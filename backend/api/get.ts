@@ -4223,3 +4223,17 @@ export const getTeamMemoSignerList = async (
 
   return data;
 };
+
+// Get memo
+export const getMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memoId: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_memo_on_load", {
+    memo_id: params.memoId,
+  });
+
+  if (error || !data) throw Error;
+
+  return data;
+};

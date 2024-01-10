@@ -1,16 +1,21 @@
 import { createTeamMemo } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { getMemoReferencePrefix, parseHtmlToMarkdown } from "@/utils/string";
+import {
+  formatTeamNameToUrlKey,
+  getMemoReferencePrefix,
+  parseHtmlToMarkdown,
+} from "@/utils/string";
 import {
   AttachmentTableRow,
   MemoSignerItem,
   UserTableRow,
 } from "@/utils/types";
-import { Container, Space, Tabs, Title } from "@mantine/core";
+import { Container, LoadingOverlay, Space, Tabs, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconEye, IconFileDescription } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import MemoForm from "./MemoForm";
@@ -56,6 +61,7 @@ const CreateMemoFormPage = ({
   teamMemoCount,
   teamMemoSignerList,
 }: Props) => {
+  const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const userFullname = `${user.user_first_name} ${user.user_last_name}`;
@@ -70,9 +76,11 @@ const CreateMemoFormPage = ({
 
   const [activeTab, setActiveTab] = useState("create");
   const [previewData, setPreviewData] = useState(memoFormMethods.getValues());
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateMemo = async (data: MemoFormValues) => {
     try {
+      setIsLoading(true);
       if (data.signerList.length <= 0) {
         return notifications.show({
           title: "Memo signers are required",
@@ -133,15 +141,21 @@ const CreateMemoFormPage = ({
         signerData,
         lineItemData,
       };
-      console.log(createMemoParams);
+
       const newMemo = await createTeamMemo(supabaseClient, createMemoParams);
-      console.log(newMemo);
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${
+          newMemo.memo_id
+        }`
+      );
     } catch (error) {
       console.log(error);
       notifications.show({
         message: "Failed to create memo",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -152,7 +166,8 @@ const CreateMemoFormPage = ({
   };
 
   return (
-    <Container>
+    <Container pos="relative">
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
       <Title order={2} color="dimmed">
         Create Memo Page
       </Title>

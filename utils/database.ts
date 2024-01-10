@@ -660,6 +660,7 @@ export type Database = {
           memo_is_disabled: boolean;
           memo_reference_number_prefix: string;
           memo_reference_number_serial: string;
+          memo_status: string;
           memo_subject: string;
           memo_team_id: string;
         };
@@ -671,6 +672,7 @@ export type Database = {
           memo_is_disabled?: boolean;
           memo_reference_number_prefix: string;
           memo_reference_number_serial: string;
+          memo_status?: string;
           memo_subject: string;
           memo_team_id: string;
         };
@@ -682,6 +684,7 @@ export type Database = {
           memo_is_disabled?: boolean;
           memo_reference_number_prefix?: string;
           memo_reference_number_serial?: string;
+          memo_status?: string;
           memo_subject?: string;
           memo_team_id?: string;
         };
@@ -2074,6 +2077,12 @@ export type Database = {
       get_edit_request_on_load: {
         Args: {
           input_data: Json;
+        };
+        Returns: Json;
+      };
+      get_memo_on_load: {
+        Args: {
+          memo_id: string;
         };
         Returns: Json;
       };

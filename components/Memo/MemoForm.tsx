@@ -243,9 +243,6 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                       clearable
                     />
                   )}
-                  // rules={{validate: {
-                  //   maxFileSize: (value: File) => value.size > MAX_FILE_SIZE
-                  // }}}
                   rules={{
                     validate: (v) => {
                       if (!v) {

@@ -206,6 +206,33 @@ export type ServiceCategoryTableInsert =
 export type ServiceCategoryTableUpdate =
   Database["public"]["Tables"]["service_category_table"]["Update"];
 
+export type MemoTableRow = Database["public"]["Tables"]["memo_table"]["Row"];
+export type MemoTableInsert =
+  Database["public"]["Tables"]["memo_table"]["Insert"];
+export type MemoTableUpdate =
+  Database["public"]["Tables"]["memo_table"]["Update"];
+
+export type MemoSignerTableRow =
+  Database["public"]["Tables"]["memo_signer_table"]["Row"];
+export type MemoSignerTableInsert =
+  Database["public"]["Tables"]["memo_signer_table"]["Insert"];
+export type MemoSignerTableUpdate =
+  Database["public"]["Tables"]["memo_signer_table"]["Update"];
+
+export type MemoLineItemTableRow =
+  Database["public"]["Tables"]["memo_line_item_table"]["Row"];
+export type MemoLineItemTableInsert =
+  Database["public"]["Tables"]["memo_line_item_table"]["Insert"];
+export type MemoLineItemTableUpdate =
+  Database["public"]["Tables"]["memo_line_item_table"]["Update"];
+
+export type MemoLineItemAttachmentTableRow =
+  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Row"];
+export type MemoLineItemAttachmentTableInsert =
+  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Insert"];
+export type MemoLineItemAttachmentTableUpdate =
+  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1126,4 +1153,22 @@ export type MemoLineItem = {
   memo_line_item_attachment?: File | Blob;
   memo_line_item_attachment_name?: string;
   memo_line_item_attachment_caption?: string;
+};
+
+export type MemoType = MemoTableRow & { memo_author_user: UserTableRow } & {
+  memo_signer_list: (MemoSignerTableRow & {
+    memo_signer_team_member: {
+      team_member_id: string;
+      user: UserTableRow & {
+        user_signature_attachment?: {
+          user_signature_attachment_id: string;
+          attachment_value: string;
+        };
+      };
+    };
+  })[];
+} & {
+  memo_line_item_list: (MemoLineItemTableRow & {
+    memo_line_item_attachment?: MemoLineItemAttachmentTableRow;
+  })[];
 };

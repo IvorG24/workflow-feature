@@ -509,3 +509,30 @@ export const updateLookup = async (
     value: formattedData[value],
   };
 };
+
+// approve or rejecet memo
+export const approveOrRejectMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    memoSignerId: string;
+    memoId: string;
+    action: string;
+    isPrimarySigner: boolean;
+  }
+) => {
+  const { memoSignerId, memoId, action, isPrimarySigner } = params;
+  const { error } = await supabaseClient
+    .from("memo_signer_table")
+    .update({ memo_signer_status: action })
+    .eq("memo_signer_id", memoSignerId);
+  if (error) throw Error;
+
+  if (isPrimarySigner) {
+    const { error } = await supabaseClient
+      .from("memo_table")
+      .update({ memo_status: action })
+      .eq("memo_id", memoId);
+
+    if (error) throw Error;
+  }
+};

@@ -488,7 +488,8 @@ CREATE TABLE memo_table (
     memo_reference_number_serial VARCHAR(4000) NOT NULL,
     memo_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
     memo_date_updated TIMESTAMPTZ(0),
-    memo_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+    memo_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+    memo_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL
 );
 
 CREATE TABLE memo_signer_table (
@@ -8522,6 +8523,110 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Create memo
+
+-- Start: Get memo
+
+CREATE OR REPLACE FUNCTION get_memo_on_load(
+    memo_id TEXT
+)
+RETURNS JSON AS $$
+  let memo_data_on_load;
+  plv8.subtransaction(function(){
+
+    const memo_data_raw = plv8.execute(`SELECT * FROM memo_table INNER JOIN user_table on user_table.user_id = memo_author_user_id WHERE memo_id = '${memo_id}' AND memo_is_disabled = false LIMIT 1`)[0];
+
+    if (memo_data_raw.length === 0) {
+        memo_data_on_load = {};
+    }
+
+    const {memo_subject, memo_reference_number_prefix, memo_reference_number_serial, memo_date_created, memo_date_updated, memo_status, user_id, user_avatar, user_first_name, user_last_name, user_job_title, user_signature_attachment_id} = memo_data_raw;
+
+    const memo_data = {
+        memo_id: memo_data_raw.memo_id,
+        memo_subject,
+        memo_reference_number_prefix,
+        memo_reference_number_serial,
+        memo_date_created,
+        memo_date_updated,
+        memo_status,
+        memo_author_user: {
+            user_id,
+            user_avatar,
+            user_first_name,
+            user_last_name,
+            user_job_title,
+            user_signature_attachment_id
+        }
+    };
+
+    const signer_data_raw = plv8.execute(`
+        SELECT * 
+        FROM memo_signer_table 
+        INNER JOIN team_member_table tm ON tm.team_member_id = memo_signer_team_member_id 
+        INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id 
+        INNER JOIN attachment_table ON attachment_id = ut.user_signature_attachment_id
+        WHERE memo_signer_memo_id = '${memo_id}'
+    `);
+
+    const signer_data = signer_data_raw.map(row => {
+        const newSignerData = {
+        memo_signer_id: row.memo_signer_id,
+        memo_signer_status: row.memo_signer_status,
+        memo_signer_is_primary: row.memo_signer_is_primary,
+        memo_signer_order: row.memo_signer_order,
+        memo_signer_team_member: {
+                team_member_id: row.team_member_id,
+                user: {
+                    user_id: row.user_id,
+                    user_first_name: row.user_first_name,
+                    user_last_name: row.user_last_name,
+                    user_avatar: row.user_avatar,
+                    user_signature_attachment: {
+                        user_signature_attachment_id: row.attachment_id,
+                        attachment_value: row.attachment_value
+                    },
+                    user_job_title: row.user_job_title
+                }
+            }
+        }
+
+        return newSignerData;
+    });
+
+    const line_item_data_raw = plv8.execute(`
+        SELECT * 
+        FROM memo_line_item_table 
+        LEFT JOIN memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id 
+        WHERE memo_line_item_memo_id = '${memo_id}'
+    `);
+
+    const line_item_data = line_item_data_raw.map(row => ({
+        memo_line_item_id: row.memo_line_item_id,
+        memo_line_item_content: row.memo_line_item_content,
+        memo_line_item_date_created: row.memo_line_item_date_created,
+        memo_line_item_date_updated: row.memo_line_item_date_updated,
+        memo_line_item_order: row.memo_line_item_order,
+        memo_line_item_attachment: {
+            memo_line_item_attachment_id: row.memo_line_item_attachment_id,
+            memo_line_item_attachment_name: row.memo_line_item_attachment_name,
+            memo_line_item_attachment_caption: row.memo_line_item_attachment_caption,
+            memo_line_item_attachment_storage_bucket: row.memo_line_item_attachment_storage_bucket,
+            memo_line_item_attachment_public_url: row.memo_line_item_attachment_public_url,
+            memo_line_item_attachment_line_item_id: row.memo_line_item_attachment_line_item_id
+        }
+    }));
+
+
+    memo_data_on_load = {
+        ...memo_data,
+        memo_signer_list: signer_data,
+        memo_line_item_list: line_item_data
+    }
+ });
+ return memo_data_on_load;
+$$ LANGUAGE plv8;
+
+-- End: Get memo
 
 ---------- End: FUNCTIONS
 

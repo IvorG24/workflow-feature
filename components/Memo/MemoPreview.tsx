@@ -9,6 +9,7 @@ import {
   Group,
   Image as MantineImage,
   Paper,
+  Space,
   Stack,
   Text,
 } from "@mantine/core";
@@ -117,6 +118,7 @@ const MemoPreview = ({ data, teamMemoCount }: Props) => {
         </Box>
         {lineItems}
 
+        <Space mt="xl" />
         {signerListPreview.length > 0 && (
           <Flex gap={48}>
             {signerListPreview.map((signer) => (

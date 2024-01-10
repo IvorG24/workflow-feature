@@ -18,6 +18,7 @@ import {
   ItemForm,
   ItemTableInsert,
   MemoLineItem,
+  MemoTableRow,
   NotificationTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
@@ -1059,13 +1060,9 @@ export const createTeamMemo = async (
     input_data,
   });
 
-  console.log(input_data);
-
-  console.log(error);
-
   if (error) throw Error;
 
-  return data;
+  return data as MemoTableRow;
 };
 
 const processAllMemoLineItems = async (
