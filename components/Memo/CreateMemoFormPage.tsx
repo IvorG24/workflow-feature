@@ -1,5 +1,10 @@
-import { UserTableRow } from "@/utils/types";
+import {
+  AttachmentTableRow,
+  MemoSignerItem,
+  UserTableRow,
+} from "@/utils/types";
 import { Container, Paper, Space, Tabs, Title } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { IconEye, IconFileDescription } from "@tabler/icons-react";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -14,22 +19,38 @@ export type MemoFormValues = {
     line_item_image_attachment?: File;
     line_item_image_caption?: string;
   }[];
+  signerList: {
+    signer_status: string;
+    signer_is_primary: boolean;
+    signer_team_member_id: string;
+    signer_full_name: string;
+    signer_avatar: string | null;
+    signer_signature:
+      | (AttachmentTableRow & { attachment_public_url?: string })
+      | null;
+    signer_job_title: string | null;
+  }[];
 };
 
 type Props = {
   user: UserTableRow;
   teamMemoCount: number;
+  teamMemoSignerList: MemoSignerItem[];
 };
 
 export const getDefaultMemoLineItemValue = ({
-  content = "Type your content here",
+  content = "<p>Type your content here</p>",
 }: {
   content?: string;
 }) => ({
   line_item_content: content,
 });
 
-const CreateMemoFormPage = ({ user, teamMemoCount }: Props) => {
+const CreateMemoFormPage = ({
+  user,
+  teamMemoCount,
+  teamMemoSignerList,
+}: Props) => {
   const userFullname = `${user.user_first_name} ${user.user_last_name}`;
 
   const memoFormMethods = useForm<MemoFormValues>({
@@ -44,6 +65,13 @@ const CreateMemoFormPage = ({ user, teamMemoCount }: Props) => {
   const [previewData, setPreviewData] = useState(memoFormMethods.getValues());
 
   const handleCreateMemo = (data: MemoFormValues) => {
+    if (data.signerList.length <= 0) {
+      return notifications.show({
+        title: "Memo signers are required",
+        message: "Please add atleast one signer.",
+        color: "red",
+      });
+    }
     console.log(data);
   };
 
@@ -78,7 +106,10 @@ const CreateMemoFormPage = ({ user, teamMemoCount }: Props) => {
 
           <Tabs.Panel value="create" pt="xs">
             <FormProvider {...memoFormMethods}>
-              <MemoForm onSubmit={handleCreateMemo} />
+              <MemoForm
+                onSubmit={handleCreateMemo}
+                teamMemoSignerList={teamMemoSignerList}
+              />
             </FormProvider>
           </Tabs.Panel>
 

@@ -101,3 +101,21 @@ export const parseHtmlToMarkdown = (html: string) => {
 
   return htmlToMarkdownParser.translate(html);
 };
+
+export const checkIfHtmlStringIsEmpty = (html: string): boolean => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const element = doc.body.firstChild as Element;
+  // Check if element exists and is an Element node
+  if (element && element.nodeType === Node.ELEMENT_NODE) {
+    return element.innerHTML.trim() === "";
+  }
+
+  return true;
+};
+
+export const getInitials = (fullname: string) => {
+  const words = fullname.trim().split(" ");
+  const initials = words.map((word) => word[0].toUpperCase()).join("");
+  return initials;
+};

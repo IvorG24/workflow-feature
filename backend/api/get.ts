@@ -4188,10 +4188,38 @@ export const getTeamMemoCount = async (
 ) => {
   const { count, error } = await supabaseClient
     .from("memo_table")
-    .select("*", { count: "exact", head: true })
+    .select("*", { count: "exact" })
     .eq("memo_team_id", params.teamId);
 
   if (error) throw error;
 
   return Number(count);
+};
+
+// Get team memo signers
+export const getTeamMemoSignerList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `team_member_id,
+       team_member_user: team_member_user_id(
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_job_title,
+          user_avatar,
+          user_signature_attachment: user_signature_attachment_id(*)
+        )
+      `
+    )
+    .eq("team_member_team_id", params.teamId);
+
+  if (error) throw error;
+
+  return data;
 };

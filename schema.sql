@@ -474,6 +474,10 @@ CREATE TABLE general_unit_of_measurement_table(
   general_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
+-- End: General unit of measurement table
+
+-- Start: Memo feature table
+
 CREATE TABLE memo_table (
     memo_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
     memo_subject VARCHAR(4000) NOT NULL,
@@ -489,6 +493,8 @@ CREATE TABLE memo_table (
 CREATE TABLE memo_signer_table (
     memo_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
     memo_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+    memo_signer_is_primary BOOLEAN DEFAULT FALSE NOT NULL,
+    memo_signer_order INT NOT NULL,
     memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
     memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
 );
@@ -509,10 +515,7 @@ CREATE TABLE memo_line_item_attachment_table (
     memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) NOT NULL
 );
 
-
-
-
--- End: General unit of measurement table
+-- End: Memo feature table
 
 ---------- End: TABLES
 

@@ -1,17 +1,21 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { Database } from "@/utils/database";
 import { getBase64 } from "@/utils/functions";
 import { parseHtmlToMarkdown } from "@/utils/string";
 import {
   Box,
   Divider,
+  Flex,
   Group,
   Image as MantineImage,
   Stack,
   Text,
 } from "@mantine/core";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import moment from "moment";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Markdown from "react-markdown";
+import { v4 as uuidv4 } from "uuid";
 import { MemoFormValues } from "./CreateMemoFormPage";
 
 type Props = {
@@ -20,10 +24,29 @@ type Props = {
 };
 
 const MemoPreview = ({ data, teamMemoCount }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
   const team = useActiveTeam();
   const teamName = team.team_name ?? "";
 
   const [lineItems, setLineItems] = useState<React.JSX.Element[]>([]);
+  const signerListPreview = useMemo(() => {
+    if (!data.signerList) return [];
+
+    return data.signerList.map((signer) => {
+      // get signature public url
+      if (signer?.signer_signature) {
+        const {
+          data: { publicUrl },
+        } = supabaseClient.storage
+          .from("USER_SIGNATURES")
+          .getPublicUrl(signer.signer_signature.attachment_value);
+
+        signer.signer_signature.attachment_public_url = `${publicUrl}?id=${uuidv4()}`;
+      }
+
+      return signer;
+    });
+  }, [data.signerList, supabaseClient.storage]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,6 +115,30 @@ const MemoPreview = ({ data, teamMemoCount }: Props) => {
           <Divider color="dark" mt={2} size="lg" />
         </Box>
         {lineItems}
+
+        {signerListPreview.length > 0 && (
+          <Flex gap={48}>
+            {signerListPreview.map((signer) => (
+              <Stack key={signer.signer_team_member_id} spacing={0}>
+                <MantineImage
+                  width={120}
+                  height={80}
+                  src={signer.signer_signature?.attachment_public_url}
+                  alt="User signature"
+                  fit="contain"
+                  withPlaceholder
+                  placeholder={
+                    <Box>
+                      <Text>No signature</Text>
+                    </Box>
+                  }
+                />
+                <Text weight={600}>{signer.signer_full_name}</Text>
+                <Text>{signer.signer_job_title}</Text>
+              </Stack>
+            ))}
+          </Flex>
+        )}
       </Stack>
     </Box>
   );
@@ -106,7 +153,7 @@ const memoData = ({ label, value }: { label: string; value: string }) => {
         {label}
       </Text>
       <Text>:</Text>
-      <Text>{value}</Text>
+      <Text>{value !== "" ? value : "<empty>"}</Text>
     </Group>
   );
 };

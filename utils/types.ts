@@ -1105,3 +1105,17 @@ export type UserIssuedItem = {
     }[];
   }[];
 };
+
+export type MemoSignerItem = {
+  team_member_id: string;
+  team_member_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_job_title: string | null;
+    user_avatar: string | null;
+    user_signature_attachment:
+      | (AttachmentTableRow & { attachment_public_url?: string })
+      | null;
+  };
+};

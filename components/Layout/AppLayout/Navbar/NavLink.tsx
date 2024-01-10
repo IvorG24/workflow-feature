@@ -27,6 +27,7 @@ import {
   IconCirclePlus,
   IconDashboard,
   IconFile,
+  IconFileDescription,
   IconFilePlus,
   IconFileText,
   IconFiles,
@@ -97,6 +98,14 @@ const ReviewAppNavLink = () => {
               }
             >
               Create Ticket
+            </Button>
+            <Button
+              fw={400}
+              leftIcon={<IconFileDescription {...defaultIconProps} />}
+              variant="transparent"
+              onClick={() => router.push(`/${activeTeamNameToUrl}/memo/create`)}
+            >
+              Create Memo
             </Button>
           </Stack>
 
@@ -200,6 +209,15 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: requisitionForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
+    },
+    {
+      label: "Create Memo",
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileDescription {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/memo/create`,
     },
   ];
 
