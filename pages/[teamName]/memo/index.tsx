@@ -1,8 +1,6 @@
 import { getTeamMemoCount, getUser } from "@/backend/api/get";
-import CreateMemoFormPage from "@/components/Memo/CreateMemoFormPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { UserTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -40,16 +38,11 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   }
 );
 
-type Props = {
-  user: UserTableRow;
-  teamMemoCount: number;
-};
-
-const Page = ({ user, teamMemoCount }: Props) => {
+const Page = () => {
   return (
     <>
       <Meta description="Create Memo Page" url="/teamName/memo/" />
-      <CreateMemoFormPage user={user} teamMemoCount={teamMemoCount} />
+      Memo List
     </>
   );
 };
