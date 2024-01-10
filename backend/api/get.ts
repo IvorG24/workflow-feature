@@ -18,6 +18,7 @@ import {
   FormType,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
+  MemoListItemType,
   NotificationOnLoad,
   NotificationTableRow,
   RequestByFormType,
@@ -4236,4 +4237,68 @@ export const getMemo = async (
   if (error || !data) throw Error;
 
   return data;
+};
+
+// Get memo list
+export const getMemoList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    authorFilter?: string[];
+    approverFilter?: string[];
+    status?: string[];
+    sort?: "ascending" | "descending";
+    searchFilter?: string;
+  }
+) => {
+  const {
+    teamId,
+    page,
+    limit,
+    authorFilter,
+    approverFilter,
+    status,
+    sort = "descending",
+    searchFilter,
+  } = params;
+
+  const authorFilterCondition = authorFilter
+    ?.map(
+      (authorUserId) => `memo_table.memo_author_user_id = '${authorUserId}'`
+    )
+    .join(" OR ");
+
+  const approverFilterCondition = approverFilter
+    ?.map(
+      (approverTeamMemberId) =>
+        `memo_signer_table.memo_signer_team_member_id = '${approverTeamMemberId}'`
+    )
+    .join(" OR ");
+
+  const statusCondition = status
+    ?.map((status) => `memo_table.memo_status = '${status}'`)
+    .join(" OR ");
+
+  const { data, error } = await supabaseClient.rpc("get_memo_list", {
+    input_data: {
+      teamId,
+      page,
+      limit,
+      sort: sort === "descending" ? "DESC" : "ASC",
+      authorFilter: authorFilterCondition
+        ? `AND (${authorFilterCondition})`
+        : "",
+      approverFilter: approverFilterCondition
+        ? `AND (${approverFilterCondition})`
+        : "",
+      status: statusCondition ? `AND (${statusCondition})` : "",
+      searchFilter: searchFilter ? searchFilter : "",
+    },
+  });
+
+  if (error) throw Error;
+
+  return data as { data: MemoListItemType[]; count: number };
 };

@@ -2080,6 +2080,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      get_memo_list: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       get_memo_on_load: {
         Args: {
           memo_id: string;

@@ -29,6 +29,7 @@ import {
   IconFile,
   IconFileDescription,
   IconFilePlus,
+  IconFileStack,
   IconFileText,
   IconFiles,
   IconListDetails,
@@ -259,6 +260,15 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/tickets`,
+    },
+    {
+      label: `Memo List`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileStack {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/memo`,
     },
   ];
 

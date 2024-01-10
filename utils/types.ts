@@ -1172,3 +1172,7 @@ export type MemoType = MemoTableRow & { memo_author_user: UserTableRow } & {
     memo_line_item_attachment?: MemoLineItemAttachmentTableRow;
   })[];
 };
+
+export type MemoListItemType = MemoTableRow & {
+  memo_author_user: UserTableRow;
+} & { memo_signer_list: MemoType["memo_signer_list"] };

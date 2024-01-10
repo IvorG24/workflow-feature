@@ -8666,6 +8666,96 @@ $$ LANGUAGE plv8;
 
 -- End: Get memo
 
+-- Start: Get memo list
+
+CREATE OR REPLACE FUNCTION get_memo_list(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let return_value;
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      page,
+      limit,
+      authorFilter,
+      approverFilter,
+      status,
+      sort,
+      searchFilter
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const memo_list = plv8.execute(
+      `
+        SELECT 
+          memo_table.*,
+          JSONB_BUILD_OBJECT(
+            'user_id', user_table.user_id,
+            'user_avatar', user_table.user_avatar,
+            'user_first_name', user_table.user_first_name,
+            'user_last_name', user_table.user_last_name
+          ) AS memo_author_user,
+          ARRAY_AGG(
+            JSONB_BUILD_OBJECT(
+              'memo_signer_id', memo_signer_id,
+              'memo_signer_status', memo_signer_status,
+              'memo_signer_is_primary', memo_signer_is_primary,
+              'memo_signer_order', memo_signer_order,
+              'memo_signer_team_member', JSONB_BUILD_OBJECT(
+                'team_member_id', team_member_table.team_member_id,
+                'user', JSONB_BUILD_OBJECT(
+                  'user_id', team_member_user_table.user_id,
+                  'user_first_name', team_member_user_table.user_first_name,
+                  'user_last_name', team_member_user_table.user_last_name,
+                  'user_avatar', team_member_user_table.user_avatar
+                )
+              )
+            )
+          ) AS memo_signer_list
+        FROM memo_table
+        INNER JOIN user_table ON user_table.user_id = memo_table.memo_author_user_id
+        LEFT JOIN memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
+        LEFT JOIN team_member_table ON team_member_table.team_member_id = memo_signer_table.memo_signer_team_member_id
+        LEFT JOIN user_table AS team_member_user_table ON team_member_user_table.user_id = team_member_table.team_member_user_id
+        LEFT JOIN memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_table.memo_id
+        WHERE 
+          memo_table.memo_team_id = '${teamId}'
+          AND memo_table.memo_is_disabled = false
+          ${authorFilter}
+          ${approverFilter}
+          ${status}
+          ${searchFilter ? `AND to_tsvector(memo_subject || ' ' || memo_line_item_table.memo_line_item_content) @@ to_tsquery('${searchFilter}')` : ''}
+        GROUP BY 
+          memo_table.memo_id,
+          user_table.user_id
+        ORDER BY memo_table.memo_date_created ${sort}
+        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+      `
+    );
+
+    const memo_count = plv8.execute(`
+      SELECT COUNT(*)
+      FROM memo_table 
+      LEFT JOIN memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_table.memo_id
+      LEFT JOIN memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
+      WHERE  
+        memo_table.memo_team_id = '${teamId}'
+        AND memo_table.memo_is_disabled = false
+        ${authorFilter}
+        ${approverFilter}
+        ${status}
+        ${searchFilter ? `AND to_tsvector(memo_line_item_table.memo_line_item_content) @@ to_tsquery('${searchFilter}')` : ''}
+    `)[0];
+
+    return_value = {data: memo_list, count: Number(memo_count.count)}
+ });
+ return return_value;
+$$ LANGUAGE plv8;
+
+-- End: Get memo list
+
 ---------- End: FUNCTIONS
 
 
