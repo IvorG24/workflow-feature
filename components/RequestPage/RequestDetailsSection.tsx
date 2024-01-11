@@ -136,14 +136,15 @@ const RequestDetailsSection = ({
             ["APPROVED", "REJECTED"].includes(request.request_status) && (
               <Text color="dimmed">
                 on{" "}
-                {new Date(request.request_date_created).toLocaleDateString(
-                  "en-US",
-                  {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  }
-                )}
+                {new Date(
+                  primarySigner.request_signer_status_date_updated
+                ).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "numeric",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                })}
               </Text>
             )}
         </Group>
