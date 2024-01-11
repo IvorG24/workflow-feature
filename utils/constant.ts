@@ -1338,3 +1338,11 @@ export const FORM_SEGMENT_CHOCIES = [
   { label: "Form Details", value: "Form Details" },
   { label: "Form Lookup", value: "Form Lookup" },
 ];
+
+export const PURPOSE_TYPE_EQUIVALENT_FIELD = {
+  "Spare Part": 10,
+  Tire: 11,
+  Battery: 12,
+};
+
+export type PURPOSE_TYPE_OPTION_TYPE = "Spare Part" | "Tire" | "Battery";

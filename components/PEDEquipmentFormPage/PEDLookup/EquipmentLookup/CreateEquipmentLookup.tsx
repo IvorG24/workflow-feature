@@ -3,11 +3,7 @@ import { createRowInLookupTable } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import {
-  EquipmentLookupChoices,
-  LookupTable,
-  LookupForm,
-} from "@/utils/types";
+import { EquipmentLookupChoices, LookupForm, LookupTable } from "@/utils/types";
 import {
   Button,
   Checkbox,

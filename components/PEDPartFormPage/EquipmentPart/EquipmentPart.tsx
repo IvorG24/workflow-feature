@@ -46,10 +46,9 @@ const EquipmentPart = ({ selectedEquipment, setSelectedEquipment }: Props) => {
           limit: ROW_PER_PAGE,
           page: 1,
         });
-        setEquipmentPartList(data as unknown as EquipmentPartType[]);
+        setEquipmentPartList(data);
         setEquipmentPartCount(Number(count ?? 0));
-      } catch (e) {
-
+      } catch {
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",

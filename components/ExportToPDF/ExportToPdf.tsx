@@ -7,6 +7,8 @@ import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import { IconList, IconTable } from "@tabler/icons-react";
 import moment from "moment";
 import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
+import PEDEquipmentPdfDocumentTableVersion from "./PEDEquipmentPdfDocumentTableVersion";
+import PEDPartPdfDocumentTableVersion from "./PEDPartPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
 import RequisitionPdfDocumentTableVersion from "./RequisitionPdfDocumentTableVersion";
 import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
@@ -165,6 +167,26 @@ const ExportToPdf = ({
             approverDetails={approverDetails}
           />
         );
+      case "PED Equipment":
+        return (
+          <PEDEquipmentPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+      case "PED Part":
+        return (
+          <PEDPartPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
     }
   };
 
@@ -210,7 +232,7 @@ const ExportToPdf = ({
             )}
 
             {request.request_form.form_is_formsly_form &&
-              ["Requisition", "Services"].includes(
+              ["Requisition", "Services", "PED Equipment", "PED Part"].includes(
                 request.request_form.form_name
               ) && (
                 <Menu.Item

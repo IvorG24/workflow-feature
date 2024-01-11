@@ -1,4 +1,5 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
+import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
@@ -59,6 +60,7 @@ export type EditRequestOnLoadProps = {
     special_approver_signer: FormType["form_signer"][0];
   }[];
   referenceOnly: boolean;
+  categoryOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -71,6 +73,7 @@ const Page = ({
   sourceProjectList = {},
   specialApprover = [],
   referenceOnly,
+  categoryOptions = [],
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
   const formslyForm = () => {
@@ -90,6 +93,15 @@ const Page = ({
           <EditServicesRequestPage
             request={request}
             projectOptions={projectOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "PED Equipment":
+        return (
+          <EditPEDEquipmentRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
             referenceOnly={referenceOnly}
           />
         );

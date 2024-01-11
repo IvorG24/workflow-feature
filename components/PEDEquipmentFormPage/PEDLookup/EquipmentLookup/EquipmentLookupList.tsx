@@ -1,12 +1,10 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getItemDescriptionFieldList } from "@/backend/api/get";
+import { getEquipmentLookupList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import {
-  ItemDescriptionFieldTableRow,
-  ItemDescriptionTableRow,
-} from "@/utils/types";
+import { EquipmentLookupChoices, LookupTable } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -23,9 +21,14 @@ import {
 import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconSearch,
+  IconSettings,
+  IconTrash,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -39,49 +42,75 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  description: ItemDescriptionTableRow;
-  records: ItemDescriptionFieldTableRow[];
-  setRecords: Dispatch<SetStateAction<ItemDescriptionFieldTableRow[]>>;
-  count: number;
-  setCount: Dispatch<SetStateAction<number>>;
-  setIsCreating: Dispatch<SetStateAction<boolean>>;
+  lookup: {
+    table: EquipmentLookupChoices;
+    label: string;
+  };
+  equipmentLookupList: LookupTable[];
+  setEquipmentLookupList: Dispatch<SetStateAction<LookupTable[]>>;
+  equipmentLookupCount: number;
+  setEquipmentLookupCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingEquipmentLookup: Dispatch<SetStateAction<boolean>>;
+  setEditEquipmentLookup: Dispatch<SetStateAction<LookupTable | null>>;
 };
 
-const ItemDescriptionFieldTable = ({
-  description,
-  records,
-  setRecords,
-  count,
-  setCount,
-  setIsCreating,
+const EquipmentLookupList = ({
+  lookup,
+  equipmentLookupList,
+  setEquipmentLookupList,
+  equipmentLookupCount,
+  setEquipmentLookupCount,
+  setIsCreatingEquipmentLookup,
+  setEditEquipmentLookup,
 }: Props) => {
-  const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
+  const { classes } = useStyles();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const team = useActiveTeam();
 
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const headerCheckboxKey = generateRandomId();
 
-  useEffect(() => {
-    handleFetch("", 1);
-  }, [description]);
+  const handleFetch = async (search: string, page: number) => {
+    setIsLoading(true);
+    try {
+      if (!team.team_id) return;
+      const { data, count } = await getEquipmentLookupList(supabaseClient, {
+        lookup: lookup.table,
+        teamId: team.team_id,
+        search,
+        limit: ROW_PER_PAGE,
+        page,
+      });
+      setEquipmentLookupList(data);
+      setEquipmentLookupCount(Number(count));
+    } catch (e) {
+      notifications.show({
+        message: `Error on fetching equipment ${lookup.label} list`,
+        color: "red",
+      });
+    }
+    setIsLoading(false);
+  };
 
-  const handleCheckRow = (descriptionId: string) => {
-    if (checkList.includes(descriptionId)) {
-      setCheckList(checkList.filter((id) => id !== descriptionId));
+  const handleCheckRow = (equipmentLookupId: string) => {
+    if (checkList.includes(equipmentLookupId)) {
+      setCheckList(checkList.filter((id) => id !== equipmentLookupId));
     } else {
-      setCheckList([...checkList, descriptionId]);
+      setCheckList([...checkList, equipmentLookupId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const fieldList = records.map((field) => field.item_description_field_id);
-      setCheckList(fieldList);
+      const equipmentLookupIdList = equipmentLookupList.map(
+        (equipmentLookup) => equipmentLookup.id
+      );
+      setCheckList(equipmentLookupIdList);
     } else {
       setCheckList([]);
     }
@@ -94,53 +123,32 @@ const ItemDescriptionFieldTable = ({
     handleFetch(isEmpty ? "" : search, 1);
   };
 
-  const handleFetch = async (search: string, page: number) => {
-    setIsLoading(true);
-    try {
-      const { data, count } = await getItemDescriptionFieldList(
-        supabaseClient,
-        {
-          descriptionId: description.item_description_id,
-          search: search,
-          page: page,
-          limit: ROW_PER_PAGE,
-        }
-      );
-      setRecords(data);
-      setCount(Number(count));
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = records;
+    const savedRecord = equipmentLookupList;
 
     try {
-      const updatedFieldList = records.filter((field) => {
-        if (!checkList.includes(field.item_description_field_id)) {
-          return field;
+      const updatedEquipmentLookupList = equipmentLookupList.filter(
+        (equipmentLookup) => {
+          if (!checkList.includes(equipmentLookup.id)) {
+            return equipmentLookup;
+          }
         }
-      });
-      setRecords(updatedFieldList);
+      );
+      setEquipmentLookupList(updatedEquipmentLookupList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "item_description_field",
+        table: lookup.table,
       });
 
       notifications.show({
-        message: "Field/s deleted.",
+        message: `${lookup.label}/s deleted.`,
         color: "green",
       });
     } catch {
-      setRecords(savedRecord);
+      setEquipmentLookupList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -149,22 +157,24 @@ const ItemDescriptionFieldTable = ({
     }
   };
 
-  const handleUpdateStatus = async (fieldId: string, value: boolean) => {
-    const savedRecords = records;
-
+  const handleUpdateStatus = async (
+    equipmentLookupId: string,
+    value: boolean
+  ) => {
+    const savedRecord = equipmentLookupList;
     try {
-      setRecords((prev) =>
-        prev.map((field) => {
-          if (field.item_description_field_id !== fieldId) return field;
+      setEquipmentLookupList((prev) =>
+        prev.map((equipmentLookup) => {
+          if (equipmentLookup.id !== equipmentLookupId) return equipmentLookup;
           return {
-            ...field,
-            item_description_field_is_available: value,
+            ...equipmentLookup,
+            status: value,
           };
         })
       );
       await toggleStatus(supabaseClient, {
-        table: "item_description_field",
-        id: fieldId,
+        table: lookup.table,
+        id: equipmentLookupId,
         status: value,
       });
     } catch {
@@ -172,20 +182,20 @@ const ItemDescriptionFieldTable = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      setRecords(savedRecords);
+      setEquipmentLookupList(savedRecord);
     }
   };
 
   return (
-    <Box mt="xl">
+    <Box>
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of {description.item_description_label}
+            List of {lookup.label}
           </Title>
           <TextInput
             miw={250}
-            placeholder="Value"
+            placeholder="Search"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
                 <IconSearch size={16} />
@@ -209,6 +219,7 @@ const ItemDescriptionFieldTable = ({
             className={classes.flexGrow}
           />
         </Group>
+
         <Group className={classes.flexGrow}>
           {checkList.length !== 0 ? (
             <Button
@@ -221,9 +232,7 @@ const ItemDescriptionFieldTable = ({
                   children: (
                     <Text size={14}>
                       Are you sure you want to delete{" "}
-                      {checkList.length === 1
-                        ? "this description?"
-                        : "these descriptions?"}
+                      {`this equipment ${lookup.label}/s?`}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -238,21 +247,21 @@ const ItemDescriptionFieldTable = ({
           <Button
             rightIcon={<IconPlus size={16} />}
             className={classes.flexGrow}
-            onClick={() => setIsCreating(true)}
+            onClick={() => setIsCreatingEquipmentLookup(true)}
           >
             Add
           </Button>
         </Group>
       </Flex>
       <DataTable
-        idAccessor="item_description_field_id"
+        idAccessor="id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={records}
+        records={equipmentLookupList}
         columns={[
           {
             accessor: "checkbox",
@@ -261,65 +270,68 @@ const ItemDescriptionFieldTable = ({
                 key={headerCheckboxKey}
                 className={classes.checkbox}
                 checked={
-                  checkList.length > 0 && checkList.length === records.length
+                  checkList.length > 0 &&
+                  checkList.length === equipmentLookupList.length
                 }
                 size="xs"
                 onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
               />
             ),
-            render: ({ item_description_field_id }) => (
+            render: (data) => (
               <Checkbox
                 className={classes.checkbox}
                 size="xs"
-                checked={checkList.includes(item_description_field_id)}
+                checked={checkList.includes(data.id)}
                 onChange={() => {
-                  handleCheckRow(item_description_field_id);
+                  handleCheckRow(data.id);
                 }}
               />
             ),
             width: 40,
           },
-          { accessor: "item_description_field_value", title: "Value" },
-          ...(description.item_description_is_with_uom
-            ? [
-                {
-                  accessor:
-                    "item_description_field_uom.[0].item_description_field_uom",
-                  title: "Base Unit of Measurement",
-                },
-              ]
-            : []),
-
           {
-            accessor: "item_description_field_is_available",
+            accessor: `${lookup.table}`,
+            title: `${lookup.label}`,
+            render: (data) => <Text>{data.value}</Text>,
+          },
+          {
+            accessor: "status",
             title: "Status",
             textAlignment: "center",
-            render: ({
-              item_description_field_is_available,
-              item_description_field_id,
-            }) => {
-              return (
-                <Center>
-                  <Checkbox
-                    checked={item_description_field_is_available}
-                    className={classes.checkbox}
-                    size="xs"
-                    onChange={(e) =>
-                      handleUpdateStatus(
-                        item_description_field_id,
-                        e.currentTarget.checked
-                      )
-                    }
-                  />
-                </Center>
-              );
-            },
+            render: (data) => (
+              <Center>
+                <Checkbox
+                  checked={data.status}
+                  className={classes.checkbox}
+                  size="xs"
+                  onChange={(e) =>
+                    handleUpdateStatus(data.id, e.currentTarget.checked)
+                  }
+                />
+              </Center>
+            ),
+          },
+          {
+            accessor: "edit",
+            title: "",
+            textAlignment: "center",
+            render: (equipment) => (
+              <Center>
+                <ActionIcon
+                  onClick={() => {
+                    setEditEquipmentLookup(equipment);
+                  }}
+                >
+                  <IconSettings size={16} />
+                </ActionIcon>
+              </Center>
+            ),
           },
         ]}
-        totalRecords={count}
+        totalRecords={equipmentLookupCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
-        onPageChange={(page) => {
+        onPageChange={(page: number) => {
           setActivePage(page);
           handleFetch(search, page);
         }}
@@ -328,4 +340,4 @@ const ItemDescriptionFieldTable = ({
   );
 };
 
-export default ItemDescriptionFieldTable;
+export default EquipmentLookupList;

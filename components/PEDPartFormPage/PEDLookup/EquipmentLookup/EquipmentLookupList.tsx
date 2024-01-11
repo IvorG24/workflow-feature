@@ -4,7 +4,7 @@ import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import { EquipmentLookupChoices, EquipmentLookupTable } from "@/utils/types";
+import { EquipmentLookupChoices, LookupTable } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -46,12 +46,12 @@ type Props = {
     table: EquipmentLookupChoices;
     label: string;
   };
-  equipmentLookupList: EquipmentLookupTable[];
-  setEquipmentLookupList: Dispatch<SetStateAction<EquipmentLookupTable[]>>;
+  equipmentLookupList: LookupTable[];
+  setEquipmentLookupList: Dispatch<SetStateAction<LookupTable[]>>;
   equipmentLookupCount: number;
   setEquipmentLookupCount: Dispatch<SetStateAction<number>>;
   setIsCreatingEquipmentLookup: Dispatch<SetStateAction<boolean>>;
-  setEditEquipmentLookup: Dispatch<SetStateAction<EquipmentLookupTable | null>>;
+  setEditEquipmentLookup: Dispatch<SetStateAction<LookupTable | null>>;
 };
 
 const EquipmentLookupList = ({

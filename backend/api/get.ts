@@ -14,9 +14,10 @@ import {
   CanvassType,
   ConnectedRequestItemType,
   CreateTicketPageOnLoad,
+  EquipmentDescriptionTableRow,
   EquipmentLookupChoices,
   EquipmentPartTableInsert,
-  EquipmentPartTableRow,
+  EquipmentPartType,
   EquipmentTableRow,
   FormStatusType,
   FormType,
@@ -4050,7 +4051,7 @@ export const getEquipmentCategoryOption = async (
   return data;
 };
 
-// Get equipment description list list
+// Get equipment description list
 export const getEquipmentDescriptionList = async (
   supabaseClient: SupabaseClient<Database>,
   params: { equipmentId: string; limit: number; page: number; search?: string }
@@ -4172,69 +4173,24 @@ export const checkSerialNumber = async (
   return Boolean(count);
 };
 
-// Get equipment part list list
+// Get equipment part list
 export const getEquipmentPartList = async (
   supabaseClient: SupabaseClient<Database>,
   params: { equipmentId: string; limit: number; page: number; search?: string }
 ) => {
-  const { equipmentId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("equipment_part_table")
-    .select(
-      `
-        *,
-        equipment_part_brand: equipment_part_brand_id(equipment_brand),
-        equipment_part_model: equipment_part_model_id(equipment_model),
-        equipment_part_unit_of_measurement: equipment_part_unit_of_measurement_id(equipment_unit_of_measurement),
-        equipment_part_component_category: equipment_part_component_category_id(equipment_component_category)
-      `,
-      {
-        count: "exact",
-      }
-    )
-    .eq("equipment_part_equipment_id", equipmentId)
-    .eq("equipment_part_is_disabled", false);
-
-  if (search) {
-    query = query.or(
-      `equipment_part_name.ilike.%${search}%, equipment_part_number.ilike.%${search}%`
-    );
-  }
-
-  query.order("equipment_part_name", { ascending: true });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
+  const { data, error } = await supabaseClient.rpc("get_equipment_part_list", {
+    input_data: params,
+  });
 
   if (error) throw error;
 
-  const formattedData = data as unknown as (EquipmentPartTableRow & {
-    equipment_part_brand: { equipment_brand: string };
-    equipment_part_model: { equipment_model: string };
-    equipment_part_unit_of_measurement: {
-      equipment_unit_of_measurement: string;
-    };
-    equipment_part_component_category: { equipment_component_category: string };
-  })[];
-
+  const formattedData = data as {
+    data: EquipmentPartType[];
+    count: number;
+  };
   return {
-    data: formattedData.map((part) => {
-      return {
-        ...part,
-        equipment_part_brand: part.equipment_part_brand.equipment_brand,
-        equipment_part_model: part.equipment_part_model.equipment_model,
-        equipment_part_unit_of_measurement:
-          part.equipment_part_unit_of_measurement.equipment_unit_of_measurement,
-        equipment_part_component_category:
-          part.equipment_part_component_category.equipment_component_category,
-      };
-    }),
-    count,
+    data: formattedData.data,
+    count: formattedData.count,
   };
 };
 
@@ -4275,7 +4231,10 @@ export const checkPEDPart = async (
   const { count, error } = await supabaseClient
     .from("equipment_part_table")
     .select("*", { count: "exact", head: true })
-    .eq("equipment_part_name", equipmentPartData.equipment_part_name)
+    .eq(
+      "equipment_part_general_name_id",
+      equipmentPartData.equipment_part_general_name_id
+    )
     .eq("equipment_part_number", equipmentPartData.equipment_part_number)
     .eq("equipment_part_brand_id", equipmentPartData.equipment_part_brand_id)
     .eq("equipment_part_model_id", equipmentPartData.equipment_part_model_id)
@@ -4297,7 +4256,7 @@ export const checkPEDPart = async (
   return Boolean(count);
 };
 
-// Get equipment category list list
+// Get equipment category list
 export const getEquipmentCategoryList = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; limit: number; page: number; search?: string }
@@ -4596,4 +4555,399 @@ export const getCSICodeOptionsForServices = async (
   if (error) throw error;
 
   return data as CSICodeTableRow[];
+};
+
+// Fetch equipment name based on equipment category
+export const getEquipmentName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    category: string;
+  }
+) => {
+  const { category } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_table")
+    .select("*")
+    .eq("equipment_is_disabled", false)
+    .eq("equipment_is_available", true)
+    .eq("equipment_equipment_category_id", category);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch equipment property number based on equipment id
+export const getEquipmentPropertyNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentId: string;
+  }
+) => {
+  const { equipmentId } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_table")
+    .select("*")
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_is_available", true)
+    .eq("equipment_description_equipment_id", equipmentId);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch equipment description based on property number
+export const getEquipmentDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    propertyNumber: string;
+  }
+) => {
+  const { propertyNumber } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_table")
+    .select(
+      "*, equipment_description_brand: equipment_description_brand_id(equipment_brand), equipment_description_model: equipment_description_model_id(equipment_model)"
+    )
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_is_available", true)
+    .eq("equipment_description_property_number", propertyNumber)
+    .single();
+  if (error) throw error;
+
+  return data as EquipmentDescriptionTableRow & {
+    equipment_description_brand: { equipment_brand: string };
+  } & {
+    equipment_description_model: { equipment_model: string };
+  };
+};
+
+// Fetch item section choices based on given parameters
+export const getItemSectionChoices = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentId?: string;
+    generalName?: string;
+    componentCategory?: string;
+    brand?: string;
+    model?: string;
+  }
+) => {
+  const { equipmentId, generalName, componentCategory, brand, model } = params;
+  let query = supabaseClient
+    .from("equipment_part_table")
+    .select(
+      `
+        equipment_part_id,
+        equipment_part_general_name: equipment_part_general_name_id!inner(equipment_general_name)
+        ${
+          generalName
+            ? ", equipment_part_component_category: equipment_part_component_category_id!inner(equipment_component_category)"
+            : ""
+        }
+        ${
+          componentCategory
+            ? ", equipment_part_brand: equipment_part_brand_id!inner(equipment_brand)"
+            : ""
+        }
+        ${
+          brand
+            ? ", equipment_part_model: equipment_part_model_id!inner(equipment_model)"
+            : ""
+        }
+        ${model ? ", equipment_part_number" : ""}
+      `
+    )
+    .eq("equipment_part_is_disabled", false)
+    .eq("equipment_part_is_available", true)
+    .eq("equipment_part_general_name.equipment_general_name_is_disabled", false)
+    .eq(
+      "equipment_part_general_name.equipment_general_name_is_available",
+      true
+    );
+
+  if (equipmentId) {
+    query = query.eq("equipment_part_equipment_id", equipmentId);
+  }
+  if (generalName) {
+    query = query.eq(
+      "equipment_part_general_name.equipment_general_name",
+      generalName
+    );
+  }
+  if (componentCategory) {
+    query = query.eq(
+      "equipment_part_component_category.equipment_component_category_is_disabled",
+      false
+    );
+    query = query.eq(
+      "equipment_part_component_category.equipment_component_category_is_available",
+      true
+    );
+    query = query.eq(
+      "equipment_part_component_category.equipment_component_category",
+      componentCategory
+    );
+  }
+  if (brand) {
+    query = query.eq("equipment_part_brand.equipment_brand_is_disabled", false);
+    query = query.eq("equipment_part_brand.equipment_brand_is_available", true);
+    query = query.eq("equipment_part_brand.equipment_brand", brand);
+  }
+  if (model) {
+    query = query.eq("equipment_part_model.equipment_model_is_disabled", false);
+    query = query.eq("equipment_part_model.equipment_model_is_available", true);
+    query = query.eq("equipment_part_model.equipment_model", model);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  const tempList: string[] = [];
+  if (!equipmentId) {
+    return [];
+  } else if (!generalName) {
+    const formattedData = data as unknown as {
+      equipment_part_id: string;
+      equipment_part_general_name: { equipment_general_name: string };
+    }[];
+
+    return formattedData.filter((value) => {
+      if (
+        !tempList.includes(
+          value.equipment_part_general_name.equipment_general_name
+        )
+      ) {
+        tempList.push(value.equipment_part_general_name.equipment_general_name);
+        return value;
+      }
+    });
+  } else if (!componentCategory) {
+    const formattedData = data as unknown as {
+      equipment_part_id: string;
+      equipment_part_component_category: {
+        equipment_component_category: string;
+      };
+    }[];
+
+    return formattedData.filter((value) => {
+      if (
+        !tempList.includes(
+          value.equipment_part_component_category.equipment_component_category
+        )
+      ) {
+        tempList.push(
+          value.equipment_part_component_category.equipment_component_category
+        );
+        return value;
+      }
+    });
+  } else if (!brand) {
+    const formattedData = data as unknown as {
+      equipment_part_id: string;
+      equipment_part_brand: {
+        equipment_brand: string;
+      };
+    }[];
+
+    return formattedData.filter((value) => {
+      if (!tempList.includes(value.equipment_part_brand.equipment_brand)) {
+        tempList.push(value.equipment_part_brand.equipment_brand);
+        return value;
+      }
+    });
+  } else if (!model) {
+    const formattedData = data as unknown as {
+      equipment_part_id: string;
+      equipment_part_model: {
+        equipment_model: string;
+      };
+    }[];
+
+    return formattedData.filter((value) => {
+      if (!tempList.includes(value.equipment_part_model.equipment_model)) {
+        tempList.push(value.equipment_part_model.equipment_model);
+        return value;
+      }
+    });
+  } else {
+    const formattedData = data as unknown as {
+      equipment_part_id: string;
+      equipment_part_number: string;
+    }[];
+
+    return formattedData.filter((value) => {
+      if (!tempList.includes(value.equipment_part_number)) {
+        tempList.push(value.equipment_part_number);
+        return value;
+      }
+    });
+  }
+};
+
+// Fetch item unit of measurement based on given parameters
+export const getItemUnitOfMeasurement = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    generalName: string;
+    componentCategory: string;
+    brand: string;
+    model: string;
+    partNumber: string;
+  }
+) => {
+  const { generalName, componentCategory, brand, model, partNumber } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_part_table")
+    .select(
+      `
+        equipment_part_id,
+        equipment_part_general_name: equipment_part_general_name_id!inner(equipment_general_name),
+        equipment_part_component_category: equipment_part_component_category_id!inner(equipment_component_category),
+        equipment_part_brand: equipment_part_brand_id!inner(equipment_brand),
+        equipment_part_model: equipment_part_model_id!inner(equipment_model),
+        equipment_part_number,
+        equipment_part_unit_of_measurement: equipment_part_unit_of_measurement_id(equipment_unit_of_measurement)
+      `
+    )
+    .eq("equipment_part_is_disabled", false)
+    .eq("equipment_part_is_available", true)
+    .eq("equipment_part_general_name.equipment_general_name_is_disabled", false)
+    .eq("equipment_part_general_name.equipment_general_name_is_available", true)
+    .eq("equipment_part_general_name.equipment_general_name", generalName)
+    .eq(
+      "equipment_part_component_category.equipment_component_category_is_disabled",
+      false
+    )
+    .eq(
+      "equipment_part_component_category.equipment_component_category_is_available",
+      true
+    )
+    .eq(
+      "equipment_part_component_category.equipment_component_category",
+      componentCategory
+    )
+    .eq("equipment_part_brand.equipment_brand_is_disabled", false)
+    .eq("equipment_part_brand.equipment_brand_is_available", true)
+    .eq("equipment_part_brand.equipment_brand", brand)
+    .eq("equipment_part_model.equipment_model_is_disabled", false)
+    .eq("equipment_part_model.equipment_model_is_available", true)
+    .eq("equipment_part_model.equipment_model", model)
+    .eq("equipment_part_number", partNumber)
+    .eq(
+      "equipment_part_unit_of_measurement.equipment_unit_of_measurement_is_disabled",
+      false
+    )
+    .eq(
+      "equipment_part_unit_of_measurement.equipment_unit_of_measurement_is_available",
+      true
+    )
+    .single();
+  if (error) throw error;
+
+  const formattedData = data as unknown as {
+    equipment_part_unit_of_measurement: {
+      equipment_unit_of_measurement: string;
+    };
+  };
+
+  return formattedData.equipment_part_unit_of_measurement
+    .equipment_unit_of_measurement;
+};
+
+// Fetch equipment section choices based on given parameters
+export const getEquipmentSectionChoices = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    category: string;
+    equipmentName: string;
+    brand?: string;
+  }
+) => {
+  const { category, equipmentName, brand } = params;
+  let query = supabaseClient
+    .from("equipment_table")
+    .select(
+      `
+        equipment_id,
+        equipment_equipment_category: equipment_equipment_category_id!inner(equipment_category),
+        equipment_name,
+        equipment_description: 
+          equipment_description_table!inner(
+            equipment_description_brand: equipment_description_brand_id(
+              equipment_brand
+            )
+            ${
+              brand
+                ? `, equipment_description_model: equipment_description_model_id(
+                equipment_model
+              )`
+                : ""
+            }
+          )
+      `
+    )
+    .eq("equipment_is_disabled", false)
+    .eq("equipment_is_available", true)
+    .eq("equipment_equipment_category.equipment_category", category)
+    .eq("equipment_name", equipmentName);
+
+  if (brand) {
+    query = query.eq(
+      "equipment_description.equipment_description_brand.equipment_brand_is_disabled",
+      false
+    );
+    query = query.eq(
+      "equipment_description.equipment_description_brand.equipment_brand_is_available",
+      true
+    );
+    query = query.eq(
+      "equipment_description.equipment_description_brand.equipment_brand",
+      brand
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const tempList: string[] = [];
+  if (!brand) {
+    const formattedData = data[0] as unknown as {
+      equipment_id: string;
+      equipment_description: {
+        equipment_description_brand: {
+          equipment_brand: string;
+        };
+      }[];
+      equipment_name: string;
+    };
+
+    return formattedData.equipment_description.filter((value) => {
+      if (
+        !tempList.includes(value.equipment_description_brand.equipment_brand)
+      ) {
+        tempList.push(value.equipment_description_brand.equipment_brand);
+        return value;
+      }
+    });
+  } else {
+    const formattedData = data[0] as unknown as {
+      equipment_id: string;
+      equipment_description: {
+        equipment_description_model: {
+          equipment_model: string;
+        };
+      }[];
+      equipment_name: string;
+    };
+
+    return formattedData.equipment_description.filter((value) => {
+      if (
+        !tempList.includes(value.equipment_description_model.equipment_model)
+      ) {
+        tempList.push(value.equipment_description_model.equipment_model);
+        return value;
+      }
+    });
+  }
 };

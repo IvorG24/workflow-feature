@@ -516,7 +516,7 @@ CREATE TABLE equipment_description_table(
 
 -- End: Equipment description
 
--- Start: Equipment unit of measurememt
+-- Start: Equipment unit of measurement
 
 CREATE TABLE equipment_unit_of_measurement_table(
   equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
@@ -529,7 +529,22 @@ CREATE TABLE equipment_unit_of_measurement_table(
   equipment_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
--- End: Equipment unit of measurememt
+-- End: Equipment unit of measurement
+
+-- Start: Equipment part general name
+
+CREATE TABLE equipment_general_name_table(
+  equipment_general_name_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_general_name_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_general_name VARCHAR(4000) NOT NULL,
+  equipment_general_name_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  equipment_general_name_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  equipment_general_name_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  equipment_general_name_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+);
+
+-- End: Equipment part general name
 
 -- Start: Equipment part
 
@@ -10260,7 +10275,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('197f0e69-39f2-4f51-b49a-8c383a1a325e', 'Project Name', 'DROPDOWN', 3, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
 ('6de3b943-470a-474f-87e5-35c01f9cf8c4', 'Equipment Loading Form', 'FILE', 4, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
 ('662b6f69-a534-4837-b64a-4599a9df4405', 'Category', 'DROPDOWN', 5, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
-('2c715814-fecf-448e-9b78-460d8a536714', 'Equipment Name*', 'DROPDOWN', 6, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('2c715814-fecf-448e-9b78-460d8a536714', 'Equipment Name', 'DROPDOWN', 6, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 
 -- Sourced Item 
 ('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),

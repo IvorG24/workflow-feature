@@ -1,4 +1,6 @@
 import Meta from "@/components/Meta/Meta";
+import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
+import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
@@ -79,6 +81,10 @@ const Page = ({
       );
     } else if (request.request_form.form_name === "Services") {
       return <ServicesRequestPage request={request} />;
+    } else if (request.request_form.form_name === "PED Equipment") {
+      return <PEDEquipmentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "PED Part") {
+      return <PEDPartRequestPage request={request} />;
     } else {
       return (
         <RequestPage

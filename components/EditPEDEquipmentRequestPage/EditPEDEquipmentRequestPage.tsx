@@ -1,9 +1,8 @@
 import {
   checkIfRequestIsEditable,
-  getCSICode,
-  getCSICodeOptionsForServices,
+  getEquipmentName,
+  getEquipmentSectionChoices,
   getProjectSignerWithTeamMember,
-  getSupplier,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
@@ -13,7 +12,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { isStringParsable } from "@/utils/functions";
+import { isStringParsable, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -25,7 +24,6 @@ import {
   Box,
   Button,
   Container,
-  Flex,
   LoadingOverlay,
   Space,
   Stack,
@@ -46,12 +44,14 @@ export type RequestFormValuesForReferenceRequest = {
 type Props = {
   request: RequestWithResponseType;
   projectOptions: OptionTableRow[];
+  categoryOptions: OptionTableRow[];
   referenceOnly: boolean;
 };
 
-const EditServicesRequestPage = ({
+const EditPEDEquipmentRequestPage = ({
   request,
   projectOptions,
+  categoryOptions,
   referenceOnly,
 }: Props) => {
   const router = useRouter();
@@ -77,7 +77,6 @@ const EditServicesRequestPage = ({
 
   const [signerList, setSignerList] = useState(initialSignerList);
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -91,13 +90,13 @@ const EditServicesRequestPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
+  const { handleSubmit, control, getValues } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
     remove: removeSection,
-    update: updateSection,
     replace: replaceSection,
+    update: updateSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -109,6 +108,7 @@ const EditServicesRequestPage = ({
     request.request_form,
     replaceSection,
     requestFormMethods,
+    categoryOptions,
     request_form.form_section,
   ]);
 
@@ -191,11 +191,11 @@ const EditServicesRequestPage = ({
           }),
         };
       });
+      const response = safeParse(
+        data.sections[0].section_field[2].field_response[0].request_response
+      );
 
-      const response = formattedData[0].section_field[0]
-        .field_response as string;
-
-      const projectId = formattedData[0].section_field[0].field_option.find(
+      const projectId = data.sections[0].section_field[2].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
 
@@ -236,23 +236,17 @@ const EditServicesRequestPage = ({
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
       .lastIndexOf(sectionId);
-    const sectionMatch = request.request_form.form_section.find(
+    const sectionMatch = request_form.form_section.find(
       (section) => section.section_id === sectionId
     );
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
-        (field) => {
-          return {
-            ...field,
-            field_response: field.field_response.map((response) => ({
-              ...response,
-              request_response_duplicatable_section_id: sectionDuplicatableId,
-              request_response: "",
-            })),
-            field_section_duplicatable_id: sectionDuplicatableId,
-          };
-        }
+        (field) => ({
+          ...field,
+          field_section_duplicatable_id: sectionDuplicatableId,
+          field_response: [],
+        })
       );
       const newSection = {
         ...sectionMatch,
@@ -265,176 +259,6 @@ const EditServicesRequestPage = ({
 
   const handleRemoveSection = (sectionMatchIndex: number) =>
     removeSection(sectionMatchIndex);
-
-  const handleCSIDivisionChange = async (
-    index: number,
-    value: string | null
-  ) => {
-    const newSection = getValues(`sections.${index}`);
-
-    if (value) {
-      const csiCodeList = await getCSICodeOptionsForServices(supabaseClient, {
-        description: value,
-      });
-
-      const generalField = [
-        ...newSection.section_field.slice(0, 5),
-        {
-          ...newSection.section_field[5],
-          field_response: newSection.section_field[5].field_response.map(
-            (response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })
-          ),
-          field_option: csiCodeList.map((code, index) => {
-            return {
-              option_id: code.csi_code_id,
-              option_value: code.csi_code_level_three_description,
-              option_order: index + 1,
-              option_field_id: newSection.section_field[4].field_id,
-            };
-          }),
-        },
-        ...newSection.section_field.slice(6, 9).map((field) => {
-          return {
-            ...field,
-            field_response: field.field_response.map((response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })),
-          };
-        }),
-        ...newSection.section_field.slice(9),
-      ];
-      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-      const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-        [
-          ...generalField.map((field) => {
-            return {
-              ...field,
-              field_section_duplicatable_id: duplicatableSectionId,
-            };
-          }),
-        ];
-
-      updateSection(index, {
-        ...newSection,
-        section_field: newFields,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 5),
-        {
-          ...newSection.section_field[5],
-          field_response: newSection.section_field[5].field_response.map(
-            (response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })
-          ),
-          field_option: [],
-        },
-        ...newSection.section_field.slice(6, 9).map((field) => {
-          return {
-            ...field,
-            field_response: field.field_response.map((response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })),
-          };
-        }),
-        ...newSection.section_field.slice(9),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    }
-  };
-
-  const handleCSICodeChange = async (index: number, value: string | null) => {
-    const newSection = getValues(`sections.${index}`);
-
-    if (value) {
-      const csiCode = await getCSICode(supabaseClient, { csiCode: value });
-
-      const generalField = [
-        ...newSection.section_field.slice(0, 6),
-        {
-          ...newSection.section_field[6],
-          field_response: newSection.section_field[6].field_response.map(
-            (response) => ({
-              ...response,
-              request_response: csiCode?.csi_code_section,
-              request_response_id: uuidv4(),
-            })
-          ),
-        },
-        {
-          ...newSection.section_field[7],
-          field_response: newSection.section_field[7].field_response.map(
-            (response) => ({
-              ...response,
-              request_response:
-                csiCode?.csi_code_level_two_major_group_description,
-              request_response_id: uuidv4(),
-            })
-          ),
-        },
-        {
-          ...newSection.section_field[8],
-          field_response: newSection.section_field[8].field_response.map(
-            (response) => ({
-              ...response,
-              request_response:
-                csiCode?.csi_code_level_two_minor_group_description,
-              request_response_id: uuidv4(),
-            })
-          ),
-        },
-        ...newSection.section_field.slice(9),
-      ];
-      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-      const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-        [
-          ...generalField.map((field) => {
-            return {
-              ...field,
-              field_section_duplicatable_id: duplicatableSectionId,
-            };
-          }),
-        ];
-
-      updateSection(index, {
-        ...newSection,
-        section_field: newFields,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 6),
-        ...newSection.section_field.slice(6, 9).map((field) => {
-          return {
-            ...field,
-            field_response: field.field_response.map((response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })),
-          };
-        }),
-        ...newSection.section_field.slice(9),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    }
-  };
 
   const resetSigner = () => {
     setSignerList(initialSignerList);
@@ -471,23 +295,284 @@ const EditServicesRequestPage = ({
     }
   };
 
-  const supplierSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id) return;
-    try {
-      setIsSearching(true);
-      const supplierList = await getSupplier(supabaseClient, {
-        supplier: value ?? "",
-        teamId: teamMember.team_member_team_id,
-        fieldId: request.request_form.form_section[1].section_field[9].field_id,
+  const handleCategoryChange = async (value: string | null, index: number) => {
+    const newSection = getValues(`sections.${index}`);
+
+    if (value) {
+      const categoryId = categoryOptions.find(
+        (category) => category.option_value === value
+      );
+
+      if (!categoryId) return;
+      const equipmentName = await getEquipmentName(supabaseClient, {
+        category: categoryId.option_id,
       });
-      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
+      const generalField = [
+        {
+          ...newSection.section_field[0],
+        },
+        {
+          ...newSection.section_field[1],
+          field_response: [],
+          field_option: equipmentName.map((equipment, index) => {
+            return {
+              option_field_id:
+                request_form.form_section[0].section_field[0].field_id,
+              option_id: equipment.equipment_id,
+              option_order: index,
+              option_value: equipment.equipment_name,
+            };
+          }),
+        },
+        ...newSection.section_field.slice(2).map((field) => {
+          return {
+            ...field,
+            field_response: [],
+            field_option: [],
+          };
+        }),
+      ];
+
+      updateSection(index, {
+        ...newSection,
+        section_field: generalField,
       });
-    } finally {
-      setIsSearching(false);
+    } else {
+      const generalField = [
+        {
+          ...newSection.section_field[0],
+          field_response: [],
+        },
+        ...newSection.section_field.slice(1).map((field) => {
+          return {
+            ...field,
+            field_response: [],
+            field_option: [],
+          };
+        }),
+      ];
+      updateSection(index, {
+        ...newSection,
+        section_field: generalField,
+      });
+    }
+  };
+
+  const handleEquipmentNameChange = async (
+    value: string | null,
+    index: number
+  ) => {
+    const newSection = getValues(`sections.${index}`);
+
+    if (value) {
+      const brandChoices = await getEquipmentSectionChoices(supabaseClient, {
+        category: safeParse(
+          newSection.section_field[0].field_response[0].request_response
+        ),
+        equipmentName: value,
+      });
+
+      const generalField = [
+        ...newSection.section_field.slice(0, 2),
+        {
+          ...newSection.section_field[2],
+          field_response: [
+            {
+              request_response: "ANY",
+              request_response_duplicatable_section_id:
+                newSection.section_field[2].field_section_duplicatable_id ??
+                null,
+              request_response_field_id: newSection.section_field[2].field_id,
+              request_response_id: uuidv4(),
+              request_response_request_id: request.request_id,
+            },
+          ],
+          field_option: [
+            {
+              option_field_id:
+                request_form.form_section[0].section_field[0].field_id,
+              option_id: uuidv4(),
+              option_order: index,
+              option_value: "ANY",
+            },
+            ...brandChoices.map((equipment, index) => {
+              const formattedChoice = equipment as {
+                equipment_description_brand: {
+                  equipment_brand: string;
+                };
+              };
+              return {
+                option_field_id:
+                  request_form.form_section[0].section_field[0].field_id,
+                option_id:
+                  formattedChoice.equipment_description_brand.equipment_brand,
+                option_order: index,
+                option_value:
+                  formattedChoice.equipment_description_brand.equipment_brand,
+              };
+            }),
+          ],
+        },
+        ...newSection.section_field.slice(3).map((field) => {
+          return {
+            ...field,
+            field_response: [
+              {
+                request_response: "ANY",
+                request_response_duplicatable_section_id:
+                  field.field_section_duplicatable_id ?? null,
+                request_response_field_id: field.field_id,
+                request_response_id: uuidv4(),
+                request_response_request_id: request.request_id,
+              },
+            ],
+            field_option: [
+              {
+                option_field_id:
+                  request_form.form_section[0].section_field[0].field_id,
+                option_id: uuidv4(),
+                option_order: index,
+                option_value: "ANY",
+              },
+            ],
+          };
+        }),
+      ];
+
+      updateSection(index, {
+        ...newSection,
+        section_field: generalField,
+      });
+    } else {
+      const generalField = [
+        ...newSection.section_field.slice(0, 2),
+        ...newSection.section_field.slice(2).map((field) => {
+          return {
+            ...field,
+            field_response: [],
+            field_option: [],
+          };
+        }),
+      ];
+      updateSection(index, {
+        ...newSection,
+        section_field: generalField,
+      });
+    }
+  };
+
+  const handleBrandChange = async (value: string | null, index: number) => {
+    const newSection = getValues(`sections.${index}`);
+
+    if (value) {
+      const modelChoices = await getEquipmentSectionChoices(supabaseClient, {
+        category: safeParse(
+          newSection.section_field[0].field_response[0].request_response
+        ),
+        equipmentName: safeParse(
+          newSection.section_field[1].field_response[0].request_response
+        ),
+        brand: value,
+      });
+
+      const generalField = [
+        ...newSection.section_field.slice(0, 3),
+        {
+          ...newSection.section_field[3],
+          field_response: [
+            {
+              request_response: "ANY",
+              request_response_duplicatable_section_id:
+                newSection.section_field[3].field_section_duplicatable_id ??
+                null,
+              request_response_field_id: newSection.section_field[3].field_id,
+              request_response_id: uuidv4(),
+              request_response_request_id: request.request_id,
+            },
+          ],
+          field_option: [
+            {
+              option_field_id:
+                request_form.form_section[0].section_field[0].field_id,
+              option_id: uuidv4(),
+              option_order: index,
+              option_value: "ANY",
+            },
+            ...modelChoices.map((equipment, index) => {
+              const formattedChoice = equipment as {
+                equipment_description_model: {
+                  equipment_model: string;
+                };
+              };
+              return {
+                option_field_id:
+                  request_form.form_section[0].section_field[0].field_id,
+                option_id:
+                  formattedChoice.equipment_description_model.equipment_model,
+                option_order: index,
+                option_value:
+                  formattedChoice.equipment_description_model.equipment_model,
+              };
+            }),
+          ],
+        },
+        ...newSection.section_field.slice(4).map((field) => {
+          return {
+            ...field,
+            field_response: [
+              {
+                request_response: "ANY",
+                request_response_duplicatable_section_id:
+                  field.field_section_duplicatable_id ?? null,
+                request_response_field_id: field.field_id,
+                request_response_id: uuidv4(),
+                request_response_request_id: request.request_id,
+              },
+            ],
+            field_option: [
+              {
+                option_field_id:
+                  request_form.form_section[0].section_field[0].field_id,
+                option_id: uuidv4(),
+                option_order: index,
+                option_value: "ANY",
+              },
+            ],
+          };
+        }),
+      ];
+
+      updateSection(index, {
+        ...newSection,
+        section_field: generalField,
+      });
+    } else {
+      const generalField = [
+        ...newSection.section_field.slice(0, 3),
+        ...newSection.section_field.slice(3).map((field) => {
+          return {
+            ...field,
+            field_response: field.field_response.map((response) => ({
+              ...response,
+              request_response: "ANY",
+              request_response_id: uuidv4(),
+            })),
+            field_option: [
+              {
+                option_field_id:
+                  request_form.form_section[0].section_field[0].field_id,
+                option_id: uuidv4(),
+                option_order: index,
+                option_value: "ANY",
+              },
+            ],
+          };
+        }),
+      ];
+      updateSection(index, {
+        ...newSection,
+        section_field: generalField,
+      });
     }
   };
 
@@ -511,9 +596,6 @@ const EditServicesRequestPage = ({
                 .map((sectionItem) => sectionItem.section_id)
                 .lastIndexOf(sectionIdToFind);
 
-              const isRemovable =
-                formSections[idx - 1]?.section_is_duplicatable &&
-                section.section_is_duplicatable;
               return (
                 <Box key={section.id}>
                   <RequestFormSection
@@ -521,15 +603,13 @@ const EditServicesRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    isSectionRemovable={isRemovable}
-                    servicesFormMethods={{
+                    formslyFormName="PED Equipment"
+                    pedEquipmentFormMethods={{
+                      onCategoryChange: handleCategoryChange,
                       onProjectNameChange: handleProjectNameChange,
-                      onCSIDivisionChange: handleCSIDivisionChange,
-                      onCSICodeChange: handleCSICodeChange,
-                      supplierSearch,
-                      isSearching,
+                      onEquipmentNameChange: handleEquipmentNameChange,
+                      onBrandChange: handleBrandChange,
                     }}
-                    formslyFormName="Requisition"
                     referenceOnly={referenceOnly}
                   />
                   {section.section_is_duplicatable &&
@@ -552,16 +632,7 @@ const EditServicesRequestPage = ({
               <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
               <RequestFormSigner signerList={signerList} />
             </Box>
-            <Flex direction="column" gap="sm">
-              <Button
-                variant="outline"
-                color="red"
-                onClick={() => replaceSection(request_form.form_section)}
-              >
-                Reset
-              </Button>
-              <Button type="submit">Submit</Button>
-            </Flex>
+            <Button type="submit">Submit</Button>
           </Stack>
         </form>
       </FormProvider>
@@ -569,4 +640,4 @@ const EditServicesRequestPage = ({
   );
 };
 
-export default EditServicesRequestPage;
+export default EditPEDEquipmentRequestPage;

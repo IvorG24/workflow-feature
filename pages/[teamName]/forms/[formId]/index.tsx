@@ -1,5 +1,6 @@
 import { getForm } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
+import PEDEquipmentFormPage from "@/components/PEDEquipmentFormPage/PEDEquipmentFormPage";
 import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
@@ -99,6 +100,18 @@ const Page = ({
       case "PED Part":
         return (
           <PEDPartFormPage
+            equipments={equipments}
+            equipmentListCount={equipmentListCount}
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "PED Equipment":
+        return (
+          <PEDEquipmentFormPage
             equipments={equipments}
             equipmentListCount={equipmentListCount}
             teamMemberList={teamMemberList}

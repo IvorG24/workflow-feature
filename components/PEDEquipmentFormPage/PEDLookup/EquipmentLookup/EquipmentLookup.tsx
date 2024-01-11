@@ -22,9 +22,9 @@ const EquipmentLookup = ({ lookup }: Props) => {
 
   const team = useActiveTeam();
 
-  const [equipmentLookupList, setEquipmentLookupList] = useState<
-    LookupTable[]
-  >([]);
+  const [equipmentLookupList, setEquipmentLookupList] = useState<LookupTable[]>(
+    []
+  );
   const [equipmentLookupCount, setEquipmentLookupCount] = useState(0);
   const [isCreatingEquipmentLookup, setIsCreatingEquipmentLookup] =
     useState(false);

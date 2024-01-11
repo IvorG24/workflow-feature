@@ -290,7 +290,11 @@ RETURNS VOID AS $$
     const equipmentData = plv8.execute(`INSERT INTO equipment_table (equipment_name, equipment_equipment_category_id, equipment_team_id) VALUES ${equipment_input} RETURNING *`);
     const equipmentWithCategory = equipmentData.map(equipment => {
       return plv8.execute(`SELECT * FROM equipment_table INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id WHERE equipment_id = '${equipment.equipment_id}'`)[0];
-    })
+    });
+
+    // GENERAL NAME
+    const general_name_input = tempEquipmentPartName.map((partName) => `('${partName}', '${TEAM_ID}')`).join(',');
+    const generalNameData = plv8.execute(`INSERT INTO equipment_general_name_table (equipment_general_name, equipment_general_name_team_id) VALUES ${general_name_input} RETURNING *`);
 
     // BRAND
     const brand_input = tempBrandList.map((brand) => `('${brand}', '${TEAM_ID}')`).join(',');
@@ -364,7 +368,7 @@ RETURNS VOID AS $$
 
     // EQUIPMENT PART
     const equipment_part_input = Array.from({ length: 1000 }, (_, index) => {
-      const partName = tempEquipmentPartName[(Math.floor(Math.random() * tempEquipmentPartName.length))];
+      const partName = generalNameData[(Math.floor(Math.random() * generalNameData.length))].equipment_general_name_id;
       const num = generateRandomNumber(10);
       const partNumber = `${num.slice(0, 4)}-${num.slice(4, 8)}-${num.slice(8, 10)}`;
       const brandId = brandData[(Math.floor(Math.random() * brandData.length))].equipment_brand_id;
@@ -378,7 +382,7 @@ RETURNS VOID AS $$
     const equipmentPartData = plv8.execute(
       `INSERT INTO equipment_part_table 
       (
-        equipment_part_name, 
+        equipment_part_general_name_id, 
         equipment_part_number, 
         equipment_part_brand_id, 
         equipment_part_model_id, 

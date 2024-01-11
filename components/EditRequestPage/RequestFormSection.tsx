@@ -49,12 +49,34 @@ type RequestFormSectionProps = {
     onProjectSiteChange: () => void;
   };
   referenceOnly?: boolean;
-  serviceFormMethods?: {
+  servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
+  };
+  pedEquipmentFormMethods?: {
+    onCategoryChange: (value: string | null, index: number) => void;
+    onProjectNameChange: (value: string | null) => void;
+    onEquipmentNameChange: (value: string | null, index: number) => void;
+    onBrandChange: (value: string | null, index: number) => void;
+  };
+  pedPartFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCategoryChange: (value: string | null) => void;
+    onEquipmentNameChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null) => void;
+    onPurposeTypeChange: (value: string | null) => void;
+    onTypeOfOrderChange: (
+      prevValue: string | null,
+      value: string | null
+    ) => void;
+    onGeneralItemNameChange: (value: string | null, index: number) => void;
+    onComponentCategoryChange: (value: string | null, index: number) => void;
+    onBrandChange: (value: string | null, index: number) => void;
+    onModelChange: (value: string | null, index: number) => void;
+    onPartNumberChange: (value: string | null, index: number) => void;
   };
 };
 
@@ -70,7 +92,9 @@ const RequestFormSection = ({
   formslyFormName = "",
   sourcedItemFormMethods,
   referenceOnly,
-  serviceFormMethods,
+  servicesFormMethods,
+  pedEquipmentFormMethods,
+  pedPartFormMethods,
 }: RequestFormSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -104,11 +128,13 @@ const RequestFormSection = ({
             requisitionFormMethods={requisitionFormMethods}
             subconFormMethods={subconFormMethods}
             quotationFormMethods={quotationFormMethods}
-            serviceFormMethods={serviceFormMethods}
+            servicesFormMethods={servicesFormMethods}
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
             sourcedItemFormMethods={sourcedItemFormMethods}
             referenceOnly={referenceOnly}
+            pedEquipmentFormMethods={pedEquipmentFormMethods}
+            pedPartFormMethods={pedPartFormMethods}
           />
         ))}
       </Stack>

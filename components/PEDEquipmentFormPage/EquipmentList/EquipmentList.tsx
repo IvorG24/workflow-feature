@@ -1,9 +1,10 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getEquipmentPartList } from "@/backend/api/get";
+import { getEquipmentList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import { EquipmentPartType, EquipmentWithCategoryType } from "@/utils/types";
+import { EquipmentWithCategoryType } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -41,70 +42,51 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  selectedEquipment: EquipmentWithCategoryType;
-  equipmentPartList: EquipmentPartType[];
-  setEquipmentPartList: Dispatch<SetStateAction<EquipmentPartType[]>>;
-  equipmentPartCount: number;
-  setEquipmentPartCount: Dispatch<SetStateAction<number>>;
-  setIsCreatingEquipmentPart: Dispatch<SetStateAction<boolean>>;
-  setEditEquipmentPart: Dispatch<SetStateAction<EquipmentPartType | null>>;
-  editEquipmentPart: EquipmentPartType | null;
+  equipmentList: EquipmentWithCategoryType[];
+  setEquipmentList: Dispatch<SetStateAction<EquipmentWithCategoryType[]>>;
+  equipmentCount: number;
+  setEquipmentCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingEquipment: Dispatch<SetStateAction<boolean>>;
+  setEditEquipment: Dispatch<SetStateAction<EquipmentWithCategoryType | null>>;
+  editEquipment: EquipmentWithCategoryType | null;
 };
 
-const EquipmentPartList = ({
-  selectedEquipment,
-  equipmentPartList,
-  setEquipmentPartList,
-  equipmentPartCount,
-  setEquipmentPartCount,
-  setIsCreatingEquipmentPart,
-  setEditEquipmentPart,
-  editEquipmentPart,
+const EquipmentList = ({
+  equipmentList,
+  setEquipmentList,
+  equipmentCount,
+  setEquipmentCount,
+  setIsCreatingEquipment,
+  setEditEquipment,
+  editEquipment,
 }: Props) => {
-  const supabaseClient = useSupabaseClient();
   const { classes } = useStyles();
+
+  const supabaseClient = useSupabaseClient();
+  const activeTeam = useActiveTeam();
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   const headerCheckboxKey = generateRandomId();
 
-  const handleFetch = async (search: string, page: number) => {
-    setIsLoading(true);
-    try {
-      const { data, count } = await getEquipmentPartList(supabaseClient, {
-        equipmentId: selectedEquipment.equipment_id,
-        search,
-        limit: ROW_PER_PAGE,
-        page,
-      });
-      setEquipmentPartList(data);
-      setEquipmentPartCount(Number(count));
-    } catch {
-      notifications.show({
-        message: "Error on fetching equipment part list",
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
-  const handleCheckRow = (equipmentPartId: string) => {
-    if (checkList.includes(equipmentPartId)) {
-      setCheckList(checkList.filter((id) => id !== equipmentPartId));
+  const handleCheckRow = (equipmentId: string) => {
+    if (checkList.includes(equipmentId)) {
+      setCheckList(checkList.filter((id) => id !== equipmentId));
     } else {
-      setCheckList([...checkList, equipmentPartId]);
+      setCheckList([...checkList, equipmentId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const equipmentPartIdList = equipmentPartList.map(
-        (equipmentPart) => equipmentPart.equipment_part_id
+      const equipmentIdList = equipmentList.map(
+        (equipment) => equipment.equipment_id
       );
-      setCheckList(equipmentPartIdList);
+      setCheckList(equipmentIdList);
     } else {
       setCheckList([]);
     }
@@ -117,32 +99,50 @@ const EquipmentPartList = ({
     handleFetch(isEmpty ? "" : search, 1);
   };
 
+  const handleFetch = async (search: string, page: number) => {
+    setIsLoading(true);
+    try {
+      const { data, count } = await getEquipmentList(supabaseClient, {
+        teamId: activeTeam.team_id,
+        search,
+        limit: ROW_PER_PAGE,
+        page: page,
+      });
+      setEquipmentList(data as EquipmentWithCategoryType[]);
+      setEquipmentCount(Number(count));
+    } catch {
+      notifications.show({
+        message: "Error on fetching equipment list",
+        color: "red",
+      });
+    }
+    setIsLoading(false);
+  };
+
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = equipmentPartList;
+    const savedRecord = equipmentList;
 
     try {
-      const updatedEquipmentPartList = equipmentPartList.filter(
-        (equipmentPart) => {
-          if (!checkList.includes(equipmentPart.equipment_part_id)) {
-            return equipmentPart;
-          }
+      const updatedEquipmentList = equipmentList.filter((equipment) => {
+        if (!checkList.includes(equipment.equipment_id)) {
+          return equipment;
         }
-      );
-      setEquipmentPartList(updatedEquipmentPartList);
+      });
+      setEquipmentList(updatedEquipmentList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "equipment_part",
+        table: "equipment",
       });
 
       notifications.show({
-        message: "Equipment Part/s deleted.",
+        message: "Equipment/s deleted.",
         color: "green",
       });
     } catch {
-      setEquipmentPartList(savedRecord);
+      setEquipmentList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -151,25 +151,21 @@ const EquipmentPartList = ({
     }
   };
 
-  const handleUpdateStatus = async (
-    equipmentPartId: string,
-    value: boolean
-  ) => {
-    const savedRecord = equipmentPartList;
+  const handleUpdateStatus = async (equipmentId: string, value: boolean) => {
+    const savedRecord = equipmentList;
     try {
-      setEquipmentPartList((prev) =>
-        prev.map((equipmentPart) => {
-          if (equipmentPart.equipment_part_id !== equipmentPartId)
-            return equipmentPart;
+      setEquipmentList((prev) =>
+        prev.map((equipment) => {
+          if (equipment.equipment_id !== equipmentId) return equipment;
           return {
-            ...equipmentPart,
-            equipment_part_is_available: value,
+            ...equipment,
+            equipment_is_available: value,
           };
         })
       );
       await toggleStatus(supabaseClient, {
-        table: "equipment_part",
-        id: equipmentPartId,
+        table: "equipment",
+        id: equipmentId,
         status: value,
       });
     } catch {
@@ -177,7 +173,7 @@ const EquipmentPartList = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      setEquipmentPartList(savedRecord);
+      setEquipmentList(savedRecord);
     }
   };
 
@@ -186,11 +182,11 @@ const EquipmentPartList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of Part
+            List of Equipments
           </Title>
           <TextInput
             miw={250}
-            placeholder="Search"
+            placeholder="Name"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
                 <IconSearch size={16} />
@@ -214,7 +210,7 @@ const EquipmentPartList = ({
             className={classes.flexGrow}
           />
         </Group>
-        {!editEquipmentPart && (
+        {!editEquipment && (
           <Group className={classes.flexGrow}>
             {checkList.length !== 0 ? (
               <Button
@@ -228,8 +224,8 @@ const EquipmentPartList = ({
                       <Text size={14}>
                         Are you sure you want to delete{" "}
                         {checkList.length === 1
-                          ? "this equipment part?"
-                          : "these equipment parts?"}
+                          ? "this equipment?"
+                          : "these equipments?"}
                       </Text>
                     ),
                     labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -244,7 +240,7 @@ const EquipmentPartList = ({
             <Button
               rightIcon={<IconPlus size={16} />}
               className={classes.flexGrow}
-              onClick={() => setIsCreatingEquipmentPart(true)}
+              onClick={() => setIsCreatingEquipment(true)}
             >
               Add
             </Button>
@@ -252,14 +248,14 @@ const EquipmentPartList = ({
         )}
       </Flex>
       <DataTable
-        idAccessor="equipment_part_id"
+        idAccessor="equipment_id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={equipmentPartList}
+        records={equipmentList}
         columns={[
           {
             accessor: "checkbox",
@@ -269,81 +265,48 @@ const EquipmentPartList = ({
                 className={classes.checkbox}
                 checked={
                   checkList.length > 0 &&
-                  checkList.length === equipmentPartList.length
+                  checkList.length === equipmentList.length
                 }
                 size="xs"
                 onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
               />
             ),
-            render: ({ equipment_part_id }) => (
+            render: ({ equipment_id }) => (
               <Checkbox
                 className={classes.checkbox}
                 size="xs"
-                checked={checkList.includes(equipment_part_id)}
+                checked={checkList.includes(equipment_id)}
                 onChange={() => {
-                  handleCheckRow(equipment_part_id);
+                  handleCheckRow(equipment_id);
                 }}
               />
             ),
             width: 40,
           },
           {
-            accessor: "equipment_part_general_name",
+            accessor: "equipment_name",
             title: "Name",
-            render: ({ equipment_part_general_name }) => (
-              <Text>{equipment_part_general_name}</Text>
-            ),
+            render: ({ equipment_name }) => <Text>{equipment_name}</Text>,
           },
           {
-            accessor: "equipment_part_number",
-            title: "Part Number",
-            render: ({ equipment_part_number }) => (
-              <Text>{equipment_part_number}</Text>
-            ),
-          },
-          {
-            accessor: "equipment_part_brand",
-            title: "Brand",
-            render: ({ equipment_part_brand }) => (
-              <Text>{equipment_part_brand}</Text>
-            ),
-          },
-          {
-            accessor: "equipment_part_model",
-            title: "Model",
-            render: ({ equipment_part_model }) => (
-              <Text>{equipment_part_model}</Text>
-            ),
-          },
-          {
-            accessor: "equipment_part_unit_of_measurement",
-            title: "UOM",
-            render: ({ equipment_part_unit_of_measurement }) => (
-              <Text>{equipment_part_unit_of_measurement}</Text>
-            ),
-          },
-          {
-            accessor: "equipment_part_component_category",
+            accessor: "equipment_category",
             title: "Category",
-            render: ({ equipment_part_component_category }) => (
-              <Text>{equipment_part_component_category}</Text>
+            render: ({ equipment_category }) => (
+              <Text>{equipment_category}</Text>
             ),
           },
           {
             accessor: "status",
             title: "Status",
             textAlignment: "center",
-            render: ({ equipment_part_is_available, equipment_part_id }) => (
+            render: ({ equipment_is_available, equipment_id }) => (
               <Center>
                 <Checkbox
-                  checked={equipment_part_is_available}
+                  checked={equipment_is_available}
                   className={classes.checkbox}
                   size="xs"
                   onChange={(e) =>
-                    handleUpdateStatus(
-                      equipment_part_id,
-                      e.currentTarget.checked
-                    )
+                    handleUpdateStatus(equipment_id, e.currentTarget.checked)
                   }
                 />
               </Center>
@@ -353,11 +316,11 @@ const EquipmentPartList = ({
             accessor: "edit",
             title: "",
             textAlignment: "center",
-            render: (equipmentPart) => (
+            render: (equipment) => (
               <Center>
                 <ActionIcon
                   onClick={() => {
-                    setEditEquipmentPart(equipmentPart);
+                    setEditEquipment(equipment);
                   }}
                 >
                   <IconSettings size={16} />
@@ -366,7 +329,7 @@ const EquipmentPartList = ({
             ),
           },
         ]}
-        totalRecords={equipmentPartCount}
+        totalRecords={equipmentCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -378,4 +341,4 @@ const EquipmentPartList = ({
   );
 };
 
-export default EquipmentPartList;
+export default EquipmentList;

@@ -1160,6 +1160,7 @@ export type EquipmentDescriptionForm = {
 };
 
 export type EquipmentPartType = EquipmentPartTableRow & {
+  equipment_part_general_name: string;
   equipment_part_brand: string;
   equipment_part_model: string;
   equipment_part_unit_of_measurement: string;
@@ -1190,18 +1191,11 @@ export type EquipmentLookupChoices =
   | "equipment_unit_of_measurement"
   | "equipment_component_category";
 
-export type EquipmentLookupTable = {
+export type LookupTable = {
   id: string;
   status: boolean;
   value: string;
 };
-
-export type EquipmentLookupTableInsert =
-  | EquipmentCategoryTableInsert
-  | EquipmentBrandTableInsert
-  | EquipmentModelTableInsert
-  | EquipmentUnitOfMeasurementTableInsert
-  | EquipmentComponentCategoryTableInsert;
 
 export type EquipmentLookupTableUpdate =
   | EquipmentCategoryTableUpdate

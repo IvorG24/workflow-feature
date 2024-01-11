@@ -5,11 +5,8 @@ import EquipmentLookup from "./EquipmentLookup/EquipmentLookup";
 const PEDLookup = () => {
   const equipmentLookupList = [
     { table: "equipment_category", label: "Category" },
-    { table: "equipment_general_name", label: "General Name" },
     { table: "equipment_brand", label: "Brand" },
     { table: "equipment_model", label: "Model" },
-    { table: "equipment_unit_of_measurement", label: "Unit of Measurement" },
-    { table: "equipment_component_category", label: "Component Category" },
   ] as { table: EquipmentLookupChoices; label: string }[];
 
   return (

@@ -463,7 +463,7 @@ const CreateSubconWorkAndServiceRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     formslyFormName="Services"
-                    servicesMethods={{
+                    servicesFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onCSIDivisionChange: handleCSIDivisionChange,
                       onCSICodeChange: handleCSICodeChange,

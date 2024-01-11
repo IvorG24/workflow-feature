@@ -208,3 +208,10 @@ export const parseItemSection = (originalSection: Section) => {
 
   return section;
 };
+
+export const createRange = (start: number, end: number, step = 1) => {
+  return Array.from(
+    { length: Math.floor((end - start) / step) + 1 },
+    (_, index) => start + index * step
+  );
+};

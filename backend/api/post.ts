@@ -10,8 +10,6 @@ import {
   AttachmentTableInsert,
   CommentTableInsert,
   EquipmentDescriptionTableInsert,
-  EquipmentLookupChoices,
-  EquipmentLookupTableInsert,
   EquipmentPartTableInsert,
   EquipmentTableInsert,
   FormTableRow,
@@ -462,6 +460,7 @@ export const createRequest = async (
       ) {
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
+
           const uploadId = `${field.field_id}${
             field.field_section_duplicatable_id
               ? `_${field.field_section_duplicatable_id}`

@@ -1,3 +1,5 @@
+import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
+import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
@@ -59,6 +61,7 @@ type Props = {
     special_approver_item_list: string[];
     special_approver_signer: FormType["form_signer"][0];
   }[];
+  categoryOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -70,6 +73,7 @@ const Page = ({
   requestingProject = "",
   serviceOptions = [],
   specialApprover = [],
+  categoryOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -95,6 +99,22 @@ const Page = ({
           <CreateServicesRequestPage
             form={form}
             projectOptions={projectOptions}
+          />
+        );
+      case "PED Equipment":
+        return (
+          <CreatePEDEquipmentRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+          />
+        );
+      case "PED Part":
+        return (
+          <CreatePEDPartRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
           />
         );
       case "Sourced Item":

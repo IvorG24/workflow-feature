@@ -123,7 +123,7 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 
 -- PED Equipment
 ('ad44c2b7-0056-4341-8caf-35d8a6b5efe5', 'Header', 1, false, '44525763-2de2-43b4-9b95-137a0721cdb2'),
-('0235bd54-7417-420a-b486-a1c4ac0763c0', 'Item', 2, true, '44525763-2de2-43b4-9b95-137a0721cdb2'),
+('0235bd54-7417-420a-b486-a1c4ac0763c0', 'Equipment', 2, true, '44525763-2de2-43b4-9b95-137a0721cdb2'),
 
 -- Sourced Item
 ('65d2d36a-7e69-4044-9f74-157bc753bd59', 'ID', 1, false, 'e5062660-9026-4629-bc2c-633826fdaa24'),
@@ -209,19 +209,21 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('e35835b4-c107-4710-86d5-11b6059e221c', 'Equipment Property Number', 'DROPDOWN', 4, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
 ('1e0dd682-452d-4a0a-b82d-4f34ae5385a1', 'Equipment Brand', 'TEXT', 5, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
 ('0c47fc2e-b326-4b22-9add-5c03c3c5d2f3', 'Equipment Model', 'TEXT', 6, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
-('6a4e95c9-c68a-4c79-9ece-36c1a263f947', 'Equipment Make', 'TEXT', 7, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
-('eff5d1ab-c0bc-4b97-814d-d1a900dc6fc2', 'Equipment Serial No.', 'TEXT', 8, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
-('124fce5f-e848-422a-a502-df71f3f14e8a', 'Purpose Type', 'DROPDOWN', 9, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
-('a9928556-1a99-4d5f-b4b6-93eafb675a50', 'Purpose Description', 'TEXT', 10, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
-('b051ce7e-980e-4bbc-ad78-3b2c058e49cc', 'Project Name', 'TEXT', 11, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
-('95708a5f-655e-4b8e-af2c-7eb577a5168c', 'Equipment Service Report', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('eff5d1ab-c0bc-4b97-814d-d1a900dc6fc2', 'Equipment Serial No.', 'TEXT', 7, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
+('124fce5f-e848-422a-a502-df71f3f14e8a', 'Purpose Type', 'DROPDOWN', 8, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('a9928556-1a99-4d5f-b4b6-93eafb675a50', 'Purpose Description', 'TEXT', 9, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('b051ce7e-980e-4bbc-ad78-3b2c058e49cc', 'Project Name', 'DROPDOWN', 10, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('95708a5f-655e-4b8e-af2c-7eb577a5168c', 'Equipment Service Report', 'FILE', 11, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
 ('12f7bd37-603a-43b0-883c-42188db5fbc2', 'Tire Thread Depth Measurement Form', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
-('c0c76f97-9939-4ef1-b8d6-fd1edd81a5d0', 'Photo of Voltage on Tester', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('c0c76f97-9939-4ef1-b8d6-fd1edd81a5d0', 'Photo of Voltage on Tester', 'FILE', 13, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
 
-('7f3593fe-926a-485a-a2ee-fe0a7a7dfbc4', 'General Item Name', 'DROPDOWN', 13, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
-('65b88de2-f6bd-4e6d-8d33-b5a4bd69555c', 'Part Number', 'DROPDOWN', 14, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
-('346cee79-f6f4-406e-8633-812ead35d2ed', 'Quantity', 'NUMBER', 15, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
-('545eafd4-3e97-4b2f-9a40-add2617cfefc', 'Unit of Measurement', 'TEXT', 16, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, true),
+('7f3593fe-926a-485a-a2ee-fe0a7a7dfbc4', 'General Item Name', 'DROPDOWN', 14, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('193fffe8-7489-41f4-8b3c-67dac285d9b4', 'Component Category', 'DROPDOWN', 15, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('50e90c96-d157-4dc3-86b0-6650fff910a1', 'Brand', 'DROPDOWN', 16, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('88bd7505-6211-4052-acf9-a37b358e2440', 'Model', 'DROPDOWN', 17, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('65b88de2-f6bd-4e6d-8d33-b5a4bd69555c', 'Part Number', 'DROPDOWN', 18, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('346cee79-f6f4-406e-8633-812ead35d2ed', 'Quantity', 'NUMBER', 19, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('545eafd4-3e97-4b2f-9a40-add2617cfefc', 'Unit of Measurement', 'TEXT', 20, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, true),
 
 -- PED Equipment
 ('289cea0b-f295-476d-a6f6-83469deffa0c', 'Request Type', 'DROPDOWN', 1, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
@@ -230,7 +232,9 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('6de3b943-470a-474f-87e5-35c01f9cf8c4', 'Equipment Loading Form', 'FILE', 4, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
 
 ('662b6f69-a534-4837-b64a-4599a9df4405', 'Category', 'DROPDOWN', 5, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
-('2c715814-fecf-448e-9b78-460d8a536714', 'Equipment Name*', 'DROPDOWN', 6, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('2c715814-fecf-448e-9b78-460d8a536714', 'Equipment Name', 'DROPDOWN', 6, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('ce9d94a2-bfef-48ea-977a-b3e1918ac90e', 'Brand', 'DROPDOWN', 7, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('6bd08eb7-f872-4475-8323-4eca2abf4264', 'Model', 'DROPDOWN', 8, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 
 -- Sourced Item 
 ('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),

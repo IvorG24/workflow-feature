@@ -514,7 +514,7 @@ CREATE TABLE equipment_description_table(
 
 -- End: Equipment description
 
--- Start: Equipment unit of measurememt
+-- Start: Equipment unit of measurement
 
 CREATE TABLE equipment_unit_of_measurement_table(
   equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
@@ -527,18 +527,33 @@ CREATE TABLE equipment_unit_of_measurement_table(
   equipment_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
--- End: Equipment unit of measurememt
+-- End: Equipment unit of measurement
+
+-- Start: Equipment part general name
+
+CREATE TABLE equipment_general_name_table(
+  equipment_general_name_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_general_name_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_general_name VARCHAR(4000) NOT NULL,
+  equipment_general_name_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  equipment_general_name_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  equipment_general_name_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  equipment_general_name_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+);
+
+-- End: Equipment part general name
 
 -- Start: Equipment part
 
 CREATE TABLE equipment_part_table(
   equipment_part_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_part_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_part_name VARCHAR(4000) NOT NULL,
   equipment_part_number VARCHAR(4000) NOT NULL,
   equipment_part_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   equipment_part_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
+  equipment_part_general_name_id UUID REFERENCES equipment_general_name_table(equipment_general_name_id) ON DELETE CASCADE NOT NULL,
   equipment_part_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
   equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
   equipment_part_unit_of_measurement_id UUID REFERENCES equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
@@ -1025,6 +1040,10 @@ RETURNS JSON AS $$
         endId = `Q`;
       } else if(formName==='Services') {
         endId = `S`;
+      } else if(formName==='PED Equipment') {
+        endId = `PE`;
+      } else if(formName==='PED Part') {
+        endId = `PP`;
       } else if(formName==='Sourced Item') {
         endId = `SI`;
       } else if(formName==='Receiving Inspecting Report') {
@@ -4218,6 +4237,18 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`),
         }
+      } else if (formName === 'PED Equipment'){
+        const equipments = plv8.execute(`SELECT equipment_table.*, equipment_category FROM equipment_table INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false ORDER BY equipment_name ASC LIMIT ${limit}`);
+        const equipmentListCount = plv8.execute(`SELECT COUNT(*) FROM equipment_table WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false`)[0].count;
+
+        returnData = {
+          equipments,
+          equipmentListCount: Number(`${equipmentListCount}`),
+          teamMemberList,
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(`${teamProjectListCount}`),
+        }
       } else if (formName === 'Quotation'){
         const suppliers = plv8.execute(`SELECT * FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false ORDER BY supplier_date_created DESC LIMIT ${limit}`);
         const supplierListCount = plv8.execute(`SELECT COUNT(*) FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false`)[0].count;
@@ -4843,6 +4874,147 @@ RETURNS JSON as $$
             ],
           },
           projectOptions,
+        }
+        return;
+      } else if (form.form_name === "PED Equipment") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.*
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM equipment_category_table
+            WHERE 
+              equipment_category_team_id = '${teamMember.team_member_team_id}'
+              AND equipment_category_is_disabled = false
+              AND equipment_category_is_available = true
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.equipment_category_id,
+            option_order: index,
+            option_value: category.equipment_category,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  ...form.form_section[0].section_field.slice(0,2),
+                  {
+                    ...form.form_section[0].section_field[2],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(3),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1),
+                ],
+              },
+            ],
+          },
+          projectOptions,
+          categoryOptions
+        }
+        return;
+      } else if (form.form_name === "PED Part") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.*
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM equipment_category_table
+            WHERE 
+              equipment_category_team_id = '${teamMember.team_member_team_id}'
+              AND equipment_category_is_disabled = false
+              AND equipment_category_is_available = true
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.equipment_category_id,
+            option_order: index,
+            option_value: category.equipment_category,
+          };
+        });
+        
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: categoryOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1,9),
+                  {
+                    ...form.form_section[0].section_field[9],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(10),
+                ],
+              },
+              {
+                ...form.form_section[1],
+              },
+            ],
+          },
+          projectOptions,
+          categoryOptions
         }
         return;
       }
@@ -8048,6 +8220,186 @@ RETURNS JSON AS $$
           sourceProjectList,
           requestingProject: request.request_project.team_project_name,
         }
+      } else if (form.form_name === "PED Equipment") {
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM equipment_category_table
+            WHERE
+              equipment_category_is_available = true
+              AND equipment_category_is_disabled = false
+              AND equipment_category_team_id = '${teamId}'
+            ORDER BY equipment_category ASC
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.equipment_category_id,
+            option_order: index,
+            option_value: category.equipment_category,
+          };
+        });
+
+        const requestSectionList = form.form_section.slice(1)
+          .map((section) => {
+            const category = JSON.parse(section.section_field[0].field_response[0].request_response);
+            const equipmentName = JSON.parse(section.section_field[1].field_response[0].request_response);
+            const brand = JSON.parse(section.section_field[2].field_response[0].request_response);
+
+            const equipmentNameList = plv8.execute(`
+              SELECT 
+                equipment_table.equipment_id,
+                equipment_table.equipment_name
+              FROM equipment_table
+              INNER JOIN equipment_category_table ON equipment_category_id = equipment_equipment_category_id
+              WHERE 
+                equipment_is_disabled = false
+                AND equipment_is_available = true
+                AND equipment_category_is_disabled = false
+                AND equipment_category_is_available = true
+                AND equipment_category = '${category}'
+            `);
+
+            const equipmentNameOptions = equipmentNameList.map((equipment, index) => {
+              return {
+                option_field_id: section.section_field[1].field_id,
+                option_id: equipment.equipment_id,
+                option_order: index,
+                option_value: equipment.equipment_name,
+              };
+            });
+
+            const brandList = plv8.execute(`
+              SELECT 
+                equipment_description_table.equipment_description_id,
+                equipment_brand_table.equipment_brand
+              FROM equipment_description_table
+              INNER JOIN equipment_table ON equipment_description_equipment_id = equipment_id
+              INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
+              INNER JOIN equipment_category_table ON equipment_category_id = equipment_equipment_category_id
+              WHERE 
+                equipment_description_is_disabled = false
+                AND equipment_description_is_available = true
+                AND equipment_brand_is_disabled = false
+                AND equipment_brand_is_available = true
+                AND equipment_is_disabled = false
+                AND equipment_is_available = true
+                AND equipment_category_is_disabled = false
+                AND equipment_category_is_available = true
+                AND equipment_category = '${category}'
+                AND equipment_name = '${equipmentName}'
+            `);
+
+            const brandOptions = brandList.map((brand, index) => {
+              return {
+                option_field_id: section.section_field[2].field_id,
+                option_id: brand.equipment_description_id,
+                option_order: index + 1,
+                option_value: brand.equipment_brand,
+              };
+            });
+            brandOptions.unshift({
+              option_field_id: section.section_field[2].field_id,
+              option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+              option_order: 0,
+              option_value: "ANY",
+            });
+
+            const modelList = plv8.execute(`
+              SELECT 
+                equipment_description_table.equipment_description_id,
+                equipment_model_table.equipment_model
+              FROM equipment_description_table
+              INNER JOIN equipment_table ON equipment_description_equipment_id = equipment_id
+              INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
+              INNER JOIN equipment_model_table ON equipment_model_id = equipment_description_model_id
+              INNER JOIN equipment_category_table ON equipment_category_id = equipment_equipment_category_id
+              WHERE 
+                equipment_description_is_disabled = false
+                AND equipment_description_is_available = true
+                AND equipment_brand_is_disabled = false
+                AND equipment_brand_is_available = true
+                AND equipment_model_is_disabled = false
+                AND equipment_model_is_available = true
+                AND equipment_is_disabled = false
+                AND equipment_is_available = true
+                AND equipment_category_is_disabled = false
+                AND equipment_category_is_available = true
+                AND equipment_category = '${category}'
+                AND equipment_name = '${equipmentName}'
+                AND equipment_brand = '${brand}'
+            `);
+
+            const modelOptions = modelList.map((model, index) => {
+              return {
+                option_field_id: section.section_field[3].field_id,
+                option_id: model.equipment_description_id,
+                option_order: index + 1,
+                option_value: model.equipment_model,
+              };
+            });
+            modelOptions.unshift({
+              option_field_id: section.section_field[3].field_id,
+              option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+              option_order: 0,
+              option_value: "ANY",
+            })
+
+            return {
+              ...section,
+              section_field: [
+                {
+                  ...section.section_field[0],
+                  field_option: categoryOptions,
+                },
+                {
+                  ...section.section_field[1],
+                  field_option: equipmentNameOptions,
+                },
+                {
+                  ...section.section_field[2],
+                  field_option: brandOptions,
+                },
+                {
+                  ...section.section_field[3],
+                  field_option: modelOptions,
+                }
+              ],
+            };
+          });
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  ...form.form_section[0].section_field.slice(0,2),
+                  {
+                    ...form.form_section[0].section_field[2],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(3),
+                ],
+              },
+              ...requestSectionList,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          projectOptions,
+          categoryOptions
+        }
       } else {
         returnData = {request};
       }
@@ -8373,6 +8725,85 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 -- End: Format team name to url key
+
+-- Start: Get equipment part list
+
+CREATE OR REPLACE FUNCTION get_equipment_part_list(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      equipmentId,
+      limit,
+      page,
+      search
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const data = plv8.execute(
+      `
+        SELECT 
+          equipment_part_table.*,
+          equipment_general_name AS equipment_part_general_name,
+          equipment_brand AS equipment_part_brand,
+          equipment_model AS equipment_part_model,
+          equipment_unit_of_measurement AS equipment_part_unit_of_measurement,
+          equipment_component_category AS equipment_part_component_category
+        FROM equipment_part_table
+        INNER JOIN equipment_general_name_table ON equipment_part_general_name_id = equipment_general_name_id
+        INNER JOIN equipment_brand_table ON equipment_part_brand_id = equipment_brand_id
+        INNER JOIN equipment_model_table ON equipment_part_model_id = equipment_model_id
+        INNER JOIN equipment_unit_of_measurement_table ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
+        INNER JOIN equipment_component_category_table ON equipment_part_component_category_id = equipment_component_category_id
+        WHERE
+          equipment_part_equipment_id = '${equipmentId}'
+          AND equipment_part_is_disabled = false
+          ${
+            search && 
+            `
+              AND equipment_general_name ILIKE '%${search}%'
+              OR equipment_part_number ILIKE '%${search}%'
+            `
+          }
+        ORDER BY equipment_general_name
+        LIMIT ${limit}
+        OFFSET '${start}'
+      `
+    );
+
+    const count = plv8.execute(
+      `
+        SELECT COUNT(equipment_part_id) FROM equipment_part_table
+        INNER JOIN equipment_general_name_table ON equipment_part_general_name_id = equipment_general_name_id
+        INNER JOIN equipment_brand_table ON equipment_part_brand_id = equipment_brand_id
+        INNER JOIN equipment_model_table ON equipment_part_model_id = equipment_model_id
+        INNER JOIN equipment_unit_of_measurement_table ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
+        INNER JOIN equipment_component_category_table ON equipment_part_component_category_id = equipment_component_category_id
+        WHERE
+          equipment_part_equipment_id = '${equipmentId}'
+          AND equipment_part_is_disabled = false
+          ${
+            search && 
+            `
+              AND equipment_general_name ILIKE '%${search}%'
+              OR equipment_part_number ILIKE '%${search}%'
+            `
+          }
+      `
+    )[0].count;
+ 
+    returnData = {
+      data,
+      count: Number(count)
+    };
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Get equipment part list
 
 ---------- End: FUNCTIONS
 

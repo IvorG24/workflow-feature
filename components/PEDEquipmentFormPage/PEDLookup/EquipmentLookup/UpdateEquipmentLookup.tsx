@@ -1,12 +1,12 @@
 import { checkEquipmentLookupTable } from "@/backend/api/get";
-import { createRowInLookupTable } from "@/backend/api/post";
+import { updateEquipmentLookup } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   EquipmentLookupChoices,
-  LookupTable,
+  EquipmentLookupTableUpdate,
   LookupForm,
+  LookupTable,
 } from "@/utils/types";
 import {
   Button,
@@ -29,54 +29,60 @@ type Props = {
     table: EquipmentLookupChoices;
     label: string;
   };
-  setIsCreatingEquipmentLookup: Dispatch<SetStateAction<boolean>>;
   setEquipmentLookupList: Dispatch<SetStateAction<LookupTable[]>>;
-  setEquipmentLookupCount: Dispatch<SetStateAction<number>>;
+  setEditEquipmentLookup: Dispatch<SetStateAction<LookupTable | null>>;
+  editEquipmentLookup: LookupTable;
 };
 
-const CreateEquipmentLookup = ({
+const UpdateEquipmentLookup = ({
   lookup,
-  setIsCreatingEquipmentLookup,
   setEquipmentLookupList,
-  setEquipmentLookupCount,
+  setEditEquipmentLookup,
+  editEquipmentLookup,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
-  const teamMember = useUserTeamMember();
 
   const { register, formState, handleSubmit } = useForm<LookupForm>({
     defaultValues: {
-      value: "",
-      isAvailable: true,
+      value: editEquipmentLookup.value,
+      isAvailable: editEquipmentLookup.status,
     },
   });
 
   const onSubmit = async (data: LookupForm) => {
     try {
       const lookupValue = lookup.table;
-      const isAvaialble = `${lookup.table}_is_available`;
-      const encoder = `${lookup.table}_encoder_team_member_id`;
+      const isAvailable = `${lookup.table}_is_available`;
       const team = `${lookup.table}_team_id`;
 
-      const newEquipmentLookup = await createRowInLookupTable(supabaseClient, {
-        inputData: {
-          [lookupValue]: data.value.toUpperCase(),
-          [isAvaialble]: data.isAvailable,
-          [encoder]: teamMember?.team_member_id,
-          [team]: activeTeam.team_id,
-        } as unknown as JSON,
-        tableName: lookup.table,
-      });
+      const newEquipmentLookup: LookupTable = await updateEquipmentLookup(
+        supabaseClient,
+        {
+          equipmentLookupData: {
+            [lookupValue]: data.value.toUpperCase(),
+            [isAvailable]: data.isAvailable,
+            [team]: activeTeam.team_id,
+          } as EquipmentLookupTableUpdate,
+          tableName: lookup.table,
+          lookupId: editEquipmentLookup.id,
+        }
+      );
+
       setEquipmentLookupList((prev) => {
-        prev.unshift(newEquipmentLookup);
-        return prev;
+        return prev.map((equipment) => {
+          if (equipment.id === editEquipmentLookup.id) {
+            return newEquipmentLookup;
+          } else {
+            return equipment;
+          }
+        });
       });
-      setEquipmentLookupCount((prev) => prev + 1);
       notifications.show({
-        message: `${lookup.label} created.`,
+        message: "Equipment Lookup updated.",
         color: "green",
       });
-      setIsCreatingEquipmentLookup(false);
+      setEditEquipmentLookup(null);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -91,7 +97,7 @@ const CreateEquipmentLookup = ({
       <LoadingOverlay visible={formState.isSubmitting} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
-          Add Equipment {lookup.label}
+          Update {lookup.label}
         </Title>
         <Divider mb="xl" />
 
@@ -144,7 +150,7 @@ const CreateEquipmentLookup = ({
             miw={100}
             mt={30}
             mr={14}
-            onClick={() => setIsCreatingEquipmentLookup(false)}
+            onClick={() => setEditEquipmentLookup(null)}
           >
             Cancel
           </Button>
@@ -154,4 +160,4 @@ const CreateEquipmentLookup = ({
   );
 };
 
-export default CreateEquipmentLookup;
+export default UpdateEquipmentLookup;

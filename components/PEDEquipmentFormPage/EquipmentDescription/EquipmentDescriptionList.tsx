@@ -1,12 +1,11 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getItemList } from "@/backend/api/get";
+import { getEquipmentDescriptionList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
 import {
-  ItemDescriptionTableRow,
-  ItemWithDescriptionType,
+  EquipmentDescriptionType,
+  EquipmentWithCategoryType,
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -31,7 +30,6 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
@@ -43,64 +41,82 @@ const useStyles = createStyles((theme) => ({
       flexGrow: 1,
     },
   },
-  clickableColumn: {
-    "&:hover": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.gray[7]
-          : theme.colors.gray[5],
-    },
-    cursor: "pointer",
-  },
 }));
 
 type Props = {
-  itemList: ItemWithDescriptionType[];
-  setItemList: Dispatch<SetStateAction<ItemWithDescriptionType[]>>;
-  itemCount: number;
-  setItemCount: Dispatch<SetStateAction<number>>;
-  setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
-  setSelectedItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
-  setEditItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
-  editItem: ItemWithDescriptionType | null;
+  selectedEquipment: EquipmentWithCategoryType;
+  equipmentDescriptionList: EquipmentDescriptionType[];
+  setEquipmentDescriptionList: Dispatch<
+    SetStateAction<EquipmentDescriptionType[]>
+  >;
+  equipmentDescriptionCount: number;
+  setEquipmentDescriptionCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingEquipmentDescription: Dispatch<SetStateAction<boolean>>;
+  setEditEquipmentDescription: Dispatch<
+    SetStateAction<EquipmentDescriptionType | null>
+  >;
+  editEquipmentDescription: EquipmentDescriptionType | null;
 };
 
-const ItemList = ({
-  itemList,
-  setItemList,
-  itemCount,
-  setItemCount,
-  setIsCreatingItem,
-  setSelectedItem,
-  setEditItem,
-  editItem,
+const EquipmentDescriptionList = ({
+  selectedEquipment,
+  equipmentDescriptionList,
+  setEquipmentDescriptionList,
+  equipmentDescriptionCount,
+  setEquipmentDescriptionCount,
+  setIsCreatingEquipmentDescription,
+  setEditEquipmentDescription,
+  editEquipmentDescription,
 }: Props) => {
-  const { classes } = useStyles();
-
   const supabaseClient = useSupabaseClient();
-  const activeTeam = useActiveTeam();
-  const router = useRouter();
-
-  const [isLoading, setIsLoading] = useState(false);
+  const { classes } = useStyles();
 
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const headerCheckboxKey = generateRandomId();
 
-  const handleCheckRow = (itemId: string) => {
-    if (checkList.includes(itemId)) {
-      setCheckList(checkList.filter((id) => id !== itemId));
+  const handleFetch = async (search: string, page: number) => {
+    setIsLoading(true);
+    try {
+      const { data, count } = await getEquipmentDescriptionList(
+        supabaseClient,
+        {
+          equipmentId: selectedEquipment.equipment_id,
+          search,
+          limit: ROW_PER_PAGE,
+          page,
+        }
+      );
+      setEquipmentDescriptionList(
+        data as unknown as EquipmentDescriptionType[]
+      );
+      setEquipmentDescriptionCount(Number(count));
+    } catch (e) {
+      notifications.show({
+        message: "Error on fetching equipment description list",
+        color: "red",
+      });
+    }
+    setIsLoading(false);
+  };
+
+  const handleCheckRow = (equipmentDescriptionId: string) => {
+    if (checkList.includes(equipmentDescriptionId)) {
+      setCheckList(checkList.filter((id) => id !== equipmentDescriptionId));
     } else {
-      setCheckList([...checkList, itemId]);
+      setCheckList([...checkList, equipmentDescriptionId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const itemIdList = itemList.map((item) => item.item_id);
-      setCheckList(itemIdList);
+      const equipmentDescriptionIdList = equipmentDescriptionList.map(
+        (equipmentDescription) => equipmentDescription.equipment_description_id
+      );
+      setCheckList(equipmentDescriptionIdList);
     } else {
       setCheckList([]);
     }
@@ -113,52 +129,34 @@ const ItemList = ({
     handleFetch(isEmpty ? "" : search, 1);
   };
 
-  const handleFetch = async (search: string, page: number) => {
-    setIsLoading(true);
-    try {
-      const { data, count } = await getItemList(supabaseClient, {
-        teamId: activeTeam.team_id,
-        search,
-        limit: ROW_PER_PAGE,
-        page: page,
-      });
-      setItemList(data as ItemWithDescriptionType[]);
-      setItemCount(Number(count));
-    } catch {
-      notifications.show({
-        message: "Error on fetching item list",
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = itemList;
+    const savedRecord = equipmentDescriptionList;
 
     try {
-      const updatedItemList = itemList.filter((item) => {
-        if (!checkList.includes(item.item_id)) {
-          return item;
+      const updatedEquipmentDescriptionList = equipmentDescriptionList.filter(
+        (equipmentDescription) => {
+          if (
+            !checkList.includes(equipmentDescription.equipment_description_id)
+          ) {
+            return equipmentDescription;
+          }
         }
-      });
-      setItemList(updatedItemList);
+      );
+      setEquipmentDescriptionList(updatedEquipmentDescriptionList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "item",
+        table: "equipment_description",
       });
 
-      setSelectedItem(null);
-
       notifications.show({
-        message: "Item/s deleted.",
+        message: "Equipment Description/s deleted.",
         color: "green",
       });
     } catch {
-      setItemList(savedRecord);
+      setEquipmentDescriptionList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -167,21 +165,28 @@ const ItemList = ({
     }
   };
 
-  const handleUpdateStatus = async (itemId: string, value: boolean) => {
-    const savedRecord = itemList;
+  const handleUpdateStatus = async (
+    equipmentDescriptionId: string,
+    value: boolean
+  ) => {
+    const savedRecord = equipmentDescriptionList;
     try {
-      setItemList((prev) =>
-        prev.map((item) => {
-          if (item.item_id !== itemId) return item;
+      setEquipmentDescriptionList((prev) =>
+        prev.map((equipmentDescription) => {
+          if (
+            equipmentDescription.equipment_description_id !==
+            equipmentDescriptionId
+          )
+            return equipmentDescription;
           return {
-            ...item,
-            item_is_available: value,
+            ...equipmentDescription,
+            equipment_description_is_available: value,
           };
         })
       );
       await toggleStatus(supabaseClient, {
-        table: "item",
-        id: itemId,
+        table: "equipment_description",
+        id: equipmentDescriptionId,
         status: value,
       });
     } catch {
@@ -189,21 +194,8 @@ const ItemList = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      setItemList(savedRecord);
+      setEquipmentDescriptionList(savedRecord);
     }
-  };
-
-  const formatItemField = (itemFieldLabel: ItemDescriptionTableRow[]) => {
-    let description = "";
-    itemFieldLabel.forEach((fieldLabel) => {
-      description += `${fieldLabel.item_description_label}, `;
-    });
-    return description.slice(0, -2);
-  };
-
-  const handleColumnClick = (item_id: string) => {
-    const selectedItem = itemList.find((item) => item.item_id === item_id);
-    setSelectedItem(selectedItem || null);
   };
 
   return (
@@ -211,11 +203,11 @@ const ItemList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of Items
+            List of Description
           </Title>
           <TextInput
             miw={250}
-            placeholder="General Name"
+            placeholder="Search"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
                 <IconSearch size={16} />
@@ -239,14 +231,8 @@ const ItemList = ({
             className={classes.flexGrow}
           />
         </Group>
-        {!editItem && (
+        {!editEquipmentDescription && (
           <Group className={classes.flexGrow}>
-            <Button
-              variant="light"
-              onClick={() => router.push("/team-requests/item-analytics")}
-            >
-              Analytics
-            </Button>
             {checkList.length !== 0 ? (
               <Button
                 variant="outline"
@@ -258,7 +244,9 @@ const ItemList = ({
                     children: (
                       <Text size={14}>
                         Are you sure you want to delete{" "}
-                        {checkList.length === 1 ? "this item?" : "these items?"}
+                        {checkList.length === 1
+                          ? "this equipment description?"
+                          : "these equipment descriptions?"}
                       </Text>
                     ),
                     labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -273,7 +261,7 @@ const ItemList = ({
             <Button
               rightIcon={<IconPlus size={16} />}
               className={classes.flexGrow}
-              onClick={() => setIsCreatingItem(true)}
+              onClick={() => setIsCreatingEquipmentDescription(true)}
             >
               Add
             </Button>
@@ -281,14 +269,14 @@ const ItemList = ({
         )}
       </Flex>
       <DataTable
-        idAccessor="item_id"
+        idAccessor="equipment_description_id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={itemList}
+        records={equipmentDescriptionList}
         columns={[
           {
             accessor: "checkbox",
@@ -297,106 +285,71 @@ const ItemList = ({
                 key={headerCheckboxKey}
                 className={classes.checkbox}
                 checked={
-                  checkList.length > 0 && checkList.length === itemList.length
+                  checkList.length > 0 &&
+                  checkList.length === equipmentDescriptionList.length
                 }
                 size="xs"
                 onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
               />
             ),
-            render: ({ item_id }) => (
+            render: ({ equipment_description_id }) => (
               <Checkbox
                 className={classes.checkbox}
                 size="xs"
-                checked={checkList.includes(item_id)}
+                checked={checkList.includes(equipment_description_id)}
                 onChange={() => {
-                  handleCheckRow(item_id);
+                  handleCheckRow(equipment_description_id);
                 }}
               />
             ),
             width: 40,
           },
           {
-            accessor: "item_general_name",
-            title: "General Name",
-            render: ({ item_general_name, item_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-              >
-                {item_general_name}
-              </Text>
+            accessor: "equipment_description_property_number",
+            title: "Property Number",
+            render: ({ equipment_description_property_number }) => (
+              <Text>{equipment_description_property_number}</Text>
             ),
           },
           {
-            accessor: "item_unit",
-            title: "Base Unit of Measurement",
-            render: ({ item_unit, item_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-              >
-                {item_unit}
-              </Text>
+            accessor: "equipment_description_brand",
+            title: "Brand",
+            render: ({ equipment_description_brand }) => (
+              <Text>{equipment_description_brand}</Text>
             ),
           },
           {
-            accessor: "description",
-            title: "Description",
-            render: ({ item_id, item_description }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-              >
-                {formatItemField(item_description)}
-              </Text>
+            accessor: "equipment_description_model",
+            title: "Model",
+            render: ({ equipment_description_model }) => (
+              <Text>{equipment_description_model}</Text>
             ),
           },
           {
-            accessor: "item_gl_account",
-            title: "GL Account",
-            render: ({ item_gl_account, item_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-              >
-                {item_gl_account}
-              </Text>
-            ),
-          },
-          {
-            accessor: "item_division_id_list",
-            title: "Division",
-            render: ({ item_division_id_list, item_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-              >
-                {item_division_id_list.join(", ")}
-              </Text>
+            accessor: "equipment_description_serial_number",
+            title: "Serial Number",
+            render: ({ equipment_description_serial_number }) => (
+              <Text>{equipment_description_serial_number}</Text>
             ),
           },
           {
             accessor: "status",
             title: "Status",
             textAlignment: "center",
-            render: ({ item_is_available, item_id }) => (
+            render: ({
+              equipment_description_is_available,
+              equipment_description_id,
+            }) => (
               <Center>
                 <Checkbox
-                  checked={item_is_available}
+                  checked={equipment_description_is_available}
                   className={classes.checkbox}
                   size="xs"
                   onChange={(e) =>
-                    handleUpdateStatus(item_id, e.currentTarget.checked)
+                    handleUpdateStatus(
+                      equipment_description_id,
+                      e.currentTarget.checked
+                    )
                   }
                 />
               </Center>
@@ -406,12 +359,11 @@ const ItemList = ({
             accessor: "edit",
             title: "",
             textAlignment: "center",
-            render: (item) => (
+            render: (equipmentDescription) => (
               <Center>
                 <ActionIcon
                   onClick={() => {
-                    setEditItem(item);
-                    setSelectedItem(null);
+                    setEditEquipmentDescription(equipmentDescription);
                   }}
                 >
                   <IconSettings size={16} />
@@ -420,7 +372,7 @@ const ItemList = ({
             ),
           },
         ]}
-        totalRecords={itemCount}
+        totalRecords={equipmentDescriptionCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -432,4 +384,4 @@ const ItemList = ({
   );
 };
 
-export default ItemList;
+export default EquipmentDescriptionList;

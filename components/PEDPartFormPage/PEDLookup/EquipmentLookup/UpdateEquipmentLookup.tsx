@@ -4,7 +4,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   EquipmentLookupChoices,
-  EquipmentLookupTable,
+  LookupTable,
   EquipmentLookupTableUpdate,
   LookupForm,
 } from "@/utils/types";
@@ -29,9 +29,9 @@ type Props = {
     table: EquipmentLookupChoices;
     label: string;
   };
-  setEquipmentLookupList: Dispatch<SetStateAction<EquipmentLookupTable[]>>;
-  setEditEquipmentLookup: Dispatch<SetStateAction<EquipmentLookupTable | null>>;
-  editEquipmentLookup: EquipmentLookupTable;
+  setEquipmentLookupList: Dispatch<SetStateAction<LookupTable[]>>;
+  setEditEquipmentLookup: Dispatch<SetStateAction<LookupTable | null>>;
+  editEquipmentLookup: LookupTable;
 };
 
 const UpdateEquipmentLookup = ({
@@ -56,7 +56,7 @@ const UpdateEquipmentLookup = ({
       const isAvailable = `${lookup.table}_is_available`;
       const team = `${lookup.table}_team_id`;
 
-      const newEquipmentLookup: EquipmentLookupTable =
+      const newEquipmentLookup: LookupTable =
         await updateEquipmentLookup(supabaseClient, {
           equipmentLookupData: {
             [lookupValue]: data.value.toUpperCase(),

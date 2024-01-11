@@ -8,8 +8,9 @@ import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
+  EquipmentWithCategoryType,
+  FormSegmentType,
   FormType,
-  ItemWithDescriptionType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -24,9 +25,9 @@ import {
   Group,
   LoadingOverlay,
   Paper,
+  SegmentedControl,
   Space,
   Stack,
-  Switch,
   Text,
   TextInput,
   Title,
@@ -40,7 +41,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { ROW_PER_PAGE } from "@/utils/constant";
+import { FORM_SEGMENT_CHOCIES, ROW_PER_PAGE } from "@/utils/constant";
 import { isEmpty, isEqual } from "@/utils/functions";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
@@ -49,14 +50,14 @@ import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import FormSection from "../RequestFormPage/FormSection";
-import ItemDescription from "./ItemDescription/ItemDescription";
-import CreateItem from "./ItemList/CreateItem";
-import ItemList from "./ItemList/ItemList";
-import UpdateItem from "./ItemList/UpdateItem";
+import CreateEquipment from "./EquipmentList/CreateEquipment";
+import EquipmentList from "./EquipmentList/EquipmentList";
+import UpdateEquipment from "./EquipmentList/UpdateEquipment";
+import PEDLookup from "./PEDLookup/PEDLookup";
 
 type Props = {
-  items: ItemWithDescriptionType[];
-  itemListCount: number;
+  equipments: EquipmentWithCategoryType[];
+  equipmentListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   form: FormType;
   teamGroupList: TeamGroupTableRow[];
@@ -64,9 +65,9 @@ type Props = {
   teamProjectListCount: number;
 };
 
-const RequisitionFormPage = ({
-  items,
-  itemListCount,
+const PEDPartFormPage = ({
+  equipments,
+  equipmentListCount,
   teamMemberList,
   form,
   teamGroupList,
@@ -83,14 +84,11 @@ const RequisitionFormPage = ({
 
   const initialSignerIds: string[] = [];
 
-  const [isCreatingItem, setIsCreatingItem] = useState(false);
-  const [selectedItem, setSelectedItem] =
-    useState<ItemWithDescriptionType | null>(null);
-  const [editItem, setEditItem] = useState<ItemWithDescriptionType | null>(
-    null
-  );
-  const [itemList, setItemList] = useState(items);
-  const [itemCount, setItemCount] = useState(itemListCount);
+  const [isCreatingEquipment, setIsCreatingEquipment] = useState(false);
+  const [editEquipment, setEditEquipment] =
+    useState<EquipmentWithCategoryType | null>(null);
+  const [equipmentList, setEquipmentList] = useState(equipments);
+  const [equipmentCount, setEquipmentCount] = useState(equipmentListCount);
 
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -109,7 +107,8 @@ const RequisitionFormPage = ({
   );
 
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
-  const [switchValue, setSwitchValue] = useState(false);
+  const [segmentValue, setSegmentValue] =
+    useState<FormSegmentType>("Form Details");
 
   const [initialRequester, setInitialRequester] = useState(
     form.form_team_group.map((group) => group.team_group.team_group_id)
@@ -378,69 +377,47 @@ const RequisitionFormPage = ({
       />
       <Space h="xl" />
       <Center>
-        <Switch
-          onLabel="Form Preview"
-          offLabel="Form Details"
-          size="xl"
-          checked={switchValue}
-          onChange={(e) => setSwitchValue(e.target.checked)}
-          sx={{
-            label: {
-              cursor: "pointer",
-            },
-          }}
+        <SegmentedControl
+          data={FORM_SEGMENT_CHOCIES}
+          value={segmentValue}
+          onChange={(value) => setSegmentValue(value as FormSegmentType)}
         />
       </Center>
       <Space h="xl" />
 
-      {!switchValue ? (
+      {segmentValue === "Form Details" ? (
         <Box>
           <Paper p="xl" shadow="xs">
-            {!isCreatingItem && !editItem ? (
-              <ItemList
-                itemList={itemList}
-                setItemList={setItemList}
-                itemCount={itemCount}
-                setItemCount={setItemCount}
-                setIsCreatingItem={setIsCreatingItem}
-                setSelectedItem={setSelectedItem}
-                setEditItem={setEditItem}
-                editItem={editItem}
+            {!isCreatingEquipment && !editEquipment ? (
+              <EquipmentList
+                equipmentList={equipmentList}
+                setEquipmentList={setEquipmentList}
+                equipmentCount={equipmentCount}
+                setEquipmentCount={setEquipmentCount}
+                setIsCreatingEquipment={setIsCreatingEquipment}
+                setEditEquipment={setEditEquipment}
+                editEquipment={editEquipment}
               />
             ) : null}
-            {isCreatingItem ? (
-              <CreateItem
-                setIsCreatingItem={setIsCreatingItem}
-                setItemList={setItemList}
-                setItemCount={setItemCount}
+            {isCreatingEquipment ? (
+              <CreateEquipment
+                setIsCreatingEquipment={setIsCreatingEquipment}
+                setEquipmentList={setEquipmentList}
+                setEquipmentCount={setEquipmentCount}
               />
             ) : null}
-            {editItem ? (
-              <UpdateItem
-                setItemList={setItemList}
-                setEditItem={setEditItem}
-                editItem={editItem}
-              />
-            ) : null}
-          </Paper>
-          <Space h="xl" />
-          <Paper p="xl" shadow="xs">
-            {!selectedItem ? (
-              <Center>
-                <Text color="dimmed">No item selected</Text>
-              </Center>
-            ) : null}
-            {selectedItem ? (
-              <ItemDescription
-                selectedItem={selectedItem}
-                setSelectedItem={setSelectedItem}
+            {editEquipment ? (
+              <UpdateEquipment
+                setEquipmentList={setEquipmentList}
+                setEditEquipment={setEditEquipment}
+                editEquipment={editEquipment}
               />
             ) : null}
           </Paper>
         </Box>
       ) : null}
 
-      {switchValue ? (
+      {segmentValue === "Form Preview" ? (
         <Stack spacing="xl">
           <FormSection section={form.form_section[0]} />
           <FormSection
@@ -451,6 +428,8 @@ const RequisitionFormPage = ({
           />
         </Stack>
       ) : null}
+
+      {segmentValue === "Form Lookup" ? <PEDLookup /> : null}
 
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Requester Details</Title>
@@ -591,4 +570,4 @@ const RequisitionFormPage = ({
   );
 };
 
-export default RequisitionFormPage;
+export default PEDPartFormPage;
