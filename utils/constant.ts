@@ -1261,6 +1261,7 @@ export const ITEM_UNIT_CHOICES = [
   "Millimetre Per Minute",
   "Milliampere",
   "Linear Meter",
+  "Newton Meter",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
