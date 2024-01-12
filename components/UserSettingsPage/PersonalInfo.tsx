@@ -46,7 +46,7 @@ const PersonalInfo = ({
     control,
     getValues,
     setError,
-    formState: { errors, isDirty, defaultValues, },
+    formState: { errors, isDirty, defaultValues },
   } = useFormContext<PersonalInfoForm>();
 
   const prevAvatarFile = usePrevious(avatarFile);

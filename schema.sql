@@ -476,6 +476,26 @@ CREATE TABLE general_unit_of_measurement_table(
 
 -- End: General unit of measurement table
 
+-- Start: Username history table
+
+CREATE TABLE user_name_history_table(
+  user_name_history_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  user_name_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_name_history_value VARCHAR(4000) NOT NULL,
+
+  user_name_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+
+CREATE TABLE signature_history_table(
+  signature_history_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  signature_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  signature_history_value VARCHAR(4000) NOT NULL,
+
+  signature_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+
+-- End: Username history table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -8393,6 +8413,38 @@ $$ LANGUAGE plv8;
 
 -- End: Analyze user issued item
 
+-- Start: Update user
+
+CREATE OR REPLACE FUNCTION update_user(
+    input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      userData,
+      previousUsername,
+      previousSignatureUrl
+    } = input_data;
+
+    const userDataUpdate = [];
+    for(const key in userData){
+      if(key !== "user_id"){
+        userDataUpdate.push(`${key} = '${userData[key]}'`)
+      }
+    }
+    plv8.execute(`UPDATE user_table SET ${userDataUpdate.join(", ")} WHERE user_id = '${userData.user_id}'`);
+
+    if(previousUsername){
+      plv8.execute(`INSERT INTO user_name_history_table (user_name_history_value, user_name_history_user_id) VALUES ('${previousUsername}', '${userData.user_id}')`);
+    }
+    if(previousSignatureUrl){
+      plv8.execute(`INSERT INTO signature_history_table (signature_history_value, signature_history_user_id) VALUES ('${previousSignatureUrl}', '${userData.user_id}')`);
+    }
+ });
+$$ LANGUAGE plv8;
+
+-- End: Update user
+
 ---------- End: FUNCTIONS
 
 
@@ -8428,6 +8480,8 @@ ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_name_history_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE signature_history_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -8594,6 +8648,10 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_employee_nu
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_employee_number_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_name_history_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON signature_history_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -10120,6 +10178,18 @@ USING (
     WHERE user_onboard_user_id = auth.uid()
   )
 );
+
+--- USER_NAME_HISTORY_TABLE
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_name_history_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+--- SIGNATURE_HISTORY_TABLE
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."signature_history_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
 
 -------- End: POLICIES
 
