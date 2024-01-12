@@ -222,7 +222,11 @@ const MemberList = ({
       accessor: "team_member.team_member_group_list",
       title: "Group",
       render: ({ team_member }) => (
-        <Text>{team_member.team_member_group_list.join(",")}</Text>
+        <Text>
+          {team_member.team_member_group_list
+            ? team_member.team_member_group_list.join(",")
+            : ""}
+        </Text>
       ),
     },
   ];

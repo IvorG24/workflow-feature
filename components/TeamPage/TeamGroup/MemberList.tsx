@@ -214,7 +214,11 @@ const MemberList = ({
       accessor: "team_member.team_member_project_list",
       title: "Project",
       render: ({ team_member }) => (
-        <Text>{team_member.team_member_project_list.join(", ")}</Text>
+        <Text>
+          {team_member.team_member_project_list
+            ? team_member.team_member_project_list.join(", ")
+            : ""}
+        </Text>
       ),
     },
   ];
