@@ -3,7 +3,6 @@ import {
   resetPassword,
   uploadImage,
 } from "@/backend/api/post";
-import { udpateUser } from "@/backend/api/update";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { UserWithSignatureType } from "@/utils/types";

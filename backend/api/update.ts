@@ -62,7 +62,7 @@ export const updateUserActiveTeam = async (
 };
 
 // Update User
-export const udpateUser = async (
+export const updateUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: UserTableUpdate
 ) => {
