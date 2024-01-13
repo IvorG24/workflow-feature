@@ -2648,13 +2648,20 @@ export const getTeamGroupMemberList = async (
             user_last_name,
             user_avatar, 
             user_email
+          ),
+          team_member_project: team_project_member_table(
+            team_project: team_project_id(team_project_name)
           )
         )
       `,
       { count: "exact" }
     )
     .eq("team_group_id", groupId)
-    .eq("team_member.team_member_is_disabled", false);
+    .eq("team_member.team_member_is_disabled", false)
+    .eq(
+      "team_member.team_member_project.team_project.team_project_is_disabled",
+      false
+    );
 
   if (search) {
     query = query.or(
@@ -2673,8 +2680,38 @@ export const getTeamGroupMemberList = async (
   const { data, count, error } = await query;
   if (error) throw error;
 
+  const formattedData = data as unknown as {
+    team_group_member_id: string;
+    team_member: {
+      team_member_id: string;
+      team_member_date_created: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+        user_email: string;
+      };
+      team_member_project: {
+        team_project: {
+          team_project_name: string;
+        };
+      }[];
+    };
+  }[];
+
   return {
-    data,
+    data: formattedData.map((data) => {
+      return {
+        ...data,
+        team_member: {
+          ...data.team_member,
+          team_member_project_list: data.team_member.team_member_project.map(
+            (project) => project.team_project.team_project_name
+          ),
+        },
+      };
+    }),
     count,
   };
 };
@@ -2717,12 +2754,16 @@ export const getTeamProjectMemberList = async (
         team_member: team_member_id!inner(
           team_member_id,
           team_member_date_created, 
+          team_member_role,
           team_member_user: team_member_user_id!inner(
             user_id, 
             user_first_name, 
             user_last_name,
             user_avatar, 
             user_email
+          ),
+          team_member_group: team_group_member_table(
+            team_group: team_group_id(team_group_name)
           )
         )
       `,
@@ -2748,8 +2789,38 @@ export const getTeamProjectMemberList = async (
   const { data, count, error } = await query;
   if (error) throw error;
 
+  const formattedData = data as unknown as {
+    team_group_member_id: string;
+    team_member: {
+      team_member_id: string;
+      team_member_date_created: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+        user_email: string;
+      };
+      team_member_group: {
+        team_group: {
+          team_group_name: string;
+        };
+      }[];
+    };
+  }[];
+
   return {
-    data,
+    data: formattedData.map((data) => {
+      return {
+        ...data,
+        team_member: {
+          ...data.team_member,
+          team_member_group_list: data.team_member.team_member_group.map(
+            (group) => group.team_group.team_group_name
+          ),
+        },
+      };
+    }),
     count,
   };
 };
