@@ -476,6 +476,36 @@ CREATE TABLE general_unit_of_measurement_table(
 
 -- End: General unit of measurement table
 
+-- Start: Other expenses category table
+
+CREATE TABLE other_expenses_category_table(
+  other_expenses_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  other_expenses_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  other_expenses_category VARCHAR(4000) NOT NULL,
+  other_expenses_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  other_expenses_category_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  other_expenses_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  other_expenses_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Other expenses category table
+
+-- Start: Other expenses type table
+
+CREATE TABLE other_expenses_type_table(
+  other_expenses_type_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  other_expenses_type_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  other_expenses_type VARCHAR(4000) NOT NULL,
+  other_expenses_type_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  other_expenses_type_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  other_expenses_type_category_id UUID REFERENCES other_expenses_category_table(other_expenses_category_id),
+  other_expenses_type_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+);
+
+-- End: Other expenses type table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -4113,6 +4143,35 @@ RETURNS JSON as $$
           teamProjectListCount: Number(`${teamProjectListCount}`),
           suppliers,
           supplierListCount: Number(`${supplierListCount}`),
+        }
+      } else if (formName === 'Other Expenses'){
+        const otherExpensesTypes = plv8.execute(`
+          SELECT 
+            other_expenses_type_table.*,
+            other_expenses_category
+          FROM other_expenses_type_table 
+          INNER JOIN other_expenses_category_table ON other_expenses_category_id = other_expenses_type_category_id
+          WHERE 
+            other_expenses_category_team_id = '${teamId}' 
+            AND other_expenses_type_is_disabled = false 
+          LIMIT ${limit}
+        `);
+        const otherExpensesTypeCount = plv8.execute(`
+          SELECT COUNT(*)
+          FROM other_expenses_type_table 
+          INNER JOIN other_expenses_category_table ON other_expenses_category_id = other_expenses_type_category_id
+          WHERE 
+            other_expenses_category_team_id = '${teamId}' 
+            AND other_expenses_type_is_disabled = false 
+        `)[0].count;
+
+        returnData = {
+          otherExpensesTypes,
+          otherExpensesTypeCount: Number(otherExpensesTypeCount),
+          teamMemberList,
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(teamProjectListCount)
         }
       } else {
         returnData = {

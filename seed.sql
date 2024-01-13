@@ -99,9 +99,10 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
 ('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
-('8e173d92-c346-4fb5-8ef2-490105e19263', 'Transfer Receipt', 'formsly premade Transfer Receipt form.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
+('8e173d92-c346-4fb5-8ef2-490105e19263', 'Transfer Receipt', 'formsly premade Transfer Receipt form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
 ('7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'Subcon', 'formsly premade Subcon form.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false),
-('800723d3-a164-4063-9e18-5fff651a96f8', 'Services', 'For subcontract service requests.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, true, false);
+('800723d3-a164-4063-9e18-5fff651a96f8', 'Services', 'For subcontract service requests.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, true, false)
+('7368a23b-601a-4ce8-adea-30b0cb483ab2', 'Other Expenses', 'formsly premade Other Expenses form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, true, false);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),
@@ -145,7 +146,11 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 
 -- Subcon and Service
 ('77ec0877-7944-45a0-bc92-3bf4e7815fcf', 'Main', 1, false, '800723d3-a164-4063-9e18-5fff651a96f8'),
-('3dfadc99-3e77-4094-983d-b78e6164846d', 'Request', 2, true, '800723d3-a164-4063-9e18-5fff651a96f8');
+('3dfadc99-3e77-4094-983d-b78e6164846d', 'Request', 2, true, '800723d3-a164-4063-9e18-5fff651a96f8'),
+
+-- Other Expenses
+('b1ef70d8-bdff-4091-a9b1-43fca942e45a', 'Main', 1, false, '7368a23b-601a-4ce8-adea-30b0cb483ab2'),
+('b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', 'Request', 2, true, '7368a23b-601a-4ce8-adea-30b0cb483ab2');
 
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required, field_is_read_only) VALUES
 -- All Fields 
@@ -276,7 +281,23 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('63471afc-f3e9-4df2-b54f-d9ee248248f3', 'CSI Code', 'TEXT', 10, '3dfadc99-3e77-4094-983d-b78e6164846d', true, true),
 ('488bd397-bc67-4b1e-80d5-75615c7326e0', 'Level 2 Major Group Description', 'TEXT', 11, '3dfadc99-3e77-4094-983d-b78e6164846d', true, true),
 ('576ada6f-bbbb-4550-807f-e826ea4d29db', 'Level 2 Minor Group Description', 'TEXT', 12, '3dfadc99-3e77-4094-983d-b78e6164846d', true, true),
-('736bffc6-da86-43d6-b912-97eedcd17839', 'Preferred Supplier', 'DROPDOWN', 13, '3dfadc99-3e77-4094-983d-b78e6164846d', false, false);
+('736bffc6-da86-43d6-b912-97eedcd17839', 'Preferred Supplier', 'DROPDOWN', 13, '3dfadc99-3e77-4094-983d-b78e6164846d', false, false),
+
+-- Other Expenses
+('b4bf10d8-009a-442d-b096-5fdd46ed7de0', 'Requesting Project', 'DROPDOWN', 1, 'b1ef70d8-bdff-4091-a9b1-43fca942e45a', true, false),
+('4309a973-da2e-482a-8ec5-31ff0eaa4294', 'Date Needed', 'DATE', 2, 'b1ef70d8-bdff-4091-a9b1-43fca942e45a', true, false),
+('29b3f1ed-4eb1-4f01-b1ea-3b6ef4523bc0', 'Purpose', 'TEXT', 3, 'b1ef70d8-bdff-4091-a9b1-43fca942e45a', true, false),
+
+('9d678821-e292-483d-b0d9-ebeccd9c1835', 'Category', 'DROPDOWN', 4, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
+('d15d4a39-9c34-4d56-80f1-17d12918fce3', 'Type', 'DROPDOWN', 5, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
+('0fc3742d-2e72-4043-acc6-358185266e20', 'Description', 'TEXT', 6, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
+('4fb94cb4-ceb1-4995-a8e7-b6adcee0506c', 'Quantity', 'NUMBER', 7, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
+('8f728f54-b0b6-4883-82ed-f36fe5d4ca00', 'Unit of Measurement', 'DROPDOWN', 8, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
+('fb76b5f1-c2e7-404a-822a-4101b7aecdf5', 'CSI Code Description', 'DROPDOWN', 9, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, true),
+('23cc13f0-6700-4793-9d2d-ce7dd87b6605', 'CSI Code', 'TEXT', 10, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, true),
+('b140d4f3-236f-4c71-b9b3-1bff236d61b0', 'Level 2 Major Group Description', 'TEXT', 11, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, true),
+('37139ca7-c4d6-43f1-a225-8d70ddefc39e', 'Level 2 Minor Group Description', 'TEXT', 12, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, true),
+('0086fa63-99ab-4121-b3b0-3734f70a4772', 'Preferred Supplier', 'DROPDOWN', 13, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', false, false);
 
 INSERT INTO option_table (option_id, option_value, option_order, option_field_id) VALUES
 ('7961d4d4-6c04-46e7-b995-472856fff590', 'Dropdown 1', 1, 'f6caa6e5-f2f5-4444-b96f-eec55dea2794'),
