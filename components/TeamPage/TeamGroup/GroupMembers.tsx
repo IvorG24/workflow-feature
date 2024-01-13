@@ -33,6 +33,7 @@ export type TeamMemberType = {
       user_avatar: string;
       user_email: string;
     };
+    team_member_project_list: string[];
   };
 };
 

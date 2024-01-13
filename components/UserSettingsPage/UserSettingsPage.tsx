@@ -5,6 +5,7 @@ import {
 } from "@/backend/api/post";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { trimObjectProperties } from "@/utils/string";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -121,7 +122,7 @@ const UserSettingsPage = ({ user }: Props) => {
       const { error } = await supabaseClient.rpc("update_user", {
         input_data: {
           userData: {
-            ...data,
+            ...trimObjectProperties(data),
             user_avatar: imageUrl ? imageUrl : data.user_avatar,
           },
           previousUsername:
