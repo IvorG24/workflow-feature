@@ -1,5 +1,6 @@
 import { checkUsername } from "@/backend/api/get";
 import { useUserIntials, useUserProfile } from "@/stores/useUserStore";
+import { removeMultipleSpaces, toTitleCase } from "@/utils/string";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
@@ -47,6 +48,7 @@ const PersonalInfo = ({
     getValues,
     setError,
     formState: { errors, isDirty, defaultValues, },
+    setValue
   } = useFormContext<PersonalInfoForm>();
 
   const prevAvatarFile = usePrevious(avatarFile);
@@ -134,6 +136,10 @@ const PersonalInfo = ({
                 w="100%"
                 label="First Name"
                 {...register("user_first_name", {
+                  onChange: (e) =>  {
+                    const format = toTitleCase(removeMultipleSpaces(e.currentTarget.value));
+                    setValue("user_first_name", format);
+                  },
                   required: "First name is required",
                   minLength: {
                     value: 2,
@@ -151,6 +157,10 @@ const PersonalInfo = ({
                 w="100%"
                 label="Last Name"
                 {...register("user_last_name", {
+                  onChange: (e) =>  {
+                    const format = toTitleCase(removeMultipleSpaces(e.currentTarget.value));
+                    setValue("user_last_name", format);
+                  },
                   required: "Last name is required",
                   minLength: {
                     value: 2,
@@ -207,6 +217,10 @@ const PersonalInfo = ({
                 w="100%"
                 label="Job Title"
                 {...register("user_job_title", {
+                  onChange: (e) =>  {
+                    const format = removeMultipleSpaces(e.currentTarget.value);
+                    setValue("user_job_title", format);
+                  },
                   minLength: {
                     value: 2,
                     message: "Job title must have at least 2 characters",
