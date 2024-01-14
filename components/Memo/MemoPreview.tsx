@@ -88,7 +88,7 @@ const MemoPreview = ({ data, teamMemoCount }: Props) => {
   }, [data]);
 
   return (
-    <Paper mt="md" p="md" radius="md">
+    <Paper p="md" radius="md">
       <Text mb="md" weight={700}>
         MEMORANDUM
       </Text>

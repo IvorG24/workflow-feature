@@ -7,13 +7,23 @@ import {
   MemoSignerItem,
   UserTableRow,
 } from "@/utils/types";
-import { Container, LoadingOverlay, Space, Tabs, Title } from "@mantine/core";
+import {
+  Box,
+  Container,
+  Flex,
+  LoadingOverlay,
+  ScrollArea,
+  Stack,
+  Tabs,
+  Title,
+} from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconEye, IconFileDescription } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import MemoForm from "./MemoForm";
 import MemoPreview from "./MemoPreview";
@@ -63,6 +73,7 @@ const CreateMemoFormPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const userFullname = `${user.user_first_name} ${user.user_last_name}`;
+  const laptopView = useMediaQuery("(min-width: 1024px)");
 
   const memoFormMethods = useForm<MemoFormValues>({
     defaultValues: {
@@ -73,8 +84,9 @@ const CreateMemoFormPage = ({
   });
 
   const [activeTab, setActiveTab] = useState("create");
-  const [previewData, setPreviewData] = useState(memoFormMethods.getValues());
   const [isLoading, setIsLoading] = useState(false);
+
+  const currentPreviewData = useWatch({ control: memoFormMethods.control });
 
   const handleCreateMemo = async (data: MemoFormValues) => {
     try {
@@ -158,48 +170,68 @@ const CreateMemoFormPage = ({
     }
   };
 
-  const handleChangeActiveTab = (selectedTab: string) => {
-    const currentFormData = memoFormMethods.getValues();
-    setPreviewData(currentFormData);
-    setActiveTab(selectedTab);
-  };
-
   return (
-    <Container pos="relative">
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
-      <Title order={2} color="dimmed">
-        Create Memo Page
-      </Title>
-      <Space h="xl" />
-      <Tabs
-        variant="pills"
-        value={activeTab}
-        onTabChange={(selectedTab: string) =>
-          handleChangeActiveTab(selectedTab)
-        }
-      >
-        <Tabs.List>
-          <Tabs.Tab value="create" icon={<IconFileDescription size={14} />}>
-            Create
-          </Tabs.Tab>
-          <Tabs.Tab value="preview" icon={<IconEye size={14} />}>
-            Preview
-          </Tabs.Tab>
-        </Tabs.List>
+    <Container maw={1440} pos="relative" p={0}>
+      <Stack spacing="md">
+        <LoadingOverlay visible={isLoading} overlayBlur={2} />
+        <Title order={2} color="dimmed">
+          Create Memo Page
+        </Title>
+        <Tabs
+          variant="pills"
+          value={activeTab}
+          onTabChange={(selectedTab: string) => setActiveTab(selectedTab)}
+        >
+          <Tabs.List>
+            <Tabs.Tab value="create" icon={<IconFileDescription size={14} />}>
+              Create
+            </Tabs.Tab>
+            {!laptopView && (
+              <Tabs.Tab value="preview" icon={<IconEye size={14} />}>
+                Preview
+              </Tabs.Tab>
+            )}
+          </Tabs.List>
 
-        <Tabs.Panel value="create" pt="xs">
-          <FormProvider {...memoFormMethods}>
-            <MemoForm
-              onSubmit={handleCreateMemo}
-              teamMemoSignerList={teamMemoSignerList}
-            />
-          </FormProvider>
-        </Tabs.Panel>
+          <Tabs.Panel value="create" pt="xs">
+            <ScrollArea>
+              <Flex
+                direction="row"
+                gap={{ base: laptopView ? "md" : "" }}
+                align="flex-start"
+              >
+                <Box sx={{ flex: 1 }}>
+                  <FormProvider {...memoFormMethods}>
+                    <MemoForm
+                      onSubmit={handleCreateMemo}
+                      teamMemoSignerList={teamMemoSignerList}
+                    />
+                  </FormProvider>
+                </Box>
+                {laptopView ? (
+                  <Box sx={{ flex: 1 }}>
+                    <MemoPreview
+                      data={currentPreviewData as MemoFormValues}
+                      teamMemoCount={teamMemoCount}
+                    />
+                  </Box>
+                ) : (
+                  <></>
+                )}
+              </Flex>
+            </ScrollArea>
+          </Tabs.Panel>
 
-        <Tabs.Panel value="preview" pt="xs">
-          <MemoPreview data={previewData} teamMemoCount={teamMemoCount} />
-        </Tabs.Panel>
-      </Tabs>
+          <Tabs.Panel value="preview" pt="lg">
+            {!laptopView && (
+              <MemoPreview
+                data={currentPreviewData as MemoFormValues}
+                teamMemoCount={teamMemoCount}
+              />
+            )}
+          </Tabs.Panel>
+        </Tabs>
+      </Stack>
     </Container>
   );
 };
