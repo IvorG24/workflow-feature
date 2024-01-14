@@ -1,6 +1,6 @@
 import { Database } from "@/utils/database";
 import { getBase64 } from "@/utils/functions";
-import { EditMemoType } from "@/utils/types";
+import { ReferenceMemoType } from "@/utils/types";
 import {
   Box,
   Divider,
@@ -19,10 +19,10 @@ import Markdown from "react-markdown";
 import { v4 as uuidv4 } from "uuid";
 
 type Props = {
-  data: EditMemoType;
+  data: ReferenceMemoType;
 };
 
-const EditMemoPreview = ({ data }: Props) => {
+const ReferenceMemoPreview = ({ data }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const memoAuthorFullname = `${data.memo_author_user.user_first_name} ${data.memo_author_user.user_last_name}`;
   const [lineItems, setLineItems] = useState<React.JSX.Element[]>([]);
@@ -100,13 +100,10 @@ const EditMemoPreview = ({ data }: Props) => {
         MEMORANDUM
       </Text>
       <Stack spacing="xs">
-        {/* {memoData({
+        {memoData({
           label: "Reference No.",
-          value: `MEMO-${teamName
-            .toUpperCase()
-            .split(" ")
-            .join("")}-${moment().format("YYYY")}-${teamMemoCount + 1}`,
-        })} */}
+          value: data.memo_reference_number,
+        })}
         {memoData({
           label: "Date",
           value: moment().format("MMMM DD, YYYY"),
@@ -159,7 +156,7 @@ const EditMemoPreview = ({ data }: Props) => {
   );
 };
 
-export default EditMemoPreview;
+export default ReferenceMemoPreview;
 
 const memoData = ({ label, value }: { label: string; value: string }) => {
   return (

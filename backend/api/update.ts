@@ -653,6 +653,9 @@ const processAllMemoLineItems = async (
             memo_line_item_attachment_public_url: attachmentPublicUrl,
             memo_line_item_attachment_storage_bucket: bucket,
             memo_line_item_attachment_name: file.name,
+            memo_line_item_attachment_caption:
+              lineItem.memo_line_item_attachment
+                ?.memo_line_item_attachment_caption ?? "",
           },
         };
       }

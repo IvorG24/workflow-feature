@@ -1,7 +1,7 @@
-import { updateMemo } from "@/backend/api/update";
+import { createReferenceMemo } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { EditMemoType, MemoSignerItem } from "@/utils/types";
+import { EditMemoType, MemoSignerItem, ReferenceMemoType } from "@/utils/types";
 import {
   Box,
   Container,
@@ -19,33 +19,31 @@ import { IconEye, IconFileDescription } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
-import EditMemoForm from "./EditMemoForm";
-import EditMemoPreview from "./EditMemoPreview";
+import ReferenceMemoForm from "./ReferenceMemoForm";
+import ReferenceMemoPreview from "./ReferenceMemoPreview";
 
 type Props = {
-  memo: EditMemoType;
+  memo: ReferenceMemoType;
   teamMemoSignerList: MemoSignerItem[];
 };
 
-type EditMemoFormValues = EditMemoType;
-
-const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
+const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const laptopView = useMediaQuery("(min-width: 1024px)");
 
-  const [updatedMemo, setUpdatedMemo] = useState<EditMemoType>(memo);
+  const [updatedMemo, setUpdatedMemo] = useState<ReferenceMemoType>(memo);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("create");
 
-  const memoFormMethods = useForm<EditMemoFormValues>({
+  const memoFormMethods = useForm<ReferenceMemoType>({
     defaultValues: updatedMemo,
   });
 
   const currentPreviewData = useWatch({ control: memoFormMethods.control });
 
-  const handleUpdateMemo = async (data: EditMemoFormValues) => {
+  const handleCreateMemo = async (data: ReferenceMemoType) => {
     try {
       setIsLoading(true);
       setUpdatedMemo(data);
@@ -101,18 +99,23 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
         return lineItem;
       });
 
-      const editMemoParams = {
+      const referenceMemoParams = {
         ...data,
+        memo_author_user_id: data.memo_author_user.user_id,
+        memo_team_id: activeTeam.team_id,
         memo_signer_list: updateSignerData,
         memo_line_item_list: updateLineItem,
       };
 
-      console.log(editMemoParams);
-
-      await updateMemo(supabaseClient, editMemoParams as EditMemoType);
+      const newMemo = await createReferenceMemo(
+        supabaseClient,
+        referenceMemoParams as ReferenceMemoType
+      );
 
       router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${data.memo_id}`
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${
+          newMemo.memo_id
+        }`
       );
     } catch (error) {
       console.log(error);
@@ -130,7 +133,7 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
       <Stack spacing="md">
         <LoadingOverlay visible={isLoading} overlayBlur={2} />
         <Title order={2} color="dimmed">
-          Edit Memo Page
+          Reference Memo Page
         </Title>
         <Tabs
           variant="pills"
@@ -157,15 +160,15 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
               >
                 <Box sx={{ flex: 1 }}>
                   <FormProvider {...memoFormMethods}>
-                    <EditMemoForm
-                      onSubmit={handleUpdateMemo}
+                    <ReferenceMemoForm
+                      onSubmit={handleCreateMemo}
                       teamMemoSignerList={teamMemoSignerList}
                     />
                   </FormProvider>
                 </Box>
                 {laptopView ? (
                   <Box sx={{ flex: 1 }}>
-                    <EditMemoPreview
+                    <ReferenceMemoPreview
                       data={currentPreviewData as EditMemoType}
                     />
                   </Box>
@@ -178,7 +181,7 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
 
           {!laptopView && (
             <Tabs.Panel value="preview" pt="lg">
-              <EditMemoPreview data={currentPreviewData as EditMemoType} />
+              <ReferenceMemoPreview data={currentPreviewData as EditMemoType} />
             </Tabs.Panel>
           )}
         </Tabs>
@@ -187,4 +190,4 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
   );
 };
 
-export default EditMemoPage;
+export default ReferenceMemoPage;

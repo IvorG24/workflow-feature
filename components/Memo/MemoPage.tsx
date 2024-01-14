@@ -34,7 +34,6 @@ import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import ExportMemoToPdf from "./ExportMemoToPdf";
 
 type Props = {
   memo: MemoType;
@@ -410,11 +409,23 @@ const MemoPage = ({ memo }: Props) => {
               Edit Memo
             </Button>
           )}
-          <ExportMemoToPdf
+          <Button
+            variant="light"
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${
+                  memo.memo_id
+                }/reference`
+              )
+            }
+          >
+            Reference Memo
+          </Button>
+          {/* <ExportMemoToPdf
             memo={memo}
             currentSignedSignerList={currentSignedSignerList}
             sortMemoLineItems={sortMemoLineItems}
-          />
+          /> */}
         </Group>
       </Group>
       <Paper mt="md" p="md" radius="md">
@@ -425,6 +436,10 @@ const MemoPage = ({ memo }: Props) => {
           {renderMemoDetails({
             label: "Reference No.",
             value: memo.memo_reference_number,
+          })}
+          {renderMemoDetails({
+            label: "Version",
+            value: memo.memo_version,
           })}
           {renderMemoDetails({
             label: "Date",
@@ -530,7 +545,15 @@ const MemoPage = ({ memo }: Props) => {
                 const readerFullname = `${reader.user_first_name} ${reader.user_last_name}`;
                 return (
                   <Group key={reader.memo_read_receipt_id}>
-                    <Avatar src={reader.user_avatar} radius="xl" />
+                    <Avatar
+                      src={reader.user_avatar}
+                      radius="xl"
+                      color={getAvatarColor(
+                        Number(`${reader.user_id.charCodeAt(0)}`)
+                      )}
+                    >
+                      {getInitials(readerFullname)}
+                    </Avatar>
                     <Text>{readerFullname}</Text>
                   </Group>
                 );
@@ -547,7 +570,7 @@ const MemoPage = ({ memo }: Props) => {
           <Modal
             title="Memo Agreement Receipt"
             opened={openAgreementListModal}
-            onClose={() => setOpenReaderListModal(false)}
+            onClose={() => setOpenAgreementListModal(false)}
             centered
             withCloseButton
           >
@@ -556,7 +579,15 @@ const MemoPage = ({ memo }: Props) => {
                 const memberFullname = `${member.user_first_name} ${member.user_last_name}`;
                 return (
                   <Group key={member.memo_agreement_id}>
-                    <Avatar src={member.user_avatar} radius="xl" />
+                    <Avatar
+                      src={member.user_avatar}
+                      radius="xl"
+                      color={getAvatarColor(
+                        Number(`${member.user_id.charCodeAt(0)}`)
+                      )}
+                    >
+                      {getInitials(memberFullname)}
+                    </Avatar>
                     <Text>{memberFullname}</Text>
                   </Group>
                 );

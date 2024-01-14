@@ -22,6 +22,7 @@ import {
   MemoType,
   NotificationOnLoad,
   NotificationTableRow,
+  ReferenceMemoType,
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
@@ -4301,4 +4302,20 @@ export const getMemoList = async (
   if (error) throw Error;
 
   return data as { data: MemoListItemType[]; count: number };
+};
+
+// Get memo
+export const getReferenceMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memo_id: string; current_user_id: string }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_memo_reference_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error || !data) throw Error;
+
+  return data as unknown as ReferenceMemoType;
 };

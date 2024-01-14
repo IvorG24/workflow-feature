@@ -21,6 +21,7 @@ import {
   MemoLineItem,
   MemoTableRow,
   NotificationTableInsert,
+  ReferenceMemoType,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestTableRow,
@@ -1142,4 +1143,115 @@ export const agreeToMemo = async (
   }
 
   return null;
+};
+
+// create reference memo
+// update memo
+export const createReferenceMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: ReferenceMemoType
+) => {
+  const memoId = uuidv4();
+  const updatedLineItemData: ReferenceMemoType["memo_line_item_list"] =
+    await processReferenceMemoLineItems(
+      params.memo_line_item_list,
+      supabaseClient,
+      memoId
+    );
+
+  const memoSignerTableValues = params.memo_signer_list
+    .map(
+      (signer, signerIndex) =>
+        `('${signer.memo_signer_is_primary}', '${signerIndex}', '${signer.memo_signer_team_member?.team_member_id}', '${memoId}')`
+    )
+    .join(",");
+
+  const memoLineItemTableValues = updatedLineItemData
+    .map(
+      (lineItem, lineItemIndex) =>
+        `('${lineItem.memo_line_item_id}', '${lineItem.memo_line_item_content}', '${lineItemIndex}', '${memoId}')`
+    )
+    .join(",");
+
+  const memoLineItemAttachmentTableValues = updatedLineItemData
+    .filter(
+      (lineItem) =>
+        lineItem.memo_line_item_attachment?.memo_line_item_attachment_name
+    )
+    .map(
+      ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
+        `('${lineItemAttachment?.memo_line_item_attachment_name}', '${
+          lineItemAttachment?.memo_line_item_attachment_caption ?? ""
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_storage_bucket
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_public_url
+        }', '${memo_line_item_id}')`
+    )
+    .join(",");
+
+  const input_data = {
+    memo_id: memoId,
+    memo_subject: params.memo_subject,
+    memo_reference_number: params.memo_reference_number,
+    memo_team_id: params.memo_team_id,
+    memo_author_user_id: params.memo_author_user_id,
+    memoSignerTableValues,
+    memoLineItemTableValues,
+    memoLineItemAttachmentTableValues,
+  };
+
+  const { data, error } = await supabaseClient.rpc("create_reference_memo", {
+    input_data,
+  });
+
+  if (error) throw Error;
+
+  return data as unknown as ReferenceMemoType;
+};
+
+const processReferenceMemoLineItems = async (
+  lineItemData: ReferenceMemoType["memo_line_item_list"],
+  supabaseClient: SupabaseClient<Database>,
+  memoId: string
+) => {
+  const processedLineItems = await Promise.all(
+    lineItemData.map(async (lineItem) => {
+      const memoLineItemId = uuidv4();
+      const file =
+        lineItem.memo_line_item_attachment &&
+        lineItem.memo_line_item_attachment.memo_line_item_attachment_file;
+
+      if (file) {
+        const bucket = "MEMO_ATTACHMENTS";
+        const attachmentPublicUrl = await uploadImage(supabaseClient, {
+          id: `${lineItem.memo_line_item_id}-${file.name}`,
+          image: file,
+          bucket,
+        });
+
+        return {
+          memo_line_item_id: memoLineItemId,
+          memo_line_item_content: lineItem.memo_line_item_content,
+          memo_line_item_memo_id: memoId,
+          memo_line_item_attachment: {
+            memo_line_item_attachment_public_url: attachmentPublicUrl,
+            memo_line_item_attachment_storage_bucket: bucket,
+            memo_line_item_attachment_name: file.name,
+            memo_line_item_attachment_caption:
+              lineItem.memo_line_item_attachment
+                ?.memo_line_item_attachment_caption ?? "",
+          },
+        };
+      }
+
+      return {
+        memo_line_item_id: memoLineItemId,
+        memo_line_item_content: lineItem.memo_line_item_content,
+        memo_line_item_memo_id: memoId,
+      };
+    })
+  );
+
+  return JSON.parse(JSON.stringify(processedLineItems));
 };
