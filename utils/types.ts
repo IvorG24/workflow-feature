@@ -1210,3 +1210,47 @@ export type MemoListItemType = MemoTableRow & {
   memo_status: string;
   memo_date_updated: string;
 } & { memo_signer_list: MemoType["memo_signer_list"] };
+
+export type EditMemoType = MemoTableRow & {
+  memo_author_user: UserTableRow;
+  memo_status: string;
+  memo_date_updated: string;
+} & {
+  memo_signer_list: (MemoSignerTableRow & { signature_public_url?: string } & {
+    memo_signer_team_member?: {
+      team_member_id: string;
+      user: {
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string | null;
+        user_job_title: string | null;
+        user_id: string;
+      } & {
+        user_signature_attachment?: {
+          user_signature_attachment_id: string;
+          attachment_value: string;
+        };
+      };
+    };
+  })[];
+} & {
+  memo_line_item_list: (MemoLineItemTableRow & {
+    memo_line_item_attachment?: MemoLineItemAttachmentTableRow & {
+      memo_line_item_attachment_file?: File;
+    };
+  })[];
+} & {
+  memo_read_receipt_list: (MemoReadReceiptTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+  })[];
+} & {
+  memo_agreement_list: (MemoAgreementTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+  })[];
+};

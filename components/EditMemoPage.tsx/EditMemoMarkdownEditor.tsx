@@ -10,7 +10,7 @@ type Props = {
   onChange: (value: string) => void;
 };
 
-const MemoMarkdownEditor = ({ value, onChange }: Props) => {
+const EditMemoMarkdownEditor = ({ value, onChange }: Props) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -45,4 +45,4 @@ const MemoMarkdownEditor = ({ value, onChange }: Props) => {
   );
 };
 
-export default MemoMarkdownEditor;
+export default EditMemoMarkdownEditor;

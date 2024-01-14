@@ -31,6 +31,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { IconCircleDashed, IconCircleX } from "@tabler/icons-react";
 import moment from "moment";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import ExportMemoToPdf from "./ExportMemoToPdf";
@@ -218,8 +219,11 @@ const MemoPage = ({ memo }: Props) => {
   const userTeamMemberData = useUserTeamMember();
   const activeTeam = useActiveTeam();
   const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
 
   const { memo_author_user } = memo;
+  const isUserAuthor =
+    userTeamMemberData?.team_member_user_id === memo_author_user.user_id;
   const sortMemoLineItems = memo.memo_line_item_list.sort(
     (a, b) => a.memo_line_item_order - b.memo_line_item_order
   );
@@ -311,6 +315,7 @@ const MemoPage = ({ memo }: Props) => {
           memo_agreement_date_created:
             newAgreementData.memo_agreement_date_created,
           memo_agreement_id: newAgreementData.memo_agreement_id,
+          memo_agreement_memo_id: newAgreementData.memo_agreement_memo_id,
           ...user_data,
         };
         setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
@@ -344,6 +349,7 @@ const MemoPage = ({ memo }: Props) => {
           memo_agreement_date_created:
             newAgreementData.memo_agreement_date_created,
           memo_agreement_id: newAgreementData.memo_agreement_id,
+          memo_agreement_memo_id: newAgreementData.memo_agreement_memo_id,
           ...user_data,
         };
         setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
@@ -390,11 +396,26 @@ const MemoPage = ({ memo }: Props) => {
         <Title order={3} color="dimmed">
           Memo Page
         </Title>
-        <ExportMemoToPdf
-          memo={memo}
-          currentSignedSignerList={currentSignedSignerList}
-          sortMemoLineItems={sortMemoLineItems}
-        />
+        <Group spacing="sm">
+          {isUserAuthor && currentMemoStatus === "PENDING" && (
+            <Button
+              onClick={() =>
+                router.push(
+                  `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${
+                    memo.memo_id
+                  }/edit`
+                )
+              }
+            >
+              Edit Memo
+            </Button>
+          )}
+          <ExportMemoToPdf
+            memo={memo}
+            currentSignedSignerList={currentSignedSignerList}
+            sortMemoLineItems={sortMemoLineItems}
+          />
+        </Group>
       </Group>
       <Paper mt="md" p="md" radius="md">
         <Text mb="md" weight={700}>

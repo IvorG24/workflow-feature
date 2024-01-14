@@ -19,6 +19,7 @@ import {
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
   MemoListItemType,
+  MemoType,
   NotificationOnLoad,
   NotificationTableRow,
   RequestByFormType,
@@ -4235,7 +4236,7 @@ export const getMemo = async (
   });
   if (error || !data) throw Error;
 
-  return data;
+  return data as MemoType;
 };
 
 // Get memo list

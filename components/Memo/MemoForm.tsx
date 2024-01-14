@@ -1,5 +1,5 @@
 import { MAX_FILE_SIZE } from "@/utils/constant";
-import { checkIfHtmlStringIsEmpty, getInitials } from "@/utils/string";
+import { getInitials } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { MemoSignerItem } from "@/utils/types";
 import {
@@ -214,11 +214,6 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                   )}
                   rules={{
                     required: "This field is required",
-                    validate: {
-                      checkIfEmpty: (value) =>
-                        !checkIfHtmlStringIsEmpty(value) ||
-                        "This field is required",
-                    },
                   }}
                 />
                 {errors?.lineItem?.[lineItemIndex]?.line_item_content
@@ -250,7 +245,6 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                       if (!v) {
                         return true;
                       }
-                      console.log(v.size, MAX_FILE_SIZE);
                       return (
                         v.size < MAX_FILE_SIZE ||
                         "Image exceeds 5mb. Please use an image below 5mb."

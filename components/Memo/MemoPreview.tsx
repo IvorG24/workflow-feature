@@ -1,7 +1,5 @@
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import { getBase64 } from "@/utils/functions";
-import { parseHtmlToMarkdown } from "@/utils/string";
 import {
   Box,
   Divider,
@@ -22,13 +20,10 @@ import { MemoFormValues } from "./CreateMemoFormPage";
 
 type Props = {
   data: MemoFormValues;
-  teamMemoCount: number;
 };
 
-const MemoPreview = ({ data, teamMemoCount }: Props) => {
+const MemoPreview = ({ data }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const team = useActiveTeam();
-  const teamName = team.team_name ?? "";
 
   const [lineItems, setLineItems] = useState<React.JSX.Element[]>([]);
   const signerListPreview = useMemo(() => {
@@ -60,9 +55,7 @@ const MemoPreview = ({ data, teamMemoCount }: Props) => {
 
           return (
             <Box key={`lineItem-${lineItemIndex}`}>
-              <Markdown>
-                {parseHtmlToMarkdown(lineItem.line_item_content)}
-              </Markdown>
+              <Markdown>{lineItem.line_item_content}</Markdown>
               {lineItem.line_item_image_attachment && (
                 <Box maw={900} mah={600}>
                   <MantineImage
@@ -93,13 +86,13 @@ const MemoPreview = ({ data, teamMemoCount }: Props) => {
         MEMORANDUM
       </Text>
       <Stack spacing="xs">
-        {memoData({
+        {/* {memoData({
           label: "Reference No.",
           value: `MEMO-${teamName
             .toUpperCase()
             .split(" ")
             .join("")}-${moment().format("YYYY")}-${teamMemoCount + 1}`,
-        })}
+        })} */}
         {memoData({
           label: "Date",
           value: moment().format("MMMM DD, YYYY"),

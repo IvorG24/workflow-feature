@@ -1,5 +1,4 @@
 import moment from "moment";
-import { NodeHtmlMarkdown } from "node-html-markdown";
 
 export const isValidTeamName = (name: string): boolean => {
   const allowedCharsRegex = /^[a-zA-Z0-9 ,;\/?:@&=+$\-_.!]*$/;
@@ -97,24 +96,6 @@ export const convertTimestampToDateTime = (
   }
 };
 
-export const parseHtmlToMarkdown = (html: string) => {
-  const htmlToMarkdownParser = new NodeHtmlMarkdown();
-
-  return htmlToMarkdownParser.translate(html);
-};
-
-export const checkIfHtmlStringIsEmpty = (html: string): boolean => {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-  const element = doc.body.firstChild as Element;
-  // Check if element exists and is an Element node
-  if (element && element.nodeType === Node.ELEMENT_NODE) {
-    return element.innerHTML.trim() === "";
-  }
-
-  return true;
-};
-
 export const getInitials = (fullname: string) => {
   const words = fullname.trim().split(" ");
   const initials = words.map((word) => word[0].toUpperCase()).join("");
@@ -138,4 +119,10 @@ export const addAmpersandBetweenWords = (searchString: string) => {
   }
 
   return sanitizedString;
+};
+
+export const convertDateNowToTimestampz = () => {
+  const currentTimestamp = new Date(Date.now());
+  const supabaseTimestampz = currentTimestamp.toISOString();
+  return supabaseTimestampz;
 };

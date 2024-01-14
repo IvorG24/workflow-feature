@@ -3,6 +3,7 @@ import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/Approver
 import { Database } from "@/utils/database";
 import {
   AppType,
+  EditMemoType,
   MemberRoleType,
   MemoAgreementTableRow,
   SignerTableRow,
@@ -14,6 +15,7 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentDate } from "./get";
+import { uploadImage } from "./post";
 
 // Update Team
 export const updateTeam = async (
@@ -511,7 +513,7 @@ export const updateLookup = async (
   };
 };
 
-// approve or rejecet memo
+// approve or reject memo
 export const approveOrRejectMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -566,4 +568,102 @@ export const approveOrRejectMemo = async (
       };
     };
   };
+};
+
+// update memo
+export const updateMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: EditMemoType
+) => {
+  const updatedLineItemData: EditMemoType["memo_line_item_list"] =
+    await processAllMemoLineItems(params.memo_line_item_list, supabaseClient);
+
+  const memoSignerTableValues = params.memo_signer_list
+    .map(
+      (signer, signerIndex) =>
+        `('${signer.memo_signer_is_primary}', '${signerIndex}', '${signer.memo_signer_team_member?.team_member_id}', '${params.memo_id}')`
+    )
+    .join(",");
+
+  const memoLineItemTableValues = updatedLineItemData
+    .map(
+      (lineItem, lineItemIndex) =>
+        `('${lineItem.memo_line_item_id}', '${lineItem.memo_line_item_content}', '${lineItemIndex}', '${params.memo_id}')`
+    )
+    .join(",");
+
+  const memoLineItemAttachmentTableValues = updatedLineItemData
+    .filter(
+      (lineItem) =>
+        lineItem.memo_line_item_attachment?.memo_line_item_attachment_name
+    )
+    .map(
+      ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
+        `('${lineItemAttachment?.memo_line_item_attachment_name}', '${
+          lineItemAttachment?.memo_line_item_attachment_caption ?? ""
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_storage_bucket
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_public_url
+        }', '${memo_line_item_id}')`
+    )
+    .join(",");
+
+  const memoLineItemIdFilter = params.memo_line_item_list
+    .map((lineItem) => `'${lineItem.memo_line_item_id}'`)
+    .join(",");
+
+  const input_data = {
+    memo_id: params.memo_id,
+    memo_subject: params.memo_subject,
+    memoSignerTableValues,
+    memoLineItemTableValues,
+    memoLineItemAttachmentTableValues,
+    memoLineItemIdFilter,
+  };
+
+  const { error } = await supabaseClient.rpc("edit_memo", { input_data });
+  console.log(error);
+  if (error) throw Error;
+};
+
+const processAllMemoLineItems = async (
+  lineItemData: EditMemoType["memo_line_item_list"],
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const processedLineItems = await Promise.all(
+    lineItemData.map(async (lineItem) => {
+      const file =
+        lineItem.memo_line_item_attachment &&
+        lineItem.memo_line_item_attachment.memo_line_item_attachment_file;
+
+      if (file) {
+        const bucket = "MEMO_ATTACHMENTS";
+        const attachmentPublicUrl = await uploadImage(supabaseClient, {
+          id: `${lineItem.memo_line_item_id}-${file.name}`,
+          image: file,
+          bucket,
+        });
+
+        return {
+          memo_line_item_id: lineItem.memo_line_item_id,
+          memo_line_item_content: lineItem.memo_line_item_content,
+          memo_line_item_memo_id: lineItem.memo_line_item_memo_id,
+          memo_line_item_attachment: {
+            memo_line_item_attachment_public_url: attachmentPublicUrl,
+            memo_line_item_attachment_storage_bucket: bucket,
+            memo_line_item_attachment_name: file.name,
+          },
+        };
+      }
+
+      return {
+        memo_line_item_id: lineItem.memo_line_item_id,
+        memo_line_item_content: lineItem.memo_line_item_content,
+        memo_line_item_memo_id: lineItem.memo_line_item_memo_id,
+      };
+    })
+  );
+
+  return JSON.parse(JSON.stringify(processedLineItems));
 };

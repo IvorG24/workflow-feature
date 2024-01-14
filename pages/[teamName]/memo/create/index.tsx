@@ -1,8 +1,4 @@
-import {
-  getTeamMemoCount,
-  getTeamMemoSignerList,
-  getUser,
-} from "@/backend/api/get";
+import { getTeamMemoSignerList, getUser } from "@/backend/api/get";
 import CreateMemoFormPage from "@/components/Memo/CreateMemoFormPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -24,17 +20,12 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           },
         };
       }
-
-      const teamMemoCount = await getTeamMemoCount(supabaseClient, {
-        teamId: userActiveTeam.team_id,
-      });
-
       const teamMemoSignerList = await getTeamMemoSignerList(supabaseClient, {
         teamId: userActiveTeam.team_id,
       });
 
       return {
-        props: { user, teamMemoCount, teamMemoSignerList },
+        props: { user, teamMemoSignerList },
       };
     } catch (error) {
       console.error(error);
@@ -50,19 +41,14 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
 type Props = {
   user: UserTableRow;
-  teamMemoCount: number;
   teamMemoSignerList: MemoSignerItem[];
 };
 
-const Page = ({ user, teamMemoCount, teamMemoSignerList }: Props) => {
+const Page = ({ user, teamMemoSignerList }: Props) => {
   return (
     <>
       <Meta description="Create Memo Page" url="/teamName/memo/" />
-      <CreateMemoFormPage
-        user={user}
-        teamMemoCount={teamMemoCount}
-        teamMemoSignerList={teamMemoSignerList}
-      />
+      <CreateMemoFormPage user={user} teamMemoSignerList={teamMemoSignerList} />
     </>
   );
 };

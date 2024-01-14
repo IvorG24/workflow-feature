@@ -1,7 +1,7 @@
 import { createTeamMemo } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey, parseHtmlToMarkdown } from "@/utils/string";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   AttachmentTableRow,
   MemoSignerItem,
@@ -52,7 +52,6 @@ export type MemoFormValues = {
 
 type Props = {
   user: UserTableRow;
-  teamMemoCount: number;
   teamMemoSignerList: MemoSignerItem[];
 };
 
@@ -64,11 +63,7 @@ export const getDefaultMemoLineItemValue = ({
   line_item_content: content,
 });
 
-const CreateMemoFormPage = ({
-  user,
-  teamMemoCount,
-  teamMemoSignerList,
-}: Props) => {
+const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -122,9 +117,7 @@ const CreateMemoFormPage = ({
 
       const lineItemData = data.lineItem.map((lineItem) => {
         const newLineItem = {
-          memo_line_item_content: parseHtmlToMarkdown(
-            lineItem.line_item_content
-          ),
+          memo_line_item_content: lineItem.line_item_content,
         };
 
         if (lineItem.line_item_image_attachment) {
@@ -210,10 +203,7 @@ const CreateMemoFormPage = ({
                 </Box>
                 {laptopView ? (
                   <Box sx={{ flex: 1 }}>
-                    <MemoPreview
-                      data={currentPreviewData as MemoFormValues}
-                      teamMemoCount={teamMemoCount}
-                    />
+                    <MemoPreview data={currentPreviewData as MemoFormValues} />
                   </Box>
                 ) : (
                   <></>
@@ -224,10 +214,7 @@ const CreateMemoFormPage = ({
 
           <Tabs.Panel value="preview" pt="lg">
             {!laptopView && (
-              <MemoPreview
-                data={currentPreviewData as MemoFormValues}
-                teamMemoCount={teamMemoCount}
-              />
+              <MemoPreview data={currentPreviewData as MemoFormValues} />
             )}
           </Tabs.Panel>
         </Tabs>
