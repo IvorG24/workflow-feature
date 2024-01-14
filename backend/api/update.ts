@@ -4,6 +4,7 @@ import { Database } from "@/utils/database";
 import {
   AppType,
   MemberRoleType,
+  MemoAgreementTableRow,
   SignerTableRow,
   TeamTableRow,
   TeamTableUpdate,
@@ -518,9 +519,16 @@ export const approveOrRejectMemo = async (
     memoId: string;
     action: string;
     isPrimarySigner: boolean;
+    memoSignerTeamMemberId: string;
   }
 ) => {
-  const { memoSignerId, memoId, action, isPrimarySigner } = params;
+  const {
+    memoSignerId,
+    memoId,
+    action,
+    isPrimarySigner,
+    memoSignerTeamMemberId,
+  } = params;
   const { error } = await supabaseClient
     .from("memo_signer_table")
     .update({ memo_signer_status: action })
@@ -535,4 +543,27 @@ export const approveOrRejectMemo = async (
     console.log(error);
     if (error) throw Error;
   }
+
+  const { data, error: MemoAgreementError } = await supabaseClient
+    .from("memo_agreement_table")
+    .insert({
+      memo_agreement_by_team_member_id: memoSignerTeamMemberId,
+      memo_agreement_memo_id: memoId,
+    })
+    .select(
+      "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name))"
+    )
+    .maybeSingle();
+  if (MemoAgreementError) throw Error;
+
+  return data as unknown as MemoAgreementTableRow & {
+    memo_agreement_by_team_member: {
+      user_data: {
+        user_avatar: string;
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+      };
+    };
+  };
 };

@@ -366,7 +366,7 @@ const MemoListPage = ({
               color="orange"
               mt="xs"
             >
-              No request/s found.
+              No memo found.
             </Alert>
           </Text>
         )}

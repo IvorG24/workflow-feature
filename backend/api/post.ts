@@ -17,6 +17,7 @@ import {
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
+  MemoAgreementTableRow,
   MemoLineItem,
   MemoTableRow,
   NotificationTableInsert,
@@ -1098,3 +1099,47 @@ const processAllMemoLineItems = async (
 };
 
 // End create memo
+
+// Agree to memo
+
+export const agreeToMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memoId: string; teamMemberId: string }
+) => {
+  const { memoId, teamMemberId } = params;
+
+  const { count, error: CountError } = await supabaseClient
+    .from("memo_agreement_table")
+    .select("*", { count: "exact" })
+    .eq("memo_agreement_by_team_member_id", teamMemberId)
+    .eq("memo_agreement_memo_id", memoId);
+
+  if (CountError) throw Error;
+
+  if (Number(count) === 0) {
+    const { data, error } = await supabaseClient
+      .from("memo_agreement_table")
+      .insert({
+        memo_agreement_by_team_member_id: teamMemberId,
+        memo_agreement_memo_id: memoId,
+      })
+      .select(
+        "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name))"
+      )
+      .maybeSingle();
+    if (error) throw Error;
+
+    return data as unknown as MemoAgreementTableRow & {
+      memo_agreement_by_team_member: {
+        user_data: {
+          user_avatar: string;
+          user_id: string;
+          user_first_name: string;
+          user_last_name: string;
+        };
+      };
+    };
+  }
+
+  return null;
+};

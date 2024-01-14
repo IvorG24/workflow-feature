@@ -4228,12 +4228,11 @@ export const getTeamMemoSignerList = async (
 // Get memo
 export const getMemo = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { memoId: string }
+  params: { memo_id: string; current_user_id: string }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_memo_on_load", {
-    memo_id: params.memoId,
+    input_data: params,
   });
-
   if (error || !data) throw Error;
 
   return data;

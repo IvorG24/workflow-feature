@@ -1,12 +1,13 @@
-import { createNotification } from "@/backend/api/post";
+import { agreeToMemo, createNotification } from "@/backend/api/post";
 import { approveOrRejectMemo } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
-import { getStatusToColor } from "@/utils/styling";
+import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
+import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { MemoType } from "@/utils/types";
 import {
+  Avatar,
   Badge,
   Box,
   Button,
@@ -16,12 +17,14 @@ import {
   Group,
   Image,
   LoadingOverlay,
+  Modal,
   Paper,
   Space,
   Stack,
   Text,
   ThemeIcon,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -125,6 +128,92 @@ const renderSignerItem = (
   );
 };
 
+const renderMemoReadReceiptSection = (
+  readerList: MemoType["memo_read_receipt_list"],
+  handleViewReaderList: () => void
+) => {
+  return (
+    <Paper mt="md" p="md" radius="md">
+      <Group mb="sm" position="apart">
+        <Box>
+          <Title order={4}>Reader Receipt</Title>
+          <Text size="xs">
+            This memo has been read by the following members.
+          </Text>
+        </Box>
+        <Button onClick={handleViewReaderList} size="xs" color="orange">
+          List View
+        </Button>
+      </Group>
+      <Tooltip.Group>
+        <Avatar.Group sx={{ flexWrap: "wrap" }} spacing="sm">
+          {readerList.map((reader) => (
+            <Tooltip
+              key={reader.memo_read_receipt_id}
+              label={`${reader.user_first_name} ${reader.user_last_name}`}
+            >
+              <Avatar
+                src={reader.user_avatar}
+                radius="xl"
+                color={getAvatarColor(
+                  Number(`${reader.user_id.charCodeAt(0)}`)
+                )}
+              >
+                {getInitials(
+                  `${reader.user_first_name} ${reader.user_last_name}`
+                )}
+              </Avatar>
+            </Tooltip>
+          ))}
+        </Avatar.Group>
+      </Tooltip.Group>
+    </Paper>
+  );
+};
+
+const renderAgreementReceiptSection = (
+  agreementList: MemoType["memo_agreement_list"],
+  handleViewAgreementList: () => void
+) => {
+  return (
+    <Paper mt="md" p="md" radius="md">
+      <Group mb="sm" position="apart">
+        <Box>
+          <Title order={4}>Agreement Receipt</Title>
+          <Text size="xs">
+            This memo has been agreed by the following members.
+          </Text>
+        </Box>
+        <Button onClick={handleViewAgreementList} size="xs" color="orange">
+          List View
+        </Button>
+      </Group>
+      <Tooltip.Group>
+        <Avatar.Group sx={{ flexWrap: "wrap" }} spacing="sm">
+          {agreementList.map((member) => (
+            <Tooltip
+              key={member.memo_agreement_id}
+              label={`${member.user_first_name} ${member.user_last_name}`}
+            >
+              <Avatar
+                src={member.user_avatar}
+                radius="xl"
+                color={getAvatarColor(
+                  Number(`${member.user_id.charCodeAt(0)}`)
+                )}
+              >
+                {getInitials(
+                  `${member.user_first_name} ${member.user_last_name}`
+                )}
+              </Avatar>
+            </Tooltip>
+          ))}
+        </Avatar.Group>
+      </Tooltip.Group>
+    </Paper>
+  );
+};
+
 const MemoPage = ({ memo }: Props) => {
   const userTeamMemberData = useUserTeamMember();
   const activeTeam = useActiveTeam();
@@ -141,7 +230,6 @@ const MemoPage = ({ memo }: Props) => {
   const signedSignerList = memo.memo_signer_list.filter((signer) =>
     ["APPROVED", "REJECTED"].includes(signer.memo_signer_status)
   );
-
   const [currentMemoStatus, setCurrentMemoStatus] = useState(memo.memo_status);
   const [userSignerData, setUserSignerData] = useState<
     MemoType["memo_signer_list"][0] | null
@@ -153,7 +241,13 @@ const MemoPage = ({ memo }: Props) => {
     useState(pendingSignerList);
   const [currentSignedSignerList, setCurrentSignedSignerList] =
     useState(signedSignerList);
+  const [currentAgreementList, setCurrentAgreementList] = useState(
+    memo.memo_agreement_list
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [openReaderListModal, setOpenReaderListModal] = useState(false);
+  const [openAgreementListModal, setOpenAgreementListModal] = useState(false);
+  const [hasUserAgreedToMemo, setHasUserAgreedToMemo] = useState(false);
 
   const handleApproveOrRejectMemo = async (
     action: string,
@@ -161,14 +255,17 @@ const MemoPage = ({ memo }: Props) => {
     isPrimarySigner: boolean
   ) => {
     try {
-      const signer = userSignerData?.memo_signer_team_member.user;
+      if (!userSignerData) return;
+      const signer = userSignerData.memo_signer_team_member.user;
 
       setIsLoading(true);
-      await approveOrRejectMemo(supabaseClient, {
+      const newAgreementData = await approveOrRejectMemo(supabaseClient, {
         memoSignerId: signerId,
         memoId: memo.memo_id,
         action,
         isPrimarySigner,
+        memoSignerTeamMemberId:
+          userSignerData.memo_signer_team_member.team_member_id,
       });
 
       await createNotification(supabaseClient, {
@@ -205,6 +302,20 @@ const MemoPage = ({ memo }: Props) => {
         updatedSignerData as MemoType["memo_signer_list"][0],
       ];
       setCurrentSignedSignerList(updatedSignedSignerList);
+
+      if (newAgreementData) {
+        const { user_data } = newAgreementData.memo_agreement_by_team_member;
+        const newUserAgreementData = {
+          memo_agreement_by_team_member_id:
+            newAgreementData.memo_agreement_by_team_member_id,
+          memo_agreement_date_created:
+            newAgreementData.memo_agreement_date_created,
+          memo_agreement_id: newAgreementData.memo_agreement_id,
+          ...user_data,
+        };
+        setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
+        setHasUserAgreedToMemo(true);
+      }
     } catch (error) {
       console.log(error);
       notifications.show({
@@ -216,8 +327,41 @@ const MemoPage = ({ memo }: Props) => {
     }
   };
 
+  const handleAgreeToMemo = async () => {
+    try {
+      if (!userTeamMemberData) return;
+      setIsLoading(true);
+      const newAgreementData = await agreeToMemo(supabaseClient, {
+        memoId: memo.memo_id,
+        teamMemberId: userTeamMemberData.team_member_id,
+      });
+
+      if (newAgreementData) {
+        const { user_data } = newAgreementData.memo_agreement_by_team_member;
+        const newUserAgreementData = {
+          memo_agreement_by_team_member_id:
+            newAgreementData.memo_agreement_by_team_member_id,
+          memo_agreement_date_created:
+            newAgreementData.memo_agreement_date_created,
+          memo_agreement_id: newAgreementData.memo_agreement_id,
+          ...user_data,
+        };
+        setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
+        setHasUserAgreedToMemo(true);
+      }
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Failed to agree to memo",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const userSignerData = pendingSignerList.find(
+    const userSignerData = memo.memo_signer_list.find(
       (signer) =>
         signer.memo_signer_team_member.team_member_id ===
         userTeamMemberData?.team_member_id
@@ -226,6 +370,16 @@ const MemoPage = ({ memo }: Props) => {
     if (userSignerData) {
       setUserSignerData(userSignerData);
       setUserSignerStatus(userSignerData.memo_signer_status);
+    }
+
+    const userAgreementData = memo.memo_agreement_list.find(
+      (member) =>
+        member.memo_agreement_by_team_member_id ===
+        userTeamMemberData?.team_member_id
+    );
+
+    if (userAgreementData) {
+      setHasUserAgreedToMemo(userAgreementData !== undefined);
     }
   }, [userTeamMemberData]);
 
@@ -301,9 +455,7 @@ const MemoPage = ({ memo }: Props) => {
       {currentPendingSignerList.length > 0 && (
         <Paper mt="xl" p="md" radius="md">
           <Stack>
-            <Title order={3} color="dimmed">
-              Signers
-            </Title>
+            <Title order={4}>Signers</Title>
             {currentPendingSignerList.map((signer) => {
               const { user_first_name, user_last_name } =
                 signer.memo_signer_team_member.user;
@@ -340,7 +492,64 @@ const MemoPage = ({ memo }: Props) => {
           </Stack>
         </Paper>
       )}
-      {userSignerStatus === "PENDING" ? (
+      {memo.memo_read_receipt_list.length > 0 && (
+        <>
+          {renderMemoReadReceiptSection(memo.memo_read_receipt_list, () =>
+            setOpenReaderListModal(true)
+          )}
+          <Modal
+            title="Memo Reader Receipt"
+            opened={openReaderListModal}
+            onClose={() => setOpenReaderListModal(false)}
+            centered
+            withCloseButton
+          >
+            <Stack>
+              {memo.memo_read_receipt_list.map((reader) => {
+                const readerFullname = `${reader.user_first_name} ${reader.user_last_name}`;
+                return (
+                  <Group key={reader.memo_read_receipt_id}>
+                    <Avatar src={reader.user_avatar} radius="xl" />
+                    <Text>{readerFullname}</Text>
+                  </Group>
+                );
+              })}
+            </Stack>
+          </Modal>
+        </>
+      )}
+      {currentAgreementList.length > 0 && (
+        <>
+          {renderAgreementReceiptSection(memo.memo_agreement_list, () =>
+            setOpenAgreementListModal(true)
+          )}
+          <Modal
+            title="Memo Agreement Receipt"
+            opened={openAgreementListModal}
+            onClose={() => setOpenReaderListModal(false)}
+            centered
+            withCloseButton
+          >
+            <Stack>
+              {currentAgreementList.map((member) => {
+                const memberFullname = `${member.user_first_name} ${member.user_last_name}`;
+                return (
+                  <Group key={member.memo_agreement_id}>
+                    <Avatar src={member.user_avatar} radius="xl" />
+                    <Text>{memberFullname}</Text>
+                  </Group>
+                );
+              })}
+            </Stack>
+          </Modal>
+        </>
+      )}
+      {!userSignerData && !hasUserAgreedToMemo && (
+        <Button mt="xl" fullWidth onClick={handleAgreeToMemo}>
+          Agree to this Memo
+        </Button>
+      )}
+      {userSignerData && userSignerStatus === "PENDING" ? (
         <Stack spacing="xs" mt="xl">
           <Button
             color="green"

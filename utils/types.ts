@@ -233,6 +233,20 @@ export type MemoLineItemAttachmentTableInsert =
 export type MemoLineItemAttachmentTableUpdate =
   Database["public"]["Tables"]["memo_line_item_attachment_table"]["Update"];
 
+export type MemoReadReceiptTableRow =
+  Database["public"]["Tables"]["memo_read_receipt_table"]["Row"];
+export type MemoReadReceiptTableInsert =
+  Database["public"]["Tables"]["memo_read_receipt_table"]["Insert"];
+export type MemoReadReceiptTableUpdate =
+  Database["public"]["Tables"]["memo_read_receipt_table"]["Update"];
+
+export type MemoAgreementTableRow =
+  Database["public"]["Tables"]["memo_agreement_table"]["Row"];
+export type MemoAgreementTableInsert =
+  Database["public"]["Tables"]["memo_agreement_table"]["Insert"];
+export type MemoAgreementTableUpdate =
+  Database["public"]["Tables"]["memo_agreement_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1174,6 +1188,20 @@ export type MemoType = MemoTableRow & {
 } & {
   memo_line_item_list: (MemoLineItemTableRow & {
     memo_line_item_attachment?: MemoLineItemAttachmentTableRow;
+  })[];
+} & {
+  memo_read_receipt_list: (MemoReadReceiptTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+  })[];
+} & {
+  memo_agreement_list: (MemoAgreementTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
   })[];
 };
 
