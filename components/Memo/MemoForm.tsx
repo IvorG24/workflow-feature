@@ -243,7 +243,6 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                       value={value}
                       onChange={onChange}
                       clearable
-                      maw="max-content"
                     />
                   )}
                   rules={{
