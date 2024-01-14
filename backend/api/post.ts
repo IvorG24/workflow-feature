@@ -1031,7 +1031,7 @@ export const createTeamMemo = async (
       memo_author_user_id: string;
       memo_subject: string;
       memo_team_id: string;
-      memo_reference_number_prefix: string;
+      memo_reference_number: string;
     };
     signerData: {
       memo_signer_order: number;

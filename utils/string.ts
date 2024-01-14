@@ -126,3 +126,16 @@ export const getMemoReferencePrefix = (teamName: string) => {
     "YYYY"
   )}`;
 };
+
+export const addAmpersandBetweenWords = (searchString: string) => {
+  const sanitizedString = searchString.replace(/[^\w\s]/gi, "");
+
+  const words = sanitizedString.split(" ");
+
+  if (words.length > 1) {
+    const result = words.join(" & ");
+    return result;
+  }
+
+  return sanitizedString;
+};

@@ -1155,8 +1155,12 @@ export type MemoLineItem = {
   memo_line_item_attachment_caption?: string;
 };
 
-export type MemoType = MemoTableRow & { memo_author_user: UserTableRow } & {
-  memo_signer_list: (MemoSignerTableRow & {
+export type MemoType = MemoTableRow & {
+  memo_author_user: UserTableRow;
+  memo_status: string;
+  memo_date_updated: string;
+} & {
+  memo_signer_list: (MemoSignerTableRow & { signature_public_url: string } & {
     memo_signer_team_member: {
       team_member_id: string;
       user: UserTableRow & {
@@ -1175,4 +1179,6 @@ export type MemoType = MemoTableRow & { memo_author_user: UserTableRow } & {
 
 export type MemoListItemType = MemoTableRow & {
   memo_author_user: UserTableRow;
+  memo_status: string;
+  memo_date_updated: string;
 } & { memo_signer_list: MemoType["memo_signer_list"] };

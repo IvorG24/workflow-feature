@@ -1,11 +1,7 @@
 import { createTeamMemo } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import {
-  formatTeamNameToUrlKey,
-  getMemoReferencePrefix,
-  parseHtmlToMarkdown,
-} from "@/utils/string";
+import { formatTeamNameToUrlKey, parseHtmlToMarkdown } from "@/utils/string";
 import {
   AttachmentTableRow,
   MemoSignerItem,
@@ -18,6 +14,7 @@ import { IconEye, IconFileDescription } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import MemoForm from "./MemoForm";
 import MemoPreview from "./MemoPreview";
 
@@ -90,6 +87,8 @@ const CreateMemoFormPage = ({
         });
       }
 
+      const memo_reference_number = uuidv4();
+
       let signerData = data.signerList
         .sort(
           (a, b) => Number(b.signer_is_primary) - Number(a.signer_is_primary)
@@ -136,9 +135,7 @@ const CreateMemoFormPage = ({
           memo_author_user_id: user.user_id,
           memo_subject: data.subject,
           memo_team_id: activeTeam.team_id,
-          memo_reference_number_prefix: getMemoReferencePrefix(
-            activeTeam.team_name
-          ),
+          memo_reference_number,
         },
         signerData,
         lineItemData,

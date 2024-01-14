@@ -250,6 +250,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                       if (!v) {
                         return true;
                       }
+                      console.log(v.size, MAX_FILE_SIZE);
                       return (
                         v.size < MAX_FILE_SIZE ||
                         "Image exceeds 5mb. Please use an image below 5mb."

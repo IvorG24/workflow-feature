@@ -108,6 +108,7 @@ const MemoListPage = ({
     }: FilterFormValues = getValues()
   ) => {
     try {
+      if (!activeTeam.team_id) return;
       setIsLoading(true);
 
       const { data, count } = await getMemoList(supabaseClient, {
@@ -152,6 +153,7 @@ const MemoListPage = ({
 
   const handlePagination = async () => {
     try {
+      if (!activeTeam.team_id) return;
       setIsLoading(true);
 
       const { data, count } = await getMemoList(supabaseClient, {

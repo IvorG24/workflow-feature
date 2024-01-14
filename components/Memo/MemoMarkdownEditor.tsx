@@ -26,7 +26,7 @@ const MemoMarkdownEditor = ({ value, onChange }: Props) => {
 
   return (
     <Box>
-      <RichTextEditor mih={150} editor={editor}>
+      <RichTextEditor mih={240} editor={editor}>
         <RichTextEditor.Toolbar sticky stickyOffset={40}>
           <RichTextEditor.ControlsGroup>
             <RichTextEditor.Bold />

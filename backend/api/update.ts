@@ -529,10 +529,10 @@ export const approveOrRejectMemo = async (
 
   if (isPrimarySigner) {
     const { error } = await supabaseClient
-      .from("memo_table")
+      .from("memo_status_table")
       .update({ memo_status: action })
-      .eq("memo_id", memoId);
-
+      .eq("memo_status_memo_id", memoId);
+    console.log(error);
     if (error) throw Error;
   }
 };

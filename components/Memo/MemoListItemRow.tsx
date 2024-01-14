@@ -24,7 +24,7 @@ type Props = {
 const MemoListItemRow = ({ memo }: Props) => {
   const activeTeam = useActiveTeam();
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
-  const referenceNumber = `${memo.memo_reference_number_prefix}-${memo.memo_reference_number_serial}`;
+  const referenceNumber = memo.memo_reference_number;
 
   const { memo_author_user } = memo;
   const authorFullname = `${memo_author_user.user_first_name} ${memo_author_user.user_last_name}`;

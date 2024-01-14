@@ -2,7 +2,7 @@ import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { regExp, startCase } from "@/utils/string";
+import { addAmpersandBetweenWords, regExp, startCase } from "@/utils/string";
 import {
   AppType,
   ApproverUnresolvedRequestListType,
@@ -4278,7 +4278,7 @@ export const getMemoList = async (
     .join(" OR ");
 
   const statusCondition = status
-    ?.map((status) => `memo_table.memo_status = '${status}'`)
+    ?.map((status) => `memo_status = '${status}'`)
     .join(" OR ");
 
   const { data, error } = await supabaseClient.rpc("get_memo_list", {
@@ -4294,7 +4294,7 @@ export const getMemoList = async (
         ? `AND (${approverFilterCondition})`
         : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
-      searchFilter: searchFilter ? searchFilter : "",
+      searchFilter: searchFilter ? addAmpersandBetweenWords(searchFilter) : "",
     },
   });
 

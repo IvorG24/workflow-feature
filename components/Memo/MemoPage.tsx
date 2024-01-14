@@ -30,6 +30,7 @@ import { IconCircleDashed, IconCircleX } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
+import ExportMemoToPdf from "./ExportMemoToPdf";
 
 type Props = {
   memo: MemoType;
@@ -90,7 +91,15 @@ const renderSignerItem = (
       .from("USER_SIGNATURES")
       .getPublicUrl(signerSignature.attachment_value);
 
-    signatureSrc = publicUrl;
+    // check if valid public url
+    const startIndex =
+      publicUrl.indexOf("USER_SIGNATURES/") + "USER_SIGNATURES/".length;
+    const signaturePath = publicUrl.substring(startIndex);
+
+    if (signaturePath !== "null") {
+      signatureSrc = publicUrl;
+      signerItem.signature_public_url = publicUrl;
+    }
   }
 
   return (
@@ -223,9 +232,16 @@ const MemoPage = ({ memo }: Props) => {
   return (
     <Container pos="relative">
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
-      <Title order={3} color="dimmed">
-        Memo Page
-      </Title>
+      <Group position="apart">
+        <Title order={3} color="dimmed">
+          Memo Page
+        </Title>
+        <ExportMemoToPdf
+          memo={memo}
+          currentSignedSignerList={currentSignedSignerList}
+          sortMemoLineItems={sortMemoLineItems}
+        />
+      </Group>
       <Paper mt="md" p="md" radius="md">
         <Text mb="md" weight={700}>
           MEMORANDUM
@@ -233,7 +249,7 @@ const MemoPage = ({ memo }: Props) => {
         <Stack spacing="xs">
           {renderMemoDetails({
             label: "Reference No.",
-            value: `${memo.memo_reference_number_prefix}-${memo.memo_reference_number_serial}`,
+            value: memo.memo_reference_number,
           })}
           {renderMemoDetails({
             label: "Date",
