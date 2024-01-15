@@ -8869,6 +8869,8 @@ ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signature_history_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE service_category_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9039,6 +9041,16 @@ DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_name_history_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON signature_history_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_category_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON service_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_category_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_category_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -10577,6 +10589,100 @@ CREATE POLICY "Allow CREATE for authenticated users" ON "public"."signature_hist
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
+
+--- general_unit_of_measurement_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE general_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."general_unit_of_measurement_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE general_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE general_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- service_category_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."service_category_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 -------- End: POLICIES
 
