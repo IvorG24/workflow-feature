@@ -1,8 +1,13 @@
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { OtherExpensesTypeTableRow } from "@/utils/types";
+import { OtherExpensesTypeWithCategoryType } from "@/utils/types";
 
+import {
+  checkOtherExpenesesTypeTable,
+  getOtherExpensesCategoryOptions,
+} from "@/backend/api/get";
+import { createRowInOtherExpensesTypeTable } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   Button,
   Checkbox,
@@ -10,19 +15,20 @@ import {
   Divider,
   Flex,
   LoadingOverlay,
+  Select,
   Stack,
   TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { Dispatch, SetStateAction } from "react";
-import { useForm } from "react-hook-form";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { TypeForm } from "./OtherExpensesType";
 
 type Props = {
   setIsCreatingType: Dispatch<SetStateAction<boolean>>;
-  setTypeList: Dispatch<SetStateAction<OtherExpensesTypeTableRow[]>>;
+  setTypeList: Dispatch<SetStateAction<OtherExpensesTypeWithCategoryType[]>>;
   setTypeCount: Dispatch<SetStateAction<number>>;
 };
 
@@ -32,28 +38,80 @@ const CreateOtherExpensesType = ({
   setTypeCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const team = useActiveTeam();
 
-  const { register, formState, handleSubmit } = useForm<TypeForm>({
-    defaultValues: {
-      type: "",
-      isAvailable: true,
-      category: "",
-    },
-  });
+  const [categoryOption, setCategoryOption] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [isFetchingOptions, setIsFetchingOptions] = useState(true);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setIsFetchingOptions(true);
+        const data = await getOtherExpensesCategoryOptions(supabaseClient, {
+          teamId: team.team_id,
+        });
+        setCategoryOption(
+          data.map((category) => {
+            return {
+              label: category.other_expenses_category,
+              value: category.other_expenses_category_id,
+            };
+          })
+        );
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsFetchingOptions(false);
+      }
+    };
+
+    fetchOptions();
+  }, []);
+
+  const { register, formState, handleSubmit, getValues, control } =
+    useForm<TypeForm>({
+      defaultValues: {
+        type: "",
+        isAvailable: true,
+        category: "",
+      },
+    });
 
   const onSubmit = async (data: TypeForm) => {
     try {
-      // setTypeList((prev) => {
-      //   prev.unshift(newType);
-      //   return prev;
-      // });
-      // setTypeCount((prev) => prev + 1);
-      // notifications.show({
-      //   message: `${.label} created.`,
-      //   color: "green",
-      // });
+      const newCategoryLookup = await createRowInOtherExpensesTypeTable(
+        supabaseClient,
+        {
+          inputData: {
+            other_expenses_type_category_id: data.category,
+            other_expenses_type: data.type.toUpperCase().trim(),
+            other_expenses_type_is_available: data.isAvailable,
+            other_expenses_type_encoder_team_member_id:
+              teamMember?.team_member_id,
+          },
+        }
+      );
+      const categoryLabel = categoryOption.find(
+        (value) => value.value === data.category
+      )?.label;
+      setTypeList((prev) => {
+        prev.unshift({
+          ...newCategoryLookup,
+          other_expenses_category: `${categoryLabel}`,
+        });
+        return prev;
+      });
+      setTypeCount((prev) => prev + 1);
+      notifications.show({
+        message: "Type created.",
+        color: "green",
+      });
       setIsCreatingType(false);
     } catch (e) {
       notifications.show({
@@ -67,7 +125,7 @@ const CreateOtherExpensesType = ({
 
   return (
     <Container p={0} fluid sx={{ position: "relative" }}>
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={formState.isSubmitting || isFetchingOptions} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
           Add Type
@@ -84,16 +142,16 @@ const CreateOtherExpensesType = ({
                 },
                 validate: {
                   duplicate: async (value) => {
-                    return value;
-                    // const isExisting = await checkTable(supabaseClient, {
-                    //   TableName: .table,
-                    //   value:
-                    //     .label === "Unit of Measurement"
-                    //       ? value
-                    //       : value.toUpperCase(),
-                    //   teamId: activeTeam.team_id,
-                    // });
-                    // return isExisting ? `${.label} already exists` : true;
+                    const category = getValues("category");
+                    if (!category) return true;
+                    const isExisting = await checkOtherExpenesesTypeTable(
+                      supabaseClient,
+                      {
+                        value: value.toUpperCase(),
+                        categoryId: category,
+                      }
+                    );
+                    return isExisting ? "Type already exists" : true;
                   },
                 },
               })}
@@ -104,6 +162,28 @@ const CreateOtherExpensesType = ({
               sx={{
                 input: {
                   textTransform: "uppercase",
+                },
+              }}
+            />
+
+            <Controller
+              control={control}
+              name="category"
+              render={({ field: { onChange } }) => (
+                <Select
+                  onChange={onChange}
+                  data={categoryOption}
+                  withAsterisk
+                  error={formState.errors.category?.message}
+                  searchable
+                  clearable
+                  label="Category"
+                />
+              )}
+              rules={{
+                required: {
+                  message: "Category is required",
+                  value: true,
                 },
               }}
             />

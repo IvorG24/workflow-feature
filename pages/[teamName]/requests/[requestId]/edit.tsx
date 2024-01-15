@@ -1,4 +1,5 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
+import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
@@ -73,6 +74,7 @@ const Page = ({
   referenceOnly,
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
+
   const formslyForm = () => {
     switch (form.form_name) {
       case "Requisition":
@@ -88,6 +90,14 @@ const Page = ({
       case "Services":
         return (
           <EditServicesRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "Other Expenses":
+        return (
+          <EditOtherExpensesRequestPage
             request={request}
             projectOptions={projectOptions}
             referenceOnly={referenceOnly}

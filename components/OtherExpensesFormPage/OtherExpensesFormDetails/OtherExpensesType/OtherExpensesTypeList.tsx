@@ -1,9 +1,10 @@
 import { deleteRow } from "@/backend/api/delete";
+import { getTypeList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import { OtherExpensesTypeTableRow } from "@/utils/types";
+import { OtherExpensesTypeWithCategoryType } from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -41,12 +42,14 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  typeList: OtherExpensesTypeTableRow[];
-  setTypeList: Dispatch<SetStateAction<OtherExpensesTypeTableRow[]>>;
+  typeList: OtherExpensesTypeWithCategoryType[];
+  setTypeList: Dispatch<SetStateAction<OtherExpensesTypeWithCategoryType[]>>;
   typeCount: number;
   setTypeCount: Dispatch<SetStateAction<number>>;
   setIsCreatingType: Dispatch<SetStateAction<boolean>>;
-  setEditType: Dispatch<SetStateAction<OtherExpensesTypeTableRow | null>>;
+  setEditType: Dispatch<
+    SetStateAction<OtherExpensesTypeWithCategoryType | null>
+  >;
 };
 
 const OtherExpensesTypeList = ({
@@ -73,9 +76,15 @@ const OtherExpensesTypeList = ({
     setIsLoading(true);
     try {
       if (!team.team_id) return;
+      const { data, count } = await getTypeList(supabaseClient, {
+        teamId: team.team_id,
+        search,
+        limit: ROW_PER_PAGE,
+        page,
+      });
 
-      // setTypeList(data);
-      // setTypeCount(Number(count));
+      setTypeList(data as unknown as OtherExpensesTypeWithCategoryType[]);
+      setTypeCount(Number(count));
     } catch (e) {
       notifications.show({
         message: `Error on fetching type list`,
@@ -124,14 +133,14 @@ const OtherExpensesTypeList = ({
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "other_expenses_type_table",
+        table: "other_expenses_type",
       });
 
       notifications.show({
         message: `Type/s deleted.`,
         color: "green",
       });
-    } catch {
+    } catch (e) {
       setTypeList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
@@ -234,7 +243,7 @@ const OtherExpensesTypeList = ({
         </Group>
       </Flex>
       <DataTable
-        idAccessor="id"
+        idAccessor="other_expenses_type_id"
         mt="xs"
         withBorder
         fw="bolder"
@@ -272,6 +281,11 @@ const OtherExpensesTypeList = ({
             accessor: `other_expenses_type_table`,
             title: `Type`,
             render: (data) => <Text>{data.other_expenses_type}</Text>,
+          },
+          {
+            accessor: `other_expenses_category`,
+            title: `Category`,
+            render: (data) => <Text>{data.other_expenses_category}</Text>,
           },
           {
             accessor: "status",

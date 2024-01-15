@@ -1,3 +1,4 @@
+import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
@@ -93,6 +94,13 @@ const Page = ({
       case "Services":
         return (
           <CreateServicesRequestPage
+            form={form}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Other Expenses":
+        return (
+          <CreateOtherExpensesRequestPage
             form={form}
             projectOptions={projectOptions}
           />

@@ -1114,5 +1114,5 @@ export type UserIssuedItem = {
 };
 
 export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
-  other_expenses_type: string;
+  other_expenses_category: string;
 };

@@ -390,7 +390,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    formslyFormName="Services"
+                    formslyFormName={form.form_name}
                     servicesMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onCSIDivisionChange: handleCSIDivisionChange,

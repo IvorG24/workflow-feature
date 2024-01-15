@@ -385,7 +385,10 @@ const OtherExpensesFormPage = ({
       ) : null}
 
       {segmentValue === "Form Details" ? (
-        <OtherExpensesFormDetails otherExpensesTypes={otherExpensesTypes} otherExpensesTypeCount={otherExpensesTypeCount} />
+        <OtherExpensesFormDetails
+          otherExpensesTypes={otherExpensesTypes}
+          otherExpensesTypeCount={otherExpensesTypeCount}
+        />
       ) : null}
 
       {segmentValue === "Form Lookup" ? <OtherExpensesLookup /> : null}

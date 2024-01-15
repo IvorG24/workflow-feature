@@ -945,6 +945,8 @@ RETURNS JSON AS $$
         endId = `Q`;
       } else if(formName==='Services') {
         endId = `S`;
+      } else if(formName==='Other Expenses') {
+        endId = `OE`;
       } else if(formName==='Sourced Item') {
         endId = `SI`;
       } else if(formName==='Receiving Inspecting Report') {
@@ -4173,7 +4175,8 @@ RETURNS JSON as $$
           INNER JOIN other_expenses_category_table ON other_expenses_category_id = other_expenses_type_category_id
           WHERE 
             other_expenses_category_team_id = '${teamId}' 
-            AND other_expenses_type_is_disabled = false 
+            AND other_expenses_type_is_disabled = false
+          ORDER BY other_expenses_type
           LIMIT ${limit}
         `);
         const otherExpensesTypeCount = plv8.execute(`
@@ -4441,6 +4444,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
           `
         );
 
@@ -4603,6 +4607,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
           `
         );
 
@@ -4650,6 +4655,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
           `
         );
 
@@ -4771,6 +4777,149 @@ RETURNS JSON as $$
                     field_option: csiDivisionOption
                   },
                   ...form.form_section[1].section_field.slice(5, 9),
+                  {
+                    ...form.form_section[1].section_field[9],
+                    field_option: supplierOptions
+                  }
+                ],
+              },
+            ],
+          },
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "Other Expenses") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.*
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const suppliers = plv8.execute(
+          `
+            SELECT *
+            FROM supplier_table
+            WHERE
+              supplier_is_available = true
+              AND supplier_is_disabled = false
+              AND supplier_team_id = '${teamId}'
+            ORDER BY supplier ASC
+            LIMIT 100
+          `
+        );
+
+        const supplierOptions = suppliers.map((suppliers, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[9].field_id,
+            option_id: suppliers.supplier_id,
+            option_order: index,
+            option_value: suppliers.supplier,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM other_expenses_category_table
+            WHERE 
+              other_expenses_category_team_id = '${teamMember.team_member_team_id}'
+              AND other_expenses_category_is_disabled = false
+              AND other_expenses_category_is_available = true
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.other_expenses_category_id,
+            option_order: index,
+            option_value: category.other_expenses_category,
+          };
+        });
+
+        const csiCodeDescription = plv8.execute(
+          `
+            SELECT *
+            FROM csi_code_table
+            WHERE csi_code_division_id = '01'
+          `
+        );
+
+        const csiCodeDescriptionOptions = csiCodeDescription.map((codDescription, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[5].field_id,
+            option_id: codDescription.csi_code_id,
+            option_order: index,
+            option_value: codDescription.csi_code_level_three_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT *
+            FROM general_unit_of_measurement_table
+            WHERE 
+              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 4),
+                   {
+                    ...form.form_section[1].section_field[4],
+                    field_option: unitOfMeasurementOptions
+                  },
+                  {
+                    ...form.form_section[1].section_field[5],
+                    field_option: csiCodeDescriptionOptions
+                  },
+                  ...form.form_section[1].section_field.slice(6, 9),
                   {
                     ...form.form_section[1].section_field[9],
                     field_option: supplierOptions
@@ -4933,6 +5082,7 @@ RETURNS JSON as $$
             FROM team_project_table
             WHERE team_project_team_id = '${teamId}'
             AND team_project_is_disabled = false
+            ORDER BY team_project_name
           `
         );
 
@@ -6644,8 +6794,17 @@ RETURNS JSON AS $$
 
       const teamMemberId = plv8.execute(`SELECT team_member_id FROM team_member_table WHERE team_member_user_id='${userId}' AND team_member_team_id='${teamId}';`)[0].team_member_id;
 
-      const projectList = plv8.execute(`SELECT tpt.* FROM team_project_table tpt
-        INNER JOIN team_project_member_table tpmt ON tpt.team_project_id=tpmt.team_project_id WHERE tpt.team_project_team_id='${teamId}' AND tpmt.team_member_id='${teamMemberId}' AND tpt.team_project_is_disabled=false;`);
+      const projectList = plv8.execute(
+        `
+          SELECT tpt.* FROM team_project_table tpt
+          INNER JOIN team_project_member_table tpmt ON tpt.team_project_id=tpmt.team_project_id 
+          WHERE 
+            tpt.team_project_team_id='${teamId}' 
+            AND tpmt.team_member_id='${teamMemberId}' 
+            AND tpt.team_project_is_disabled=false 
+          ORDER BY team_project_name
+        `
+      );
       
       const projectOptions = projectList.map((project, index) => {
         return {
@@ -7105,6 +7264,175 @@ RETURNS JSON AS $$
                 {
                   ...section.section_field[5],
                   field_option: csiCodeOptions,
+                },
+                ...section.section_field.slice(6, 9),
+                {
+                  ...section.section_field[9],
+                  field_option: supplierOptions,
+                },
+              ],
+            };
+          });
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              ...requestSectionList,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          projectOptions
+        }
+      } else if (form.form_name === "Other Expenses") {
+        const suppliers = plv8.execute(
+          `
+            SELECT *
+            FROM supplier_table
+            WHERE
+              supplier_is_available = true
+              AND supplier_is_disabled = false
+              AND supplier_team_id = '${teamId}'
+            ORDER BY supplier ASC
+            LIMIT 100
+          `
+        );
+
+        const supplierOptions = suppliers.map((suppliers, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[9].field_id,
+            option_id: suppliers.supplier_id,
+            option_order: index,
+            option_value: suppliers.supplier,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM other_expenses_category_table
+            WHERE 
+              other_expenses_category_team_id = '${teamId}'
+              AND other_expenses_category_is_disabled = false
+              AND other_expenses_category_is_available = true
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.other_expenses_category_id,
+            option_order: index,
+            option_value: category.other_expenses_category,
+          };
+        });
+
+        const csiCodeDescription = plv8.execute(
+          `
+            SELECT *
+            FROM csi_code_table
+            WHERE csi_code_division_id = '01'
+          `
+        );
+
+        const csiCodeDescriptionOptions = csiCodeDescription.map((codDescription, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[5].field_id,
+            option_id: codDescription.csi_code_id,
+            option_order: index,
+            option_value: codDescription.csi_code_level_three_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT *
+            FROM general_unit_of_measurement_table
+            WHERE 
+              general_unit_of_measurement_team_id = '${teamId}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        const sectionWithDuplicateList = form.form_section
+          .slice(1)
+          .map((section) => {
+            return {
+              ...section,
+              section_field: section.section_field,
+            }
+          });
+
+        const requestSectionList = sectionWithDuplicateList
+          .map((section) => {
+            const categoryResponse = JSON.parse(section.section_field[0].field_response[0].request_response);
+            const categoryID = categoryOptions.find(category => category.option_value === categoryResponse).option_id;
+
+            const typeList = plv8.execute(`
+              SELECT *
+              FROM other_expenses_type_table
+              WHERE other_expenses_type_category_id = '${categoryID}'
+              AND other_expenses_type_is_disabled = false
+              AND other_expenses_type_is_available = true
+              ORDER BY other_expenses_type
+            `);
+
+            const typeOptions = typeList.map((type, index) => {
+              return {
+                option_field_id: form.form_section[1].section_field[1].field_id,
+                option_id: type.other_expenses_type_id,
+                option_order: index,
+                option_value: type.other_expenses_type,
+              };
+            });
+
+            return {
+              ...section,
+              section_field: [
+                {
+                  ...section.section_field[0],
+                  field_option: categoryOptions,
+                },
+                {
+                  ...section.section_field[1],
+                  field_option: typeOptions,
+                },
+                ...section.section_field.slice(2, 4),
+                {
+                  ...section.section_field[4],
+                  field_option: unitOfMeasurementOptions,
+                },
+                {
+                  ...section.section_field[5],
+                  field_option: csiCodeDescriptionOptions,
                 },
                 ...section.section_field.slice(6, 9),
                 {

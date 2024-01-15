@@ -293,7 +293,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('0fc3742d-2e72-4043-acc6-358185266e20', 'Description', 'TEXT', 6, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
 ('4fb94cb4-ceb1-4995-a8e7-b6adcee0506c', 'Quantity', 'NUMBER', 7, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
 ('8f728f54-b0b6-4883-82ed-f36fe5d4ca00', 'Unit of Measurement', 'DROPDOWN', 8, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
-('fb76b5f1-c2e7-404a-822a-4101b7aecdf5', 'CSI Code Description', 'DROPDOWN', 9, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, true),
+('fb76b5f1-c2e7-404a-822a-4101b7aecdf5', 'CSI Code Description', 'DROPDOWN', 9, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, false),
 ('23cc13f0-6700-4793-9d2d-ce7dd87b6605', 'CSI Code', 'TEXT', 10, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, true),
 ('b140d4f3-236f-4c71-b9b3-1bff236d61b0', 'Level 2 Major Group Description', 'TEXT', 11, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, true),
 ('37139ca7-c4d6-43f1-a225-8d70ddefc39e', 'Level 2 Minor Group Description', 'TEXT', 12, 'b1747c1b-e3b2-4c5b-9f22-b16cce8efc05', true, true),

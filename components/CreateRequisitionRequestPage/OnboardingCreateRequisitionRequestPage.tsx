@@ -507,7 +507,7 @@ const OnboardingCreateRequisitionRequestPage = ({
                       supplierSearch,
                       isSearching,
                     }}
-                    formslyFormName="Requisition"
+                    formslyFormName={form.form_name}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
