@@ -213,6 +213,22 @@ const MemberList = ({
         <Text>{team_member.team_member_user.user_email}</Text>
       ),
     },
+    {
+      accessor: "team_member.team_member_role",
+      title: "Role",
+      render: ({ team_member }) => <Text>{team_member.team_member_role}</Text>,
+    },
+    {
+      accessor: "team_member.team_member_group_list",
+      title: "Group",
+      render: ({ team_member }) => (
+        <Text>
+          {team_member.team_member_group_list
+            ? team_member.team_member_group_list.join(",")
+            : ""}
+        </Text>
+      ),
+    },
   ];
 
   return (
