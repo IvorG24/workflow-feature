@@ -20,6 +20,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('USER_SIGNATURES', 'USER_SIGNATUR
 INSERT INTO storage.buckets (id, name) VALUES ('TEAM_LOGOS', 'TEAM_LOGOS');
 INSERT INTO storage.buckets (id, name) VALUES ('COMMENT_ATTACHMENTS', 'COMMENT_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('REQUEST_ATTACHMENTS', 'REQUEST_ATTACHMENTS');
+INSERT INTO storage.buckets (id, name) VALUES ('TEAM_PROJECT_ATTACHMENTS', 'TEAM_PROJECT_ATTACHMENTS');
 
 UPDATE storage.buckets SET public = true;
 
@@ -89,6 +90,8 @@ CREATE TABLE team_project_table(
   team_project_code VARCHAR(4000) NOT NULL,
   team_project_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
+  team_project_site_map_attachment_id UUID REFERENCES attachment_table(attachment_id),
+  team_project_boq_attachment_id UUID REFERENCES attachment_table(attachment_id),
   team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 CREATE TABLE team_group_member_table(
@@ -2527,9 +2530,11 @@ RETURNS JSON AS $$
   let team_project_data;
   plv8.subtransaction(function(){
     const {
-    teamProjectName,
-    teamProjectInitials,
-    teamProjectTeamId,
+      teamProjectName,
+      teamProjectInitials,
+      teamProjectTeamId,
+      siteMapId,
+      boqId
     } = input_data;
 
     
@@ -2541,7 +2546,15 @@ RETURNS JSON AS $$
 
     const teamProjectCode = teamProjectInitials + projectInitialCount.toString(16).toUpperCase();
 
-    team_project_data = plv8.execute(`INSERT INTO team_project_table (team_project_name, team_project_code, team_project_team_id) VALUES ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}') RETURNING *;`)[0];
+    team_project_data = plv8.execute(
+      `
+        INSERT INTO team_project_table 
+          (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id) 
+        VALUES 
+          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', '${siteMapId}', '${boqId}')
+        RETURNING *
+      `
+    )[0];
 
  });
  return team_project_data;
@@ -3394,7 +3407,28 @@ RETURNS JSON AS $$
 
     const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
 
-    const teamProjects = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC LIMIT 10;`);
+    const teamProjects = plv8.execute(
+      `
+        SELECT 
+          team_project_table.*,
+          boq.attachment_value AS team_project_boq_attachment_id,
+          site_map.attachment_value AS team_project_site_map_attachment_id
+        FROM team_project_table 
+        LEFT JOIN attachment_table boq ON (
+          team_project_boq_attachment_id = boq.attachment_id
+          AND boq.attachment_is_disabled = false
+        )
+        LEFT JOIN attachment_table site_map ON (
+          team_project_site_map_attachment_id = site_map.attachment_id
+          AND site_map.attachment_is_disabled = false
+        )
+        WHERE 
+          team_project_team_id='${teamId}' 
+          AND team_project_is_disabled=false 
+        ORDER BY team_project_name ASC 
+        LIMIT 10
+      `
+    );
 
     const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
