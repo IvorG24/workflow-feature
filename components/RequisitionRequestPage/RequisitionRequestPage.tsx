@@ -515,19 +515,7 @@ const RequisitionRequestPage = ({
           );
         })}
 
-        <RequisitionSummary
-          summaryData={sectionWithDuplicateList
-            .slice(1)
-            .sort((a, b) =>
-              `${a.section_field[0].field_response?.request_response}` >
-              `${b.section_field[0].field_response?.request_response}`
-                ? 1
-                : `${b.section_field[0].field_response?.request_response}` >
-                  `${a.section_field[0].field_response?.request_response}`
-                ? -1
-                : 0
-            )}
-        />
+        <RequisitionSummary summaryData={sectionWithDuplicateList.slice(1)} />
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
