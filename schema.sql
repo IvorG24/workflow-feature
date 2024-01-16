@@ -20,6 +20,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('USER_SIGNATURES', 'USER_SIGNATUR
 INSERT INTO storage.buckets (id, name) VALUES ('TEAM_LOGOS', 'TEAM_LOGOS');
 INSERT INTO storage.buckets (id, name) VALUES ('COMMENT_ATTACHMENTS', 'COMMENT_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('REQUEST_ATTACHMENTS', 'REQUEST_ATTACHMENTS');
+INSERT INTO storage.buckets (id, name) VALUES ('USER_VALID_IDS', 'USER_VALID_IDS');
 
 UPDATE storage.buckets SET public = true;
 
@@ -475,6 +476,32 @@ CREATE TABLE general_unit_of_measurement_table(
 );
 
 -- End: General unit of measurement table
+
+-- Start: Valid ID
+CREATE TABLE user_valid_id_table (
+    user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    user_valid_id_date_updated TIMESTAMPTZ,
+    user_valid_id_number VARCHAR(4000) UNIQUE NOT NULL,
+    user_valid_id_type VARCHAR(4000) NOT NULL,
+    user_valid_id_first_name VARCHAR(4000) NOT NULL,
+    user_valid_id_middle_name VARCHAR(4000) NOT NULL,
+    user_valid_id_last_name VARCHAR(4000) NOT NULL,
+    user_valid_id_gender VARCHAR(4000) NOT NULL,
+    user_valid_id_nationality VARCHAR(4000) NOT NULL,
+    user_valid_id_province VARCHAR(4000) NOT NULL,
+    user_valid_id_city VARCHAR(4000) NOT NULL,
+    user_valid_id_barangay VARCHAR(4000) NOT NULL,
+    user_valid_id_zip_code VARCHAR(4000) NOT NULL,
+    user_valid_id_house_and_street VARCHAR(4000) NOT NULL,
+    user_valid_id_front_image_url VARCHAR(4000) NOT NULL,
+    user_valid_id_back_image_url VARCHAR(4000),
+    user_valid_id_status VARCHAR(4000) NOT NULL,
+
+    user_valid_id_approver UUID REFERENCES user_table(user_id),
+    user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+-- End: Valid ID
 
 ---------- End: TABLES
 
@@ -8428,6 +8455,7 @@ ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_valid_id_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -8594,6 +8622,10 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_employee_nu
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_employee_number_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_valid_id_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_valid_id_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_valid_id_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -10120,6 +10152,23 @@ USING (
     WHERE user_onboard_user_id = auth.uid()
   )
 );
+
+--- USER_VALID_ID_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."user_valid_id_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."user_valid_id_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."user_valid_id_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
 
 -------- End: POLICIES
 
