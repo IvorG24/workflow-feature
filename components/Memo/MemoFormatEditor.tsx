@@ -331,7 +331,7 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
 
                 <Group mt="xl">
                   <Button onClick={close} w={120} size="md" variant="outline">
-                    Cancel
+                    Close
                   </Button>
                   <Button type="submit" w={120} size="md">
                     Save
