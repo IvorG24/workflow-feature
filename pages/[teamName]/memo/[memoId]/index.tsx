@@ -17,6 +17,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           },
         };
       }
+
       const memo = await getMemo(supabaseClient, {
         memo_id: `${memoId}`,
         current_user_id: user.id,

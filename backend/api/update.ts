@@ -1,11 +1,13 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
+import { parseMemoFormatTypeToDB } from "@/utils/functions";
 import {
   AppType,
   EditMemoType,
   MemberRoleType,
   MemoAgreementTableRow,
+  MemoFormatType,
   SignerTableRow,
   TeamTableRow,
   TeamTableUpdate,
@@ -672,4 +674,17 @@ const processAllMemoLineItems = async (
   );
 
   return JSON.parse(JSON.stringify(processedLineItems));
+};
+
+export const updateMemoFormat = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: MemoFormatType
+) => {
+  const columnListToUpdate = parseMemoFormatTypeToDB(params);
+  const { error } = await supabaseClient
+    .from("memo_format_table")
+    .update(columnListToUpdate)
+    .eq("memo_format_id", params.memo_format_id);
+
+  if (error) throw Error;
 };

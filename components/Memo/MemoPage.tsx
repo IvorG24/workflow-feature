@@ -1,3 +1,4 @@
+import { getMemoFormat } from "@/backend/api/get";
 import { agreeToMemo, createNotification } from "@/backend/api/post";
 import { approveOrRejectMemo } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -5,7 +6,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { MemoType } from "@/utils/types";
+import { MemoFormatType, MemoType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -252,6 +253,7 @@ const MemoPage = ({ memo }: Props) => {
   const [openReaderListModal, setOpenReaderListModal] = useState(false);
   const [openAgreementListModal, setOpenAgreementListModal] = useState(false);
   const [hasUserAgreedToMemo, setHasUserAgreedToMemo] = useState(false);
+  const [memoFormat, setMemoFormat] = useState<MemoFormatType | null>(null);
 
   const handleApproveOrRejectMemo = async (
     action: string,
@@ -393,6 +395,14 @@ const MemoPage = ({ memo }: Props) => {
     }
   }, [userTeamMemberData]);
 
+  useEffect(() => {
+    const fetchMemoFormat = async () => {
+      const memoFormat = await getMemoFormat(supabaseClient);
+      setMemoFormat(memoFormat);
+    };
+    fetchMemoFormat();
+  }, [supabaseClient]);
+
   return (
     <Container pos="relative">
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
@@ -426,11 +436,14 @@ const MemoPage = ({ memo }: Props) => {
           >
             Reference Memo
           </Button>
-          <ExportMemoToPdf
-            memo={memo}
-            currentSignedSignerList={currentSignedSignerList}
-            sortMemoLineItems={sortMemoLineItems}
-          />
+          {memoFormat && (
+            <ExportMemoToPdf
+              memo={memo}
+              currentSignedSignerList={currentSignedSignerList}
+              sortMemoLineItems={sortMemoLineItems}
+              memoFormat={memoFormat}
+            />
+          )}
         </Group>
       </Group>
       <Paper mt="md" p="xl" radius="md">

@@ -1,4 +1,4 @@
-import { MemoType } from "@/utils/types";
+import { MemoFormatType, MemoType } from "@/utils/types";
 import {
   Document,
   Image,
@@ -13,24 +13,7 @@ import { marked } from "marked";
 import moment from "moment";
 import Html from "react-pdf-html";
 
-type Props = {
-  memo: MemoType;
-  currentSignedSignerList: MemoType["memo_signer_list"];
-  sortMemoLineItems: MemoType["memo_line_item_list"];
-};
-
 const styles = StyleSheet.create({
-  page: {
-    padding: "20pt 30pt 54pt",
-    fontFamily: "Open Sans",
-    fontSize: "10pt",
-  },
-  header: {
-    display: "flex",
-    alignItems: "flex-end",
-    justifyContent: "flex-end",
-    marginBottom: "16px",
-  },
   memoHeader: {
     marginLeft: "12px",
   },
@@ -69,17 +52,6 @@ const styles = StyleSheet.create({
     marginRight: "12px",
     marginTop: "48px",
   },
-  footer: {
-    position: "absolute",
-    bottom: 20,
-    left: 30,
-    right: 30,
-    textAlign: "center",
-    fontSize: 10,
-    color: "#495057",
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
   logo: {
     flexDirection: "row",
     gap: 4,
@@ -98,10 +70,18 @@ const styles = StyleSheet.create({
   },
 });
 
+type Props = {
+  memo: MemoType;
+  currentSignedSignerList: MemoType["memo_signer_list"];
+  sortMemoLineItems: MemoType["memo_line_item_list"];
+  memoFormat: MemoFormatType;
+};
+
 const MemoPDF = ({
   memo,
   sortMemoLineItems,
   currentSignedSignerList,
+  memoFormat,
 }: Props) => {
   const lineItemStyleSheet = {
     "*": {
@@ -169,70 +149,111 @@ const MemoPDF = ({
     );
   });
 
+  const dynamicStyles = StyleSheet.create({
+    header: {
+      display: "flex",
+      alignItems: getFlexJustify(memoFormat.header.logoPosition),
+      margin: `${memoFormat.header.top}px ${memoFormat.header.right}px ${memoFormat.header.bottom}px ${memoFormat.header.left}px`,
+    },
+    body: {
+      margin: `${memoFormat.body.top}px ${memoFormat.body.right}px ${memoFormat.body.bottom}px ${memoFormat.body.left}px`,
+    },
+    footer: {
+      position: "absolute",
+      bottom: memoFormat.footer.bottom,
+      left: memoFormat.footer.left,
+      right: memoFormat.footer.right,
+      marginTop: `${memoFormat.footer.top}`,
+      color: "#495057",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+  });
+
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
-        <Header />
-        <View style={styles.memoHeader}>
+      <Page size="A4" style={{ fontFamily: "Open Sans", fontSize: "10pt" }}>
+        <View style={dynamicStyles.header} fixed>
+          <Image
+            src="/logo-scic.png"
+            style={{ width: 90, height: 30, objectFit: "contain" }}
+          />
+        </View>
+        <View style={dynamicStyles.body}>
+          <View style={styles.memoHeader}>
+            <Text
+              style={{
+                fontWeight: 600,
+                fontSize: "12px",
+                marginBottom: "12px",
+              }}
+            >
+              MEMORANDUM
+            </Text>
+            <View style={styles.memoHeaderInput}>
+              <Text style={{ fontWeight: 600, width: "54px" }}>Ref. No.</Text>
+              <Text>:</Text>
+              <Text>{memo.memo_reference_number}</Text>
+            </View>
+            <View style={styles.memoHeaderInput}>
+              <Text style={{ fontWeight: 600, width: "54px" }}>Date</Text>
+              <Text>:</Text>
+              <Text>
+                {moment(memo.memo_date_created).format("MMMM DD, YYYY")}
+              </Text>
+            </View>
+            <View style={styles.memoHeaderInput}>
+              <Text style={{ fontWeight: 600, width: "54px" }}>From</Text>
+              <Text>:</Text>
+              <Text>
+                {memoAuthorFullname} - {memo.memo_author_user.user_job_title}
+              </Text>
+            </View>
+            <View style={styles.memoHeaderInput}>
+              <Text style={{ fontWeight: 600, width: "54px" }}>Subject</Text>
+              <Text>:</Text>
+              <Text style={{ fontWeight: 600 }}>{memo.memo_subject}</Text>
+            </View>
+          </View>
+          <View style={styles.divider}>
+            <Svg height="2" width="100%">
+              <Line
+                x1="0"
+                y1="0"
+                x2="1000"
+                y2="0"
+                strokeWidth={2}
+                stroke="rgb(0,0,0)"
+              />
+            </Svg>
+            <Svg height="4" width="100%">
+              <Line
+                x1="0"
+                y1="0"
+                x2="1000"
+                y2="0"
+                strokeWidth={5}
+                stroke="rgb(0,0,0)"
+              />
+            </Svg>
+          </View>
+          <View style={styles.memoBody}>{renderLineItems}</View>
+          <View style={styles.memoSigner}>{renderSignerList}</View>
+        </View>
+        <View style={dynamicStyles.footer} fixed>
           <Text
-            style={{
-              fontWeight: 600,
-              fontSize: "12px",
-              marginBottom: "12px",
-            }}
-          >
-            MEMORANDUM
-          </Text>
-          <View style={styles.memoHeaderInput}>
-            <Text style={{ fontWeight: 600, width: "54px" }}>Ref. No.</Text>
-            <Text>:</Text>
-            <Text>{memo.memo_reference_number}</Text>
-          </View>
-          <View style={styles.memoHeaderInput}>
-            <Text style={{ fontWeight: 600, width: "54px" }}>Date</Text>
-            <Text>:</Text>
-            <Text>
-              {moment(memo.memo_date_created).format("MMMM DD, YYYY")}
-            </Text>
-          </View>
-          <View style={styles.memoHeaderInput}>
-            <Text style={{ fontWeight: 600, width: "54px" }}>From</Text>
-            <Text>:</Text>
-            <Text>
-              {memoAuthorFullname} - {memo.memo_author_user.user_job_title}
-            </Text>
-          </View>
-          <View style={styles.memoHeaderInput}>
-            <Text style={{ fontWeight: 600, width: "54px" }}>Subject</Text>
-            <Text>:</Text>
-            <Text style={{ fontWeight: 600 }}>{memo.memo_subject}</Text>
+            render={({ pageNumber, totalPages }) =>
+              `${pageNumber} / ${totalPages}`
+            }
+          />
+          <View style={styles.logo}>
+            <Text style={{ fontSize: 8 }}>Powered by</Text>
+            <Image
+              src="/logo-request-light.png"
+              style={{ width: 45, height: 15 }}
+            />
           </View>
         </View>
-        <View style={styles.divider}>
-          <Svg height="2" width="100%">
-            <Line
-              x1="0"
-              y1="0"
-              x2="1000"
-              y2="0"
-              strokeWidth={2}
-              stroke="rgb(0,0,0)"
-            />
-          </Svg>
-          <Svg height="4" width="100%">
-            <Line
-              x1="0"
-              y1="0"
-              x2="1000"
-              y2="0"
-              strokeWidth={5}
-              stroke="rgb(0,0,0)"
-            />
-          </Svg>
-        </View>
-        <View style={styles.memoBody}>{renderLineItems}</View>
-        <View style={styles.memoSigner}>{renderSignerList}</View>
-        <Footer />
       </Page>
     </Document>
   );
@@ -240,20 +261,18 @@ const MemoPDF = ({
 
 export default MemoPDF;
 
-const Footer = () => (
-  <View style={styles.footer} fixed>
-    <Text
-      render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
-    />
-    <View style={styles.logo}>
-      <Text style={{ fontSize: 8 }}>Powered by</Text>
-      <Image src="/logo-request-light.png" style={{ width: 45, height: 15 }} />
-    </View>
-  </View>
-);
+const getFlexJustify = (memoFormatLogoPosition: string) => {
+  switch (memoFormatLogoPosition.toLowerCase()) {
+    case "left":
+      return "flex-start";
 
-const Header = () => (
-  <View style={styles.header} fixed>
-    <Image src="/logo-scic.png" style={{ width: 90, height: 30 }} />
-  </View>
-);
+    case "center":
+      return "center";
+
+    case "right":
+      return "flex-end";
+
+    default:
+      return "flex-start";
+  }
+};

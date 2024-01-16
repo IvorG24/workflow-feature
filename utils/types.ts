@@ -1302,3 +1302,26 @@ export type ReferenceMemoType = MemoTableRow & {
     user_employee_number: string;
   })[];
 };
+
+export type MemoFormatType = {
+  memo_format_id: string;
+  header: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+    logoPosition: string;
+  };
+  body: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  footer: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+};

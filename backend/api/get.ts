@@ -18,6 +18,7 @@ import {
   FormType,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
+  MemoFormatType,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -4318,4 +4319,41 @@ export const getReferenceMemo = async (
   if (error || !data) throw Error;
 
   return data as unknown as ReferenceMemoType;
+};
+
+// get memo format
+export const getMemoFormat = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .from("memo_format_table")
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) throw Error;
+
+  const formatData: MemoFormatType = {
+    memo_format_id: data.memo_format_id,
+    header: {
+      top: Number(data.memo_format_header_margin_top),
+      right: Number(data.memo_format_header_margin_right),
+      bottom: Number(data.memo_format_header_margin_bottom),
+      left: Number(data.memo_format_header_margin_left),
+      logoPosition: data.memo_format_header_logo_position,
+    },
+    body: {
+      top: Number(data.memo_format_body_margin_top),
+      right: Number(data.memo_format_body_margin_right),
+      bottom: Number(data.memo_format_body_margin_bottom),
+      left: Number(data.memo_format_body_margin_left),
+    },
+    footer: {
+      top: Number(data.memo_format_footer_margin_top),
+      right: Number(data.memo_format_footer_margin_right),
+      bottom: Number(data.memo_format_footer_margin_bottom),
+      left: Number(data.memo_format_footer_margin_left),
+    },
+  };
+
+  return formatData;
 };

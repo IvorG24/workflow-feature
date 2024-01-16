@@ -1,15 +1,18 @@
 import { getMemoList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
 import { MemoListItemType, TeamMemberType } from "@/utils/types";
 import {
   ActionIcon,
   Alert,
   Box,
+  Button,
   Container,
   Divider,
   Flex,
   Grid,
+  Group,
   Loader,
   LoadingOverlay,
   MultiSelect,
@@ -23,7 +26,7 @@ import {
   Title,
   Tooltip,
 } from "@mantine/core";
-import { useFocusWithin } from "@mantine/hooks";
+import { useDisclosure, useFocusWithin } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
@@ -34,6 +37,7 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import MemoFormatEditor from "./MemoFormatEditor";
 import MemoListItemRow from "./MemoListItemRow";
 
 type Props = {
@@ -55,6 +59,7 @@ const MemoListPage = ({
   memoListCount: initialMemoListCount,
   teamMemberList,
 }: Props) => {
+  const userTeamMemberData = useUserTeamMember();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
 
@@ -79,8 +84,10 @@ const MemoListPage = ({
     { value: "REJECTED", label: "Rejected" },
   ];
 
-  // filter data
-
+  const [
+    memoFormatEditorIsOpened,
+    { open: openMemoFormatEditor, close: closeMemoFormatEditor },
+  ] = useDisclosure(false);
   const [isLoading, setIsLoading] = useState(false);
   const [activePage, setActivePage] = useState(1);
   const [memoListCount, setMemoListCount] = useState(initialMemoListCount);
@@ -181,10 +188,19 @@ const MemoListPage = ({
 
   return (
     <Container maw={3840} h="100%">
-      <Box>
-        <Title order={4}>Memo List Page</Title>
-        <Text>Manage your team memo here.</Text>
-      </Box>
+      <Group>
+        <Box>
+          <Title order={4}>Memo List Page</Title>
+          <Text>Manage your team memo here.</Text>
+        </Box>
+        {["OWNER", "ADMIN"].includes(
+          `${userTeamMemberData?.team_member_role}`
+        ) && (
+          <Button variant="light" onClick={openMemoFormatEditor}>
+            Manage Memo Format
+          </Button>
+        )}
+      </Group>
       {/* memo filters */}
       <form onSubmit={handleSubmit(handleFilterMemo)}>
         <Flex mt="sm" gap="sm" wrap="wrap" align="center">
@@ -381,6 +397,11 @@ const MemoListPage = ({
           className="onboarding-request-list-pagination"
         />
       </Flex>
+
+      <MemoFormatEditor
+        opened={memoFormatEditorIsOpened}
+        close={closeMemoFormatEditor}
+      />
     </Container>
   );
 };
