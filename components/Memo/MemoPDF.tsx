@@ -38,11 +38,6 @@ const styles = StyleSheet.create({
     lineHeight: 1,
     marginBottom: "8px",
   },
-  memoImageCaption: {
-    fontStyle: "italic",
-    fontFamily: "Open Sans",
-    fontSize: "10pt",
-  },
   memoSigner: {
     display: "flex",
     flexDirection: "row",
@@ -86,12 +81,12 @@ const MemoPDF = ({
   const lineItemStyleSheet = {
     "*": {
       fontSize: "10pt",
-      margin: 4,
+      margin: "4px 0px 8px 0px",
     },
   };
   const memoAuthorFullname = `${memo.memo_author_user.user_first_name} ${memo.memo_author_user.user_last_name}`;
 
-  const renderLineItems = sortMemoLineItems.map((lineItem) => {
+  const renderLineItems = sortMemoLineItems.map((lineItem, lineItemIndex) => {
     const lineItemContentHtml = marked(lineItem.memo_line_item_content);
 
     return (
@@ -103,6 +98,9 @@ const MemoPDF = ({
           {lineItem.memo_line_item_attachment
             ?.memo_line_item_attachment_name && (
             <View>
+              <Text style={{ fontWeight: 600, marginBottom: 4 }}>
+                Figure {lineItemIndex + 1}
+              </Text>
               <Image
                 src={
                   lineItem.memo_line_item_attachment
@@ -112,12 +110,11 @@ const MemoPDF = ({
               />
               {lineItem.memo_line_item_attachment
                 .memo_line_item_attachment_caption && (
-                <Text style={styles.memoImageCaption}>
-                  Image caption:{" "}
-                  {
+                <Text>
+                  {`Caption ${lineItemIndex + 1}: ${
                     lineItem.memo_line_item_attachment
                       .memo_line_item_attachment_caption
-                  }
+                  }`}
                 </Text>
               )}
             </View>

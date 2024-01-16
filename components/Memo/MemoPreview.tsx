@@ -58,13 +58,16 @@ const MemoPreview = ({ data }: Props) => {
               <Markdown>{lineItem.line_item_content}</Markdown>
               {lineItem.line_item_image_attachment && (
                 <Box maw={900} mah={600}>
+                  <Text weight={600}>Figure {lineItemIndex + 1}</Text>
                   <MantineImage
                     src={imgSrc}
                     alt={lineItem.line_item_image_caption ?? "No alt provided"}
                     withPlaceholder
                   />
                   {lineItem.line_item_image_caption && (
-                    <Text italic>{lineItem.line_item_image_caption}</Text>
+                    <Text weight={600}>{`Caption ${lineItemIndex + 1}: ${
+                      lineItem.line_item_image_caption
+                    }`}</Text>
                   )}
                 </Box>
               )}

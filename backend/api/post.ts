@@ -1062,7 +1062,7 @@ export const createTeamMemo = async (
   const { data, error } = await supabaseClient.rpc("create_memo", {
     input_data,
   });
-  console.log(error);
+
   if (error) throw Error;
 
   return data as MemoTableRow;

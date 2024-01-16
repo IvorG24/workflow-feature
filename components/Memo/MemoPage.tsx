@@ -13,6 +13,7 @@ import {
   Box,
   Button,
   Container,
+  CopyButton,
   Divider,
   Flex,
   Group,
@@ -30,7 +31,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { IconCircleDashed, IconCircleX } from "@tabler/icons-react";
+import { IconCircleDashed, IconCircleX, IconShare } from "@tabler/icons-react";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -67,14 +68,22 @@ const renderMemoLineItems = (lineItem: MemoType["memo_line_item_list"][0]) => {
     <>
       <Markdown>{lineItem.memo_line_item_content}</Markdown>
       {attachment?.memo_line_item_attachment_public_url && (
-        <Box maw={900} mah={600}>
+        <>
+          <Text weight={600}>Figure {lineItem.memo_line_item_order + 1}</Text>
           <Image
             src={attachment.memo_line_item_attachment_public_url}
             alt={caption ?? "No alt provided"}
+            fit="contain"
+            maw={900}
+            mah={600}
             withPlaceholder
           />
-          {caption && <Text italic>Image caption: {caption}</Text>}
-        </Box>
+          {caption && (
+            <Text weight={600}>{`Caption ${
+              lineItem.memo_line_item_order + 1
+            }: ${caption}`}</Text>
+          )}
+        </>
       )}
     </>
   );
@@ -407,9 +416,23 @@ const MemoPage = ({ memo }: Props) => {
     <Container pos="relative">
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
       <Group position="apart">
-        <Title order={3} color="dimmed">
-          Memo Page
-        </Title>
+        <Group>
+          <Title order={3} color="dimmed">
+            Memo Page
+          </Title>
+          <CopyButton value={window.location.href}>
+            {({ copied, copy }) => (
+              <Button
+                leftIcon={<IconShare size={16} />}
+                size="xs"
+                color={copied ? "teal" : "blue"}
+                onClick={copy}
+              >
+                {copied ? "Link Copied" : "Share Memo"}
+              </Button>
+            )}
+          </CopyButton>
+        </Group>
         <Group spacing="sm">
           {isUserAuthor && currentMemoStatus === "PENDING" && (
             <Button
@@ -446,7 +469,7 @@ const MemoPage = ({ memo }: Props) => {
           )}
         </Group>
       </Group>
-      <Paper mt="md" p="xl" radius="md">
+      <Paper mt="md" p="xl" radius="md" h="fit-content">
         <Text mb="md" weight={700}>
           MEMORANDUM
         </Text>
