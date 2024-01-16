@@ -1,5 +1,5 @@
 import { createAttachment } from "@/backend/api/post";
-import { udpateUser } from "@/backend/api/update";
+import { updateUser } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
@@ -80,7 +80,7 @@ const LeaveTeamSection = ({ onLeaveTeam }: Props) => {
         }
       );
 
-      await udpateUser(supabaseClient, {
+      await updateUser(supabaseClient, {
         user_id: user?.user_id,
         user_signature_attachment_id: signatureAttachment.attachment_id,
       });

@@ -126,3 +126,17 @@ export const convertDateNowToTimestampz = () => {
   const supabaseTimestampz = currentTimestamp.toISOString();
   return supabaseTimestampz;
 };
+
+export const removeMultipleSpaces = (text: string) => {
+  return text.replace(/\s+/g, " ");
+};
+
+export const trimObjectProperties = (obj: { [x: string]: string }) => {
+  const trimmedObject: { [x: string]: string } = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key) && typeof obj[key] === "string") {
+      trimmedObject[key] = obj[key].trim();
+    }
+  }
+  return trimmedObject;
+};
