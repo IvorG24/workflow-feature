@@ -1195,6 +1195,7 @@ export type MemoType = MemoTableRow & {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_employee_number: string;
   })[];
 } & {
   memo_agreement_list: (MemoAgreementTableRow & {
@@ -1202,6 +1203,7 @@ export type MemoType = MemoTableRow & {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_employee_number: string;
   })[];
 };
 
@@ -1245,6 +1247,7 @@ export type EditMemoType = MemoTableRow & {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_employee_number: string;
   })[];
 } & {
   memo_agreement_list: (MemoAgreementTableRow & {
@@ -1252,6 +1255,7 @@ export type EditMemoType = MemoTableRow & {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_employee_number: string;
   })[];
 };
 
@@ -1287,6 +1291,7 @@ export type ReferenceMemoType = MemoTableRow & {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_employee_number: string;
   })[];
 } & {
   memo_agreement_list: (MemoAgreementTableRow & {
@@ -1294,5 +1299,6 @@ export type ReferenceMemoType = MemoTableRow & {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_employee_number: string;
   })[];
 };

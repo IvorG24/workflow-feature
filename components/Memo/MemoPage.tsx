@@ -317,6 +317,8 @@ const MemoPage = ({ memo }: Props) => {
           memo_agreement_id: newAgreementData.memo_agreement_id,
           memo_agreement_memo_id: newAgreementData.memo_agreement_memo_id,
           ...user_data,
+          user_employee_number:
+            user_data.user_employee_number[0].user_employee_number ?? "",
         };
         setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
         setHasUserAgreedToMemo(true);
@@ -351,6 +353,8 @@ const MemoPage = ({ memo }: Props) => {
           memo_agreement_id: newAgreementData.memo_agreement_id,
           memo_agreement_memo_id: newAgreementData.memo_agreement_memo_id,
           ...user_data,
+          user_employee_number:
+            user_data.user_employee_number[0].user_employee_number ?? "",
         };
         setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
         setHasUserAgreedToMemo(true);
@@ -545,17 +549,20 @@ const MemoPage = ({ memo }: Props) => {
               {memo.memo_read_receipt_list.map((reader) => {
                 const readerFullname = `${reader.user_first_name} ${reader.user_last_name}`;
                 return (
-                  <Group key={reader.memo_read_receipt_id}>
-                    <Avatar
-                      src={reader.user_avatar}
-                      radius="xl"
-                      color={getAvatarColor(
-                        Number(`${reader.user_id.charCodeAt(0)}`)
-                      )}
-                    >
-                      {getInitials(readerFullname)}
-                    </Avatar>
-                    <Text>{readerFullname}</Text>
+                  <Group key={reader.memo_read_receipt_id} position="apart">
+                    <Group>
+                      <Avatar
+                        src={reader.user_avatar}
+                        radius="xl"
+                        color={getAvatarColor(
+                          Number(`${reader.user_id.charCodeAt(0)}`)
+                        )}
+                      >
+                        {getInitials(readerFullname)}
+                      </Avatar>
+                      <Text>{readerFullname}</Text>
+                    </Group>
+                    <Text weight={600}>{reader.user_employee_number}</Text>
                   </Group>
                 );
               })}
@@ -579,17 +586,20 @@ const MemoPage = ({ memo }: Props) => {
               {currentAgreementList.map((member) => {
                 const memberFullname = `${member.user_first_name} ${member.user_last_name}`;
                 return (
-                  <Group key={member.memo_agreement_id}>
-                    <Avatar
-                      src={member.user_avatar}
-                      radius="xl"
-                      color={getAvatarColor(
-                        Number(`${member.user_id.charCodeAt(0)}`)
-                      )}
-                    >
-                      {getInitials(memberFullname)}
-                    </Avatar>
-                    <Text>{memberFullname}</Text>
+                  <Group key={member.memo_agreement_id} position="apart">
+                    <Group>
+                      <Avatar
+                        src={member.user_avatar}
+                        radius="xl"
+                        color={getAvatarColor(
+                          Number(`${member.user_id.charCodeAt(0)}`)
+                        )}
+                      >
+                        {getInitials(memberFullname)}
+                      </Avatar>
+                      <Text>{memberFullname}</Text>
+                    </Group>
+                    <Text weight={600}>{member.user_employee_number}</Text>
                   </Group>
                 );
               })}

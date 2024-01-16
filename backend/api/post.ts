@@ -1125,9 +1125,10 @@ export const agreeToMemo = async (
         memo_agreement_memo_id: memoId,
       })
       .select(
-        "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name))"
+        "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name, user_employee_number: user_employee_number_table(user_employee_number)))"
       )
       .maybeSingle();
+
     if (error) throw Error;
 
     return data as unknown as MemoAgreementTableRow & {
@@ -1137,6 +1138,9 @@ export const agreeToMemo = async (
           user_id: string;
           user_first_name: string;
           user_last_name: string;
+          user_employee_number: {
+            user_employee_number: string;
+          }[];
         };
       };
     };
