@@ -3576,7 +3576,9 @@ RETURNS JSON AS $$
 
     const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
-    team_data = { team, teamMembers, teamGroups, teamGroupsCount:`${teamGroupsCount}`, teamProjects, teamProjectsCount:`${teamProjectsCount}`, teamMembersCount: Number(teamMembersCount)}
+    const pendingValidIDList = plv8.execute(`SELECT * FROM user_valid_id_table WHERE user_valid_id_status='PENDING';`);
+
+    team_data = { team, teamMembers, teamGroups, teamGroupsCount:`${teamGroupsCount}`, teamProjects, teamProjectsCount:`${teamProjectsCount}`, teamMembersCount: Number(teamMembersCount), pendingValidIDList}
  });
  return team_data;
 $$ LANGUAGE plv8;

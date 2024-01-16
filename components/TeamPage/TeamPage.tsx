@@ -18,6 +18,7 @@ import {
   TeamMemberType,
   TeamProjectTableRow,
   TeamTableRow,
+  UserValidIDTableRow,
 } from "@/utils/types";
 import {
   Box,
@@ -47,6 +48,7 @@ import TeamMemberList from "./TeamMemberList";
 import CreateProject from "./TeamProject/CreateProject";
 import ProjectList from "./TeamProject/ProjectList";
 import ProjectMembers from "./TeamProject/ProjectMembers";
+import ValidIDVerificationList from "./ValidIDVerificationList";
 
 export type UpdateTeamInfoForm = {
   teamName: string;
@@ -65,6 +67,7 @@ type Props = {
   teamMembersCount: number;
   teamGroupsCount: number;
   teamProjectsCount: number;
+  pendingValidIDList: UserValidIDTableRow[];
 };
 
 const TeamPage = ({
@@ -75,6 +78,7 @@ const TeamPage = ({
   teamMembersCount,
   teamGroupsCount,
   teamProjectsCount,
+  pendingValidIDList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -584,6 +588,7 @@ const TeamPage = ({
             teamMemberList={initialTeamMemberList}
           />
           <QuickOnboarding memberEmailList={memberEmailList} />
+          <ValidIDVerificationList pendingValidIDList={pendingValidIDList} />
         </>
       )}
 
