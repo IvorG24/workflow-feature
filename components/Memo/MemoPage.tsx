@@ -263,6 +263,7 @@ const MemoPage = ({ memo }: Props) => {
   const [openAgreementListModal, setOpenAgreementListModal] = useState(false);
   const [hasUserAgreedToMemo, setHasUserAgreedToMemo] = useState(false);
   const [memoFormat, setMemoFormat] = useState<MemoFormatType | null>(null);
+  const [currentUrl, setCurrentUrl] = useState("");
 
   const handleApproveOrRejectMemo = async (
     action: string,
@@ -412,6 +413,12 @@ const MemoPage = ({ memo }: Props) => {
     fetchMemoFormat();
   }, [supabaseClient]);
 
+  useEffect(() => {
+    if (window !== undefined) {
+      setCurrentUrl(window.location.href);
+    }
+  }, []);
+
   return (
     <Container pos="relative">
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
@@ -420,7 +427,7 @@ const MemoPage = ({ memo }: Props) => {
           <Title order={3} color="dimmed">
             Memo Page
           </Title>
-          <CopyButton value={window.location.href}>
+          <CopyButton value={currentUrl}>
             {({ copied, copy }) => (
               <Button
                 leftIcon={<IconShare size={16} />}
