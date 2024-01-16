@@ -2357,6 +2357,7 @@ RETURNS JSON AS $$
             AND form_table.form_is_disabled = false
             AND signer_team_member_id = '${teamMemberId}'
             AND request_status = 'PENDING'
+            AND request_signer_status = 'PENDING'
             ORDER BY request_view.request_date_created ${sort} 
             OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
           `
@@ -2374,6 +2375,7 @@ RETURNS JSON AS $$
             AND form_table.form_is_disabled = false
             AND signer_team_member_id = '${teamMemberId}'
             AND request_status = 'PENDING'
+            AND request_signer_status = 'PENDING'
           `
         )[0];
       }
