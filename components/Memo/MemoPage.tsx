@@ -34,6 +34,7 @@ import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
+import ExportMemoToPdf from "./ExportMemoToPdf";
 
 type Props = {
   memo: MemoType;
@@ -421,14 +422,14 @@ const MemoPage = ({ memo }: Props) => {
           >
             Reference Memo
           </Button>
-          {/* <ExportMemoToPdf
+          <ExportMemoToPdf
             memo={memo}
             currentSignedSignerList={currentSignedSignerList}
             sortMemoLineItems={sortMemoLineItems}
-          /> */}
+          />
         </Group>
       </Group>
-      <Paper mt="md" p="md" radius="md">
+      <Paper mt="md" p="xl" radius="md">
         <Text mb="md" weight={700}>
           MEMORANDUM
         </Text>
@@ -564,7 +565,7 @@ const MemoPage = ({ memo }: Props) => {
       )}
       {currentAgreementList.length > 0 && (
         <>
-          {renderAgreementReceiptSection(memo.memo_agreement_list, () =>
+          {renderAgreementReceiptSection(currentAgreementList, () =>
             setOpenAgreementListModal(true)
           )}
           <Modal

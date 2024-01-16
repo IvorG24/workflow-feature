@@ -1,5 +1,3 @@
-"use client";
-
 import { MemoType } from "@/utils/types";
 import { Button } from "@mantine/core";
 
@@ -23,6 +21,10 @@ Font.register({
       src: "https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-600.ttf",
       fontWeight: 600,
     },
+    {
+      src: "https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-italic.ttf",
+      fontStyle: "italic",
+    },
   ],
 });
 
@@ -44,8 +46,8 @@ const ExportToPdf = ({
     document: (
       <MemoPDF
         memo={memo}
-        currentSignedSignerList={currentSignedSignerList}
         sortMemoLineItems={sortMemoLineItems}
+        currentSignedSignerList={currentSignedSignerList}
       />
     ),
   });

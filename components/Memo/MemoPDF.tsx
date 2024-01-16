@@ -2,44 +2,72 @@ import { MemoType } from "@/utils/types";
 import {
   Document,
   Image,
+  Line,
   Page,
   StyleSheet,
+  Svg,
   Text,
   View,
 } from "@react-pdf/renderer";
+import { marked } from "marked";
 import moment from "moment";
+import Html from "react-pdf-html";
+
+type Props = {
+  memo: MemoType;
+  currentSignedSignerList: MemoType["memo_signer_list"];
+  sortMemoLineItems: MemoType["memo_line_item_list"];
+};
 
 const styles = StyleSheet.create({
-  paper: {
-    marginTop: 20,
-    padding: 20,
-    borderRadius: 10,
+  page: {
+    padding: "20pt 30pt 54pt",
     fontFamily: "Open Sans",
+    fontSize: "10pt",
   },
-  heading: {
-    marginBottom: 20,
-    fontWeight: "bold",
+  header: {
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "flex-end",
+    marginBottom: "16px",
   },
-  details: {
-    marginBottom: 10,
+  memoHeader: {
+    marginLeft: "12px",
+  },
+  memoHeaderInput: {
+    display: "flex",
+    flexDirection: "row",
+    gap: "16px",
   },
   divider: {
-    marginTop: 5,
-    borderTop: "1px solid #000",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1px",
+    marginTop: "8px",
   },
-  lineItem: {
-    marginBottom: 5,
+  memoBody: {
+    marginTop: "8px",
+    marginLeft: "12px",
+    marginRight: "12px",
+    fontSize: "10pt",
   },
-  badge: {
-    fontWeight: "bold",
-    padding: 5,
+  memoLineItem: {
+    lineHeight: 1,
+    marginBottom: "8px",
   },
-  signerContainer: {
-    marginTop: 20,
+  memoImageCaption: {
+    fontStyle: "italic",
+    fontFamily: "Open Sans",
+    fontSize: "10pt",
+  },
+  memoSigner: {
+    display: "flex",
     flexDirection: "row",
-  },
-  signerItem: {
-    marginRight: 48,
+    flexWrap: "wrap",
+    gap: "24px",
+    marginLeft: "12px",
+    marginRight: "12px",
+    marginTop: "48px",
   },
   footer: {
     position: "absolute",
@@ -58,65 +86,174 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  noSignature: {
+    border: "1px solid gray",
+    backgroundColor: "#f8f9fa",
+    marginBottom: "4px",
+    height: "50px",
+    width: "75px",
+    textAlign: "center",
+    display: "flex",
+    justifyContent: "center",
+  },
 });
-
-type Props = {
-  memo: MemoType;
-  currentSignedSignerList: MemoType["memo_signer_list"];
-  sortMemoLineItems: MemoType["memo_line_item_list"];
-};
 
 const MemoPDF = ({
   memo,
-  currentSignedSignerList,
   sortMemoLineItems,
+  currentSignedSignerList,
 }: Props) => {
-  const { user_first_name, user_last_name } = memo.memo_author_user;
-  return (
-    <Document>
-      <Page size="A4" style={{ fontSize: 14 }}>
-        <View style={styles.paper}>
-          <Text style={styles.heading}>MEMORANDUM</Text>
-          <View style={styles.details}>
-            <Text>{`Reference No.: ${memo.memo_reference_number}`}</Text>
-            <Text>{`Date: ${moment(memo.memo_date_created).format(
-              "MMMM DD, YYYY"
-            )}`}</Text>
-            <Text>{`Author: ${user_first_name} ${user_last_name}`}</Text>
-            <Text>{`Subject: ${memo.memo_subject}`}</Text>
-            <View style={styles.divider} />
-          </View>
-          {sortMemoLineItems.map((lineItem) => (
-            <View key={lineItem.memo_line_item_id} style={styles.lineItem}>
-              <Text>{lineItem.memo_line_item_content}</Text>
-            </View>
-          ))}
+  const lineItemStyleSheet = {
+    "*": {
+      fontSize: "10pt",
+      margin: 4,
+    },
+  };
+  const memoAuthorFullname = `${memo.memo_author_user.user_first_name} ${memo.memo_author_user.user_last_name}`;
 
-          {currentSignedSignerList.length > 0 && (
-            <View style={styles.signerContainer}>
-              {currentSignedSignerList.map(
-                (signer) =>
-                  signer.memo_signer_status === "APPROVED" && (
-                    <View key={signer.memo_signer_id} style={styles.signerItem}>
-                      <Image
-                        src={signer.signature_public_url}
-                        style={{ height: "50px", width: "75px" }}
-                      />
-                      <Text
-                        style={{ fontWeight: 600 }}
-                      >{`${signer.memo_signer_team_member.user.user_first_name} ${signer.memo_signer_team_member.user.user_last_name}`}</Text>
-                      <Text>
-                        {signer.memo_signer_team_member.user.user_job_title}
-                      </Text>
-                    </View>
-                  )
+  const renderLineItems = sortMemoLineItems.map((lineItem) => {
+    const lineItemContentHtml = marked(lineItem.memo_line_item_content);
+
+    return (
+      <View key={lineItem.memo_line_item_id} style={styles.memoLineItem}>
+        <Html stylesheet={lineItemStyleSheet}>
+          {lineItemContentHtml as string}
+        </Html>
+        <View>
+          {lineItem.memo_line_item_attachment
+            ?.memo_line_item_attachment_name && (
+            <View>
+              <Image
+                src={
+                  lineItem.memo_line_item_attachment
+                    .memo_line_item_attachment_public_url
+                }
+                style={{ height: "280px", width: "100%" }}
+              />
+              {lineItem.memo_line_item_attachment
+                .memo_line_item_attachment_caption && (
+                <Text style={styles.memoImageCaption}>
+                  Image caption:{" "}
+                  {
+                    lineItem.memo_line_item_attachment
+                      .memo_line_item_attachment_caption
+                  }
+                </Text>
               )}
             </View>
           )}
         </View>
+      </View>
+    );
+  });
+
+  const renderSignerList = currentSignedSignerList.map((signer) => {
+    const signerFullname = `${signer.memo_signer_team_member.user.user_first_name} ${signer.memo_signer_team_member.user.user_last_name}`;
+    return (
+      <View key={signer.memo_signer_id}>
+        {signer.signature_public_url ? (
+          <Image
+            src={signer.signature_public_url}
+            style={{ height: "50px", width: "75px" }}
+          />
+        ) : (
+          <View style={styles.noSignature}>
+            <Text>{"NO\nSIGNATURE"}</Text>
+          </View>
+        )}
+        <Text style={{ fontWeight: 600, marginBottom: "2px" }}>
+          {signerFullname}
+        </Text>
+        <Text>{signer.memo_signer_team_member.user.user_job_title}</Text>
+      </View>
+    );
+  });
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <Header />
+        <View style={styles.memoHeader}>
+          <Text
+            style={{
+              fontWeight: 600,
+              fontSize: "12px",
+              marginBottom: "12px",
+            }}
+          >
+            MEMORANDUM
+          </Text>
+          <View style={styles.memoHeaderInput}>
+            <Text style={{ fontWeight: 600, width: "54px" }}>Ref. No.</Text>
+            <Text>:</Text>
+            <Text>{memo.memo_reference_number}</Text>
+          </View>
+          <View style={styles.memoHeaderInput}>
+            <Text style={{ fontWeight: 600, width: "54px" }}>Date</Text>
+            <Text>:</Text>
+            <Text>
+              {moment(memo.memo_date_created).format("MMMM DD, YYYY")}
+            </Text>
+          </View>
+          <View style={styles.memoHeaderInput}>
+            <Text style={{ fontWeight: 600, width: "54px" }}>From</Text>
+            <Text>:</Text>
+            <Text>
+              {memoAuthorFullname} - {memo.memo_author_user.user_job_title}
+            </Text>
+          </View>
+          <View style={styles.memoHeaderInput}>
+            <Text style={{ fontWeight: 600, width: "54px" }}>Subject</Text>
+            <Text>:</Text>
+            <Text style={{ fontWeight: 600 }}>{memo.memo_subject}</Text>
+          </View>
+        </View>
+        <View style={styles.divider}>
+          <Svg height="2" width="100%">
+            <Line
+              x1="0"
+              y1="0"
+              x2="1000"
+              y2="0"
+              strokeWidth={2}
+              stroke="rgb(0,0,0)"
+            />
+          </Svg>
+          <Svg height="4" width="100%">
+            <Line
+              x1="0"
+              y1="0"
+              x2="1000"
+              y2="0"
+              strokeWidth={5}
+              stroke="rgb(0,0,0)"
+            />
+          </Svg>
+        </View>
+        <View style={styles.memoBody}>{renderLineItems}</View>
+        <View style={styles.memoSigner}>{renderSignerList}</View>
+        <Footer />
       </Page>
     </Document>
   );
 };
 
 export default MemoPDF;
+
+const Footer = () => (
+  <View style={styles.footer} fixed>
+    <Text
+      render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
+    />
+    <View style={styles.logo}>
+      <Text style={{ fontSize: 8 }}>Powered by</Text>
+      <Image src="/logo-request-light.png" style={{ width: 45, height: 15 }} />
+    </View>
+  </View>
+);
+
+const Header = () => (
+  <View style={styles.header} fixed>
+    <Image src="/logo-scic.png" style={{ width: 90, height: 30 }} />
+  </View>
+);
