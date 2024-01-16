@@ -35,6 +35,7 @@ import {
   UserOnboardTableInsert,
   UserTableInsert,
   UserTableRow,
+  UserValidIDTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -1019,4 +1020,18 @@ export const createRowInLookupTable = async (
     status: Boolean(formattedData[status]),
     value: formattedData[value],
   };
+};
+
+// Create Valid ID
+export const createValidID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: UserValidIDTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_valid_id_table")
+    .insert(params)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 };

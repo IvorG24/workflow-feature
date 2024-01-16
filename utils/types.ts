@@ -206,6 +206,13 @@ export type ServiceCategoryTableInsert =
 export type ServiceCategoryTableUpdate =
   Database["public"]["Tables"]["service_category_table"]["Update"];
 
+export type UserValidIDTableRow =
+  Database["public"]["Tables"]["user_valid_id_table"]["Row"];
+export type UserValidIDTableInsert =
+  Database["public"]["Tables"]["user_valid_id_table"]["Insert"];
+export type UserValidIDTableUpdate =
+  Database["public"]["Tables"]["user_valid_id_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -214,6 +221,7 @@ export type MemberRoleType = "OWNER" | "APPROVER" | "MEMBER" | "ADMIN";
 export type AttachmentBucketType =
   | "USER_AVATARS"
   | "USER_SIGNATURES"
+  | "USER_VALID_IDS"
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS";
