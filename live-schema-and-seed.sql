@@ -8489,7 +8489,7 @@ END;
 $$ LANGUAGE plpgsql;
 -- End: Format team name to url key
 
--- Start: Create memo
+-- Start: memo queries
 
 CREATE OR REPLACE FUNCTION create_memo(
     input_data JSON
@@ -8718,20 +8718,22 @@ RETURNS JSON AS $$
 
     const read_receipt_data = plv8.execute(
       `
-        SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar 
+        SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
         FROM memo_read_receipt_table 
         INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
+        LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
         WHERE memo_read_receipt_memo_id = '${memo_id}'
       `
     );
 
     const agreement_data = plv8.execute(
       `
-        SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar
+        SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
         FROM memo_agreement_table
         INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
+        LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
         WHERE memo_agreement_memo_id = '${memo_id}'
       `
     )
@@ -8746,6 +8748,7 @@ RETURNS JSON AS $$
  });
  return memo_data_on_load;
 $$ LANGUAGE plv8;
+
 
 
 CREATE OR REPLACE FUNCTION get_memo_list(
@@ -9078,6 +9081,8 @@ RETURNS JSON AS $$
   return new_memo_data;
 $$ LANGUAGE plv8;
 
+
+-- End: memo queries
 
 ---------- End: FUNCTIONS
 

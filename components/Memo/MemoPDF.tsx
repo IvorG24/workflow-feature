@@ -106,7 +106,11 @@ const MemoPDF = ({
                   lineItem.memo_line_item_attachment
                     .memo_line_item_attachment_public_url
                 }
-                style={{ height: "280px", width: "100%" }}
+                style={{
+                  maxHeight: "600px",
+                  maxWidth: "900px",
+                  objectFit: "contain",
+                }}
               />
               {lineItem.memo_line_item_attachment
                 .memo_line_item_attachment_caption && (

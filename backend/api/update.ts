@@ -548,31 +548,42 @@ export const approveOrRejectMemo = async (
     if (error) throw Error;
   }
 
-  const { data, error: MemoAgreementError } = await supabaseClient
-    .from("memo_agreement_table")
-    .insert({
-      memo_agreement_by_team_member_id: memoSignerTeamMemberId,
-      memo_agreement_memo_id: memoId,
-    })
-    .select(
-      "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name, user_employee_number: user_employee_number_table(user_employee_number)))"
-    )
-    .maybeSingle();
-  if (MemoAgreementError) throw Error;
+  // agree to memo
+  if (action.toLowerCase() === "approved") {
+    const { count } = await supabaseClient
+      .from("memo_agreement_table")
+      .select("*", { count: "exact" })
+      .eq("memo_agreement_by_team_member_id", memoSignerTeamMemberId)
+      .eq("memo_agreement_memo_id", memoId);
 
-  return data as unknown as MemoAgreementTableRow & {
-    memo_agreement_by_team_member: {
-      user_data: {
-        user_avatar: string;
-        user_id: string;
-        user_first_name: string;
-        user_last_name: string;
-        user_employee_number: {
-          user_employee_number: string;
-        }[];
+    if (Number(count) === 0) {
+      const { data, error: MemoAgreementError } = await supabaseClient
+        .from("memo_agreement_table")
+        .insert({
+          memo_agreement_by_team_member_id: memoSignerTeamMemberId,
+          memo_agreement_memo_id: memoId,
+        })
+        .select(
+          "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name, user_employee_number: user_employee_number_table(user_employee_number)))"
+        )
+        .maybeSingle();
+      if (MemoAgreementError) throw Error;
+
+      return data as unknown as MemoAgreementTableRow & {
+        memo_agreement_by_team_member: {
+          user_data: {
+            user_avatar: string;
+            user_id: string;
+            user_first_name: string;
+            user_last_name: string;
+            user_employee_number: {
+              user_employee_number: string;
+            }[];
+          };
+        };
       };
-    };
-  };
+    }
+  }
 };
 
 // update memo
@@ -628,7 +639,7 @@ export const updateMemo = async (
   };
 
   const { error } = await supabaseClient.rpc("edit_memo", { input_data });
-  console.log(error);
+
   if (error) throw Error;
 };
 

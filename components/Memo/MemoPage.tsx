@@ -321,6 +321,9 @@ const MemoPage = ({ memo }: Props) => {
 
       if (newAgreementData) {
         const { user_data } = newAgreementData.memo_agreement_by_team_member;
+        const employeeNumber = user_data.user_employee_number[0]
+          ? user_data.user_employee_number[0].user_employee_number
+          : "N/A";
         const newUserAgreementData = {
           memo_agreement_by_team_member_id:
             newAgreementData.memo_agreement_by_team_member_id,
@@ -329,8 +332,7 @@ const MemoPage = ({ memo }: Props) => {
           memo_agreement_id: newAgreementData.memo_agreement_id,
           memo_agreement_memo_id: newAgreementData.memo_agreement_memo_id,
           ...user_data,
-          user_employee_number:
-            user_data.user_employee_number[0].user_employee_number ?? "",
+          user_employee_number: employeeNumber,
         };
         setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
         setHasUserAgreedToMemo(true);
@@ -357,6 +359,9 @@ const MemoPage = ({ memo }: Props) => {
 
       if (newAgreementData) {
         const { user_data } = newAgreementData.memo_agreement_by_team_member;
+        const employeeNumber = user_data.user_employee_number[0]
+          ? user_data.user_employee_number[0].user_employee_number
+          : "N/A";
         const newUserAgreementData = {
           memo_agreement_by_team_member_id:
             newAgreementData.memo_agreement_by_team_member_id,
@@ -365,8 +370,7 @@ const MemoPage = ({ memo }: Props) => {
           memo_agreement_id: newAgreementData.memo_agreement_id,
           memo_agreement_memo_id: newAgreementData.memo_agreement_memo_id,
           ...user_data,
-          user_employee_number:
-            user_data.user_employee_number[0].user_employee_number ?? "",
+          user_employee_number: employeeNumber,
         };
         setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
         setHasUserAgreedToMemo(true);
@@ -605,7 +609,9 @@ const MemoPage = ({ memo }: Props) => {
                       </Avatar>
                       <Text>{readerFullname}</Text>
                     </Group>
-                    <Text weight={600}>{reader.user_employee_number}</Text>
+                    <Text weight={600}>
+                      {reader.user_employee_number ?? "N/A"}
+                    </Text>
                   </Group>
                 );
               })}
@@ -642,7 +648,9 @@ const MemoPage = ({ memo }: Props) => {
                       </Avatar>
                       <Text>{memberFullname}</Text>
                     </Group>
-                    <Text weight={600}>{member.user_employee_number}</Text>
+                    <Text weight={600}>
+                      {member.user_employee_number ?? "N/A"}
+                    </Text>
                   </Group>
                 );
               })}

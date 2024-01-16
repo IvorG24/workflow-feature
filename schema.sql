@@ -514,7 +514,7 @@ CREATE TABLE memo_line_item_attachment_table (
     memo_line_item_attachment_caption VARCHAR(4000),
     memo_line_item_attachment_storage_bucket VARCHAR(4000) NOT NULL,
     memo_line_item_attachment_public_url VARCHAR(4000) NOT NULL,
-    memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) NOT NULL
+    memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) ON DELETE CASCADE NOT NULL
 );
 
 CREATE TABLE memo_date_updated_table (
@@ -544,18 +544,25 @@ CREATE TABLE memo_agreement_table (
     memo_agreement_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
 );
 
-CREATE TABLE memo_format_table (
+CREATE TABLE memo_format_table(
     memo_format_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_format_header VARCHAR(4000) NOT NULL,
-    memo_format_footer VARCHAR(4000) NOT NULL,
-    memo_format_margin_top VARCHAR(4000) NOT NULL,
-    memo_format_margin_right VARCHAR(4000) NOT NULL,
-    memo_format_margin_bottom VARCHAR(4000) NOT NULL,
-    memo_format_margin_left VARCHAR(4000) NOT NULL
+    memo_format_header_margin_top VARCHAR(20) NOT NULL,
+    memo_format_header_margin_right VARCHAR(20) NOT NULL,
+    memo_format_header_margin_bottom VARCHAR(20) NOT NULL,
+    memo_format_header_margin_left VARCHAR(20) NOT NULL,
+    memo_format_header_logo_position VARCHAR(255) NOT NULL,
+    memo_format_body_margin_top VARCHAR(20) NOT NULL,
+    memo_format_body_margin_right VARCHAR(20) NOT NULL,
+    memo_format_body_margin_bottom VARCHAR(20) NOT NULL,
+    memo_format_body_margin_left VARCHAR(20) NOT NULL,
+    memo_format_footer_margin_top VARCHAR(20) NOT NULL,
+    memo_format_footer_margin_right VARCHAR(20) NOT NULL,
+    memo_format_footer_margin_bottom VARCHAR(20) NOT NULL,
+    memo_format_footer_margin_left VARCHAR(20) NOT NULL
 );
 
-
 -- End: Memo feature table
+
 -- Start: Username history table
 
 CREATE TABLE user_name_history_table(
@@ -8495,7 +8502,7 @@ $$ LANGUAGE plv8;
 
 -- End: Analyze user issued item
 
--- Start: Create memo
+-- Start: memo queries
 
 CREATE OR REPLACE FUNCTION create_memo(
     input_data JSON
@@ -8724,20 +8731,22 @@ RETURNS JSON AS $$
 
     const read_receipt_data = plv8.execute(
       `
-        SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar 
+        SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
         FROM memo_read_receipt_table 
         INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
+        LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
         WHERE memo_read_receipt_memo_id = '${memo_id}'
       `
     );
 
     const agreement_data = plv8.execute(
       `
-        SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar
+        SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
         FROM memo_agreement_table
         INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
         INNER JOIN user_table ON user_id = team_member_user_id
+        LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
         WHERE memo_agreement_memo_id = '${memo_id}'
       `
     )
@@ -8752,6 +8761,7 @@ RETURNS JSON AS $$
  });
  return memo_data_on_load;
 $$ LANGUAGE plv8;
+
 
 
 CREATE OR REPLACE FUNCTION get_memo_list(
@@ -9083,6 +9093,8 @@ RETURNS JSON AS $$
   });
   return new_memo_data;
 $$ LANGUAGE plv8;
+
+-- End: memo queries
 
 -- Start: Update user
 
