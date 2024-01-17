@@ -107,8 +107,8 @@ const MemoPDF = ({
                     .memo_line_item_attachment_public_url
                 }
                 style={{
-                  maxHeight: "600px",
-                  maxWidth: "900px",
+                  height: "200px",
+                  width: "600px",
                   objectFit: "contain",
                 }}
               />
@@ -135,7 +135,7 @@ const MemoPDF = ({
         {signer.signature_public_url ? (
           <Image
             src={signer.signature_public_url}
-            style={{ height: "50px", width: "75px" }}
+            style={{ height: "50px", width: "75px", objectFit: "contain" }}
           />
         ) : (
           <View style={styles.noSignature}>
@@ -155,25 +155,33 @@ const MemoPDF = ({
       display: "flex",
       alignItems: getFlexJustify(memoFormat.header.logoPosition),
       margin: `${memoFormat.header.top}px ${memoFormat.header.right}px ${memoFormat.header.bottom}px ${memoFormat.header.left}px`,
+      flex: "0 1 auto",
     },
     body: {
       margin: `${memoFormat.body.top}px ${memoFormat.body.right}px ${memoFormat.body.bottom}px ${memoFormat.body.left}px`,
+      flex: "1 1 auto",
     },
     footer: {
-      position: "absolute",
-      bottom: memoFormat.footer.bottom,
-      left: memoFormat.footer.left,
-      right: memoFormat.footer.right,
-      marginTop: `${memoFormat.footer.top}`,
+      margin: `${memoFormat.footer.top}px ${memoFormat.footer.right}px ${memoFormat.footer.bottom}px ${memoFormat.footer.left}px`,
       color: "#495057",
       flexDirection: "row",
       justifyContent: "space-between",
+      flex: "0 1 auto",
     },
   });
 
   return (
     <Document>
-      <Page size="A4" style={{ fontFamily: "Open Sans", fontSize: "10pt" }}>
+      <Page
+        size="A4"
+        style={{
+          fontFamily: "Open Sans",
+          fontSize: "10pt",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+        }}
+      >
         <View style={dynamicStyles.header} fixed>
           <Image
             src="/logo-scic.png"

@@ -218,6 +218,7 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
             label="Author"
             value={memoAuthorFullname}
             readOnly
+            variant="filled"
             withAsterisk
           />
           <TextInput
@@ -441,7 +442,7 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
 
         <Box mb={42}>
           <Button mb={12} size="md" fullWidth type="submit">
-            Save Edit
+            Submit
           </Button>
           <Button
             size="md"

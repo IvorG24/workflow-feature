@@ -169,6 +169,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
             {...register("author", {
               required: "This field is required",
             })}
+            variant="filled"
             error={errors.author?.message}
             withAsterisk
           />
