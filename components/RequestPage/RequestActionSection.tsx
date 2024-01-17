@@ -1,3 +1,5 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { Button, Flex, Paper, Space, Stack, Text, Title } from "@mantine/core";
 // import { useRouter } from "next/router";
 import { modals, openConfirmModal } from "@mantine/modals";
@@ -20,7 +22,7 @@ type Props = {
   canSignerTakeAction?: boolean;
   isDeletable: boolean;
   isUserRequester?: boolean;
-  onCreateJiraTicket: () => Promise<string | null | undefined>;
+  onCreateJiraTicket?: () => Promise<string | null | undefined>;
 };
 
 const RequestActionSection = ({
@@ -30,7 +32,6 @@ const RequestActionSection = ({
   isRf,
   isCashPurchase,
   isUserPrimarySigner,
-  requestId,
   isEditable,
   canSignerTakeAction,
   isDeletable,
@@ -38,23 +39,26 @@ const RequestActionSection = ({
   onCreateJiraTicket,
 }: Props) => {
   const router = useRouter();
+  const activeTeam = useActiveTeam();
 
   const handleApproveRequisitionRequest = async () => {
     try {
-      const jiraTicketResponse = await onCreateJiraTicket();
-      if (!jiraTicketResponse) {
-        notifications.show({
-          message: "Failed to create jira ticket",
-          color: "red",
-        });
-        return;
+      if (onCreateJiraTicket) {
+        const jiraTicketResponse = await onCreateJiraTicket();
+        if (!jiraTicketResponse) {
+          notifications.show({
+            message: "Failed to create jira ticket",
+            color: "red",
+          });
+          return;
+        }
+
+        const jiraTicket = JSON.parse(jiraTicketResponse);
+
+        const jiraTicketWebLink = jiraTicket._links.web;
+
+        handleUpdateRequest("APPROVED", jiraTicket.issueKey, jiraTicketWebLink);
       }
-
-      const jiraTicket = JSON.parse(jiraTicketResponse);
-
-      const jiraTicketWebLink = jiraTicket._links.web;
-
-      handleUpdateRequest("APPROVED", jiraTicket.issueKey, jiraTicketWebLink);
     } catch (error) {
       console.log(error);
       notifications.show({
@@ -132,7 +136,7 @@ const RequestActionSection = ({
   };
 
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper p="xl" shadow="xs" className="onboarding-requisition-request-action">
       <Title order={4} color="dimmed">
         Request Action
       </Title>
@@ -143,7 +147,9 @@ const RequestActionSection = ({
             fullWidth
             onClick={() =>
               router.push(
-                `/team-requests/requests/${requestId}/edit?referenceOnly=true`
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name ?? ""
+                )}/requests/${router.query.requestId}/edit?referenceOnly=true`
               )
             }
           >
@@ -177,7 +183,9 @@ const RequestActionSection = ({
               fullWidth
               onClick={() =>
                 router.push(
-                  `/team-requests/requests/${router.query.requestId}/edit`
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/requests/${router.query.requestId}/edit`
                 )
               }
             >

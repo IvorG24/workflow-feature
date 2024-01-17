@@ -13,10 +13,10 @@ import {
   FormType,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
+  ItemDescriptionFieldUOMTableInsert,
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
-  ItemTableUpdate,
   NotificationTableInsert,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
@@ -32,6 +32,7 @@ import {
   TeamTableInsert,
   TicketCommentTableInsert,
   TicketTableRow,
+  UserOnboardTableInsert,
   UserTableInsert,
   UserTableRow,
 } from "@/utils/types";
@@ -144,6 +145,23 @@ export const createTeamMember = async (
     .select();
   if (error) throw error;
   return data;
+};
+
+// Create Team Member with team name
+export const createTeamMemberReturnTeamName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TeamMemberTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .insert(params)
+    .select("*, team:team_table(team_name)");
+  if (error) throw error;
+  return data as unknown as [
+    {
+      team: { team_name: string };
+    } & TeamMemberTableInsert
+  ];
 };
 
 // Create Team Invitation/s
@@ -291,7 +309,7 @@ export const createComment = async (
 export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert;
+    itemData: ItemTableInsert & { item_division_id_list: string[] };
     itemDescription: {
       description: string;
       withUoM: boolean;
@@ -313,7 +331,7 @@ export const createItem = async (
 export const updateItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableUpdate;
+    itemData: ItemTableInsert & { item_division_id_list: string[] };
     toAdd: ItemForm["descriptions"];
     toUpdate: ItemDescriptionTableUpdate[];
     toRemove: { fieldId: string; descriptionId: string }[];
@@ -331,15 +349,51 @@ export const updateItem = async (
 // Create item description field
 export const createItemDescriptionField = async (
   supabaseClient: SupabaseClient<Database>,
-  params: ItemDescriptionFieldTableInsert[]
+  params: (ItemDescriptionFieldTableInsert & {
+    item_description_field_uom: string | null;
+  })[]
 ) => {
-  const { data, error } = await supabaseClient
+  const itemDescriptionFieldUomInput: ItemDescriptionFieldUOMTableInsert[] = [];
+  const itemDescriptionFieldInput = params.map((field) => {
+    const fieldId = uuidv4();
+    if (field.item_description_field_uom) {
+      itemDescriptionFieldUomInput.push({
+        item_description_field_uom_item_description_field_id: fieldId,
+        item_description_field_uom: field.item_description_field_uom,
+      });
+    }
+    return {
+      item_description_field_id: fieldId,
+      item_description_field_value: field.item_description_field_value,
+      item_description_field_is_available:
+        field.item_description_field_is_available,
+      item_description_field_item_description_id:
+        field.item_description_field_item_description_id,
+      item_description_field_encoder_team_member_id:
+        field.item_description_field_encoder_team_member_id,
+    };
+  });
+  const { data: item, error: itemError } = await supabaseClient
     .from("item_description_field_table")
-    .insert(params)
+    .insert(itemDescriptionFieldInput)
     .select("*");
-  if (error) throw error;
-
-  return data;
+  if (itemError) throw itemError;
+  const { data: uom, error: uomError } = await supabaseClient
+    .from("item_description_field_uom_table")
+    .insert(itemDescriptionFieldUomInput)
+    .select("*");
+  if (uomError) throw uomError;
+  return item.map((item) => {
+    const itemUom = uom.find(
+      (value) =>
+        value.item_description_field_uom_item_description_field_id ===
+        item.item_description_field_id
+    );
+    return {
+      ...item,
+      item_description_field_uom: itemUom?.item_description_field_uom,
+    };
+  });
 };
 
 // Create request form
@@ -374,6 +428,7 @@ export const createRequest = async (
     formName: string;
     isFormslyForm: boolean;
     projectId: string;
+    teamName: string;
   }
 ) => {
   const {
@@ -384,6 +439,7 @@ export const createRequest = async (
     formName,
     isFormslyForm,
     projectId,
+    teamName,
   } = params;
 
   const requestId = uuidv4();
@@ -450,7 +506,7 @@ export const createRequest = async (
       requestSignerNotificationInput.push({
         notification_app: "REQUEST",
         notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-        notification_redirect_url: `/team-requests/requests/${requestId}`,
+        notification_redirect_url: `/${teamName}/requests/${requestId}`,
         notification_team_id: teamId,
         notification_type: "REQUEST",
         notification_user_id:
@@ -480,13 +536,6 @@ export const createRequest = async (
     )
     .join(",");
 
-  const notificationValues = requestSignerNotificationInput
-    .map(
-      (notification) =>
-        `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
-    )
-    .join(",");
-
   // create request
   const { data, error } = await supabaseClient
     .rpc("create_request", {
@@ -496,15 +545,15 @@ export const createRequest = async (
         teamMemberId: params.teamMemberId,
         responseValues,
         signerValues,
-        notificationValues,
+        requestSignerNotificationInput,
         formName,
         isFormslyForm,
         projectId,
+        teamId,
       },
     })
     .select()
     .single();
-
   if (error) throw error;
 
   return data as RequestTableRow;
@@ -522,6 +571,7 @@ export const editRequest = async (
     teamId: string;
     requesterName: string;
     formName: string;
+    teamName: string;
   }
 ) => {
   const {
@@ -531,11 +581,15 @@ export const editRequest = async (
     teamId,
     requesterName,
     formName,
+    teamName,
   } = params;
 
   // get request response
   const requestResponseInput: RequestResponseTableInsert[] = [];
   for (const section of requestFormValues.sections) {
+    const duplicatableSectionId = section.section_is_duplicatable
+      ? uuidv4()
+      : null;
     for (const field of section.section_field) {
       let responseValue = field?.field_response[0]?.request_response as unknown;
       if (
@@ -582,9 +636,7 @@ export const editRequest = async (
 
         const response = {
           request_response: JSON.stringify(responseValue),
-          request_response_duplicatable_section_id:
-            field.field_response[0].request_response_duplicatable_section_id ??
-            null,
+          request_response_duplicatable_section_id: duplicatableSectionId,
           request_response_field_id: field.field_id,
           request_response_request_id: requestId,
         };
@@ -609,7 +661,7 @@ export const editRequest = async (
       requestSignerNotificationInput.push({
         notification_app: "REQUEST",
         notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-        notification_redirect_url: `/team-requests/requests/${requestId}`,
+        notification_redirect_url: `/${teamName}/requests/${requestId}`,
         notification_team_id: teamId,
         notification_type: "REQUEST",
         notification_user_id:
@@ -620,16 +672,16 @@ export const editRequest = async (
   });
 
   const responseValues = requestResponseInput
-    .map(
-      (response) =>
-        `('${response.request_response}',${
-          response.request_response_duplicatable_section_id
-            ? `'${response.request_response_duplicatable_section_id}'`
-            : "NULL"
-        },'${response.request_response_field_id}','${
-          response.request_response_request_id
-        }')`
-    )
+    .map((response) => {
+      const escapedResponse = response.request_response.replace(/'/g, "''");
+      return `('${escapedResponse}',${
+        response.request_response_duplicatable_section_id
+          ? `'${response.request_response_duplicatable_section_id}'`
+          : "NULL"
+      },'${response.request_response_field_id}','${
+        response.request_response_request_id
+      }')`;
+    })
     .join(",");
 
   const signerValues = requestSignerInput
@@ -919,4 +971,52 @@ export const createTicketComment = async (
   if (error) throw error;
 
   return { data, error };
+};
+
+// Create onboard
+export const createOnboard = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    onboardData: UserOnboardTableInsert;
+  }
+) => {
+  const { onboardData } = params;
+  const { data, error } = await supabaseClient
+    .from("user_onboard_table")
+    .insert(onboardData)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Create row in lookup table
+export const createRowInLookupTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    inputData: JSON;
+    tableName: string;
+  }
+) => {
+  const { tableName, inputData } = params;
+  const { data, error } = await supabaseClient
+    .from(`${tableName}_table`)
+    .insert(inputData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const id = `${tableName}_id`;
+  const value = tableName;
+  const status = `${tableName}_is_available`;
+
+  const formattedData = data as unknown as {
+    [key: string]: string;
+  };
+
+  return {
+    id: formattedData[id],
+    status: Boolean(formattedData[status]),
+    value: formattedData[value],
+  };
 };

@@ -2,10 +2,14 @@ import { getRequestList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
+import { JoyRideNoSSR } from "@/utils/functions";
+import { ONBOARDING_REQUEST_LIST_STEP, ONBOARD_NAME } from "@/utils/onboarding";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormStatusType,
   RequestListItemType,
   TeamMemberWithUserType,
+  TeamProjectTableRow,
 } from "@/utils/types";
 import {
   Alert,
@@ -24,14 +28,17 @@ import {
   Stack,
   Text,
   Title,
+  useMantineTheme,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { CallBackProps, STATUS } from "react-joyride";
 import RequestItemRow from "./RequestItemRow";
 import RequestListFilter from "./RequestListFilter";
 
@@ -40,9 +47,11 @@ export type FilterFormValues = {
   requestorList: string[];
   approverList: string[];
   formList: string[];
+  projectList: string[];
   status?: FormStatusType[];
   isAscendingSort: boolean;
   isApproversView: boolean;
+  idFilterList: string[];
 };
 
 export type RequestListLocalFilter = {
@@ -53,6 +62,8 @@ export type RequestListLocalFilter = {
   status: FormStatusType[] | undefined;
   isAscendingSort: boolean;
   isApproversView: boolean;
+  projectList: string[];
+  idFilterList: string[];
 };
 
 type Props = {
@@ -61,6 +72,7 @@ type Props = {
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
+  projectList: TeamProjectTableRow[];
 };
 
 const RequestListPage = ({
@@ -69,12 +81,15 @@ const RequestListPage = ({
   teamMemberList,
   formList,
   isFormslyTeam,
+  projectList,
 }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const { colors } = useMantineTheme();
   const teamMember = useUserTeamMember();
   const [activePage, setActivePage] = useState(1);
+  const [isOnboarding, setIsOnboarding] = useState(false);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] =
     useState<RequestListItemType[]>(initialRequestList);
@@ -89,6 +104,8 @@ const RequestListPage = ({
         status: undefined,
         isAscendingSort: false,
         isApproversView: false,
+        projectList: [],
+        idFilterList: [],
       },
     }
   );
@@ -113,6 +130,8 @@ const RequestListPage = ({
       status,
       isAscendingSort,
       isApproversView,
+      projectList,
+      idFilterList,
     }: FilterFormValues = getValues()
   ) => {
     try {
@@ -141,6 +160,10 @@ const RequestListPage = ({
           approverList && approverList.length > 0 ? approverList : undefined,
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
+        project:
+          projectList && projectList.length > 0 ? projectList : undefined,
+        idFilter:
+          idFilterList && idFilterList.length > 0 ? idFilterList : undefined,
         search: search,
         isApproversView,
         teamMemberId: teamMember.team_member_id,
@@ -176,6 +199,8 @@ const RequestListPage = ({
         status,
         isAscendingSort,
         isApproversView,
+        projectList,
+        idFilterList,
       } = getValues();
 
       const params = {
@@ -188,6 +213,10 @@ const RequestListPage = ({
           approverList && approverList.length > 0 ? approverList : undefined,
         form: formList && formList.length > 0 ? formList : undefined,
         status: status && status.length > 0 ? status : undefined,
+        project:
+          projectList && projectList.length > 0 ? projectList : undefined,
+        idFilter:
+          idFilterList && idFilterList.length < 0 ? idFilterList : undefined,
         search: search,
         isApproversView,
         teamMemberId: teamMember.team_member_id,
@@ -210,6 +239,63 @@ const RequestListPage = ({
     }
   };
 
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    if (status === STATUS.FINISHED) {
+      router.push(
+        `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.REQUEST_LIST}`
+      );
+    }
+  };
+
+  const openRequestListOnboardingModal = () =>
+    modals.open({
+      centered: true,
+      closeOnEscape: false,
+      closeOnClickOutside: false,
+      withCloseButton: false,
+      children: (
+        <Box>
+          <Title order={3}>Welcome to Request List Onboarding</Title>
+          <Text mt="xs" align="center">
+            Effortlessly manage requests in the Request List. Streamline your
+            workflow, review details, and easily take action on pending
+            requests. This quick session will guide you through key features for
+            a seamless experience.
+          </Text>
+          <Flex justify="flex-end" direction="row" gap="md" mt="lg">
+            <Button
+              variant="outline"
+              onClick={() => {
+                modals.closeAll();
+                setIsOnboarding(false);
+                router.push("/team-requests/requests", undefined, {
+                  shallow: true,
+                });
+              }}
+            >
+              Skip Onboarding
+            </Button>
+            <Button
+              onClick={() => {
+                modals.closeAll();
+                setIsOnboarding(true);
+              }}
+            >
+              Start
+            </Button>
+          </Flex>
+        </Box>
+      ),
+    });
+
+  useEffect(() => {
+    if (router.query.onboarding) {
+      setIsOnboarding(true);
+      openRequestListOnboardingModal();
+    }
+  }, [router.query]);
+
   useEffect(() => {
     handlePagination();
   }, [activePage]);
@@ -225,7 +311,7 @@ const RequestListPage = ({
   }, [activeTeam.team_id, teamMember, localFilter]);
 
   return (
-    <Container maw={1300} h="100%">
+    <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap">
         <Box>
           <Title order={4}>Request List Page</Title>
@@ -233,9 +319,16 @@ const RequestListPage = ({
         </Box>
         {isFormslyTeam ? (
           <Button
-            onClick={() => router.push("/team-requests/spreadsheet-view")}
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name
+                )}/requests/spreadsheet-view`
+              )
+            }
             sx={{ flex: 1 }}
             maw={300}
+            className="onboarding-request-list-ssot"
           >
             SSOT Spreadsheet View
           </Button>
@@ -244,6 +337,7 @@ const RequestListPage = ({
           variant="light"
           leftIcon={<IconReload size={16} />}
           onClick={() => handleFilterForms()}
+          className="onboarding-request-list-refresh"
         >
           Refresh
         </Button>
@@ -257,6 +351,7 @@ const RequestListPage = ({
             formList={formList}
             localFilter={localFilter}
             setLocalFilter={setLocalFilter}
+            projectList={projectList}
           />
         </form>
       </FormProvider>
@@ -270,7 +365,7 @@ const RequestListPage = ({
           loader={<Loader variant="dots" />}
         />
         {requestList.length > 0 ? (
-          <Paper withBorder>
+          <Paper withBorder className="onboarding-request-list-table">
             <ScrollArea h="fit-content" type="auto">
               <Stack spacing={0} miw={1074}>
                 <Box
@@ -343,8 +438,27 @@ const RequestListPage = ({
           onChange={setActivePage}
           total={Math.ceil(requestListCount / DEFAULT_REQUEST_LIST_LIMIT)}
           mt="xl"
+          className="onboarding-request-list-pagination"
         />
       </Flex>
+
+      <JoyRideNoSSR
+        callback={handleJoyrideCallback}
+        continuous
+        run={isOnboarding}
+        steps={ONBOARDING_REQUEST_LIST_STEP}
+        scrollToFirstStep
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        showProgress
+        styles={{
+          buttonNext: { backgroundColor: colors.blue[6] },
+          buttonBack: { color: colors.blue[6] },
+          beaconInner: { backgroundColor: colors.blue[6] },
+          tooltipContent: { padding: 0 },
+        }}
+      />
     </Container>
   );
 };

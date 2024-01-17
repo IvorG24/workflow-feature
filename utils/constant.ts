@@ -14,6 +14,7 @@ export const MAX_FILE_SIZE_IN_MB = 5;
 export const MAX_FILE_SIZE = MAX_FILE_SIZE_IN_MB * 1024 * 1024;
 export const DEFAULT_NUMBER_SSOT_ROWS = 10;
 export const DEFAULT_ITEM_ANALYTICS_ROWS = 20;
+export const DEFAULT_ON_SCROLL_LIMIT = 10;
 
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",
@@ -28,6 +29,7 @@ export const UUID_EXP =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
 
 export const SIGN_IN_PAGE_PATH = "/sign-in";
+export const CREATE_PASSWORD_PAGE_PATH = "/create-password";
 export const DEFAULT_LANDING_PAGE = "/team-requests/dashboard";
 
 export const defaultRequestFormBuilderSection = (
@@ -1242,6 +1244,24 @@ export const ITEM_UNIT_CHOICES = [
   "Kilocalorie",
   "British Thermal Unit",
   "Celsius",
+  "Percent",
+  "Parts Per Million",
+  "Meter Per Second",
+  "Cubic Meter Per Second",
+  "Microfarad",
+  "Nanofarad",
+  "Picofarad",
+  "Frames Per Second",
+  "Millimeter Of Mercury",
+  "Grams Per Square Meter",
+  "Cubic Meter Per Hour",
+  "Kiloampere",
+  "Beats Per Minute",
+  "Micron",
+  "Millimetre Per Minute",
+  "Milliampere",
+  "Linear Meter",
+  "Newton Meter",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
@@ -1313,4 +1333,10 @@ export const GL_ACCOUNT_CHOICES = [
   "Computer Software",
   "Temporary Facility",
   "Bidding",
+];
+
+export const FORM_SEGMENT_CHOCIES = [
+  { label: "Form Preview", value: "Form Preview" },
+  { label: "Form Details", value: "Form Details" },
+  { label: "Form Lookup", value: "Form Lookup" },
 ];

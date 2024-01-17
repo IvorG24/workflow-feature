@@ -63,6 +63,13 @@ type RequestFormFieldsProps = {
   sourcedItemFormMethods?: {
     onProjectSiteChange: () => void;
   };
+  servicesMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSIDivisionChange: (index: number, value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
 };
 
 const RequestFormFields = ({
@@ -75,6 +82,7 @@ const RequestFormFields = ({
   rirFormMethods,
   formslyFormName = "",
   sourcedItemFormMethods,
+  servicesMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -307,17 +315,23 @@ const RequestFormFields = ({
                       prevValue === null ? null : `${prevValue}`
                     );
                   } else if (field.field_name === "CSI Code Description") {
-                    requisitionFormMethods?.onCSICodeChange(
-                      sectionIndex,
-                      value
-                    );
+                    requisitionFormMethods &&
+                      requisitionFormMethods.onCSICodeChange(
+                        sectionIndex,
+                        value
+                      );
+                    servicesMethods &&
+                      servicesMethods.onCSICodeChange(sectionIndex, value);
                   } else if (field.field_name === "Source Project") {
                     sourcedItemFormMethods?.onProjectSiteChange();
                   } else if (field.field_name === "Requesting Project") {
                     requisitionFormMethods?.onProjectNameChange(value);
                     subconFormMethods?.onProjectNameChange(value);
+                    servicesMethods?.onProjectNameChange(value);
                   } else if (field.field_name === "Service Name") {
                     subconFormMethods?.onServiceNameChange(sectionIndex, value);
+                  } else if (field.field_name === "CSI Division") {
+                    servicesMethods?.onCSIDivisionChange(sectionIndex, value);
                   }
                 }}
                 data={dropdownOption}

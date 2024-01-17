@@ -63,7 +63,7 @@ const RequestDetailsSection = ({
 
   const isFormslyRequisitionRequest =
     request.request_form.form_is_formsly_form &&
-    request.request_form.form_name === "Requisition";
+    ["Requisition", "Services"].includes(request.request_form.form_name);
 
   const handleUpdateOtpID = async ({ otpID }: { otpID: string }) => {
     try {
@@ -85,8 +85,16 @@ const RequestDetailsSection = ({
     }
   };
 
+  const primarySigner = request.request_signer.find(
+    (signer) => signer.request_signer_signer.signer_is_primary_signer
+  );
+
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper
+      p="xl"
+      shadow="xs"
+      className="onboarding-requisition-request-request"
+    >
       <Title order={2}>{request.request_form.form_name}</Title>
       <Text mt="xs">{request.request_form.form_description}</Text>
 
@@ -109,7 +117,6 @@ const RequestDetailsSection = ({
             {`${requestor.user_first_name} ${requestor.user_last_name}`}
           </Text>
           <Text color="dimmed" size={14}>
-            {" "}
             {requestor.user_username}
           </Text>
         </Stack>
@@ -120,13 +127,36 @@ const RequestDetailsSection = ({
       </Group>
       <Group spacing="md" mt="xs">
         <Text>Status:</Text>
-        <Badge color={getStatusToColor(requestStatus.toLowerCase())}>
-          {requestStatus}
-        </Badge>
+        <Group spacing="xs">
+          <Badge color={getStatusToColor(requestStatus.toLowerCase())}>
+            {requestStatus}
+          </Badge>
+          {primarySigner &&
+            primarySigner.request_signer_status_date_updated &&
+            ["APPROVED", "REJECTED"].includes(request.request_status) && (
+              <Text color="dimmed">
+                on{" "}
+                {new Date(
+                  primarySigner.request_signer_status_date_updated
+                ).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "numeric",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                })}
+              </Text>
+            )}
+        </Group>
       </Group>
+
       <Group spacing="md" mt="xl">
         <Title order={5}>Request ID:</Title>
-        <Text>{request.request_formsly_id ?? request.request_id}</Text>
+        <Text>
+          {request.request_formsly_id === "-"
+            ? request.request_id
+            : request.request_formsly_id}
+        </Text>
       </Group>
       {request.request_project.team_project_name && (
         <Group spacing="md" mt="xl">

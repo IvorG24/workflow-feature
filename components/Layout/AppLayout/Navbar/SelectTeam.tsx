@@ -18,6 +18,7 @@ import { useUserActions, useUserProfile } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { AppType, TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
@@ -135,7 +136,11 @@ const SelectTeam = () => {
       setUnreadNotification(unreadNotificationCount || 0);
     }
 
-    await router.push(`/team-${activeApp.toLowerCase()}s/dashboard`);
+    if (newActiveTeam) {
+      await router.push(
+        `/${formatTeamNameToUrlKey(newActiveTeam.team_name)}/dashboard`
+      );
+    }
 
     setIsLoading(false);
   };
@@ -180,6 +185,11 @@ const SelectTeam = () => {
             {(activeTeam.team_name[0] + activeTeam.team_name[1]).toUpperCase()}
           </Avatar>
         }
+        styles={{
+          dropdown: {
+            maxWidth: "fit-content",
+          },
+        }}
       />
     </>
   );

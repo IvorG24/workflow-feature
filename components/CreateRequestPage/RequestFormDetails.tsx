@@ -16,15 +16,19 @@ type Props = {
 };
 
 const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
-  const userProfile = useUserProfile();
   const userInitials = useUserIntials();
+  const userProfile = useUserProfile();
 
-  const { form_name, form_description, form_date_created } = formDetails;
+  const { form_name, form_description } = formDetails;
 
-  const formDateCreated = moment(form_date_created).format("MMM DD, YYYY");
+  const requestDate = moment(new Date()).format("MMM DD, YYYY");
 
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper
+      p="xl"
+      shadow="xs"
+      className="onboarding-create-request-form-details"
+    >
       <Title order={2}>{form_name}</Title>
       <Text mt="xs">{form_description}</Text>
 
@@ -53,7 +57,7 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
       </Flex>
       <Group spacing="md" mt="xl">
         <IconCalendar />
-        <Text weight={600}>{formDateCreated}</Text>
+        <Text weight={600}>{requestDate}</Text>
       </Group>
       {requestingProject && (
         <Group spacing="md" mt="xl">

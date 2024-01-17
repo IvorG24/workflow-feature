@@ -38,6 +38,7 @@ import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { isEmpty, isEqual } from "@/utils/functions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { v4 as uuidv4 } from "uuid";
@@ -302,7 +303,9 @@ const QuotationFormPage = ({
           <Button
             onClick={() =>
               router.push({
-                pathname: `/team-requests/dashboard/`,
+                pathname: `/${formatTeamNameToUrlKey(
+                  team.team_name
+                )}/dashboard/`,
                 query: { ...router.query, formId },
               })
             }

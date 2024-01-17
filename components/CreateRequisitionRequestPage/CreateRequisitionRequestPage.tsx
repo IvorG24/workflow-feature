@@ -13,6 +13,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -215,6 +216,7 @@ const CreateRequisitionRequestPage = ({
         formName: form.form_name,
         isFormslyForm: true,
         projectId,
+        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
 
       notifications.show({
@@ -222,7 +224,11 @@ const CreateRequisitionRequestPage = ({
         color: "green",
       });
 
-      router.push(`/team-requests/requests/${request.request_id}`);
+      router.push(
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+          request.request_formsly_id_prefix
+        }-${request.request_formsly_id_serial}`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -315,7 +321,6 @@ const CreateRequisitionRequestPage = ({
           field_response: "",
           field_option: csiCodeList.map((csiCode, index) => {
             return {
-              option_description: null,
               option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: csiCode.csi_code_id,
               option_order: index,
@@ -339,24 +344,32 @@ const CreateRequisitionRequestPage = ({
         const options = description.item_description_field.map(
           (options, optionIndex) => {
             return {
-              option_description: null,
               option_field_id: description.item_field.field_id,
               option_id: options.item_description_field_id,
               option_order: optionIndex + 1,
               option_value: `${options.item_description_field_value}${
                 description.item_description_is_with_uom
-                  ? ` ${options.item_description_field_uom}`
+                  ? ` ${options.item_description_field_uom[0].item_description_field_uom}`
                   : ""
               }`,
             };
           }
         );
 
+        const index = options.findIndex(
+          (value) => value.option_value === "Any"
+        );
+        if (index !== -1) {
+          const anyOption = options[index];
+          options.splice(index, 1);
+          options.unshift({ ...anyOption });
+        }
+
         return {
           ...description.item_field,
           field_section_duplicatable_id: duplicatableSectionId,
           field_option: options,
-          field_response: "",
+          field_response: index !== -1 ? "Any" : "",
         };
       });
 

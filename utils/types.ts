@@ -122,6 +122,13 @@ export type ItemDescriptionFieldTableInsert =
 export type ItemDescriptionFieldTableUpdate =
   Database["public"]["Tables"]["item_description_field_table"]["Update"];
 
+export type ItemDescriptionFieldUOMTableRow =
+  Database["public"]["Tables"]["item_description_field_uom_table"]["Row"];
+export type ItemDescriptionFieldUOMTableInsert =
+  Database["public"]["Tables"]["item_description_field_uom_table"]["Insert"];
+export type ItemDescriptionFieldUOMTableUpdate =
+  Database["public"]["Tables"]["item_description_field_uom_table"]["Update"];
+
 export type SupplierTableRow =
   Database["public"]["Tables"]["supplier_table"]["Row"];
 export type SupplierTableInsert =
@@ -184,6 +191,20 @@ export type TicketCommentTableInsert =
   Database["public"]["Tables"]["ticket_comment_table"]["Insert"];
 export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
+
+export type UserOnboardTableRow =
+  Database["public"]["Tables"]["user_onboard_table"]["Row"];
+export type UserOnboardTableInsert =
+  Database["public"]["Tables"]["user_onboard_table"]["Insert"];
+export type UserOnboardTableUpdate =
+  Database["public"]["Tables"]["user_onboard_table"]["Update"];
+
+export type ServiceCategoryTableRow =
+  Database["public"]["Tables"]["service_category_table"]["Row"];
+export type ServiceCategoryTableInsert =
+  Database["public"]["Tables"]["service_category_table"]["Insert"];
+export type ServiceCategoryTableUpdate =
+  Database["public"]["Tables"]["service_category_table"]["Update"];
 
 // End: Database Table Types
 
@@ -279,10 +300,14 @@ export type RequestType = {
 };
 
 export type UserWithSignatureType = UserTableRow & {
+  user_employee_number: string;
+} & {
   user_signature_attachment: AttachmentTableRow;
 };
 
 export type RequestWithResponseType = RequestTableRow & {
+  request_formsly_id: string;
+} & {
   request_form: {
     form_id: string;
     form_name: string;
@@ -367,6 +392,7 @@ export type TeamMemberType = {
     user_last_name: string;
     user_avatar: string;
     user_email: string;
+    user_employee_number: string;
   };
 };
 
@@ -493,6 +519,8 @@ export type FormWithTeamMember = FormTableRow & {
 };
 
 export type ItemWithDescriptionType = ItemTableRow & {
+  item_division_id_list: string[];
+} & {
   item_description: ItemDescriptionTableRow[];
 };
 
@@ -546,8 +574,14 @@ export type FieldWithChoices = {
 } & FieldTableRow;
 
 export type ItemWithDescriptionAndField = ItemTableRow & {
+  item_division_id_list: string[];
+} & {
   item_description: (ItemDescriptionTableRow & {
-    item_description_field: ItemDescriptionFieldTableRow[];
+    item_description_field: (ItemDescriptionFieldTableRow & {
+      item_description_field_uom: {
+        item_description_field_uom: string | null;
+      }[];
+    })[];
     item_field: FieldTableRow;
   })[];
 };
@@ -885,7 +919,9 @@ export type TeamMemberWithUserDetails = {
 }[];
 
 export type TeamMemberOnLoad = {
-  member: TeamMemberTableRow & { team_member_user: UserTableRow };
+  member: TeamMemberTableRow & {
+    team_member_user: UserTableRow & { user_employee_number: string };
+  };
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -1042,4 +1078,30 @@ export type ApproverUnresolvedRequestListType = {
     request_jira_id: string | null;
     request_status: string;
   };
+};
+
+export type LookupTable = {
+  id: string;
+  status: boolean;
+  value: string;
+};
+
+export type LookupForm = {
+  value: string;
+  isAvailable: boolean;
+};
+
+export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";
+
+export type UserIssuedItem = {
+  itemName: string;
+  itemUom: string;
+  itemQuantity: number;
+  variation: {
+    quantity: number;
+    specification: {
+      fieldName: string;
+      response: string;
+    }[];
+  }[];
 };

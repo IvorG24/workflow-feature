@@ -4,12 +4,15 @@ import {
   createComment,
   createNotification,
 } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { RequestCommentType } from "@/utils/types";
 import { Divider, Group, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import moment from "moment";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -29,7 +32,9 @@ type Props = {
 
 const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   const userProfile = useUserProfile();
+  const router = useRouter();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
   const user = useUserProfile();
   const [isLoading, setIsLoading] = useState(false);
@@ -121,7 +126,9 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
             notification_app: "REQUEST",
             notification_type: "COMMENT",
             notification_content: `${commenterFullName} commented on your request`,
-            notification_redirect_url: `/team-requests/requests/${requestData.requestId}`,
+            notification_redirect_url: `/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/requests/${router.query.requestId}`,
             notification_user_id: requestData.requestOwnerId,
             notification_team_id: requestData.teamId,
           });
@@ -236,7 +243,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
   };
 
   return (
-    <Stack>
+    <Stack className="onboarding-requisition-request-comment">
       <Paper p="xl" shadow="xs" mt="xl">
         <Group position="apart">
           <Title order={4} color="dimmed">

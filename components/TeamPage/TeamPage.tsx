@@ -1,6 +1,7 @@
 import { deleteRow } from "@/backend/api/delete";
 import { uploadImage } from "@/backend/api/post";
 import {
+  leaveTeam,
   updateTeam,
   updateTeamMemberRole,
   updateTeamOwner,
@@ -29,10 +30,13 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import DeleteTeamSection from "./DeleteTeam/DeleteTeamSection";
 import InviteMember from "./InviteMember";
+import LeaveTeamSection from "./LeaveTeamSection";
+import QuickOnboarding from "./QuickOnboarding";
 import AdminGroup from "./TeamGroup/AdminGroup";
 import ApproverGroup from "./TeamGroup/ApproverGroup";
 import CreateGroup from "./TeamGroup/CreateGroup";
@@ -73,7 +77,7 @@ const TeamPage = ({
   teamProjectsCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const router = useRouter();
   const teamList = useTeamList();
   const teamMember = useUserTeamMember();
   const { setUserTeamMember } = useUserActions();
@@ -323,6 +327,27 @@ const TeamPage = ({
     }
   };
 
+  const handleLeaveTeam = async () => {
+    try {
+      const teamId = team.team_id;
+      const teamMemberId = teamMember?.team_member_id;
+      await leaveTeam(supabaseClient, {
+        teamId,
+        teamMemberId: `${teamMemberId}`,
+      });
+      const updatedTeamList = teamList.filter(
+        (team) => team.team_id !== teamId
+      );
+      setTeamList(updatedTeamList);
+      router.push("/");
+    } catch (error) {
+      notifications.show({
+        message: "Error: cannot leave team",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     const channel = supabaseClient
       .channel("realtime team-member-list")
@@ -552,14 +577,18 @@ const TeamPage = ({
       </Box>
 
       {isOwnerOrAdmin && (
-        <InviteMember
-          isOwnerOrAdmin={isOwnerOrAdmin}
-          memberEmailList={memberEmailList}
-          teamMemberList={initialTeamMemberList}
-        />
+        <>
+          <InviteMember
+            isOwnerOrAdmin={isOwnerOrAdmin}
+            memberEmailList={memberEmailList}
+            teamMemberList={initialTeamMemberList}
+          />
+          <QuickOnboarding memberEmailList={memberEmailList} />
+        </>
       )}
 
       {isOwner && <DeleteTeamSection totalMembers={teamMembers.length} />}
+      {!isOwner && <LeaveTeamSection onLeaveTeam={handleLeaveTeam} />}
 
       <Space mt={32} />
     </Container>

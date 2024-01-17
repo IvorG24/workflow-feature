@@ -1,4 +1,3 @@
-import { DEFAULT_LANDING_PAGE } from "@/utils/constant";
 import {
   Button,
   Group,
@@ -61,7 +60,7 @@ const HeaderMenu = () => {
   const router = useRouter();
   const { classes } = useStyles();
   const user = useUser();
-  
+
   return (
     <>
       <MediaQuery smallerThan="sm" styles={{ display: "none" }}>
@@ -80,7 +79,7 @@ const HeaderMenu = () => {
       <MediaQuery smallerThan="sm" styles={{ display: "none" }}>
         <Group>
           {user ? (
-            <Button onClick={() => router.push(DEFAULT_LANDING_PAGE)}>
+            <Button onClick={() => router.push(`/userActiveTeam`)}>
               Go to Formsly
             </Button>
           ) : null}

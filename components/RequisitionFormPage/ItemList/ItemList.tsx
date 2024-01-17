@@ -4,6 +4,7 @@ import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ItemDescriptionTableRow,
   ItemWithDescriptionType,
@@ -16,6 +17,7 @@ import {
   Checkbox,
   Flex,
   Group,
+  Menu,
   Text,
   TextInput,
   Title,
@@ -241,12 +243,38 @@ const ItemList = ({
         </Group>
         {!editItem && (
           <Group className={classes.flexGrow}>
-            <Button
-              variant="light"
-              onClick={() => router.push("/team-requests/item-analytics")}
-            >
-              Analytics
-            </Button>
+            <Menu shadow="xl" width={200} withArrow>
+              <Menu.Target>
+                <Button variant="light">Analytics</Button>
+              </Menu.Target>
+
+              <Menu.Dropdown>
+                <Menu.Label>Analytics</Menu.Label>
+
+                <Menu.Item
+                  onClick={() =>
+                    router.push(
+                      `/${formatTeamNameToUrlKey(
+                        activeTeam.team_name
+                      )}/item-analytics`
+                    )
+                  }
+                >
+                  Item
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() =>
+                    router.push(
+                      `/${formatTeamNameToUrlKey(
+                        activeTeam.team_name
+                      )}/user-item-analytics`
+                    )
+                  }
+                >
+                  User Issued Items
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
             {checkList.length !== 0 ? (
               <Button
                 variant="outline"

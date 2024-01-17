@@ -1,6 +1,11 @@
 import { checkUsername, getUserPendingInvitation } from "@/backend/api/get";
-import { createUser, uploadImage } from "@/backend/api/post";
+import {
+  createTeamMemberReturnTeamName,
+  createUser,
+  uploadImage,
+} from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { formatTeamNameToUrlKey, isUUID, removeMultipleSpaces, toTitleCase, trimObjectProperties } from "@/utils/string";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
@@ -48,6 +53,7 @@ const OnboardingPage = ({ user }: Props) => {
     formState: { errors },
     setError,
     control,
+    setValue
   } = useForm<OnboardUserParams>({
     defaultValues: { user_id: user.id, user_email: user.email },
     reValidateMode: "onChange",
@@ -56,6 +62,9 @@ const OnboardingPage = ({ user }: Props) => {
   const handleOnboardUser = async (data: OnboardUserParams) => {
     setIsLoading(true);
     try {
+      const { inviteTeamId } = router.query;
+      const isValidTeamId = isUUID(inviteTeamId);
+
       let imageUrl = "";
       if (avatarFile) {
         imageUrl = await uploadImage(supabaseClient, {
@@ -64,9 +73,9 @@ const OnboardingPage = ({ user }: Props) => {
           bucket: "USER_AVATARS",
         });
       }
-
       await createUser(supabaseClient, {
-        ...data,
+        ...trimObjectProperties(data) as OnboardUserParams,
+        user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
       });
 
@@ -74,12 +83,22 @@ const OnboardingPage = ({ user }: Props) => {
         userEmail: data.user_email,
       });
 
-      if (pendingInvitation) {
+      if (isValidTeamId) {
+        const team = await createTeamMemberReturnTeamName(supabaseClient, {
+          team_member_team_id: `${inviteTeamId}`,
+          team_member_user_id: data.user_id,
+        });
+
+        const activeTeamNameToUrl = formatTeamNameToUrlKey(
+          team[0].team.team_name ?? ""
+        );
+        await router.push(`/${activeTeamNameToUrl}/dashboard?onboarding=true`);
+      } else if (pendingInvitation) {
         await router.push(
-          `/team/invitation/${pendingInvitation.invitation_id}`
+          `/invitation/${pendingInvitation.invitation_id}?onboarding=true`
         );
       } else {
-        await router.push("/team/create");
+        await router.push("/create-team?onboarding=true");
       }
 
       notifications.show({
@@ -158,6 +177,10 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="First name"
               {...register("user_first_name", {
+                onChange: (e) =>  {
+                  const format = toTitleCase(removeMultipleSpaces(e.currentTarget.value));
+                  setValue("user_first_name", format);
+                },
                 required: "First name is required",
                 minLength: {
                   value: 2,
@@ -176,6 +199,10 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Last name"
               {...register("user_last_name", {
+                onChange: (e) =>  {
+                  const format = toTitleCase(removeMultipleSpaces(e.currentTarget.value));
+                  setValue("user_last_name", format);
+                },
                 required: "Last name is required",
                 minLength: {
                   value: 2,
@@ -236,6 +263,10 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Job Title"
               {...register("user_job_title", {
+                onChange: (e) =>  {
+                  const format = removeMultipleSpaces(e.currentTarget.value);
+                  setValue("user_job_title", format);
+                },
                 minLength: {
                   value: 2,
                   message: "Job title must have at least 2 characters",

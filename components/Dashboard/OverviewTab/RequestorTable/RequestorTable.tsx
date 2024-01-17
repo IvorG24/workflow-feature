@@ -10,6 +10,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconTrophyFilled } from "@tabler/icons-react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { RequestorAndSignerDataType } from "../Overview";
 import RequestorItem from "./RequestorItem";
 
@@ -22,20 +23,49 @@ const useStyles = createStyles(() => ({
 type RequestorTableProps = {
   totalRequestCount: number;
   requestorList: RequestorAndSignerDataType[];
+  loadMoreRequestor: (page: number) => void;
+  isRequestorFetchable: boolean;
+  requestorOffset: number;
+  setRequestorOffset: Dispatch<SetStateAction<number>>;
 };
 
 const RequestorTable = ({
   totalRequestCount,
   requestorList,
+  loadMoreRequestor,
+  isRequestorFetchable,
+  requestorOffset,
+  setRequestorOffset,
 }: RequestorTableProps) => {
   const { classes } = useStyles();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const sortRequestorListByTotalRequests = requestorList.sort(
-    (a, b) => b.total - a.total
-  );
+  const [isInView, setIsInView] = useState(false);
+
+  const handleScroll = () => {
+    if (!isRequestorFetchable) return;
+    if (containerRef.current && typeof window !== "undefined") {
+      const container = containerRef.current;
+      const { bottom } = container.getBoundingClientRect();
+      const { innerHeight } = window;
+      setIsInView(bottom <= innerHeight);
+    }
+  };
+
+  useEffect(() => {
+    if (isInView) {
+      loadMoreRequestor(requestorOffset + 1);
+      setRequestorOffset((prev) => (prev += 1));
+    }
+  }, [isInView]);
 
   return (
-    <ScrollArea w="100%" h="100%">
+    <ScrollArea
+      w="100%"
+      h="100%"
+      onScrollCapture={handleScroll}
+      className="onboarding-dashboard-top-requestor"
+    >
       <Paper w={{ base: "100%" }} mih={420} withBorder>
         <Group p="md" spacing="xs" className={classes.withBorderBottom}>
           <Center c="green">
@@ -44,9 +74,9 @@ const RequestorTable = ({
           <Title order={4}>Top Requestor</Title>
         </Group>
 
-        <Stack p="lg" mb="sm" spacing={32}>
+        <Stack p="lg" mb="sm" spacing={32} ref={containerRef}>
           {totalRequestCount > 0 ? (
-            sortRequestorListByTotalRequests.map((requestor) => (
+            requestorList.map((requestor) => (
               <Box key={requestor.team_member_id}>
                 <RequestorItem
                   requestor={requestor}

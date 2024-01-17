@@ -1,14 +1,9 @@
-import {
-  getAllGroupOfTeamMember,
-  getFormList,
-  getUserTeamMemberData,
-} from "@/backend/api/get";
-import { updateUserActiveTeam } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useNotificationActions } from "@/stores/useNotificationStore";
 import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions, useUserProfile } from "@/stores/useUserStore";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { TeamTableRow } from "@/utils/types";
 import { Button, Paper, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -37,44 +32,21 @@ const TeamCard = ({ team }: TeamCardProps) => {
     try {
       if (!user) return;
       setIsLoading(true);
-
       setActiveTeam(team);
-      await updateUserActiveTeam(supabaseClient, {
-        userId: user.user_id,
-        teamId: team.team_id,
-      });
-
-      // fetch user team member id
-      const teamMember = await getUserTeamMemberData(supabaseClient, {
-        teamId: team.team_id,
-        userId: user.user_id,
-      });
-      // set user team member id
-      if (teamMember) {
-        const teamMemberGroupList = await getAllGroupOfTeamMember(
-          supabaseClient,
-          { teamMemberId: teamMember.team_member_id }
-        );
-
-        setUserTeamMember(teamMember);
-        setUserTeamMemberGroupList(teamMemberGroupList);
-
-        // set notification
-        setNotificationList([]);
-        setUnreadNotification(0);
-
-        // fetch form list
-        const formList = await getFormList(supabaseClient, {
+      const { data, error } = await supabaseClient.rpc("redirect_to_new_team", {
+        input_data: {
+          userId: user.user_id,
           teamId: team.team_id,
           app: activeApp,
-          memberId: teamMember.team_member_id,
-        });
-
-        // set form list
-        setFormList(formList);
-      }
-
-      await router.push("/team-requests/requests");
+        },
+      });
+      if (error) throw error;
+      setUserTeamMember(data.teamMember);
+      setUserTeamMemberGroupList([]);
+      setNotificationList([]);
+      setUnreadNotification(0);
+      setFormList(data.formList);
+      await router.push(`/${formatTeamNameToUrlKey(team.team_name)}/requests`);
       setIsLoading(false);
     } catch (error) {
       notifications.show({

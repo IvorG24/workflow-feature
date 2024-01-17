@@ -49,6 +49,13 @@ type RequestFormSectionProps = {
     onProjectSiteChange: () => void;
   };
   referenceOnly?: boolean;
+  serviceFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSIDivisionChange: (index: number, value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
 };
 
 const RequestFormSection = ({
@@ -63,6 +70,7 @@ const RequestFormSection = ({
   formslyFormName = "",
   sourcedItemFormMethods,
   referenceOnly,
+  serviceFormMethods,
 }: RequestFormSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -96,6 +104,7 @@ const RequestFormSection = ({
             requisitionFormMethods={requisitionFormMethods}
             subconFormMethods={subconFormMethods}
             quotationFormMethods={quotationFormMethods}
+            serviceFormMethods={serviceFormMethods}
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
             sourcedItemFormMethods={sourcedItemFormMethods}

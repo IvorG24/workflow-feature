@@ -283,9 +283,9 @@ const SupplierList = ({
             width: 40,
           },
           {
-            accessor: "supplier_name",
+            accessor: "supplier",
             title: "Supplier Name",
-            render: ({ supplier_name }) => <Text>{supplier_name}</Text>,
+            render: ({ supplier }) => <Text>{supplier}</Text>,
           },
           {
             accessor: "status",

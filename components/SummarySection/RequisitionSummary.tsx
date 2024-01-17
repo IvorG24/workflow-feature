@@ -16,7 +16,11 @@ const RequisitionSummary = ({ summaryData }: Props) => {
     .some((index) => index !== -1);
 
   return (
-    <Paper p="xl" shadow="xs">
+    <Paper
+      p="xl"
+      shadow="xs"
+      className="onboarding-requisition-request-summary"
+    >
       <Title order={4} color="dimmed">
         Summary
       </Title>

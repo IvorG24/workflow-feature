@@ -1,5 +1,6 @@
 import { checkItemDescription } from "@/backend/api/get";
 import { createItemDescriptionField } from "@/backend/api/post";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
@@ -44,6 +45,7 @@ const CreateItemDescriptionField = ({
   isWithUoM,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const teamMember = useUserTeamMember();
 
   const { register, formState, handleSubmit, control, getValues } = useForm<{
     descriptions: ItemDescriptionFieldForm[];
@@ -78,6 +80,8 @@ const CreateItemDescriptionField = ({
     descriptions: ItemDescriptionFieldForm[];
   }) => {
     try {
+      if (!teamMember) throw new Error("Team member not found");
+
       const newItem = await createItemDescriptionField(
         supabaseClient,
         data.descriptions.map((descriptionField) => {
@@ -86,6 +90,8 @@ const CreateItemDescriptionField = ({
             item_description_field_is_available: descriptionField.isAvailable,
             item_description_field_item_description_id: descriptionId,
             item_description_field_uom: descriptionField.unitOfMeasurement,
+            item_description_field_encoder_team_member_id:
+              teamMember.team_member_id,
           };
         })
       );
@@ -146,14 +152,22 @@ const CreateItemDescriptionField = ({
                       validate: {
                         duplicate: async (value) => {
                           const data = getValues("descriptions");
-                          const values = data.map((value) => value.value);
+                          const values = data.map(
+                            (value) =>
+                              `${value.value}${value.unitOfMeasurement ?? ""}`
+                          );
+
                           if (includesTwoTimes(values, value))
                             return "Value already exists";
 
+                          const uom = getValues(
+                            `descriptions.${index}.unitOfMeasurement`
+                          );
                           const isExisting = await checkItemDescription(
                             supabaseClient,
                             {
                               itemDescription: value,
+                              itemDescriptionUom: uom,
                               descriptionId: descriptionId,
                             }
                           );

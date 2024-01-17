@@ -15,6 +15,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { isStringParsable, safeParse } from "@/utils/functions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -201,7 +202,11 @@ const EditRequisitionRequestPage = ({
           color: "red",
           autoClose: false,
         });
-        router.push(`/team-requests/requests/${request.request_id}`);
+        router.push(
+          `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+            request.request_formsly_id_prefix
+          }-${request.request_formsly_id_serial}`
+        );
         return;
       }
 
@@ -213,9 +218,8 @@ const EditRequisitionRequestPage = ({
       const additionalSignerList: FormType["form_signer"] = [];
       const alreadyAddedAdditionalSigner: string[] = [];
       if (specialApprover && specialApprover.length !== 0) {
-        const generalNameList = newSections.map(
-          (section) =>
-            section.section_field[0].field_response[0].request_response
+        const generalNameList = newSections.map((section) =>
+          safeParse(section.section_field[0].field_response[0].request_response)
         );
         specialApprover.map((approver) => {
           if (
@@ -237,13 +241,14 @@ const EditRequisitionRequestPage = ({
         });
       }
 
-      await editRequest(supabaseClient, {
+      const edittedRequest = await editRequest(supabaseClient, {
         requestId: request.request_id,
         requestFormValues: newData,
         signers: [...filteredSignerList, ...additionalSignerList],
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: request_form.form_name,
+        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
 
       notifications.show({
@@ -251,7 +256,11 @@ const EditRequisitionRequestPage = ({
         color: "green",
       });
 
-      router.push(`/team-requests/requests/${request.request_id}`);
+      router.push(
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+          edittedRequest.request_formsly_id_prefix
+        }-${edittedRequest.request_formsly_id_serial}`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -381,6 +390,7 @@ const EditRequisitionRequestPage = ({
         formName: request.request_form.form_name,
         isFormslyForm: true,
         projectId,
+        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
 
       notifications.show({
@@ -388,7 +398,11 @@ const EditRequisitionRequestPage = ({
         color: "green",
       });
 
-      router.push(`/team-requests/requests/${newRequest.request_id}`);
+      router.push(
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+          newRequest.request_formsly_id_prefix
+        }-${newRequest.request_formsly_id_serial}`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -501,7 +515,6 @@ const EditRequisitionRequestPage = ({
             ),
             field_option: csiCodeList.map((csiCode, index) => {
               return {
-                option_description: null,
                 option_field_id:
                   request_form.form_section[0].section_field[0].field_id,
                 option_id: csiCode.csi_code_id,
@@ -535,13 +548,12 @@ const EditRequisitionRequestPage = ({
         const options = description.item_description_field.map(
           (options, optionIndex) => {
             return {
-              option_description: null,
               option_field_id: description.item_field.field_id,
               option_id: options.item_description_field_id,
               option_order: optionIndex + 1,
               option_value: `${options.item_description_field_value}${
                 description.item_description_is_with_uom
-                  ? ` ${options.item_description_field_uom}`
+                  ? ` ${options.item_description_field_uom[0].item_description_field_uom}`
                   : ""
               }`,
             };
@@ -754,7 +766,7 @@ const EditRequisitionRequestPage = ({
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Edit Request
+        {referenceOnly ? "Reference" : "Edit"} Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>

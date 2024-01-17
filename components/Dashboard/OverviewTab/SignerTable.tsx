@@ -14,6 +14,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconShieldCheckFilled } from "@tabler/icons-react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { RequestorAndSignerDataType } from "./Overview";
 
 const useStyles = createStyles(() => ({
@@ -25,16 +26,50 @@ const useStyles = createStyles(() => ({
 type SignerTableProps = {
   signerList: RequestorAndSignerDataType[];
   totalRequestCount: number;
+  loadMoreSigner: (page: number) => void;
+  isSignerFetchable: boolean;
+  signerOffset: number;
+  setSignerOffset: Dispatch<SetStateAction<number>>;
 };
 
-const SignerTable = ({ signerList, totalRequestCount }: SignerTableProps) => {
+const SignerTable = ({
+  signerList,
+  totalRequestCount,
+  loadMoreSigner,
+  isSignerFetchable,
+  signerOffset,
+  setSignerOffset,
+}: SignerTableProps) => {
   const { classes } = useStyles();
-  const sortSignerListByTotalRequests = signerList.sort(
-    (a, b) => b.total - a.total
-  );
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [isInView, setIsInView] = useState(false);
+
+  const handleScroll = () => {
+    if (!isSignerFetchable) return;
+    if (containerRef.current && typeof window !== "undefined") {
+      const container = containerRef.current;
+      const { bottom } = container.getBoundingClientRect();
+      const { innerHeight } = window;
+      setIsInView(bottom <= innerHeight);
+    }
+  };
+
+  useEffect(() => {
+    if (isInView) {
+      loadMoreSigner(signerOffset + 1);
+      setSignerOffset((prev) => (prev += 1));
+    }
+  }, [isInView]);
 
   return (
-    <ScrollArea w="100%" h="100%">
+    <ScrollArea
+      w="100%"
+      h="100%"
+      onScrollCapture={handleScroll}
+      className="onboarding-dashboard-top-signer"
+    >
       <Paper w={{ base: "100%" }} mih={420} withBorder>
         <Group p="md" spacing="xs" className={classes.withBorderBottom}>
           <Center c="green">
@@ -43,9 +78,9 @@ const SignerTable = ({ signerList, totalRequestCount }: SignerTableProps) => {
           <Title order={4}>Top Signer</Title>
         </Group>
 
-        <Stack p="lg" mb="sm" spacing={32}>
+        <Stack p="lg" mb="sm" spacing={32} ref={containerRef}>
           {totalRequestCount > 0 ? (
-            sortSignerListByTotalRequests.map((signer) => {
+            signerList.map((signer) => {
               const user = signer.team_member_user;
               const progressSections = signer.request
                 .map(({ label, value }) => ({

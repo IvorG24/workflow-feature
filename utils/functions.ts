@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import moment from "moment";
+import dynamic from "next/dynamic";
 import { RequestCommentType } from "./types";
 
 // check if a value is empty
@@ -559,3 +560,6 @@ export const generateJiraCommentPayload = (
 
   return commentListForJira;
 };
+export const JoyRideNoSSR = dynamic(() => import("react-joyride"), {
+  ssr: false,
+});

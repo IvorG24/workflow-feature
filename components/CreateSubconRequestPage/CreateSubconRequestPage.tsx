@@ -11,6 +11,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -117,6 +118,7 @@ const CreateSubconRequestPage = ({
         formName: form.form_name,
         isFormslyForm: true,
         projectId,
+        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
 
       notifications.show({
@@ -124,7 +126,11 @@ const CreateSubconRequestPage = ({
         color: "green",
       });
 
-      router.push(`/team-requests/requests/${request.request_id}`);
+      router.push(
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
+          request.request_id
+        }`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -223,7 +229,6 @@ const CreateSubconRequestPage = ({
         const options = scope.service_scope_choice.map(
           (options, optionIndex) => {
             return {
-              option_description: null,
               option_field_id: scope.service_field.field_id,
               option_id: options.service_scope_choice_id,
               option_order: optionIndex + 1,

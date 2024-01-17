@@ -126,26 +126,34 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
         }
       });
 
-      const newItem = await updateItem(supabaseClient, {
-        toAdd,
-        toUpdate,
-        toRemove: toRemoveDescription,
-        itemData: {
-          item_id: editItem.item_id,
-          item_general_name: data.generalName.toUpperCase(),
-          item_is_available: data.isAvailable,
-          item_unit: data.unit,
-          item_gl_account: data.glAccount,
-          item_team_id: activeTeam.team_id,
-          item_division_id_list: data.division.map((id) => `'${id}'`),
-        },
-        formId: formId,
-      });
+      const newItem: ItemWithDescriptionType = await updateItem(
+        supabaseClient,
+        {
+          toAdd,
+          toUpdate,
+          toRemove: toRemoveDescription,
+          itemData: {
+            item_id: editItem.item_id,
+            item_general_name: data.generalName.toUpperCase(),
+            item_is_available: data.isAvailable,
+            item_unit: data.unit,
+            item_gl_account: data.glAccount,
+            item_team_id: activeTeam.team_id,
+            item_division_id_list: data.division.map((id) => `'${id}'`),
+          },
+          formId: formId,
+        }
+      );
 
       setItemList((prev) => {
         return prev.map((item) => {
           if (item.item_id === editItem.item_id) {
-            return newItem;
+            return {
+              ...newItem,
+              item_description: newItem.item_description.sort(
+                (a, b) => a.item_description_order - b.item_description_order
+              ),
+            };
           } else {
             return item;
           }
@@ -170,7 +178,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
       <LoadingOverlay visible={formState.isSubmitting} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
-          Add Item
+          Update Item
         </Title>
         <Divider mb="xl" />
 

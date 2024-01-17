@@ -3,9 +3,9 @@ import {
   resetPassword,
   uploadImage,
 } from "@/backend/api/post";
-import { udpateUser } from "@/backend/api/update";
 import { useUserActions } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { trimObjectProperties } from "@/utils/string";
 import { UserWithSignatureType } from "@/utils/types";
 import { Container, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -119,10 +119,19 @@ const UserSettingsPage = ({ user }: Props) => {
         setUserAvatar(imageUrl);
       }
 
-      await udpateUser(supabaseClient, {
-        ...data,
-        user_avatar: imageUrl ? imageUrl : data.user_avatar,
+      const { error } = await supabaseClient.rpc("update_user", {
+        input_data: {
+          userData: {
+            ...trimObjectProperties(data),
+            user_avatar: imageUrl ? imageUrl : data.user_avatar,
+          },
+          previousUsername:
+            data.user_username !== user.user_username
+              ? data.user_username
+              : undefined,
+        },
       });
+      if (error) throw error;
 
       setUserInitials(
         (data.user_first_name[0] + data.user_last_name[0]).toUpperCase()
@@ -205,7 +214,7 @@ const UserSettingsPage = ({ user }: Props) => {
           attachmentData: {
             attachment_name: signature.name,
             attachment_bucket: "USER_SIGNATURES",
-            attachment_value: user.user_id,
+            attachment_value: uuidv4(),
             attachment_id: user.user_signature_attachment_id
               ? user.user_signature_attachment_id
               : undefined,
@@ -214,10 +223,16 @@ const UserSettingsPage = ({ user }: Props) => {
         }
       );
 
-      await udpateUser(supabaseClient, {
-        user_id: user.user_id,
-        user_signature_attachment_id: signatureAttachment.attachment_id,
+      const { error } = await supabaseClient.rpc("update_user", {
+        input_data: {
+          userData: {
+            user_id: user.user_id,
+            user_signature_attachment_id: signatureAttachment.attachment_id,
+          },
+          previousSignatureUrl: url,
+        },
       });
+      if (error) throw error;
 
       setSignatureUrl(url);
       notifications.show({
@@ -245,6 +260,7 @@ const UserSettingsPage = ({ user }: Props) => {
           avatarFile={avatarFile}
           onAvatarFileChange={setAvatarFile}
           isUpdatingPersonalInfo={isUpdatingPersonalInfo}
+          employeeNumber={user.user_employee_number}
         />
       </FormProvider>
 

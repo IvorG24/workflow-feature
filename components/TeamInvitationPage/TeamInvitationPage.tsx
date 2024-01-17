@@ -3,10 +3,11 @@ import {
   declineTeamInvitation,
 } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { useTeamActions } from "@/stores/useTeamStore";
+import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { startCase } from "@/utils/string";
+import { JoyRideNoSSR } from "@/utils/functions";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { InvitationWithTeam, TeamTableRow } from "@/utils/types";
 import {
@@ -16,7 +17,9 @@ import {
   Container,
   Paper,
   Stack,
+  Text,
   Title,
+  useMantineTheme,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -29,11 +32,13 @@ export type Props = {
 
 const TeamInvitationPage = ({ invitation }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-
+  const { colors } = useMantineTheme();
   const user = useUserProfile();
   const router = useRouter();
+  const isAcceptOnboarding = router.query.onboarding === "true";
   const { setIsLoading } = useLoadingActions();
   const { setTeamList } = useTeamActions();
+  const teamList = useTeamList();
 
   const [status, setStatus] = useState(invitation.invitation_status);
 
@@ -58,7 +63,16 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         message: "Invitation accepted.",
         color: "green",
       });
-      setTimeout(router.reload, 1000);
+      if (teamList.length <= 0) {
+        const teamName = teamListData[0].team_name;
+        const activeTeamNameToUrl = formatTeamNameToUrlKey(teamName);
+        await router
+          .push(`/${activeTeamNameToUrl}/dashboard?onboarding=true`)
+          .then(() => router.reload());
+      } else {
+        await router.push(`/invitation/${invitation.invitation_id}`);
+        setTimeout(router.reload, 1000);
+      }
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -90,6 +104,24 @@ const TeamInvitationPage = ({ invitation }: Props) => {
 
   return (
     <Container fluid>
+      <JoyRideNoSSR
+        steps={[
+          {
+            target: ".onboarding-accept-team",
+            content: <Text>Accept the invitation</Text>,
+            placement: "top-start",
+            disableBeacon: true,
+          },
+        ]}
+        run={isAcceptOnboarding}
+        scrollToFirstStep
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        hideBackButton
+        spotlightClicks={true}
+        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+      />
       <Center>
         <Paper p="xl" mt="xl">
           <Stack align="center">
@@ -129,6 +161,9 @@ const TeamInvitationPage = ({ invitation }: Props) => {
                   <Button
                     fullWidth
                     size="md"
+                    className={
+                      isAcceptOnboarding ? "onboarding-accept-team" : ""
+                    }
                     onClick={() => handleAcceptInvitation()}
                   >
                     Accept Invitation

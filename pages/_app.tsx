@@ -2,6 +2,7 @@ import { Layouts, PageWithLayoutProps } from "@/components/Layout/LayoutList";
 import { RouterTransition } from "@/components/RouterTransition/RouterTransition";
 import { useIsLoading } from "@/stores/useLoadingStore";
 import { useActiveApp } from "@/stores/useTeamStore";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import {
   ColorScheme,
@@ -70,6 +71,7 @@ export default function App(
                 sx={{ position: "fixed" }}
               />
               <Component {...pageProps} />
+              <SpeedInsights />
             </Layout>
           </SessionContextProvider>
         </ModalsProvider>

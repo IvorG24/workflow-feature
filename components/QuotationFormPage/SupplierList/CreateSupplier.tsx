@@ -47,7 +47,7 @@ const CreateSupplier = ({
     try {
       const newSupplier = await createSupplier(supabaseClient, {
         supplierData: {
-          supplier_name: data.name,
+          supplier: data.name,
           supplier_is_available: data.isAvailable,
           supplier_team_id: activeTeam.team_id,
         },
