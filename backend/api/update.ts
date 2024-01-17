@@ -8,6 +8,7 @@ import {
   MemberRoleType,
   MemoAgreementTableRow,
   MemoFormatType,
+  OtherExpensesTypeTableUpdate,
   SignerTableRow,
   TeamTableRow,
   TeamTableUpdate,
@@ -698,4 +699,25 @@ export const updateMemoFormat = async (
     .eq("memo_format_id", params.memo_format_id);
 
   if (error) throw Error;
+};
+
+// Update other expenses type
+export const updateOtherExpensesType = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    updateData: OtherExpensesTypeTableUpdate;
+    otherExpensesTypeId: string;
+  }
+) => {
+  const { updateData, otherExpensesTypeId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .update(updateData)
+    .eq("other_expenses_type_id", otherExpensesTypeId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data;
 };

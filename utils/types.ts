@@ -246,6 +246,12 @@ export type MemoAgreementTableInsert =
   Database["public"]["Tables"]["memo_agreement_table"]["Insert"];
 export type MemoAgreementTableUpdate =
   Database["public"]["Tables"]["memo_agreement_table"]["Update"];
+export type OtherExpensesTypeTableRow =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Row"];
+export type OtherExpensesTypeTableInsert =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Insert"];
+export type OtherExpensesTypeTableUpdate =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
 
 // End: Database Table Types
 
@@ -258,7 +264,8 @@ export type AttachmentBucketType =
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS"
-  | "MEMO_ATTACHMENTS";
+  | "MEMO_ATTACHMENTS"
+  | "TEAM_PROJECT_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
@@ -355,6 +362,8 @@ export type RequestWithResponseType = RequestTableRow & {
     form_name: string;
     form_description: string;
     form_is_formsly_form: boolean;
+    form_type?: string;
+    form_sub_type?: string;
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_section_duplicatable_id?: string;
@@ -467,6 +476,8 @@ export type FormType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
+  form_type?: string;
+  form_sub_type?: string;
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -514,6 +525,8 @@ export type FormWithResponseType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
+  form_type?: string;
+  form_sub_type?: string;
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -1324,4 +1337,8 @@ export type MemoFormatType = {
     bottom: number;
     left: number;
   };
+};
+
+export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
+  other_expenses_category: string;
 };

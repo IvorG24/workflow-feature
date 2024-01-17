@@ -21,6 +21,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('TEAM_LOGOS', 'TEAM_LOGOS');
 INSERT INTO storage.buckets (id, name) VALUES ('COMMENT_ATTACHMENTS', 'COMMENT_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('REQUEST_ATTACHMENTS', 'REQUEST_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('MEMO_ATTACHMENTS', 'MEMO_ATTACHMENTS');
+INSERT INTO storage.buckets (id, name) VALUES ('TEAM_PROJECT_ATTACHMENTS', 'TEAM_PROJECT_ATTACHMENTS');
 
 UPDATE storage.buckets SET public = true;
 
@@ -90,6 +91,8 @@ CREATE TABLE team_project_table(
   team_project_code VARCHAR(4000) NOT NULL,
   team_project_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
+  team_project_site_map_attachment_id UUID REFERENCES attachment_table(attachment_id),
+  team_project_boq_attachment_id UUID REFERENCES attachment_table(attachment_id),
   team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 CREATE TABLE team_group_member_table(
@@ -145,6 +148,8 @@ CREATE TABLE form_table(
   form_is_formsly_form BOOLEAN DEFAULT FALSE NOT NULL,
   form_app VARCHAR(4000) NOT NULL,
   form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
+  form_type VARCHAR(4000),
+  form_sub_type VARCHAR(4000),
 
   form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
@@ -583,6 +588,36 @@ CREATE TABLE signature_history_table(
 
 -- End: Username history table
 
+-- Start: Other expenses category table
+
+CREATE TABLE other_expenses_category_table(
+  other_expenses_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  other_expenses_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  other_expenses_category VARCHAR(4000) NOT NULL,
+  other_expenses_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  other_expenses_category_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  other_expenses_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  other_expenses_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+-- End: Other expenses category table
+
+-- Start: Other expenses type table
+
+CREATE TABLE other_expenses_type_table(
+  other_expenses_type_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  other_expenses_type_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  other_expenses_type VARCHAR(4000) NOT NULL,
+  other_expenses_type_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  other_expenses_type_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  other_expenses_type_category_id UUID REFERENCES other_expenses_category_table(other_expenses_category_id),
+  other_expenses_type_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+);
+
+-- End: Other expenses type table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -1002,6 +1037,8 @@ RETURNS JSON AS $$
         endId = `Q`;
       } else if(formName==='Services') {
         endId = `S`;
+      } else if(formName==='Other Expenses') {
+        endId = `OE`;
       } else if(formName==='Sourced Item') {
         endId = `SI`;
       } else if(formName==='Receiving Inspecting Report') {
@@ -2614,9 +2651,11 @@ RETURNS JSON AS $$
   let team_project_data;
   plv8.subtransaction(function(){
     const {
-    teamProjectName,
-    teamProjectInitials,
-    teamProjectTeamId,
+      teamProjectName,
+      teamProjectInitials,
+      teamProjectTeamId,
+      siteMapId,
+      boqId
     } = input_data;
 
     
@@ -2628,7 +2667,15 @@ RETURNS JSON AS $$
 
     const teamProjectCode = teamProjectInitials + projectInitialCount.toString(16).toUpperCase();
 
-    team_project_data = plv8.execute(`INSERT INTO team_project_table (team_project_name, team_project_code, team_project_team_id) VALUES ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}') RETURNING *;`)[0];
+    team_project_data = plv8.execute(
+      `
+        INSERT INTO team_project_table 
+          (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id) 
+        VALUES 
+          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', '${siteMapId}', '${boqId}')
+        RETURNING *
+      `
+    )[0];
 
  });
  return team_project_data;
@@ -3481,7 +3528,28 @@ RETURNS JSON AS $$
 
     const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
 
-    const teamProjects = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC LIMIT 10;`);
+    const teamProjects = plv8.execute(
+      `
+        SELECT 
+          team_project_table.*,
+          boq.attachment_value AS team_project_boq_attachment_id,
+          site_map.attachment_value AS team_project_site_map_attachment_id
+        FROM team_project_table 
+        LEFT JOIN attachment_table boq ON (
+          team_project_boq_attachment_id = boq.attachment_id
+          AND boq.attachment_is_disabled = false
+        )
+        LEFT JOIN attachment_table site_map ON (
+          team_project_site_map_attachment_id = site_map.attachment_id
+          AND site_map.attachment_is_disabled = false
+        )
+        WHERE 
+          team_project_team_id='${teamId}' 
+          AND team_project_is_disabled=false 
+        ORDER BY team_project_name ASC 
+        LIMIT 10
+      `
+    );
 
     const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
@@ -4223,6 +4291,36 @@ RETURNS JSON as $$
           suppliers,
           supplierListCount: Number(`${supplierListCount}`),
         }
+      } else if (formName === 'Other Expenses'){
+        const otherExpensesTypes = plv8.execute(`
+          SELECT 
+            other_expenses_type_table.*,
+            other_expenses_category
+          FROM other_expenses_type_table 
+          INNER JOIN other_expenses_category_table ON other_expenses_category_id = other_expenses_type_category_id
+          WHERE 
+            other_expenses_category_team_id = '${teamId}' 
+            AND other_expenses_type_is_disabled = false
+          ORDER BY other_expenses_type
+          LIMIT ${limit}
+        `);
+        const otherExpensesTypeCount = plv8.execute(`
+          SELECT COUNT(*)
+          FROM other_expenses_type_table 
+          INNER JOIN other_expenses_category_table ON other_expenses_category_id = other_expenses_type_category_id
+          WHERE 
+            other_expenses_category_team_id = '${teamId}' 
+            AND other_expenses_type_is_disabled = false 
+        `)[0].count;
+
+        returnData = {
+          otherExpensesTypes,
+          otherExpensesTypeCount: Number(otherExpensesTypeCount),
+          teamMemberList,
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(teamProjectListCount)
+        }
       } else {
         returnData = {
           teamMemberList,
@@ -4276,6 +4374,8 @@ RETURNS JSON as $$
           form_is_hidden, 
           form_is_formsly_form, 
           form_is_for_every_member,
+          form_type,
+          form_sub_type,
           team_member_id,
           user_id, 
           user_first_name, 
@@ -4373,6 +4473,8 @@ RETURNS JSON as $$
       form_is_hidden: formData.form_is_hidden,
       form_is_formsly_form: formData.form_is_formsly_form,
       form_is_for_every_member: formData.form_is_for_every_member,
+      form_type: formData.form_type,
+      form_sub_type: formData.form_sub_type,
       form_team_member: {
         team_member_id: formData.team_member_id,
         team_member_user: {
@@ -4471,6 +4573,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
           `
         );
 
@@ -4633,6 +4736,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
           `
         );
 
@@ -4680,6 +4784,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
           `
         );
 
@@ -4758,6 +4863,7 @@ RETURNS JSON as $$
               general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
               AND general_unit_of_measurement_is_disabled = false
               AND general_unit_of_measurement_is_available = true
+            ORDER BY general_unit_of_measurement
           `
         );
 
@@ -4801,6 +4907,149 @@ RETURNS JSON as $$
                     field_option: csiDivisionOption
                   },
                   ...form.form_section[1].section_field.slice(5, 9),
+                  {
+                    ...form.form_section[1].section_field[9],
+                    field_option: supplierOptions
+                  }
+                ],
+              },
+            ],
+          },
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "Other Expenses") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.*
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const suppliers = plv8.execute(
+          `
+            SELECT *
+            FROM supplier_table
+            WHERE
+              supplier_is_available = true
+              AND supplier_is_disabled = false
+              AND supplier_team_id = '${teamId}'
+            ORDER BY supplier ASC
+            LIMIT 100
+          `
+        );
+
+        const supplierOptions = suppliers.map((suppliers, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[9].field_id,
+            option_id: suppliers.supplier_id,
+            option_order: index,
+            option_value: suppliers.supplier,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM other_expenses_category_table
+            WHERE 
+              other_expenses_category_team_id = '${teamMember.team_member_team_id}'
+              AND other_expenses_category_is_disabled = false
+              AND other_expenses_category_is_available = true
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.other_expenses_category_id,
+            option_order: index,
+            option_value: category.other_expenses_category,
+          };
+        });
+
+        const csiCodeDescription = plv8.execute(
+          `
+            SELECT *
+            FROM csi_code_table
+            WHERE csi_code_division_id = '01'
+          `
+        );
+
+        const csiCodeDescriptionOptions = csiCodeDescription.map((codDescription, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[5].field_id,
+            option_id: codDescription.csi_code_id,
+            option_order: index,
+            option_value: codDescription.csi_code_level_three_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT *
+            FROM general_unit_of_measurement_table
+            WHERE 
+              general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(1, 4),
+                   {
+                    ...form.form_section[1].section_field[4],
+                    field_option: unitOfMeasurementOptions
+                  },
+                  {
+                    ...form.form_section[1].section_field[5],
+                    field_option: csiCodeDescriptionOptions
+                  },
+                  ...form.form_section[1].section_field.slice(6, 9),
                   {
                     ...form.form_section[1].section_field[9],
                     field_option: supplierOptions
@@ -4963,6 +5212,7 @@ RETURNS JSON as $$
             FROM team_project_table
             WHERE team_project_team_id = '${teamId}'
             AND team_project_is_disabled = false
+            ORDER BY team_project_name
           `
         );
 
@@ -5461,6 +5711,8 @@ RETURNS JSON as $$
           form_name, 
           form_description, 
           form_is_formsly_form,
+          form_type,
+          form_sub_type,
           team_project_name
         FROM request_view
         INNER JOIN team_member_table ON team_member_id = request_team_member_id
@@ -5639,6 +5891,8 @@ RETURNS JSON as $$
       form_description: requestData.form_description,
       form_is_formsly_form: requestData.form_is_formsly_form,
       form_section: formSection,
+      form_type: requestData.form_type,
+      form_sub_type: requestData.form_sub_type
     };
 
     returnData = {
@@ -6674,8 +6928,17 @@ RETURNS JSON AS $$
 
       const teamMemberId = plv8.execute(`SELECT team_member_id FROM team_member_table WHERE team_member_user_id='${userId}' AND team_member_team_id='${teamId}';`)[0].team_member_id;
 
-      const projectList = plv8.execute(`SELECT tpt.* FROM team_project_table tpt
-        INNER JOIN team_project_member_table tpmt ON tpt.team_project_id=tpmt.team_project_id WHERE tpt.team_project_team_id='${teamId}' AND tpmt.team_member_id='${teamMemberId}' AND tpt.team_project_is_disabled=false;`);
+      const projectList = plv8.execute(
+        `
+          SELECT tpt.* FROM team_project_table tpt
+          INNER JOIN team_project_member_table tpmt ON tpt.team_project_id=tpmt.team_project_id 
+          WHERE 
+            tpt.team_project_team_id='${teamId}' 
+            AND tpmt.team_member_id='${teamMemberId}' 
+            AND tpt.team_project_is_disabled=false 
+          ORDER BY team_project_name
+        `
+      );
       
       const projectOptions = projectList.map((project, index) => {
         return {
@@ -7076,6 +7339,7 @@ RETURNS JSON AS $$
               general_unit_of_measurement_team_id = '${teamId}'
               AND general_unit_of_measurement_is_disabled = false
               AND general_unit_of_measurement_is_available = true
+            ORDER BY general_unit_of_measurement
           `
         );
 
@@ -7135,6 +7399,175 @@ RETURNS JSON AS $$
                 {
                   ...section.section_field[5],
                   field_option: csiCodeOptions,
+                },
+                ...section.section_field.slice(6, 9),
+                {
+                  ...section.section_field[9],
+                  field_option: supplierOptions,
+                },
+              ],
+            };
+          });
+
+        const formattedRequest = {
+          ...request,
+          request_form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              ...requestSectionList,
+            ],
+          },
+          request_signer:
+            projectSignerList.length !== 0
+              ? projectSignerList
+              : request.request_signer,
+        };
+
+        returnData = {
+          request: formattedRequest,
+          projectOptions
+        }
+      } else if (form.form_name === "Other Expenses") {
+        const suppliers = plv8.execute(
+          `
+            SELECT *
+            FROM supplier_table
+            WHERE
+              supplier_is_available = true
+              AND supplier_is_disabled = false
+              AND supplier_team_id = '${teamId}'
+            ORDER BY supplier ASC
+            LIMIT 100
+          `
+        );
+
+        const supplierOptions = suppliers.map((suppliers, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[9].field_id,
+            option_id: suppliers.supplier_id,
+            option_order: index,
+            option_value: suppliers.supplier,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT *
+            FROM other_expenses_category_table
+            WHERE 
+              other_expenses_category_team_id = '${teamId}'
+              AND other_expenses_category_is_disabled = false
+              AND other_expenses_category_is_available = true
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: category.other_expenses_category_id,
+            option_order: index,
+            option_value: category.other_expenses_category,
+          };
+        });
+
+        const csiCodeDescription = plv8.execute(
+          `
+            SELECT *
+            FROM csi_code_table
+            WHERE csi_code_division_id = '01'
+          `
+        );
+
+        const csiCodeDescriptionOptions = csiCodeDescription.map((codDescription, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[5].field_id,
+            option_id: codDescription.csi_code_id,
+            option_order: index,
+            option_value: codDescription.csi_code_level_three_description,
+          };
+        });
+
+        const unitOfMeasurements = plv8.execute(
+          `
+            SELECT *
+            FROM general_unit_of_measurement_table
+            WHERE 
+              general_unit_of_measurement_team_id = '${teamId}'
+              AND general_unit_of_measurement_is_disabled = false
+              AND general_unit_of_measurement_is_available = true
+          `
+        );
+
+        const unitOfMeasurementOptions = unitOfMeasurements.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[4].field_id,
+            option_id: uom.general_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.general_unit_of_measurement,
+          };
+        });
+
+        const sectionWithDuplicateList = form.form_section
+          .slice(1)
+          .map((section) => {
+            return {
+              ...section,
+              section_field: section.section_field,
+            }
+          });
+
+        const requestSectionList = sectionWithDuplicateList
+          .map((section) => {
+            const categoryResponse = JSON.parse(section.section_field[0].field_response[0].request_response);
+            const categoryID = categoryOptions.find(category => category.option_value === categoryResponse).option_id;
+
+            const typeList = plv8.execute(`
+              SELECT *
+              FROM other_expenses_type_table
+              WHERE other_expenses_type_category_id = '${categoryID}'
+              AND other_expenses_type_is_disabled = false
+              AND other_expenses_type_is_available = true
+              ORDER BY other_expenses_type
+            `);
+
+            const typeOptions = typeList.map((type, index) => {
+              return {
+                option_field_id: form.form_section[1].section_field[1].field_id,
+                option_id: type.other_expenses_type_id,
+                option_order: index,
+                option_value: type.other_expenses_type,
+              };
+            });
+
+            return {
+              ...section,
+              section_field: [
+                {
+                  ...section.section_field[0],
+                  field_option: categoryOptions,
+                },
+                {
+                  ...section.section_field[1],
+                  field_option: typeOptions,
+                },
+                ...section.section_field.slice(2, 4),
+                {
+                  ...section.section_field[4],
+                  field_option: unitOfMeasurementOptions,
+                },
+                {
+                  ...section.section_field[5],
+                  field_option: csiCodeDescriptionOptions,
                 },
                 ...section.section_field.slice(6, 9),
                 {
@@ -9165,6 +9598,8 @@ ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signature_history_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE service_category_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9335,6 +9770,16 @@ DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_name_history_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON signature_history_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_category_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON service_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_category_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_category_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -10873,6 +11318,100 @@ CREATE POLICY "Allow CREATE for authenticated users" ON "public"."signature_hist
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
+
+--- general_unit_of_measurement_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE general_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."general_unit_of_measurement_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE general_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE general_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- service_category_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."service_category_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE service_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 -------- End: POLICIES
 

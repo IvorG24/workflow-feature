@@ -87,6 +87,8 @@ const CreateRequisitionRequestPage = ({
     form_description: form.form_description,
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
+    form_type: form.form_type,
+    form_sub_type: form.form_sub_type,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
@@ -551,7 +553,7 @@ const CreateRequisitionRequestPage = ({
                       supplierSearch,
                       isSearching,
                     }}
-                    formslyFormName="Requisition"
+                    formslyFormName={form.form_name}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

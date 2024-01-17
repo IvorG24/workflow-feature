@@ -21,6 +21,7 @@ import {
   MemoLineItem,
   MemoTableRow,
   NotificationTableInsert,
+  OtherExpensesTypeTableInsert,
   ReferenceMemoType,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
@@ -820,6 +821,8 @@ export const createTeamProject = async (
     teamProjectName: string;
     teamProjectInitials: string;
     teamProjectTeamId: string;
+    siteMapId: string;
+    boqId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -1258,4 +1261,21 @@ const processReferenceMemoLineItems = async (
   );
 
   return JSON.parse(JSON.stringify(processedLineItems));
+};
+// Create row in other expenses type table
+export const createRowInOtherExpensesTypeTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    inputData: OtherExpensesTypeTableInsert;
+  }
+) => {
+  const { inputData } = params;
+  const { data, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .insert(inputData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data;
 };

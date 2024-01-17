@@ -101,6 +101,8 @@ const EditRequisitionRequestPage = ({
     form_description: request_form.form_description,
     form_date_created: request.request_date_created,
     form_team_member: request.request_team_member,
+    form_type: request_form.form_type,
+    form_sub_type: request_form.form_sub_type,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
@@ -801,7 +803,7 @@ const EditRequisitionRequestPage = ({
                       supplierSearch,
                       isSearching,
                     }}
-                    formslyFormName="Requisition"
+                    formslyFormName={request_form.form_name}
                     referenceOnly={referenceOnly}
                   />
                   {section.section_is_duplicatable &&

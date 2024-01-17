@@ -189,7 +189,9 @@ export type Database = {
           form_is_hidden: boolean;
           form_is_signature_required: boolean;
           form_name: string;
+          form_sub_type: string | null;
           form_team_member_id: string;
+          form_type: string | null;
         };
         Insert: {
           form_app: string;
@@ -202,7 +204,9 @@ export type Database = {
           form_is_hidden?: boolean;
           form_is_signature_required?: boolean;
           form_name: string;
+          form_sub_type?: string | null;
           form_team_member_id: string;
+          form_type?: string | null;
         };
         Update: {
           form_app?: string;
@@ -215,7 +219,9 @@ export type Database = {
           form_is_hidden?: boolean;
           form_is_signature_required?: boolean;
           form_name?: string;
+          form_sub_type?: string | null;
           form_team_member_id?: string;
+          form_type?: string | null;
         };
         Relationships: [
           {
@@ -957,6 +963,96 @@ export type Database = {
           }
         ];
       };
+      other_expenses_category_table: {
+        Row: {
+          other_expenses_category: string;
+          other_expenses_category_date_created: string;
+          other_expenses_category_encoder_team_member_id: string | null;
+          other_expenses_category_id: string;
+          other_expenses_category_is_available: boolean;
+          other_expenses_category_is_disabled: boolean;
+          other_expenses_category_team_id: string;
+        };
+        Insert: {
+          other_expenses_category: string;
+          other_expenses_category_date_created?: string;
+          other_expenses_category_encoder_team_member_id?: string | null;
+          other_expenses_category_id?: string;
+          other_expenses_category_is_available?: boolean;
+          other_expenses_category_is_disabled?: boolean;
+          other_expenses_category_team_id: string;
+        };
+        Update: {
+          other_expenses_category?: string;
+          other_expenses_category_date_created?: string;
+          other_expenses_category_encoder_team_member_id?: string | null;
+          other_expenses_category_id?: string;
+          other_expenses_category_is_available?: boolean;
+          other_expenses_category_is_disabled?: boolean;
+          other_expenses_category_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_category_table_other_expenses_category_enco_fkey";
+            columns: ["other_expenses_category_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          },
+          {
+            foreignKeyName: "other_expenses_category_table_other_expenses_category_team_fkey";
+            columns: ["other_expenses_category_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          }
+        ];
+      };
+      other_expenses_type_table: {
+        Row: {
+          other_expenses_type: string;
+          other_expenses_type_category_id: string | null;
+          other_expenses_type_date_created: string;
+          other_expenses_type_encoder_team_member_id: string | null;
+          other_expenses_type_id: string;
+          other_expenses_type_is_available: boolean;
+          other_expenses_type_is_disabled: boolean;
+        };
+        Insert: {
+          other_expenses_type: string;
+          other_expenses_type_category_id?: string | null;
+          other_expenses_type_date_created?: string;
+          other_expenses_type_encoder_team_member_id?: string | null;
+          other_expenses_type_id?: string;
+          other_expenses_type_is_available?: boolean;
+          other_expenses_type_is_disabled?: boolean;
+        };
+        Update: {
+          other_expenses_type?: string;
+          other_expenses_type_category_id?: string | null;
+          other_expenses_type_date_created?: string;
+          other_expenses_type_encoder_team_member_id?: string | null;
+          other_expenses_type_id?: string;
+          other_expenses_type_is_available?: boolean;
+          other_expenses_type_is_disabled?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_type_table_other_expenses_type_category_id_fkey";
+            columns: ["other_expenses_type_category_id"];
+            isOneToOne: false;
+            referencedRelation: "other_expenses_category_table";
+            referencedColumns: ["other_expenses_category_id"];
+          },
+          {
+            foreignKeyName: "other_expenses_type_table_other_expenses_type_encoder_team_fkey";
+            columns: ["other_expenses_type_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          }
+        ];
+      };
       request_response_table: {
         Row: {
           request_response: string;
@@ -1637,30 +1733,50 @@ export type Database = {
       };
       team_project_table: {
         Row: {
+          team_project_boq_attachment_id: string | null;
           team_project_code: string;
           team_project_date_created: string;
           team_project_id: string;
           team_project_is_disabled: boolean;
           team_project_name: string;
+          team_project_site_map_attachment_id: string | null;
           team_project_team_id: string;
         };
         Insert: {
+          team_project_boq_attachment_id?: string | null;
           team_project_code: string;
           team_project_date_created?: string;
           team_project_id?: string;
           team_project_is_disabled?: boolean;
           team_project_name: string;
+          team_project_site_map_attachment_id?: string | null;
           team_project_team_id: string;
         };
         Update: {
+          team_project_boq_attachment_id?: string | null;
           team_project_code?: string;
           team_project_date_created?: string;
           team_project_id?: string;
           team_project_is_disabled?: boolean;
           team_project_name?: string;
+          team_project_site_map_attachment_id?: string | null;
           team_project_team_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "team_project_table_team_project_boq_attachment_id_fkey";
+            columns: ["team_project_boq_attachment_id"];
+            isOneToOne: false;
+            referencedRelation: "attachment_table";
+            referencedColumns: ["attachment_id"];
+          },
+          {
+            foreignKeyName: "team_project_table_team_project_site_map_attachment_id_fkey";
+            columns: ["team_project_site_map_attachment_id"];
+            isOneToOne: false;
+            referencedRelation: "attachment_table";
+            referencedColumns: ["attachment_id"];
+          },
           {
             foreignKeyName: "team_project_table_team_project_team_id_fkey";
             columns: ["team_project_team_id"];
