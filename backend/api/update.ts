@@ -4,6 +4,7 @@ import { Database } from "@/utils/database";
 import {
   AppType,
   MemberRoleType,
+  OtherExpensesTypeTableUpdate,
   SignerTableRow,
   TeamTableRow,
   TeamTableUpdate,
@@ -508,4 +509,25 @@ export const updateLookup = async (
     status: Boolean(formattedData[status]),
     value: formattedData[value],
   };
+};
+
+// Update other expenses type
+export const updateOtherExpensesType = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    updateData: OtherExpensesTypeTableUpdate;
+    otherExpensesTypeId: string;
+  }
+) => {
+  const { updateData, otherExpensesTypeId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .update(updateData)
+    .eq("other_expenses_type_id", otherExpensesTypeId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data;
 };

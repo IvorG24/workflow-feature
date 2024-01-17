@@ -1,9 +1,9 @@
 import {
   checkIfRequestIsEditable,
   getCSICode,
-  getCSICodeOptionsForServices,
   getProjectSignerWithTeamMember,
   getSupplier,
+  getTypeOptions,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
@@ -49,7 +49,7 @@ type Props = {
   referenceOnly: boolean;
 };
 
-const EditServicesRequestPage = ({
+const EditOtherExpensesRequestPage = ({
   request,
   projectOptions,
   referenceOnly,
@@ -82,10 +82,10 @@ const EditServicesRequestPage = ({
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
-  const { request_form } = request;
+  const { request_form: form } = request;
   const formDetails = {
-    form_name: request_form.form_name,
-    form_description: request_form.form_description,
+    form_name: form.form_name,
+    form_description: form.form_description,
     form_date_created: request.request_date_created,
     form_team_member: request.request_team_member,
   };
@@ -104,12 +104,12 @@ const EditServicesRequestPage = ({
   });
 
   useEffect(() => {
-    replaceSection(request_form.form_section);
+    replaceSection(form.form_section);
   }, [
     request.request_form,
     replaceSection,
     requestFormMethods,
-    request_form.form_section,
+    form.form_section,
   ]);
 
   const handleEditRequest = async (data: RequestFormValues) => {
@@ -143,7 +143,7 @@ const EditServicesRequestPage = ({
         signers: signerList,
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: request_form.form_name,
+        formName: form.form_name,
         teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
 
@@ -266,97 +266,6 @@ const EditServicesRequestPage = ({
   const handleRemoveSection = (sectionMatchIndex: number) =>
     removeSection(sectionMatchIndex);
 
-  const handleCSIDivisionChange = async (
-    index: number,
-    value: string | null
-  ) => {
-    const newSection = getValues(`sections.${index}`);
-
-    if (value) {
-      const csiCodeList = await getCSICodeOptionsForServices(supabaseClient, {
-        description: value,
-      });
-
-      const generalField = [
-        ...newSection.section_field.slice(0, 5),
-        {
-          ...newSection.section_field[5],
-          field_response: newSection.section_field[5].field_response.map(
-            (response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })
-          ),
-          field_option: csiCodeList.map((code, index) => {
-            return {
-              option_id: code.csi_code_id,
-              option_value: code.csi_code_level_three_description,
-              option_order: index + 1,
-              option_field_id: newSection.section_field[4].field_id,
-            };
-          }),
-        },
-        ...newSection.section_field.slice(6, 9).map((field) => {
-          return {
-            ...field,
-            field_response: field.field_response.map((response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })),
-          };
-        }),
-        ...newSection.section_field.slice(9),
-      ];
-      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-      const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-        [
-          ...generalField.map((field) => {
-            return {
-              ...field,
-              field_section_duplicatable_id: duplicatableSectionId,
-            };
-          }),
-        ];
-
-      updateSection(index, {
-        ...newSection,
-        section_field: newFields,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 5),
-        {
-          ...newSection.section_field[5],
-          field_response: newSection.section_field[5].field_response.map(
-            (response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })
-          ),
-          field_option: [],
-        },
-        ...newSection.section_field.slice(6, 9).map((field) => {
-          return {
-            ...field,
-            field_response: field.field_response.map((response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })),
-          };
-        }),
-        ...newSection.section_field.slice(9),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    }
-  };
-
   const handleCSICodeChange = async (index: number, value: string | null) => {
     const newSection = getValues(`sections.${index}`);
 
@@ -400,19 +309,17 @@ const EditServicesRequestPage = ({
         ...newSection.section_field.slice(9),
       ];
       const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-      const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-        [
+
+      updateSection(index, {
+        ...newSection,
+        section_field: [
           ...generalField.map((field) => {
             return {
               ...field,
               field_section_duplicatable_id: duplicatableSectionId,
             };
           }),
-        ];
-
-      updateSection(index, {
-        ...newSection,
-        section_field: newFields,
+        ],
       });
     } else {
       const generalField = [
@@ -420,11 +327,7 @@ const EditServicesRequestPage = ({
         ...newSection.section_field.slice(6, 9).map((field) => {
           return {
             ...field,
-            field_response: field.field_response.map((response) => ({
-              ...response,
-              request_response: "",
-              request_response_id: uuidv4(),
-            })),
+            field_response: [],
           };
         }),
         ...newSection.section_field.slice(9),
@@ -435,7 +338,6 @@ const EditServicesRequestPage = ({
       });
     }
   };
-
   const resetSigner = () => {
     setSignerList(initialSignerList);
   };
@@ -478,7 +380,7 @@ const EditServicesRequestPage = ({
       const supplierList = await getSupplier(supabaseClient, {
         supplier: value ?? "",
         teamId: teamMember.team_member_team_id,
-        fieldId: request.request_form.form_section[1].section_field[9].field_id,
+        fieldId: form.form_section[1].section_field[9].field_id,
       });
       setValue(`sections.${index}.section_field.9.field_option`, supplierList);
     } catch (e) {
@@ -488,6 +390,66 @@ const EditServicesRequestPage = ({
       });
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  const handleCategoryChange = async (index: number, value: string | null) => {
+    const newSection = getValues(`sections.${index}`);
+
+    if (value) {
+      const categoryId = newSection.section_field[0].field_option.find(
+        (option) => option.option_value === value
+      )?.option_id;
+      if (!categoryId) return;
+
+      const data = await getTypeOptions(supabaseClient, {
+        categoryId: categoryId,
+      });
+
+      const typeOptions = data.map((type) => {
+        return {
+          option_field_id: form.form_section[1].section_field[0].field_id,
+          option_id: type.other_expenses_type_id,
+          option_order: index,
+          option_value: type.other_expenses_type,
+        };
+      });
+
+      const generalField = [
+        newSection.section_field[0],
+        {
+          ...newSection.section_field[1],
+          field_option: typeOptions,
+        },
+        ...newSection.section_field.slice(2),
+      ];
+      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
+
+      updateSection(index, {
+        ...newSection,
+        section_field: [
+          ...generalField.map((field) => {
+            return {
+              ...field,
+              field_section_duplicatable_id: duplicatableSectionId,
+            };
+          }),
+        ],
+      });
+    } else {
+      const generalField = [
+        newSection.section_field[0],
+        {
+          ...newSection.section_field[1],
+          field_response: [],
+          field_option: [],
+        },
+        ...newSection.section_field.slice(2),
+      ];
+      updateSection(index, {
+        ...newSection,
+        section_field: generalField,
+      });
     }
   };
 
@@ -522,14 +484,14 @@ const EditServicesRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     isSectionRemovable={isRemovable}
-                    serviceFormMethods={{
+                    otherExpensesMethods={{
                       onProjectNameChange: handleProjectNameChange,
-                      onCSIDivisionChange: handleCSIDivisionChange,
                       onCSICodeChange: handleCSICodeChange,
+                      onCategoryChange: handleCategoryChange,
                       supplierSearch,
                       isSearching,
                     }}
-                    formslyFormName={request.request_form.form_name}
+                    formslyFormName={form.form_name}
                     referenceOnly={referenceOnly}
                   />
                   {section.section_is_duplicatable &&
@@ -556,7 +518,7 @@ const EditServicesRequestPage = ({
               <Button
                 variant="outline"
                 color="red"
-                onClick={() => replaceSection(request_form.form_section)}
+                onClick={() => replaceSection(form.form_section)}
               >
                 Reset
               </Button>
@@ -569,4 +531,4 @@ const EditServicesRequestPage = ({
   );
 };
 
-export default EditServicesRequestPage;
+export default EditOtherExpensesRequestPage;

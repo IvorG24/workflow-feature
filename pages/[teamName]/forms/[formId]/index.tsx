@@ -1,5 +1,6 @@
 import { getForm } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
+import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
@@ -10,6 +11,7 @@ import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
   FormType,
   ItemWithDescriptionType,
+  OtherExpensesTypeWithCategoryType,
   ServiceWithScopeType,
   SupplierTableRow,
   TeamGroupTableRow,
@@ -61,6 +63,8 @@ type Props = {
   teamProjectListCount?: number;
   services?: ServiceWithScopeType[];
   serviceListCount?: number;
+  otherExpensesTypes?: OtherExpensesTypeWithCategoryType[];
+  otherExpensesTypeCount?: number;
 };
 
 const Page = ({
@@ -75,6 +79,8 @@ const Page = ({
   teamProjectListCount = 0,
   services = [],
   serviceListCount = 0,
+  otherExpensesTypes = [],
+  otherExpensesTypeCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -124,6 +130,18 @@ const Page = ({
             teamGroupList={teamGroupList}
             teamProjectList={teamProjectList}
             teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "Other Expenses":
+        return (
+          <OtherExpensesFormPage
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+            otherExpensesTypes={otherExpensesTypes}
+            otherExpensesTypeCount={otherExpensesTypeCount}
           />
         );
       default:

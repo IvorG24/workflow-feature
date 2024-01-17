@@ -19,11 +19,7 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import {
-  ConnectedRequestIdList,
-  ReceiverStatusType,
-  RequestWithResponseType,
-} from "@/utils/types";
+import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
 import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -31,21 +27,10 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
-import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
-import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
-import RequisitionSummary from "../SummarySection/RequisitionSummary";
+import OtherExpensesSummary from "../SummarySection/OtherExpensesSummary";
 
 type Props = {
   request: RequestWithResponseType;
-  connectedForm: {
-    form_name: string;
-    form_id: string;
-    form_is_for_every_member: boolean;
-    form_is_member: boolean;
-    form_is_hidden: boolean;
-  }[];
-  connectedRequestIDList: ConnectedRequestIdList;
-  canvassRequest: string[];
 };
 
 export type ApproverDetailsType = {
@@ -56,12 +41,7 @@ export type ApproverDetailsType = {
   signature: string | null;
 };
 
-const RequisitionRequestPage = ({
-  request,
-  // connectedForm,
-  connectedRequestIDList,
-  canvassRequest,
-}: Props) => {
+const OtherExpensesRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
@@ -69,8 +49,6 @@ const RequisitionRequestPage = ({
     []
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
-  const [isCashPurchase, setIsCashPurchase] = useState(false);
-  // const [currentServerDate, setCurrentServerDate] = useState("");
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
@@ -142,19 +120,9 @@ const RequisitionRequestPage = ({
           })
         );
         setApproverDetails(data);
-
-        // const serverDate = (
-        //   await getCurrentDate(supabaseClient)
-        // ).toLocaleString();
-        // setCurrentServerDate(serverDate);
       };
       if (request) {
         fetchApproverDetails();
-
-        setIsCashPurchase(
-          `${request.request_form.form_section[0].section_field[1].field_response[0].request_response}` ===
-            `"Cash Purchase - Local Purchase"`
-        );
       }
     } catch (e) {
       console.error(e);
@@ -327,74 +295,6 @@ const RequisitionRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  // const handleReverseApproval = async () => {
-  //   try {
-  //     if (!isUserSigner || !teamMember) {
-  //       console.error("Signer or team member is undefined");
-  //       return;
-  //     }
-  //     setIsLoading(true);
-
-  //     const serverDate = (
-  //       await getCurrentDate(supabaseClient)
-  //     ).toLocaleString();
-
-  //     const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-  //       `${isUserSigner.request_signer_status_date_updated}`,
-  //       serverDate
-  //     );
-
-  //     if (!actionIsWithinFiveMinutes) {
-  //       return notifications.show({
-  //         message: "Reversal is beyond the time limit.",
-  //         color: "orange",
-  //       });
-  //     }
-
-  //     const signerFullName = `${isUserSigner.signer_team_member.team_member_user.user_first_name} ${isUserSigner.signer_team_member.team_member_user.user_last_name}`;
-
-  //     await reverseRequestApproval(supabaseClient, {
-  //       requestAction: "REVERSED",
-  //       requestId: request.request_id,
-  //       isPrimarySigner: isUserSigner.signer_is_primary_signer,
-  //       requestSignerId: isUserSigner.request_signer_id,
-  //       requestOwnerId: request.request_team_member.team_member_user.user_id,
-  //       signerFullName: signerFullName,
-  //       formName: request.request_form.form_name,
-  //       memberId: teamMember.team_member_id,
-  //       teamId: request.request_team_member.team_member_team_id,
-  //     });
-  //   } catch (error) {
-  //     notifications.show({
-  //       message: "Something went wrong. Please try again later",
-  //       color: "red",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
-  //   if (!isUserSigner) return false;
-  //   if (currentServerDate === "") return false;
-
-  //   const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-  //     `${isUserSigner.request_signer_status_date_updated}`,
-  //     currentServerDate
-  //   );
-  //   const primarySignerStatusIsPending = signerList.find(
-  //     (signer) => signer.signer_is_primary_signer
-  //   )?.request_signer_status;
-  //   const signerStatusIsPending =
-  //     isUserSigner.request_signer_status !== "PENDING";
-
-  //   return (
-  //     actionIsWithinFiveMinutes &&
-  //     primarySignerStatusIsPending &&
-  //     signerStatusIsPending
-  //   );
-  // };
-
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
@@ -451,30 +351,6 @@ const RequisitionRequestPage = ({
               sectionWithDuplicateList={sectionWithDuplicateList}
               approverDetails={approverDetails}
             />
-            {/* {requestStatus === "APPROVED" ? (
-            <Group>
-              {connectedForm.map((form) => {
-                if (
-                  (form.form_is_for_every_member || form.form_is_member) &&
-                  form.form_is_hidden === false
-                ) {
-                  return (
-                    <Button
-                      key={form.form_id}
-                      onClick={() =>
-                        router.push(
-                          `/team-requests/forms/${form.form_id}/create?requisitionId=${request.request_id}`
-                        )
-                      }
-                      sx={{ flex: 1 }}
-                    >
-                      Create {form.form_name}
-                    </Button>
-                  );
-                }
-              })}
-            </Group>
-          ) : null} */}
           </Group>
         )}
       </Flex>
@@ -487,14 +363,6 @@ const RequisitionRequestPage = ({
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
           jiraTicketStatus={jiraTicketStatus}
-        />
-
-        {canvassRequest.length !== 0 ? (
-          <RequisitionCanvassSection canvassRequest={canvassRequest} />
-        ) : null}
-
-        <ConnectedRequestSection
-          connectedRequestIDList={connectedRequestIDList}
         />
 
         {sectionWithDuplicateList.map((section, idx) => {
@@ -515,15 +383,25 @@ const RequisitionRequestPage = ({
           );
         })}
 
-        <RequisitionSummary summaryData={sectionWithDuplicateList.slice(1)} />
+        <OtherExpensesSummary
+          summaryData={sectionWithDuplicateList
+            .slice(1)
+            .sort((a, b) =>
+              `${a.section_field[0].field_response?.request_response}` >
+              `${b.section_field[0].field_response?.request_response}`
+                ? 1
+                : `${b.section_field[0].field_response?.request_response}` >
+                  `${a.section_field[0].field_response?.request_response}`
+                ? -1
+                : 0
+            )}
+        />
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             handleUpdateRequest={handleUpdateRequest}
-            isRf
-            isCashPurchase={isCashPurchase}
             isUserPrimarySigner={
               isUserSigner
                 ? Boolean(isUserSigner.signer_is_primary_signer)
@@ -534,14 +412,9 @@ const RequisitionRequestPage = ({
             isDeletable={isDeletable}
             isUserRequester={isUserRequester}
             requestId={request.request_id}
+            isRf
           />
         )}
-
-        {/* {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
-          <RequestReverseActionSection
-            handleReverseApproval={handleReverseApproval}
-          />
-        ) : null} */}
 
         <RequestSignerSection signerList={signerList} />
       </Stack>
@@ -558,4 +431,4 @@ const RequisitionRequestPage = ({
   );
 };
 
-export default RequisitionRequestPage;
+export default OtherExpensesRequestPage;

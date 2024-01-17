@@ -20,6 +20,7 @@ import {
   ItemWithDescriptionType,
   NotificationOnLoad,
   NotificationTableRow,
+  OtherExpensesTypeTableRow,
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
@@ -4248,4 +4249,117 @@ export const getUserIssuedItemList = async (
   if (error) throw error;
 
   return data as unknown as { data: UserIssuedItem[]; raw: UserIssuedItem[] };
+};
+
+// Get type list
+export const getTypeList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from(`other_expenses_type_table`)
+    .select(
+      `
+        *, 
+        other_expenses_type_category: other_expenses_type_category_id!inner(
+          other_expenses_category
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("other_expenses_type_category.other_expenses_category_team_id", teamId)
+    .eq(
+      "other_expenses_type_category.other_expenses_category_is_disabled",
+      false
+    )
+    .eq("other_expenses_type_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("other_expenses_type", `%${search}%`);
+  }
+
+  query.order("other_expenses_type");
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const formattedData = data as unknown as (OtherExpensesTypeTableRow & {
+    other_expenses_type_category: { other_expenses_category: string };
+  })[];
+
+  return {
+    data: formattedData.map((type) => {
+      return {
+        ...type,
+        other_expenses_category:
+          type.other_expenses_type_category.other_expenses_category,
+      };
+    }),
+    count,
+  };
+};
+
+// check if other expenses table value already exists
+export const checkOtherExpenesesTypeTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { value: string; categoryId: string }
+) => {
+  const { value, categoryId } = params;
+  const { count, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .select("*", { count: "exact", head: true })
+    .eq("other_expenses_type", value)
+    .eq("other_expenses_type_is_disabled", false)
+    .eq("other_expenses_type_category_id", categoryId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Fetch other expenses category options
+export const getOtherExpensesCategoryOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("other_expenses_category_table")
+    .select("*")
+    .eq("other_expenses_category_team_id", teamId)
+    .order("other_expenses_category", { ascending: true });
+  if (error) throw error;
+  return data;
+};
+
+// Get type list
+export const getTypeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    categoryId: string;
+  }
+) => {
+  const { categoryId } = params;
+  const { data, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .select("*")
+    .eq("other_expenses_type_category_id", categoryId)
+    .eq("other_expenses_type_is_available", true)
+    .eq("other_expenses_type_is_disabled", false)
+    .order("other_expenses_type", { ascending: true });
+  if (error) throw error;
+  return data;
 };
