@@ -169,6 +169,19 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
         </Group>
       )}
 
+      {form.form_type && form.form_sub_type && (
+        <Stack mt="xl" spacing="xs">
+          <Group>
+            <Title order={5}>Type:</Title>
+            <Text>{form.form_type}</Text>
+          </Group>
+          <Group>
+            <Title order={5}>Sub Type:</Title>
+            <Text>{form.form_sub_type}</Text>
+          </Group>
+        </Stack>
+      )}
+
       <Title order={5} mt="xl">
         Created by:
       </Title>

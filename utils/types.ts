@@ -321,6 +321,8 @@ export type RequestWithResponseType = RequestTableRow & {
     form_name: string;
     form_description: string;
     form_is_formsly_form: boolean;
+    form_type?: string;
+    form_sub_type?: string;
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_section_duplicatable_id?: string;
@@ -433,6 +435,8 @@ export type FormType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
+  form_type?: string;
+  form_sub_type?: string;
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -480,6 +484,8 @@ export type FormWithResponseType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
+  form_type?: string;
+  form_sub_type?: string;
   form_team_member: {
     team_member_id: string;
     team_member_user: {

@@ -147,6 +147,8 @@ CREATE TABLE form_table(
   form_is_formsly_form BOOLEAN DEFAULT FALSE NOT NULL,
   form_app VARCHAR(4000) NOT NULL,
   form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
+  form_type VARCHAR(4000),
+  form_sub_type VARCHAR(4000),
 
   form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
@@ -4285,6 +4287,8 @@ RETURNS JSON as $$
           form_is_hidden, 
           form_is_formsly_form, 
           form_is_for_every_member,
+          form_type,
+          form_sub_type,
           team_member_id,
           user_id, 
           user_first_name, 
@@ -4382,6 +4386,8 @@ RETURNS JSON as $$
       form_is_hidden: formData.form_is_hidden,
       form_is_formsly_form: formData.form_is_formsly_form,
       form_is_for_every_member: formData.form_is_for_every_member,
+      form_type: formData.form_type,
+      form_sub_type: formData.form_sub_type,
       form_team_member: {
         team_member_id: formData.team_member_id,
         team_member_user: {
@@ -4770,6 +4776,7 @@ RETURNS JSON as $$
               general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
               AND general_unit_of_measurement_is_disabled = false
               AND general_unit_of_measurement_is_available = true
+            ORDER BY general_unit_of_measurement
           `
         );
 
@@ -5617,6 +5624,8 @@ RETURNS JSON as $$
           form_name, 
           form_description, 
           form_is_formsly_form,
+          form_type,
+          form_sub_type,
           team_project_name
         FROM request_view
         INNER JOIN team_member_table ON team_member_id = request_team_member_id
@@ -5795,6 +5804,8 @@ RETURNS JSON as $$
       form_description: requestData.form_description,
       form_is_formsly_form: requestData.form_is_formsly_form,
       form_section: formSection,
+      form_type: requestData.form_type,
+      form_sub_type: requestData.form_sub_type
     };
 
     returnData = {
@@ -7241,6 +7252,7 @@ RETURNS JSON AS $$
               general_unit_of_measurement_team_id = '${teamId}'
               AND general_unit_of_measurement_is_disabled = false
               AND general_unit_of_measurement_is_available = true
+            ORDER BY general_unit_of_measurement
           `
         );
 
