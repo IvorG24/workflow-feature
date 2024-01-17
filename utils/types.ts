@@ -223,7 +223,8 @@ export type AttachmentBucketType =
   | "USER_SIGNATURES"
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
-  | "REQUEST_ATTACHMENTS";
+  | "REQUEST_ATTACHMENTS"
+  | "TEAM_PROJECT_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =

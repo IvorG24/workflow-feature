@@ -817,6 +817,8 @@ export const createTeamProject = async (
     teamProjectName: string;
     teamProjectInitials: string;
     teamProjectTeamId: string;
+    siteMapId: string;
+    boqId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
