@@ -108,7 +108,7 @@ const OnboardingPage = ({ user }: Props) => {
       let idFrontImage = "";
       if (data.user_id_front_image) {
         idFrontImage = await uploadImage(supabaseClient, {
-          id: data.user_id,
+          id: `${data.user_id}-front`,
           image: data.user_id_front_image,
           bucket: "USER_VALID_IDS",
         });
@@ -116,7 +116,7 @@ const OnboardingPage = ({ user }: Props) => {
       let idBackImage = "";
       if (data.user_id_back_image) {
         idBackImage = await uploadImage(supabaseClient, {
-          id: data.user_id,
+          id: `${data.user_id}-back`,
           image: data.user_id_back_image,
           bucket: "USER_VALID_IDS",
         });
@@ -563,7 +563,7 @@ const OnboardingPage = ({ user }: Props) => {
                   <FileInput
                     value={value}
                     onChange={onChange}
-                    label="back ID image"
+                    label="Back ID image"
                     accept="image/png,image/jpeg"
                     error={errors.user_id_back_image?.message}
                   />

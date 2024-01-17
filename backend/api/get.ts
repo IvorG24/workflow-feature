@@ -4178,3 +4178,20 @@ export const getUserIssuedItemList = async (
 
   return data as unknown as { data: UserIssuedItem[]; raw: UserIssuedItem[] };
 };
+
+// Get user valid id
+export const getUserValidID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    validId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_valid_id_table")
+    .select("*, user_valid_id_user_id(*), user_valid_id_approver(*)")
+    .eq("user_valid_id_id", params.validId)
+    .single();
+  if (error) throw error;
+
+  return data;
+};

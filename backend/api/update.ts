@@ -509,3 +509,26 @@ export const updateLookup = async (
     value: formattedData[value],
   };
 };
+
+// Update valid id status and add approver
+export const approveOrRejectValidId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    validIdId: string;
+    approverUserId: string;
+    status: "APPROVED" | "REJECTED";
+  }
+) => {
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+  const { error } = await supabaseClient
+    .from("user_valid_id_table")
+    .update({
+      user_valid_id_status: params.status,
+      user_valid_id_approver: params.approverUserId,
+      user_valid_id_date_updated: `${currentDate}`,
+    })
+    .eq("user_valid_id_id", params.validIdId);
+
+  if (error) throw error;
+};

@@ -3301,6 +3301,8 @@ RETURNS JSON AS $$
       `
     )[0];
 
+    const userValidId = plv8.execute(`SELECT * FROM user_valid_id_table WHERE user_valid_id_user_id='${member.team_member_user.user_id}';`)[0];
+
     const memberGroupToSelect = plv8.execute(`SELECT tgmt2.team_group_member_id, tgt2.team_group_name FROM team_group_member_table tgmt2 INNER JOIN team_group_table tgt2 ON tgt2.team_group_id = tgmt2.team_group_id WHERE tgmt2.team_member_id='${teamMemberId}' ORDER BY tgt2.team_group_name ASC LIMIT 10`);
 
     let groupList = []
@@ -3325,7 +3327,7 @@ RETURNS JSON AS $$
       projectCount = plv8.execute(`SELECT COUNT(*) FROM team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
     }
 
-    team_member_data = {member: member, groupList, groupCount:`${groupCount}`, projectList, projectCount: `${projectCount}`}
+    team_member_data = {member: member, userValidId, groupList, groupCount:`${groupCount}`, projectList, projectCount: `${projectCount}`}
  });
  return team_member_data;
 $$ LANGUAGE plv8;

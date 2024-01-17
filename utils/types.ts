@@ -930,6 +930,7 @@ export type TeamMemberOnLoad = {
   member: TeamMemberTableRow & {
     team_member_user: UserTableRow & { user_employee_number: string };
   };
+  userValidId: UserValidIDTableRow;
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -1112,4 +1113,12 @@ export type UserIssuedItem = {
       response: string;
     }[];
   }[];
+};
+
+export type UserValidIdWithUser = Omit<
+  UserValidIDTableRow,
+  "user_valid_id_user_id" | "user_valid_id_approver"
+> & {
+  user_valid_id_user_id: UserTableRow;
+  user_valid_id_approver: UserTableRow;
 };

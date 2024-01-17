@@ -4,9 +4,11 @@ import {
   TeamMemberTableRow,
   TeamProjectTableRow,
   UserTableRow,
+  UserValidIDTableRow,
 } from "@/utils/types";
 import {
   Avatar,
+  Badge,
   Container,
   Divider,
   Flex,
@@ -24,6 +26,7 @@ type Props = {
   member: TeamMemberTableRow & {
     team_member_user: UserTableRow & { user_employee_number: string };
   };
+  userValidId: UserValidIDTableRow;
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -38,11 +41,34 @@ type Props = {
 
 const TeamMemberPage = ({
   member,
+  userValidId,
   groupList,
   groupCount,
   projectList,
   projectCount,
 }: Props) => {
+  const getValidIDStatus = () => {
+    let label = "";
+    let color = "";
+    if (userValidId.user_valid_id_status === "APPROVED") {
+      label = "VERIFIED";
+      color = "green";
+    } else if (userValidId.user_valid_id_status === "REJECTED") {
+      label = "REJECTED";
+      color = "red";
+    } else {
+      label = "PENDING";
+      color = "yellow";
+    }
+
+    return {
+      label,
+      color,
+    };
+  };
+
+  const validIDStatus = getValidIDStatus();
+
   return (
     <Container>
       <Title order={2}>Member Profile</Title>
@@ -63,6 +89,20 @@ const TeamMemberPage = ({
               {member.team_member_user.user_first_name[0].toUpperCase()}
               {member.team_member_user.user_last_name[0].toUpperCase()}
             </Avatar>
+
+            {userValidId.user_valid_id_status !== "PENDING" && (
+              <Badge
+                variant="filled"
+                pr={0}
+                rightSection={
+                  <Badge color={validIDStatus.color}>
+                    {validIDStatus.label}
+                  </Badge>
+                }
+              >
+                {userValidId.user_valid_id_type}
+              </Badge>
+            )}
           </Flex>
 
           <Flex direction={{ base: "column", md: "row" }} gap={16}>
