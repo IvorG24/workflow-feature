@@ -157,7 +157,6 @@ const RequestListFilter = ({
                 size={36}
                 color="dark.3"
                 variant="outline"
-                className="onboarding-request-list-sort"
               >
                 {value ? (
                   <IconSortAscending size={18} />
@@ -181,7 +180,6 @@ const RequestListFilter = ({
         miw={250}
         maw={320}
         disabled={filterSelectedValues.isApproversView}
-        className="onboarding-request-list-filters-rid"
       />
 
       <Controller
@@ -204,7 +202,6 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
-            className="onboarding-request-list-filters-form"
           />
         )}
       />
@@ -229,7 +226,6 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
-            className="onboarding-request-list-filters-status"
           />
         )}
       />
@@ -255,7 +251,6 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
-            className="onboarding-request-list-filters-project"
           />
         )}
       />
@@ -280,7 +275,6 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
-            className="onboarding-request-list-filters-requestor"
           />
         )}
       />
@@ -305,7 +299,6 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
-            className="onboarding-request-list-filters-approver"
           />
         )}
       />
@@ -330,7 +323,6 @@ const RequestListFilter = ({
             miw={250}
             maw={320}
             disabled={filterSelectedValues.isApproversView}
-            className="onboarding-request-list-filters-id-filter"
           />
         )}
       />
@@ -351,7 +343,6 @@ const RequestListFilter = ({
               cursor: "pointer",
             },
           }}
-          className="onboarding-request-list-filters-approver-view"
         />
       </Tooltip>
     </Flex>
