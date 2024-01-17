@@ -403,7 +403,7 @@ const CreateSourcedItemRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Sourced Item"
+                    formslyFormName={form.form_name}
                     onRemoveSection={handleRemoveSection}
                     sourcedItemFormMethods={{
                       onProjectSiteChange: handleProjectSiteChange,

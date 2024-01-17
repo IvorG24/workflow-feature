@@ -364,7 +364,7 @@ const CreateSubconRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    formslyFormName="Subcon"
+                    formslyFormName={form.form_name}
                     subconFormMethods={{
                       onServiceNameChange: handleServiceNameChange,
                       onProjectNameChange: handleProjectNameChange,
