@@ -20,6 +20,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('USER_SIGNATURES', 'USER_SIGNATUR
 INSERT INTO storage.buckets (id, name) VALUES ('TEAM_LOGOS', 'TEAM_LOGOS');
 INSERT INTO storage.buckets (id, name) VALUES ('COMMENT_ATTACHMENTS', 'COMMENT_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('REQUEST_ATTACHMENTS', 'REQUEST_ATTACHMENTS');
+INSERT INTO storage.buckets (id, name) VALUES ('MEMO_ATTACHMENTS', 'MEMO_ATTACHMENTS');
 INSERT INTO storage.buckets (id, name) VALUES ('TEAM_PROJECT_ATTACHMENTS', 'TEAM_PROJECT_ATTACHMENTS');
 
 UPDATE storage.buckets SET public = true;
@@ -480,6 +481,92 @@ CREATE TABLE general_unit_of_measurement_table(
 );
 
 -- End: General unit of measurement table
+
+-- Start: Memo feature table
+
+CREATE TABLE memo_table (
+    memo_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_subject VARCHAR(4000) NOT NULL,
+    memo_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+    memo_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+    memo_author_user_id UUID REFERENCES user_table(user_id) NOT NULL,
+    memo_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+    memo_version VARCHAR(4000) NOT NULL,
+    memo_reference_number UUID DEFAULT uuid_generate_v4() NOT NULL
+);
+
+CREATE TABLE memo_signer_table (
+    memo_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+    memo_signer_is_primary BOOLEAN DEFAULT FALSE NOT NULL,
+    memo_signer_order INT NOT NULL,
+    memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+    memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_line_item_table (
+    memo_line_item_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_line_item_content VARCHAR(4000) NOT NULL,
+    memo_line_item_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+    memo_line_item_date_updated TIMESTAMPTZ(0),
+    memo_line_item_order INT NOT NULL,
+    memo_line_item_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_line_item_attachment_table (
+    memo_line_item_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_line_item_attachment_name VARCHAR(4000) NOT NULL,
+    memo_line_item_attachment_caption VARCHAR(4000),
+    memo_line_item_attachment_storage_bucket VARCHAR(4000) NOT NULL,
+    memo_line_item_attachment_public_url VARCHAR(4000) NOT NULL,
+    memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE memo_date_updated_table (
+    memo_date_updated_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_date_updated TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+    memo_date_updated_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_status_table (
+    memo_status_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+    memo_status_date_updated TIMESTAMPTZ(0),
+    memo_status_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_read_receipt_table (
+    memo_read_receipt_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_read_receipt_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+    memo_read_receipt_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+    memo_read_receipt_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_agreement_table (
+    memo_agreement_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_agreement_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+    memo_agreement_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+    memo_agreement_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_format_table(
+    memo_format_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_format_header_margin_top VARCHAR(20) NOT NULL,
+    memo_format_header_margin_right VARCHAR(20) NOT NULL,
+    memo_format_header_margin_bottom VARCHAR(20) NOT NULL,
+    memo_format_header_margin_left VARCHAR(20) NOT NULL,
+    memo_format_header_logo_position VARCHAR(255) NOT NULL,
+    memo_format_body_margin_top VARCHAR(20) NOT NULL,
+    memo_format_body_margin_right VARCHAR(20) NOT NULL,
+    memo_format_body_margin_bottom VARCHAR(20) NOT NULL,
+    memo_format_body_margin_left VARCHAR(20) NOT NULL,
+    memo_format_footer_margin_top VARCHAR(20) NOT NULL,
+    memo_format_footer_margin_right VARCHAR(20) NOT NULL,
+    memo_format_footer_margin_bottom VARCHAR(20) NOT NULL,
+    memo_format_footer_margin_left VARCHAR(20) NOT NULL
+);
+
+-- End: Memo feature table
 
 -- Start: Username history table
 
@@ -8847,6 +8934,600 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Analyze user issued item
+
+-- Start: memo queries
+
+CREATE OR REPLACE FUNCTION create_memo(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let new_memo_data;
+  plv8.subtransaction(function(){
+    const {
+      memoData,
+      signerData,
+      lineItemData
+    } = input_data;
+
+    const memo_count = plv8.execute(`SELECT COUNT(*) FROM memo_table WHERE memo_reference_number = '${memoData.memo_reference_number}'`)[0].count;
+    const memo_version = (Number(memo_count) + 1);
+    memoData.memo_version = memo_version;
+
+    new_memo_data = plv8.execute(`
+      INSERT INTO memo_table (
+        memo_team_id,
+        memo_author_user_id,
+        memo_subject,
+        memo_reference_number,
+        memo_version
+      ) 
+      VALUES (
+        '${memoData.memo_team_id}',
+        '${memoData.memo_author_user_id}',
+        '${memoData.memo_subject}',
+        '${memoData.memo_reference_number}',
+        '${memoData.memo_version}'
+      ) 
+      RETURNING *;
+    `)[0];
+
+    plv8.execute(`INSERT INTO memo_date_updated_table (memo_date_updated_memo_id) VALUES ('${new_memo_data.memo_id}')`);
+    plv8.execute(`INSERT INTO memo_status_table (memo_status_memo_id) VALUES ('${new_memo_data.memo_id}')`);
+
+    const signerTableValues = signerData.map((signer) => `('${signer.memo_signer_is_primary}','${signer.memo_signer_order}','${signer.memo_signer_team_member_id}', '${new_memo_data.memo_id}')`).join(",");
+
+    plv8.execute(`INSERT INTO memo_signer_table (memo_signer_is_primary, memo_signer_order, memo_signer_team_member_id, memo_signer_memo_id) VALUES ${signerTableValues}`);
+
+    let lineItemTableValues = [];
+    let lineItemAttachmentTableValues = [];
+
+    lineItemData.forEach((lineItem, lineItemIndex) => {
+      const lineItemValues = `('${lineItem.memo_line_item_id}', '${lineItem.memo_line_item_content}', '${lineItemIndex}', '${new_memo_data.memo_id}')`
+
+      lineItemTableValues.push(lineItemValues)
+
+      if (lineItem.memo_line_item_attachment) {
+
+        const lineItemAttachmentValues = `('${lineItem.memo_line_item_attachment_name}', '${lineItem.memo_line_item_attachment_caption}', '${lineItem.memo_line_item_attachment_storage_bucket}', '${lineItem.memo_line_item_attachment_public_url}', '${lineItem.memo_line_item_id}')`
+
+        lineItemAttachmentTableValues.push(lineItemAttachmentValues)
+      }
+    });
+
+    plv8.execute(`
+      INSERT INTO memo_line_item_table (
+        memo_line_item_id,
+        memo_line_item_content,
+        memo_line_item_order,
+        memo_line_item_memo_id
+      ) VALUES 
+      ${lineItemTableValues.join(",")}
+    `);
+
+    if (lineItemAttachmentTableValues.length > 0) {
+      plv8.execute(`
+        INSERT INTO memo_line_item_attachment_table (
+          memo_line_item_attachment_name,
+          memo_line_item_attachment_caption,
+          memo_line_item_attachment_storage_bucket,
+          memo_line_item_attachment_public_url,
+          memo_line_item_attachment_line_item_id
+        ) VALUES 
+        ${lineItemAttachmentTableValues.join(",")}
+      `);
+    }
+
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${memoData.memo_team_id}';`);
+    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
+    const memo_author_data = plv8.execute(`SELECT user_first_name, user_last_name FROM user_table WHERE user_id = '${memoData.memo_author_user_id}' LIMIT 1`)[0];
+
+    const signerNotificationInput = signerData.map((signer) => ({notification_app: 'REQUEST', notification_content: `${memo_author_data.user_first_name} ${memo_author_data.user_last_name} requested you to sign his/her memo`, notification_redirect_url: '', notification_team_id: memoData.memo_team_id, notification_type: 'MEMO-APPROVAL', notification_user_id: signer.memo_signer_user_id}));
+
+    
+    if (activeTeam && memo_author_data) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
+
+      if (teamNameUrlKey) {
+        const notificationValues = signerNotificationInput
+        .map(
+          (notification) =>
+            `('${notification.notification_app}','${notification.notification_content}','/${teamNameUrlKey}/memo/${new_memo_data.memo_id}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`
+        )
+        .join(",");
+
+        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      }
+    }
+
+ });
+ return new_memo_data;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_memo_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let memo_data_on_load;
+  plv8.subtransaction(function(){
+
+    const {memo_id, current_user_id, isReference} = input_data;
+
+    const currentUser = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id = '${current_user_id}' LIMIT 1`)[0];
+    
+    if (currentUser) {
+      const hasUserReadMemo = plv8.execute(
+      `
+        SELECT COUNT(*) 
+        FROM memo_read_receipt_table 
+        WHERE memo_read_receipt_by_team_member_id = '${currentUser.team_member_id}' 
+        AND memo_read_receipt_memo_id = '${memo_id}';
+      `)[0];
+
+      if (Number(hasUserReadMemo.count) === 0) {
+        plv8.execute(`INSERT INTO memo_read_receipt_table (memo_read_receipt_by_team_member_id, memo_read_receipt_memo_id) VALUES ('${currentUser.team_member_id}', '${memo_id}')`);
+      }
+    }
+
+    const memo_data_raw = plv8.execute(
+      `
+      SELECT *
+      FROM memo_table
+      INNER JOIN user_table ON user_table.user_id = memo_author_user_id
+      INNER JOIN memo_date_updated_table ON memo_date_updated_memo_id = memo_id
+      INNER JOIN memo_status_table ON memo_status_memo_id = memo_id
+      WHERE memo_id = '${memo_id}' AND memo_is_disabled = false
+      LIMIT 1;
+      `
+    )[0];
+
+    if (memo_data_raw.length === 0) {
+        memo_data_on_load = {};
+    }
+
+    const {memo_subject, memo_reference_number, memo_date_created, memo_version, memo_date_updated, memo_status, user_id, user_avatar, user_first_name, user_last_name, user_job_title, user_signature_attachment_id} = memo_data_raw;
+
+    const memo_data = {
+        memo_id: memo_data_raw.memo_id,
+        memo_subject,
+        memo_reference_number,
+        memo_date_created,
+        memo_date_updated,
+        memo_status,
+        memo_version,
+        memo_author_user: {
+            user_id,
+            user_avatar,
+            user_first_name,
+            user_last_name,
+            user_job_title,
+            user_signature_attachment_id
+        }
+    };
+
+    const signer_data_raw = plv8.execute(`
+        SELECT * 
+        FROM memo_signer_table 
+        INNER JOIN team_member_table tm ON tm.team_member_id = memo_signer_team_member_id 
+        INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id 
+        LEFT JOIN attachment_table ON attachment_id = ut.user_signature_attachment_id
+        WHERE memo_signer_memo_id = '${memo_id}'
+    `);
+
+    const signer_data = signer_data_raw.map(row => {
+        const newSignerData = {
+        memo_signer_id: row.memo_signer_id,
+        memo_signer_status: row.memo_signer_status,
+        memo_signer_is_primary: row.memo_signer_is_primary,
+        memo_signer_order: row.memo_signer_order,
+        memo_signer_team_member: {
+                team_member_id: row.team_member_id,
+                user: {
+                    user_id: row.user_id,
+                    user_first_name: row.user_first_name,
+                    user_last_name: row.user_last_name,
+                    user_avatar: row.user_avatar,
+                    user_signature_attachment: {
+                        user_signature_attachment_id: row.attachment_id,
+                        attachment_value: row.attachment_value
+                    },
+                    user_job_title: row.user_job_title
+                }
+            }
+        }
+
+        return newSignerData;
+    });
+
+    const line_item_data_raw = plv8.execute(`
+        SELECT * 
+        FROM memo_line_item_table 
+        LEFT JOIN memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id 
+        WHERE memo_line_item_memo_id = '${memo_id}'
+    `);
+
+    const line_item_data = line_item_data_raw.map(row => ({
+        memo_line_item_id: row.memo_line_item_id,
+        memo_line_item_content: row.memo_line_item_content,
+        memo_line_item_date_created: row.memo_line_item_date_created,
+        memo_line_item_date_updated: row.memo_line_item_date_updated,
+        memo_line_item_order: row.memo_line_item_order,
+        memo_line_item_attachment: {
+            memo_line_item_attachment_id: row.memo_line_item_attachment_id,
+            memo_line_item_attachment_name: row.memo_line_item_attachment_name,
+            memo_line_item_attachment_caption: row.memo_line_item_attachment_caption,
+            memo_line_item_attachment_storage_bucket: row.memo_line_item_attachment_storage_bucket,
+            memo_line_item_attachment_public_url: row.memo_line_item_attachment_public_url,
+            memo_line_item_attachment_line_item_id: row.memo_line_item_attachment_line_item_id
+        }
+    }));
+
+    const read_receipt_data = plv8.execute(
+      `
+        SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
+        FROM memo_read_receipt_table 
+        INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
+        INNER JOIN user_table ON user_id = team_member_user_id
+        LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
+        WHERE memo_read_receipt_memo_id = '${memo_id}'
+      `
+    );
+
+    const agreement_data = plv8.execute(
+      `
+        SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
+        FROM memo_agreement_table
+        INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
+        INNER JOIN user_table ON user_id = team_member_user_id
+        LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
+        WHERE memo_agreement_memo_id = '${memo_id}'
+      `
+    )
+
+    memo_data_on_load = {
+        ...memo_data,
+        memo_signer_list: signer_data,
+        memo_line_item_list: line_item_data,
+        memo_read_receipt_list: read_receipt_data,
+        memo_agreement_list: agreement_data
+    }
+ });
+ return memo_data_on_load;
+$$ LANGUAGE plv8;
+
+
+
+CREATE OR REPLACE FUNCTION get_memo_list(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let return_value;
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      page,
+      limit,
+      authorFilter,
+      approverFilter,
+      status,
+      sort,
+      searchFilter
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const memo_list = plv8.execute(
+      `
+        SELECT 
+          memo_table.*,
+          memo_status_table.memo_status as memo_status,
+          memo_date_updated_table.memo_date_updated as memo_date_updated,
+          JSONB_BUILD_OBJECT(
+            'user_id', user_table.user_id,
+            'user_avatar', user_table.user_avatar,
+            'user_first_name', user_table.user_first_name,
+            'user_last_name', user_table.user_last_name
+          ) AS memo_author_user,
+          ARRAY_AGG(
+           DISTINCT JSONB_BUILD_OBJECT(
+              'memo_signer_id', memo_signer_id,
+              'memo_signer_status', memo_signer_status,
+              'memo_signer_is_primary', memo_signer_is_primary,
+              'memo_signer_order', memo_signer_order,
+              'memo_signer_team_member', JSONB_BUILD_OBJECT(
+                'team_member_id', team_member_table.team_member_id,
+                'user', JSONB_BUILD_OBJECT(
+                  'user_id', team_member_user_table.user_id,
+                  'user_first_name', team_member_user_table.user_first_name,
+                  'user_last_name', team_member_user_table.user_last_name,
+                  'user_avatar', team_member_user_table.user_avatar
+                )
+              )
+            )
+          ) AS memo_signer_list
+        FROM memo_table
+        INNER JOIN user_table ON user_table.user_id = memo_table.memo_author_user_id
+        INNER JOIN memo_date_updated_table ON memo_date_updated_memo_id = memo_table.memo_id
+        INNER JOIN memo_status_table ON memo_status_memo_id = memo_table.memo_id
+        LEFT JOIN memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
+        LEFT JOIN team_member_table ON team_member_table.team_member_id = memo_signer_table.memo_signer_team_member_id
+        LEFT JOIN user_table AS team_member_user_table ON team_member_user_table.user_id = team_member_table.team_member_user_id
+        LEFT JOIN memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_table.memo_id
+        WHERE 
+          memo_team_id = '${teamId}'
+          AND memo_is_disabled = false
+          ${authorFilter}
+          ${approverFilter}
+          ${status}
+          ${searchFilter ? `AND to_tsvector(memo_subject || ' ' || memo_line_item_table.memo_line_item_content) @@ to_tsquery('${searchFilter}')` : ''}
+        GROUP BY 
+          memo_id,
+          user_table.user_id,
+          memo_status_table.memo_status,
+          memo_date_updated_table.memo_date_updated
+        ORDER BY memo_table.memo_date_created ${sort}
+        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+      `
+    );
+
+    const memo_count = plv8.execute(`
+      SELECT COUNT(DISTINCT memo_table.memo_id)
+      FROM memo_table
+      INNER JOIN memo_date_updated_table ON memo_date_updated_memo_id = memo_id
+      INNER JOIN memo_status_table ON memo_status_memo_id = memo_id
+      LEFT JOIN memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_id
+      LEFT JOIN memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_id
+      WHERE  
+          memo_team_id = '${teamId}'
+          AND memo_is_disabled = false
+          ${authorFilter}
+          ${approverFilter}
+          ${status}
+          ${searchFilter ? `AND to_tsvector(memo_line_item_table.memo_line_item_content) @@ to_tsquery('${searchFilter}')` : ''}
+    `)[0];
+
+    return_value = {data: memo_list, count: Number(memo_count.count)}
+ });
+ return return_value;
+$$ LANGUAGE plv8;
+
+
+CREATE OR REPLACE FUNCTION edit_memo(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  plv8.subtransaction(function(){
+    const {
+      memo_id,
+      memo_subject,
+      memoSignerTableValues,
+      memoLineItemTableValues,
+      memoLineItemAttachmentTableValues,
+      memoLineItemIdFilter
+    } = input_data;
+
+    plv8.execute(`UPDATE memo_table SET memo_subject = '${memo_subject}' WHERE memo_id = '${memo_id}'`);
+
+    plv8.execute(`UPDATE memo_date_updated_table SET memo_date_updated = NOW() WHERE memo_date_updated_memo_id = '${memo_id}'`);
+
+    plv8.execute(`DELETE FROM memo_signer_table WHERE memo_signer_memo_id = '${memo_id}'`);
+
+    plv8.execute(`DELETE FROM memo_line_item_table WHERE memo_line_item_memo_id = '${memo_id}'`);
+
+    plv8.execute(`DELETE FROM memo_line_item_attachment_table WHERE memo_line_item_attachment_line_item_id IN (${memoLineItemIdFilter})`);
+
+    plv8.execute(`INSERT INTO memo_signer_table (memo_signer_is_primary, memo_signer_order, memo_signer_team_member_id, memo_signer_memo_id) VALUES ${memoSignerTableValues}`);
+
+    plv8.execute(`INSERT INTO memo_line_item_table (memo_line_item_id, memo_line_item_content, memo_line_item_order, memo_line_item_memo_id) VALUES ${memoLineItemTableValues}`);
+
+    plv8.execute(`INSERT INTO memo_line_item_attachment_table (memo_line_item_attachment_name,memo_line_item_attachment_caption,memo_line_item_attachment_storage_bucket,memo_line_item_attachment_public_url,memo_line_item_attachment_line_item_id) VALUES ${memoLineItemAttachmentTableValues}`);
+ });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_memo_reference_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let memo_data_on_load;
+  plv8.subtransaction(function(){
+
+    const {memo_id, current_user_id} = input_data;
+
+    const currentUser = plv8.execute(`
+      SELECT *
+      FROM team_member_table
+      INNER JOIN user_table ON user_id = team_member_user_id
+      WHERE team_member_user_id = '${current_user_id}'
+      LIMIT 1
+    `)[0];
+
+    const memo_data_raw = plv8.execute(
+      `
+      SELECT *
+      FROM memo_table
+      WHERE memo_id = '${memo_id}' AND memo_is_disabled = false
+      LIMIT 1;
+      `
+    )[0];
+
+    if (memo_data_raw.length === 0) {
+        memo_data_on_load = {};
+    }
+
+    const {memo_subject, memo_reference_number} = memo_data_raw;
+
+    const {user_id, user_avatar, user_first_name, user_last_name, user_job_title, user_signature_attachment_id} = currentUser;
+
+    const memo_data = {
+        memo_id: memo_data_raw.memo_id,
+        memo_subject,
+        memo_reference_number,
+        memo_author_user: {
+            user_id,
+            user_avatar,
+            user_first_name,
+            user_last_name,
+            user_job_title,
+            user_signature_attachment_id
+        }
+    };
+
+    const signer_data_raw = plv8.execute(`
+        SELECT * 
+        FROM memo_signer_table 
+        INNER JOIN team_member_table tm ON tm.team_member_id = memo_signer_team_member_id 
+        INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id 
+        LEFT JOIN attachment_table ON attachment_id = ut.user_signature_attachment_id
+        WHERE memo_signer_memo_id = '${memo_id}'
+    `);
+
+    const signer_data = signer_data_raw.map(row => {
+        const newSignerData = {
+        memo_signer_id: row.memo_signer_id,
+        memo_signer_status: row.memo_signer_status,
+        memo_signer_is_primary: row.memo_signer_is_primary,
+        memo_signer_order: row.memo_signer_order,
+        memo_signer_team_member: {
+                team_member_id: row.team_member_id,
+                user: {
+                    user_id: row.user_id,
+                    user_first_name: row.user_first_name,
+                    user_last_name: row.user_last_name,
+                    user_avatar: row.user_avatar,
+                    user_signature_attachment: {
+                        user_signature_attachment_id: row.attachment_id,
+                        attachment_value: row.attachment_value
+                    },
+                    user_job_title: row.user_job_title
+                }
+            }
+        }
+
+        return newSignerData;
+    });
+
+    const line_item_data_raw = plv8.execute(`
+        SELECT * 
+        FROM memo_line_item_table 
+        LEFT JOIN memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id 
+        WHERE memo_line_item_memo_id = '${memo_id}'
+    `);
+
+    const line_item_data = line_item_data_raw.map(row => ({
+        memo_line_item_id: row.memo_line_item_id,
+        memo_line_item_content: row.memo_line_item_content,
+        memo_line_item_date_created: row.memo_line_item_date_created,
+        memo_line_item_date_updated: row.memo_line_item_date_updated,
+        memo_line_item_order: row.memo_line_item_order,
+        memo_line_item_attachment: {
+            memo_line_item_attachment_id: row.memo_line_item_attachment_id,
+            memo_line_item_attachment_name: row.memo_line_item_attachment_name,
+            memo_line_item_attachment_caption: row.memo_line_item_attachment_caption,
+            memo_line_item_attachment_storage_bucket: row.memo_line_item_attachment_storage_bucket,
+            memo_line_item_attachment_public_url: row.memo_line_item_attachment_public_url,
+            memo_line_item_attachment_line_item_id: row.memo_line_item_attachment_line_item_id
+        }
+    }));
+    
+    memo_data_on_load = {
+        ...memo_data,
+        memo_signer_list: signer_data,
+        memo_line_item_list: line_item_data
+    }
+ });
+ return memo_data_on_load;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_reference_memo(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let new_memo_data;
+  plv8.subtransaction(function() {
+    const {
+      memo_id,
+      memo_subject,
+      memo_reference_number,
+      memo_team_id,
+      memo_author_user_id,
+      memoSignerTableValues,
+      memoLineItemTableValues,
+      memoLineItemAttachmentTableValues,
+      memoLineItemIdFilter
+    } = input_data;
+
+    const memo_count = plv8.execute(`
+      SELECT COUNT(*) 
+      FROM memo_table 
+      WHERE memo_reference_number = '${memo_reference_number}'
+    `)[0].count;
+    const memo_version = Number(memo_count) + 1;
+
+    new_memo_data = plv8.execute(`
+      INSERT INTO memo_table (
+        memo_id,
+        memo_team_id,
+        memo_author_user_id,
+        memo_subject,
+        memo_reference_number,
+        memo_version
+      ) 
+      VALUES (
+        '${memo_id}',
+        '${memo_team_id}',
+        '${memo_author_user_id}',
+        '${memo_subject}',
+        '${memo_reference_number}',
+        '${memo_version}'
+      ) 
+      RETURNING *;
+    `)[0];
+
+    plv8.execute(`
+      INSERT INTO memo_date_updated_table (memo_date_updated_memo_id) 
+      VALUES ('${new_memo_data.memo_id}')
+    `);
+
+    plv8.execute(`
+      INSERT INTO memo_status_table (memo_status_memo_id) 
+      VALUES ('${new_memo_data.memo_id}')
+    `);
+
+    plv8.execute(`
+      INSERT INTO memo_signer_table (
+        memo_signer_is_primary,
+        memo_signer_order,
+        memo_signer_team_member_id,
+        memo_signer_memo_id
+      ) 
+      VALUES ${memoSignerTableValues}
+    `);
+
+    plv8.execute(`
+      INSERT INTO memo_line_item_table (
+        memo_line_item_id,
+        memo_line_item_content,
+        memo_line_item_order,
+        memo_line_item_memo_id
+      ) 
+      VALUES ${memoLineItemTableValues}
+    `);
+
+    plv8.execute(`
+      INSERT INTO memo_line_item_attachment_table (
+        memo_line_item_attachment_name,
+        memo_line_item_attachment_caption,
+        memo_line_item_attachment_storage_bucket,
+        memo_line_item_attachment_public_url,
+        memo_line_item_attachment_line_item_id
+      ) 
+      VALUES ${memoLineItemAttachmentTableValues}
+    `);
+  });
+  return new_memo_data;
+$$ LANGUAGE plv8;
+
+-- End: memo queries
 
 -- Start: Update user
 

@@ -2,7 +2,7 @@ import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { regExp, startCase } from "@/utils/string";
+import { addAmpersandBetweenWords, regExp, startCase } from "@/utils/string";
 import {
   AppType,
   ApproverUnresolvedRequestListType,
@@ -18,9 +18,13 @@ import {
   FormType,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
+  MemoFormatType,
+  MemoListItemType,
+  MemoType,
   NotificationOnLoad,
   NotificationTableRow,
   OtherExpensesTypeTableRow,
+  ReferenceMemoType,
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
@@ -4253,6 +4257,180 @@ export const getUserIssuedItemList = async (
   return data as unknown as { data: UserIssuedItem[]; raw: UserIssuedItem[] };
 };
 
+// Get team memo total count
+export const getTeamMemoCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { count, error } = await supabaseClient
+    .from("memo_table")
+    .select("*", { count: "exact" })
+    .eq("memo_team_id", params.teamId);
+
+  if (error) throw error;
+
+  return Number(count);
+};
+
+// Get team memo signers
+export const getTeamMemoSignerList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `team_member_id,
+       team_member_user: team_member_user_id(
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_job_title,
+          user_avatar,
+          user_signature_attachment: user_signature_attachment_id(*)
+        )
+      `
+    )
+    .eq("team_member_team_id", params.teamId);
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Get memo
+export const getMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memo_id: string; current_user_id: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_memo_on_load", {
+    input_data: params,
+  });
+  if (error || !data) throw Error;
+
+  return data as MemoType;
+};
+
+// Get memo list
+export const getMemoList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    authorFilter?: string[];
+    approverFilter?: string[];
+    status?: string[];
+    sort?: "ascending" | "descending";
+    searchFilter?: string;
+  }
+) => {
+  const {
+    teamId,
+    page,
+    limit,
+    authorFilter,
+    approverFilter,
+    status,
+    sort = "descending",
+    searchFilter,
+  } = params;
+
+  const authorFilterCondition = authorFilter
+    ?.map(
+      (authorUserId) => `memo_table.memo_author_user_id = '${authorUserId}'`
+    )
+    .join(" OR ");
+
+  const approverFilterCondition = approverFilter
+    ?.map(
+      (approverTeamMemberId) =>
+        `memo_signer_table.memo_signer_team_member_id = '${approverTeamMemberId}'`
+    )
+    .join(" OR ");
+
+  const statusCondition = status
+    ?.map((status) => `memo_status = '${status}'`)
+    .join(" OR ");
+
+  const { data, error } = await supabaseClient.rpc("get_memo_list", {
+    input_data: {
+      teamId,
+      page,
+      limit,
+      sort: sort === "descending" ? "DESC" : "ASC",
+      authorFilter: authorFilterCondition
+        ? `AND (${authorFilterCondition})`
+        : "",
+      approverFilter: approverFilterCondition
+        ? `AND (${approverFilterCondition})`
+        : "",
+      status: statusCondition ? `AND (${statusCondition})` : "",
+      searchFilter: searchFilter ? addAmpersandBetweenWords(searchFilter) : "",
+    },
+  });
+
+  if (error) throw Error;
+
+  return data as { data: MemoListItemType[]; count: number };
+};
+
+// Get memo
+export const getReferenceMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memo_id: string; current_user_id: string }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_memo_reference_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error || !data) throw Error;
+
+  return data as unknown as ReferenceMemoType;
+};
+
+// get memo format
+export const getMemoFormat = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .from("memo_format_table")
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) throw Error;
+
+  const formatData: MemoFormatType = {
+    memo_format_id: data.memo_format_id,
+    header: {
+      top: Number(data.memo_format_header_margin_top),
+      right: Number(data.memo_format_header_margin_right),
+      bottom: Number(data.memo_format_header_margin_bottom),
+      left: Number(data.memo_format_header_margin_left),
+      logoPosition: data.memo_format_header_logo_position,
+    },
+    body: {
+      top: Number(data.memo_format_body_margin_top),
+      right: Number(data.memo_format_body_margin_right),
+      bottom: Number(data.memo_format_body_margin_bottom),
+      left: Number(data.memo_format_body_margin_left),
+    },
+    footer: {
+      top: Number(data.memo_format_footer_margin_top),
+      right: Number(data.memo_format_footer_margin_right),
+      bottom: Number(data.memo_format_footer_margin_bottom),
+      left: Number(data.memo_format_footer_margin_left),
+    },
+  };
+
+  return formatData;
+}
 // Get type list
 export const getTypeList = async (
   supabaseClient: SupabaseClient<Database>,
