@@ -626,6 +626,8 @@ export const getForm = async (
       form_is_hidden, 
       form_is_formsly_form, 
       form_is_for_every_member, 
+      form_type,
+      form_sub_type,
       form_team_member: form_team_member_id(
         team_member_id, 
         team_member_user: team_member_user_id(

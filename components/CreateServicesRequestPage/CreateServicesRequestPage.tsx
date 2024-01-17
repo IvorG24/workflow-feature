@@ -75,6 +75,8 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
     form_description: form.form_description,
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
+    form_type: form.form_type,
+    form_sub_type: form.form_sub_type,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();

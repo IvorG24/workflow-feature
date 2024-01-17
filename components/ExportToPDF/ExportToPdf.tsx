@@ -61,6 +61,18 @@ const ExportToPdf = ({
       label: "Form Description:",
       value: request.request_form.form_description,
     },
+    ...(request.request_form.form_type && request.request_form.form_sub_type
+      ? [
+          {
+            label: "Type:",
+            value: request.request_form.form_type,
+          },
+          {
+            label: "Sub Type:",
+            value: request.request_form.form_sub_type,
+          },
+        ]
+      : []),
   ];
 
   const requestorDetails = [
