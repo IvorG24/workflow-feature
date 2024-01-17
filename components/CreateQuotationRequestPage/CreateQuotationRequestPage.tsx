@@ -420,7 +420,7 @@ const CreateQuotationRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Quotation"
+                    formslyFormName={form.form_name}
                     onRemoveSection={handleRemoveSection}
                     quotationFormMethods={{
                       onItemChange: handleItemChange,

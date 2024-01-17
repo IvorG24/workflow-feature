@@ -206,6 +206,13 @@ export type ServiceCategoryTableInsert =
 export type ServiceCategoryTableUpdate =
   Database["public"]["Tables"]["service_category_table"]["Update"];
 
+export type OtherExpensesTypeTableRow =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Row"];
+export type OtherExpensesTypeTableInsert =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Insert"];
+export type OtherExpensesTypeTableUpdate =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -216,7 +223,8 @@ export type AttachmentBucketType =
   | "USER_SIGNATURES"
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
-  | "REQUEST_ATTACHMENTS";
+  | "REQUEST_ATTACHMENTS"
+  | "TEAM_PROJECT_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
@@ -1110,4 +1118,8 @@ export type UserIssuedItem = {
       response: string;
     }[];
   }[];
+};
+
+export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
+  other_expenses_category: string;
 };

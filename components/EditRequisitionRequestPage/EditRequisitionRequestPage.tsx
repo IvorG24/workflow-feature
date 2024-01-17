@@ -803,7 +803,7 @@ const EditRequisitionRequestPage = ({
                       supplierSearch,
                       isSearching,
                     }}
-                    formslyFormName="Requisition"
+                    formslyFormName={request_form.form_name}
                     referenceOnly={referenceOnly}
                   />
                   {section.section_is_duplicatable &&

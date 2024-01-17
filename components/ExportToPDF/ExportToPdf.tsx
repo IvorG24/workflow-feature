@@ -1,5 +1,6 @@
 "use client";
 
+import { safeParse } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
 import { Button, Menu } from "@mantine/core";
@@ -7,6 +8,7 @@ import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import { IconList, IconTable } from "@tabler/icons-react";
 import moment from "moment";
 import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
+import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
 import RequisitionPdfDocumentTableVersion from "./RequisitionPdfDocumentTableVersion";
 import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
@@ -120,17 +122,14 @@ const ExportToPdf = ({
 
   const requestItems = sectionWithDuplicateList.map((section) => {
     const title = section.section_name;
-    const fieldWithResponse = section.section_field.filter(
-      (field) => field.field_response !== null
-    );
-    const fields = fieldWithResponse.map((field) => {
-      const parseResponse = JSON.parse(
-        `${field.field_response?.request_response}`
-      );
+
+    const fields = section.section_field.map((field) => {
+      let response = "";
+      if (field.field_response?.request_response) {
+        response = safeParse(field.field_response?.request_response);
+      }
       const responseValue =
-        field.field_type !== "DATE"
-          ? parseResponse
-          : getReadableDate(parseResponse);
+        field.field_type !== "DATE" ? response : getReadableDate(response);
 
       return {
         label: field.field_name,
@@ -170,6 +169,16 @@ const ExportToPdf = ({
       case "Services":
         return (
           <ServicesPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+      case "Other Expenses":
+        return (
+          <OtherExpensesPdfDocumentTableVersion
             requestDetails={requestDetails}
             requestorDetails={requestorDetails}
             requestIDs={requestIDs}
@@ -222,7 +231,7 @@ const ExportToPdf = ({
             )}
 
             {request.request_form.form_is_formsly_form &&
-              ["Requisition", "Services"].includes(
+              ["Requisition", "Services", "Other Expenses"].includes(
                 request.request_form.form_name
               ) && (
                 <Menu.Item
