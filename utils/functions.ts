@@ -2,6 +2,7 @@
 
 import moment from "moment";
 import dynamic from "next/dynamic";
+import { MemoFormatType } from "./types";
 
 // check if a value is empty
 export const isEmpty = (value: any) => {
@@ -123,3 +124,34 @@ export const safeParse = (str: string) => {
 export const JoyRideNoSSR = dynamic(() => import("react-joyride"), {
   ssr: false,
 });
+
+export const getBase64 = (file: File) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.onerror = reject;
+  });
+};
+
+export const parseMemoFormatTypeToDB = (memoFormat: MemoFormatType): any => {
+  const { header, body, footer } = memoFormat;
+
+  return {
+    memo_format_header_margin_top: header.top,
+    memo_format_header_margin_right: header.right,
+    memo_format_header_margin_bottom: header.bottom,
+    memo_format_header_margin_left: header.left,
+    memo_format_header_logo_position: header.logoPosition,
+    memo_format_body_margin_top: body.top,
+    memo_format_body_margin_right: body.right,
+    memo_format_body_margin_bottom: body.bottom,
+    memo_format_body_margin_left: body.left,
+    memo_format_footer_margin_top: footer.top,
+    memo_format_footer_margin_right: footer.right,
+    memo_format_footer_margin_bottom: footer.bottom,
+    memo_format_footer_margin_left: footer.left,
+  };
+};

@@ -54,11 +54,7 @@ const ValidIDVerificationList = ({ pendingValidIDList }: Props) => {
           ))
         ) : (
           <Text align="center" size={24} weight="bolder" color="dimmed">
-            <Alert
-              icon={<IconAlertCircle size="1rem" />}
-              color="orange"
-              mt="xs"
-            >
+            <Alert icon={<IconAlertCircle size="1rem" />} color="blue" mt="xs">
               All IDs are verified; no pending verifications at the moment.
             </Alert>
           </Text>

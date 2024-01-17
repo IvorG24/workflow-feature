@@ -1,4 +1,5 @@
 import Meta from "@/components/Meta/Meta";
+import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
@@ -79,6 +80,8 @@ const Page = ({
       );
     } else if (request.request_form.form_name === "Services") {
       return <ServicesRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Other Expenses") {
+      return <OtherExpensesRequestPage request={request} />;
     } else {
       return (
         <RequestPage

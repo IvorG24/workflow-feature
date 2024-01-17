@@ -6,7 +6,12 @@ import {
   uploadImage,
 } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { formatTeamNameToUrlKey, isUUID } from "@/utils/string";
+import {
+  formatTeamNameToUrlKey,
+  isUUID,
+  removeMultipleSpaces,
+  toTitleCase,
+} from "@/utils/string";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
@@ -73,6 +78,7 @@ const OnboardingPage = ({ user }: Props) => {
     setError,
     clearErrors,
     control,
+    setValue,
   } = useForm<OnboardUserParams>({
     defaultValues: { user_id: user.id, user_email: user.email },
     reValidateMode: "onChange",
@@ -95,12 +101,12 @@ const OnboardingPage = ({ user }: Props) => {
 
       await createUser(supabaseClient, {
         user_id: data.user_id,
-        user_email: data.user_email,
-        user_first_name: data.user_first_name,
-        user_last_name: data.user_last_name,
-        user_username: data.user_username,
-        user_phone_number: data.user_phone_number,
-        user_job_title: data.user_job_title,
+        user_email: data.user_email.trim(),
+        user_first_name: data.user_first_name.trim(),
+        user_last_name: data.user_last_name.trim(),
+        user_username: data.user_username.trim(),
+        user_phone_number: data.user_phone_number.trim(),
+        user_job_title: data.user_job_title.trim(),
         user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
       });
@@ -125,17 +131,17 @@ const OnboardingPage = ({ user }: Props) => {
       await createValidID(supabaseClient, {
         user_valid_id_user_id: data.user_id,
         user_valid_id_type: data.user_id_type,
-        user_valid_id_number: data.user_id_number,
-        user_valid_id_first_name: data.user_id_first_name,
-        user_valid_id_middle_name: data.user_id_middle_name,
-        user_valid_id_last_name: data.user_last_name,
-        user_valid_id_gender: data.user_id_gender,
-        user_valid_id_nationality: data.user_id_nationality,
-        user_valid_id_province: data.user_id_province,
-        user_valid_id_city: data.user_id_city,
-        user_valid_id_barangay: data.user_id_barangay,
-        user_valid_id_zip_code: `${data.user_id_zip_code}`,
-        user_valid_id_house_and_street: data.user_id_house_and_street,
+        user_valid_id_number: data.user_id_number.trim(),
+        user_valid_id_first_name: data.user_id_first_name.trim(),
+        user_valid_id_middle_name: data.user_id_middle_name.trim(),
+        user_valid_id_last_name: data.user_last_name.trim(),
+        user_valid_id_gender: data.user_id_gender.trim(),
+        user_valid_id_nationality: data.user_id_nationality.trim(),
+        user_valid_id_province: data.user_id_province.trim(),
+        user_valid_id_city: data.user_id_city.trim(),
+        user_valid_id_barangay: data.user_id_barangay.trim(),
+        user_valid_id_zip_code: `${data.user_id_zip_code}`.trim(),
+        user_valid_id_house_and_street: data.user_id_house_and_street.trim(),
         user_valid_id_status: "PENDING",
         user_valid_id_front_image_url: idFrontImage,
         user_valid_id_back_image_url: idBackImage,
@@ -240,6 +246,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="First name"
               {...register("user_first_name", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_first_name", format);
+                },
                 required: "First name is required",
                 minLength: {
                   value: 2,
@@ -258,6 +270,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Last name"
               {...register("user_last_name", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_last_name", format);
+                },
                 required: "Last name is required",
                 minLength: {
                   value: 2,
@@ -334,6 +352,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="First name"
               {...register("user_id_first_name", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_id_first_name", format);
+                },
                 required: "First name is required",
                 minLength: {
                   value: 2,
@@ -351,6 +375,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Middle name"
               {...register("user_id_middle_name", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_id_middle_name", format);
+                },
                 required: "Middle name is required",
                 minLength: {
                   value: 2,
@@ -368,6 +398,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Last name"
               {...register("user_id_last_name", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_id_last_name", format);
+                },
                 required: "Last name is required",
                 minLength: {
                   value: 2,
@@ -410,6 +446,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Nationality"
               {...register("user_id_nationality", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_id_nationality", format);
+                },
                 required: "Nationality is required",
                 minLength: {
                   value: 2,
@@ -427,6 +469,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Province"
               {...register("user_id_province", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_id_province", format);
+                },
                 required: "Province is required",
                 minLength: {
                   value: 2,
@@ -444,6 +492,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="City"
               {...register("user_id_city", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_id_city", format);
+                },
                 required: "City is required",
                 minLength: {
                   value: 2,
@@ -461,6 +515,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Barangay/Municipality"
               {...register("user_id_barangay", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_id_barangay", format);
+                },
                 required: "Barangay/Municipality is required",
                 minLength: {
                   value: 2,
@@ -516,6 +576,12 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="House number and street address"
               {...register("user_id_house_and_street", {
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
+                  setValue("user_id_house_and_street", format);
+                },
                 required: "House number and street address is required",
                 minLength: {
                   value: 2,
@@ -616,6 +682,10 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Job Title"
               {...register("user_job_title", {
+                onChange: (e) => {
+                  const format = removeMultipleSpaces(e.currentTarget.value);
+                  setValue("user_job_title", format);
+                },
                 minLength: {
                   value: 2,
                   message: "Job title must have at least 2 characters",

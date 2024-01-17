@@ -57,10 +57,19 @@ export const getStatusToColor = (status: string) => {
       return "gray";
   }
 };
-export const mobileNumberFormatter = (value: string | undefined) =>
-  !Number.isNaN(parseFloat(value ? value : "0"))
-    ? `${value}`.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3")
-    : "";
+export const mobileNumberFormatter = (value: string | undefined) => {
+  const cleanedNumber = value ? value.replace(/\D/g, "") : "";
+
+  if (cleanedNumber.length === 10) {
+    const formattedNumber = cleanedNumber.replace(
+      /(\d{3})(\d{3})(\d{4})/,
+      "$1 $2 $3"
+    );
+    return formattedNumber;
+  } else {
+    return "Invalid phone number";
+  }
+};
 
 export const getStatusToColorForCharts = (status: string) => {
   switch (status.toLowerCase()) {

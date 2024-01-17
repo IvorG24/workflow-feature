@@ -189,7 +189,9 @@ export interface Database {
           form_is_hidden: boolean
           form_is_signature_required: boolean
           form_name: string
+          form_sub_type: string | null
           form_team_member_id: string
+          form_type: string | null
         }
         Insert: {
           form_app: string
@@ -202,7 +204,9 @@ export interface Database {
           form_is_hidden?: boolean
           form_is_signature_required?: boolean
           form_name: string
+          form_sub_type?: string | null
           form_team_member_id: string
+          form_type?: string | null
         }
         Update: {
           form_app?: string
@@ -215,7 +219,9 @@ export interface Database {
           form_is_hidden?: boolean
           form_is_signature_required?: boolean
           form_name?: string
+          form_sub_type?: string | null
           form_team_member_id?: string
+          form_type?: string | null
         }
         Relationships: [
           {
@@ -539,6 +545,344 @@ export interface Database {
           }
         ]
       }
+      memo_agreement_table: {
+        Row: {
+          memo_agreement_by_team_member_id: string
+          memo_agreement_date_created: string
+          memo_agreement_id: string
+          memo_agreement_memo_id: string
+        }
+        Insert: {
+          memo_agreement_by_team_member_id: string
+          memo_agreement_date_created?: string
+          memo_agreement_id?: string
+          memo_agreement_memo_id: string
+        }
+        Update: {
+          memo_agreement_by_team_member_id?: string
+          memo_agreement_date_created?: string
+          memo_agreement_id?: string
+          memo_agreement_memo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memo_agreement_table_memo_agreement_by_team_member_id_fkey"
+            columns: ["memo_agreement_by_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_table"
+            referencedColumns: ["team_member_id"]
+          },
+          {
+            foreignKeyName: "memo_agreement_table_memo_agreement_memo_id_fkey"
+            columns: ["memo_agreement_memo_id"]
+            isOneToOne: false
+            referencedRelation: "memo_table"
+            referencedColumns: ["memo_id"]
+          }
+        ]
+      }
+      memo_date_updated_table: {
+        Row: {
+          memo_date_updated: string
+          memo_date_updated_id: string
+          memo_date_updated_memo_id: string
+        }
+        Insert: {
+          memo_date_updated?: string
+          memo_date_updated_id?: string
+          memo_date_updated_memo_id: string
+        }
+        Update: {
+          memo_date_updated?: string
+          memo_date_updated_id?: string
+          memo_date_updated_memo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memo_date_updated_table_memo_date_updated_memo_id_fkey"
+            columns: ["memo_date_updated_memo_id"]
+            isOneToOne: false
+            referencedRelation: "memo_table"
+            referencedColumns: ["memo_id"]
+          }
+        ]
+      }
+      memo_format_table: {
+        Row: {
+          memo_format_body_margin_bottom: string
+          memo_format_body_margin_left: string
+          memo_format_body_margin_right: string
+          memo_format_body_margin_top: string
+          memo_format_footer_margin_bottom: string
+          memo_format_footer_margin_left: string
+          memo_format_footer_margin_right: string
+          memo_format_footer_margin_top: string
+          memo_format_header_logo_position: string
+          memo_format_header_margin_bottom: string
+          memo_format_header_margin_left: string
+          memo_format_header_margin_right: string
+          memo_format_header_margin_top: string
+          memo_format_id: string
+        }
+        Insert: {
+          memo_format_body_margin_bottom: string
+          memo_format_body_margin_left: string
+          memo_format_body_margin_right: string
+          memo_format_body_margin_top: string
+          memo_format_footer_margin_bottom: string
+          memo_format_footer_margin_left: string
+          memo_format_footer_margin_right: string
+          memo_format_footer_margin_top: string
+          memo_format_header_logo_position: string
+          memo_format_header_margin_bottom: string
+          memo_format_header_margin_left: string
+          memo_format_header_margin_right: string
+          memo_format_header_margin_top: string
+          memo_format_id?: string
+        }
+        Update: {
+          memo_format_body_margin_bottom?: string
+          memo_format_body_margin_left?: string
+          memo_format_body_margin_right?: string
+          memo_format_body_margin_top?: string
+          memo_format_footer_margin_bottom?: string
+          memo_format_footer_margin_left?: string
+          memo_format_footer_margin_right?: string
+          memo_format_footer_margin_top?: string
+          memo_format_header_logo_position?: string
+          memo_format_header_margin_bottom?: string
+          memo_format_header_margin_left?: string
+          memo_format_header_margin_right?: string
+          memo_format_header_margin_top?: string
+          memo_format_id?: string
+        }
+        Relationships: []
+      }
+      memo_line_item_attachment_table: {
+        Row: {
+          memo_line_item_attachment_caption: string | null
+          memo_line_item_attachment_id: string
+          memo_line_item_attachment_line_item_id: string
+          memo_line_item_attachment_name: string
+          memo_line_item_attachment_public_url: string
+          memo_line_item_attachment_storage_bucket: string
+        }
+        Insert: {
+          memo_line_item_attachment_caption?: string | null
+          memo_line_item_attachment_id?: string
+          memo_line_item_attachment_line_item_id: string
+          memo_line_item_attachment_name: string
+          memo_line_item_attachment_public_url: string
+          memo_line_item_attachment_storage_bucket: string
+        }
+        Update: {
+          memo_line_item_attachment_caption?: string | null
+          memo_line_item_attachment_id?: string
+          memo_line_item_attachment_line_item_id?: string
+          memo_line_item_attachment_name?: string
+          memo_line_item_attachment_public_url?: string
+          memo_line_item_attachment_storage_bucket?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memo_line_item_attachment_tab_memo_line_item_attachment_li_fkey"
+            columns: ["memo_line_item_attachment_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "memo_line_item_table"
+            referencedColumns: ["memo_line_item_id"]
+          }
+        ]
+      }
+      memo_line_item_table: {
+        Row: {
+          memo_line_item_content: string
+          memo_line_item_date_created: string
+          memo_line_item_date_updated: string | null
+          memo_line_item_id: string
+          memo_line_item_memo_id: string
+          memo_line_item_order: number
+        }
+        Insert: {
+          memo_line_item_content: string
+          memo_line_item_date_created?: string
+          memo_line_item_date_updated?: string | null
+          memo_line_item_id?: string
+          memo_line_item_memo_id: string
+          memo_line_item_order: number
+        }
+        Update: {
+          memo_line_item_content?: string
+          memo_line_item_date_created?: string
+          memo_line_item_date_updated?: string | null
+          memo_line_item_id?: string
+          memo_line_item_memo_id?: string
+          memo_line_item_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memo_line_item_table_memo_line_item_memo_id_fkey"
+            columns: ["memo_line_item_memo_id"]
+            isOneToOne: false
+            referencedRelation: "memo_table"
+            referencedColumns: ["memo_id"]
+          }
+        ]
+      }
+      memo_read_receipt_table: {
+        Row: {
+          memo_read_receipt_by_team_member_id: string
+          memo_read_receipt_date_created: string
+          memo_read_receipt_id: string
+          memo_read_receipt_memo_id: string
+        }
+        Insert: {
+          memo_read_receipt_by_team_member_id: string
+          memo_read_receipt_date_created?: string
+          memo_read_receipt_id?: string
+          memo_read_receipt_memo_id: string
+        }
+        Update: {
+          memo_read_receipt_by_team_member_id?: string
+          memo_read_receipt_date_created?: string
+          memo_read_receipt_id?: string
+          memo_read_receipt_memo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memo_read_receipt_table_memo_read_receipt_by_team_member_i_fkey"
+            columns: ["memo_read_receipt_by_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_table"
+            referencedColumns: ["team_member_id"]
+          },
+          {
+            foreignKeyName: "memo_read_receipt_table_memo_read_receipt_memo_id_fkey"
+            columns: ["memo_read_receipt_memo_id"]
+            isOneToOne: false
+            referencedRelation: "memo_table"
+            referencedColumns: ["memo_id"]
+          }
+        ]
+      }
+      memo_signer_table: {
+        Row: {
+          memo_signer_id: string
+          memo_signer_is_primary: boolean
+          memo_signer_memo_id: string
+          memo_signer_order: number
+          memo_signer_status: string
+          memo_signer_team_member_id: string
+        }
+        Insert: {
+          memo_signer_id?: string
+          memo_signer_is_primary?: boolean
+          memo_signer_memo_id: string
+          memo_signer_order: number
+          memo_signer_status?: string
+          memo_signer_team_member_id: string
+        }
+        Update: {
+          memo_signer_id?: string
+          memo_signer_is_primary?: boolean
+          memo_signer_memo_id?: string
+          memo_signer_order?: number
+          memo_signer_status?: string
+          memo_signer_team_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memo_signer_table_memo_signer_memo_id_fkey"
+            columns: ["memo_signer_memo_id"]
+            isOneToOne: false
+            referencedRelation: "memo_table"
+            referencedColumns: ["memo_id"]
+          },
+          {
+            foreignKeyName: "memo_signer_table_memo_signer_team_member_id_fkey"
+            columns: ["memo_signer_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_table"
+            referencedColumns: ["team_member_id"]
+          }
+        ]
+      }
+      memo_status_table: {
+        Row: {
+          memo_status: string
+          memo_status_date_updated: string | null
+          memo_status_id: string
+          memo_status_memo_id: string
+        }
+        Insert: {
+          memo_status?: string
+          memo_status_date_updated?: string | null
+          memo_status_id?: string
+          memo_status_memo_id: string
+        }
+        Update: {
+          memo_status?: string
+          memo_status_date_updated?: string | null
+          memo_status_id?: string
+          memo_status_memo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memo_status_table_memo_status_memo_id_fkey"
+            columns: ["memo_status_memo_id"]
+            isOneToOne: false
+            referencedRelation: "memo_table"
+            referencedColumns: ["memo_id"]
+          }
+        ]
+      }
+      memo_table: {
+        Row: {
+          memo_author_user_id: string
+          memo_date_created: string
+          memo_id: string
+          memo_is_disabled: boolean
+          memo_reference_number: string
+          memo_subject: string
+          memo_team_id: string
+          memo_version: string
+        }
+        Insert: {
+          memo_author_user_id: string
+          memo_date_created?: string
+          memo_id?: string
+          memo_is_disabled?: boolean
+          memo_reference_number?: string
+          memo_subject: string
+          memo_team_id: string
+          memo_version: string
+        }
+        Update: {
+          memo_author_user_id?: string
+          memo_date_created?: string
+          memo_id?: string
+          memo_is_disabled?: boolean
+          memo_reference_number?: string
+          memo_subject?: string
+          memo_team_id?: string
+          memo_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "memo_table_memo_author_user_id_fkey"
+            columns: ["memo_author_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_table"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "memo_table_memo_team_id_fkey"
+            columns: ["memo_team_id"]
+            isOneToOne: false
+            referencedRelation: "team_table"
+            referencedColumns: ["team_id"]
+          }
+        ]
+      }
       notification_table: {
         Row: {
           notification_app: string
@@ -616,6 +960,96 @@ export interface Database {
             isOneToOne: false
             referencedRelation: "field_table"
             referencedColumns: ["field_id"]
+          }
+        ]
+      }
+      other_expenses_category_table: {
+        Row: {
+          other_expenses_category: string
+          other_expenses_category_date_created: string
+          other_expenses_category_encoder_team_member_id: string | null
+          other_expenses_category_id: string
+          other_expenses_category_is_available: boolean
+          other_expenses_category_is_disabled: boolean
+          other_expenses_category_team_id: string
+        }
+        Insert: {
+          other_expenses_category: string
+          other_expenses_category_date_created?: string
+          other_expenses_category_encoder_team_member_id?: string | null
+          other_expenses_category_id?: string
+          other_expenses_category_is_available?: boolean
+          other_expenses_category_is_disabled?: boolean
+          other_expenses_category_team_id: string
+        }
+        Update: {
+          other_expenses_category?: string
+          other_expenses_category_date_created?: string
+          other_expenses_category_encoder_team_member_id?: string | null
+          other_expenses_category_id?: string
+          other_expenses_category_is_available?: boolean
+          other_expenses_category_is_disabled?: boolean
+          other_expenses_category_team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_category_table_other_expenses_category_enco_fkey"
+            columns: ["other_expenses_category_encoder_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_table"
+            referencedColumns: ["team_member_id"]
+          },
+          {
+            foreignKeyName: "other_expenses_category_table_other_expenses_category_team_fkey"
+            columns: ["other_expenses_category_team_id"]
+            isOneToOne: false
+            referencedRelation: "team_table"
+            referencedColumns: ["team_id"]
+          }
+        ]
+      }
+      other_expenses_type_table: {
+        Row: {
+          other_expenses_type: string
+          other_expenses_type_category_id: string | null
+          other_expenses_type_date_created: string
+          other_expenses_type_encoder_team_member_id: string | null
+          other_expenses_type_id: string
+          other_expenses_type_is_available: boolean
+          other_expenses_type_is_disabled: boolean
+        }
+        Insert: {
+          other_expenses_type: string
+          other_expenses_type_category_id?: string | null
+          other_expenses_type_date_created?: string
+          other_expenses_type_encoder_team_member_id?: string | null
+          other_expenses_type_id?: string
+          other_expenses_type_is_available?: boolean
+          other_expenses_type_is_disabled?: boolean
+        }
+        Update: {
+          other_expenses_type?: string
+          other_expenses_type_category_id?: string | null
+          other_expenses_type_date_created?: string
+          other_expenses_type_encoder_team_member_id?: string | null
+          other_expenses_type_id?: string
+          other_expenses_type_is_available?: boolean
+          other_expenses_type_is_disabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_type_table_other_expenses_type_category_id_fkey"
+            columns: ["other_expenses_type_category_id"]
+            isOneToOne: false
+            referencedRelation: "other_expenses_category_table"
+            referencedColumns: ["other_expenses_category_id"]
+          },
+          {
+            foreignKeyName: "other_expenses_type_table_other_expenses_type_encoder_team_fkey"
+            columns: ["other_expenses_type_encoder_team_member_id"]
+            isOneToOne: false
+            referencedRelation: "team_member_table"
+            referencedColumns: ["team_member_id"]
           }
         ]
       }
@@ -979,6 +1413,35 @@ export interface Database {
           }
         ]
       }
+      signature_history_table: {
+        Row: {
+          signature_history_date_created: string
+          signature_history_id: string
+          signature_history_user_id: string
+          signature_history_value: string
+        }
+        Insert: {
+          signature_history_date_created?: string
+          signature_history_id?: string
+          signature_history_user_id: string
+          signature_history_value: string
+        }
+        Update: {
+          signature_history_date_created?: string
+          signature_history_id?: string
+          signature_history_user_id?: string
+          signature_history_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signature_history_table_signature_history_user_id_fkey"
+            columns: ["signature_history_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_table"
+            referencedColumns: ["user_id"]
+          }
+        ]
+      }
       signer_table: {
         Row: {
           signer_action: string
@@ -1270,30 +1733,50 @@ export interface Database {
       }
       team_project_table: {
         Row: {
+          team_project_boq_attachment_id: string | null
           team_project_code: string
           team_project_date_created: string
           team_project_id: string
           team_project_is_disabled: boolean
           team_project_name: string
+          team_project_site_map_attachment_id: string | null
           team_project_team_id: string
         }
         Insert: {
+          team_project_boq_attachment_id?: string | null
           team_project_code: string
           team_project_date_created?: string
           team_project_id?: string
           team_project_is_disabled?: boolean
           team_project_name: string
+          team_project_site_map_attachment_id?: string | null
           team_project_team_id: string
         }
         Update: {
+          team_project_boq_attachment_id?: string | null
           team_project_code?: string
           team_project_date_created?: string
           team_project_id?: string
           team_project_is_disabled?: boolean
           team_project_name?: string
+          team_project_site_map_attachment_id?: string | null
           team_project_team_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "team_project_table_team_project_boq_attachment_id_fkey"
+            columns: ["team_project_boq_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "attachment_table"
+            referencedColumns: ["attachment_id"]
+          },
+          {
+            foreignKeyName: "team_project_table_team_project_site_map_attachment_id_fkey"
+            columns: ["team_project_site_map_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "attachment_table"
+            referencedColumns: ["attachment_id"]
+          },
           {
             foreignKeyName: "team_project_table_team_project_team_id_fkey"
             columns: ["team_project_team_id"]
@@ -1469,6 +1952,35 @@ export interface Database {
           {
             foreignKeyName: "user_employee_number_table_user_employee_number_user_id_fkey"
             columns: ["user_employee_number_user_id"]
+            isOneToOne: false
+            referencedRelation: "user_table"
+            referencedColumns: ["user_id"]
+          }
+        ]
+      }
+      user_name_history_table: {
+        Row: {
+          user_name_history_date_created: string
+          user_name_history_id: string
+          user_name_history_user_id: string
+          user_name_history_value: string
+        }
+        Insert: {
+          user_name_history_date_created?: string
+          user_name_history_id?: string
+          user_name_history_user_id: string
+          user_name_history_value: string
+        }
+        Update: {
+          user_name_history_date_created?: string
+          user_name_history_id?: string
+          user_name_history_user_id?: string
+          user_name_history_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_name_history_table_user_name_history_user_id_fkey"
+            columns: ["user_name_history_user_id"]
             isOneToOne: false
             referencedRelation: "user_table"
             referencedColumns: ["user_id"]
@@ -1843,6 +2355,18 @@ export interface Database {
         }
         Returns: Json
       }
+      create_memo: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      create_reference_memo: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       create_request: {
         Args: {
           input_data: Json
@@ -1897,6 +2421,12 @@ export interface Database {
           team_member_id: string
         }
         Returns: undefined
+      }
+      edit_memo: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
       }
       edit_request: {
         Args: {
@@ -1987,6 +2517,24 @@ export interface Database {
         Returns: string
       }
       get_edit_request_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_memo_list: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_memo_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_memo_reference_on_load: {
         Args: {
           input_data: Json
         }
@@ -2137,6 +2685,12 @@ export interface Database {
           input_data: Json
         }
         Returns: Json
+      }
+      update_user: {
+        Args: {
+          input_data: Json
+        }
+        Returns: undefined
       }
     }
     Enums: {

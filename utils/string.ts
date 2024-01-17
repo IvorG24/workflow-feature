@@ -1,3 +1,5 @@
+import moment from "moment";
+
 export const isValidTeamName = (name: string): boolean => {
   const allowedCharsRegex = /^[a-zA-Z0-9 ,;\/?:@&=+$\-_.!]*$/;
 
@@ -92,4 +94,49 @@ export const convertTimestampToDateTime = (
     console.error(error);
     return null;
   }
+};
+
+export const getInitials = (fullname: string) => {
+  const words = fullname.trim().split(" ");
+  const initials = words.map((word) => word[0].toUpperCase()).join("");
+  return initials;
+};
+
+export const getMemoReferencePrefix = (teamName: string) => {
+  return `MEMO-${teamName.toUpperCase().split(" ").join("")}-${moment().format(
+    "YYYY"
+  )}`;
+};
+
+export const addAmpersandBetweenWords = (searchString: string) => {
+  const sanitizedString = searchString.replace(/[^\w\s]/gi, "");
+
+  const words = sanitizedString.split(" ");
+
+  if (words.length > 1) {
+    const result = words.join(" & ");
+    return result;
+  }
+
+  return sanitizedString;
+};
+
+export const convertDateNowToTimestampz = () => {
+  const currentTimestamp = new Date(Date.now());
+  const supabaseTimestampz = currentTimestamp.toISOString();
+  return supabaseTimestampz;
+};
+
+export const removeMultipleSpaces = (text: string) => {
+  return text.replace(/\s+/g, " ");
+};
+
+export const trimObjectProperties = (obj: { [x: string]: string }) => {
+  const trimmedObject: { [x: string]: string } = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key) && typeof obj[key] === "string") {
+      trimmedObject[key] = obj[key].trim();
+    }
+  }
+  return trimmedObject;
 };

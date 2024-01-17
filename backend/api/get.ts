@@ -2,7 +2,7 @@ import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { regExp, startCase } from "@/utils/string";
+import { addAmpersandBetweenWords, regExp, startCase } from "@/utils/string";
 import {
   AppType,
   ApproverUnresolvedRequestListType,
@@ -18,8 +18,13 @@ import {
   FormType,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
+  MemoFormatType,
+  MemoListItemType,
+  MemoType,
   NotificationOnLoad,
   NotificationTableRow,
+  OtherExpensesTypeTableRow,
+  ReferenceMemoType,
   RequestByFormType,
   RequestDashboardOverviewData,
   RequestListItemType,
@@ -626,6 +631,8 @@ export const getForm = async (
       form_is_hidden, 
       form_is_formsly_form, 
       form_is_for_every_member, 
+      form_type,
+      form_sub_type,
       form_team_member: form_team_member_id(
         team_member_id, 
         team_member_user: team_member_user_id(
@@ -2648,13 +2655,20 @@ export const getTeamGroupMemberList = async (
             user_last_name,
             user_avatar, 
             user_email
+          ),
+          team_member_project: team_project_member_table(
+            team_project: team_project_id(team_project_name)
           )
         )
       `,
       { count: "exact" }
     )
     .eq("team_group_id", groupId)
-    .eq("team_member.team_member_is_disabled", false);
+    .eq("team_member.team_member_is_disabled", false)
+    .eq(
+      "team_member.team_member_project.team_project.team_project_is_disabled",
+      false
+    );
 
   if (search) {
     query = query.or(
@@ -2673,8 +2687,38 @@ export const getTeamGroupMemberList = async (
   const { data, count, error } = await query;
   if (error) throw error;
 
+  const formattedData = data as unknown as {
+    team_group_member_id: string;
+    team_member: {
+      team_member_id: string;
+      team_member_date_created: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+        user_email: string;
+      };
+      team_member_project: {
+        team_project: {
+          team_project_name: string;
+        };
+      }[];
+    };
+  }[];
+
   return {
-    data,
+    data: formattedData.map((data) => {
+      return {
+        ...data,
+        team_member: {
+          ...data.team_member,
+          team_member_project_list: data.team_member.team_member_project.map(
+            (project) => project.team_project.team_project_name
+          ),
+        },
+      };
+    }),
     count,
   };
 };
@@ -2717,12 +2761,16 @@ export const getTeamProjectMemberList = async (
         team_member: team_member_id!inner(
           team_member_id,
           team_member_date_created, 
+          team_member_role,
           team_member_user: team_member_user_id!inner(
             user_id, 
             user_first_name, 
             user_last_name,
             user_avatar, 
             user_email
+          ),
+          team_member_group: team_group_member_table(
+            team_group: team_group_id(team_group_name)
           )
         )
       `,
@@ -2748,8 +2796,38 @@ export const getTeamProjectMemberList = async (
   const { data, count, error } = await query;
   if (error) throw error;
 
+  const formattedData = data as unknown as {
+    team_group_member_id: string;
+    team_member: {
+      team_member_id: string;
+      team_member_date_created: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+        user_email: string;
+      };
+      team_member_group: {
+        team_group: {
+          team_group_name: string;
+        };
+      }[];
+    };
+  }[];
+
   return {
-    data,
+    data: formattedData.map((data) => {
+      return {
+        ...data,
+        team_member: {
+          ...data.team_member,
+          team_member_group_list: data.team_member.team_member_group.map(
+            (group) => group.team_group.team_group_name
+          ),
+        },
+      };
+    }),
     count,
   };
 };
@@ -4177,6 +4255,293 @@ export const getUserIssuedItemList = async (
   if (error) throw error;
 
   return data as unknown as { data: UserIssuedItem[]; raw: UserIssuedItem[] };
+};
+
+// Get team memo total count
+export const getTeamMemoCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { count, error } = await supabaseClient
+    .from("memo_table")
+    .select("*", { count: "exact" })
+    .eq("memo_team_id", params.teamId);
+
+  if (error) throw error;
+
+  return Number(count);
+};
+
+// Get team memo signers
+export const getTeamMemoSignerList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `team_member_id,
+       team_member_user: team_member_user_id(
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_job_title,
+          user_avatar,
+          user_signature_attachment: user_signature_attachment_id(*)
+        )
+      `
+    )
+    .eq("team_member_team_id", params.teamId);
+
+  if (error) throw error;
+
+  return data;
+};
+
+// Get memo
+export const getMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memo_id: string; current_user_id: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_memo_on_load", {
+    input_data: params,
+  });
+  if (error || !data) throw Error;
+
+  return data as MemoType;
+};
+
+// Get memo list
+export const getMemoList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    page: number;
+    limit: number;
+    authorFilter?: string[];
+    approverFilter?: string[];
+    status?: string[];
+    sort?: "ascending" | "descending";
+    searchFilter?: string;
+  }
+) => {
+  const {
+    teamId,
+    page,
+    limit,
+    authorFilter,
+    approverFilter,
+    status,
+    sort = "descending",
+    searchFilter,
+  } = params;
+
+  const authorFilterCondition = authorFilter
+    ?.map(
+      (authorUserId) => `memo_table.memo_author_user_id = '${authorUserId}'`
+    )
+    .join(" OR ");
+
+  const approverFilterCondition = approverFilter
+    ?.map(
+      (approverTeamMemberId) =>
+        `memo_signer_table.memo_signer_team_member_id = '${approverTeamMemberId}'`
+    )
+    .join(" OR ");
+
+  const statusCondition = status
+    ?.map((status) => `memo_status = '${status}'`)
+    .join(" OR ");
+
+  const { data, error } = await supabaseClient.rpc("get_memo_list", {
+    input_data: {
+      teamId,
+      page,
+      limit,
+      sort: sort === "descending" ? "DESC" : "ASC",
+      authorFilter: authorFilterCondition
+        ? `AND (${authorFilterCondition})`
+        : "",
+      approverFilter: approverFilterCondition
+        ? `AND (${approverFilterCondition})`
+        : "",
+      status: statusCondition ? `AND (${statusCondition})` : "",
+      searchFilter: searchFilter ? addAmpersandBetweenWords(searchFilter) : "",
+    },
+  });
+
+  if (error) throw Error;
+
+  return data as { data: MemoListItemType[]; count: number };
+};
+
+// Get memo
+export const getReferenceMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memo_id: string; current_user_id: string }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_memo_reference_on_load",
+    {
+      input_data: params,
+    }
+  );
+  if (error || !data) throw Error;
+
+  return data as unknown as ReferenceMemoType;
+};
+
+// get memo format
+export const getMemoFormat = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .from("memo_format_table")
+    .select("*")
+    .maybeSingle();
+
+  if (error || !data) throw Error;
+
+  const formatData: MemoFormatType = {
+    memo_format_id: data.memo_format_id,
+    header: {
+      top: Number(data.memo_format_header_margin_top),
+      right: Number(data.memo_format_header_margin_right),
+      bottom: Number(data.memo_format_header_margin_bottom),
+      left: Number(data.memo_format_header_margin_left),
+      logoPosition: data.memo_format_header_logo_position,
+    },
+    body: {
+      top: Number(data.memo_format_body_margin_top),
+      right: Number(data.memo_format_body_margin_right),
+      bottom: Number(data.memo_format_body_margin_bottom),
+      left: Number(data.memo_format_body_margin_left),
+    },
+    footer: {
+      top: Number(data.memo_format_footer_margin_top),
+      right: Number(data.memo_format_footer_margin_right),
+      bottom: Number(data.memo_format_footer_margin_bottom),
+      left: Number(data.memo_format_footer_margin_left),
+    },
+  };
+
+  return formatData;
+};
+// Get type list
+export const getTypeList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from(`other_expenses_type_table`)
+    .select(
+      `
+        *, 
+        other_expenses_type_category: other_expenses_type_category_id!inner(
+          other_expenses_category
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("other_expenses_type_category.other_expenses_category_team_id", teamId)
+    .eq(
+      "other_expenses_type_category.other_expenses_category_is_disabled",
+      false
+    )
+    .eq("other_expenses_type_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("other_expenses_type", `%${search}%`);
+  }
+
+  query.order("other_expenses_type");
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const formattedData = data as unknown as (OtherExpensesTypeTableRow & {
+    other_expenses_type_category: { other_expenses_category: string };
+  })[];
+
+  return {
+    data: formattedData.map((type) => {
+      return {
+        ...type,
+        other_expenses_category:
+          type.other_expenses_type_category.other_expenses_category,
+      };
+    }),
+    count,
+  };
+};
+
+// check if other expenses table value already exists
+export const checkOtherExpenesesTypeTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { value: string; categoryId: string }
+) => {
+  const { value, categoryId } = params;
+  const { count, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .select("*", { count: "exact", head: true })
+    .eq("other_expenses_type", value)
+    .eq("other_expenses_type_is_disabled", false)
+    .eq("other_expenses_type_category_id", categoryId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Fetch other expenses category options
+export const getOtherExpensesCategoryOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("other_expenses_category_table")
+    .select("*")
+    .eq("other_expenses_category_team_id", teamId)
+    .order("other_expenses_category", { ascending: true });
+  if (error) throw error;
+  return data;
+};
+
+// Get type list
+export const getTypeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    categoryId: string;
+  }
+) => {
+  const { categoryId } = params;
+  const { data, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .select("*")
+    .eq("other_expenses_type_category_id", categoryId)
+    .eq("other_expenses_type_is_available", true)
+    .eq("other_expenses_type_is_disabled", false)
+    .order("other_expenses_type", { ascending: true });
+  if (error) throw error;
+  return data;
 };
 
 // Get user valid id

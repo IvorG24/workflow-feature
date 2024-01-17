@@ -352,7 +352,7 @@ const EditSubconRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     isSectionRemovable={isRemovable}
-                    formslyFormName="Subcon"
+                    formslyFormName={form.form_name}
                     subconFormMethods={{
                       onServiceNameChange: handleServiceNameChange,
                       onProjectNameChange: handleProjectNameChange,

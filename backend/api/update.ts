@@ -1,9 +1,14 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
+import { parseMemoFormatTypeToDB } from "@/utils/functions";
 import {
   AppType,
+  EditMemoType,
   MemberRoleType,
+  MemoAgreementTableRow,
+  MemoFormatType,
+  OtherExpensesTypeTableUpdate,
   SignerTableRow,
   TeamTableRow,
   TeamTableUpdate,
@@ -13,6 +18,7 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentDate } from "./get";
+import { uploadImage } from "./post";
 
 // Update Team
 export const updateTeam = async (
@@ -62,7 +68,7 @@ export const updateUserActiveTeam = async (
 };
 
 // Update User
-export const udpateUser = async (
+export const updateUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: UserTableUpdate
 ) => {
@@ -508,6 +514,212 @@ export const updateLookup = async (
     status: Boolean(formattedData[status]),
     value: formattedData[value],
   };
+};
+
+// approve or reject memo
+export const approveOrRejectMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    memoSignerId: string;
+    memoId: string;
+    action: string;
+    isPrimarySigner: boolean;
+    memoSignerTeamMemberId: string;
+  }
+) => {
+  const {
+    memoSignerId,
+    memoId,
+    action,
+    isPrimarySigner,
+    memoSignerTeamMemberId,
+  } = params;
+  const { error } = await supabaseClient
+    .from("memo_signer_table")
+    .update({ memo_signer_status: action })
+    .eq("memo_signer_id", memoSignerId);
+  if (error) throw Error;
+
+  if (isPrimarySigner) {
+    const { error } = await supabaseClient
+      .from("memo_status_table")
+      .update({ memo_status: action })
+      .eq("memo_status_memo_id", memoId);
+    console.log(error);
+    if (error) throw Error;
+  }
+
+  // agree to memo
+  if (action.toLowerCase() === "approved") {
+    const { count } = await supabaseClient
+      .from("memo_agreement_table")
+      .select("*", { count: "exact" })
+      .eq("memo_agreement_by_team_member_id", memoSignerTeamMemberId)
+      .eq("memo_agreement_memo_id", memoId);
+
+    if (Number(count) === 0) {
+      const { data, error: MemoAgreementError } = await supabaseClient
+        .from("memo_agreement_table")
+        .insert({
+          memo_agreement_by_team_member_id: memoSignerTeamMemberId,
+          memo_agreement_memo_id: memoId,
+        })
+        .select(
+          "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name, user_employee_number: user_employee_number_table(user_employee_number)))"
+        )
+        .maybeSingle();
+      if (MemoAgreementError) throw Error;
+
+      return data as unknown as MemoAgreementTableRow & {
+        memo_agreement_by_team_member: {
+          user_data: {
+            user_avatar: string;
+            user_id: string;
+            user_first_name: string;
+            user_last_name: string;
+            user_employee_number: {
+              user_employee_number: string;
+            }[];
+          };
+        };
+      };
+    }
+  }
+};
+
+// update memo
+export const updateMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: EditMemoType
+) => {
+  const updatedLineItemData: EditMemoType["memo_line_item_list"] =
+    await processAllMemoLineItems(params.memo_line_item_list, supabaseClient);
+
+  const memoSignerTableValues = params.memo_signer_list
+    .map(
+      (signer, signerIndex) =>
+        `('${signer.memo_signer_is_primary}', '${signerIndex}', '${signer.memo_signer_team_member?.team_member_id}', '${params.memo_id}')`
+    )
+    .join(",");
+
+  const memoLineItemTableValues = updatedLineItemData
+    .map(
+      (lineItem, lineItemIndex) =>
+        `('${lineItem.memo_line_item_id}', '${lineItem.memo_line_item_content}', '${lineItemIndex}', '${params.memo_id}')`
+    )
+    .join(",");
+
+  const memoLineItemAttachmentTableValues = updatedLineItemData
+    .filter(
+      (lineItem) =>
+        lineItem.memo_line_item_attachment?.memo_line_item_attachment_name
+    )
+    .map(
+      ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
+        `('${lineItemAttachment?.memo_line_item_attachment_name}', '${
+          lineItemAttachment?.memo_line_item_attachment_caption ?? ""
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_storage_bucket
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_public_url
+        }', '${memo_line_item_id}')`
+    )
+    .join(",");
+
+  const memoLineItemIdFilter = params.memo_line_item_list
+    .map((lineItem) => `'${lineItem.memo_line_item_id}'`)
+    .join(",");
+
+  const input_data = {
+    memo_id: params.memo_id,
+    memo_subject: params.memo_subject,
+    memoSignerTableValues,
+    memoLineItemTableValues,
+    memoLineItemAttachmentTableValues,
+    memoLineItemIdFilter,
+  };
+
+  const { error } = await supabaseClient.rpc("edit_memo", { input_data });
+
+  if (error) throw Error;
+};
+
+const processAllMemoLineItems = async (
+  lineItemData: EditMemoType["memo_line_item_list"],
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const processedLineItems = await Promise.all(
+    lineItemData.map(async (lineItem) => {
+      const file =
+        lineItem.memo_line_item_attachment &&
+        lineItem.memo_line_item_attachment.memo_line_item_attachment_file;
+
+      if (file) {
+        const bucket = "MEMO_ATTACHMENTS";
+        const attachmentPublicUrl = await uploadImage(supabaseClient, {
+          id: `${lineItem.memo_line_item_id}-${file.name}`,
+          image: file,
+          bucket,
+        });
+
+        return {
+          memo_line_item_id: lineItem.memo_line_item_id,
+          memo_line_item_content: lineItem.memo_line_item_content,
+          memo_line_item_memo_id: lineItem.memo_line_item_memo_id,
+          memo_line_item_attachment: {
+            memo_line_item_attachment_public_url: attachmentPublicUrl,
+            memo_line_item_attachment_storage_bucket: bucket,
+            memo_line_item_attachment_name: file.name,
+            memo_line_item_attachment_caption:
+              lineItem.memo_line_item_attachment
+                ?.memo_line_item_attachment_caption ?? "",
+          },
+        };
+      }
+
+      return {
+        memo_line_item_id: lineItem.memo_line_item_id,
+        memo_line_item_content: lineItem.memo_line_item_content,
+        memo_line_item_memo_id: lineItem.memo_line_item_memo_id,
+      };
+    })
+  );
+
+  return JSON.parse(JSON.stringify(processedLineItems));
+};
+
+export const updateMemoFormat = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: MemoFormatType
+) => {
+  const columnListToUpdate = parseMemoFormatTypeToDB(params);
+  const { error } = await supabaseClient
+    .from("memo_format_table")
+    .update(columnListToUpdate)
+    .eq("memo_format_id", params.memo_format_id);
+
+  if (error) throw Error;
+};
+
+// Update other expenses type
+export const updateOtherExpensesType = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    updateData: OtherExpensesTypeTableUpdate;
+    otherExpensesTypeId: string;
+  }
+) => {
+  const { updateData, otherExpensesTypeId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .update(updateData)
+    .eq("other_expenses_type_id", otherExpensesTypeId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data;
 };
 
 // Update valid id status and add approver

@@ -11,6 +11,8 @@ type Props = {
     form_description: string;
     form_date_created: string;
     form_team_member: FormType["form_team_member"];
+    form_type?: string;
+    form_sub_type?: string;
   };
   requestingProject?: string;
 };
@@ -19,9 +21,9 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
   const userInitials = useUserIntials();
   const userProfile = useUserProfile();
 
-  const { form_name, form_description, form_date_created } = formDetails;
+  const { form_name, form_description, form_type, form_sub_type } = formDetails;
 
-  const formDateCreated = moment(form_date_created).format("MMM DD, YYYY");
+  const requestDate = moment(new Date()).format("MMM DD, YYYY");
 
   return (
     <Paper
@@ -31,6 +33,19 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
     >
       <Title order={2}>{form_name}</Title>
       <Text mt="xs">{form_description}</Text>
+
+      {form_type && form_sub_type && (
+        <Stack mt="xl" spacing="xs">
+          <Group>
+            <Title order={5}>Type:</Title>
+            <Text>{form_type}</Text>
+          </Group>
+          <Group>
+            <Title order={5}>Sub Type:</Title>
+            <Text>{form_sub_type}</Text>
+          </Group>
+        </Stack>
+      )}
 
       <Title order={5} mt="xl">
         Requested by:
@@ -57,7 +72,7 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
       </Flex>
       <Group spacing="md" mt="xl">
         <IconCalendar />
-        <Text weight={600}>{formDateCreated}</Text>
+        <Text weight={600}>{requestDate}</Text>
       </Group>
       {requestingProject && (
         <Group spacing="md" mt="xl">
