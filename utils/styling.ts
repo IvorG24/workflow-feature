@@ -67,7 +67,7 @@ export const mobileNumberFormatter = (value: string | undefined) => {
     );
     return formattedNumber;
   } else if (cleanedNumber.length === 0) {
-    return value;
+    return "";
   } else {
     return "Invalid phone number";
   }

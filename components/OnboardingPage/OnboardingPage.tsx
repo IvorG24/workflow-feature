@@ -666,7 +666,7 @@ const OnboardingPage = ({ user }: Props) => {
                   label="Mobile Number"
                   maxLength={10}
                   hideControls
-                  formatter={(value) => `${mobileNumberFormatter(value)}`}
+                  formatter={(value) => mobileNumberFormatter(value)}
                   icon="+63"
                   min={0}
                   max={9999999999}
