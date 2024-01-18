@@ -977,7 +977,8 @@ RETURNS JSON AS $$
       user_avatar,
       user_phone_number,
       user_job_title,
-      user_active_team_id
+      user_active_team_id,
+      user_employee_number
     } = input_data;
 
     if(user_active_team_id){
@@ -989,6 +990,7 @@ RETURNS JSON AS $$
 
     if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
+    plv8.execute(`INSERT INTO user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
  });
  return user_data;
 $$ LANGUAGE plv8;
