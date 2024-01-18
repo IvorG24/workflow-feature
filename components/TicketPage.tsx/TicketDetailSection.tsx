@@ -40,7 +40,7 @@ const TicketDetailSection = ({ ticket }: Props) => {
         <Text>
           {`${requester.team_member_user.user_first_name} ${requester.team_member_user.user_last_name} opened this ticket on `}
           <Text span weight={600}>
-            {moment(ticket.ticket_date_created).format("MMM DD, YYYY")}
+            {moment(ticket.ticket_date_created).format("YYYY-MM-DD")}
           </Text>
         </Text>
       </Group>
@@ -64,7 +64,7 @@ const TicketDetailSection = ({ ticket }: Props) => {
               approver.team_member_user.user_last_name
             } reviewed this ticket and marked as '${ticket.ticket_status.toLowerCase()}' on `}
             <Text span weight={600}>
-              {moment(ticket.ticket_status_date_updated).format("MMM DD, YYYY")}
+              {moment(ticket.ticket_status_date_updated).format("YYYY-MM-DD")}
             </Text>
           </Text>
         </Group>

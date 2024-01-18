@@ -199,9 +199,7 @@ const MemoPDF = ({
             <View style={styles.memoHeaderInput}>
               <Text style={{ fontWeight: 600, width: "54px" }}>Date</Text>
               <Text>:</Text>
-              <Text>
-                {moment(memo.memo_date_created).format("MMMM DD, YYYY")}
-              </Text>
+              <Text>{moment(memo.memo_date_created).format("YYYY-MM-DD")}</Text>
             </View>
             <View style={styles.memoHeaderInput}>
               <Text style={{ fontWeight: 600, width: "54px" }}>From</Text>

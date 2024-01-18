@@ -23,7 +23,7 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
 
   const { form_name, form_description, form_type, form_sub_type } = formDetails;
 
-  const requestDate = moment(new Date()).format("MMM DD, YYYY");
+  const requestDate = moment(new Date()).format("YYYY-MM-DD");
 
   return (
     <Paper

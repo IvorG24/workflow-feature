@@ -151,13 +151,7 @@ const RequestDetailsSection = ({
                 on{" "}
                 {new Date(
                   primarySigner.request_signer_status_date_updated
-                ).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "numeric",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
-                })}
+                ).toISOString()}
               </Text>
             )}
         </Group>

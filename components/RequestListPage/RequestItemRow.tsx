@@ -164,7 +164,7 @@ const RequestItemRow = ({ request }: Props) => {
       </Grid.Col>
       <Grid.Col span="content" className="onboarding-request-list-row-date">
         <Text miw={105}>
-          {moment(request.request_date_created).format("MMM DD, YYYY")}
+          {moment(request.request_date_created).format("YYYY-MM-DD")}
         </Text>
       </Grid.Col>
       <Grid.Col span="content" className="onboarding-request-list-row-view">
