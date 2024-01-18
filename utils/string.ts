@@ -140,3 +140,28 @@ export const trimObjectProperties = (obj: { [x: string]: string }) => {
   }
   return trimmedObject;
 };
+
+type AnyObject = {
+  [key: string]: unknown;
+};
+
+export const jsonToCsv = (jsonString: string): string => {
+  try {
+    const jsonArray: AnyObject[] = JSON.parse(jsonString);
+
+    if (!jsonArray.length) {
+      throw new Error("Invalid JSON array");
+    }
+
+    const keys = Object.keys(jsonArray[0]);
+
+    const csvContent = `${keys.join(", ")}\n${jsonArray
+      .map((obj) => keys.map((key) => obj[key]).join(", "))
+      .join("\n")}`;
+
+    return csvContent;
+  } catch (error) {
+    console.error("Error converting JSON to CSV");
+    return "";
+  }
+};

@@ -469,3 +469,7 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 ('f5caeebf-8158-450a-88da-d7a098155a14', 'Test notification approve', TRUE, '/', 'APPROVE', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 ('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 ('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40');
+
+INSERT INTO query_table (query_name, query_sql) VALUES
+('Request average time from creation to resolved', 'SELECT team_project_name, AVG(request_status_date_updated-request_date_created) AS average_time_to_update FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NOT NULL GROUP BY team_project_name;'),
+('Stale requests by project', 'SELECT team_project_name, COUNT(*) AS number_of_stale_requests FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NULL GROUP BY team_project_name;');

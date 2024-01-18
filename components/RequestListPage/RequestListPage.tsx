@@ -318,20 +318,35 @@ const RequestListPage = ({
           <Text>Manage your team requests here.</Text>
         </Box>
         {isFormslyTeam ? (
-          <Button
-            onClick={() =>
-              router.push(
-                `/${formatTeamNameToUrlKey(
-                  activeTeam.team_name
-                )}/requests/spreadsheet-view`
-              )
-            }
-            sx={{ flex: 1 }}
-            maw={300}
-            className="onboarding-request-list-ssot"
-          >
-            SSOT Spreadsheet View
-          </Button>
+          <Flex gap="md">
+            <Button
+              onClick={() =>
+                router.push(
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name
+                  )}/requests/spreadsheet-view`
+                )
+              }
+              sx={{ flex: 1 }}
+              maw={300}
+              className="onboarding-request-list-ssot"
+            >
+              SSOT Spreadsheet View
+            </Button>
+            <Button
+              onClick={() =>
+                router.push(
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name
+                  )}/requests/sla`
+                )
+              }
+              sx={{ flex: 1 }}
+              maw={300}
+            >
+              SLA
+            </Button>
+          </Flex>
         ) : null}
         <Button
           variant="light"

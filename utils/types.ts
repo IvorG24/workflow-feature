@@ -253,6 +253,8 @@ export type OtherExpensesTypeTableInsert =
 export type OtherExpensesTypeTableUpdate =
   Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
 
+export type QueryTableRow = Database["public"]["Tables"]["query_table"]["Row"];
+
 // End: Database Table Types
 
 // Start: Database Enums

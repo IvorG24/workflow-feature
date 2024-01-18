@@ -4543,3 +4543,28 @@ export const getTypeOptions = async (
   if (error) throw error;
   return data;
 };
+
+// Get query data
+export const getQueryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    queryId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_query_data", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  const queryFetchedData = data as unknown as { queryData: string };
+  return queryFetchedData.queryData;
+};
+
+// Get query table
+export const getQueryList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient.from("query_table").select("*");
+  if (error) throw error;
+  return data;
+};

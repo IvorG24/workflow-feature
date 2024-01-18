@@ -730,6 +730,16 @@ CREATE TABLE memo_format_table (
 
 -- End: Memo feature table
 
+-- Start: Query table
+
+CREATE TABLE query_table (
+    query_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    query_name VARCHAR(4000) UNIQUE NOT NULL,
+    query_sql VARCHAR(4000) NOT NULL
+);
+
+-- End: Query table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -9119,6 +9129,7 @@ ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE query_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9285,6 +9296,8 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_employee_nu
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_employee_number_table;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON query_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -10812,6 +10825,12 @@ USING (
   )
 );
 
+--- QUERY_TABLE
+
+CREATE POLICY "Allow READ for anon users" ON "public"."query_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
 -------- End: POLICIES
 
 ---------- Start: INDEXES
@@ -11052,6 +11071,10 @@ INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) V
 ('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('2b3806c6-c61c-46d4-a56e-eb563e2fc78c', '8e173d92-c346-4fb5-8ef2-490105e19263', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('5aa860bf-95d3-463e-901b-a552ec2ae171', '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', '9f7de2eb-4073-43e6-b662-d688ccba4b26');
+
+INSERT INTO query_table (query_name, query_sql) VALUES
+('Request average time from creation to resolved', 'SELECT team_project_name, AVG(request_status_date_updated-request_date_created) AS average_time_to_update FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NOT NULL GROUP BY team_project_name;'),
+('Stale requests by project', 'SELECT team_project_name, COUNT(*) AS number_of_stale_requests FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NULL GROUP BY team_project_name;');
 
 DROP FUNCTION IF EXISTS supplier_seed;
 CREATE FUNCTION supplier_seed()

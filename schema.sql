@@ -618,6 +618,16 @@ CREATE TABLE other_expenses_type_table(
 
 -- End: Other expenses type table
 
+-- Start: Query table
+
+CREATE TABLE query_table (
+    query_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    query_name VARCHAR(4000) UNIQUE NOT NULL,
+    query_sql VARCHAR(4000) NOT NULL
+);
+
+-- End: Query table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -9561,6 +9571,33 @@ $$ LANGUAGE plv8;
 
 -- End: Update user
 
+-- START: Get query data
+
+CREATE OR REPLACE FUNCTION get_query_data(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      queryId
+    } = input_data;
+    
+    const selectedQuery = plv8.execute(`SELECT * FROM query_table WHERE query_id='${queryId}';`)[0];
+
+    const fetchedData = plv8.execute(selectedQuery.query_sql);
+    
+    BigInt.prototype.toJSON = function () {
+    return this.toString();
+    };
+
+    returnData ={queryData: JSON.stringify(fetchedData)}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- END: Get query data
+
 ---------- End: FUNCTIONS
 
 
@@ -9600,6 +9637,7 @@ ALTER TABLE user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signature_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE service_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE query_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9780,6 +9818,8 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON service_category_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_category_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_category_table;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON query_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -11412,6 +11452,12 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
+
+--- QUERY_TABLE
+
+CREATE POLICY "Allow READ for anon users" ON "public"."query_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
 
 -------- End: POLICIES
 
