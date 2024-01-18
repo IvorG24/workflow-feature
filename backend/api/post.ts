@@ -107,7 +107,7 @@ export const uploadFile = async (
 // Create User
 export const createUser = async (
   supabaseClient: SupabaseClient<Database>,
-  params: UserTableInsert
+  params: UserTableInsert & { user_employee_number: string }
 ) => {
   const { user_phone_number } = params;
 
