@@ -192,8 +192,9 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
                 direction="row"
                 gap={{ base: laptopView ? "md" : "" }}
                 align="flex-start"
+                h="100%"
               >
-                <Box sx={{ flex: 1 }}>
+                <Box maw={600} sx={{ flex: 1 }}>
                   <FormProvider {...memoFormMethods}>
                     <MemoForm
                       onSubmit={handleCreateMemo}
@@ -202,7 +203,7 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
                   </FormProvider>
                 </Box>
                 {laptopView ? (
-                  <Box sx={{ flex: 1 }}>
+                  <Box maw={900} sx={{ flex: 1 }}>
                     <MemoPreview data={currentPreviewData as MemoFormValues} />
                   </Box>
                 ) : (

@@ -73,10 +73,9 @@ const renderMemoLineItems = (lineItem: MemoType["memo_line_item_list"][0]) => {
           <Image
             src={attachment.memo_line_item_attachment_public_url}
             alt={caption ?? "No alt provided"}
+            width="100%"
+            height={600}
             fit="contain"
-            maw={900}
-            mah={600}
-            withPlaceholder
           />
           {caption && (
             <Text weight={600}>{`Caption ${

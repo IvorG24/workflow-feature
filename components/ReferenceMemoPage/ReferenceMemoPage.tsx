@@ -158,7 +158,7 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
                 gap={{ base: laptopView ? "md" : "" }}
                 align="flex-start"
               >
-                <Box sx={{ flex: 1 }}>
+                <Box maw={600} sx={{ flex: 1 }}>
                   <FormProvider {...memoFormMethods}>
                     <ReferenceMemoForm
                       onSubmit={handleCreateMemo}
@@ -167,7 +167,7 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
                   </FormProvider>
                 </Box>
                 {laptopView ? (
-                  <Box sx={{ flex: 1 }}>
+                  <Box maw={900} sx={{ flex: 1 }}>
                     <ReferenceMemoPreview
                       data={currentPreviewData as EditMemoType}
                     />
