@@ -73,14 +73,27 @@ const ReferenceMemoPreview = ({ data }: Props) => {
               {lineItem.memo_line_item_attachment &&
                 lineItem.memo_line_item_attachment
                   .memo_line_item_attachment_file && (
-                  <Box maw={900} mah={600}>
+                  <>
+                    <Text weight={600}>Figure {lineItemIndex + 1}</Text>
                     <MantineImage
                       src={imgSrc}
                       alt={caption ?? "No alt provided"}
                       withPlaceholder
+                      width="100%"
+                      height="100%"
+                      fit="contain"
+                      styles={{
+                        image: {
+                          maxHeight: 600,
+                        },
+                      }}
                     />
-                    {caption && <Text italic>Image Caption: {caption}</Text>}
-                  </Box>
+                    {caption && (
+                      <Text weight={600}>{`Caption ${
+                        lineItemIndex + 1
+                      }: ${caption}`}</Text>
+                    )}
+                  </>
                 )}
             </Box>
           );
@@ -95,7 +108,7 @@ const ReferenceMemoPreview = ({ data }: Props) => {
   }, [data]);
 
   return (
-    <Paper p="md" radius="md">
+    <Paper p="md" radius="md" maw={900}>
       <Text mb="md" weight={700}>
         MEMORANDUM
       </Text>

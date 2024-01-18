@@ -57,12 +57,20 @@ const MemoPreview = ({ data }: Props) => {
             <Box key={`lineItem-${lineItemIndex}`}>
               <Markdown>{lineItem.line_item_content}</Markdown>
               {lineItem.line_item_image_attachment && (
-                <Box maw={900} mah={600}>
+                <Box>
                   <Text weight={600}>Figure {lineItemIndex + 1}</Text>
                   <MantineImage
                     src={imgSrc}
                     alt={lineItem.line_item_image_caption ?? "No alt provided"}
                     withPlaceholder
+                    width="100%"
+                    height="100%"
+                    fit="contain"
+                    styles={{
+                      image: {
+                        maxHeight: 600,
+                      },
+                    }}
                   />
                   {lineItem.line_item_image_caption && (
                     <Text weight={600}>{`Caption ${lineItemIndex + 1}: ${
@@ -84,7 +92,7 @@ const MemoPreview = ({ data }: Props) => {
   }, [data]);
 
   return (
-    <Paper p="md" radius="md">
+    <Paper p="md" radius="md" maw={900} h="fit-content">
       <Text mb="md" weight={700}>
         MEMORANDUM
       </Text>

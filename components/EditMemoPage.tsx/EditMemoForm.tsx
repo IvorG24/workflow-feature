@@ -218,6 +218,7 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
             label="Author"
             value={memoAuthorFullname}
             readOnly
+            variant="filled"
             withAsterisk
           />
           <TextInput

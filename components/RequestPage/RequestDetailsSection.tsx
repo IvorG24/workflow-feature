@@ -90,11 +90,7 @@ const RequestDetailsSection = ({
   );
 
   return (
-    <Paper
-      p="xl"
-      shadow="xs"
-      className="onboarding-requisition-request-request"
-    >
+    <Paper p="xl" shadow="xs">
       <Title order={2}>{request.request_form.form_name}</Title>
       <Text mt="xs">{request.request_form.form_description}</Text>
 

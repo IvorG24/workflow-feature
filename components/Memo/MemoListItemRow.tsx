@@ -32,7 +32,7 @@ const MemoListItemRow = ({ memo }: Props) => {
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
       <Grid.Col span={2}>
-        <Flex gap="md">
+        <Flex gap="md" align="center">
           <Text size="xs" truncate maw={150}>
             <Anchor
               href={`/${formatTeamNameToUrlKey(

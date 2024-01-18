@@ -203,12 +203,7 @@ const ExportToPdf = ({
       {!instance.loading && approverDetails.length !== 0 ? (
         <Menu width={200} shadow="md">
           <Menu.Target>
-            <Button
-              variant="light"
-              className="onboarding-requisition-request-pdf"
-            >
-              Export to PDF
-            </Button>
+            <Button variant="light">Export to PDF</Button>
           </Menu.Target>
 
           <Menu.Dropdown>
