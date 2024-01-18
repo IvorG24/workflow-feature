@@ -122,7 +122,10 @@ const UserSettingsPage = ({ user }: Props) => {
       const { error } = await supabaseClient.rpc("update_user", {
         input_data: {
           userData: {
-            ...trimObjectProperties(data),
+            ...trimObjectProperties({
+              ...data,
+              user_phone_number: `${data.user_phone_number}`,
+            }),
             user_avatar: imageUrl ? imageUrl : data.user_avatar,
           },
           previousUsername:
