@@ -105,7 +105,7 @@ const OnboardingPage = ({ user }: Props) => {
         user_first_name: data.user_first_name.trim(),
         user_last_name: data.user_last_name.trim(),
         user_username: data.user_username.trim(),
-        user_phone_number: data.user_phone_number.trim(),
+        user_phone_number: data.user_phone_number,
         user_job_title: data.user_job_title.trim(),
         user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
@@ -140,7 +140,7 @@ const OnboardingPage = ({ user }: Props) => {
         user_valid_id_province: data.user_id_province.trim(),
         user_valid_id_city: data.user_id_city.trim(),
         user_valid_id_barangay: data.user_id_barangay.trim(),
-        user_valid_id_zip_code: `${data.user_id_zip_code}`.trim(),
+        user_valid_id_zip_code: `${data.user_id_zip_code}`,
         user_valid_id_house_and_street: data.user_id_house_and_street.trim(),
         user_valid_id_status: "PENDING",
         user_valid_id_front_image_url: idFrontImage,
@@ -381,7 +381,6 @@ const OnboardingPage = ({ user }: Props) => {
                   );
                   setValue("user_id_middle_name", format);
                 },
-                required: "Middle name is required",
                 minLength: {
                   value: 2,
                   message: "Middle name must have at least 2 characters",
@@ -654,7 +653,6 @@ const OnboardingPage = ({ user }: Props) => {
                       : `${value}`.length === 10
                       ? true
                       : "Invalid mobile number",
-
                   startsWith: (value) =>
                     !value
                       ? true
@@ -668,7 +666,7 @@ const OnboardingPage = ({ user }: Props) => {
                   label="Mobile Number"
                   maxLength={10}
                   hideControls
-                  formatter={(value) => mobileNumberFormatter(value)}
+                  formatter={(value) => `${mobileNumberFormatter(value)}`}
                   icon="+63"
                   min={0}
                   max={9999999999}
