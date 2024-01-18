@@ -2562,7 +2562,7 @@ RETURNS JSON AS $$
           request_jira_link: request.request_jira_link,
           request_otp_id: request.request_otp_id,
           request_team_member: {
-            team_member_team_id: request.request_team_member_id,
+            team_member_id: request.request_team_member_id,
             team_member_user: {
               user_id: request_team_member.user_id, 
               user_first_name: request_team_member.user_first_name,
