@@ -151,7 +151,12 @@ const RequestItemRow = ({ request }: Props) => {
           >
             {requestor.user_first_name[0] + requestor.user_last_name[0]}
           </Avatar>
-          <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
+          <Anchor
+            href={`/member/${request.request_team_member.team_member_id}`}
+            target="_blank"
+          >
+            <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
+          </Anchor>
         </Flex>
       </Grid.Col>
       <Grid.Col span={1} className="onboarding-request-list-row-approver">

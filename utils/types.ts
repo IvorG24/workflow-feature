@@ -927,7 +927,7 @@ export type RequestListItemType = {
   request_jira_link?: string;
   request_otp_id?: string;
   request_team_member: {
-    team_member_team_id: string;
+    team_member_id: string;
     team_member_user: {
       user_id: string;
       user_first_name: string;
