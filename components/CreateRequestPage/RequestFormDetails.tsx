@@ -26,11 +26,7 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
   const requestDate = moment(new Date()).format("MMM DD, YYYY");
 
   return (
-    <Paper
-      p="xl"
-      shadow="xs"
-      className="onboarding-create-request-form-details"
-    >
+    <Paper p="xl" shadow="xs">
       <Title order={2}>{form_name}</Title>
       <Text mt="xs">{form_description}</Text>
 
