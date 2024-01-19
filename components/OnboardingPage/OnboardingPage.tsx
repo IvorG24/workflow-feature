@@ -110,7 +110,7 @@ const OnboardingPage = ({ user }: Props) => {
         user_job_title: data.user_job_title.trim(),
         user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
-        user_employee_number: data.user_employee_number.trim(),
+        user_employee_number: data.user_employee_number,
       });
 
       let idFrontImage = "";
@@ -176,6 +176,7 @@ const OnboardingPage = ({ user }: Props) => {
         color: "green",
       });
     } catch (error) {
+      console.error(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -291,6 +292,41 @@ const OnboardingPage = ({ user }: Props) => {
               mt="sm"
               data-cy="onboarding-input-last-name"
             />
+            <Controller
+              control={control}
+              name="user_phone_number"
+              rules={{
+                required: "Mobile Number is required.",
+                validate: {
+                  valid: (value) =>
+                    !value
+                      ? true
+                      : `${value}`.length === 10
+                      ? true
+                      : "Invalid mobile number",
+                  startsWith: (value) =>
+                    !value
+                      ? true
+                      : `${value}`[0] === "9"
+                      ? true
+                      : "Mobile number must start with 9",
+                },
+              }}
+              render={({ field: { onChange } }) => (
+                <NumberInput
+                  label="Mobile Number"
+                  maxLength={10}
+                  hideControls
+                  formatter={(value) => mobileNumberFormatter(value)}
+                  icon="+63"
+                  min={0}
+                  max={9999999999}
+                  onChange={onChange}
+                  error={errors.user_phone_number?.message}
+                  mt="xs"
+                />
+              )}
+            />
 
             <Controller
               control={control}
@@ -299,6 +335,7 @@ const OnboardingPage = ({ user }: Props) => {
                 <NumberInput
                   label="Employee Number"
                   onChange={onChange}
+                  hideControls
                   error={errors.user_employee_number?.message}
                 />
               )}
@@ -660,41 +697,6 @@ const OnboardingPage = ({ user }: Props) => {
             </Text>
 
             <Divider mt={4} />
-
-            <Controller
-              control={control}
-              name="user_phone_number"
-              rules={{
-                validate: {
-                  valid: (value) =>
-                    !value
-                      ? true
-                      : `${value}`.length === 10
-                      ? true
-                      : "Invalid mobile number",
-                  startsWith: (value) =>
-                    !value
-                      ? true
-                      : `${value}`[0] === "9"
-                      ? true
-                      : "Mobile number must start with 9",
-                },
-              }}
-              render={({ field: { onChange } }) => (
-                <NumberInput
-                  label="Mobile Number"
-                  maxLength={10}
-                  hideControls
-                  formatter={(value) => mobileNumberFormatter(value)}
-                  icon="+63"
-                  min={0}
-                  max={9999999999}
-                  onChange={onChange}
-                  error={errors.user_phone_number?.message}
-                  mt="xs"
-                />
-              )}
-            />
 
             <TextInput
               label="Job Title"
