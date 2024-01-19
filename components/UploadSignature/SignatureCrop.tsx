@@ -1,5 +1,6 @@
 import getCroppedImg from "@/utils/cropImage";
-import { Button, Container, Flex, Slider } from "@mantine/core";
+import { Button, Container, Flex, Paper, Slider } from "@mantine/core";
+import Compressor from "compressorjs";
 import { useCallback, useEffect, useState } from "react";
 import Cropper, { Area } from "react-easy-crop";
 
@@ -20,6 +21,18 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
   useEffect(() => {
     const getFileUrl = async () => {
       if (file) {
+        const compressedImage: Blob = await new Promise((resolve) => {
+          new Compressor(file, {
+            quality: 0.6,
+            success(result) {
+              resolve(result);
+            },
+            error(error) {
+              throw error;
+            },
+          });
+        });
+
         const reader = new FileReader();
 
         reader.onload = (e) => {
@@ -27,7 +40,9 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
           setFileUrl(url);
         };
 
-        reader.readAsDataURL(file);
+        console.log(compressedImage);
+
+        reader.readAsDataURL(compressedImage);
       }
     };
     getFileUrl();
@@ -61,21 +76,28 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
   return (
     <Container fluid p={0} m={0}>
       {fileUrl && (
-        <Container w="100%" pos="relative" h={200} bg="dark">
-          <Cropper
-            image={fileUrl}
-            crop={crop}
-            zoom={zoom}
-            cropSize={{ height: 200, width: 250 }}
-            aspect={1.25 / 1}
-            onCropChange={setCrop}
-            onCropComplete={onCropComplete}
-            onZoomChange={setZoom}
-            style={{
-              containerStyle: { background: "white" },
-            }}
-          />
-        </Container>
+        <Paper
+          sx={(theme) => ({
+            border: `1.5px solid ${theme.colors.gray[3]}`,
+          })}
+          p={1}
+        >
+          <Container w={250} pos="relative" h={200} bg="dark">
+            <Cropper
+              image={fileUrl}
+              crop={crop}
+              zoom={zoom}
+              cropSize={{ height: 150, width: 200 }}
+              aspect={1.25 / 1}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+              style={{
+                containerStyle: { background: "white" },
+              }}
+            />
+          </Container>
+        </Paper>
       )}
       <Flex direction="column" mt="xs" gap="md">
         <Slider
