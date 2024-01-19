@@ -1,4 +1,3 @@
-import { Database } from "@/utils/database";
 import { getBase64 } from "@/utils/functions";
 import { ReferenceMemoType } from "@/utils/types";
 import {
@@ -12,43 +11,19 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import moment from "moment";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import { v4 as uuidv4 } from "uuid";
 
 type Props = {
   data: ReferenceMemoType;
 };
 
 const ReferenceMemoPreview = ({ data }: Props) => {
-  const supabaseClient = createPagesBrowserClient<Database>();
   const memoAuthorFullname = `${data.memo_author_user.user_first_name} ${data.memo_author_user.user_last_name}`;
   const [lineItems, setLineItems] = useState<React.JSX.Element[]>([]);
 
-  const signerListPreview = useMemo(() => {
-    const signerList = data.memo_signer_list;
-    if (!signerList) return [];
-
-    return signerList.map((signer) => {
-      const signatureAttachmentValue =
-        signer.memo_signer_team_member?.user.user_signature_attachment
-          ?.attachment_value;
-      // get signature public url
-      if (signatureAttachmentValue) {
-        const {
-          data: { publicUrl },
-        } = supabaseClient.storage
-          .from("USER_SIGNATURES")
-          .getPublicUrl(signatureAttachmentValue);
-
-        signer.signature_public_url = `${publicUrl}?id=${uuidv4()}`;
-      }
-
-      return signer;
-    });
-  }, [data.memo_signer_list, supabaseClient.storage]);
+  const signerListPreview = data.memo_signer_list;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -145,7 +120,7 @@ const ReferenceMemoPreview = ({ data }: Props) => {
                   <MantineImage
                     width={120}
                     height={80}
-                    src={signer.signature_public_url}
+                    src={signer.memo_signer_signature_public_url}
                     alt="User signature"
                     fit="contain"
                     withPlaceholder

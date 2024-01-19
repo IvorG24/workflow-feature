@@ -915,7 +915,7 @@ export type RequestListItemType = {
   request_jira_link?: string;
   request_otp_id?: string;
   request_team_member: {
-    team_member_team_id: string;
+    team_member_id: string;
     team_member_user: {
       user_id: string;
       user_first_name: string;
@@ -1165,10 +1165,8 @@ export type MemoSignerItem = {
     user_last_name: string;
     user_job_title: string | null;
     user_avatar: string | null;
-    user_signature_attachment:
-      | (AttachmentTableRow & { attachment_public_url?: string })
-      | null;
   };
+  signature_list: SignatureHistoryTableRow[];
 };
 
 export type MemoLineItem = {
@@ -1266,7 +1264,13 @@ export type ReferenceMemoType = MemoTableRow & {
   memo_signer_list: (MemoSignerTableRow & {
     memo_signer_team_member?: {
       team_member_id: string;
-      user: UserTableRow;
+      user: {
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string | null;
+        user_job_title: string | null;
+        user_id: string;
+      };
     };
     memo_signer_signature_public_url: string;
   })[];

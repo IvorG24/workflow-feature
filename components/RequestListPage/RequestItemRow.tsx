@@ -47,7 +47,7 @@ const RequestItemRow = ({ request }: Props) => {
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
-      <Grid.Col span={1} className="onboarding-request-list-row-rid">
+      <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
             <Anchor
@@ -78,7 +78,7 @@ const RequestItemRow = ({ request }: Props) => {
           </CopyButton>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1} className="onboarding-request-list-row-jira">
+      <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
             <Anchor href={request.request_jira_link} target="_blank">
@@ -101,7 +101,7 @@ const RequestItemRow = ({ request }: Props) => {
           )}
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1} className="onboarding-request-list-row-otp">
+      <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
             {request.request_otp_id}
@@ -123,12 +123,12 @@ const RequestItemRow = ({ request }: Props) => {
         </Flex>
       </Grid.Col>
 
-      <Grid.Col span={2} className="onboarding-request-list-row-form">
+      <Grid.Col span={2}>
         <Tooltip label={request.request_form.form_name} openDelay={2000}>
           <Text truncate>{request.request_form.form_name}</Text>
         </Tooltip>
       </Grid.Col>
-      <Grid.Col span={1} className="onboarding-request-list-row-status">
+      <Grid.Col span={1}>
         <Badge
           variant="filled"
           color={getStatusToColor(request.request_status)}
@@ -137,11 +137,7 @@ const RequestItemRow = ({ request }: Props) => {
         </Badge>
       </Grid.Col>
 
-      <Grid.Col
-        span="auto"
-        offset={0.5}
-        className="onboarding-request-list-row-requester"
-      >
+      <Grid.Col span="auto" offset={0.5}>
         <Flex px={0} gap={8} wrap="wrap">
           <Avatar
             src={requestor.user_avatar}
@@ -151,18 +147,23 @@ const RequestItemRow = ({ request }: Props) => {
           >
             {requestor.user_first_name[0] + requestor.user_last_name[0]}
           </Avatar>
-          <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
+          <Anchor
+            href={`/member/${request.request_team_member.team_member_id}`}
+            target="_blank"
+          >
+            <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
+          </Anchor>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1} className="onboarding-request-list-row-approver">
+      <Grid.Col span={1}>
         <RequestSignerList signerList={request_signer} />
       </Grid.Col>
-      <Grid.Col span="content" className="onboarding-request-list-row-date">
+      <Grid.Col span="content">
         <Text miw={105}>
           {moment(request.request_date_created).format("MMM DD, YYYY")}
         </Text>
       </Grid.Col>
-      <Grid.Col span="content" className="onboarding-request-list-row-view">
+      <Grid.Col span="content">
         <Group position="center">
           <ActionIcon
             color="blue"

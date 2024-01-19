@@ -438,20 +438,6 @@ CREATE TABLE user_employee_number_table (
 
 -- END: User employee number table
 
--- Start: User onboard table
-
-CREATE TABLE user_onboard_table(
-  user_onboard_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  user_onboard_name VARCHAR(4000) NOT NULL,
-  user_onboard_score INT NOT NULL,
-  user_onboard_top_score INT NOT NULL,
-
-  user_onboard_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  user_onboard_user_id UUID REFERENCES user_table(user_id) NOT NULL
-);
-
--- END: User onboard table
-
 -- Start: Service category table
 
 CREATE TABLE service_category_table(
@@ -503,7 +489,7 @@ CREATE TABLE memo_signer_table (
     memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
     memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL,
     memo_signer_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    memo_line_item_date_signed TIMESTAMPTZ(0)
+    memo_signer_date_signed TIMESTAMPTZ(0)
 );
 
 CREATE TABLE memo_line_item_table (
@@ -979,7 +965,8 @@ RETURNS JSON AS $$
       user_avatar,
       user_phone_number,
       user_job_title,
-      user_active_team_id
+      user_active_team_id,
+      user_employee_number
     } = input_data;
 
     if(user_active_team_id){
@@ -991,6 +978,7 @@ RETURNS JSON AS $$
 
     if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
+    plv8.execute(`INSERT INTO user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
  });
  return user_data;
 $$ LANGUAGE plv8;
@@ -2564,7 +2552,7 @@ RETURNS JSON AS $$
           request_jira_link: request.request_jira_link,
           request_otp_id: request.request_otp_id,
           request_team_member: {
-            team_member_team_id: request.request_team_member_id,
+            team_member_id: request.request_team_member_id,
             team_member_user: {
               user_id: request_team_member.user_id, 
               user_first_name: request_team_member.user_first_name,
@@ -9666,7 +9654,6 @@ ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signature_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
@@ -9836,11 +9823,6 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_field_uom_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_onboard_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON user_onboard_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_onboard_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own onboard" ON user_onboard_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
@@ -11389,34 +11371,6 @@ USING (
     WHERE user_id = user_employee_number_user_id
   )
 );
-
---- USER_ONBOARD_TABLE
-CREATE POLICY "Allow CREATE access for all users" ON "public"."user_onboard_table"
-AS PERMISSIVE FOR INSERT
-TO authenticated
-WITH CHECK (true);
-
-CREATE POLICY "Allow READ for anon users" ON "public"."user_onboard_table"
-AS PERMISSIVE FOR SELECT
-USING (true);
-
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."user_onboard_table"
-AS PERMISSIVE FOR UPDATE
-TO authenticated 
-USING(true)
-WITH CHECK (true);
-
-CREATE POLICY "Allow DELETE for authenticated users on own onboard" ON "public"."user_onboard_table"
-AS PERMISSIVE FOR DELETE
-TO authenticated
-USING (
-  user_onboard_user_id IN (
-    SELECT user_onboard_user_id  
-    FROM user_onboard_table 
-    WHERE user_onboard_user_id = auth.uid()
-  )
-);
-
 --- USER_NAME_HISTORY_TABLE
 CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_name_history_table"
 AS PERMISSIVE FOR INSERT

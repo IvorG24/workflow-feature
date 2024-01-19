@@ -5,7 +5,13 @@ import {
   uploadImage,
 } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { formatTeamNameToUrlKey, isUUID, removeMultipleSpaces, toTitleCase, trimObjectProperties } from "@/utils/string";
+import {
+  formatTeamNameToUrlKey,
+  isUUID,
+  removeMultipleSpaces,
+  toTitleCase,
+  trimObjectProperties,
+} from "@/utils/string";
 import { mobileNumberFormatter } from "@/utils/styling";
 import {
   Button,
@@ -34,6 +40,7 @@ type OnboardUserParams = {
   user_avatar: string;
   user_phone_number: string;
   user_job_title: string;
+  user_employee_number: string;
 };
 
 type Props = {
@@ -53,7 +60,7 @@ const OnboardingPage = ({ user }: Props) => {
     formState: { errors },
     setError,
     control,
-    setValue
+    setValue,
   } = useForm<OnboardUserParams>({
     defaultValues: { user_id: user.id, user_email: user.email },
     reValidateMode: "onChange",
@@ -74,9 +81,10 @@ const OnboardingPage = ({ user }: Props) => {
         });
       }
       await createUser(supabaseClient, {
-        ...trimObjectProperties(data) as OnboardUserParams,
+        ...(trimObjectProperties(data) as OnboardUserParams),
         user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
+        user_employee_number: data.user_employee_number,
       });
 
       const pendingInvitation = await getUserPendingInvitation(supabaseClient, {
@@ -177,8 +185,10 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="First name"
               {...register("user_first_name", {
-                onChange: (e) =>  {
-                  const format = toTitleCase(removeMultipleSpaces(e.currentTarget.value));
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
                   setValue("user_first_name", format);
                 },
                 required: "First name is required",
@@ -199,8 +209,10 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Last name"
               {...register("user_last_name", {
-                onChange: (e) =>  {
-                  const format = toTitleCase(removeMultipleSpaces(e.currentTarget.value));
+                onChange: (e) => {
+                  const format = toTitleCase(
+                    removeMultipleSpaces(e.currentTarget.value)
+                  );
                   setValue("user_last_name", format);
                 },
                 required: "Last name is required",
@@ -216,6 +228,24 @@ const OnboardingPage = ({ user }: Props) => {
               error={errors.user_last_name?.message}
               mt="sm"
               data-cy="onboarding-input-last-name"
+            />
+
+            <Controller
+              control={control}
+              name="user_employee_number"
+              render={({ field: { onChange } }) => (
+                <NumberInput
+                  label="Employee Number"
+                  onChange={onChange}
+                  error={errors.user_employee_number?.message}
+                />
+              )}
+              rules={{
+                required: {
+                  value: true,
+                  message: "Employee number is required",
+                },
+              }}
             />
 
             <Text size="lg" mt="lg" fw="bold">
@@ -263,7 +293,7 @@ const OnboardingPage = ({ user }: Props) => {
             <TextInput
               label="Job Title"
               {...register("user_job_title", {
-                onChange: (e) =>  {
+                onChange: (e) => {
                   const format = removeMultipleSpaces(e.currentTarget.value);
                   setValue("user_job_title", format);
                 },

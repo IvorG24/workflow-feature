@@ -2657,7 +2657,7 @@ export const getTeamGroupMemberList = async (
             user_email
           ),
           team_member_project: team_project_member_table(
-            team_project: team_project_id(team_project_name)
+            team_project: team_project_id!inner(team_project_name)
           )
         )
       `,
@@ -4059,31 +4059,6 @@ export const checkIfTeamNameExists = async (
   return Boolean(count);
 };
 
-// Get onboard list
-export const getOnboardList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    userId: string;
-    onboardName?: string;
-  }
-) => {
-  const { userId, onboardName } = params;
-
-  const query = supabaseClient
-    .from("user_onboard_table")
-    .select("*")
-    .eq("user_onboard_user_id", userId)
-
-    .order("user_onboard_date_created", { ascending: false });
-
-  if (onboardName) query.eq("user_onboard_name", onboardName);
-  const { data, error } = await query;
-
-  if (error) throw error;
-
-  return data;
-};
-
 // check if email list are onboarded
 export const checkIfEmailsOnboarded = async (
   supabaseClient: SupabaseClient<Database>,
@@ -4290,9 +4265,9 @@ export const getTeamMemoSignerList = async (
           user_first_name,
           user_last_name,
           user_job_title,
-          user_avatar,
-          user_signature_attachment: user_signature_attachment_id(*)
-        )
+          user_avatar
+        ),
+       signature_list: signature_history_user_id(*)
       `
     )
     .eq("team_member_team_id", params.teamId);
