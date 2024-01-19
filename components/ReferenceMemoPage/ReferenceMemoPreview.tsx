@@ -23,7 +23,7 @@ const ReferenceMemoPreview = ({ data }: Props) => {
   const memoAuthorFullname = `${data.memo_author_user.user_first_name} ${data.memo_author_user.user_last_name}`;
   const [lineItems, setLineItems] = useState<React.JSX.Element[]>([]);
 
-  const signerListPreview = data.memo_signer_list;
+  const signerListPreview = data.memo_signer_list ?? [];
 
   useEffect(() => {
     const fetchData = async () => {

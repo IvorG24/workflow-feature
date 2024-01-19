@@ -8591,7 +8591,7 @@ CREATE OR REPLACE FUNCTION get_memo_on_load(
 RETURNS JSON AS $$
   let memo_data_on_load;
   plv8.subtransaction(function() {
-    const { memo_id, current_user_id, isReference } = input_data;
+    const { memo_id, current_user_id } = input_data;
 
     const currentUser = plv8.execute(`
       SELECT *
@@ -8690,7 +8690,7 @@ RETURNS JSON AS $$
         const signatureDateCreatedTime = new Date(
           signature.signature_history_date_created
         ).getTime();
-        const signedDate = new Date(row.memo_signer_date_created).getTime();
+        const signedDate = new Date(row.memo_signer_date_signed).getTime();
 
         return signedDate <= signatureDateCreatedTime;
       });
@@ -8709,6 +8709,7 @@ RETURNS JSON AS $$
         memo_signer_is_primary: row.memo_signer_is_primary,
         memo_signer_order: row.memo_signer_order,
         memo_signer_date_created: row.memo_signer_date_created,
+        memo_signer_date_signed: row.memo_signer_date_signed,
         memo_signer_team_member: {
           team_member_id: row.team_member_id,
           user: {
@@ -8982,12 +8983,12 @@ RETURNS JSON AS $$
         const signatureDateCreatedTime = new Date(
           signature.signature_history_date_created
         ).getTime();
-        const signedDate = new Date(row.memo_signer_date_created).getTime();
+        const signedDate = new Date(row.memo_signer_date_signed).getTime();
 
         return signedDate <= signatureDateCreatedTime;
       });
 
-      if (signatureMatch) {
+      if (signatureMatch && row.memo_signer_date_signed) {
         signature_public_url = signatureMatch.signature_history_value;
       } else {
         signature_public_url = defaultSignature
@@ -9001,6 +9002,7 @@ RETURNS JSON AS $$
         memo_signer_is_primary: row.memo_signer_is_primary,
         memo_signer_order: row.memo_signer_order,
         memo_signer_date_created: row.memo_signer_date_created,
+        memo_signer_date_signed: row.memo_signer_date_signed,
         memo_signer_team_member: {
           team_member_id: row.team_member_id,
           user: {

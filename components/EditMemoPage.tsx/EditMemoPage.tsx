@@ -107,8 +107,6 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
         memo_line_item_list: updateLineItem,
       };
 
-      console.log(editMemoParams);
-
       await updateMemo(supabaseClient, editMemoParams as EditMemoType);
 
       router.push(

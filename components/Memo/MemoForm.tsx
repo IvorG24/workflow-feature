@@ -97,10 +97,6 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
       });
     }
 
-    const signerSignatureList = selectedSigner.signature_list ?? [];
-    const signerCurrentSignature =
-      signerSignatureList[signerSignatureList.length - 1];
-
     const newMemoSigner: MemoFormValues["signerList"][0] = {
       signer_status: "PENDING",
       signer_team_member_id: selectedSigner.team_member_id,
@@ -109,7 +105,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
       signer_avatar: user_avatar,
       signer_job_title: user_job_title,
       signer_user_id: user_id,
-      signer_signature: signerCurrentSignature.signature_history_value,
+      signer_signature: selectedSigner.signer_signature_public_url,
     };
 
     insertSignerItem(selectedSignerList.length, newMemoSigner);

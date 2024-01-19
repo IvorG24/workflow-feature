@@ -21,7 +21,7 @@ type Props = {
 
 const MemoPreview = ({ data }: Props) => {
   const [lineItems, setLineItems] = useState<React.JSX.Element[]>([]);
-  const signerListPreview = data.signerList;
+  const signerListPreview = data.signerList ?? [];
 
   useEffect(() => {
     const fetchData = async () => {

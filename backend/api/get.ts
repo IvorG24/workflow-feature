@@ -34,6 +34,7 @@ import {
   RequestWithResponseType,
   SSOTOnLoad,
   ServiceWithScopeAndChoice,
+  SignatureHistoryTableRow,
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUserDetails,
@@ -4265,16 +4266,40 @@ export const getTeamMemoSignerList = async (
           user_first_name,
           user_last_name,
           user_job_title,
-          user_avatar
-        ),
-       signature_list: signature_history_user_id(*)
+          user_avatar,
+          signature_list: signature_history_table(*)
+        )
       `
     )
     .eq("team_member_team_id", params.teamId);
 
   if (error) throw error;
 
-  return data;
+  const dataWithType = data as unknown as {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string | null;
+      user_job_title: string | null;
+      user_avatar: string;
+      signature_list: SignatureHistoryTableRow[];
+    };
+  }[];
+
+  const formattedData = dataWithType.map((signer) => {
+    const signatureList = signer.team_member_user.signature_list ?? [];
+    const defaultSignature = signatureList[signatureList.length - 1];
+
+    return {
+      ...signer,
+      signer_signature_public_url: defaultSignature
+        ? defaultSignature.signature_history_value
+        : "",
+    };
+  });
+
+  return formattedData;
 };
 
 // Get memo

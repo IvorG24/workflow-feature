@@ -189,8 +189,7 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
         },
       },
       memo_signer_signature_public_url:
-        selectedSigner.signature_list[selectedSigner.signature_list.length - 1]
-          .signature_history_value,
+        selectedSigner.signer_signature_public_url,
     };
 
     insertSignerItem(selectedSignerList.length, newMemoSigner);

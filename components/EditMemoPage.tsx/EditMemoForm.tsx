@@ -188,7 +188,8 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
           user_id,
         },
       },
-      memo_signer_signature_public_url: "",
+      memo_signer_signature_public_url:
+        selectedSigner.signer_signature_public_url,
     };
 
     insertSignerItem(selectedSignerList.length, newMemoSigner);

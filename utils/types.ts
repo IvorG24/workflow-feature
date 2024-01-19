@@ -1166,7 +1166,7 @@ export type MemoSignerItem = {
     user_job_title: string | null;
     user_avatar: string | null;
   };
-  signature_list: SignatureHistoryTableRow[];
+  signer_signature_public_url: string;
 };
 
 export type MemoLineItem = {

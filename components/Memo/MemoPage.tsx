@@ -442,7 +442,7 @@ const MemoPage = ({ memo }: Props) => {
               )
             }
           >
-            Reference Memo
+            Use Memo As Template
           </Button>
           {memoFormat && (
             <ExportMemoToPdf
