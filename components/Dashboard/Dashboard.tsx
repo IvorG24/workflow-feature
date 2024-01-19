@@ -231,6 +231,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
                   dropdownType="popover"
                   minDate={new Date("2023-01-01")}
                   maxDate={currentDate}
+                  valueFormat="YYYY-MM-DD"
                 />
                 <DatePickerInput
                   label="End Date"
@@ -241,6 +242,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
                   dropdownType="popover"
                   minDate={startDateFilter || new Date()}
                   maxDate={currentDate}
+                  valueFormat="YYYY-MM-DD"
                 />
               </>
             )}

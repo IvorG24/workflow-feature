@@ -217,8 +217,7 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                   <Stack m={0} p={0} spacing={0}>
                     <Text>
                       {commentContent} on{" "}
-                      {`${moment(comment.comment_date_created).format("LTS")} `}
-                      {new Date(comment.comment_date_created).toDateString()}
+                      {new Date(comment.comment_date_created).toISOString()}
                     </Text>
                     <Text color="dimmed" size={12}>
                       {moment(comment.comment_date_created).fromNow()}

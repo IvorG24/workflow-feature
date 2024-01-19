@@ -141,9 +141,7 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
               </Avatar>
             </Tooltip>
             <Tooltip
-              label={moment(form.form_date_created).format(
-                "MMMM Do YYYY, h:mm:ss a"
-              )}
+              label={moment(form.form_date_created).toISOString()}
               openDelay={400}
             >
               <Text size="xs" color="dimmed">

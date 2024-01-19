@@ -91,7 +91,7 @@ const MemoListItemRow = ({ memo }: Props) => {
       </Grid.Col>
 
       <Grid.Col span={1}>
-        <Text>{moment(memo.memo_date_created).format("MMM DD, YYYY")}</Text>
+        <Text>{moment(memo.memo_date_created).format("YYYY-MM-DD")}</Text>
       </Grid.Col>
     </Grid>
   );

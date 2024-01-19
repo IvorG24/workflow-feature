@@ -119,7 +119,7 @@ const ReferenceMemoPreview = ({ data }: Props) => {
         })}
         {memoData({
           label: "Date",
-          value: moment().format("MMMM DD, YYYY"),
+          value: moment().format("YYYY-MM-DD"),
         })}
         {memoData({
           label: "Author",

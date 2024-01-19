@@ -206,7 +206,7 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
       <Group spacing="md" mt="xl">
         <IconCalendar />
         <Text weight={600}>
-          {moment(form.form_date_created).format("MMMM DD, YYYY")}
+          {moment(form.form_date_created).format("YYYY-MM-DD")}
         </Text>
       </Group>
       <Group spacing="md" mt="xl">

@@ -1,4 +1,3 @@
-import { convertTimestampToDateTime } from "@/utils/string";
 import {
   Document,
   Image,
@@ -422,12 +421,7 @@ const OtherExpensesPdfDocumentTableVersion = ({
                       <View style={(styles.tableCell, styles.centerCell)}>
                         {approver.date && (
                           <Text style={styles.cellFontSize}>
-                            {new Date(approver.date).toLocaleDateString()}
-                          </Text>
-                        )}
-                        {approver.date && (
-                          <Text style={styles.cellFontSize}>
-                            {convertTimestampToDateTime(approver.date)?.time}
+                            {new Date(approver.date).toISOString()}
                           </Text>
                         )}
                       </View>

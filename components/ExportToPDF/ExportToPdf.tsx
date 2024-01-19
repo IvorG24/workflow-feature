@@ -32,15 +32,8 @@ Font.register({
   ],
 });
 
-const getReadableDate = (date: string) => {
-  const readableDate = new Date(date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-
-  return readableDate;
-};
+const getReadableDate = (date: string) =>
+  moment(new Date(date)).format("YYYY-MM-DD");
 
 const ExportToPdf = ({
   request,
