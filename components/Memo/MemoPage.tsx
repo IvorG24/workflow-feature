@@ -30,7 +30,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { IconCircleDashed, IconCircleX, IconShare } from "@tabler/icons-react";
 import moment from "moment";
 import { useRouter } from "next/router";
@@ -88,39 +87,15 @@ const renderMemoLineItems = (lineItem: MemoType["memo_line_item_list"][0]) => {
   );
 };
 
-const renderSignerItem = (
-  signerItem: MemoType["memo_signer_list"][0],
-  supabaseClient: SupabaseClient<Database>
-) => {
+const renderSignerItem = (signerItem: MemoType["memo_signer_list"][0]) => {
   const signerUserData = signerItem.memo_signer_team_member.user;
-  const signerSignature =
-    signerItem.memo_signer_team_member.user.user_signature_attachment;
-  let signatureSrc = "";
-
-  if (signerSignature) {
-    const {
-      data: { publicUrl },
-    } = supabaseClient.storage
-      .from("USER_SIGNATURES")
-      .getPublicUrl(signerSignature.attachment_value);
-
-    // check if valid public url
-    const startIndex =
-      publicUrl.indexOf("USER_SIGNATURES/") + "USER_SIGNATURES/".length;
-    const signaturePath = publicUrl.substring(startIndex);
-
-    if (signaturePath !== "null") {
-      signatureSrc = publicUrl;
-      signerItem.signature_public_url = publicUrl;
-    }
-  }
 
   return (
     <Stack key={signerItem.memo_signer_id} spacing={0}>
       <Image
         width={120}
         height={80}
-        src={signatureSrc}
+        src={signerItem.memo_signer_signature_public_url}
         alt="User signature"
         fit="contain"
         withPlaceholder
@@ -531,7 +506,7 @@ const MemoPage = ({ memo }: Props) => {
               <Flex gap={48}>
                 {currentSignedSignerList.map((signer) =>
                   signer.memo_signer_status === "APPROVED"
-                    ? renderSignerItem(signer, supabaseClient)
+                    ? renderSignerItem(signer)
                     : null
                 )}
               </Flex>

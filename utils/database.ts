@@ -766,6 +766,8 @@ export type Database = {
       };
       memo_signer_table: {
         Row: {
+          memo_signer_date_created: string;
+          memo_signer_date_signed: string | null;
           memo_signer_id: string;
           memo_signer_is_primary: boolean;
           memo_signer_memo_id: string;
@@ -774,6 +776,8 @@ export type Database = {
           memo_signer_team_member_id: string;
         };
         Insert: {
+          memo_signer_date_created?: string;
+          memo_signer_date_signed?: string | null;
           memo_signer_id?: string;
           memo_signer_is_primary?: boolean;
           memo_signer_memo_id: string;
@@ -782,6 +786,8 @@ export type Database = {
           memo_signer_team_member_id: string;
         };
         Update: {
+          memo_signer_date_created?: string;
+          memo_signer_date_signed?: string | null;
           memo_signer_id?: string;
           memo_signer_is_primary?: boolean;
           memo_signer_memo_id?: string;
@@ -1987,41 +1993,6 @@ export type Database = {
           }
         ];
       };
-      user_onboard_table: {
-        Row: {
-          user_onboard_date_created: string;
-          user_onboard_id: string;
-          user_onboard_name: string;
-          user_onboard_score: number;
-          user_onboard_top_score: number;
-          user_onboard_user_id: string;
-        };
-        Insert: {
-          user_onboard_date_created?: string;
-          user_onboard_id?: string;
-          user_onboard_name: string;
-          user_onboard_score: number;
-          user_onboard_top_score: number;
-          user_onboard_user_id: string;
-        };
-        Update: {
-          user_onboard_date_created?: string;
-          user_onboard_id?: string;
-          user_onboard_name?: string;
-          user_onboard_score?: number;
-          user_onboard_top_score?: number;
-          user_onboard_user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_onboard_table_user_onboard_user_id_fkey";
-            columns: ["user_onboard_user_id"];
-            isOneToOne: false;
-            referencedRelation: "user_table";
-            referencedColumns: ["user_id"];
-          }
-        ];
-      };
       user_table: {
         Row: {
           user_active_app: string;
@@ -2075,6 +2046,90 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "attachment_table";
             referencedColumns: ["attachment_id"];
+          }
+        ];
+      };
+      user_valid_id_table: {
+        Row: {
+          user_valid_id_approver: string | null;
+          user_valid_id_back_image_url: string | null;
+          user_valid_id_barangay: string;
+          user_valid_id_city: string;
+          user_valid_id_date_created: string;
+          user_valid_id_date_updated: string | null;
+          user_valid_id_first_name: string;
+          user_valid_id_front_image_url: string;
+          user_valid_id_gender: string;
+          user_valid_id_house_and_street: string;
+          user_valid_id_id: string;
+          user_valid_id_last_name: string;
+          user_valid_id_middle_name: string;
+          user_valid_id_nationality: string;
+          user_valid_id_number: string;
+          user_valid_id_province: string;
+          user_valid_id_status: string;
+          user_valid_id_type: string;
+          user_valid_id_user_id: string;
+          user_valid_id_zip_code: string;
+        };
+        Insert: {
+          user_valid_id_approver?: string | null;
+          user_valid_id_back_image_url?: string | null;
+          user_valid_id_barangay: string;
+          user_valid_id_city: string;
+          user_valid_id_date_created?: string;
+          user_valid_id_date_updated?: string | null;
+          user_valid_id_first_name: string;
+          user_valid_id_front_image_url: string;
+          user_valid_id_gender: string;
+          user_valid_id_house_and_street: string;
+          user_valid_id_id?: string;
+          user_valid_id_last_name: string;
+          user_valid_id_middle_name: string;
+          user_valid_id_nationality: string;
+          user_valid_id_number: string;
+          user_valid_id_province: string;
+          user_valid_id_status: string;
+          user_valid_id_type: string;
+          user_valid_id_user_id: string;
+          user_valid_id_zip_code: string;
+        };
+        Update: {
+          user_valid_id_approver?: string | null;
+          user_valid_id_back_image_url?: string | null;
+          user_valid_id_barangay?: string;
+          user_valid_id_city?: string;
+          user_valid_id_date_created?: string;
+          user_valid_id_date_updated?: string | null;
+          user_valid_id_first_name?: string;
+          user_valid_id_front_image_url?: string;
+          user_valid_id_gender?: string;
+          user_valid_id_house_and_street?: string;
+          user_valid_id_id?: string;
+          user_valid_id_last_name?: string;
+          user_valid_id_middle_name?: string;
+          user_valid_id_nationality?: string;
+          user_valid_id_number?: string;
+          user_valid_id_province?: string;
+          user_valid_id_status?: string;
+          user_valid_id_type?: string;
+          user_valid_id_user_id?: string;
+          user_valid_id_zip_code?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_valid_id_table_user_valid_id_approver_fkey";
+            columns: ["user_valid_id_approver"];
+            isOneToOne: false;
+            referencedRelation: "user_table";
+            referencedColumns: ["user_id"];
+          },
+          {
+            foreignKeyName: "user_valid_id_table_user_valid_id_user_id_fkey";
+            columns: ["user_valid_id_user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_table";
+            referencedColumns: ["user_id"];
           }
         ];
       };

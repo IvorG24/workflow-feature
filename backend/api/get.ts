@@ -4430,7 +4430,7 @@ export const getMemoFormat = async (
   };
 
   return formatData;
-}
+};
 // Get type list
 export const getTypeList = async (
   supabaseClient: SupabaseClient<Database>,

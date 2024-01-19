@@ -192,13 +192,6 @@ export type TicketCommentTableInsert =
 export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
 
-export type UserOnboardTableRow =
-  Database["public"]["Tables"]["user_onboard_table"]["Row"];
-export type UserOnboardTableInsert =
-  Database["public"]["Tables"]["user_onboard_table"]["Insert"];
-export type UserOnboardTableUpdate =
-  Database["public"]["Tables"]["user_onboard_table"]["Update"];
-
 export type ServiceCategoryTableRow =
   Database["public"]["Tables"]["service_category_table"]["Row"];
 export type ServiceCategoryTableInsert =
@@ -252,6 +245,9 @@ export type OtherExpensesTypeTableInsert =
   Database["public"]["Tables"]["other_expenses_type_table"]["Insert"];
 export type OtherExpensesTypeTableUpdate =
   Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
+
+export type SignatureHistoryTableRow =
+  Database["public"]["Tables"]["signature_history_table"]["Row"];
 
 // End: Database Table Types
 
@@ -1187,16 +1183,12 @@ export type MemoType = MemoTableRow & {
   memo_status: string;
   memo_date_updated: string;
 } & {
-  memo_signer_list: (MemoSignerTableRow & { signature_public_url: string } & {
+  memo_signer_list: (MemoSignerTableRow & {
     memo_signer_team_member: {
       team_member_id: string;
-      user: UserTableRow & {
-        user_signature_attachment?: {
-          user_signature_attachment_id: string;
-          attachment_value: string;
-        };
-      };
+      user: UserTableRow;
     };
+    memo_signer_signature_public_url: string;
   })[];
 } & {
   memo_line_item_list: (MemoLineItemTableRow & {
@@ -1231,7 +1223,7 @@ export type EditMemoType = MemoTableRow & {
   memo_status: string;
   memo_date_updated: string;
 } & {
-  memo_signer_list: (MemoSignerTableRow & { signature_public_url?: string } & {
+  memo_signer_list: (MemoSignerTableRow & {
     memo_signer_team_member?: {
       team_member_id: string;
       user: {
@@ -1240,13 +1232,9 @@ export type EditMemoType = MemoTableRow & {
         user_avatar: string | null;
         user_job_title: string | null;
         user_id: string;
-      } & {
-        user_signature_attachment?: {
-          user_signature_attachment_id: string;
-          attachment_value: string;
-        };
       };
     };
+    memo_signer_signature_public_url: string;
   })[];
 } & {
   memo_line_item_list: (MemoLineItemTableRow & {
@@ -1275,22 +1263,12 @@ export type EditMemoType = MemoTableRow & {
 export type ReferenceMemoType = MemoTableRow & {
   memo_author_user: UserTableRow;
 } & {
-  memo_signer_list: (MemoSignerTableRow & { signature_public_url?: string } & {
+  memo_signer_list: (MemoSignerTableRow & {
     memo_signer_team_member?: {
       team_member_id: string;
-      user: {
-        user_first_name: string;
-        user_last_name: string;
-        user_avatar: string | null;
-        user_job_title: string | null;
-        user_id: string;
-      } & {
-        user_signature_attachment?: {
-          user_signature_attachment_id: string;
-          attachment_value: string;
-        };
-      };
+      user: UserTableRow;
     };
+    memo_signer_signature_public_url: string;
   })[];
 } & {
   memo_line_item_list: (MemoLineItemTableRow & {

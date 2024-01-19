@@ -176,6 +176,8 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
       memo_signer_id: uuidv4(),
       memo_signer_memo_id: getValues("memo_id"),
       memo_signer_order: selectedSignerList.length + 1,
+      memo_signer_date_created: `${new Date()}`,
+      memo_signer_date_signed: "",
       memo_signer_team_member: {
         team_member_id: selectedSigner.team_member_id,
         user: {
@@ -184,12 +186,9 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
           user_avatar,
           user_job_title,
           user_id,
-          user_signature_attachment: {
-            user_signature_attachment_id: `${selectedSigner.team_member_user.user_signature_attachment?.attachment_id}`,
-            attachment_value: `${selectedSigner.team_member_user.user_signature_attachment?.attachment_value}`,
-          },
         },
       },
+      memo_signer_signature_public_url: "",
     };
 
     insertSignerItem(selectedSignerList.length, newMemoSigner);
