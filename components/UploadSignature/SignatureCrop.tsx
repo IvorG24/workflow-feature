@@ -66,8 +66,8 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
             image={fileUrl}
             crop={crop}
             zoom={zoom}
-            cropSize={{ height: 166.67, width: 250 }}
-            aspect={3 / 2}
+            cropSize={{ height: 200, width: 250 }}
+            aspect={1.25 / 1}
             onCropChange={setCrop}
             onCropComplete={onCropComplete}
             onZoomChange={setZoom}
