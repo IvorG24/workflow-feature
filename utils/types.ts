@@ -246,6 +246,13 @@ export type OtherExpensesTypeTableInsert =
 export type OtherExpensesTypeTableUpdate =
   Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
 
+export type UserValidIDTableRow =
+  Database["public"]["Tables"]["user_valid_id_table"]["Row"];
+export type UserValidIDTableInsert =
+  Database["public"]["Tables"]["user_valid_id_table"]["Insert"];
+export type UserValidIDTableUpdate =
+  Database["public"]["Tables"]["user_valid_id_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -254,6 +261,7 @@ export type MemberRoleType = "OWNER" | "APPROVER" | "MEMBER" | "ADMIN";
 export type AttachmentBucketType =
   | "USER_AVATARS"
   | "USER_SIGNATURES"
+  | "USER_VALID_IDS"
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS"
@@ -970,6 +978,7 @@ export type TeamMemberOnLoad = {
   member: TeamMemberTableRow & {
     team_member_user: UserTableRow & { user_employee_number: string };
   };
+  userValidId: UserValidIDTableRow;
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -1334,4 +1343,12 @@ export type MemoFormatType = {
 
 export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
   other_expenses_category: string;
+};
+
+export type UserValidIdWithUser = Omit<
+  UserValidIDTableRow,
+  "user_valid_id_user_id" | "user_valid_id_approver"
+> & {
+  user_valid_id_user_id: UserTableRow;
+  user_valid_id_approver: UserTableRow;
 };

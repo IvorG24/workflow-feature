@@ -39,6 +39,7 @@ import {
   TicketTableRow,
   UserTableInsert,
   UserTableRow,
+  UserValidIDTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -1259,5 +1260,19 @@ export const createRowInOtherExpensesTypeTable = async (
     .single();
   if (error) throw error;
 
+  return data;
+};
+
+// Create Valid ID
+export const createValidID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: UserValidIDTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_valid_id_table")
+    .insert(params)
+    .select()
+    .single();
+  if (error) throw error;
   return data;
 };
