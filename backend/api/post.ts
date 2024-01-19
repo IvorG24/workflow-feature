@@ -37,7 +37,6 @@ import {
   TeamTableInsert,
   TicketCommentTableInsert,
   TicketTableRow,
-  UserOnboardTableInsert,
   UserTableInsert,
   UserTableRow,
   UserValidIDTableInsert,
@@ -108,7 +107,7 @@ export const uploadFile = async (
 // Create User
 export const createUser = async (
   supabaseClient: SupabaseClient<Database>,
-  params: UserTableInsert
+  params: UserTableInsert & { user_employee_number: string }
 ) => {
   const { user_phone_number } = params;
 
@@ -979,23 +978,6 @@ export const createTicketComment = async (
   if (error) throw error;
 
   return { data, error };
-};
-
-// Create onboard
-export const createOnboard = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    onboardData: UserOnboardTableInsert;
-  }
-) => {
-  const { onboardData } = params;
-  const { data, error } = await supabaseClient
-    .from("user_onboard_table")
-    .insert(onboardData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
 };
 
 // Create row in lookup table

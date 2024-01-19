@@ -44,6 +44,7 @@ type OnboardUserParams = {
   user_avatar: string;
   user_phone_number: string;
   user_job_title: string;
+  user_employee_number: string;
   user_id_type: string;
   user_id_number: string;
   user_id_first_name: string;
@@ -109,6 +110,7 @@ const OnboardingPage = ({ user }: Props) => {
         user_job_title: data.user_job_title.trim(),
         user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
+        user_employee_number: data.user_employee_number.trim(),
       });
 
       let idFrontImage = "";
@@ -147,7 +149,6 @@ const OnboardingPage = ({ user }: Props) => {
         user_valid_id_back_image_url: idBackImage,
       });
 
-      // create user goverment id
       const pendingInvitation = await getUserPendingInvitation(supabaseClient, {
         userEmail: data.user_email,
       });
@@ -289,6 +290,24 @@ const OnboardingPage = ({ user }: Props) => {
               error={errors.user_last_name?.message}
               mt="sm"
               data-cy="onboarding-input-last-name"
+            />
+
+            <Controller
+              control={control}
+              name="user_employee_number"
+              render={({ field: { onChange } }) => (
+                <NumberInput
+                  label="Employee Number"
+                  onChange={onChange}
+                  error={errors.user_employee_number?.message}
+                />
+              )}
+              rules={{
+                required: {
+                  value: true,
+                  message: "Employee number is required",
+                },
+              }}
             />
 
             <Text size="lg" mt="lg" fw="bold">

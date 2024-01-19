@@ -267,7 +267,6 @@ const MemoListPage = ({
                 }
                 miw={250}
                 maw={320}
-                className="onboarding-request-list-filters-status"
               />
             )}
           />
@@ -394,7 +393,6 @@ const MemoListPage = ({
           onChange={setActivePage}
           total={Math.ceil(memoListCount / DEFAULT_REQUEST_LIST_LIMIT)}
           mt="xl"
-          className="onboarding-request-list-pagination"
         />
       </Flex>
 

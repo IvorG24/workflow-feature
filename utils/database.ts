@@ -1987,41 +1987,6 @@ export interface Database {
           }
         ]
       }
-      user_onboard_table: {
-        Row: {
-          user_onboard_date_created: string
-          user_onboard_id: string
-          user_onboard_name: string
-          user_onboard_score: number
-          user_onboard_top_score: number
-          user_onboard_user_id: string
-        }
-        Insert: {
-          user_onboard_date_created?: string
-          user_onboard_id?: string
-          user_onboard_name: string
-          user_onboard_score: number
-          user_onboard_top_score: number
-          user_onboard_user_id: string
-        }
-        Update: {
-          user_onboard_date_created?: string
-          user_onboard_id?: string
-          user_onboard_name?: string
-          user_onboard_score?: number
-          user_onboard_top_score?: number
-          user_onboard_user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_onboard_table_user_onboard_user_id_fkey"
-            columns: ["user_onboard_user_id"]
-            isOneToOne: false
-            referencedRelation: "user_table"
-            referencedColumns: ["user_id"]
-          }
-        ]
-      }
       user_table: {
         Row: {
           user_active_app: string

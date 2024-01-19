@@ -439,20 +439,6 @@ CREATE TABLE user_employee_number_table (
 
 -- END: User employee number table
 
--- Start: User onboard table
-
-CREATE TABLE user_onboard_table(
-  user_onboard_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  user_onboard_name VARCHAR(4000) NOT NULL,
-  user_onboard_score INT NOT NULL,
-  user_onboard_top_score INT NOT NULL,
-
-  user_onboard_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  user_onboard_user_id UUID REFERENCES user_table(user_id) NOT NULL
-);
-
--- END: User onboard table
-
 -- Start: Service category table
 
 CREATE TABLE service_category_table(
@@ -1004,7 +990,8 @@ RETURNS JSON AS $$
       user_avatar,
       user_phone_number,
       user_job_title,
-      user_active_team_id
+      user_active_team_id,
+      user_employee_number
     } = input_data;
 
     if(user_active_team_id){
@@ -1016,6 +1003,7 @@ RETURNS JSON AS $$
 
     if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
+    plv8.execute(`INSERT INTO user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
  });
  return user_data;
 $$ LANGUAGE plv8;
@@ -9626,11 +9614,19 @@ ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_onboard_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signature_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE service_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_signer_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_line_item_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_line_item_attachment_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_date_updated_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_status_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_agreement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_format_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_valid_id_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
@@ -9789,11 +9785,6 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_fie
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_onboard_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON user_onboard_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_onboard_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own onboard" ON user_onboard_table;
-
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_employee_number_table;
@@ -9812,6 +9803,35 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON service_category_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_category_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_category_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_table;
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_table;
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_signer_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_line_item_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_line_item_attachment_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_date_updated_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_date_updated_table;
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_date_updated_table;
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_date_updated_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_status_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_status_table;
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_status_table;
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_status_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_read_receipt_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_read_receipt_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_agreement_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_agreement_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_valid_id_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_valid_id_table;
@@ -11315,34 +11335,6 @@ USING (
     WHERE user_id = user_employee_number_user_id
   )
 );
-
---- USER_ONBOARD_TABLE
-CREATE POLICY "Allow CREATE access for all users" ON "public"."user_onboard_table"
-AS PERMISSIVE FOR INSERT
-TO authenticated
-WITH CHECK (true);
-
-CREATE POLICY "Allow READ for anon users" ON "public"."user_onboard_table"
-AS PERMISSIVE FOR SELECT
-USING (true);
-
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."user_onboard_table"
-AS PERMISSIVE FOR UPDATE
-TO authenticated 
-USING(true)
-WITH CHECK (true);
-
-CREATE POLICY "Allow DELETE for authenticated users on own onboard" ON "public"."user_onboard_table"
-AS PERMISSIVE FOR DELETE
-TO authenticated
-USING (
-  user_onboard_user_id IN (
-    SELECT user_onboard_user_id  
-    FROM user_onboard_table 
-    WHERE user_onboard_user_id = auth.uid()
-  )
-);
-
 --- USER_NAME_HISTORY_TABLE
 CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_name_history_table"
 AS PERMISSIVE FOR INSERT
@@ -11448,6 +11440,133 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
+
+-- memo_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for auth users" ON "public"."memo_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  memo_author_user_id = auth.uid()
+);
+
+-- memo_signer_table
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_signer_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+-- memo_line_item_table
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_line_item_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+-- memo_line_item_attachment_table
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_line_item_attachment_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+-- memo_date_updated_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_date_updated_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_date_updated_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for auth users" ON "public"."memo_date_updated_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_date_updated_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM memo_table
+    WHERE memo_id = memo_date_updated_memo_id
+    AND memo_author_user_id = auth.uid()
+  )
+);
+
+-- memo_status_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_status_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_status_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for auth users" ON "public"."memo_status_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_status_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM memo_table
+    WHERE memo_id = memo_status_memo_id
+    AND memo_author_user_id = auth.uid()
+  )
+);
+
+-- memo_read_receipt_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_read_receipt_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_read_receipt_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+-- memo_agreement_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_agreement_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_agreement_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+-- memo_format_table
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
 
 --- USER_VALID_ID_TABLE
 
