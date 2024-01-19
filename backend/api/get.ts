@@ -2657,7 +2657,7 @@ export const getTeamGroupMemberList = async (
             user_email
           ),
           team_member_project: team_project_member_table(
-            team_project: team_project_id(team_project_name)
+            team_project: team_project_id!inner(team_project_name)
           )
         )
       `,
