@@ -4495,6 +4495,8 @@ export const getOtherExpensesCategoryOptions = async (
     .from("other_expenses_category_table")
     .select("*")
     .eq("other_expenses_category_team_id", teamId)
+    .eq("other_expenses_category_is_disabled", false)
+    .eq("other_expenses_category_is_available", true)
     .order("other_expenses_category", { ascending: true });
   if (error) throw error;
   return data;
