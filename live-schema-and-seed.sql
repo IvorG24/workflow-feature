@@ -8713,17 +8713,23 @@ RETURNS JSON AS $$
       const signatureList = row.signature_list || [];
       const defaultSignature = signatureList[signatureList.length - 1];
 
-      const signatureMatch = signatureList.find(signature => {
-        if (!signature) {
-          return false;
-        }
+      const sortedSignatures = signatureList.slice().sort((a, b) => {
+        const aTime = new Date(a.signature_history_date_created).getTime();
+        const bTime = new Date(b.signature_history_date_created).getTime();
+        return aTime - bTime;
+      });
 
-        const signatureDateCreatedTime = new Date(
-          signature.signature_history_date_created
-        ).getTime();
-        const signedDate = new Date(row.memo_signer_date_signed).getTime();
+      const signedDate = new Date(row.memo_signer_date_signed).getTime();
 
-        return signedDate <= signatureDateCreatedTime;
+      const signatureMatch = sortedSignatures.find((signature, index) => {
+          if (!signature) {
+              return false;
+          }
+          const signatureDateCreatedTime = new Date(signature.signature_history_date_created).getTime();
+          const nextSignatureDateCreatedTime = index < sortedSignatures.length - 1
+              ? new Date(sortedSignatures[index + 1].signature_history_date_created).getTime()
+              : 0;
+          return signedDate >= signatureDateCreatedTime && signedDate < nextSignatureDateCreatedTime;
       });
 
       if (signatureMatch) {
@@ -8751,7 +8757,8 @@ RETURNS JSON AS $$
             user_job_title: row.user_job_title
           }
         },
-        memo_signer_signature_public_url: signature_public_url
+        memo_signer_signature_public_url: signature_public_url,
+        signatureList
       };
       return newSignerData;
     });
@@ -8935,7 +8942,9 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO memo_line_item_table (memo_line_item_id, memo_line_item_content, memo_line_item_order, memo_line_item_memo_id) VALUES ${memoLineItemTableValues}`);
 
-    plv8.execute(`INSERT INTO memo_line_item_attachment_table (memo_line_item_attachment_name,memo_line_item_attachment_caption,memo_line_item_attachment_storage_bucket,memo_line_item_attachment_public_url,memo_line_item_attachment_line_item_id) VALUES ${memoLineItemAttachmentTableValues}`);
+    if (memoLineItemAttachmentTableValues) {
+      plv8.execute(`INSERT INTO memo_line_item_attachment_table (memo_line_item_attachment_name,memo_line_item_attachment_caption,memo_line_item_attachment_storage_bucket,memo_line_item_attachment_public_url,memo_line_item_attachment_line_item_id) VALUES ${memoLineItemAttachmentTableValues}`);
+    }
  });
 $$ LANGUAGE plv8;
 
@@ -9006,22 +9015,7 @@ RETURNS JSON AS $$
       const signatureList = row.signature_list || [];
       const defaultSignature = signatureList[signatureList.length - 1];
 
-      const signatureMatch = signatureList.find(signature => {
-        if (!signature) {
-          return false;
-        }
-
-        const signatureDateCreatedTime = new Date(
-          signature.signature_history_date_created
-        ).getTime();
-        const signedDate = new Date(row.memo_signer_date_signed).getTime();
-
-        return signedDate <= signatureDateCreatedTime;
-      });
-
-      if (signatureMatch && row.memo_signer_date_signed) {
-        signature_public_url = signatureMatch.signature_history_value;
-      } else {
+      if (defaultSignature) {
         signature_public_url = defaultSignature
           ? defaultSignature.signature_history_value
           : "";
@@ -9095,8 +9089,7 @@ RETURNS JSON AS $$
       memo_author_user_id,
       memoSignerTableValues,
       memoLineItemTableValues,
-      memoLineItemAttachmentTableValues,
-      memoLineItemIdFilter
+      memoLineItemAttachmentTableValues
     } = input_data;
 
     const memo_count = plv8.execute(`
@@ -9156,20 +9149,22 @@ RETURNS JSON AS $$
       VALUES ${memoLineItemTableValues}
     `);
 
-    plv8.execute(`
-      INSERT INTO memo_line_item_attachment_table (
-        memo_line_item_attachment_name,
-        memo_line_item_attachment_caption,
-        memo_line_item_attachment_storage_bucket,
-        memo_line_item_attachment_public_url,
-        memo_line_item_attachment_line_item_id
-      ) 
-      VALUES ${memoLineItemAttachmentTableValues}
-    `);
+    if (memoLineItemAttachmentTableValues) {
+      plv8.execute(`
+        INSERT INTO memo_line_item_attachment_table (
+          memo_line_item_attachment_name,
+          memo_line_item_attachment_caption,
+          memo_line_item_attachment_storage_bucket,
+          memo_line_item_attachment_public_url,
+          memo_line_item_attachment_line_item_id
+        ) 
+        VALUES ${memoLineItemAttachmentTableValues}
+      `);
+    }
+    ;
   });
   return new_memo_data;
 $$ LANGUAGE plv8;
-
 
 -- End: memo queries
 
