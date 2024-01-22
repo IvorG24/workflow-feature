@@ -1263,6 +1263,7 @@ export const ITEM_UNIT_CHOICES = [
   "Linear Meter",
   "Newton Meter",
   "Gallon Per Minute",
+  "Centistoke",
 ];
 
 export const REQUISITION_FIELDS_ORDER = [
