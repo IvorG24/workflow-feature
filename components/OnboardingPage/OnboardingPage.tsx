@@ -323,7 +323,7 @@ const OnboardingPage = ({ user }: Props) => {
                   max={9999999999}
                   onChange={onChange}
                   error={errors.user_phone_number?.message}
-                  mt="xs"
+                  mt="sm"
                 />
               )}
             />
@@ -337,6 +337,7 @@ const OnboardingPage = ({ user }: Props) => {
                   onChange={onChange}
                   hideControls
                   error={errors.user_employee_number?.message}
+                  mt="sm"
                 />
               )}
               rules={{
@@ -666,6 +667,7 @@ const OnboardingPage = ({ user }: Props) => {
                   label="Front ID image"
                   accept="image/png,image/jpeg"
                   error={errors.user_id_front_image?.message}
+                  mt="sm"
                 />
               )}
             />
@@ -687,6 +689,7 @@ const OnboardingPage = ({ user }: Props) => {
                     label="Back ID image"
                     accept="image/png,image/jpeg"
                     error={errors.user_id_back_image?.message}
+                    mt="sm"
                   />
                 )}
               />
