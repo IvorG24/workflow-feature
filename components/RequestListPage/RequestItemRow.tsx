@@ -60,11 +60,7 @@ const RequestItemRow = ({ request }: Props) => {
             </Anchor>
           </Text>
 
-          <CopyButton
-            value={`${window.location.origin}/${formatTeamNameToUrlKey(
-              activeTeam.team_name ?? ""
-            )}/requests/${requestId}`}
-          >
+          <CopyButton>
             {({ copied, copy }) => (
               <Tooltip
                 label={
