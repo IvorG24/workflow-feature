@@ -135,8 +135,7 @@ const MemoListPage = ({
 
       setMemoList(data);
       setMemoListCount(count || 0);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -171,8 +170,7 @@ const MemoListPage = ({
 
       setMemoList(data);
       setMemoListCount(count || 0);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

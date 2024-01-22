@@ -108,7 +108,7 @@ const CreateTicketPage = ({ member }: Props) => {
             </Stack>
             <Stack spacing={4}>
               <Title order={5}>Date</Title>
-              <Text>{moment().format("MMM DD, YYYY")}</Text>
+              <Text>{moment().format("YYYY-MM-DD")}</Text>
             </Stack>
           </Group>
           <Divider />

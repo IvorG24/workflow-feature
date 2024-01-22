@@ -567,6 +567,7 @@ const RequestFormFields = ({
                       : new Date()
                     : undefined
                 }
+                valueFormat="YYYY-MM-DD"
               />
             )}
             rules={{

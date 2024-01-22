@@ -311,8 +311,7 @@ const MemoPage = ({ memo }: Props) => {
         setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
         setHasUserAgreedToMemo(true);
       }
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to sign the memo",
         color: "red",
@@ -349,8 +348,7 @@ const MemoPage = ({ memo }: Props) => {
         setCurrentAgreementList((prev) => [...prev, newUserAgreementData]);
         setHasUserAgreedToMemo(true);
       }
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to agree to memo",
         color: "red",
@@ -469,7 +467,7 @@ const MemoPage = ({ memo }: Props) => {
           })}
           {renderMemoDetails({
             label: "Date",
-            value: moment(memo.memo_date_created).format("MMMM DD, YYYY"),
+            value: moment(memo.memo_date_created).format("YYYY-MM-DD"),
           })}
           {renderMemoDetails({
             label: "Author",

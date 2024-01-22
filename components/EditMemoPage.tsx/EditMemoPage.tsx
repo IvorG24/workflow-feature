@@ -112,8 +112,7 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
       router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${data.memo_id}`
       );
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to create memo",
         color: "red",

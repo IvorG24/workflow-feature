@@ -125,6 +125,14 @@ const CreateRequisitionRequestPage = ({
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
+    if (isFetchingSigner) {
+      notifications.show({
+        message: "Wait until all signers are fetched before submitting.",
+        color: "orange",
+      });
+      return;
+    }
+
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -494,6 +502,7 @@ const CreateRequisitionRequestPage = ({
         resetSigner();
       }
     } catch (e) {
+      setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

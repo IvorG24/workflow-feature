@@ -151,7 +151,7 @@ const TicketListItem = ({ ticket }: Props) => {
       </Grid.Col>
       <Grid.Col span="content">
         <Text miw={105}>
-          {moment(ticket.ticket_date_created).format("MMM DD, YYYY")}
+          {moment(ticket.ticket_date_created).format("YYYY-MM-DD")}
         </Text>
       </Grid.Col>
       <Grid.Col span="content">

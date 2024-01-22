@@ -72,8 +72,8 @@ const RequestStatistics = ({
     setChartData(newChartData);
   };
 
-  const startDate = moment(startDateFilter).format("MMM DD, YYYY");
-  const endDate = moment(endDateFilter).format("MMM DD, YYYY");
+  const startDate = moment(startDateFilter).format("YYYY-MM-DD");
+  const endDate = moment(endDateFilter).format("YYYY-MM-DD");
   const xAxisChartLabel =
     startDate === endDate ? startDate : `${startDate} - ${endDate}`;
 

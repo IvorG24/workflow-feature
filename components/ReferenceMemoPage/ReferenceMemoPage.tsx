@@ -117,8 +117,7 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
           newMemo.memo_id
         }`
       );
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to create memo",
         color: "red",

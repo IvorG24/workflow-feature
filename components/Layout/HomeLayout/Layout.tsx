@@ -1,5 +1,7 @@
 import { AppShell, useMantineTheme } from "@mantine/core";
-import { useState } from "react";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 import Footer from "./Footer";
 import Header from "./Header/Header";
 import Navbar from "./Navbar/Navbar";
@@ -11,6 +13,14 @@ type LayoutProps = {
 const Layout = ({ children }: LayoutProps) => {
   const theme = useMantineTheme();
   const [openNavbar, setOpenNavbar] = useState(false);
+  const user = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.push("/userActiveTeam");
+    }
+  }, [user]);
 
   return (
     <AppShell
