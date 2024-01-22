@@ -4,7 +4,7 @@ import {
   checkRIRItemQuantity,
   checkROItemQuantity,
   checkTransferReceiptItemQuantity,
-  getFileUrl,
+  getUserSignatureList,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
@@ -105,11 +105,36 @@ const RequestPage = ({
               signer.request_signer_signer.signer_team_member.team_member_user
                 .user_signature_attachment_id
             ) {
-              signatureUrl = await getFileUrl(supabaseClient, {
-                path: signer.request_signer_signer.signer_team_member
-                  .team_member_user.user_signature_attachment_id,
-                bucket: "USER_SIGNATURES",
+              const signatureList = await getUserSignatureList(supabaseClient, {
+                userId:
+                  signer.request_signer_signer.signer_team_member
+                    .team_member_user.user_id,
               });
+
+              const defaultSignature = signatureList[signatureList.length - 1];
+
+              const signatureMatch = signatureList.find((signature) => {
+                if (!signature) {
+                  return false;
+                }
+
+                const signatureDateCreatedTime = new Date(
+                  signature.signature_history_date_created
+                ).getTime();
+                const signedDate = new Date(
+                  `${signer.request_signer_status_date_updated}`
+                ).getTime();
+
+                return signedDate <= signatureDateCreatedTime;
+              });
+
+              if (signatureMatch && signer.request_signer_status_date_updated) {
+                signatureUrl = signatureMatch.signature_history_value;
+              } else {
+                signatureUrl = defaultSignature
+                  ? defaultSignature.signature_history_value
+                  : "";
+              }
             }
 
             return {

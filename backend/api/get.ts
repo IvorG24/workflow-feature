@@ -4543,3 +4543,20 @@ export const getTypeOptions = async (
   if (error) throw error;
   return data;
 };
+
+// Get user signature list
+export const getUserSignatureList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { userId } = params;
+  const { data, error } = await supabaseClient
+    .from("signature_history_table")
+    .select("*")
+    .eq("signature_history_user_id", userId);
+
+  if (error) throw error;
+  return data;
+};
