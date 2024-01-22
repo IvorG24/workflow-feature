@@ -545,7 +545,6 @@ export const approveOrRejectMemo = async (
       .from("memo_status_table")
       .update({ memo_status: action })
       .eq("memo_status_memo_id", memoId);
-    console.log(error);
     if (error) throw Error;
   }
 
