@@ -114,45 +114,24 @@ const RequestPage = ({
 
               const defaultSignature = signatureList[signatureList.length - 1];
 
-              const sortedSignatures = signatureList.slice().sort((a, b) => {
-                const aTime = new Date(
-                  a.signature_history_date_created
-                ).getTime();
-                const bTime = new Date(
-                  b.signature_history_date_created
-                ).getTime();
-                return aTime - bTime;
-              });
-
               const signedDate = new Date(
                 `${signer.request_signer_status_date_updated}`
               ).getTime();
 
-              const signatureMatch = sortedSignatures.find(
-                (signature, index) => {
-                  if (!signature) {
-                    return false;
-                  }
-
-                  const signatureDateCreatedTime = new Date(
-                    signature.signature_history_date_created
-                  ).getTime();
-
-                  const nextSignatureDateCreatedTime =
-                    index < sortedSignatures.length - 1
-                      ? new Date(
-                          sortedSignatures[
-                            index + 1
-                          ].signature_history_date_created
-                        ).getTime()
-                      : 0;
-
-                  return (
-                    signedDate >= signatureDateCreatedTime &&
-                    signedDate < nextSignatureDateCreatedTime
-                  );
+              const signatureMatch = signatureList.find((signature, index) => {
+                if (!signature) {
+                  return false;
                 }
-              );
+
+                const nextSignatureDateCreatedTime =
+                  index < signatureList.length - 1
+                    ? new Date(
+                        signatureList[index + 1].signature_history_date_created
+                      ).getTime()
+                    : 0;
+
+                return signedDate < nextSignatureDateCreatedTime;
+              });
 
               if (signatureMatch) {
                 signatureUrl = signatureMatch.signature_history_value;
