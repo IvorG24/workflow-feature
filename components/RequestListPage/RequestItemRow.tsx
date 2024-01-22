@@ -60,7 +60,13 @@ const RequestItemRow = ({ request }: Props) => {
             </Anchor>
           </Text>
 
-          <CopyButton value="temp">
+          <CopyButton
+            value={`${
+              process.env.NEXT_PUBLIC_SITE_URL
+            }/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/requests/${requestId}`}
+          >
             {({ copied, copy }) => (
               <Tooltip
                 label={
