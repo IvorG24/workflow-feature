@@ -273,6 +273,17 @@ const ItemList = ({
                 >
                   User Issued Items
                 </Menu.Item>
+                <Menu.Item
+                  onClick={() =>
+                    router.push(
+                      `/${formatTeamNameToUrlKey(
+                        activeTeam.team_name
+                      )}/common-queries`
+                    )
+                  }
+                >
+                  Common Queries
+                </Menu.Item>
               </Menu.Dropdown>
             </Menu>
             {checkList.length !== 0 ? (

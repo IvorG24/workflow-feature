@@ -32,7 +32,7 @@ type Props = {
   queryList: QueryTableRow[];
 };
 
-const SLAPage = ({ queryList }: Props) => {
+const CommonQueriesPage = ({ queryList }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
@@ -97,7 +97,7 @@ const SLAPage = ({ queryList }: Props) => {
     <Container>
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
 
-      <Title order={2}>SLA</Title>
+      <Title order={2}>Common Queries</Title>
 
       <Select
         width="100%"
@@ -198,4 +198,4 @@ const SLAPage = ({ queryList }: Props) => {
   );
 };
 
-export default SLAPage;
+export default CommonQueriesPage;

@@ -1,6 +1,6 @@
 import { getQueryList } from "@/backend/api/get";
+import CommonQueriesPage from "@/components/CommonQueriesPage/CommonQueriesPage";
 import Meta from "@/components/Meta/Meta";
-import SLAPage from "@/components/SLAPage/SLAPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { QueryTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -33,7 +33,7 @@ const Page = ({ queryList }: Props) => {
   return (
     <>
       <Meta description="SLA Page" url="/{teamName}/requests/sla" />
-      <SLAPage queryList={queryList} />
+      <CommonQueriesPage queryList={queryList} />
     </>
   );
 };
