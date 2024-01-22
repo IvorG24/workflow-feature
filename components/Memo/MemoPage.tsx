@@ -89,7 +89,6 @@ const renderMemoLineItems = (lineItem: MemoType["memo_line_item_list"][0]) => {
 
 const renderSignerItem = (signerItem: MemoType["memo_signer_list"][0]) => {
   const signerUserData = signerItem.memo_signer_team_member.user;
-
   return (
     <Stack key={signerItem.memo_signer_id} spacing={0}>
       <Image

@@ -102,7 +102,7 @@ const MemoPreview = ({ data }: Props) => {
 
         <Space mt="xl" />
         {signerListPreview.length > 0 && (
-          <Flex gap={48}>
+          <Flex gap={48} wrap="wrap">
             {signerListPreview.map((signer) => (
               <Stack key={signer.signer_team_member_id} spacing={0}>
                 <MantineImage

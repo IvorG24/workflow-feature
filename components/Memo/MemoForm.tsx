@@ -9,7 +9,9 @@ import {
   Box,
   Button,
   Checkbox,
+  Divider,
   FileInput,
+  Flex,
   Group,
   Paper,
   Select,
@@ -19,6 +21,7 @@ import {
   Title,
   Tooltip,
 } from "@mantine/core";
+import { getHotkeyHandler } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import {
   IconArrowsExchange,
@@ -92,7 +95,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
 
     if (hasPrimarySigner && isSelectedSignerPrimary) {
       return notifications.show({
-        message: "Memo already has an existing primary signer.",
+        message: "Memo already has an existing primary approver.",
         color: "orange",
       });
     }
@@ -156,7 +159,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form>
       <Stack>
         <Paper p="md" radius="md">
           <Title order={3} mb="sm" color="dimmed">
@@ -291,12 +294,10 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
             </Stack>
           ))}
         </Paper>
-
+        <Divider label="Approver Section" labelPosition="center" />
         <Paper p="md" radius="md">
           <Stack>
-            <Title order={3} color="dimmed">
-              Signers
-            </Title>
+            <Title order={3}>Approvers</Title>
             {selectedSignerList.map((signer, signerIndex) => {
               return (
                 <Group key={signer.id} position="apart">
@@ -337,8 +338,9 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                 </Group>
               );
             })}
-            <Box>
+            <Flex mb="sm" gap="md" align="center" justify="space-between">
               <Select
+                sx={{ flex: 1 }}
                 searchable
                 clearable
                 nothingFound
@@ -361,27 +363,34 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                     setSelectedSigner(signerMatch);
                   }
                 }}
+                onKeyDown={getHotkeyHandler([["Enter", handleAddMemoSigner]])}
               />
               <Checkbox
-                mt="sm"
-                label="Primary Signer"
+                label="Primary Approver"
                 checked={isSelectedSignerPrimary}
                 onChange={(event) =>
                   setIsSelectedSignerPrimary(event.currentTarget.checked)
                 }
               />
-            </Box>
+            </Flex>
             <Button
               leftIcon={<IconSquarePlus size={16} />}
               variant="light"
+              color="orange"
               onClick={() => handleAddMemoSigner()}
             >
-              Add Memo Signer
+              Add Memo Approver
             </Button>
           </Stack>
         </Paper>
-
-        <Button mb={42} size="md" fullWidth type="submit">
+        <Divider label="Submit Memo" labelPosition="center" />
+        <Button
+          mb={42}
+          size="md"
+          fullWidth
+          type="button"
+          onClick={handleSubmit(onSubmit)}
+        >
           Submit
         </Button>
       </Stack>
