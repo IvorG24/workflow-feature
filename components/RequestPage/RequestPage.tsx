@@ -113,22 +113,47 @@ const RequestPage = ({
 
               const defaultSignature = signatureList[signatureList.length - 1];
 
-              const signatureMatch = signatureList.find((signature) => {
-                if (!signature) {
-                  return false;
-                }
-
-                const signatureDateCreatedTime = new Date(
-                  signature.signature_history_date_created
+              const sortedSignatures = signatureList.slice().sort((a, b) => {
+                const aTime = new Date(
+                  a.signature_history_date_created
                 ).getTime();
-                const signedDate = new Date(
-                  `${signer.request_signer_status_date_updated}`
+                const bTime = new Date(
+                  b.signature_history_date_created
                 ).getTime();
-
-                return signedDate <= signatureDateCreatedTime;
+                return aTime - bTime;
               });
 
-              if (signatureMatch && signer.request_signer_status_date_updated) {
+              const signedDate = new Date(
+                `${signer.request_signer_status_date_updated}`
+              ).getTime();
+
+              const signatureMatch = sortedSignatures.find(
+                (signature, index) => {
+                  if (!signature) {
+                    return false;
+                  }
+
+                  const signatureDateCreatedTime = new Date(
+                    signature.signature_history_date_created
+                  ).getTime();
+
+                  const nextSignatureDateCreatedTime =
+                    index < sortedSignatures.length - 1
+                      ? new Date(
+                          sortedSignatures[
+                            index + 1
+                          ].signature_history_date_created
+                        ).getTime()
+                      : 0;
+
+                  return (
+                    signedDate >= signatureDateCreatedTime &&
+                    signedDate < nextSignatureDateCreatedTime
+                  );
+                }
+              );
+
+              if (signatureMatch) {
                 signatureUrl = signatureMatch.signature_history_value;
               } else {
                 signatureUrl = defaultSignature

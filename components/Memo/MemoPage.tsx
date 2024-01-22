@@ -584,7 +584,7 @@ const MemoPage = ({ memo }: Props) => {
                       <Text>{readerFullname}</Text>
                     </Group>
                     <Text weight={600}>
-                      {reader.user_employee_number ?? "N/A"}
+                      {reader.user_employee_number ?? "No employee number"}
                     </Text>
                   </Group>
                 );
@@ -623,7 +623,7 @@ const MemoPage = ({ memo }: Props) => {
                       <Text>{memberFullname}</Text>
                     </Group>
                     <Text weight={600}>
-                      {member.user_employee_number ?? "N/A"}
+                      {member.user_employee_number ?? "No employee number"}
                     </Text>
                   </Group>
                 );

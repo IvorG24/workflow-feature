@@ -535,7 +535,7 @@ export const approveOrRejectMemo = async (
     memoSignerTeamMemberId,
   } = params;
 
-  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  const currentDate = (await getCurrentDate(supabaseClient)).toISOString();
 
   const { error } = await supabaseClient
     .from("memo_signer_table")
@@ -544,6 +544,7 @@ export const approveOrRejectMemo = async (
       memo_signer_date_signed: `${currentDate}`,
     })
     .eq("memo_signer_id", memoSignerId);
+
   if (error) throw Error;
 
   if (isPrimarySigner) {
