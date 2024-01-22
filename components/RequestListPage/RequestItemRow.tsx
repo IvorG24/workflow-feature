@@ -60,7 +60,7 @@ const RequestItemRow = ({ request }: Props) => {
             </Anchor>
           </Text>
 
-          <CopyButton>
+          <CopyButton value="temp">
             {({ copied, copy }) => (
               <Tooltip
                 label={
