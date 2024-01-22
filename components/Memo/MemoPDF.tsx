@@ -108,7 +108,7 @@ const MemoPDF = ({
                 }
                 style={{
                   height: "200px",
-                  width: "600px",
+                  width: "100%",
                   objectFit: "contain",
                 }}
               />
