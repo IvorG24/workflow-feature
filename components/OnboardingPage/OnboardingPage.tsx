@@ -20,6 +20,7 @@ import {
   Divider,
   FileInput,
   Flex,
+  Grid,
   NumberInput,
   Paper,
   Select,
@@ -188,7 +189,7 @@ const OnboardingPage = ({ user }: Props) => {
 
   return (
     <Container p={0} mih="100vh" fluid>
-      <Container p="xl" maw={450}>
+      <Container p="xl" maw={{ base: 450, xs: 750 }}>
         <Paper p="xl" shadow="sm" withBorder>
           <Title color="blue">Onboarding</Title>
 
@@ -209,514 +210,569 @@ const OnboardingPage = ({ user }: Props) => {
           </Center>
 
           <form onSubmit={handleSubmit(handleOnboardUser)}>
-            <TextInput
-              label="Email"
-              {...register("user_email")}
-              mt="sm"
-              disabled
-            />
-
-            <TextInput
-              label="Username"
-              {...register("user_username", {
-                required: "Username is required",
-                minLength: {
-                  value: 2,
-                  message: "Username must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "Username must be shorter than 100 characters",
-                },
-                validate: {
-                  validCharacters: (value) =>
-                    /^[a-zA-Z0-9_.]+$/.test(value) ||
-                    "Username can only contain letters, numbers, underscore, and period",
-                  alreadyUsed: async (value) => {
-                    const isAlreadyUsed = await checkUsername(supabaseClient, {
-                      username: value,
-                    });
-                    return isAlreadyUsed ? "Username is already used" : true;
-                  },
-                },
-              })}
-              error={errors.user_username?.message}
-              mt="sm"
-              data-cy="onboarding-input-username"
-            />
-
-            <TextInput
-              label="First name"
-              {...register("user_first_name", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_first_name", format);
-                },
-                required: "First name is required",
-                minLength: {
-                  value: 2,
-                  message: "First name must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "First name must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_first_name?.message}
-              mt="sm"
-              data-cy="onboarding-input-first-name"
-            />
-
-            <TextInput
-              label="Last name"
-              {...register("user_last_name", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_last_name", format);
-                },
-                required: "Last name is required",
-                minLength: {
-                  value: 2,
-                  message: "Last name must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "Last name must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_last_name?.message}
-              mt="sm"
-              data-cy="onboarding-input-last-name"
-            />
-            <Controller
-              control={control}
-              name="user_phone_number"
-              rules={{
-                required: "Mobile Number is required.",
-                validate: {
-                  valid: (value) =>
-                    !value
-                      ? true
-                      : `${value}`.length === 10
-                      ? true
-                      : "Invalid mobile number",
-                  startsWith: (value) =>
-                    !value
-                      ? true
-                      : `${value}`[0] === "9"
-                      ? true
-                      : "Mobile number must start with 9",
-                },
-              }}
-              render={({ field: { onChange } }) => (
-                <NumberInput
-                  label="Mobile Number"
-                  maxLength={10}
-                  hideControls
-                  formatter={(value) => mobileNumberFormatter(value)}
-                  icon="+63"
-                  min={0}
-                  max={9999999999}
-                  onChange={onChange}
-                  error={errors.user_phone_number?.message}
-                  mt="xs"
+            <Grid columns={2} mt="sm">
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="Email"
+                  {...register("user_email")}
+                  mt="sm"
+                  disabled
                 />
-              )}
-            />
-
-            <Controller
-              control={control}
-              name="user_employee_number"
-              render={({ field: { onChange } }) => (
-                <NumberInput
-                  label="Employee Number"
-                  onChange={onChange}
-                  hideControls
-                  error={errors.user_employee_number?.message}
+              </Grid.Col>
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="Username"
+                  {...register("user_username", {
+                    required: "Username is required",
+                    minLength: {
+                      value: 2,
+                      message: "Username must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "Username must be shorter than 100 characters",
+                    },
+                    validate: {
+                      validCharacters: (value) =>
+                        /^[a-zA-Z0-9_.]+$/.test(value) ||
+                        "Username can only contain letters, numbers, underscore, and period",
+                      alreadyUsed: async (value) => {
+                        const isAlreadyUsed = await checkUsername(
+                          supabaseClient,
+                          {
+                            username: value,
+                          }
+                        );
+                        return isAlreadyUsed
+                          ? "Username is already used"
+                          : true;
+                      },
+                    },
+                  })}
+                  error={errors.user_username?.message}
+                  mt="sm"
+                  data-cy="onboarding-input-username"
                 />
-              )}
-              rules={{
-                required: {
-                  value: true,
-                  message: "Employee number is required",
-                },
-              }}
-            />
+              </Grid.Col>
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="First name"
+                  {...register("user_first_name", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_first_name", format);
+                    },
+                    required: "First name is required",
+                    minLength: {
+                      value: 2,
+                      message: "First name must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "First name must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_first_name?.message}
+                  mt="sm"
+                  data-cy="onboarding-input-first-name"
+                />
+              </Grid.Col>
 
-            <Text size="lg" mt="lg" fw="bold">
-              Government-issued ID
-            </Text>
-
-            <Divider mt={4} />
-
-            <Flex align="center" gap={4} mt="xs">
-              <IconAlertCircle size="1rem" color="#998e95" />
-              <Text size="xs" color="dimmed">
-                Please fill in the fields referring to the government-issued ID.
-              </Text>
-            </Flex>
-
-            <Controller
-              control={control}
-              name={"user_id_type"}
-              rules={{ required: "ID Type is required" }}
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  label="ID type"
-                  value={value}
-                  onChange={(value) => {
-                    onChange(value);
-                    setIdType(value);
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="Last name"
+                  {...register("user_last_name", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_last_name", format);
+                    },
+                    required: "Last name is required",
+                    minLength: {
+                      value: 2,
+                      message: "Last name must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "Last name must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_last_name?.message}
+                  mt="sm"
+                  data-cy="onboarding-input-last-name"
+                />
+              </Grid.Col>
+              <Grid.Col xs={2} sm={1}>
+                <Controller
+                  control={control}
+                  name="user_phone_number"
+                  rules={{
+                    required: "Mobile Number is required.",
+                    validate: {
+                      valid: (value) =>
+                        !value
+                          ? true
+                          : `${value}`.length === 10
+                          ? true
+                          : "Invalid mobile number",
+                      startsWith: (value) =>
+                        !value
+                          ? true
+                          : `${value}`[0] === "9"
+                          ? true
+                          : "Mobile number must start with 9",
+                    },
                   }}
-                  data={[
-                    {
-                      value: "Philippine Driver's License",
-                      label: "Philippine Driver's License",
-                    },
-                    {
-                      value: "Philippine Passport",
-                      label: "Philippine Passport",
-                    },
-                  ]}
-                  error={errors.user_id_type?.message}
-                  mt="md"
+                  render={({ field: { onChange } }) => (
+                    <NumberInput
+                      label="Mobile Number"
+                      maxLength={10}
+                      hideControls
+                      formatter={(value) => mobileNumberFormatter(value)}
+                      icon="+63"
+                      min={0}
+                      max={9999999999}
+                      onChange={onChange}
+                      error={errors.user_phone_number?.message}
+                      mt="sm"
+                    />
+                  )}
                 />
-              )}
-            />
+              </Grid.Col>
 
-            <TextInput
-              label="ID number"
-              {...register("user_id_number", {
-                required: "ID Number is required",
-                minLength: {
-                  value: 6,
-                  message: "ID Number must have at least 8 characters",
-                },
-                maxLength: {
-                  value: 16,
-                  message: "ID Number must be shorter than 16 characters",
-                },
-              })}
-              error={errors.user_id_number?.message}
-              mt="sm"
-            />
-
-            <TextInput
-              label="First name"
-              {...register("user_id_first_name", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_id_first_name", format);
-                },
-                required: "First name is required",
-                minLength: {
-                  value: 2,
-                  message: "First name must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "First name must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_id_first_name?.message}
-              mt="sm"
-            />
-
-            <TextInput
-              label="Middle name"
-              {...register("user_id_middle_name", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_id_middle_name", format);
-                },
-                minLength: {
-                  value: 2,
-                  message: "Middle name must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "Middle name must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_id_middle_name?.message}
-              mt="sm"
-            />
-
-            <TextInput
-              label="Last name"
-              {...register("user_id_last_name", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_id_last_name", format);
-                },
-                required: "Last name is required",
-                minLength: {
-                  value: 2,
-                  message: "Last name must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "Last name must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_id_last_name?.message}
-              mt="sm"
-            />
-
-            <Controller
-              control={control}
-              name={"user_id_gender"}
-              rules={{ required: "Gender is required" }}
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  label="Gender"
-                  value={value}
-                  onChange={onChange}
-                  data={[
-                    {
-                      value: "Male",
-                      label: "Male",
+              <Grid.Col xs={2} sm={1}>
+                <Controller
+                  control={control}
+                  name="user_employee_number"
+                  render={({ field: { onChange } }) => (
+                    <NumberInput
+                      label="Employee Number"
+                      onChange={onChange}
+                      hideControls
+                      error={errors.user_employee_number?.message}
+                      mt="sm"
+                    />
+                  )}
+                  rules={{
+                    required: {
+                      value: true,
+                      message: "Employee number is required",
                     },
-                    {
-                      value: "Female",
-                      label: "Female",
+                  }}
+                />
+              </Grid.Col>
+
+              <Grid.Col span={2}>
+                <Text size="lg" mt="lg" fw="bold">
+                  Government-issued ID
+                </Text>
+                <Divider mt={4} />
+                <Flex align="center" gap={4} mt="xs">
+                  <IconAlertCircle size="1rem" color="#998e95" />
+                  <Text size="xs" color="dimmed">
+                    Please fill in the fields referring to the government-issued
+                    ID.
+                  </Text>
+                </Flex>
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <Controller
+                  control={control}
+                  name={"user_id_type"}
+                  rules={{ required: "ID Type is required" }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      label="ID type"
+                      value={value}
+                      onChange={(value) => {
+                        onChange(value);
+                        setIdType(value);
+                      }}
+                      data={[
+                        {
+                          value: "Philippine Driver's License",
+                          label: "Philippine Driver's License",
+                        },
+                        {
+                          value: "Philippine Passport",
+                          label: "Philippine Passport",
+                        },
+                      ]}
+                      error={errors.user_id_type?.message}
+                    />
+                  )}
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="ID number"
+                  {...register("user_id_number", {
+                    required: "ID Number is required",
+                    minLength: {
+                      value: 6,
+                      message: "ID Number must have at least 8 characters",
                     },
-                  ]}
-                  error={errors.user_id_type?.message}
+                    maxLength: {
+                      value: 16,
+                      message: "ID Number must be shorter than 16 characters",
+                    },
+                  })}
+                  error={errors.user_id_number?.message}
                   mt="sm"
                 />
-              )}
-            />
+              </Grid.Col>
 
-            <TextInput
-              label="Nationality"
-              {...register("user_id_nationality", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_id_nationality", format);
-                },
-                required: "Nationality is required",
-                minLength: {
-                  value: 2,
-                  message: "Nationality must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "Nationality must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_id_nationality?.message}
-              mt="sm"
-            />
-
-            <TextInput
-              label="Province"
-              {...register("user_id_province", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_id_province", format);
-                },
-                required: "Province is required",
-                minLength: {
-                  value: 2,
-                  message: "Province must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "Province must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_id_province?.message}
-              mt="sm"
-            />
-
-            <TextInput
-              label="City"
-              {...register("user_id_city", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_id_city", format);
-                },
-                required: "City is required",
-                minLength: {
-                  value: 2,
-                  message: "City must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "City must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_id_city?.message}
-              mt="sm"
-            />
-
-            <TextInput
-              label="Barangay/Municipality"
-              {...register("user_id_barangay", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_id_barangay", format);
-                },
-                required: "Barangay/Municipality is required",
-                minLength: {
-                  value: 2,
-                  message:
-                    "Barangay/Municipality must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message:
-                    "Barangay/Municipality must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_id_barangay?.message}
-              mt="sm"
-            />
-
-            <Controller
-              control={control}
-              name={"user_id_zip_code"}
-              rules={{
-                required: "Zip code is required",
-              }}
-              render={({ field: { value, onChange } }) => (
-                <NumberInput
-                  label="Zip code"
-                  defaultValue={0}
-                  value={Number(value) | 0}
-                  onChange={onChange}
-                  hideControls
-                  formatter={(value) => {
-                    const intValue = parseInt(value, 10);
-
-                    if (
-                      !isNaN(intValue) &&
-                      intValue >= 1000 &&
-                      intValue <= 9999
-                    ) {
-                      clearErrors("user_id_zip_code");
-                      return intValue.toString();
-                    } else {
-                      setError("user_id_zip_code", {
-                        message: "Zip code must be 4 digits",
-                      });
-                      return "";
-                    }
-                  }}
-                  error={errors.user_id_zip_code?.message}
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="First name"
+                  {...register("user_id_first_name", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_id_first_name", format);
+                    },
+                    required: "First name is required",
+                    minLength: {
+                      value: 2,
+                      message: "First name must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "First name must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_id_first_name?.message}
                   mt="sm"
                 />
-              )}
-            />
+              </Grid.Col>
 
-            <TextInput
-              label="House number and street address"
-              {...register("user_id_house_and_street", {
-                onChange: (e) => {
-                  const format = toTitleCase(
-                    removeMultipleSpaces(e.currentTarget.value)
-                  );
-                  setValue("user_id_house_and_street", format);
-                },
-                required: "House number and street address is required",
-                minLength: {
-                  value: 2,
-                  message:
-                    "House number and street address must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message:
-                    "House number and street address must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_id_house_and_street?.message}
-              mt="sm"
-            />
-
-            <Controller
-              control={control}
-              name={"user_id_front_image"}
-              rules={{
-                required: "Front ID image is required",
-              }}
-              render={({ field: { value, onChange } }) => (
-                <FileInput
-                  value={value}
-                  onChange={onChange}
-                  label="Front ID image"
-                  accept="image/png,image/jpeg"
-                  error={errors.user_id_front_image?.message}
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="Middle name"
+                  {...register("user_id_middle_name", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_id_middle_name", format);
+                    },
+                    minLength: {
+                      value: 2,
+                      message: "Middle name must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message:
+                        "Middle name must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_id_middle_name?.message}
+                  mt="sm"
                 />
-              )}
-            />
+              </Grid.Col>
 
-            {idType !== "Philippine Passport" && (
-              <Controller
-                control={control}
-                name={"user_id_back_image"}
-                rules={{
-                  required:
-                    idType !== "Philippine Passport"
-                      ? "Back ID image is required"
-                      : false,
-                }}
-                render={({ field: { value, onChange } }) => (
-                  <FileInput
-                    value={value}
-                    onChange={onChange}
-                    label="Back ID image"
-                    accept="image/png,image/jpeg"
-                    error={errors.user_id_back_image?.message}
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="Last name"
+                  {...register("user_id_last_name", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_id_last_name", format);
+                    },
+                    required: "Last name is required",
+                    minLength: {
+                      value: 2,
+                      message: "Last name must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "Last name must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_id_last_name?.message}
+                  mt="sm"
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <Controller
+                  control={control}
+                  name={"user_id_gender"}
+                  rules={{ required: "Gender is required" }}
+                  render={({ field: { value, onChange } }) => (
+                    <Select
+                      label="Gender"
+                      value={value}
+                      onChange={onChange}
+                      data={[
+                        {
+                          value: "Male",
+                          label: "Male",
+                        },
+                        {
+                          value: "Female",
+                          label: "Female",
+                        },
+                      ]}
+                      error={errors.user_id_type?.message}
+                      mt="sm"
+                    />
+                  )}
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="Nationality"
+                  {...register("user_id_nationality", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_id_nationality", format);
+                    },
+                    required: "Nationality is required",
+                    minLength: {
+                      value: 2,
+                      message: "Nationality must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message:
+                        "Nationality must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_id_nationality?.message}
+                  mt="sm"
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="Province"
+                  {...register("user_id_province", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_id_province", format);
+                    },
+                    required: "Province is required",
+                    minLength: {
+                      value: 2,
+                      message: "Province must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "Province must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_id_province?.message}
+                  mt="sm"
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="City"
+                  {...register("user_id_city", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_id_city", format);
+                    },
+                    required: "City is required",
+                    minLength: {
+                      value: 2,
+                      message: "City must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "City must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_id_city?.message}
+                  mt="sm"
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="Barangay/Municipality"
+                  {...register("user_id_barangay", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_id_barangay", format);
+                    },
+                    required: "Barangay/Municipality is required",
+                    minLength: {
+                      value: 2,
+                      message:
+                        "Barangay/Municipality must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message:
+                        "Barangay/Municipality must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_id_barangay?.message}
+                  mt="sm"
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <Controller
+                  control={control}
+                  name={"user_id_zip_code"}
+                  rules={{
+                    required: "Zip code is required",
+                  }}
+                  render={({ field: { value, onChange } }) => (
+                    <NumberInput
+                      label="Zip code"
+                      defaultValue={0}
+                      value={Number(value) | 0}
+                      onChange={onChange}
+                      hideControls
+                      formatter={(value) => {
+                        const intValue = parseInt(value, 10);
+
+                        if (
+                          !isNaN(intValue) &&
+                          intValue >= 1000 &&
+                          intValue <= 9999
+                        ) {
+                          clearErrors("user_id_zip_code");
+                          return intValue.toString();
+                        } else {
+                          setError("user_id_zip_code", {
+                            message: "Zip code must be 4 digits",
+                          });
+                          return "";
+                        }
+                      }}
+                      error={errors.user_id_zip_code?.message}
+                      mt="sm"
+                    />
+                  )}
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  label="House number and street address"
+                  {...register("user_id_house_and_street", {
+                    onChange: (e) => {
+                      const format = toTitleCase(
+                        removeMultipleSpaces(e.currentTarget.value)
+                      );
+                      setValue("user_id_house_and_street", format);
+                    },
+                    required: "House number and street address is required",
+                    minLength: {
+                      value: 2,
+                      message:
+                        "House number and street address must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message:
+                        "House number and street address must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_id_house_and_street?.message}
+                  mt="sm"
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <Controller
+                  control={control}
+                  name={"user_id_front_image"}
+                  rules={{
+                    required: "Front ID image is required",
+                  }}
+                  render={({ field: { value, onChange } }) => (
+                    <FileInput
+                      value={value}
+                      onChange={onChange}
+                      label="Front ID image"
+                      accept="image/png,image/jpeg"
+                      error={errors.user_id_front_image?.message}
+                      mt="sm"
+                    />
+                  )}
+                />
+              </Grid.Col>
+
+              {idType !== "Philippine Passport" && (
+                <Grid.Col xs={2} sm={1}>
+                  <Controller
+                    control={control}
+                    name={"user_id_back_image"}
+                    rules={{
+                      required:
+                        idType !== "Philippine Passport"
+                          ? "Back ID image is required"
+                          : false,
+                    }}
+                    render={({ field: { value, onChange } }) => (
+                      <FileInput
+                        value={value}
+                        onChange={onChange}
+                        label="Back ID image"
+                        accept="image/png,image/jpeg"
+                        error={errors.user_id_back_image?.message}
+                        mt="sm"
+                      />
+                    )}
                   />
-                )}
-              />
-            )}
+                </Grid.Col>
+              )}
+              <Grid.Col span={2}>
+                <Text size="lg" mt="lg" fw="bold">
+                  Optional
+                </Text>
 
-            <Text size="lg" mt="lg" fw="bold">
-              Optional
-            </Text>
+                <Divider mt={4} />
+              </Grid.Col>
 
-            <Divider mt={4} />
-
-            <TextInput
-              label="Job Title"
-              {...register("user_job_title", {
-                onChange: (e) => {
-                  const format = removeMultipleSpaces(e.currentTarget.value);
-                  setValue("user_job_title", format);
-                },
-                minLength: {
-                  value: 2,
-                  message: "Job title must have at least 2 characters",
-                },
-                maxLength: {
-                  value: 100,
-                  message: "Job title must be shorter than 100 characters",
-                },
-              })}
-              error={errors.user_job_title?.message}
-              mt="sm"
-            />
+              <Grid.Col span={2}>
+                <TextInput
+                  label="Job Title"
+                  {...register("user_job_title", {
+                    onChange: (e) => {
+                      const format = removeMultipleSpaces(
+                        e.currentTarget.value
+                      );
+                      setValue("user_job_title", format);
+                    },
+                    minLength: {
+                      value: 2,
+                      message: "Job title must have at least 2 characters",
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: "Job title must be shorter than 100 characters",
+                    },
+                  })}
+                  error={errors.user_job_title?.message}
+                  mt="sm"
+                />
+              </Grid.Col>
+            </Grid>
 
             <Button type="submit" mt="xl" fullWidth>
               Save and Continue
