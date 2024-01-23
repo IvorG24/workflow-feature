@@ -304,6 +304,7 @@ const RequestFormFields = ({
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
+                precision={2}
               />
             )}
             rules={{
