@@ -20,6 +20,7 @@ import {
   Portal,
   Space,
   Stack,
+  Text,
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -75,6 +76,9 @@ const ReviewAppNavLink = () => {
   const renderCreateRequestMenu = () => {
     return (
       <Box h="fit-content" mt="md">
+        <Text size="xs" weight={400}>
+          Create
+        </Text>
         <Menu
           shadow="1px 1px 3px rgba(0, 0, 0, .25)"
           withArrow
@@ -190,7 +194,19 @@ const ReviewAppNavLink = () => {
     );
   };
 
-  const tempCreateRequest = [
+  const analyticsSection = [
+    {
+      label: `Dashboard`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconDashboard {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/dashboard`,
+    },
+  ];
+
+  const createSection = [
     {
       label: "Create Request",
       icon: (
@@ -222,16 +238,7 @@ const ReviewAppNavLink = () => {
     },
   ];
 
-  const overviewSection = [
-    {
-      label: `Dashboard`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconDashboard {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/dashboard`,
-    },
+  const listSection = [
     {
       label: `${startCase(activeApp)} List`,
       icon: (
@@ -326,9 +333,16 @@ const ReviewAppNavLink = () => {
     };
     fetchApproverRequestList();
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
-
   return (
     <>
+      {!isEmpty(activeTeam) && hasTeam ? (
+        <NavLinkSection
+          label={"Analytics"}
+          links={analyticsSection}
+          {...defaultNavLinkProps}
+        />
+      ) : null}
+
       {requisitionForm &&
       requisitionForm.form_is_hidden === false &&
       requisitionForm.form_team_group.length &&
@@ -336,14 +350,18 @@ const ReviewAppNavLink = () => {
         unhiddenForms.length > 1 ? (
           renderCreateRequestMenu()
         ) : (
-          <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
+          <NavLinkSection
+            label="Create"
+            links={createSection}
+            {...defaultNavLinkProps}
+          />
         )
       ) : null}
 
       {!isEmpty(activeTeam) && hasTeam ? (
         <NavLinkSection
-          label={"Overview"}
-          links={overviewSection}
+          label={"List"}
+          links={listSection}
           {...defaultNavLinkProps}
         />
       ) : null}
