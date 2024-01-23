@@ -2,11 +2,7 @@ import { createTeamMemo } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import {
-  AttachmentTableRow,
-  MemoSignerItem,
-  UserTableRow,
-} from "@/utils/types";
+import { MemoSignerItem, UserTableRow } from "@/utils/types";
 import {
   Box,
   Container,
@@ -42,9 +38,7 @@ export type MemoFormValues = {
     signer_team_member_id: string;
     signer_full_name: string;
     signer_avatar: string | null;
-    signer_signature:
-      | (AttachmentTableRow & { attachment_public_url?: string })
-      | null;
+    signer_signature: string | null;
     signer_job_title: string | null;
     signer_user_id: string;
   }[];
@@ -88,8 +82,20 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
       setIsLoading(true);
       if (data.signerList.length <= 0) {
         return notifications.show({
-          title: "Memo signers are required",
-          message: "Please add atleast one signer.",
+          title: "Memo approvers are required",
+          message: "Please add atleast one approver.",
+          color: "red",
+        });
+      }
+
+      const isPrimarySignerExisting = data.signerList.filter(
+        (signer) => signer.signer_is_primary
+      );
+
+      if (isPrimarySignerExisting.length <= 0) {
+        return notifications.show({
+          title: "Primary approver is required",
+          message: "Please select a primary approver.",
           color: "red",
         });
       }

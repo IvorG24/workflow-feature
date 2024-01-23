@@ -1,5 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getFileUrl } from "@/backend/api/get";
+import { getUserSignatureList } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -124,11 +124,40 @@ const RequisitionRequestPage = ({
               signer.request_signer_signer.signer_team_member.team_member_user
                 .user_signature_attachment_id
             ) {
-              signatureUrl = await getFileUrl(supabaseClient, {
-                path: signer.request_signer_signer.signer_team_member
-                  .team_member_user.user_signature_attachment_id,
-                bucket: "USER_SIGNATURES",
+              const signatureList = await getUserSignatureList(supabaseClient, {
+                userId:
+                  signer.request_signer_signer.signer_team_member
+                    .team_member_user.user_id,
               });
+
+              const defaultSignature = signatureList[signatureList.length - 1];
+
+              const signedDate = new Date(
+                `${signer.request_signer_status_date_updated}`
+              ).getTime();
+
+              const signatureMatch = signatureList.find((signature, index) => {
+                if (!signature) {
+                  return false;
+                }
+
+                const nextSignatureDateCreatedTime =
+                  index < signatureList.length - 1
+                    ? new Date(
+                        signatureList[index + 1].signature_history_date_created
+                      ).getTime()
+                    : 0;
+
+                return signedDate < nextSignatureDateCreatedTime;
+              });
+
+              if (signatureMatch) {
+                signatureUrl = signatureMatch.signature_history_value;
+              } else {
+                signatureUrl = defaultSignature
+                  ? defaultSignature.signature_history_value
+                  : "";
+              }
             }
 
             return {

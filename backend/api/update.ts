@@ -534,16 +534,26 @@ export const approveOrRejectMemo = async (
     isPrimarySigner,
     memoSignerTeamMemberId,
   } = params;
+
+  const currentDate = (await getCurrentDate(supabaseClient)).toISOString();
+
   const { error } = await supabaseClient
     .from("memo_signer_table")
-    .update({ memo_signer_status: action })
+    .update({
+      memo_signer_status: action,
+      memo_signer_date_signed: `${currentDate}`,
+    })
     .eq("memo_signer_id", memoSignerId);
+
   if (error) throw Error;
 
   if (isPrimarySigner) {
     const { error } = await supabaseClient
       .from("memo_status_table")
-      .update({ memo_status: action })
+      .update({
+        memo_status: action,
+        memo_status_date_updated: `${currentDate}`,
+      })
       .eq("memo_status_memo_id", memoId);
     if (error) throw Error;
   }
