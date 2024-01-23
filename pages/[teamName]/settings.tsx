@@ -6,7 +6,7 @@ import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
   TeamGroupTableRow,
   TeamMemberType,
-  TeamProjectTableRow,
+  TeamProjectWithAddressType,
   TeamTableRow,
   UserValidIDTableRow,
 } from "@/utils/types";
@@ -39,7 +39,7 @@ type Props = {
   team: TeamTableRow;
   teamMembers: TeamMemberType[];
   teamGroups: TeamGroupTableRow[];
-  teamProjects: TeamProjectTableRow[];
+  teamProjects: TeamProjectWithAddressType[];
   teamMembersCount: number;
   teamGroupsCount: number;
   teamProjectsCount: number;

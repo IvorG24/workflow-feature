@@ -33,7 +33,7 @@ import {
   SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
-  TeamProjectTableRow,
+  TeamProjectWithAddressType,
   TeamTableInsert,
   TicketCommentTableInsert,
   TicketTableRow,
@@ -823,6 +823,12 @@ export const createTeamProject = async (
     teamProjectTeamId: string;
     siteMapId: string;
     boqId: string;
+    region: string;
+    province: string;
+    city: string;
+    barangay: string;
+    street: string;
+    zipCode: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -835,7 +841,7 @@ export const createTeamProject = async (
     .single();
   if (error) throw error;
 
-  return data as TeamProjectTableRow;
+  return data as TeamProjectWithAddressType;
 };
 
 // Insert team member to group

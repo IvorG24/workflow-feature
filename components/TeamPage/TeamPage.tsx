@@ -16,7 +16,7 @@ import {
   MemberRoleType,
   TeamGroupTableRow,
   TeamMemberType,
-  TeamProjectTableRow,
+  TeamProjectWithAddressType,
   TeamTableRow,
   UserValidIDTableRow,
 } from "@/utils/types";
@@ -63,7 +63,7 @@ type Props = {
   team: TeamTableRow;
   teamMembers: TeamMemberType[];
   teamGroups: TeamGroupTableRow[];
-  teamProjects: TeamProjectTableRow[];
+  teamProjects: TeamProjectWithAddressType[];
   teamMembersCount: number;
   teamGroupsCount: number;
   teamProjectsCount: number;
@@ -109,7 +109,7 @@ const TeamPage = ({
   const [projectList, setProjectList] = useState(teamProjects);
   const [projectCount, setProjectCount] = useState(teamProjectsCount);
   const [selectedProject, setSelectedProject] =
-    useState<TeamProjectTableRow | null>(null);
+    useState<TeamProjectWithAddressType | null>(null);
 
   const [isFetchingMembers, setIsFetchingMembers] = useState(false);
 

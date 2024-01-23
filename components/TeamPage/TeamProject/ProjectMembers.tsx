@@ -4,7 +4,7 @@ import {
 } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { TeamProjectTableRow } from "@/utils/types";
+import { TeamProjectWithAddressType } from "@/utils/types";
 import {
   Box,
   CloseButton,
@@ -51,8 +51,10 @@ export type TeamMemberChoiceType = {
 
 type Props = {
   teamId: string;
-  selectedProject: TeamProjectTableRow;
-  setSelectedProject: Dispatch<SetStateAction<TeamProjectTableRow | null>>;
+  selectedProject: TeamProjectWithAddressType;
+  setSelectedProject: Dispatch<
+    SetStateAction<TeamProjectWithAddressType | null>
+  >;
   isFetchingMembers: boolean;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
   isOwnerOrAdmin: boolean;

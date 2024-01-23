@@ -253,6 +253,13 @@ export type UserValidIDTableInsert =
 export type UserValidIDTableUpdate =
   Database["public"]["Tables"]["user_valid_id_table"]["Update"];
 
+export type AddressTableRow =
+  Database["public"]["Tables"]["address_table"]["Row"];
+export type AddressTableInsert =
+  Database["public"]["Tables"]["address_table"]["Insert"];
+export type AddressTableUpdate =
+  Database["public"]["Tables"]["address_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1351,4 +1358,8 @@ export type UserValidIdWithUser = Omit<
 > & {
   user_valid_id_user_id: UserTableRow;
   user_valid_id_approver: UserTableRow;
+};
+
+export type TeamProjectWithAddressType = TeamProjectTableRow & {
+  team_project_address: AddressTableRow;
 };

@@ -2567,7 +2567,9 @@ export const getTeamProjectList = async (
 
   let query = supabaseClient
     .from("team_project_table")
-    .select("*", { count: "exact" })
+    .select("*, team_project_address: team_project_address_id(*)", {
+      count: "exact",
+    })
     .eq("team_project_team_id", teamId)
     .eq("team_project_is_disabled", false);
 

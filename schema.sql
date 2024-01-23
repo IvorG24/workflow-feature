@@ -28,6 +28,19 @@ UPDATE storage.buckets SET public = true;
 
 ---------- Start: TABLES
 
+-- Start: address_table
+CREATE TABLE address_table (
+  address_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  address_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  address_region VARCHAR(4000) NOT NULL,
+  address_province VARCHAR(4000) NOT NULL,
+  address_city VARCHAR(4000) NOT NULL,
+  address_barangay VARCHAR(4000) NOT NULL,
+  address_street VARCHAR(4000) NOT NULL,
+  address_zip_code VARCHAR(4000) NOT NULL
+);
+-- End: address_table
+
 -- Start: Attachments
 CREATE TABLE attachment_table (
     attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -94,7 +107,8 @@ CREATE TABLE team_project_table(
 
   team_project_site_map_attachment_id UUID REFERENCES attachment_table(attachment_id),
   team_project_boq_attachment_id UUID REFERENCES attachment_table(attachment_id),
-  team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  team_project_address_id UUID REFERENCES address_table(address_id)
 );
 CREATE TABLE team_group_member_table(
   team_group_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
@@ -607,27 +621,27 @@ CREATE TABLE other_expenses_type_table(
 
 -- Start: Valid ID
 CREATE TABLE user_valid_id_table (
-    user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    user_valid_id_date_updated TIMESTAMPTZ,
-    user_valid_id_number VARCHAR(4000) UNIQUE NOT NULL,
-    user_valid_id_type VARCHAR(4000) NOT NULL,
-    user_valid_id_first_name VARCHAR(4000) NOT NULL,
-    user_valid_id_middle_name VARCHAR(4000) NOT NULL,
-    user_valid_id_last_name VARCHAR(4000) NOT NULL,
-    user_valid_id_gender VARCHAR(4000) NOT NULL,
-    user_valid_id_nationality VARCHAR(4000) NOT NULL,
-    user_valid_id_province VARCHAR(4000) NOT NULL,
-    user_valid_id_city VARCHAR(4000) NOT NULL,
-    user_valid_id_barangay VARCHAR(4000) NOT NULL,
-    user_valid_id_zip_code VARCHAR(4000) NOT NULL,
-    user_valid_id_house_and_street VARCHAR(4000) NOT NULL,
-    user_valid_id_front_image_url VARCHAR(4000) NOT NULL,
-    user_valid_id_back_image_url VARCHAR(4000),
-    user_valid_id_status VARCHAR(4000) NOT NULL,
+  user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_valid_id_date_updated TIMESTAMPTZ,
+  user_valid_id_number VARCHAR(4000) UNIQUE NOT NULL,
+  user_valid_id_type VARCHAR(4000) NOT NULL,
+  user_valid_id_first_name VARCHAR(4000) NOT NULL,
+  user_valid_id_middle_name VARCHAR(4000) NOT NULL,
+  user_valid_id_last_name VARCHAR(4000) NOT NULL,
+  user_valid_id_gender VARCHAR(4000) NOT NULL,
+  user_valid_id_nationality VARCHAR(4000) NOT NULL,
+  user_valid_id_province VARCHAR(4000) NOT NULL,
+  user_valid_id_city VARCHAR(4000) NOT NULL,
+  user_valid_id_barangay VARCHAR(4000) NOT NULL,
+  user_valid_id_zip_code VARCHAR(4000) NOT NULL,
+  user_valid_id_house_and_street VARCHAR(4000) NOT NULL,
+  user_valid_id_front_image_url VARCHAR(4000) NOT NULL,
+  user_valid_id_back_image_url VARCHAR(4000),
+  user_valid_id_status VARCHAR(4000) NOT NULL,
 
-    user_valid_id_approver UUID REFERENCES user_table(user_id),
-    user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL
+  user_valid_id_approver UUID REFERENCES user_table(user_id),
+  user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
 -- End: Valid ID
 
@@ -2670,11 +2684,17 @@ RETURNS JSON AS $$
       teamProjectInitials,
       teamProjectTeamId,
       siteMapId,
-      boqId
+      boqId,
+      region,
+      province,
+      city,
+      barangay,
+      street,
+      zipCode
     } = input_data;
 
     
-   const projectInitialCount = plv8.execute(`
+    const projectInitialCount = plv8.execute(`
       SELECT COUNT(*) FROM team_project_table 
       WHERE team_project_team_id = $1 
       AND team_project_code ILIKE '%' || $2 || '%';
@@ -2682,16 +2702,31 @@ RETURNS JSON AS $$
 
     const teamProjectCode = teamProjectInitials + projectInitialCount.toString(16).toUpperCase();
 
-    team_project_data = plv8.execute(
+    const addressData = plv8.execute(
+      `
+        INSERT INTO address_table 
+          (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
+        VALUES 
+          ('${region}', '${province}', '${city}', '${barangay}', '${street}', '${zipCode}') RETURNING *
+      `
+    )[0];
+
+    teamData = plv8.execute(
       `
         INSERT INTO team_project_table 
-          (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id) 
+          (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id, team_project_address_id) 
         VALUES 
-          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', '${siteMapId}', '${boqId}')
+          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', '${siteMapId}', '${boqId}', '${addressData.address_id}')
         RETURNING *
       `
     )[0];
 
+    team_project_data = {
+      ...teamData,
+      team_project_address: {
+        ...addressData
+      }
+    }
  });
  return team_project_data;
 $$ LANGUAGE plv8;
@@ -3550,7 +3585,8 @@ RETURNS JSON AS $$
         SELECT 
           team_project_table.*,
           boq.attachment_value AS team_project_boq_attachment_id,
-          site_map.attachment_value AS team_project_site_map_attachment_id
+          site_map.attachment_value AS team_project_site_map_attachment_id,
+          address_table.*
         FROM team_project_table 
         LEFT JOIN attachment_table boq ON (
           team_project_boq_attachment_id = boq.attachment_id
@@ -3559,6 +3595,9 @@ RETURNS JSON AS $$
         LEFT JOIN attachment_table site_map ON (
           team_project_site_map_attachment_id = site_map.attachment_id
           AND site_map.attachment_is_disabled = false
+        )
+        LEFT JOIN address_table ON (
+          team_project_address_id = address_id
         )
         WHERE 
           team_project_team_id='${teamId}' 
@@ -3572,7 +3611,42 @@ RETURNS JSON AS $$
 
     const pendingValidIDList = plv8.execute(`SELECT * FROM user_valid_id_table WHERE user_valid_id_status='PENDING';`);
 
-    team_data = { team, teamMembers, teamGroups, teamGroupsCount:`${teamGroupsCount}`, teamProjects, teamProjectsCount:`${teamProjectsCount}`, teamMembersCount: Number(teamMembersCount), pendingValidIDList}
+    team_data = { 
+      team, 
+      teamMembers, 
+      teamGroups, 
+      teamGroupsCount: `${teamGroupsCount}`, 
+      teamProjects: teamProjects.map(project => {
+        if(!project.address_id){
+          return project;
+        }
+
+        return {
+          team_project_id: project.team_project_id,
+          team_project_date_created: project.team_project_date_created,
+          team_project_name: project.team_project_name,
+          team_project_code: project.team_project_code,
+          team_project_is_disabled: project.team_project_is_disabled,
+          team_project_team_id: project.team_project_team_id,
+          team_project_site_map_attachment_id: project.team_project_site_map_attachment_id,
+          team_project_boq_attachment_id: project.team_project_boq_attachment_id,
+          team_project_address_id: project.team_project_address_id,
+          team_project_address: {
+            address_id: project.address_id,
+            address_date_created: project.address_date_created,
+            address_region: project.address_region,
+            address_province: project.address_province,
+            address_city: project.address_city,
+            address_barangay: project.address_barangay,
+            address_street: project.address_street,
+            address_zip_code: project.address_zip_code
+          }
+        }
+      }), 
+      teamProjectsCount: `${teamProjectsCount}`, 
+      teamMembersCount: Number(teamMembersCount), 
+      pendingValidIDList
+    }
  });
  return team_data;
 $$ LANGUAGE plv8;
