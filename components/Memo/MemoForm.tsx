@@ -344,7 +344,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                 searchable
                 clearable
                 nothingFound
-                placeholder="Select memo signer"
+                placeholder="Select memo approver"
                 data={currentSignerList.map(
                   ({
                     team_member_id,

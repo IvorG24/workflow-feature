@@ -19,6 +19,7 @@ import {
   Title,
   Tooltip,
 } from "@mantine/core";
+import { getHotkeyHandler } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import {
   IconArrowsExchange,
@@ -351,9 +352,7 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
 
         <Paper p="md" radius="md">
           <Stack>
-            <Title order={3} color="dimmed">
-              Signers
-            </Title>
+            <Title order={3}>Approvers</Title>
             {selectedSignerList.map((signer, signerIndex) => {
               const user = signer.memo_signer_team_member?.user;
               const signerFullname = `${user?.user_first_name} ${user?.user_last_name}`;
@@ -401,7 +400,7 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                 searchable
                 clearable
                 nothingFound
-                placeholder="Select memo signer"
+                placeholder="Select memo approver"
                 data={currentSignerList.map(
                   ({
                     team_member_id,
@@ -420,10 +419,11 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                     setSelectedSigner(signerMatch);
                   }
                 }}
+                onKeyDown={getHotkeyHandler([["Enter", handleAddMemoSigner]])}
               />
               <Checkbox
                 mt="sm"
-                label="Primary Signer"
+                label="Primary Approver"
                 checked={isSelectedSignerPrimary}
                 onChange={(event) =>
                   setIsSelectedSignerPrimary(event.currentTarget.checked)
@@ -435,7 +435,7 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
               variant="light"
               onClick={() => handleAddMemoSigner()}
             >
-              Add Memo Signer
+              Add Memo Approver
             </Button>
           </Stack>
         </Paper>
