@@ -8,6 +8,7 @@ import {
   Paper,
   Text,
   Tooltip,
+  useMantineTheme,
 } from "@mantine/core";
 import {
   IconFile,
@@ -31,6 +32,8 @@ type Props = {
 const NotificationItem = ({ notification, onReadNotification }: Props) => {
   const router = useRouter();
   const tab = router.query.tab || "all";
+
+  const { colorScheme } = useMantineTheme();
 
   const getIcon = () => {
     const type = notification.notification_type;
@@ -80,6 +83,8 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
           bg={
             notification.notification_is_read && tab !== "unread"
               ? "transparent"
+              : colorScheme === "dark"
+              ? "dark.6"
               : "#E7F5FF"
           }
         >
