@@ -607,56 +607,106 @@ export type Database = {
           }
         ];
       };
-      memo_format_table: {
+      memo_format_attachment_table: {
         Row: {
-          memo_format_body_margin_bottom: string;
-          memo_format_body_margin_left: string;
-          memo_format_body_margin_right: string;
-          memo_format_body_margin_top: string;
-          memo_format_footer_margin_bottom: string;
-          memo_format_footer_margin_left: string;
-          memo_format_footer_margin_right: string;
-          memo_format_footer_margin_top: string;
-          memo_format_header_logo_position: string;
-          memo_format_header_margin_bottom: string;
-          memo_format_header_margin_left: string;
-          memo_format_header_margin_right: string;
-          memo_format_header_margin_top: string;
-          memo_format_id: string;
+          memo_format_attachment_id: string;
+          memo_format_attachment_name: string;
+          memo_format_attachment_order: string;
+          memo_format_attachment_subsection_id: string | null;
+          memo_format_attachment_url: string;
         };
         Insert: {
-          memo_format_body_margin_bottom: string;
-          memo_format_body_margin_left: string;
-          memo_format_body_margin_right: string;
-          memo_format_body_margin_top: string;
-          memo_format_footer_margin_bottom: string;
-          memo_format_footer_margin_left: string;
-          memo_format_footer_margin_right: string;
-          memo_format_footer_margin_top: string;
-          memo_format_header_logo_position: string;
-          memo_format_header_margin_bottom: string;
-          memo_format_header_margin_left: string;
-          memo_format_header_margin_right: string;
-          memo_format_header_margin_top: string;
-          memo_format_id?: string;
+          memo_format_attachment_id?: string;
+          memo_format_attachment_name: string;
+          memo_format_attachment_order: string;
+          memo_format_attachment_subsection_id?: string | null;
+          memo_format_attachment_url: string;
         };
         Update: {
-          memo_format_body_margin_bottom?: string;
-          memo_format_body_margin_left?: string;
-          memo_format_body_margin_right?: string;
-          memo_format_body_margin_top?: string;
-          memo_format_footer_margin_bottom?: string;
-          memo_format_footer_margin_left?: string;
-          memo_format_footer_margin_right?: string;
-          memo_format_footer_margin_top?: string;
-          memo_format_header_logo_position?: string;
-          memo_format_header_margin_bottom?: string;
-          memo_format_header_margin_left?: string;
-          memo_format_header_margin_right?: string;
-          memo_format_header_margin_top?: string;
-          memo_format_id?: string;
+          memo_format_attachment_id?: string;
+          memo_format_attachment_name?: string;
+          memo_format_attachment_order?: string;
+          memo_format_attachment_subsection_id?: string | null;
+          memo_format_attachment_url?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "memo_format_attachment_table_memo_format_attachment_subsec_fkey";
+            columns: ["memo_format_attachment_subsection_id"];
+            isOneToOne: false;
+            referencedRelation: "memo_format_subsection_table";
+            referencedColumns: ["memo_format_subsection_id"];
+          }
+        ];
+      };
+      memo_format_section_table: {
+        Row: {
+          memo_format_section_id: string;
+          memo_format_section_margin_bottom: string | null;
+          memo_format_section_margin_left: string | null;
+          memo_format_section_margin_right: string | null;
+          memo_format_section_margin_top: string | null;
+          memo_format_section_name: string | null;
+        };
+        Insert: {
+          memo_format_section_id?: string;
+          memo_format_section_margin_bottom?: string | null;
+          memo_format_section_margin_left?: string | null;
+          memo_format_section_margin_right?: string | null;
+          memo_format_section_margin_top?: string | null;
+          memo_format_section_name?: string | null;
+        };
+        Update: {
+          memo_format_section_id?: string;
+          memo_format_section_margin_bottom?: string | null;
+          memo_format_section_margin_left?: string | null;
+          memo_format_section_margin_right?: string | null;
+          memo_format_section_margin_top?: string | null;
+          memo_format_section_name?: string | null;
         };
         Relationships: [];
+      };
+      memo_format_subsection_table: {
+        Row: {
+          memo_format_subsection_attachment_id: string | null;
+          memo_format_subsection_id: string;
+          memo_format_subsection_name: string | null;
+          memo_format_subsection_section_id: string | null;
+          memo_format_subsection_text: string | null;
+          memo_format_subsection_text_font_size: string | null;
+        };
+        Insert: {
+          memo_format_subsection_attachment_id?: string | null;
+          memo_format_subsection_id?: string;
+          memo_format_subsection_name?: string | null;
+          memo_format_subsection_section_id?: string | null;
+          memo_format_subsection_text?: string | null;
+          memo_format_subsection_text_font_size?: string | null;
+        };
+        Update: {
+          memo_format_subsection_attachment_id?: string | null;
+          memo_format_subsection_id?: string;
+          memo_format_subsection_name?: string | null;
+          memo_format_subsection_section_id?: string | null;
+          memo_format_subsection_text?: string | null;
+          memo_format_subsection_text_font_size?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "memo_format_subsection_table_memo_format_subsection_attach_fkey";
+            columns: ["memo_format_subsection_attachment_id"];
+            isOneToOne: false;
+            referencedRelation: "attachment_table";
+            referencedColumns: ["attachment_id"];
+          },
+          {
+            foreignKeyName: "memo_format_subsection_table_memo_format_subsection_sectio_fkey";
+            columns: ["memo_format_subsection_section_id"];
+            isOneToOne: false;
+            referencedRelation: "memo_format_section_table";
+            referencedColumns: ["memo_format_section_id"];
+          }
+        ];
       };
       memo_line_item_attachment_table: {
         Row: {

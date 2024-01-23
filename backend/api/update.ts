@@ -1,13 +1,12 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
-import { parseMemoFormatTypeToDB } from "@/utils/functions";
 import {
   AppType,
   EditMemoType,
   MemberRoleType,
   MemoAgreementTableRow,
-  MemoFormatType,
+  MemoFormatTableUpdate,
   OtherExpensesTypeTableUpdate,
   SignerTableRow,
   TeamTableRow,
@@ -699,15 +698,16 @@ const processAllMemoLineItems = async (
 
 export const updateMemoFormat = async (
   supabaseClient: SupabaseClient<Database>,
-  params: MemoFormatType
+  params: MemoFormatTableUpdate[]
 ) => {
-  const columnListToUpdate = parseMemoFormatTypeToDB(params);
-  const { error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("memo_format_table")
-    .update(columnListToUpdate)
-    .eq("memo_format_id", params.memo_format_id);
+    .upsert(params)
+    .select();
 
   if (error) throw Error;
+
+  return data;
 };
 
 // Update other expenses type

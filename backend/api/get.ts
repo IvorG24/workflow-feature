@@ -1,3 +1,4 @@
+import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
@@ -18,7 +19,6 @@ import {
   FormType,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
-  MemoFormatType,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -4400,36 +4400,25 @@ export const getMemoFormat = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
-    .from("memo_format_table")
-    .select("*")
-    .maybeSingle();
-
+    .from("memo_format_section_table")
+    .select(
+      "*, format_subsection: memo_format_subsection_table(*, subsection_attachment: memo_format_attachment_table(*))"
+    );
   if (error || !data) throw Error;
 
-  const formatData: MemoFormatType = {
-    memo_format_id: data.memo_format_id,
-    header: {
-      top: Number(data.memo_format_header_margin_top),
-      right: Number(data.memo_format_header_margin_right),
-      bottom: Number(data.memo_format_header_margin_bottom),
-      left: Number(data.memo_format_header_margin_left),
-      logoPosition: data.memo_format_header_logo_position,
-    },
-    body: {
-      top: Number(data.memo_format_body_margin_top),
-      right: Number(data.memo_format_body_margin_right),
-      bottom: Number(data.memo_format_body_margin_bottom),
-      left: Number(data.memo_format_body_margin_left),
-    },
-    footer: {
-      top: Number(data.memo_format_footer_margin_top),
-      right: Number(data.memo_format_footer_margin_right),
-      bottom: Number(data.memo_format_footer_margin_bottom),
-      left: Number(data.memo_format_footer_margin_left),
-    },
-  };
+  const sectionOrderList = ["header", "body", "footer"];
+  const sortedData = data.sort((a, b) => {
+    const aIndex = sectionOrderList.findIndex(
+      (section) => section === a.memo_format_section_name
+    );
+    const bIndex = sectionOrderList.findIndex(
+      (section) => section === b.memo_format_section_name
+    );
 
-  return formatData;
+    return aIndex - bIndex;
+  });
+
+  return sortedData as MemoFormatFormValues["formatSection"];
 };
 // Get type list
 export const getTypeList = async (
