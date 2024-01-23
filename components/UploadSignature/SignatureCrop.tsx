@@ -1,6 +1,5 @@
-import getCroppedImg from "@/utils/cropImage";
-import { Button, Container, Flex, Paper, Slider } from "@mantine/core";
-import Compressor from "compressorjs";
+import getCroppedImg, { convertAspectRatio } from "@/utils/cropImage";
+import { Button, Container, Flex, Slider } from "@mantine/core";
 import { useCallback, useEffect, useState } from "react";
 import Cropper, { Area } from "react-easy-crop";
 
@@ -17,32 +16,21 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [convertedImage, setConvertedImage] = useState<File | null>(null);
 
   useEffect(() => {
     const getFileUrl = async () => {
       if (file) {
-        const compressedImage: Blob = await new Promise((resolve) => {
-          new Compressor(file, {
-            quality: 0.6,
-            success(result) {
-              resolve(result);
-            },
-            error(error) {
-              throw error;
-            },
-          });
-        });
-
         const reader = new FileReader();
-
         reader.onload = (e) => {
           const url = e.target?.result as string;
           setFileUrl(url);
         };
 
-        console.log(compressedImage);
+        const resizedImage = await convertAspectRatio(file);
+        setConvertedImage(resizedImage);
 
-        reader.readAsDataURL(compressedImage);
+        reader.readAsDataURL(resizedImage);
       }
     };
     getFileUrl();
@@ -55,8 +43,12 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
   const showCroppedImage = useCallback(async () => {
     setIsLoading(true);
     if (!croppedAreaPixels) return;
+    if (!convertedImage) return;
     try {
-      const croppedImageFile = await getCroppedImg(file, croppedAreaPixels, 0);
+      const croppedImageFile = await getCroppedImg(
+        convertedImage,
+        croppedAreaPixels
+      );
 
       setFile(croppedImageFile);
       onSaveChanges(croppedImageFile);
@@ -76,28 +68,25 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
   return (
     <Container fluid p={0} m={0}>
       {fileUrl && (
-        <Paper
-          sx={(theme) => ({
-            border: `1.5px solid ${theme.colors.gray[3]}`,
-          })}
-          p={1}
-        >
-          <Container w={250} pos="relative" h={200} bg="dark">
-            <Cropper
-              image={fileUrl}
-              crop={crop}
-              zoom={zoom}
-              cropSize={{ height: 150, width: 200 }}
-              aspect={1.25 / 1}
-              onCropChange={setCrop}
-              onCropComplete={onCropComplete}
-              onZoomChange={setZoom}
-              style={{
-                containerStyle: { background: "white" },
-              }}
-            />
-          </Container>
-        </Paper>
+        <Container w={250} pos="relative" h={200} bg="dark">
+          <Cropper
+            image={fileUrl}
+            crop={crop}
+            zoom={zoom}
+            cropSize={{ height: 200, width: 250 }}
+            aspect={1.25 / 1}
+            onCropChange={setCrop}
+            onCropComplete={onCropComplete}
+            onZoomChange={setZoom}
+            style={{
+              containerStyle: {
+                background: "white",
+                border: `1.5px solid #e7e7e7`,
+              },
+              mediaStyle: { background: "red" },
+            }}
+          />
+        </Container>
       )}
       <Flex direction="column" mt="xs" gap="md">
         <Slider

@@ -96,6 +96,7 @@ const UploadSignature = ({
               <Paper
                 sx={(theme) => ({
                   border: `1.5px solid ${theme.colors.gray[3]}`,
+                  borderRadius: 0,
                 })}
                 p={1}
               >
@@ -174,6 +175,7 @@ const UploadSignature = ({
               <Paper
                 sx={(theme) => ({
                   border: `1.5px solid ${theme.colors.gray[3]}`,
+                  borderRadius: 0,
                 })}
                 p={1}
               >
