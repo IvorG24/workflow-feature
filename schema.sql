@@ -9171,14 +9171,13 @@ RETURNS JSON AS $$
       const signedDate = new Date(row.memo_signer_date_signed).getTime();
 
       const signatureMatch = sortedSignatures.find((signature, index) => {
-          if (!signature) {
-              return false;
-          }
-          const signatureDateCreatedTime = new Date(signature.signature_history_date_created).getTime();
-          const nextSignatureDateCreatedTime = index < sortedSignatures.length - 1
-              ? new Date(sortedSignatures[index + 1].signature_history_date_created).getTime()
-              : 0;
-          return signedDate >= signatureDateCreatedTime && signedDate < nextSignatureDateCreatedTime;
+        if (!signature) {
+            return false;
+        }
+        const nextSignatureDateCreatedTime = index < sortedSignatures.length - 1
+            ? new Date(sortedSignatures[index + 1].signature_history_date_created).getTime()
+            : 0;
+        return signedDate < nextSignatureDateCreatedTime;
       });
 
       if (signatureMatch) {
@@ -9236,7 +9235,7 @@ RETURNS JSON AS $$
         memo_line_item_attachment_line_item_id:
           row.memo_line_item_attachment_line_item_id
       }
-    }));
+    })).sort((a, b) => a.memo_line_item_order - b.memo_line_item_order);
 
     const read_receipt_data = plv8.execute(`
       SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
@@ -9513,7 +9512,7 @@ RETURNS JSON AS $$
             memo_line_item_attachment_public_url: row.memo_line_item_attachment_public_url,
             memo_line_item_attachment_line_item_id: row.memo_line_item_attachment_line_item_id
         }
-    }));
+    })).sort((a, b) => a.memo_line_item_order - b.memo_line_item_order);
     
     memo_data_on_load = {
         ...memo_data,
