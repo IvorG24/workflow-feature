@@ -16,11 +16,7 @@ const RequestSection = ({
   isAnon = false,
 }: RequestSectionProps) => {
   return (
-    <Paper
-      p="xl"
-      shadow="xs"
-      className={`onboarding-requisition-request-${section.section_name.toLowerCase()}`}
-    >
+    <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
         {section.section_name}
       </Title>

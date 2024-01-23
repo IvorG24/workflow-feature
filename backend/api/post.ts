@@ -37,9 +37,9 @@ import {
   TeamTableInsert,
   TicketCommentTableInsert,
   TicketTableRow,
-  UserOnboardTableInsert,
   UserTableInsert,
   UserTableRow,
+  UserValidIDTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -107,7 +107,7 @@ export const uploadFile = async (
 // Create User
 export const createUser = async (
   supabaseClient: SupabaseClient<Database>,
-  params: UserTableInsert
+  params: UserTableInsert & { user_employee_number: string }
 ) => {
   const { user_phone_number } = params;
 
@@ -980,23 +980,6 @@ export const createTicketComment = async (
   return { data, error };
 };
 
-// Create onboard
-export const createOnboard = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    onboardData: UserOnboardTableInsert;
-  }
-) => {
-  const { onboardData } = params;
-  const { data, error } = await supabaseClient
-    .from("user_onboard_table")
-    .insert(onboardData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
 // Create row in lookup table
 export const createRowInLookupTable = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1277,5 +1260,19 @@ export const createRowInOtherExpensesTypeTable = async (
     .single();
   if (error) throw error;
 
+  return data;
+};
+
+// Create Valid ID
+export const createValidID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: UserValidIDTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_valid_id_table")
+    .insert(params)
+    .select()
+    .single();
+  if (error) throw error;
   return data;
 };

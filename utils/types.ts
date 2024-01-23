@@ -192,13 +192,6 @@ export type TicketCommentTableInsert =
 export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
 
-export type UserOnboardTableRow =
-  Database["public"]["Tables"]["user_onboard_table"]["Row"];
-export type UserOnboardTableInsert =
-  Database["public"]["Tables"]["user_onboard_table"]["Insert"];
-export type UserOnboardTableUpdate =
-  Database["public"]["Tables"]["user_onboard_table"]["Update"];
-
 export type ServiceCategoryTableRow =
   Database["public"]["Tables"]["service_category_table"]["Row"];
 export type ServiceCategoryTableInsert =
@@ -253,6 +246,13 @@ export type OtherExpensesTypeTableInsert =
 export type OtherExpensesTypeTableUpdate =
   Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
 
+export type UserValidIDTableRow =
+  Database["public"]["Tables"]["user_valid_id_table"]["Row"];
+export type UserValidIDTableInsert =
+  Database["public"]["Tables"]["user_valid_id_table"]["Insert"];
+export type UserValidIDTableUpdate =
+  Database["public"]["Tables"]["user_valid_id_table"]["Update"];
+
 export type QueryTableRow = Database["public"]["Tables"]["query_table"]["Row"];
 
 // End: Database Table Types
@@ -263,6 +263,7 @@ export type MemberRoleType = "OWNER" | "APPROVER" | "MEMBER" | "ADMIN";
 export type AttachmentBucketType =
   | "USER_AVATARS"
   | "USER_SIGNATURES"
+  | "USER_VALID_IDS"
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS"
@@ -979,6 +980,7 @@ export type TeamMemberOnLoad = {
   member: TeamMemberTableRow & {
     team_member_user: UserTableRow & { user_employee_number: string };
   };
+  userValidId: UserValidIDTableRow;
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -1343,4 +1345,12 @@ export type MemoFormatType = {
 
 export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
   other_expenses_category: string;
+};
+
+export type UserValidIdWithUser = Omit<
+  UserValidIDTableRow,
+  "user_valid_id_user_id" | "user_valid_id_approver"
+> & {
+  user_valid_id_user_id: UserTableRow;
+  user_valid_id_approver: UserTableRow;
 };

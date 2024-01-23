@@ -166,6 +166,7 @@ const UserItemFilter = ({
                     minDate={new Date("2023-01-01")}
                     maxDate={currentDate}
                     disabled={isAnalyzing}
+                    valueFormat="YYYY-MM-DD"
                   />
                 )}
               />
@@ -186,6 +187,7 @@ const UserItemFilter = ({
                     disabled={isAnalyzing}
                     minDate={getValues("startDate") || new Date()}
                     maxDate={currentDate}
+                    valueFormat="YYYY-MM-DD"
                   />
                 )}
               />

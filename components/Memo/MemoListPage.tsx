@@ -135,8 +135,7 @@ const MemoListPage = ({
 
       setMemoList(data);
       setMemoListCount(count || 0);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -171,8 +170,7 @@ const MemoListPage = ({
 
       setMemoList(data);
       setMemoListCount(count || 0);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -267,7 +265,6 @@ const MemoListPage = ({
                 }
                 miw={250}
                 maw={320}
-                className="onboarding-request-list-filters-status"
               />
             )}
           />
@@ -394,7 +391,6 @@ const MemoListPage = ({
           onChange={setActivePage}
           total={Math.ceil(memoListCount / DEFAULT_REQUEST_LIST_LIMIT)}
           mt="xl"
-          className="onboarding-request-list-pagination"
         />
       </Flex>
 

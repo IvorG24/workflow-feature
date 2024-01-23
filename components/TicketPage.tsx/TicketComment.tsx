@@ -145,7 +145,9 @@ const TicketComment = ({ comment }: Props) => {
                 </Text>
                 <Text color="dimmed" size={12}>
                   {moment(comment.ticket_comment_date_created).fromNow()},{" "}
-                  {new Date(comment.ticket_comment_date_created).toDateString()}
+                  {moment(new Date(comment.ticket_comment_date_created)).format(
+                    "YYYY-MM-DD"
+                  )}
                 </Text>
               </Stack>
             </Flex>
@@ -171,9 +173,9 @@ const TicketComment = ({ comment }: Props) => {
               <Text size={14}>
                 {`${commenter.team_member_user.user_first_name} ${commenter.team_member_user.user_last_name}`}
               </Text>
-              <Text size={14}>
+              <Text size={14} color="dimmed">
                 {moment(comment.ticket_comment_date_created).format(
-                  "MMM DD, YYYY"
+                  "YYYY-MM-DD"
                 )}
               </Text>
             </Group>

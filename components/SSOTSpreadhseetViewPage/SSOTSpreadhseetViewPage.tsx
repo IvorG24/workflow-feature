@@ -23,6 +23,7 @@ import {
 import { useElementSize, useViewportSize } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
@@ -1595,9 +1596,9 @@ const SSOTSpreadsheetView = ({
               )}
               {requisitionTable.columnList["date_created"] && (
                 <td>
-                  {new Date(
-                    request.requisition_request_date_created
-                  ).toLocaleDateString()}
+                  {moment(
+                    new Date(request.requisition_request_date_created)
+                  ).format("YYYY-MM-DD")}
                 </td>
               )}
 
@@ -1617,9 +1618,9 @@ const SSOTSpreadsheetView = ({
                     showColumn && (
                       <td key={index}>
                         {response.request_response_field_type === "DATE"
-                          ? new Date(
-                              JSON.parse(response.request_response)
-                            ).toLocaleDateString()
+                          ? moment(new Date(response.request_response)).format(
+                              "YYYY-MM-DD"
+                            )
                           : JSON.parse(response.request_response) !== "null"
                           ? JSON.parse(response.request_response)
                           : ""}

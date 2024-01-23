@@ -2,8 +2,6 @@ import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
-import { JoyRideNoSSR } from "@/utils/functions";
-import { ONBOARDING_DASHBOARD_STEP, ONBOARD_NAME } from "@/utils/onboarding";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   Alert,
@@ -17,16 +15,13 @@ import {
   Stack,
   Text,
   Title,
-  useMantineTheme,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { usePrevious } from "@mantine/hooks";
-import { modals } from "@mantine/modals";
 import { IconAlertCircle, IconCalendarEvent } from "@tabler/icons-react";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { CallBackProps, STATUS } from "react-joyride";
 import Overview from "./OverviewTab/Overview";
 
 // response tab is hidden
@@ -50,11 +45,9 @@ type Props = {
 
 const Dashboard = ({ ticketListCount }: Props) => {
   const router = useRouter();
-  const { colors } = useMantineTheme();
   const formList = useFormList();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
-  const [isOnboarding, setIsOnboarding] = useState(false);
 
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
@@ -111,65 +104,6 @@ const Dashboard = ({ ticketListCount }: Props) => {
       }
     }
   }, [formData]);
-
-  const handleJoyrideCallback = (data: CallBackProps) => {
-    const { status } = data;
-    if (status === STATUS.FINISHED) {
-      router.push(
-        `/user/onboarding/test?notice=success&onboardName=${ONBOARD_NAME.DASHBOARD}`
-      );
-    }
-  };
-
-  const openDashboardOnboardingModal = () =>
-    modals.open({
-      centered: true,
-      closeOnEscape: false,
-      closeOnClickOutside: false,
-      withCloseButton: false,
-      zIndex: 1000,
-      children: (
-        <Box>
-          <Title order={3}>Welcome to Dashboard Overview</Title>
-          <Text mt="xs" align="justify">
-            Navigate through key features, including &apos;Total Requests,&apos;
-            &apos;Top Requestor,&apos; &apos;Top Signer,&apos; and &apos;Monthly
-            Statistics.&apos; Effortlessly track and manage your requests with
-            our user-friendly dashboard. This quick session will guide you
-            through the essentials for a seamless and informed experience.
-          </Text>
-          <Flex justify="flex-end" direction="row" gap="md" mt="lg">
-            <Button
-              variant="outline"
-              onClick={() => {
-                modals.closeAll();
-                setIsOnboarding(false);
-                router.push("/team-requests/dashboard", undefined, {
-                  shallow: true,
-                });
-              }}
-            >
-              Skip Onboarding
-            </Button>
-            <Button
-              onClick={() => {
-                modals.closeAll();
-                setIsOnboarding(true);
-              }}
-            >
-              Start
-            </Button>
-          </Flex>
-        </Box>
-      ),
-    });
-
-  useEffect(() => {
-    if (router.query.onboarding) {
-      setIsOnboarding(true);
-      openDashboardOnboardingModal();
-    }
-  }, [router.query]);
 
   useEffect(() => {
     if (previousActiveTeamId && previousActiveTeamId !== activeTeam.team_id) {
@@ -275,7 +209,6 @@ const Dashboard = ({ ticketListCount }: Props) => {
               onChange={setSelectedForm}
               searchable
               disabled={isFetching}
-              className="onboarding-dashboard-filter-form"
             />
             <Select
               label="Date Created"
@@ -285,7 +218,6 @@ const Dashboard = ({ ticketListCount }: Props) => {
               onChange={setSelectedDays}
               searchable
               disabled={isFetching}
-              className="onboarding-dashboard-filter-date-created"
             />
 
             {selectedDays === "0" && (
@@ -299,6 +231,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
                   dropdownType="popover"
                   minDate={new Date("2023-01-01")}
                   maxDate={currentDate}
+                  valueFormat="YYYY-MM-DD"
                 />
                 <DatePickerInput
                   label="End Date"
@@ -309,6 +242,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
                   dropdownType="popover"
                   minDate={startDateFilter || new Date()}
                   maxDate={currentDate}
+                  valueFormat="YYYY-MM-DD"
                 />
               </>
             )}
@@ -316,24 +250,6 @@ const Dashboard = ({ ticketListCount }: Props) => {
         </Flex>
         <Box>{renderTabs(selectedTab)}</Box>
       </Stack>
-
-      <JoyRideNoSSR
-        callback={handleJoyrideCallback}
-        continuous
-        run={isOnboarding}
-        steps={ONBOARDING_DASHBOARD_STEP}
-        scrollToFirstStep
-        hideCloseButton
-        disableCloseOnEsc
-        disableOverlayClose
-        showProgress
-        styles={{
-          buttonNext: { backgroundColor: colors.blue[6] },
-          buttonBack: { color: colors.blue[6] },
-          beaconInner: { backgroundColor: colors.blue[6] },
-          tooltipContent: { padding: 0 },
-        }}
-      />
     </Container>
   );
 };

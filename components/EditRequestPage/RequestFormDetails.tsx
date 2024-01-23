@@ -29,7 +29,7 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
     form_sub_type,
   } = formDetails;
 
-  const formDateCreated = moment(form_date_created).format("MMM DD, YYYY");
+  const formDateCreated = moment(form_date_created).format("YYYY-MM-DD");
 
   return (
     <Paper p="xl" shadow="xs">

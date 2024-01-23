@@ -67,7 +67,7 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         const teamName = teamListData[0].team_name;
         const activeTeamNameToUrl = formatTeamNameToUrlKey(teamName);
         await router
-          .push(`/${activeTeamNameToUrl}/dashboard?onboarding=true`)
+          .push(`/${activeTeamNameToUrl}/dashboard`)
           .then(() => router.reload());
       } else {
         await router.push(`/invitation/${invitation.invitation_id}`);

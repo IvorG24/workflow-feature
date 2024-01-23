@@ -31,6 +31,7 @@ type Props = TeamMemberOnLoad;
 
 const Page = ({
   member,
+  userValidId,
   groupList,
   groupCount,
   projectList,
@@ -41,6 +42,7 @@ const Page = ({
       <Meta description="User Profile Page" url="/member/<memberId>" />
       <TeamMemberPage
         member={member}
+        userValidId={userValidId}
         groupList={groupList}
         groupCount={groupCount}
         projectList={projectList}

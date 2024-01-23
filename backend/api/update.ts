@@ -545,7 +545,6 @@ export const approveOrRejectMemo = async (
       .from("memo_status_table")
       .update({ memo_status: action })
       .eq("memo_status_memo_id", memoId);
-    console.log(error);
     if (error) throw Error;
   }
 
@@ -720,4 +719,27 @@ export const updateOtherExpensesType = async (
   if (error) throw error;
 
   return data;
+};
+
+// Update valid id status and add approver
+export const approveOrRejectValidId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    validIdId: string;
+    approverUserId: string;
+    status: "APPROVED" | "REJECTED";
+  }
+) => {
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+  const { error } = await supabaseClient
+    .from("user_valid_id_table")
+    .update({
+      user_valid_id_status: params.status,
+      user_valid_id_approver: params.approverUserId,
+      user_valid_id_date_updated: `${currentDate}`,
+    })
+    .eq("user_valid_id_id", params.validIdId);
+
+  if (error) throw error;
 };

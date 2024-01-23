@@ -8,6 +8,7 @@ import {
   TeamMemberType,
   TeamProjectTableRow,
   TeamTableRow,
+  UserValidIDTableRow,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
@@ -42,6 +43,7 @@ type Props = {
   teamMembersCount: number;
   teamGroupsCount: number;
   teamProjectsCount: number;
+  pendingValidIDList: UserValidIDTableRow[];
 };
 
 const Page = ({
@@ -52,6 +54,7 @@ const Page = ({
   teamMembersCount,
   teamGroupsCount,
   teamProjectsCount,
+  pendingValidIDList,
 }: Props) => {
   return (
     <>
@@ -64,6 +67,7 @@ const Page = ({
         teamMembersCount={teamMembersCount}
         teamGroupsCount={teamGroupsCount}
         teamProjectsCount={teamProjectsCount}
+        pendingValidIDList={pendingValidIDList}
       />
     </>
   );

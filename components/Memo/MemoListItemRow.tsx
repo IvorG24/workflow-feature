@@ -32,7 +32,7 @@ const MemoListItemRow = ({ memo }: Props) => {
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
       <Grid.Col span={2}>
-        <Flex gap="md">
+        <Flex gap="md" align="center">
           <Text size="xs" truncate maw={150}>
             <Anchor
               href={`/${formatTeamNameToUrlKey(
@@ -91,7 +91,7 @@ const MemoListItemRow = ({ memo }: Props) => {
       </Grid.Col>
 
       <Grid.Col span={1}>
-        <Text>{moment(memo.memo_date_created).format("MMM DD, YYYY")}</Text>
+        <Text>{moment(memo.memo_date_created).format("YYYY-MM-DD")}</Text>
       </Grid.Col>
     </Grid>
   );

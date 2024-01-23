@@ -101,8 +101,8 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'Release Order', 'These items were available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
 ('8e173d92-c346-4fb5-8ef2-490105e19263', 'Transfer Receipt', 'formsly premade Transfer Receipt form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
 ('7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'Subcon', 'formsly premade Subcon form.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
-('800723d3-a164-4063-9e18-5fff651a96f8', 'Services', 'For subcontract service requests.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, true, false, 'Purchase', 'Subcon')
-('7368a23b-601a-4ce8-adea-30b0cb483ab2', 'Other Expenses', 'formsly premade Other Expenses form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, true, false);
+('800723d3-a164-4063-9e18-5fff651a96f8', 'Services', 'For subcontract service requests.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, true, false, 'Purchase', 'Subcon'),
+('7368a23b-601a-4ce8-adea-30b0cb483ab2', 'Other Expenses', 'formsly premade Other Expenses form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, true, false, NULL, NULL);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
 ('80017528-ddb2-419d-92be-cdfa867b8f42', 'All fields Section 1', 1, false, 'b8408545-4354-47d0-a648-928c6755a94b'),

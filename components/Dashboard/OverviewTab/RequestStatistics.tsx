@@ -72,8 +72,8 @@ const RequestStatistics = ({
     setChartData(newChartData);
   };
 
-  const startDate = moment(startDateFilter).format("MMM DD, YYYY");
-  const endDate = moment(endDateFilter).format("MMM DD, YYYY");
+  const startDate = moment(startDateFilter).format("YYYY-MM-DD");
+  const endDate = moment(endDateFilter).format("YYYY-MM-DD");
   const xAxisChartLabel =
     startDate === endDate ? startDate : `${startDate} - ${endDate}`;
 
@@ -82,14 +82,7 @@ const RequestStatistics = ({
   }, [monthlyChartData]);
 
   return (
-    <Paper
-      w="100%"
-      h="100%"
-      p="lg"
-      withBorder
-      sx={{ flex: 1 }}
-      className="onboarding-dashboard-monthly-statistics"
-    >
+    <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
       <Stack>
         <Group position="apart">
           <Group spacing="xs" mb="sm">

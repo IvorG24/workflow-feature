@@ -115,6 +115,7 @@ const FormField = ({ field }: Props) => {
             label={field.field_name}
             {...inputProps}
             withAsterisk={field.field_is_required}
+            valueFormat="YYYY-MM-DD"
           />
         );
       case "TIME":

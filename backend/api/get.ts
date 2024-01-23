@@ -2657,7 +2657,7 @@ export const getTeamGroupMemberList = async (
             user_email
           ),
           team_member_project: team_project_member_table(
-            team_project: team_project_id(team_project_name)
+            team_project: team_project_id!inner(team_project_name)
           )
         )
       `,
@@ -4059,31 +4059,6 @@ export const checkIfTeamNameExists = async (
   return Boolean(count);
 };
 
-// Get onboard list
-export const getOnboardList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    userId: string;
-    onboardName?: string;
-  }
-) => {
-  const { userId, onboardName } = params;
-
-  const query = supabaseClient
-    .from("user_onboard_table")
-    .select("*")
-    .eq("user_onboard_user_id", userId)
-
-    .order("user_onboard_date_created", { ascending: false });
-
-  if (onboardName) query.eq("user_onboard_name", onboardName);
-  const { data, error } = await query;
-
-  if (error) throw error;
-
-  return data;
-};
-
 // check if email list are onboarded
 export const checkIfEmailsOnboarded = async (
   supabaseClient: SupabaseClient<Database>,
@@ -4520,6 +4495,8 @@ export const getOtherExpensesCategoryOptions = async (
     .from("other_expenses_category_table")
     .select("*")
     .eq("other_expenses_category_team_id", teamId)
+    .eq("other_expenses_category_is_disabled", false)
+    .eq("other_expenses_category_is_available", true)
     .order("other_expenses_category", { ascending: true });
   if (error) throw error;
   return data;
@@ -4541,6 +4518,23 @@ export const getTypeOptions = async (
     .eq("other_expenses_type_is_disabled", false)
     .order("other_expenses_type", { ascending: true });
   if (error) throw error;
+  return data;
+};
+
+// Get user valid id
+export const getUserValidID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    validId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_valid_id_table")
+    .select("*, user_valid_id_user_id(*), user_valid_id_approver(*)")
+    .eq("user_valid_id_id", params.validId)
+    .single();
+  if (error) throw error;
+
   return data;
 };
 
