@@ -6,7 +6,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { MemoFormatType, MemoType } from "@/utils/types";
+import { MemoType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -35,6 +35,7 @@ import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
+import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
 import ExportMemoToPdf from "./ExportMemoToPdf";
 
 type Props = {
@@ -235,7 +236,9 @@ const MemoPage = ({ memo }: Props) => {
   const [openReaderListModal, setOpenReaderListModal] = useState(false);
   const [openAgreementListModal, setOpenAgreementListModal] = useState(false);
   const [hasUserAgreedToMemo, setHasUserAgreedToMemo] = useState(false);
-  const [memoFormat, setMemoFormat] = useState<MemoFormatType | null>(null);
+  const [memoFormat, setMemoFormat] = useState<
+    MemoFormatFormValues["formatSection"] | null
+  >(null);
   const [currentUrl, setCurrentUrl] = useState("");
 
   const handleApproveOrRejectMemo = async (

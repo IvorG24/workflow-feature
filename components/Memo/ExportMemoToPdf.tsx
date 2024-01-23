@@ -1,15 +1,16 @@
-import { MemoFormatType, MemoType } from "@/utils/types";
+import { MemoType } from "@/utils/types";
 import { Button } from "@mantine/core";
 
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import moment from "moment";
+import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
 import MemoPDF from "./MemoPDF";
 
 type Props = {
   memo: MemoType;
   currentSignedSignerList: MemoType["memo_signer_list"];
   sortMemoLineItems: MemoType["memo_line_item_list"];
-  memoFormat: MemoFormatType;
+  memoFormat: MemoFormatFormValues["formatSection"];
 };
 
 Font.register({
