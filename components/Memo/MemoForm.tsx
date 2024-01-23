@@ -48,7 +48,7 @@ const MemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
   const [selectedSigner, setSelectedSigner] = useState<MemoSignerItem | null>(
     null
   );
-  const [isSelectedSignerPrimary, setIsSelectedSignerPrimary] = useState(false);
+  const [isSelectedSignerPrimary, setIsSelectedSignerPrimary] = useState(true);
 
   const {
     register,

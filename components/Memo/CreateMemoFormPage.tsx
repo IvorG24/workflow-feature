@@ -82,8 +82,20 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
       setIsLoading(true);
       if (data.signerList.length <= 0) {
         return notifications.show({
-          title: "Memo signers are required",
-          message: "Please add atleast one signer.",
+          title: "Memo approvers are required",
+          message: "Please add atleast one approver.",
+          color: "red",
+        });
+      }
+
+      const isPrimarySignerExisting = data.signerList.filter(
+        (signer) => signer.signer_is_primary
+      );
+
+      if (isPrimarySignerExisting.length <= 0) {
+        return notifications.show({
+          title: "Primary approver is required",
+          message: "Please select a primary approver.",
           color: "red",
         });
       }
