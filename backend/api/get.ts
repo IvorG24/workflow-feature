@@ -4418,8 +4418,60 @@ export const getMemoFormat = async (
     return aIndex - bIndex;
   });
 
-  return sortedData as MemoFormatFormValues["formatSection"];
+  const sortedDataWithType =
+    sortedData as MemoFormatFormValues["formatSection"];
+
+  const sortedDataWithAttachmentFile = await Promise.all(
+    sortedDataWithType.map(async (section) => {
+      const updatedSubsectionList = await Promise.all(
+        section.format_subsection.map(async (subsection) => {
+          const updatedAttachmentList = await Promise.all(
+            subsection.subsection_attachment.map(async (attachment) => {
+              try {
+                const attachmentFileResponse = await fetch(
+                  `${attachment.memo_format_attachment_url}`
+                );
+
+                if (!attachmentFileResponse.ok) {
+                  throw new Error(
+                    `Failed to fetch attachment for ${attachment.memo_format_attachment_name}`
+                  );
+                }
+
+                const blob = await attachmentFileResponse.blob();
+                const newAttachmentFile = new File(
+                  [blob],
+                  attachment.memo_format_attachment_name,
+                  { type: blob.type }
+                );
+
+                return {
+                  ...attachment,
+                  memo_format_attachment_file: newAttachmentFile,
+                };
+              } catch (error) {
+                console.error(error);
+                return attachment;
+              }
+            })
+          );
+
+          return {
+            ...subsection,
+            subsection_attachment: updatedAttachmentList,
+          };
+        })
+      );
+
+      return {
+        ...section,
+        format_subsection: updatedSubsectionList,
+      };
+    })
+  );
+  return sortedDataWithAttachmentFile;
 };
+
 // Get type list
 export const getTypeList = async (
   supabaseClient: SupabaseClient<Database>,

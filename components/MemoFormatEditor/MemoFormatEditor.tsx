@@ -1,4 +1,6 @@
 import { getMemoFormat } from "@/backend/api/get";
+import { uploadImage } from "@/backend/api/post";
+import { updateMemoFormat } from "@/backend/api/update";
 import { MAX_FILE_SIZE } from "@/utils/constant";
 import { startCase } from "@/utils/string";
 import {
@@ -22,7 +24,6 @@ import {
   NumberInput,
   Stack,
   Text,
-  TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -31,6 +32,7 @@ import { IconPhotoUp, IconTrashFilled } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import MemoFormatMarkdownInput from "./MemoFormatMarkdownInput";
 import MemoFormatPreview from "./MemoFormatPreview";
 
 type Props = {
@@ -71,22 +73,86 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
 
   const formatValues = useWatch<MemoFormatFormValues>({ control });
 
-  const { fields: formatSection } = useFieldArray({
-    control,
-    name: "formatSection",
-  });
+  const { fields: formatSection, replace: replaceFormatSection } =
+    useFieldArray({
+      control,
+      name: "formatSection",
+    });
 
   const handleSaveFormat = async (data: MemoFormatFormValues) => {
     try {
       setIsLoading(true);
-      console.log(data);
-      // await updateMemoFormat(supabaseClient, data.formatFieldList);
+      // upload image attachments
+      const memoFormatSectionData = await Promise.all(
+        data.formatSection.map(async (section) => {
+          const updatedSubsectionData = await Promise.all(
+            section.format_subsection.map(async (subsection) => {
+              if (subsection.subsection_attachment.length > 0) {
+                const updatedAttachmentData = await Promise.all(
+                  subsection.subsection_attachment.map(
+                    async (attachment, attachmentIndex) => {
+                      if (attachment.memo_format_attachment_file) {
+                        const bucket = "MEMO_ATTACHMENTS";
+                        const attachmentPublicUrl = await uploadImage(
+                          supabaseClient,
+                          {
+                            id: uuidv4(),
+                            image: attachment.memo_format_attachment_file,
+                            bucket,
+                          }
+                        );
+
+                        return {
+                          ...attachment,
+                          memo_format_attachment_url: attachmentPublicUrl,
+                          memo_format_attachment_name:
+                            attachment.memo_format_attachment_file.name,
+                          memo_format_attachment_order: `${attachmentIndex}`,
+                          memo_format_attachment_subsection_id:
+                            subsection.memo_format_subsection_id,
+                        };
+                      }
+
+                      return {
+                        ...attachment,
+                        memo_format_attachment_order: `${attachmentIndex}`,
+                        memo_format_attachment_subsection_id:
+                          subsection.memo_format_subsection_id,
+                      };
+                    }
+                  )
+                );
+
+                return {
+                  ...subsection,
+                  subsection_attachment: updatedAttachmentData,
+                };
+              }
+
+              return subsection;
+            })
+          );
+
+          return {
+            ...section,
+            format_subsection: updatedSubsectionData,
+          };
+        })
+      );
+
+      const updatedFormatData = await updateMemoFormat(
+        supabaseClient,
+        memoFormatSectionData as MemoFormatFormValues["formatSection"]
+      );
+
+      replaceFormatSection(updatedFormatData);
 
       notifications.show({
         message: "Memo format updated.",
         color: "green",
       });
     } catch (error) {
+      console.log(error);
       notifications.show({
         message: "Failed to save format",
         color: "red",
@@ -230,7 +296,7 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                       <Accordion variant="separated">
                         {section.format_subsection.map(
                           (subsection, subsectionIndex) => {
-                            const subsectionTextField = `formatSection.${sectionIndex}.format_subsection.${subsectionIndex}.memo_format_subsection_text`;
+                            const subsectionTextFontSizeField = `formatSection.${sectionIndex}.format_subsection.${subsectionIndex}.memo_format_subsection_text_font_size`;
 
                             return (
                               <Accordion.Item
@@ -242,27 +308,48 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                                 )} Section`}</Accordion.Control>
                                 <Accordion.Panel>
                                   <Stack spacing={12}>
-                                    <Controller
-                                      control={control}
-                                      name={
-                                        subsectionTextField as keyof MemoFormatFormValues
-                                      }
-                                      render={({
-                                        field: { onChange, value },
-                                      }) => (
-                                        <TextInput
-                                          label={`Add text (optional)`}
-                                          onChange={onChange}
-                                          placeholder="Add section text here"
-                                          value={`${value ?? ""}`}
-                                          error={
-                                            errors?.[
-                                              subsectionTextField as keyof MemoFormatFormValues
-                                            ]?.message
-                                          }
-                                        />
-                                      )}
-                                    />
+                                    <Flex gap="sm" wrap="wrap">
+                                      <Controller
+                                        control={control}
+                                        name={`formatSection.${sectionIndex}.format_subsection.${subsectionIndex}.memo_format_subsection_text`}
+                                        render={({
+                                          field: { onChange, value },
+                                        }) => (
+                                          <Box sx={{ flex: 1 }}>
+                                            <Text
+                                              size={14}
+                                              weight={600}
+                                            >{`Add text (optional)`}</Text>
+                                            <MemoFormatMarkdownInput
+                                              value={value}
+                                              onChange={onChange}
+                                            />
+                                          </Box>
+                                        )}
+                                      />
+                                      <Controller
+                                        control={control}
+                                        name={`formatSection.${sectionIndex}.format_subsection.${subsectionIndex}.memo_format_subsection_text_font_size`}
+                                        defaultValue={"16"}
+                                        render={({
+                                          field: { onChange, value },
+                                        }) => (
+                                          <NumberInput
+                                            w={120}
+                                            min={0}
+                                            max={64}
+                                            label={`Font Size`}
+                                            onChange={onChange}
+                                            value={Number(value ?? 16)}
+                                            error={
+                                              errors?.[
+                                                subsectionTextFontSizeField as keyof MemoFormatFormValues
+                                              ]?.message
+                                            }
+                                          />
+                                        )}
+                                      />
+                                    </Flex>
                                     {subsection.subsection_attachment.map(
                                       (attachment, attachmentIndex) => (
                                         <Stack
@@ -360,7 +447,9 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
             </Stack>
           </form>
           <Box maw={600} mah={900} sx={{ flex: 1 }}>
-            <Title order={4}>Preview</Title>
+            <Title order={4} mb="sm">
+              Preview
+            </Title>
             <MemoFormatPreview
               formatData={formatValues as MemoFormatFormValues}
             />

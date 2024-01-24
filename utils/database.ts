@@ -668,7 +668,6 @@ export type Database = {
       };
       memo_format_subsection_table: {
         Row: {
-          memo_format_subsection_attachment_id: string | null;
           memo_format_subsection_id: string;
           memo_format_subsection_name: string | null;
           memo_format_subsection_section_id: string | null;
@@ -676,7 +675,6 @@ export type Database = {
           memo_format_subsection_text_font_size: string | null;
         };
         Insert: {
-          memo_format_subsection_attachment_id?: string | null;
           memo_format_subsection_id?: string;
           memo_format_subsection_name?: string | null;
           memo_format_subsection_section_id?: string | null;
@@ -684,7 +682,6 @@ export type Database = {
           memo_format_subsection_text_font_size?: string | null;
         };
         Update: {
-          memo_format_subsection_attachment_id?: string | null;
           memo_format_subsection_id?: string;
           memo_format_subsection_name?: string | null;
           memo_format_subsection_section_id?: string | null;
@@ -692,13 +689,6 @@ export type Database = {
           memo_format_subsection_text_font_size?: string | null;
         };
         Relationships: [
-          {
-            foreignKeyName: "memo_format_subsection_table_memo_format_subsection_attach_fkey";
-            columns: ["memo_format_subsection_attachment_id"];
-            isOneToOne: false;
-            referencedRelation: "attachment_table";
-            referencedColumns: ["attachment_id"];
-          },
           {
             foreignKeyName: "memo_format_subsection_table_memo_format_subsection_sectio_fkey";
             columns: ["memo_format_subsection_section_id"];

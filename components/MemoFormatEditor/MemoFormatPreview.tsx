@@ -1,6 +1,7 @@
 import { getBase64 } from "@/utils/functions";
-import { Box, Flex, Image, Paper, Text } from "@mantine/core";
+import { Box, Flex, Image, Paper, createStyles } from "@mantine/core";
 import { useEffect, useState } from "react";
+import Markdown from "react-markdown";
 import { MemoFormatFormValues } from "./MemoFormatEditor";
 
 type Props = {
@@ -21,7 +22,30 @@ const getSectionColor = (section: string) => {
   }
 };
 
+const getSubsectionJustify = (subsection: string) => {
+  switch (subsection) {
+    case "left":
+      return "flex-start";
+    case "center":
+      return "center";
+    case "right":
+      return "flex-end";
+
+    default:
+      return "#339AF0";
+  }
+};
+
+const useStyles = createStyles(() => ({
+  markdown: {
+    "*": {
+      margin: 0,
+    },
+  },
+}));
+
 const MemoFormatPreview = ({ formatData }: Props) => {
+  const { classes } = useStyles();
   const { formatSection } = formatData;
   const [sectionList, setSectionList] = useState<React.JSX.Element[]>([]);
 
@@ -40,20 +64,19 @@ const MemoFormatPreview = ({ formatData }: Props) => {
                         )}`
                       : attachment.memo_format_attachment_url;
 
-                  return (
-                    <Box key={attachment.memo_format_attachment_id}>
-                      {imageAttachmentSource && (
-                        <Image
-                          src={imageAttachmentSource}
-                          alt="Section Image"
-                          withPlaceholder
-                          width={90}
-                          height={30}
-                          fit="contain"
-                        />
-                      )}
-                    </Box>
-                  );
+                  if (imageAttachmentSource) {
+                    return (
+                      <Image
+                        key={attachment.memo_format_attachment_id}
+                        src={imageAttachmentSource}
+                        alt="Section Image"
+                        withPlaceholder
+                        width={90}
+                        height={30}
+                        fit="contain"
+                      />
+                    );
+                  }
                 })
               );
 
@@ -62,11 +85,24 @@ const MemoFormatPreview = ({ formatData }: Props) => {
                   key={subsection.memo_format_subsection_id}
                   gap="sm"
                   wrap="wrap"
+                  sx={{ flex: 1 }}
+                  justify={getSubsectionJustify(
+                    `${subsection.memo_format_subsection_name}`
+                  )}
                 >
                   {subsection.memo_format_subsection_text && (
-                    <Text miw={0} sx={{ wordBreak: "break-word" }}>
-                      {subsection.memo_format_subsection_text}
-                    </Text>
+                    <Box
+                      sx={{
+                        wordBreak: "break-word",
+                        fontSize:
+                          `${subsection.memo_format_subsection_text_font_size}px` ??
+                          "16px",
+                      }}
+                    >
+                      <Markdown className={classes.markdown}>
+                        {subsection.memo_format_subsection_text}
+                      </Markdown>
+                    </Box>
                   )}
                   {subsection.subsection_attachment.length > 0
                     ? renderImageAttachmentList
@@ -79,7 +115,7 @@ const MemoFormatPreview = ({ formatData }: Props) => {
           return (
             <Flex
               key={section.memo_format_section_id}
-              mih={section.memo_format_section_name === "body" ? "100%" : 60}
+              mih={section.memo_format_section_name === "body" ? "100%" : 30}
               mt={`${section.memo_format_section_margin_top}px`}
               mr={`${section.memo_format_section_margin_right}px`}
               mb={`${section.memo_format_section_margin_bottom}px`}
