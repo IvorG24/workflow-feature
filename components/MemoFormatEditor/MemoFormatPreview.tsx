@@ -32,7 +32,7 @@ const getSubsectionJustify = (subsection: string) => {
       return "flex-end";
 
     default:
-      return "#339AF0";
+      return "flex-start";
   }
 };
 

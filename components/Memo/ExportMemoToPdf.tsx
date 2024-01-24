@@ -1,5 +1,5 @@
 import { MemoType } from "@/utils/types";
-import { Button } from "@mantine/core";
+import { Box, Button } from "@mantine/core";
 
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import moment from "moment";
@@ -30,7 +30,7 @@ Font.register({
   ],
 });
 
-const ExportToPdf = ({
+const ExportMemoToPdf = ({
   memo,
   currentSignedSignerList,
   sortMemoLineItems,
@@ -57,8 +57,8 @@ const ExportToPdf = ({
   });
 
   return (
-    <>
-      {!instance.loading ? (
+    <Box>
+      {!instance.loading && (
         <Button
           variant="light"
           component="a"
@@ -67,9 +67,9 @@ const ExportToPdf = ({
         >
           Export to PDF
         </Button>
-      ) : null}
-    </>
+      )}
+    </Box>
   );
 };
 
-export default ExportToPdf;
+export default ExportMemoToPdf;
