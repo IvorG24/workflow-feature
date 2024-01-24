@@ -808,19 +808,7 @@ const RequestPage = ({
 
         {request.request_form.form_name === "Requisition" &&
         request.request_form.form_is_formsly_form ? (
-          <RequisitionSummary
-            summaryData={sectionWithDuplicateList
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
+          <RequisitionSummary summaryData={sectionWithDuplicateList.slice(1)} />
         ) : null}
 
         {request.request_form.form_name === "Subcon" &&
