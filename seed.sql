@@ -469,3 +469,8 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 ('f5caeebf-8158-450a-88da-d7a098155a14', 'Test notification approve', TRUE, '/', 'APPROVE', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 ('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 ('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40');
+
+INSERT INTO memo_format_table (memo_format_header_margin_top, memo_format_header_margin_right, memo_format_header_margin_bottom, memo_format_header_margin_left, memo_format_header_logo_position,
+    memo_format_body_margin_top, memo_format_body_margin_right, memo_format_body_margin_bottom, memo_format_body_margin_left,
+    memo_format_footer_margin_top, memo_format_footer_margin_right, memo_format_footer_margin_bottom, memo_format_footer_margin_left) 
+VALUES ('12', '12', '16', '12', 'Right','2', '12', '2', '12','16', '12', '8', '12');

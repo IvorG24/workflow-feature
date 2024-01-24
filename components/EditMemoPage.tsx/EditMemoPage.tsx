@@ -52,11 +52,23 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
 
       if (data.memo_signer_list.length === 0) {
         return notifications.show({
-          message: "Signer is required. Please add atleast 1 signer.",
+          title: "Memo approvers are required",
+          message: "Please add atleast one approver.",
           color: "red",
         });
       }
 
+      const isPrimarySignerExisting = data.memo_signer_list.filter(
+        (signer) => signer.memo_signer_is_primary
+      );
+
+      if (isPrimarySignerExisting.length <= 0) {
+        return notifications.show({
+          title: "Primary approver is required",
+          message: "Please select a primary approver.",
+          color: "red",
+        });
+      }
       let updateSignerData = data.memo_signer_list
         .sort(
           (a, b) =>

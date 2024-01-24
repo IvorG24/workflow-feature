@@ -1,4 +1,3 @@
-import { Database } from "@/utils/database";
 import { getBase64 } from "@/utils/functions";
 import {
   Box,
@@ -11,11 +10,9 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import moment from "moment";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import { v4 as uuidv4 } from "uuid";
 import { MemoFormValues } from "./CreateMemoFormPage";
 
 type Props = {
@@ -23,27 +20,8 @@ type Props = {
 };
 
 const MemoPreview = ({ data }: Props) => {
-  const supabaseClient = createPagesBrowserClient<Database>();
-
   const [lineItems, setLineItems] = useState<React.JSX.Element[]>([]);
-  const signerListPreview = useMemo(() => {
-    if (!data.signerList) return [];
-
-    return data.signerList.map((signer) => {
-      // get signature public url
-      if (signer?.signer_signature) {
-        const {
-          data: { publicUrl },
-        } = supabaseClient.storage
-          .from("USER_SIGNATURES")
-          .getPublicUrl(signer.signer_signature.attachment_value);
-
-        signer.signer_signature.attachment_public_url = `${publicUrl}?id=${uuidv4()}`;
-      }
-
-      return signer;
-    });
-  }, [data.signerList, supabaseClient.storage]);
+  const signerListPreview = data.signerList ?? [];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -124,13 +102,13 @@ const MemoPreview = ({ data }: Props) => {
 
         <Space mt="xl" />
         {signerListPreview.length > 0 && (
-          <Flex gap={48}>
+          <Flex gap={48} wrap="wrap">
             {signerListPreview.map((signer) => (
               <Stack key={signer.signer_team_member_id} spacing={0}>
                 <MantineImage
                   width={120}
                   height={80}
-                  src={signer.signer_signature?.attachment_public_url}
+                  src={signer.signer_signature}
                   alt="User signature"
                   fit="contain"
                   withPlaceholder

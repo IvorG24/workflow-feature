@@ -108,7 +108,7 @@ const MemoPDF = ({
                 }
                 style={{
                   height: "200px",
-                  width: "600px",
+                  width: "100%",
                   objectFit: "contain",
                 }}
               />
@@ -132,9 +132,9 @@ const MemoPDF = ({
     const signerFullname = `${signer.memo_signer_team_member.user.user_first_name} ${signer.memo_signer_team_member.user.user_last_name}`;
     return (
       <View key={signer.memo_signer_id}>
-        {signer.signature_public_url ? (
+        {signer.memo_signer_signature_public_url ? (
           <Image
-            src={signer.signature_public_url}
+            src={signer.memo_signer_signature_public_url}
             style={{ height: "50px", width: "75px", objectFit: "contain" }}
           />
         ) : (
