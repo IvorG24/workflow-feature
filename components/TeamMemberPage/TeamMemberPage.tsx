@@ -26,7 +26,7 @@ type Props = {
   member: TeamMemberTableRow & {
     team_member_user: UserTableRow & { user_employee_number: string };
   };
-  userValidId: UserValidIDTableRow;
+  userValidId: UserValidIDTableRow | undefined;
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -48,6 +48,7 @@ const TeamMemberPage = ({
   projectCount,
 }: Props) => {
   const getValidIDStatus = () => {
+    if (!userValidId) return;
     let label = "";
     let color = "";
     if (userValidId.user_valid_id_status === "APPROVED") {
@@ -90,7 +91,7 @@ const TeamMemberPage = ({
               {member.team_member_user.user_last_name[0].toUpperCase()}
             </Avatar>
 
-            {userValidId.user_valid_id_status !== "PENDING" && (
+            {userValidId && validIDStatus && (
               <Badge
                 variant="filled"
                 pr={0}

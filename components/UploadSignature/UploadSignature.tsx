@@ -93,18 +93,26 @@ const UploadSignature = ({
         <Flex mt={16} gap={16} align="center" direction="column" mih={100}>
           {openCanvas && (
             <>
-              <Paper radius="md" withBorder h={166.67} w={250}>
-                <SignatureCanvas
-                  canvasProps={{
-                    width: 250,
-                    height: 166.67,
-                  }}
-                  backgroundColor="white"
-                  ref={sigCanvas}
-                  data-testid="sigCanvas"
-                  onEnd={handleOnEndDrawSignature}
-                />
-                <Flex justify="flex-start"></Flex>
+              <Paper
+                sx={(theme) => ({
+                  border: `1.5px solid ${theme.colors.gray[3]}`,
+                  borderRadius: 0,
+                })}
+                p={1}
+              >
+                <Paper radius="md" h={200} w={250}>
+                  <SignatureCanvas
+                    canvasProps={{
+                      width: 250,
+                      height: 200,
+                    }}
+                    backgroundColor="white"
+                    ref={sigCanvas}
+                    data-testid="sigCanvas"
+                    onEnd={handleOnEndDrawSignature}
+                  />
+                  <Flex justify="flex-start"></Flex>
+                </Paper>
               </Paper>
 
               <Flex justify="space-between" gap="xs">
@@ -143,12 +151,12 @@ const UploadSignature = ({
 
           {openCrop && signatureFile && (
             <Flex direction="column" justify="space-between" w={250} mih={275}>
-              <Group pos="absolute" h={166.67} w={250} mb="lg">
+              <Group pos="absolute" h={200} w={250} mb="lg">
                 <div
                   style={{
                     position: "relative",
                     width: "100%",
-                    height: 166.67,
+                    height: 200,
                   }}
                 >
                   <SignatureCrop
@@ -164,20 +172,28 @@ const UploadSignature = ({
 
           {!openCanvas && !openCrop && (
             <>
-              <Image
-                width={250}
-                height={166.67}
-                radius="md"
-                src={signatureUrl}
-                alt="User signature"
-                fit="contain"
-                withPlaceholder
-                placeholder={
-                  <Box>
-                    <Text>No signature</Text>
-                  </Box>
-                }
-              />
+              <Paper
+                sx={(theme) => ({
+                  border: `1.5px solid ${theme.colors.gray[3]}`,
+                  borderRadius: 0,
+                })}
+                p={1}
+              >
+                <Image
+                  width={250}
+                  height={200}
+                  radius="md"
+                  src={signatureUrl}
+                  alt="User signature"
+                  fit="contain"
+                  withPlaceholder
+                  placeholder={
+                    <Box>
+                      <Text>No signature</Text>
+                    </Box>
+                  }
+                />
+              </Paper>
               <Flex gap={12} justify="flex-start">
                 <Button size="xs" onClick={() => setOpenCanvas(true)}>
                   Draw

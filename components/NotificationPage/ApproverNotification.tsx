@@ -11,6 +11,7 @@ import {
   Progress,
   Stack,
   Text,
+  useMantineTheme,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useRouter } from "next/router";
@@ -31,6 +32,7 @@ type Props = {
 const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
+  const { colorScheme } = useMantineTheme();
   const [localFilter, setLocalFilter] = useLocalStorage<RequestListLocalFilter>(
     {
       key: "formsly-request-list-filter",
@@ -90,7 +92,7 @@ const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
   };
 
   return (
-    <Card my="md" bg="white">
+    <Card my="md" bg={colorScheme === "dark" ? "dark.6" : "white"}>
       <Card.Section px="md" bg="blue">
         <Text color="white">Approver Notification</Text>
       </Card.Section>
