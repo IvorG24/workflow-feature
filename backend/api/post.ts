@@ -6,6 +6,7 @@ import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { parseJSONIfValid } from "@/utils/string";
 import {
+  AddressTableInsert,
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
@@ -1272,13 +1273,11 @@ export const createRowInOtherExpensesTypeTable = async (
 // Create Valid ID
 export const createValidID = async (
   supabaseClient: SupabaseClient<Database>,
-  params: UserValidIDTableInsert
+  params: UserValidIDTableInsert & AddressTableInsert
 ) => {
-  const { data, error } = await supabaseClient
-    .from("user_valid_id_table")
-    .insert(params)
-    .select()
-    .single();
+  const { data, error } = await supabaseClient.rpc("create_user_valid_id", {
+    input_data: params,
+  });
   if (error) throw error;
   return data;
 };

@@ -35,7 +35,7 @@ const UserValidIDVerificationPage = ({ userValidId, approverId }: Props) => {
   const { hovered: frontIDHovered, ref: frontIDRef } = useHover();
   const { hovered: backIDHovered, ref: backIDRef } = useHover();
 
-  const user = userValidId.user_valid_id_user_id;
+  const user = userValidId.user_valid_id_user;
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -192,33 +192,39 @@ const UserValidIDVerificationPage = ({ userValidId, approverId }: Props) => {
             </Text>
             <Text mt="md">
               <Text color="dimmed" span>
+                Region:&nbsp;
+              </Text>
+              {userValidId.user_valid_id_address.address_region}
+            </Text>
+            <Text mt="md">
+              <Text color="dimmed" span>
                 Province:&nbsp;
               </Text>
-              {userValidId.user_valid_id_province}
+              {userValidId.user_valid_id_address.address_province}
             </Text>
             <Text mt="md">
               <Text color="dimmed" span>
                 City:&nbsp;
               </Text>
-              {userValidId.user_valid_id_city}
+              {userValidId.user_valid_id_address.address_city}
             </Text>
             <Text mt="md">
               <Text color="dimmed" span>
-                Barangay/Municipality:&nbsp;
+                Barangay:&nbsp;
               </Text>
-              {userValidId.user_valid_id_barangay}
+              {userValidId.user_valid_id_address.address_barangay}
+            </Text>
+            <Text mt="md">
+              <Text color="dimmed" span>
+                Street:&nbsp;
+              </Text>
+              {userValidId.user_valid_id_address.address_street}
             </Text>
             <Text mt="md">
               <Text color="dimmed" span>
                 Zip Code:&nbsp;
               </Text>
-              {userValidId.user_valid_id_zip_code}
-            </Text>
-            <Text mt="md">
-              <Text color="dimmed" span>
-                House number and Street address:&nbsp;
-              </Text>
-              {userValidId.user_valid_id_house_and_street}
+              {userValidId.user_valid_id_address.address_zip_code}
             </Text>
           </Box>
         </Flex>

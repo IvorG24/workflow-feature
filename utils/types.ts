@@ -1354,12 +1354,18 @@ export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
 
 export type UserValidIdWithUser = Omit<
   UserValidIDTableRow,
-  "user_valid_id_user_id" | "user_valid_id_approver"
+  "user_valid_id_user_id" | "user_valid_id_approver_user_id" | "user_valid_id_address_id"
 > & {
-  user_valid_id_user_id: UserTableRow;
-  user_valid_id_approver: UserTableRow;
+  user_valid_id_user: UserTableRow;
+  user_valid_id_approver_user: UserTableRow;
+  user_valid_id_address: AddressTableRow;
 };
 
 export type TeamProjectWithAddressType = TeamProjectTableRow & {
   team_project_address: AddressTableRow;
+};
+
+export type OptionType = {
+  label: string;
+  value: string;
 };

@@ -631,17 +631,13 @@ CREATE TABLE user_valid_id_table (
   user_valid_id_last_name VARCHAR(4000) NOT NULL,
   user_valid_id_gender VARCHAR(4000) NOT NULL,
   user_valid_id_nationality VARCHAR(4000) NOT NULL,
-  user_valid_id_province VARCHAR(4000) NOT NULL,
-  user_valid_id_city VARCHAR(4000) NOT NULL,
-  user_valid_id_barangay VARCHAR(4000) NOT NULL,
-  user_valid_id_zip_code VARCHAR(4000) NOT NULL,
-  user_valid_id_house_and_street VARCHAR(4000) NOT NULL,
   user_valid_id_front_image_url VARCHAR(4000) NOT NULL,
   user_valid_id_back_image_url VARCHAR(4000),
   user_valid_id_status VARCHAR(4000) NOT NULL,
 
-  user_valid_id_approver UUID REFERENCES user_table(user_id),
-  user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL
+  user_valid_id_approver_user_id UUID REFERENCES user_table(user_id),
+  user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL,
+  user_valid_id_address_id UUID REFERENCES address_table(address_id) NOT NULL
 );
 -- End: Valid ID
 
@@ -9653,6 +9649,90 @@ RETURNS VOID AS $$
 $$ LANGUAGE plv8;
 
 -- End: Update user
+
+-- Start: Create user valid id
+
+CREATE OR REPLACE FUNCTION create_user_valid_id(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      user_valid_id_user_id,
+      user_valid_id_type,
+      user_valid_id_number,
+      user_valid_id_first_name,
+      user_valid_id_middle_name,
+      user_valid_id_last_name,
+      user_valid_id_gender,
+      user_valid_id_nationality,
+      user_valid_id_status,
+      user_valid_id_front_image_url,
+      user_valid_id_back_image_url,
+      address_region,
+      address_province,
+      address_city,
+      address_barangay,
+      address_street,
+      address_zip_code,
+    } = input_data;
+
+    const addressData = plv8.execute(
+      `
+        INSERT INTO address_table 
+          (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
+        VALUES
+          ('${address_region}', '${address_province}', '${address_city}', '${address_barangay}', '${address_street}', '${address_zip_code}')
+        RETURNING *
+      `
+    )[0];
+
+    const userValidIdData = plv8.execute(
+      `
+        INSERT INTO user_valid_id_table
+          (
+            user_valid_id_number, 
+            user_valid_id_type, 
+            user_valid_id_first_name, 
+            user_valid_id_middle_name, 
+            user_valid_id_last_name, 
+            user_valid_id_gender, 
+            user_valid_id_nationality, 
+            user_valid_id_front_image_url, 
+            user_valid_id_back_image_url, 
+            user_valid_id_status, 
+            user_valid_id_user_id, 
+            user_valid_id_address_id
+          )
+        VALUES
+          (
+            '${user_valid_id_number}',
+            '${user_valid_id_type}',
+            '${user_valid_id_first_name}',
+            '${user_valid_id_middle_name}',
+            '${user_valid_id_last_name}',
+            '${user_valid_id_gender}',
+            '${user_valid_id_nationality}',
+            '${user_valid_id_front_image_url}',
+            '${user_valid_id_back_image_url}',
+            '${user_valid_id_status}',
+            '${user_valid_id_user_id}',
+            '${addressData.address_id}'
+          )
+        RETURNING *
+      `
+    )[0];
+
+    returnData = {
+      ...addressData,
+      ...userValidIdData
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create user valid id
 
 ---------- End: FUNCTIONS
 

@@ -3,7 +3,7 @@ import { createAttachment, createTeamProject } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { TeamProjectWithAddressType } from "@/utils/types";
+import { OptionType, TeamProjectWithAddressType } from "@/utils/types";
 import {
   Button,
   Container,
@@ -37,11 +37,6 @@ type ProjectForm = {
   city: string;
   barangay: string;
   street: string;
-};
-
-type OptionType = {
-  label: string;
-  value: string;
 };
 
 type Props = {

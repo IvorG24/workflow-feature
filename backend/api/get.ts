@@ -4532,7 +4532,9 @@ export const getUserValidID = async (
 ) => {
   const { data, error } = await supabaseClient
     .from("user_valid_id_table")
-    .select("*, user_valid_id_user_id(*), user_valid_id_approver(*)")
+    .select(
+      "*, user_valid_id_user: user_valid_id_user_id(*), user_valid_id_approver_user: user_valid_id_approver_user_id(*), user_valid_id_address: user_valid_id_address_id(*)"
+    )
     .eq("user_valid_id_id", params.validId)
     .single();
   if (error) throw error;
