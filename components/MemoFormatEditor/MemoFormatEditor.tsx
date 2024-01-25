@@ -30,7 +30,13 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconPhotoUp, IconTrashFilled } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
+import {
+  Controller,
+  FieldErrors,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import MemoFormatMarkdownInput from "./MemoFormatMarkdownInput";
 import MemoFormatPreview from "./MemoFormatPreview";
@@ -63,6 +69,8 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
   const supabaseClient = createPagesBrowserClient();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [formErrors, setFormErrors] =
+    useState<FieldErrors<MemoFormatFormValues>>();
 
   const {
     handleSubmit,
@@ -128,7 +136,7 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                   subsection_attachment: updatedAttachmentData,
                 };
               }
-
+              console.log(subsection);
               return subsection;
             })
           );
@@ -214,13 +222,37 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
     );
   };
 
+  const marginFieldHasError = (sectionIndex: number, fieldName: string) => {
+    if (!formErrors) return;
+
+    switch (fieldName) {
+      case "memo_format_section_margin_top":
+        return formErrors.formatSection?.[sectionIndex]
+          ?.memo_format_section_margin_top?.message;
+
+      case "memo_format_section_margin_right":
+        return formErrors.formatSection?.[sectionIndex]
+          ?.memo_format_section_margin_right?.message;
+      case "memo_format_section_margin_bottom":
+        return formErrors.formatSection?.[sectionIndex]
+          ?.memo_format_section_margin_bottom?.message;
+      case "memo_format_section_margin_left":
+        return formErrors.formatSection?.[sectionIndex]
+          ?.memo_format_section_margin_left?.message;
+
+      default:
+        break;
+    }
+  };
+
   useEffect(() => {
     const fetchMemoFormat = async () => {
       const defaultMemoFormat = await getMemoFormat(supabaseClient);
       setValue("formatSection", defaultMemoFormat);
     };
     fetchMemoFormat();
-  }, [setValue, supabaseClient]);
+    setFormErrors(errors);
+  }, [setValue, supabaseClient, errors]);
 
   return (
     <Modal
@@ -270,22 +302,29 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                                 key={marginPosition + "-" + marginPositionIndex}
                                 control={control}
                                 name={fieldName as keyof MemoFormatFormValues}
-                                rules={{ required: "This field is required" }}
+                                rules={{
+                                  required: "This field is required",
+                                  min: {
+                                    value: 0,
+                                    message: "Margin has a minimum of 0",
+                                  },
+                                  max: {
+                                    value: 400,
+                                    message: "Margin has a maximum of 400",
+                                  },
+                                }}
                                 render={({ field: { onChange, value } }) => (
                                   <NumberInput
                                     w={120}
-                                    min={0}
-                                    max={500}
                                     label={`${startCase(
                                       marginPosition
                                     )} Margin`}
                                     onChange={onChange}
                                     value={Number(value)}
-                                    error={
-                                      errors?.[
-                                        fieldName as keyof MemoFormatFormValues
-                                      ]?.message
-                                    }
+                                    error={marginFieldHasError(
+                                      sectionIndex,
+                                      `memo_format_section_margin_${marginPosition}`
+                                    )}
                                   />
                                 )}
                               />
@@ -296,8 +335,6 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                       <Accordion variant="separated">
                         {section.format_subsection.map(
                           (subsection, subsectionIndex) => {
-                            const subsectionTextFontSizeField = `formatSection.${sectionIndex}.format_subsection.${subsectionIndex}.memo_format_subsection_text_font_size`;
-
                             return (
                               <Accordion.Item
                                 value={`${subsection.memo_format_subsection_name}`}
@@ -330,24 +367,37 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                                       <Controller
                                         control={control}
                                         name={`formatSection.${sectionIndex}.format_subsection.${subsectionIndex}.memo_format_subsection_text_font_size`}
-                                        defaultValue={"16"}
                                         render={({
                                           field: { onChange, value },
                                         }) => (
                                           <NumberInput
                                             w={120}
-                                            min={0}
-                                            max={64}
                                             label={`Font Size`}
                                             onChange={onChange}
-                                            value={Number(value ?? 16)}
+                                            value={Number(value)}
                                             error={
-                                              errors?.[
-                                                subsectionTextFontSizeField as keyof MemoFormatFormValues
-                                              ]?.message
+                                              errors?.formatSection?.[
+                                                sectionIndex
+                                              ]?.format_subsection?.[
+                                                subsectionIndex
+                                              ]
+                                                ?.memo_format_subsection_text_font_size
+                                                ?.message
                                             }
                                           />
                                         )}
+                                        rules={{
+                                          min: {
+                                            value: 8,
+                                            message:
+                                              "Font size has a minimum of 8",
+                                          },
+                                          max: {
+                                            value: 64,
+                                            message:
+                                              "Font size has a maximum of 64",
+                                          },
+                                        }}
                                       />
                                     </Flex>
                                     {subsection.subsection_attachment.map(

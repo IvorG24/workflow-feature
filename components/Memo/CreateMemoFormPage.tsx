@@ -182,13 +182,19 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
           onTabChange={(selectedTab: string) => setActiveTab(selectedTab)}
         >
           <Tabs.List>
-            <Tabs.Tab value="create" icon={<IconFileDescription size={14} />}>
-              Create
-            </Tabs.Tab>
             {!laptopView && (
-              <Tabs.Tab value="preview" icon={<IconEye size={14} />}>
-                Preview
-              </Tabs.Tab>
+              <>
+                {" "}
+                <Tabs.Tab
+                  value="create"
+                  icon={<IconFileDescription size={14} />}
+                >
+                  Create
+                </Tabs.Tab>
+                <Tabs.Tab value="preview" icon={<IconEye size={14} />}>
+                  Preview
+                </Tabs.Tab>
+              </>
             )}
           </Tabs.List>
 

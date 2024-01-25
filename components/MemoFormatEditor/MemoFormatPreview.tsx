@@ -89,6 +89,7 @@ const MemoFormatPreview = ({ formatData }: Props) => {
                   justify={getSubsectionJustify(
                     `${subsection.memo_format_subsection_name}`
                   )}
+                  align="center"
                 >
                   {subsection.memo_format_subsection_text && (
                     <Box
