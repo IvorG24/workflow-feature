@@ -470,7 +470,13 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 ('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 ('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40');
 
-INSERT INTO memo_format_table (memo_format_header_margin_top, memo_format_header_margin_right, memo_format_header_margin_bottom, memo_format_header_margin_left, memo_format_header_logo_position,
-    memo_format_body_margin_top, memo_format_body_margin_right, memo_format_body_margin_bottom, memo_format_body_margin_left,
-    memo_format_footer_margin_top, memo_format_footer_margin_right, memo_format_footer_margin_bottom, memo_format_footer_margin_left) 
-VALUES ('12', '12', '16', '12', 'Right','2', '12', '2', '12','16', '12', '8', '12');
+INSERT INTO memo_format_subsection_table(memo_format_subsection_name, memo_format_subsection_section_id) VALUES
+('left', '69291b3f-dae2-4c67-b217-0b4ed17dd083'),
+('center', '69291b3f-dae2-4c67-b217-0b4ed17dd083'),
+('right', '69291b3f-dae2-4c67-b217-0b4ed17dd083'),
+('left', '59c71083-f06a-4ce1-aa4b-12526186da7e'),
+('center', '59c71083-f06a-4ce1-aa4b-12526186da7e'),
+('right', '59c71083-f06a-4ce1-aa4b-12526186da7e'),
+('left', '16435f18-7ad7-4a44-af87-a6a290787fdc'),
+('center', '16435f18-7ad7-4a44-af87-a6a290787fdc'),
+('right', '16435f18-7ad7-4a44-af87-a6a290787fdc');

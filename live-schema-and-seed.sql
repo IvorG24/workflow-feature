@@ -731,14 +731,29 @@ CREATE TABLE memo_agreement_table (
     memo_agreement_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
 );
 
-CREATE TABLE memo_format_table (
-    memo_format_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_format_header VARCHAR(4000) NOT NULL,
-    memo_format_footer VARCHAR(4000) NOT NULL,
-    memo_format_margin_top VARCHAR(4000) NOT NULL,
-    memo_format_margin_right VARCHAR(4000) NOT NULL,
-    memo_format_margin_bottom VARCHAR(4000) NOT NULL,
-    memo_format_margin_left VARCHAR(4000) NOT NULL
+CREATE TABLE memo_format_section_table(
+    memo_format_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_format_section_margin_top VARCHAR(20),
+    memo_format_section_margin_right VARCHAR(20),
+    memo_format_section_margin_bottom VARCHAR(20),
+    memo_format_section_margin_left VARCHAR(20),
+    memo_format_section_name VARCHAR(100)
+);
+
+CREATE TABLE memo_format_subsection_table(
+    memo_format_subsection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_format_subsection_name VARCHAR(100),
+    memo_format_subsection_text VARCHAR(4000),
+    memo_format_subsection_text_font_size VARCHAR(20),
+    memo_format_subsection_section_id UUID REFERENCES memo_format_section_table(memo_format_section_id)
+);
+
+CREATE TABLE memo_format_attachment_table(
+    memo_format_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_format_attachment_name VARCHAR(4000) NOT NULL,
+    memo_format_attachment_url VARCHAR(4000) NOT NULL,
+    memo_format_attachment_order VARCHAR(20) NOT NULL,
+    memo_format_attachment_subsection_id UUID REFERENCES memo_format_subsection_table(memo_format_subsection_id)
 );
 
 
@@ -9210,8 +9225,10 @@ ALTER TABLE memo_date_updated_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_status_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_agreement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_format_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_valid_id_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_format_section_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
 
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
@@ -9402,11 +9419,13 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_read_receipt_table;
 DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_agreement_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_agreement_table;
 
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_table;
-
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_valid_id_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_valid_id_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_valid_id_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_section_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_subsection_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_attachment_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -11027,8 +11046,19 @@ CREATE POLICY "Allow READ for anon users" ON "public"."memo_agreement_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
--- memo_format_table
-CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_table"
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_section_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_subsection_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_attachment_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
