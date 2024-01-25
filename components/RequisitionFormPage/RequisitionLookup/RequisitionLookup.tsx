@@ -4,6 +4,7 @@ import CategoryLookup from "./CategoryLookup/CategoryLookup";
 const RequisitionLookup = () => {
   const serviceLookupList = [
     { table: "item_unit_of_measurement", label: "Unit of Measurement" },
+    { table: "supplier", label: "Supplier" },
   ] as { table: string; label: string }[];
 
   return (
