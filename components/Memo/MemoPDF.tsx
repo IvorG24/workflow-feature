@@ -15,9 +15,6 @@ import Html from "react-pdf-html";
 import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
 
 const styles = StyleSheet.create({
-  memoHeader: {
-    marginLeft: "12px",
-  },
   memoHeaderInput: {
     display: "flex",
     flexDirection: "row",
@@ -28,12 +25,6 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     gap: "1px",
     marginTop: "8px",
-  },
-  memoBody: {
-    marginTop: "8px",
-    marginLeft: "12px",
-    marginRight: "12px",
-    fontSize: "10pt",
   },
   memoLineItem: {
     lineHeight: 1,
@@ -272,9 +263,11 @@ const MemoPDF = ({
               key={subsection.memo_format_subsection_id}
             >
               {subsection.memo_format_subsection_text && (
-                <Html stylesheet={textStyleSheet}>
-                  {marked(subsection.memo_format_subsection_text) as string}
-                </Html>
+                <View>
+                  <Html stylesheet={textStyleSheet}>
+                    {marked(subsection.memo_format_subsection_text) as string}
+                  </Html>
+                </View>
               )}
               {subsection.subsection_attachment.length > 0 &&
                 subsection.subsection_attachment.map((attachment) => (
@@ -309,7 +302,7 @@ const MemoPDF = ({
       >
         {renderHeader()}
         <View style={sectionStyleSheet.body}>
-          <View style={styles.memoHeader}>
+          <View>
             <Text
               style={{
                 fontWeight: 600,
@@ -364,7 +357,7 @@ const MemoPDF = ({
               />
             </Svg>
           </View>
-          <View style={styles.memoBody}>{renderLineItems}</View>
+          <View>{renderLineItems}</View>
           <View style={styles.memoSigner}>{renderSignerList}</View>
         </View>
         {renderFooter()}

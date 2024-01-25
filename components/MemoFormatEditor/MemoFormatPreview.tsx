@@ -144,7 +144,7 @@ const MemoFormatPreview = ({ formatData }: Props) => {
   }, [formatSection]);
 
   return (
-    <Paper maw={600} h={900} withBorder>
+    <Paper maw={595} h={842} withBorder>
       <Flex w="100%" mih="100%" direction="column">
         {sectionList}
       </Flex>
