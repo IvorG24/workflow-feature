@@ -136,7 +136,6 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                   subsection_attachment: updatedAttachmentData,
                 };
               }
-              console.log(subsection);
               return subsection;
             })
           );
@@ -340,7 +339,16 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                                 value={`${subsection.memo_format_subsection_name}`}
                                 key={subsection + "-" + subsectionIndex}
                               >
-                                <Accordion.Control>{`${startCase(
+                                <Accordion.Control
+                                  style={{
+                                    border: `2px solid ${
+                                      errors?.formatSection?.[sectionIndex]
+                                        ?.format_subsection?.[subsectionIndex]
+                                        ? "red"
+                                        : "white"
+                                    }`,
+                                  }}
+                                >{`${startCase(
                                   `${subsection.memo_format_subsection_name}`
                                 )} Section`}</Accordion.Control>
                                 <Accordion.Panel>
@@ -372,6 +380,8 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                                         }) => (
                                           <NumberInput
                                             w={120}
+                                            min={8}
+                                            max={64}
                                             label={`Font Size`}
                                             onChange={onChange}
                                             value={Number(value)}
@@ -397,6 +407,9 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
                                             message:
                                               "Font size has a maximum of 64",
                                           },
+                                          validate: (v) =>
+                                            v !== "" ||
+                                            "Font size has a minimum of 8",
                                         }}
                                       />
                                     </Flex>

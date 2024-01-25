@@ -95,9 +95,7 @@ const MemoFormatPreview = ({ formatData }: Props) => {
                     <Box
                       sx={{
                         wordBreak: "break-word",
-                        fontSize:
-                          `${subsection.memo_format_subsection_text_font_size}px` ??
-                          "16px",
+                        fontSize: `${subsection.memo_format_subsection_text_font_size}px`,
                       }}
                     >
                       <Markdown className={classes.markdown}>
