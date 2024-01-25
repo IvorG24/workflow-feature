@@ -159,6 +159,7 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
         }`
       );
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Failed to create memo",
         color: "red",

@@ -85,7 +85,7 @@ const MemoFormatPreview = ({ formatData }: Props) => {
                   key={subsection.memo_format_subsection_id}
                   gap="sm"
                   wrap="wrap"
-                  sx={{ flex: 1 }}
+                  // sx={{ flex: 1 }}
                   justify={getSubsectionJustify(
                     `${subsection.memo_format_subsection_name}`
                   )}

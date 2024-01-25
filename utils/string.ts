@@ -141,7 +141,7 @@ export const trimObjectProperties = (obj: { [x: string]: string }) => {
   return trimmedObject;
 };
 
-export const escapeApostrophe = (input: string) => {
+export const escapeQuotes = (input: string): string => {
   const escapedString = input.replace(/'/g, "''");
 
   return escapedString;

@@ -2,7 +2,7 @@ import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
-import { escapeApostrophe } from "@/utils/string";
+import { escapeQuotes } from "@/utils/string";
 import {
   AppType,
   EditMemoType,
@@ -616,7 +616,7 @@ export const updateMemo = async (
   const memoLineItemTableValues = updatedLineItemData
     .map(
       (lineItem, lineItemIndex) =>
-        `('${lineItem.memo_line_item_id}', '${escapeApostrophe(
+        `('${lineItem.memo_line_item_id}', '${escapeQuotes(
           lineItem.memo_line_item_content
         )}', '${lineItemIndex}', '${params.memo_id}')`
     )
@@ -631,7 +631,7 @@ export const updateMemo = async (
       ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
         `('${
           lineItemAttachment?.memo_line_item_attachment_name
-        }', '${escapeApostrophe(
+        }', '${escapeQuotes(
           lineItemAttachment?.memo_line_item_attachment_caption ?? ""
         )}', '${
           lineItemAttachment?.memo_line_item_attachment_storage_bucket

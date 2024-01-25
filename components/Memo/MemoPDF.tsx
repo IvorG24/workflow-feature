@@ -198,7 +198,6 @@ const MemoPDF = ({
             "*": {
               fontSize: `${subsection.memo_format_subsection_text_font_size}px`,
               margin: 0,
-              wordBreak: "break-word",
             },
           };
 
@@ -209,15 +208,20 @@ const MemoPDF = ({
                 display: "flex",
                 flexDirection: "row",
                 flexWrap: "wrap",
+                height: "auto",
                 justifyContent: getSubsectionJustify(
                   `${subsection.memo_format_subsection_name}`
                 ),
+                alignItems: "center",
+                alignContent: "center",
               }}
             >
               {subsection.memo_format_subsection_text && (
-                <Html stylesheet={textStyleSheet}>
-                  {marked(subsection.memo_format_subsection_text) as string}
-                </Html>
+                <View>
+                  <Html stylesheet={textStyleSheet}>
+                    {marked(subsection.memo_format_subsection_text) as string}
+                  </Html>
+                </View>
               )}
               {subsection.subsection_attachment.length > 0 &&
                 subsection.subsection_attachment.map((attachment) => (
@@ -251,16 +255,18 @@ const MemoPDF = ({
           };
           return (
             <View
+              key={subsection.memo_format_subsection_id}
               style={{
                 display: "flex",
                 flexDirection: "row",
                 flexWrap: "wrap",
-                flex: 1,
+                height: "auto",
                 justifyContent: getSubsectionJustify(
                   `${subsection.memo_format_subsection_name}`
                 ),
+                alignItems: "center",
+                alignContent: "center",
               }}
-              key={subsection.memo_format_subsection_id}
             >
               {subsection.memo_format_subsection_text && (
                 <View>
