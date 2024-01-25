@@ -3283,7 +3283,7 @@ export const getCSICode = async (
   return data as CSICodeTableRow;
 };
 
-// Fetch all itemm division option
+// Fetch all item division option
 export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -3291,6 +3291,26 @@ export const getItemDivisionOption = async (
     .from("distinct_division_view")
     .select("csi_code_division_id, csi_code_division_description")
     .order("csi_code_division_id", { ascending: true });
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch all item unit of measurement option
+export const getItemUnitOfMeasurementOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("item_unit_of_measurement_table")
+    .select("item_unit_of_measurement_id, item_unit_of_measurement")
+    .eq("item_unit_of_measurement_is_available", true)
+    .eq("item_unit_of_measurement_is_disabled", false)
+    .eq("item_unit_of_measurement_team_id", teamId)
+    .order("item_unit_of_measurement", { ascending: true });
   if (error) throw error;
 
   return data;
