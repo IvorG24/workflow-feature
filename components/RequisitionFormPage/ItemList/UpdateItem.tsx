@@ -1,7 +1,11 @@
-import { checkItemName, getItemDivisionOption } from "@/backend/api/get";
+import {
+  checkItemName,
+  getItemDivisionOption,
+  getItemUnitOfMeasurementOption,
+} from "@/backend/api/get";
 import { updateItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { GL_ACCOUNT_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
+import { GL_ACCOUNT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   ItemDescriptionTableUpdate,
@@ -51,18 +55,36 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
   const [divisionIdOption, setDivisionIdOption] = useState<
     { label: string; value: string }[]
   >([]);
+  const [unitOfMeasurementOption, setUnitOfMeasurementOption] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [isFetchingOptions, setIsFetchingOptions] = useState(true);
 
   useEffect(() => {
-    const fetchDivisionOption = async () => {
+    const fetchOptions = async () => {
       try {
-        const option = await getItemDivisionOption(supabaseClient);
-
-        option &&
+        setIsFetchingOptions(true);
+        const divisionOption = await getItemDivisionOption(supabaseClient);
+        divisionOption &&
           setDivisionIdOption(
-            option.map((divisionId) => {
+            divisionOption.map((divisionId) => {
               return {
                 label: `${divisionId.csi_code_division_description}`,
                 value: `${divisionId.csi_code_division_id}`,
+              };
+            })
+          );
+
+        const unitOfMeasurementOption = await getItemUnitOfMeasurementOption(
+          supabaseClient,
+          { teamId: activeTeam.team_id }
+        );
+        unitOfMeasurementOption &&
+          setUnitOfMeasurementOption(
+            unitOfMeasurementOption.map((uom) => {
+              return {
+                label: `${uom.item_unit_of_measurement}`,
+                value: `${uom.item_unit_of_measurement}`,
               };
             })
           );
@@ -71,9 +93,11 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
+      } finally {
+        setIsFetchingOptions(false);
       }
     };
-    fetchDivisionOption();
+    fetchOptions();
   }, []);
 
   const { register, getValues, formState, handleSubmit, control } =
@@ -175,7 +199,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
 
   return (
     <Container p={0} fluid sx={{ position: "relative" }}>
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={formState.isSubmitting || isFetchingOptions} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
           Update Item
@@ -228,7 +252,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                 <Select
                   value={value as string}
                   onChange={onChange}
-                  data={ITEM_UNIT_CHOICES}
+                  data={unitOfMeasurementOption}
                   withAsterisk
                   error={formState.errors.unit?.message}
                   searchable
