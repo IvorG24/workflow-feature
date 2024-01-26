@@ -8,6 +8,7 @@ import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
+  FormSegmentType,
   FormType,
   ItemWithDescriptionType,
   TeamGroupTableRow,
@@ -16,7 +17,6 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
-  Box,
   Button,
   Center,
   Container,
@@ -24,9 +24,9 @@ import {
   Group,
   LoadingOverlay,
   Paper,
+  SegmentedControl,
   Space,
   Stack,
-  Switch,
   Text,
   TextInput,
   Title,
@@ -40,7 +40,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { ROW_PER_PAGE } from "@/utils/constant";
+import { FORM_SEGMENT_CHOCIES, ROW_PER_PAGE } from "@/utils/constant";
 import { isEmpty, isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { IconSearch } from "@tabler/icons-react";
@@ -50,10 +50,8 @@ import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import FormSection from "../RequestFormPage/FormSection";
-import ItemDescription from "./ItemDescription/ItemDescription";
-import CreateItem from "./ItemList/CreateItem";
-import ItemList from "./ItemList/ItemList";
-import UpdateItem from "./ItemList/UpdateItem";
+import RequisitionFormDetails from "./RequisitionFormDetails/RequisitionFormDetails";
+import RequisitionLookup from "./RequisitionLookup/RequisitionLookup";
 
 type Props = {
   items: ItemWithDescriptionType[];
@@ -110,7 +108,8 @@ const RequisitionFormPage = ({
   );
 
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
-  const [switchValue, setSwitchValue] = useState(false);
+  const [segmentValue, setSegmentValue] =
+    useState<FormSegmentType>("Form Details");
 
   const [initialRequester, setInitialRequester] = useState(
     form.form_team_group.map((group) => group.team_group.team_group_id)
@@ -385,69 +384,17 @@ const RequisitionFormPage = ({
       />
       <Space h="xl" />
       <Center>
-        <Switch
-          onLabel="Form Preview"
-          offLabel="Form Details"
-          size="xl"
-          checked={switchValue}
-          onChange={(e) => setSwitchValue(e.target.checked)}
-          sx={{
-            label: {
-              cursor: "pointer",
-            },
-          }}
-        />
+        <Center>
+          <SegmentedControl
+            data={FORM_SEGMENT_CHOCIES}
+            value={segmentValue}
+            onChange={(value) => setSegmentValue(value as FormSegmentType)}
+          />
+        </Center>
       </Center>
       <Space h="xl" />
 
-      {!switchValue ? (
-        <Box>
-          <Paper p="xl" shadow="xs">
-            {!isCreatingItem && !editItem ? (
-              <ItemList
-                itemList={itemList}
-                setItemList={setItemList}
-                itemCount={itemCount}
-                setItemCount={setItemCount}
-                setIsCreatingItem={setIsCreatingItem}
-                setSelectedItem={setSelectedItem}
-                setEditItem={setEditItem}
-                editItem={editItem}
-              />
-            ) : null}
-            {isCreatingItem ? (
-              <CreateItem
-                setIsCreatingItem={setIsCreatingItem}
-                setItemList={setItemList}
-                setItemCount={setItemCount}
-              />
-            ) : null}
-            {editItem ? (
-              <UpdateItem
-                setItemList={setItemList}
-                setEditItem={setEditItem}
-                editItem={editItem}
-              />
-            ) : null}
-          </Paper>
-          <Space h="xl" />
-          <Paper p="xl" shadow="xs">
-            {!selectedItem ? (
-              <Center>
-                <Text color="dimmed">No item selected</Text>
-              </Center>
-            ) : null}
-            {selectedItem ? (
-              <ItemDescription
-                selectedItem={selectedItem}
-                setSelectedItem={setSelectedItem}
-              />
-            ) : null}
-          </Paper>
-        </Box>
-      ) : null}
-
-      {switchValue ? (
+      {segmentValue === "Form Preview" ? (
         <Stack spacing="xl">
           <FormSection section={form.form_section[0]} />
           <FormSection
@@ -458,6 +405,23 @@ const RequisitionFormPage = ({
           />
         </Stack>
       ) : null}
+
+      {segmentValue === "Form Details" ? (
+        <RequisitionFormDetails
+          isCreatingItem={isCreatingItem}
+          editItem={editItem}
+          itemList={itemList}
+          setItemList={setItemList}
+          itemCount={itemCount}
+          setItemCount={setItemCount}
+          setIsCreatingItem={setIsCreatingItem}
+          setSelectedItem={setSelectedItem}
+          setEditItem={setEditItem}
+          selectedItem={selectedItem}
+        />
+      ) : null}
+
+      {segmentValue === "Form Lookup" ? <RequisitionLookup /> : null}
 
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Requester Details</Title>

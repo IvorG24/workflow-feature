@@ -5,6 +5,7 @@ import {
   REQUISITION_FIELDS_ORDER,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import { addCommaToNumber } from "@/utils/string";
 import { SSOTResponseType, SSOTType } from "@/utils/types";
 import {
@@ -1540,7 +1541,6 @@ const SSOTSpreadsheetView = ({
           );
         }
       );
-
       const items = fields.slice(0, -REQUISITION_FIELDS_ORDER.length);
 
       const sortedAndGroupedItems = sortAndGroupItems(items);
@@ -1618,9 +1618,9 @@ const SSOTSpreadsheetView = ({
                     showColumn && (
                       <td key={index}>
                         {response.request_response_field_type === "DATE"
-                          ? moment(new Date(response.request_response)).format(
-                              "YYYY-MM-DD"
-                            )
+                          ? moment(
+                              new Date(safeParse(response.request_response))
+                            ).format("YYYY-MM-DD")
                           : JSON.parse(response.request_response) !== "null"
                           ? JSON.parse(response.request_response)
                           : ""}

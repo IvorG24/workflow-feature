@@ -545,6 +545,51 @@ export type Database = {
           }
         ];
       };
+      item_unit_of_measurement_table: {
+        Row: {
+          item_unit_of_measurement: string;
+          item_unit_of_measurement_date_created: string;
+          item_unit_of_measurement_encoder_team_member_id: string | null;
+          item_unit_of_measurement_id: string;
+          item_unit_of_measurement_is_available: boolean;
+          item_unit_of_measurement_is_disabled: boolean;
+          item_unit_of_measurement_team_id: string;
+        };
+        Insert: {
+          item_unit_of_measurement: string;
+          item_unit_of_measurement_date_created?: string;
+          item_unit_of_measurement_encoder_team_member_id?: string | null;
+          item_unit_of_measurement_id?: string;
+          item_unit_of_measurement_is_available?: boolean;
+          item_unit_of_measurement_is_disabled?: boolean;
+          item_unit_of_measurement_team_id: string;
+        };
+        Update: {
+          item_unit_of_measurement?: string;
+          item_unit_of_measurement_date_created?: string;
+          item_unit_of_measurement_encoder_team_member_id?: string | null;
+          item_unit_of_measurement_id?: string;
+          item_unit_of_measurement_is_available?: boolean;
+          item_unit_of_measurement_is_disabled?: boolean;
+          item_unit_of_measurement_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_unit_of_measurement_tabl_item_unit_of_measurement_enc_fkey";
+            columns: ["item_unit_of_measurement_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          },
+          {
+            foreignKeyName: "item_unit_of_measurement_tabl_item_unit_of_measurement_tea_fkey";
+            columns: ["item_unit_of_measurement_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          }
+        ];
+      };
       memo_agreement_table: {
         Row: {
           memo_agreement_by_team_member_id: string;
