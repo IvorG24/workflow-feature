@@ -127,6 +127,9 @@ const ItemList = ({
   const [unitOfMeasurementOptions, setUnitOfMeasurementOptions] = useState<
     { label: string; value: string }[]
   >([]);
+  const [pageOptions, setPageOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
 
   const headerCheckboxKey = generateRandomId();
   const requestFormMethods = useForm<FilterType>();
@@ -179,6 +182,17 @@ const ItemList = ({
       handleSort();
     }
   }, [sortStatus]);
+
+  useEffect(() => {
+    const resultArray: { label: string; value: string }[] = [];
+    for (let i = 1; i <= Math.ceil(itemCount / ROW_PER_PAGE); i++) {
+      resultArray.push({
+        label: `${i}`,
+        value: `${i}`,
+      });
+    }
+    setPageOptions(resultArray);
+  }, [itemCount]);
 
   const handleCheckRow = (itemId: string) => {
     if (checkList.includes(itemId)) {
@@ -576,6 +590,18 @@ const ItemList = ({
                 className={classes.flexGrow}
               />
             )}
+          />
+
+          <Select
+            value={`${activePage}`}
+            onChange={(value: string) => {
+              setActivePage(Number(value));
+              handlePagination(Number(value));
+            }}
+            placeholder="Page"
+            data={pageOptions}
+            className={classes.flexGrow}
+            searchable
           />
         </Group>
       </form>
