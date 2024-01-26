@@ -23,28 +23,33 @@ export default async function handler(
     } = await supabaseClient.auth.getUser();
 
     const { token } = req.query;
-    const decodedToken = jwt.verify(`${token}`, JWT_SECRET_KEY) as JwtPayload;
-    const { teamId, invitedEmail } = decodedToken;
+    jwt.verify(`${token}`, JWT_SECRET_KEY, async function (err, decodedToken) {
+      if (err) {
+        res.redirect("/sign-up");
+      } else {
+        const { teamId, invitedEmail } = decodedToken as JwtPayload;
 
-    if (!user) {
-      const redirectUrl = `/sign-up?inviteToken=${token}`;
-      res.redirect(redirectUrl);
-    } else {
-      const isUserOnboarded = await checkIfEmailExists(supabaseClient, {
-        email: invitedEmail,
-      });
+        if (!user) {
+          const redirectUrl = `/sign-up?inviteToken=${token}`;
+          res.redirect(redirectUrl);
+        } else {
+          const isUserOnboarded = await checkIfEmailExists(supabaseClient, {
+            email: invitedEmail,
+          });
 
-      if (user && !isUserOnboarded) {
-        res.redirect(`/onboarding`);
+          if (user && !isUserOnboarded) {
+            res.redirect(`/onboarding`);
+          }
+
+          const invitationId = await getInvitationId(supabaseClient, {
+            teamId: `${teamId}`,
+            userEmail: `${invitedEmail}`,
+          });
+
+          res.redirect(`/user/invitation/${invitationId}`);
+        }
       }
-
-      const invitationId = await getInvitationId(supabaseClient, {
-        teamId: `${teamId}`,
-        userEmail: `${invitedEmail}`,
-      });
-
-      res.redirect(`/user/invitation/${invitationId}`);
-    }
+    });
   } catch (error) {
     console.error(error);
     res.redirect("/500");
