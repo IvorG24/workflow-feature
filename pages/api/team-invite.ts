@@ -1,6 +1,6 @@
 import { getInvitationId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
-import { JWT_SECRET_KEY, SIGN_IN_PAGE_PATH } from "@/utils/constant";
+import { JWT_SECRET_KEY } from "@/utils/constant";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import jwt from "jsonwebtoken";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -27,7 +27,7 @@ export default async function handler(
     const { teamId, invitedEmail } = decodedToken;
 
     if (!user) {
-      const redirectUrl = `${SIGN_IN_PAGE_PATH}?inviteToken=${token}`;
+      const redirectUrl = `/sign-up?inviteToken=${token}`;
       res.redirect(redirectUrl);
     } else {
       const isUserOnboarded = await checkIfEmailExists(supabaseClient, {
