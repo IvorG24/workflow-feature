@@ -520,6 +520,7 @@ const ItemList = ({
                 clearable
                 error={error?.message}
                 className={classes.flexGrow}
+                searchable
               />
             )}
           />
@@ -543,6 +544,7 @@ const ItemList = ({
                 clearable
                 error={error?.message}
                 className={classes.flexGrow}
+                searchable
               />
             )}
           />
@@ -561,6 +563,7 @@ const ItemList = ({
                 clearable
                 error={error?.message}
                 className={classes.flexGrow}
+                searchable
               />
             )}
           />
