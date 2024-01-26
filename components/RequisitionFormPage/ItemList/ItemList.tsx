@@ -1,8 +1,12 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getItemList } from "@/backend/api/get";
+import {
+  getItemDivisionOption,
+  getItemList,
+  getItemUnitOfMeasurementOption,
+} from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ROW_PER_PAGE } from "@/utils/constant";
+import { GL_ACCOUNT_CHOICES, ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -18,6 +22,7 @@ import {
   Flex,
   Group,
   Menu,
+  Select,
   Text,
   TextInput,
   Title,
@@ -32,9 +37,10 @@ import {
   IconSettings,
   IconTrash,
 } from "@tabler/icons-react";
-import { DataTable } from "mantine-datatable";
+import { DataTable, DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -55,6 +61,21 @@ const useStyles = createStyles((theme) => ({
     cursor: "pointer",
   },
 }));
+
+type FilterType = {
+  generalName: string;
+  unitOfMeasurement: string;
+  description: string;
+  glAccount: string;
+  division: string;
+  status: string;
+};
+
+export type ItemOrderType =
+  | "item_general_name"
+  | "item_unit"
+  | "item_is_available"
+  | "item_gl_account";
 
 type Props = {
   itemList: ItemWithDescriptionType[];
@@ -86,10 +107,92 @@ const ItemList = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const [activePage, setActivePage] = useState(1);
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "item_general_name",
+    direction: "asc",
+  });
   const [checkList, setCheckList] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
+  const [formFilterValues, setFormFilterValues] = useState<FilterType>({
+    generalName: "",
+    description: "",
+    unitOfMeasurement: "",
+    glAccount: "",
+    division: "",
+    status: "",
+  });
+
+  const [divisionIdOptions, setDivisionIdOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [unitOfMeasurementOptions, setUnitOfMeasurementOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [pageOptions, setPageOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
 
   const headerCheckboxKey = generateRandomId();
+  const requestFormMethods = useForm<FilterType>();
+  const { handleSubmit, control, register, getValues } = requestFormMethods;
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setIsLoading(true);
+        const divisionOption = await getItemDivisionOption(supabaseClient);
+        divisionOption &&
+          setDivisionIdOptions(
+            divisionOption.map((divisionId) => {
+              return {
+                label: `${divisionId.csi_code_division_id}`,
+                value: `${divisionId.csi_code_division_id}`,
+              };
+            })
+          );
+
+        const unitOfMeasurementOptions = await getItemUnitOfMeasurementOption(
+          supabaseClient,
+          { teamId: activeTeam.team_id }
+        );
+        unitOfMeasurementOptions &&
+          setUnitOfMeasurementOptions(
+            unitOfMeasurementOptions.map((uom) => {
+              return {
+                label: `${uom.item_unit_of_measurement}`,
+                value: `${uom.item_unit_of_measurement}`,
+              };
+            })
+          );
+      } catch {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (activeTeam.team_id) {
+      fetchOptions();
+    }
+  }, [activeTeam]);
+
+  useEffect(() => {
+    if (activeTeam.team_id) {
+      handleSort();
+    }
+  }, [sortStatus]);
+
+  useEffect(() => {
+    const resultArray: { label: string; value: string }[] = [];
+    for (let i = 1; i <= Math.ceil(itemCount / ROW_PER_PAGE); i++) {
+      resultArray.push({
+        label: `${i}`,
+        value: `${i}`,
+      });
+    }
+    setPageOptions(resultArray);
+  }, [itemCount]);
 
   const handleCheckRow = (itemId: string) => {
     if (checkList.includes(itemId)) {
@@ -106,33 +209,6 @@ const ItemList = ({
     } else {
       setCheckList([]);
     }
-  };
-
-  const handleSearch = async (isEmpty?: boolean) => {
-    if (activePage !== 1) {
-      setActivePage(1);
-    }
-    handleFetch(isEmpty ? "" : search, 1);
-  };
-
-  const handleFetch = async (search: string, page: number) => {
-    setIsLoading(true);
-    try {
-      const { data, count } = await getItemList(supabaseClient, {
-        teamId: activeTeam.team_id,
-        search,
-        limit: ROW_PER_PAGE,
-        page: page,
-      });
-      setItemList(data as ItemWithDescriptionType[]);
-      setItemCount(Number(count));
-    } catch {
-      notifications.show({
-        message: "Error on fetching item list",
-        color: "red",
-      });
-    }
-    setIsLoading(false);
   };
 
   const handleDelete = async () => {
@@ -208,6 +284,127 @@ const ItemList = ({
     setSelectedItem(selectedItem || null);
   };
 
+  const handleFilterForms = async (
+    {
+      generalName,
+      description,
+      unitOfMeasurement,
+      glAccount,
+      division,
+      status,
+    }: FilterType = getValues()
+  ) => {
+    try {
+      setIsLoading(true);
+
+      const { data, count } = await getItemList(supabaseClient, {
+        teamId: activeTeam.team_id,
+        limit: ROW_PER_PAGE,
+        page: 1,
+        generalName,
+        description,
+        unitOfMeasurement,
+        glAccount,
+        division,
+        status,
+      });
+      setItemList(data as ItemWithDescriptionType[]);
+      setItemCount(Number(count));
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePagination = async (
+    page: number,
+    {
+      generalName,
+      description,
+      unitOfMeasurement,
+      glAccount,
+      division,
+      status,
+    }: FilterType = getValues()
+  ) => {
+    try {
+      setIsLoading(true);
+
+      const { data, count } = await getItemList(supabaseClient, {
+        teamId: activeTeam.team_id,
+        limit: ROW_PER_PAGE,
+        page: page,
+        generalName,
+        description,
+        unitOfMeasurement,
+        glAccount,
+        division,
+        status,
+      });
+      setItemList(data as ItemWithDescriptionType[]);
+      setItemCount(Number(count));
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFilterChange = async (key: keyof FilterType, value: string) => {
+    setActivePage(1);
+    const filterMatch = formFilterValues[`${key}`];
+    if (value !== filterMatch) {
+      await handleFilterForms();
+    }
+    setFormFilterValues((prev) => ({ ...prev, [`${key}`]: value }));
+  };
+
+  const handleSort = async (
+    {
+      generalName,
+      description,
+      unitOfMeasurement,
+      glAccount,
+      division,
+      status,
+    }: FilterType = getValues()
+  ) => {
+    try {
+      setIsLoading(true);
+
+      const { data, count } = await getItemList(supabaseClient, {
+        teamId: activeTeam.team_id,
+        limit: ROW_PER_PAGE,
+        page: activePage,
+        generalName,
+        description,
+        unitOfMeasurement,
+        glAccount,
+        division,
+        status,
+        sortColumn: sortStatus.columnAccessor as ItemOrderType,
+        sortOrder: sortStatus.direction,
+      });
+      setItemList(data as ItemWithDescriptionType[]);
+      setItemCount(Number(count));
+    } catch (e) {
+      console.log(e);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Box>
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
@@ -215,32 +412,8 @@ const ItemList = ({
           <Title m={0} p={0} order={3}>
             List of Items
           </Title>
-          <TextInput
-            miw={250}
-            placeholder="General Name"
-            rightSection={
-              <ActionIcon onClick={() => search && handleSearch()}>
-                <IconSearch size={16} />
-              </ActionIcon>
-            }
-            value={search}
-            onChange={async (e) => {
-              setSearch(e.target.value);
-              if (e.target.value === "") {
-                handleSearch(true);
-              }
-            }}
-            onKeyUp={(e) => {
-              if (e.key === "Enter") {
-                if (search) {
-                  handleSearch();
-                }
-              }
-            }}
-            maxLength={4000}
-            className={classes.flexGrow}
-          />
         </Group>
+
         {!editItem && (
           <Group className={classes.flexGrow}>
             <Menu shadow="xl" width={200} withArrow>
@@ -308,6 +481,134 @@ const ItemList = ({
           </Group>
         )}
       </Flex>
+      <form onSubmit={handleSubmit(handleFilterForms)}>
+        <Group mt="xs" spacing="xs">
+          <TextInput
+            {...register("generalName")}
+            placeholder="General Name"
+            rightSection={
+              <ActionIcon type="submit">
+                <IconSearch size={16} />
+              </ActionIcon>
+            }
+            maxLength={4000}
+            className={classes.flexGrow}
+          />
+          <TextInput
+            {...register("description")}
+            placeholder="Description"
+            rightSection={
+              <ActionIcon type="submit">
+                <IconSearch size={16} />
+              </ActionIcon>
+            }
+            maxLength={4000}
+            className={classes.flexGrow}
+          />
+          <Controller
+            control={control}
+            name="unitOfMeasurement"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <Select
+                value={value as string}
+                onChange={(value: string) => {
+                  onChange(value);
+                  handleFilterChange("unitOfMeasurement", value);
+                }}
+                placeholder="Unit of Measurement"
+                data={unitOfMeasurementOptions}
+                clearable
+                error={error?.message}
+                className={classes.flexGrow}
+                searchable
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="glAccount"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <Select
+                value={value as string}
+                onChange={(value: string) => {
+                  onChange(value);
+                  handleFilterChange("glAccount", value);
+                }}
+                placeholder="GL Account"
+                data={GL_ACCOUNT_CHOICES.map((glAccount) => {
+                  return {
+                    value: glAccount,
+                    label: glAccount,
+                  };
+                })}
+                clearable
+                error={error?.message}
+                className={classes.flexGrow}
+                searchable
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="division"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <Select
+                value={value as string}
+                onChange={(value: string) => {
+                  onChange(value);
+                  handleFilterChange("division", value);
+                }}
+                placeholder="Division"
+                data={divisionIdOptions}
+                clearable
+                error={error?.message}
+                className={classes.flexGrow}
+                searchable
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="status"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <Select
+                value={value as string}
+                onChange={(value: string) => {
+                  onChange(value);
+                  handleFilterChange("status", value);
+                }}
+                placeholder="Status"
+                data={[
+                  {
+                    label: "Active",
+                    value: "active",
+                  },
+                  {
+                    label: "Inactive",
+                    value: "inactive",
+                  },
+                ]}
+                clearable
+                error={error?.message}
+                className={classes.flexGrow}
+              />
+            )}
+          />
+
+          <Select
+            value={`${activePage}`}
+            onChange={(value: string) => {
+              setActivePage(Number(value));
+              handlePagination(Number(value));
+            }}
+            placeholder="Page"
+            data={pageOptions}
+            className={classes.flexGrow}
+            searchable
+          />
+        </Group>
+      </form>
+
       <DataTable
         idAccessor="item_id"
         mt="xs"
@@ -356,10 +657,11 @@ const ItemList = ({
                 {item_general_name}
               </Text>
             ),
+            sortable: true,
           },
           {
             accessor: "item_unit",
-            title: "Base Unit of Measurement",
+            title: "UoM",
             render: ({ item_unit, item_id }) => (
               <Text
                 className={classes.clickableColumn}
@@ -370,6 +672,7 @@ const ItemList = ({
                 {item_unit}
               </Text>
             ),
+            sortable: true,
           },
           {
             accessor: "description",
@@ -398,6 +701,7 @@ const ItemList = ({
                 {item_gl_account}
               </Text>
             ),
+            sortable: true,
           },
           {
             accessor: "item_division_id_list",
@@ -414,7 +718,7 @@ const ItemList = ({
             ),
           },
           {
-            accessor: "status",
+            accessor: "item_is_available",
             title: "Status",
             textAlignment: "center",
             render: ({ item_is_available, item_id }) => (
@@ -429,6 +733,7 @@ const ItemList = ({
                 />
               </Center>
             ),
+            sortable: true,
           },
           {
             accessor: "edit",
@@ -453,8 +758,10 @@ const ItemList = ({
         page={activePage}
         onPageChange={(page: number) => {
           setActivePage(page);
-          handleFetch(search, page);
+          handlePagination(page);
         }}
+        sortStatus={sortStatus}
+        onSortStatusChange={setSortStatus}
       />
     </Box>
   );
