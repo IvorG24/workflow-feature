@@ -163,7 +163,7 @@ const ItemList = ({
               };
             })
           );
-      } catch {
+      } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",
@@ -395,7 +395,6 @@ const ItemList = ({
       setItemList(data as ItemWithDescriptionType[]);
       setItemCount(Number(count));
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -706,14 +705,20 @@ const ItemList = ({
           {
             accessor: "item_division_id_list",
             title: "Division",
-            render: ({ item_division_id_list, item_id }) => (
+            render: ({
+              item_division_id_list,
+              item_id,
+              item_level_three_description,
+            }) => (
               <Text
                 className={classes.clickableColumn}
                 onClick={() => {
                   handleColumnClick(item_id);
                 }}
               >
-                {item_division_id_list.join(", ")}
+                {item_level_three_description
+                  ? item_level_three_description
+                  : item_division_id_list.join(", ")}
               </Text>
             ),
           },

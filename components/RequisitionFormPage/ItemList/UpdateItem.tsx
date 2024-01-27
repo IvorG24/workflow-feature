@@ -1,5 +1,6 @@
 import {
   checkItemName,
+  getCSIDescriptionOptionBasedOnDivisionId,
   getItemDivisionOption,
   getItemUnitOfMeasurementOption,
 } from "@/backend/api/get";
@@ -20,6 +21,7 @@ import {
   Container,
   Divider,
   Flex,
+  Loader,
   LoadingOverlay,
   MultiSelect,
   Select,
@@ -59,6 +61,18 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
     { label: string; value: string }[]
   >([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(true);
+  const [divisionDescriptionOption, setDivisionDescriptionOption] = useState<
+    { label: string; value: string }[]
+  >([
+    {
+      label: editItem.item_level_three_description ?? "",
+      value: editItem.item_level_three_description ?? "",
+    },
+  ]);
+  const [
+    isFetchingDivisionDescriptionOption,
+    setIsFetchingDivisionDescriptionOption,
+  ] = useState(false);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -88,6 +102,13 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
               };
             })
           );
+
+        fetchDivisionDescriptionOption(editItem.item_division_id_list);
+        editItem.item_level_three_description &&
+          setValue(
+            "divisionDescription",
+            editItem.item_level_three_description
+          );
       } catch {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -100,7 +121,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
     fetchOptions();
   }, []);
 
-  const { register, getValues, formState, handleSubmit, control } =
+  const { register, getValues, formState, handleSubmit, control, setValue } =
     useForm<ItemForm>({
       defaultValues: {
         descriptions: editItem.item_description.map((description) => {
@@ -116,6 +137,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
         isAvailable: true,
         glAccount: editItem.item_gl_account,
         division: editItem.item_division_id_list,
+        divisionDescription: editItem.item_level_three_description,
       },
     });
 
@@ -164,6 +186,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             item_gl_account: data.glAccount,
             item_team_id: activeTeam.team_id,
             item_division_id_list: data.division.map((id) => `'${id}'`),
+            item_level_three_description: data.divisionDescription,
           },
           formId: formId,
         }
@@ -195,6 +218,34 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
       });
     }
     return;
+  };
+
+  const fetchDivisionDescriptionOption = async (value: string[]) => {
+    try {
+      setIsFetchingDivisionDescriptionOption(true);
+      setValue("divisionDescription", "");
+      const data = await getCSIDescriptionOptionBasedOnDivisionId(
+        supabaseClient,
+        {
+          divisionId: value,
+        }
+      );
+      const divisionDescriptionOption = data.map((description) => {
+        return {
+          label: description.csi_code_level_three_description,
+          value: description.csi_code_level_three_description,
+        };
+      });
+      setDivisionDescriptionOption(divisionDescriptionOption);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      setValue("division", []);
+    } finally {
+      setIsFetchingDivisionDescriptionOption(false);
+    }
   };
 
   return (
@@ -295,7 +346,10 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
               render={({ field: { value, onChange } }) => (
                 <MultiSelect
                   value={value as string[]}
-                  onChange={onChange}
+                  onChange={(value) => {
+                    fetchDivisionDescriptionOption(value);
+                    onChange(value);
+                  }}
                   data={divisionIdOption}
                   withAsterisk
                   error={formState.errors.division?.message}
@@ -310,6 +364,25 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                   value: true,
                 },
               }}
+            />
+            <Controller
+              control={control}
+              name="divisionDescription"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value}
+                  onChange={onChange}
+                  data={divisionDescriptionOption}
+                  error={formState.errors.division?.message}
+                  searchable
+                  clearable
+                  label="Division Description"
+                  disabled={divisionDescriptionOption.length === 0}
+                  rightSection={
+                    isFetchingDivisionDescriptionOption && <Loader size={16} />
+                  }
+                />
+              )}
             />
             {fields.map((field, index) => {
               return (

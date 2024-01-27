@@ -777,7 +777,12 @@ export const getItemList = async (
   let query = supabaseClient
     .from("item_table")
     .select(
-      "*, item_division_table!inner(*), item_description: item_description_table!inner(*)",
+      `
+        *, 
+        item_division_table!inner(*), 
+        item_description: item_description_table!inner(*),
+        item_level_three_description: item_level_three_description_table(*)
+      `,
       {
         count: "exact",
       }
@@ -842,6 +847,7 @@ export const getItemList = async (
 
   const formattedData = data as unknown as (ItemWithDescriptionType & {
     item_division_table: { item_division_value: string }[];
+    item_level_three_description: { item_level_three_description: string }[];
   })[];
 
   return {
@@ -851,6 +857,10 @@ export const getItemList = async (
         item_division_id_list: data.item_division_table.map(
           (division) => division.item_division_value
         ),
+        item_level_three_description:
+          data.item_level_three_description.length !== 0
+            ? data.item_level_three_description[0].item_level_three_description
+            : "",
       };
     }),
     count,
@@ -964,7 +974,23 @@ export const getItem = async (
   const { data, error } = await supabaseClient
     .from("item_table")
     .select(
-      "*, item_division_table(*), item_description: item_description_table(*, item_description_field: item_description_field_table(*, item_description_field_uom: item_description_field_uom_table(item_description_field_uom)), item_field: item_description_field_id(*))"
+      `
+        *, 
+        item_division_table(*), 
+        item_description: item_description_table(
+          *, 
+          item_description_field: item_description_field_table(
+            *, 
+            item_description_field_uom: item_description_field_uom_table(
+              item_description_field_uom
+            )
+          ), 
+          item_field: item_description_field_id(
+            *
+          )
+        ),
+        item_level_three_description: item_level_three_description_table(*)
+      `
     )
     .eq("item_team_id", teamId)
     .eq("item_general_name", itemName)
@@ -984,6 +1010,7 @@ export const getItem = async (
   if (error) throw error;
   const formattedData = data as unknown as ItemWithDescriptionAndField & {
     item_division_table: { item_division_value: string }[];
+    item_level_three_description: { item_level_three_description: string }[];
   };
 
   return {
@@ -991,6 +1018,11 @@ export const getItem = async (
     item_division_id_list: formattedData.item_division_table.map(
       (division) => division.item_division_value
     ),
+    item_level_three_description:
+      formattedData.item_level_three_description.length !== 0
+        ? formattedData.item_level_three_description[0]
+            .item_level_three_description
+        : "",
   } as unknown as ItemWithDescriptionAndField;
 };
 
@@ -4657,4 +4689,39 @@ export const getUserValidID = async (
   if (error) throw error;
 
   return data;
+};
+
+// Fetch csi code description based on division id
+export const getCSIDescriptionOptionBasedOnDivisionId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    divisionId: string[];
+  }
+) => {
+  const { divisionId } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_level_three_description, csi_code_division_id")
+    .in("csi_code_division_id", divisionId)
+    .order("csi_code_level_three_description", { ascending: true });
+  if (error) throw error;
+  return data;
+};
+
+// Fetch CSI Code based on level three description
+export const getLevelThreeDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    levelThreeDescription: string;
+  }
+) => {
+  const { levelThreeDescription } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("*")
+    .eq("csi_code_level_three_description", levelThreeDescription)
+    .single();
+  if (error) throw error;
+
+  return [data] as CSICodeTableRow[];
 };
