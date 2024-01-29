@@ -113,15 +113,17 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
         <form onSubmit={handleSubmit(handleFilterSignerSLA)}>
           <SignerSLAListFilter formOptions={formList} />
         </form>
-        <Paper mt="xl" shadow="md" p="sm">
-          {signerSLAList && signerSLAList.length > 0 && slaHours !== null && (
-            <Flex justify="flex-end">
-              <Badge>
-                SLA resolution time required: {slaHours} Hour
-                {slaHours > 1 ? "s" : ""}
-              </Badge>
-            </Flex>
-          )}
+
+        {signerSLAList && signerSLAList.length > 0 && slaHours !== null && (
+          <Flex justify="flex-start" mt="md">
+            <Badge>
+              SLA resolution time required: {slaHours} Hour
+              {slaHours > 1 ? "s" : ""}
+            </Badge>
+          </Flex>
+        )}
+
+        <Paper mt="md" shadow="md" p="sm">
           <SignerSLAList signerSLAList={signerSLAList} />
         </Paper>
       </FormProvider>

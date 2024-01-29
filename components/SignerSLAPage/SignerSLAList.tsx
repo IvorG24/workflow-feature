@@ -23,7 +23,7 @@ const SignerSLAList = ({ signerSLAList }: Props) => {
     <Flex direction="column">
       {signerSLAList === null ? (
         <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
-          Please select a form and search
+          Please select a form, project, and signer then search
         </Alert>
       ) : signerSLAList && signerSLAList.length > 0 ? (
         <ScrollArea>
