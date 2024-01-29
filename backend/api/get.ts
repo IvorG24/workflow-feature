@@ -4612,16 +4612,30 @@ export const getTeamFormSLAList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
+    search?: string;
+    page: number;
+    limit: number;
   }
 ) => {
-  const { teamId } = params;
+  const { teamId, page, limit, search } = params;
+  const start = (page - 1) * limit;
 
-  const { data, error } = await supabaseClient
+  let query = supabaseClient
     .from("form_sla_table")
-    .select("*, form: form_table(form_name)")
+    .select("*, form_table!inner(*)", { count: "exact" })
     .eq("form_sla_team_id", teamId);
+
+  if (search) {
+    query = query.ilike("form_table.form_name", `%${search}%`);
+  }
+
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, error, count } = await query;
   if (error) throw error;
-  return data;
+
+  return { data, count };
 };
 
 // Fetch project id based on formId

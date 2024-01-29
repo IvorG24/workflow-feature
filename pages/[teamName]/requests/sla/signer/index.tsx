@@ -2,14 +2,16 @@ import { getTeamFormSLAList } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import SignerSLAPage from "@/components/SignerSLAPage/SignerSLAPage";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { FormSLAWithFormName } from "@/utils/types";
+import { FormSLAWithForm } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient, userActiveTeam }) => {
     try {
-      const slaFormList = await getTeamFormSLAList(supabaseClient, {
+      const { data: slaFormList } = await getTeamFormSLAList(supabaseClient, {
         teamId: userActiveTeam.team_id,
+        limit: 999,
+        page: 1,
       });
 
       return {
@@ -28,7 +30,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 );
 
 type Props = {
-  slaFormList: FormSLAWithFormName[];
+  slaFormList: FormSLAWithForm[];
 };
 
 const Page = ({ slaFormList }: Props) => {

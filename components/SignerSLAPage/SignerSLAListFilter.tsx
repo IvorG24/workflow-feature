@@ -73,7 +73,6 @@ const SignerSLAListFilter = ({ formOptions }: Props) => {
   const onProjectChange = async (projectId: string) => {
     try {
       setIsProjectgChanging(true);
-      console.log(getValues("formId"));
       const signerWithProfile = await getSignerWithProfile(supabaseClient, {
         projectId,
         formId: getValues("formId"),

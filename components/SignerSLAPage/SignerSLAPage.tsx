@@ -3,7 +3,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { FormSLAWithFormName, SignerRequestSLA } from "@/utils/types";
+import { FormSLAWithForm, SignerRequestSLA } from "@/utils/types";
 import {
   Badge,
   Button,
@@ -24,7 +24,7 @@ import SignerSLAList from "./SignerSLAList";
 import SignerSLAListFilter, { SLAFormValues } from "./SignerSLAListFilter";
 
 type Props = {
-  slaFormList: FormSLAWithFormName[];
+  slaFormList: FormSLAWithForm[];
 };
 
 const SignerSLAPage = ({ slaFormList }: Props) => {
@@ -40,7 +40,7 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
 
   const formList = slaFormList
     .map((slaForm) => ({
-      label: slaForm.form.form_name,
+      label: slaForm.form_table.form_name,
       value: slaForm.form_sla_form_id,
       disabled: slaForm.form_sla_hours <= 0,
     }))
