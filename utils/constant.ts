@@ -25,6 +25,15 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Subcon",
 ];
 
+export const SLA_LIST = [
+  {
+    title: "Signer",
+    description:
+      "Signer SLA can track, analyze, and optimize signer response times.",
+    href: "/requests/sla/signer",
+  },
+];
+
 export const UUID_EXP =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
 

@@ -255,6 +255,13 @@ export type UserValidIDTableUpdate =
 
 export type QueryTableRow = Database["public"]["Tables"]["query_table"]["Row"];
 
+export type FormSLATableRow =
+  Database["public"]["Tables"]["form_sla_table"]["Row"];
+export type FormSLATableInsert =
+  Database["public"]["Tables"]["form_sla_table"]["Insert"];
+export type FormSLATableUpdate =
+  Database["public"]["Tables"]["form_sla_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1353,4 +1360,23 @@ export type UserValidIdWithUser = Omit<
 > & {
   user_valid_id_user_id: UserTableRow;
   user_valid_id_approver: UserTableRow;
+};
+
+export type SignerRequestSLA = {
+  request_id: string;
+  request_date_created: string;
+  formsly_id: string;
+  request_signer_status_date_updated: string;
+  time_difference: string;
+  status: string;
+};
+
+export type SignerWithProfile = SignerTableRow & {
+  signer_team_member: {
+    team_member_user: UserTableRow;
+  } & TeamMemberTableRow;
+};
+
+export type FormSLAWithFormName = Omit<FormSLATableRow, "form"> & {
+  form: { form_name: string };
 };
