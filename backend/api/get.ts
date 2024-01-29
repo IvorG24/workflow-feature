@@ -2536,7 +2536,7 @@ export const getSupplier = async (
     .from("supplier_table")
     .select("supplier")
     .eq("supplier_team_id", teamId)
-    .ilike("supplier", `%${supplier}%`)
+    .ilike("supplier", `${supplier}%`)
     .order("supplier", { ascending: true })
     .limit(100);
   if (error) throw error;
@@ -2551,6 +2551,32 @@ export const getSupplier = async (
   });
 
   return supplierList;
+};
+
+// Get CSI
+export const getCSI = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { csi: string; fieldId: string }
+) => {
+  const { csi, fieldId } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_level_three_description")
+    .ilike("csi_code_level_three_description", `${csi}%`)
+    .order("csi_code_level_three_description", { ascending: true })
+    .limit(100);
+  if (error) throw error;
+
+  const csiList = data.map((csi, index) => {
+    return {
+      option_field_id: fieldId,
+      option_id: uuidv4(),
+      option_order: index + 1,
+      option_value: csi.csi_code_level_three_description,
+    };
+  });
+
+  return csiList;
 };
 
 // Get team member on load

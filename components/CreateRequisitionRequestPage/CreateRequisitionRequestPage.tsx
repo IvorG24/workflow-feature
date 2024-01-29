@@ -1,4 +1,5 @@
 import {
+  getCSI,
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
@@ -77,7 +78,8 @@ const CreateRequisitionRequestPage = ({
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchingSupplier, setIsSearchingSupplier] = useState(false);
+  const [isSearchingCSI, setIsSearchingCSI] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -515,7 +517,7 @@ const CreateRequisitionRequestPage = ({
   const supplierSearch = async (value: string, index: number) => {
     if (!teamMember?.team_member_team_id) return;
     try {
-      setIsSearching(true);
+      setIsSearchingSupplier(true);
       const supplierList = await getSupplier(supabaseClient, {
         supplier: value ?? "",
         teamId: teamMember.team_member_team_id,
@@ -528,7 +530,26 @@ const CreateRequisitionRequestPage = ({
         color: "red",
       });
     } finally {
-      setIsSearching(false);
+      setIsSearchingSupplier(false);
+    }
+  };
+
+  const csiSearch = async (value: string, index: number) => {
+    if (!teamMember?.team_member_team_id) return;
+    try {
+      setIsSearchingCSI(true);
+      const csiList = await getCSI(supabaseClient, {
+        csi: value ?? "",
+        fieldId: form.form_section[1].section_field[4].field_id,
+      });
+      setValue(`sections.${index}.section_field.4.field_option`, csiList);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearchingCSI(false);
     }
   };
 
@@ -560,7 +581,9 @@ const CreateRequisitionRequestPage = ({
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
                       supplierSearch,
-                      isSearching,
+                      isSearchingSupplier,
+                      csiSearch,
+                      isSearchingCSI,
                     }}
                     formslyFormName={form.form_name}
                   />

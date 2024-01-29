@@ -1,5 +1,6 @@
 import {
   checkIfRequestIsEditable,
+  getCSI,
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
@@ -90,7 +91,8 @@ const EditRequisitionRequestPage = ({
 
   const [signerList, setSignerList] = useState(initialSignerList);
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchingSupplier, setIsSearching] = useState(false);
+  const [isSearchingCSI, setIsSearchingCSI] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -765,6 +767,25 @@ const EditRequisitionRequestPage = ({
     }
   };
 
+  const csiSearch = async (value: string, index: number) => {
+    if (!teamMember?.team_member_team_id) return;
+    try {
+      setIsSearchingCSI(true);
+      const csiList = await getCSI(supabaseClient, {
+        csi: value ?? "",
+        fieldId: request_form.form_section[1].section_field[4].field_id,
+      });
+      setValue(`sections.${index}.section_field.4.field_option`, csiList);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearchingCSI(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -801,7 +822,9 @@ const EditRequisitionRequestPage = ({
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
                       supplierSearch,
-                      isSearching,
+                      isSearchingSupplier,
+                      csiSearch,
+                      isSearchingCSI,
                     }}
                     formslyFormName={request_form.form_name}
                     referenceOnly={referenceOnly}
