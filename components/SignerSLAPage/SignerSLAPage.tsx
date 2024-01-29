@@ -2,9 +2,11 @@ import { getFormSLA, getSignerSLA } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { FormSLAWithFormName, SignerRequestSLA } from "@/utils/types";
 import {
   Badge,
+  Button,
   Container,
   Flex,
   LoadingOverlay,
@@ -14,6 +16,8 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconSettings } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SignerSLAList from "./SignerSLAList";
@@ -25,6 +29,8 @@ type Props = {
 
 const SignerSLAPage = ({ slaFormList }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
+  const activeTeam = useActiveTeam();
 
   const [signerSLAList, setSignerSLAList] = useState<SignerRequestSLA[] | null>(
     null
@@ -109,7 +115,22 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
 
       <FormProvider {...filterMethods}>
-        <Title order={3}>Signer SLA</Title>
+        <Flex justify="space-between">
+          <Title order={3}>Signer SLA</Title>
+          <Button
+            variant="light"
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name ?? ""
+                )}/requests/sla/signer/settings`
+              )
+            }
+            leftIcon={<IconSettings size="1rem" />}
+          >
+            Settings
+          </Button>
+        </Flex>
         <form onSubmit={handleSubmit(handleFilterSignerSLA)}>
           <SignerSLAListFilter formOptions={formList} />
         </form>
