@@ -596,7 +596,12 @@ const EditRequisitionRequestPage = ({
     } else {
       const generalField: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
         [
-          ...newSection.section_field.slice(0, 3),
+          newSection.section_field[0],
+          {
+            ...newSection.section_field[1],
+            field_response: [],
+          },
+          newSection.section_field[2],
           ...newSection.section_field.slice(3, 9).map((field) => {
             return {
               ...field,
