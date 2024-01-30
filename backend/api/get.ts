@@ -1,4 +1,5 @@
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
+import { ItemOrderType } from "@/components/RequisitionFormPage/ItemList/ItemList";
 import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
@@ -211,7 +212,10 @@ export const getRequestList = async (
     ?.map((value) => `request_view.request_form_id = '${value}'`)
     .join(" OR ");
   const projectCondition = project
-    ?.map((value) => `request_view.request_formsly_id_prefix = '${value}'`)
+    ?.map(
+      (value) =>
+        `request_view.request_formsly_id_prefix ILIKE '${value}' || '%'`
+    )
     .join(" OR ");
 
   const idFilterCondition = idFilter
@@ -743,16 +747,40 @@ export const getAllNotification = async (
 // Get item list
 export const getItemList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; limit: number; page: number; search?: string }
+  params: {
+    teamId: string;
+    limit: number;
+    page: number;
+    generalName: string;
+    description: string;
+    unitOfMeasurement: string;
+    glAccount: string;
+    division: string;
+    status: string;
+    sortColumn?: ItemOrderType;
+    sortOrder?: string;
+  }
 ) => {
-  const { teamId, search, limit, page } = params;
+  const {
+    teamId,
+    limit,
+    page,
+    generalName,
+    description,
+    unitOfMeasurement,
+    glAccount,
+    division,
+    status,
+    sortColumn,
+    sortOrder,
+  } = params;
 
   const start = (page - 1) * limit;
 
   let query = supabaseClient
     .from("item_table")
     .select(
-      "*, item_division_table(*), item_description: item_description_table(*)",
+      "*, item_division_table!inner(*), item_description: item_description_table!inner(*)",
       {
         count: "exact",
       }
@@ -761,11 +789,45 @@ export const getItemList = async (
     .eq("item_is_disabled", false)
     .eq("item_description.item_description_is_disabled", false);
 
-  if (search) {
-    query = query.ilike("item_general_name", `%${search}%`);
+  if (generalName) {
+    query = query.ilike("item_general_name", `${generalName}%`);
+  }
+  if (description) {
+    query = query.ilike(
+      "item_description.item_description_label",
+      `${description}%`
+    );
+  }
+  if (unitOfMeasurement) {
+    query = query.eq("item_unit", `${unitOfMeasurement}`);
+  }
+  if (glAccount) {
+    query = query.eq("item_gl_account", `${glAccount}`);
+  }
+  if (division) {
+    query = query.eq("item_division_table.item_division_value", `${division}`);
+  }
+  if (status) {
+    switch (status) {
+      case "active":
+        query = query.eq("item_is_available", true);
+        break;
+      case "inactive":
+        query = query.eq("item_is_available", false);
+        break;
+    }
   }
 
-  query.order("item_general_name", { ascending: true });
+  if (sortColumn) {
+    query.order(sortColumn, {
+      ascending: sortOrder === "asc",
+    });
+  } else {
+    query.order("item_general_name", {
+      ascending: true,
+    });
+  }
+
   query.order("item_description_order", {
     foreignTable: "item_description",
     ascending: true,
