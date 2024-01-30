@@ -4,6 +4,7 @@ import {
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
+  getLevelThreeDescription,
   getProjectSignerWithTeamMember,
   getSupplier,
 } from "@/backend/api/get";
@@ -18,6 +19,7 @@ import { Database } from "@/utils/database";
 import { isStringParsable, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
+  CSICodeTableRow,
   FormType,
   FormWithResponseType,
   OptionTableRow,
@@ -475,10 +477,18 @@ const EditRequisitionRequestPage = ({
         teamId: team.team_id,
         itemName: value,
       });
+      const isWithDescription = Boolean(item.item_level_three_description);
+      let csiCodeList: CSICodeTableRow[] = [];
 
-      const csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-        divisionIdList: item.item_division_id_list,
-      });
+      if (item.item_level_three_description) {
+        csiCodeList = await getLevelThreeDescription(supabaseClient, {
+          levelThreeDescription: item.item_level_three_description,
+        });
+      } else {
+        csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
+          divisionIdList: item.item_division_id_list,
+        });
+      }
 
       const generalField: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
         [
@@ -513,7 +523,9 @@ const EditRequisitionRequestPage = ({
             field_response: newSection.section_field[4].field_response.map(
               (response) => ({
                 ...response,
-                request_response: "",
+                request_response: isWithDescription
+                  ? csiCodeList[0].csi_code_level_three_description
+                  : "",
                 request_response_id: uuidv4(),
               })
             ),
@@ -528,19 +540,99 @@ const EditRequisitionRequestPage = ({
             }),
           },
           ...newSection.section_field.slice(5, 9).map((field, fieldIdx) => {
-            return {
-              ...field,
-              field_response: newSection.section_field[
-                5 + fieldIdx
-              ].field_response.map((response) => ({
-                ...response,
-                request_response: "",
-                request_response_duplicatable_section_id:
-                  newSection.section_field[0].field_response[0]
-                    .request_response_duplicatable_section_id,
-                request_response_id: uuidv4(),
-              })),
-            };
+            if (isWithDescription) {
+              switch (field.field_name) {
+                case "CSI Code":
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response: csiCodeList[0].csi_code_section,
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+                case "Division Description":
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response:
+                        csiCodeList[0].csi_code_division_description,
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+                case "Level 2 Major Group Description":
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response:
+                        csiCodeList[0]
+                          .csi_code_level_two_major_group_description,
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+                case "Level 2 Minor Group Description":
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response:
+                        csiCodeList[0]
+                          .csi_code_level_two_minor_group_description,
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+                default:
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response: "",
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+              }
+            } else {
+              return {
+                ...field,
+                field_response: newSection.section_field[
+                  5 + fieldIdx
+                ].field_response.map((response) => ({
+                  ...response,
+                  request_response: "",
+                  request_response_duplicatable_section_id:
+                    newSection.section_field[0].field_response[0]
+                      .request_response_duplicatable_section_id,
+                  request_response_id: uuidv4(),
+                })),
+              };
+            }
           }),
           {
             ...newSection.section_field[9],

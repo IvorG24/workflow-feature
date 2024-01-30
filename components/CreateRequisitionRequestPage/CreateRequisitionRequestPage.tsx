@@ -3,6 +3,7 @@ import {
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
+  getLevelThreeDescription,
   getProjectSignerWithTeamMember,
   getSupplier,
 } from "@/backend/api/get";
@@ -16,6 +17,7 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
+  CSICodeTableRow,
   FormType,
   FormWithResponseType,
   OptionTableRow,
@@ -308,10 +310,18 @@ const CreateRequisitionRequestPage = ({
         teamId: team.team_id,
         itemName: value,
       });
+      const isWithDescription = Boolean(item.item_level_three_description);
+      let csiCodeList: CSICodeTableRow[] = [];
 
-      const csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-        divisionIdList: item.item_division_id_list,
-      });
+      if (item.item_level_three_description) {
+        csiCodeList = await getLevelThreeDescription(supabaseClient, {
+          levelThreeDescription: item.item_level_three_description,
+        });
+      } else {
+        csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
+          divisionIdList: item.item_division_id_list,
+        });
+      }
 
       const generalField = [
         {
@@ -330,7 +340,9 @@ const CreateRequisitionRequestPage = ({
         },
         {
           ...newSection.section_field[4],
-          field_response: "",
+          field_response: isWithDescription
+            ? csiCodeList[0].csi_code_level_three_description
+            : "",
           field_option: csiCodeList.map((csiCode, index) => {
             return {
               option_field_id: form.form_section[0].section_field[0].field_id,
@@ -341,10 +353,42 @@ const CreateRequisitionRequestPage = ({
           }),
         },
         ...newSection.section_field.slice(5, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
+          if (isWithDescription) {
+            switch (field.field_name) {
+              case "CSI Code":
+                return {
+                  ...field,
+                  field_response: csiCodeList[0].csi_code_section,
+                };
+              case "Division Description":
+                return {
+                  ...field,
+                  field_response: csiCodeList[0].csi_code_division_description,
+                };
+              case "Level 2 Major Group Description":
+                return {
+                  ...field,
+                  field_response:
+                    csiCodeList[0].csi_code_level_two_major_group_description,
+                };
+              case "Level 2 Minor Group Description":
+                return {
+                  ...field,
+                  field_response:
+                    csiCodeList[0].csi_code_level_two_minor_group_description,
+                };
+              default:
+                return {
+                  ...field,
+                  field_response: "",
+                };
+            }
+          } else {
+            return {
+              ...field,
+              field_response: "",
+            };
+          }
         }),
         {
           ...newSection.section_field[9],

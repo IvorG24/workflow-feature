@@ -622,29 +622,39 @@ CREATE TABLE other_expenses_type_table(
 
 -- Start: Valid ID
 CREATE TABLE user_valid_id_table (
-    user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    user_valid_id_date_updated TIMESTAMPTZ,
-    user_valid_id_number VARCHAR(4000) UNIQUE NOT NULL,
-    user_valid_id_type VARCHAR(4000) NOT NULL,
-    user_valid_id_first_name VARCHAR(4000) NOT NULL,
-    user_valid_id_middle_name VARCHAR(4000) NOT NULL,
-    user_valid_id_last_name VARCHAR(4000) NOT NULL,
-    user_valid_id_gender VARCHAR(4000) NOT NULL,
-    user_valid_id_nationality VARCHAR(4000) NOT NULL,
-    user_valid_id_province VARCHAR(4000) NOT NULL,
-    user_valid_id_city VARCHAR(4000) NOT NULL,
-    user_valid_id_barangay VARCHAR(4000) NOT NULL,
-    user_valid_id_zip_code VARCHAR(4000) NOT NULL,
-    user_valid_id_house_and_street VARCHAR(4000) NOT NULL,
-    user_valid_id_front_image_url VARCHAR(4000) NOT NULL,
-    user_valid_id_back_image_url VARCHAR(4000),
-    user_valid_id_status VARCHAR(4000) NOT NULL,
+  user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_valid_id_date_updated TIMESTAMPTZ,
+  user_valid_id_number VARCHAR(4000) UNIQUE NOT NULL,
+  user_valid_id_type VARCHAR(4000) NOT NULL,
+  user_valid_id_first_name VARCHAR(4000) NOT NULL,
+  user_valid_id_middle_name VARCHAR(4000) NOT NULL,
+  user_valid_id_last_name VARCHAR(4000) NOT NULL,
+  user_valid_id_gender VARCHAR(4000) NOT NULL,
+  user_valid_id_nationality VARCHAR(4000) NOT NULL,
+  user_valid_id_province VARCHAR(4000) NOT NULL,
+  user_valid_id_city VARCHAR(4000) NOT NULL,
+  user_valid_id_barangay VARCHAR(4000) NOT NULL,
+  user_valid_id_zip_code VARCHAR(4000) NOT NULL,
+  user_valid_id_house_and_street VARCHAR(4000) NOT NULL,
+  user_valid_id_front_image_url VARCHAR(4000) NOT NULL,
+  user_valid_id_back_image_url VARCHAR(4000),
+  user_valid_id_status VARCHAR(4000) NOT NULL,
 
-    user_valid_id_approver UUID REFERENCES user_table(user_id),
-    user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL
+  user_valid_id_approver UUID REFERENCES user_table(user_id),
+  user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
 -- End: Valid ID
+
+-- Start: Item Level Three Description
+CREATE TABLE item_level_three_description_table (
+  item_level_three_description_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  item_level_three_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_level_three_description VARCHAR(4000) NOT NULL,
+
+  item_level_three_description_item_id UUID REFERENCES item_table(item_id),
+);
+-- End: Item Level Three Description
 
 ---------- End: TABLES
 
@@ -1264,7 +1274,8 @@ RETURNS JSON AS $$
         item_gl_account,
         item_team_id,
         item_division_id_list,
-        item_encoder_team_member_id
+        item_encoder_team_member_id,
+        item_level_three_description
       },
       itemDescription
     } = input_data;
@@ -1274,6 +1285,10 @@ RETURNS JSON AS $$
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");
+    let itemDivisionDescription;
+    if(item_level_three_description){
+      itemDivisionDescription = plv8.execute(`INSERT INTO item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_result.item_id}', '${item_level_three_description}') RETURNING *`)[0];
+    }
     const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
     const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
@@ -1320,7 +1335,8 @@ RETURNS JSON AS $$
     item_data = {
       ...item_result, 
       item_division_id_list: item_division_list_result.map(division => division.item_division_value), 
-      item_description: item_description
+      item_description: item_description,
+      item_level_three_description: itemDivisionDescription
     }
  });
  return item_data;
@@ -1344,7 +1360,8 @@ RETURNS JSON AS $$
         item_unit,
         item_gl_account,
         item_team_id,
-        item_division_id_list
+        item_division_id_list,
+        item_level_three_description
       },
       toAdd,
       toUpdate,
@@ -1436,6 +1453,12 @@ RETURNS JSON AS $$
         `
       );
     });
+    plv8.execute(
+      `
+        DELETE FROM item_level_three_description_table
+        WHERE item_level_three_description_item_id = '${item_id}'
+      `
+    );
 
     // add
     let addedDescription = [];
@@ -1452,10 +1475,16 @@ RETURNS JSON AS $$
     
     const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
+    let itemLevelThreeDescription = "";
+    if(item_level_three_description){
+      itemLevelThreeDescription = plv8.execute(`INSERT INTO item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_id}', '${item_level_three_description}') RETURNING *`)[0].item_level_three_description;
+    }
+
     item_data = {
       ...item_result, 
       item_division_id_list: item_division_list_result.map(division => division.item_division_value), 
-      item_description: [...updatedItemDescription, ...addedDescription]
+      item_description: [...updatedItemDescription, ...addedDescription],
+      item_level_three_description: itemLevelThreeDescription
     }
  });
  return item_data;
@@ -4269,13 +4298,14 @@ RETURNS JSON as $$
 
         itemData.forEach(value => {
           const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC`);
-          
           const itemDivision = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${value.item_id}' ORDER BY item_division_value ASC`);
+          const itemDivisionDescription = plv8.execute(`SELECT * FROM item_level_three_description_table WHERE item_level_three_description_item_id = '${value.item_id}'`);
           
           items.push({
             ...value,
             item_division_id_list: itemDivision.map(division => division.item_division_value),
-            item_description: itemDescription
+            item_description: itemDescription,
+            item_level_three_description: itemDivisionDescription.length !== 0 ? itemDivisionDescription[0].item_level_three_description : ""
           })
         })
 
@@ -9699,6 +9729,7 @@ ALTER TABLE user_valid_id_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_type_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_level_three_description_table  ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9923,6 +9954,11 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON item_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_unit_of_measurement_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_level_three_description_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_level_three_description_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_level_three_description_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_level_three_description_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -11819,6 +11855,56 @@ USING (
     WHERE item_unit_of_measurement_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- ITEM_LEVEL_THREE_DESCRIPTION
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table "
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_level_three_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_level_three_description_table "
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table "
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_level_three_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table "
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_level_three_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
