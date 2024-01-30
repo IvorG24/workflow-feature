@@ -7170,24 +7170,6 @@ RETURNS JSON AS $$
                 }
               })
 
-            const itemDivisionIdList = `('${item_division_list.map(division => division.item_division_value).join("','")}')`
-
-            const csiCodeList = plv8.execute(`
-              SELECT *
-              FROM csi_code_table
-              WHERE csi_code_division_id IN ${itemDivisionIdList};
-            `);
-
-            const csiCodeOptions = csiCodeList.map((csiCode, index) => {
-              return {
-
-                option_field_id: form.form_section[0].section_field[0].field_id,
-                option_id: csiCode.csi_code_id,
-                option_order: index,
-                option_value: csiCode.csi_code_level_three_description,
-              };
-            });
-
             const newFieldsWithOptions = itemDescriptionWithField.map(
               (description) => {
                 const options = description.item_description_field.map(
@@ -7230,7 +7212,12 @@ RETURNS JSON AS $$
                 ...section.section_field.slice(1, 4),
                 {
                   ...section.section_field[4],
-                  field_option: csiCodeOptions,
+                  field_option: [{
+                    option_field_id: form.form_section[0].section_field[0].field_id,
+                    option_id: JSON.parse(section.section_field[4].field_response[0].request_response),
+                    option_order: 1,
+                    option_value: JSON.parse(section.section_field[4].field_response[0].request_response)
+                  }],
                 },
                 ...section.section_field.slice(5, 9),
                 isWithPreferredSupplier
