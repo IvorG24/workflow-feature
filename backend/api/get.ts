@@ -863,10 +863,10 @@ export const getItemList = async (
 // Get all items
 export const getAllItems = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
+  params: { teamId: string; search?: string }
 ) => {
-  const { teamId } = params;
-  const { data, error } = await supabaseClient
+  const { teamId, search } = params;
+  let query = supabaseClient
     .from("item_table")
     .select("item_general_name")
     .eq("item_team_id", teamId)
@@ -874,6 +874,11 @@ export const getAllItems = async (
     .eq("item_is_available", true)
     .order("item_general_name", { ascending: true });
 
+  if (search) {
+    query = query.ilike("item_general_name", `${search}%`);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
 
   return data;

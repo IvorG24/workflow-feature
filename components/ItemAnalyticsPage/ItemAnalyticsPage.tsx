@@ -7,6 +7,7 @@ import {
   Button,
   Container,
   Flex,
+  Loader,
   LoadingOverlay,
   Pagination,
   Paper,
@@ -19,7 +20,8 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconAlertCircle } from "@tabler/icons-react";
 
-import { useState } from "react";
+import { getAllItems } from "@/backend/api/get";
+import { useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import ItemRow from "./ItemRow";
 
@@ -37,12 +39,14 @@ export type ResultType = {
 };
 
 type Props = {
-  itemList: { item_general_name: string }[];
+  items: { item_general_name: string }[];
 };
 
-const ItemAnalyticsPage = ({ itemList }: Props) => {
+const ItemAnalyticsPage = ({ items }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [resultList, setResultList] = useState<ResultType[] | undefined>(
     undefined
@@ -51,6 +55,15 @@ const ItemAnalyticsPage = ({ itemList }: Props) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [currentItem, setCurrentItem] = useState("");
   const [page, setPage] = useState(1);
+  const [isSearching, setIsSearching] = useState(false);
+  const [itemList, setItemList] = useState(
+    items.map((item) => {
+      return {
+        label: item.item_general_name,
+        value: item.item_general_name,
+      };
+    })
+  );
 
   const {
     handleSubmit,
@@ -122,6 +135,31 @@ const ItemAnalyticsPage = ({ itemList }: Props) => {
     }
   };
 
+  const itemSearch = async (value: string) => {
+    try {
+      setIsSearching(true);
+      const itemList = await getAllItems(supabaseClient, {
+        teamId: activeTeam.team_id,
+        search: value,
+      });
+      setItemList(
+        itemList.map((item) => {
+          return {
+            label: item.item_general_name,
+            value: item.item_general_name,
+          };
+        })
+      );
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Container p={0}>
       <Title color="dimmed" order={2}>
@@ -138,12 +176,7 @@ const ItemAnalyticsPage = ({ itemList }: Props) => {
               }}
               render={({ field: { value, onChange } }) => (
                 <Select
-                  data={itemList.map((item) => {
-                    return {
-                      label: item.item_general_name,
-                      value: item.item_general_name,
-                    };
-                  })}
+                  data={itemList}
                   placeholder="Select Item"
                   label="Item"
                   clearable
@@ -151,6 +184,16 @@ const ItemAnalyticsPage = ({ itemList }: Props) => {
                   onChange={onChange}
                   value={value}
                   error={errors.item?.message}
+                  rightSection={isSearching && <Loader size={16} />}
+                  onSearchChange={(value) => {
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+
+                    timeoutRef.current = setTimeout(() => {
+                      itemSearch(value);
+                    }, 500);
+                  }}
                 />
               )}
             />
