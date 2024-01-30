@@ -72,6 +72,7 @@ const ItemAnalyticsPage = ({ items }: Props) => {
   } = useForm<{ item: string }>();
 
   const onSubmit = async ({ item }: { item: string }) => {
+    if (isSearching) return;
     try {
       setIsAnalyzing(true);
       setPage(1);
@@ -136,6 +137,7 @@ const ItemAnalyticsPage = ({ items }: Props) => {
   };
 
   const itemSearch = async (value: string) => {
+    if (!activeTeam.team_id) return;
     try {
       setIsSearching(true);
       const itemList = await getAllItems(supabaseClient, {
