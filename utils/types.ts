@@ -578,6 +578,7 @@ export type FormWithTeamMember = FormTableRow & {
 
 export type ItemWithDescriptionType = ItemTableRow & {
   item_division_id_list: string[];
+  item_level_three_description?: string;
 } & {
   item_description: ItemDescriptionTableRow[];
 };
@@ -599,6 +600,7 @@ export type ItemForm = {
   isAvailable: boolean;
   glAccount: string;
   division: string[];
+  divisionDescription: string;
 };
 
 export type ServiceForm = {
@@ -642,6 +644,7 @@ export type ItemWithDescriptionAndField = ItemTableRow & {
     })[];
     item_field: FieldTableRow;
   })[];
+  item_level_three_description?: string;
 };
 
 export type InvitationWithTeam = InvitationTableRow & {
