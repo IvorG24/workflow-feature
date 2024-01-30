@@ -1,21 +1,34 @@
 import { getTeamFormSLAList } from "@/backend/api/get";
+import { updateSLAHours } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { FormSLAWithForm } from "@/utils/types";
 import {
   ActionIcon,
+  Button,
   Container,
+  Divider,
+  Flex,
+  Group,
   LoadingOverlay,
+  Menu,
+  NumberInput,
   Paper,
+  Text,
   TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconSearch } from "@tabler/icons-react";
+import {
+  IconDotsVertical,
+  IconEdit,
+  IconSearch,
+  IconX,
+} from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 
 type Props = {
   slaFormList: FormSLAWithForm[];
@@ -26,10 +39,10 @@ const SignerSLASettingsPage = ({
   slaFormList: initialSlaFormList,
   slaFormListCount: initialSlaFormListCount,
 }: Props) => {
-  console.log(initialSlaFormList);
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
 
+  const [isUpdatingSLAForm, setIsUpdatingSLAForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedSlaForm, setSelectedSlaForm] =
@@ -40,6 +53,7 @@ const SignerSLASettingsPage = ({
     initialSlaFormListCount
   );
   const [activePage, setActivePage] = useState(1);
+  const [slaResolutionTime, setSlaResolutionTime] = useState<number | "">(0);
 
   const columnData: DataTableColumn<FormSLAWithForm>[] = [
     {
@@ -53,6 +67,42 @@ const SignerSLASettingsPage = ({
     {
       accessor: "form_sla_date_updated",
       title: "Date Updated",
+      render: ({ form_sla_date_updated }) => {
+        if (!form_sla_date_updated) return <></>;
+        return (
+          <Text>
+            {`${new Date(
+              form_sla_date_updated
+            ).toLocaleDateString()} ${new Date(
+              form_sla_date_updated
+            ).toLocaleTimeString()}`}
+          </Text>
+        );
+      },
+    },
+    {
+      accessor: "edit",
+      title: "",
+      render: ({ form_sla_id }) => (
+        <Menu withArrow>
+          <Menu.Target>
+            <ActionIcon maw={50}>
+              <IconDotsVertical size={16} />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item
+              px="md"
+              icon={<IconEdit size={14} />}
+              onClick={() => {
+                handleColumnClick(form_sla_id);
+              }}
+            >
+              Edit
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
+      ),
     },
   ];
 
@@ -64,8 +114,8 @@ const SignerSLASettingsPage = ({
   };
 
   const handleFetch = async (search: string, page: number) => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
       const { data: formList, count: formListCount } = await getTeamFormSLAList(
         supabaseClient,
         {
@@ -83,64 +133,146 @@ const SignerSLASettingsPage = ({
         message: "Error on SLA Form List",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
+  };
+
+  const handleColumnClick = (formId: string) => {
+    const selectedForm = slaFormList.find(
+      (form) => form.form_sla_id === formId
+    );
+    setSelectedSlaForm(selectedForm || null);
+    setSlaResolutionTime(selectedForm?.form_sla_hours || 0);
+  };
+
+  const handleCancelEdit = () => {
+    setSlaResolutionTime(0);
+    setSelectedSlaForm(null);
+  };
+  const handleSaveEdit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (typeof slaResolutionTime !== "number" && !selectedSlaForm) {
+      return;
+    }
+    try {
+      setIsUpdatingSLAForm(true);
+      await updateSLAHours(supabaseClient, {
+        form_sla_id: `${selectedSlaForm?.form_sla_id}`,
+        form_sla_hours: Number(slaResolutionTime),
+      });
+
+      await handleFetch(search, activePage);
+    } catch {
+      notifications.show({
+        message: "Error on SLA Form update",
+        color: "red",
+      });
+    } finally {
+      setIsUpdatingSLAForm(false);
+      setSelectedSlaForm(null);
+      setSlaResolutionTime(0);
+    }
   };
 
   return (
     <Container p={0}>
       <Title order={2}>Signer SLA Settings</Title>
 
-      <Container p={0} fluid pos="relative">
-        <LoadingOverlay
-          visible={false}
-          overlayBlur={2}
-          transitionDuration={500}
-        />
-        <Paper shadow="md" p="md" mt="md">
-          <Title order={4}>SLA Resolution Time</Title>
-          <TextInput
-            miw={250}
-            placeholder="Form Name"
-            rightSection={
-              <ActionIcon onClick={() => search && handleSearch()}>
-                <IconSearch size={16} />
+      <Container p={0}>
+        {selectedSlaForm ? (
+          <Paper shadow="md" p="md" mt="md" pos="relative">
+            <LoadingOverlay
+              visible={isUpdatingSLAForm}
+              overlayBlur={2}
+              transitionDuration={500}
+            />
+
+            <Flex justify="space-between">
+              <Title order={3}>{selectedSlaForm.form_table.form_name}</Title>
+              <ActionIcon maw={50} onClick={handleCancelEdit}>
+                <IconX size={16} />
               </ActionIcon>
-            }
-            value={search}
-            onChange={async (e) => {
-              setSearch(e.target.value);
-              if (e.target.value === "") {
-                handleSearch(true);
-              }
-            }}
-            onKeyUp={(e) => {
-              if (e.key === "Enter") {
-                if (search) {
-                  handleSearch();
+            </Flex>
+            <Divider mt="md" />
+            <Paper shadow="md" p="md" mt="md">
+              <Title order={4}>Edit SLA Resolution Time</Title>
+              <Divider mt="md" />
+              <form onSubmit={handleSaveEdit}>
+                <NumberInput
+                  value={slaResolutionTime}
+                  onChange={setSlaResolutionTime}
+                  min={1}
+                  mt="md"
+                />
+
+                <Group spacing="xl" mt="md">
+                  <Button
+                    type="submit"
+                    miw={100}
+                    disabled={
+                      typeof slaResolutionTime !== "number" ||
+                      slaResolutionTime < 1
+                    }
+                  >
+                    Save
+                  </Button>
+                  <Button variant="outline" miw={100}>
+                    Cancel
+                  </Button>
+                </Group>
+              </form>
+            </Paper>
+          </Paper>
+        ) : (
+          <Paper shadow="md" p="md" mt="md">
+            <Flex justify="flex-start" gap="xl" wrap="wrap">
+              <Title order={3}>SLA Resolution Time</Title>
+              <TextInput
+                maw={250}
+                placeholder="Form Name"
+                rightSection={
+                  <ActionIcon onClick={() => search && handleSearch()}>
+                    <IconSearch size={16} />
+                  </ActionIcon>
                 }
-              }
-            }}
-            maxLength={4000}
-          />
-          <DataTable
-            mt="xs"
-            withBorder
-            fw="bolder"
-            c="dimmed"
-            minHeight={390}
-            fetching={isLoading}
-            records={slaFormList}
-            columns={columnData}
-            totalRecords={slaFormListCount}
-            recordsPerPage={ROW_PER_PAGE}
-            page={activePage}
-            onPageChange={(page: number) => {
-              setActivePage(page);
-              handleFetch(search, page);
-            }}
-          />
-        </Paper>
+                value={search}
+                onChange={async (e) => {
+                  setSearch(e.target.value);
+                  if (e.target.value === "") {
+                    handleSearch(true);
+                  }
+                }}
+                onKeyUp={(e) => {
+                  if (e.key === "Enter") {
+                    if (search) {
+                      handleSearch();
+                    }
+                  }
+                }}
+                maxLength={4000}
+              />
+            </Flex>
+            <DataTable
+              mt="md"
+              withBorder
+              fw="bolder"
+              c="dimmed"
+              minHeight={390}
+              highlightOnHover
+              fetching={isLoading}
+              records={slaFormList}
+              columns={columnData}
+              totalRecords={slaFormListCount}
+              recordsPerPage={ROW_PER_PAGE}
+              page={activePage}
+              onPageChange={(page: number) => {
+                setActivePage(page);
+                handleFetch(search, page);
+              }}
+            />
+          </Paper>
+        )}
       </Container>
     </Container>
   );

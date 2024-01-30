@@ -4629,6 +4629,7 @@ export const getTeamFormSLAList = async (
     query = query.ilike("form_table.form_name", `%${search}%`);
   }
 
+  query.order("form_sla_date_updated", { ascending: true });
   query.limit(limit);
   query.range(start, start + limit - 1);
 

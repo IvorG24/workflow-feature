@@ -1377,6 +1377,6 @@ export type SignerWithProfile = SignerTableRow & {
   } & TeamMemberTableRow;
 };
 
-export type FormSLAWithForm = Omit<FormSLATableRow, "form_table"> & {
+export type FormSLAWithForm = {
   form_table: FormTableRow;
-};
+} & FormSLATableRow;

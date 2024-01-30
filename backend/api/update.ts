@@ -743,3 +743,24 @@ export const approveOrRejectValidId = async (
 
   if (error) throw error;
 };
+
+// Update SLA Hours
+export const updateSLAHours = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    form_sla_id: string;
+    form_sla_hours: number;
+  }
+) => {
+  const { form_sla_hours, form_sla_id } = params;
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+  const { data, error } = await supabaseClient
+    .from("form_sla_table")
+    .update({ form_sla_hours, form_sla_date_updated: `${currentDate}` })
+    .eq("form_sla_id", form_sla_id)
+    .select("*, form_table!inner(*)");
+
+  if (error) throw error;
+  return data[0];
+};
