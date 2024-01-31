@@ -46,7 +46,9 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
+    isSearchingSupplier?: boolean;
+    csiSearch?: (value: string, index: number) => void;
+    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -304,6 +306,7 @@ const RequestFormFields = ({
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
+                precision={2}
               />
             )}
             rules={{
@@ -469,6 +472,18 @@ const RequestFormFields = ({
                             sectionIndex
                           );
                       }, 500);
+                    } else if (
+                      requisitionFormMethods &&
+                      field.field_name === "CSI Code Description"
+                    ) {
+                      if (timeoutRef.current) {
+                        clearTimeout(timeoutRef.current);
+                      }
+
+                      timeoutRef.current = setTimeout(() => {
+                        requisitionFormMethods.csiSearch &&
+                          requisitionFormMethods.csiSearch(value, sectionIndex);
+                      }, 500);
                     }
                   }}
                   rightSection={
@@ -476,8 +491,11 @@ const RequestFormFields = ({
                       quotationFormMethods.isSearching &&
                       field.field_name === "Supplier") ||
                     (requisitionFormMethods &&
-                      requisitionFormMethods.isSearching &&
+                      requisitionFormMethods.isSearchingSupplier &&
                       field.field_name === "Preferred Supplier") ||
+                    (requisitionFormMethods &&
+                      requisitionFormMethods.isSearchingCSI &&
+                      field.field_name === "CSI Code Description") ||
                     (otherExpensesMethods &&
                       otherExpensesMethods.isSearching &&
                       field.field_name === "Preferred Supplier") ? (

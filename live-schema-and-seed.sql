@@ -681,7 +681,9 @@ CREATE TABLE memo_signer_table (
     memo_signer_is_primary BOOLEAN DEFAULT FALSE NOT NULL,
     memo_signer_order INT NOT NULL,
     memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-    memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+    memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL,
+    memo_signer_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    memo_signer_date_signed TIMESTAMPTZ(0)
 );
 
 CREATE TABLE memo_line_item_table (
@@ -729,14 +731,29 @@ CREATE TABLE memo_agreement_table (
     memo_agreement_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
 );
 
-CREATE TABLE memo_format_table (
-    memo_format_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_format_header VARCHAR(4000) NOT NULL,
-    memo_format_footer VARCHAR(4000) NOT NULL,
-    memo_format_margin_top VARCHAR(4000) NOT NULL,
-    memo_format_margin_right VARCHAR(4000) NOT NULL,
-    memo_format_margin_bottom VARCHAR(4000) NOT NULL,
-    memo_format_margin_left VARCHAR(4000) NOT NULL
+CREATE TABLE memo_format_section_table(
+    memo_format_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_format_section_margin_top VARCHAR(20),
+    memo_format_section_margin_right VARCHAR(20),
+    memo_format_section_margin_bottom VARCHAR(20),
+    memo_format_section_margin_left VARCHAR(20),
+    memo_format_section_name VARCHAR(100)
+);
+
+CREATE TABLE memo_format_subsection_table(
+    memo_format_subsection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_format_subsection_name VARCHAR(100),
+    memo_format_subsection_text VARCHAR(4000),
+    memo_format_subsection_text_font_size VARCHAR(20),
+    memo_format_subsection_section_id UUID REFERENCES memo_format_section_table(memo_format_section_id)
+);
+
+CREATE TABLE memo_format_attachment_table(
+    memo_format_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    memo_format_attachment_name VARCHAR(4000) NOT NULL,
+    memo_format_attachment_url VARCHAR(4000) NOT NULL,
+    memo_format_attachment_order VARCHAR(20) NOT NULL,
+    memo_format_attachment_subsection_id UUID REFERENCES memo_format_subsection_table(memo_format_subsection_id)
 );
 
 
@@ -8641,28 +8658,33 @@ CREATE OR REPLACE FUNCTION get_memo_on_load(
 )
 RETURNS JSON AS $$
   let memo_data_on_load;
-  plv8.subtransaction(function(){
+  plv8.subtransaction(function() {
+    const { memo_id, current_user_id } = input_data;
 
-    const {memo_id, current_user_id, isReference} = input_data;
+    const currentUser = plv8.execute(`
+      SELECT *
+      FROM team_member_table
+      WHERE team_member_user_id = '${current_user_id}'
+      LIMIT 1
+    `)[0];
 
-    const currentUser = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id = '${current_user_id}' LIMIT 1`)[0];
-    
     if (currentUser) {
-      const hasUserReadMemo = plv8.execute(
-      `
-        SELECT COUNT(*) 
-        FROM memo_read_receipt_table 
-        WHERE memo_read_receipt_by_team_member_id = '${currentUser.team_member_id}' 
+      const hasUserReadMemo = plv8.execute(`
+        SELECT COUNT(*)
+        FROM memo_read_receipt_table
+        WHERE memo_read_receipt_by_team_member_id = '${currentUser.team_member_id}'
         AND memo_read_receipt_memo_id = '${memo_id}';
       `)[0];
 
       if (Number(hasUserReadMemo.count) === 0) {
-        plv8.execute(`INSERT INTO memo_read_receipt_table (memo_read_receipt_by_team_member_id, memo_read_receipt_memo_id) VALUES ('${currentUser.team_member_id}', '${memo_id}')`);
+        plv8.execute(`
+          INSERT INTO memo_read_receipt_table (memo_read_receipt_by_team_member_id, memo_read_receipt_memo_id)
+          VALUES ('${currentUser.team_member_id}', '${memo_id}')
+        `);
       }
     }
 
-    const memo_data_raw = plv8.execute(
-      `
+    const memo_data_raw = plv8.execute(`
       SELECT *
       FROM memo_table
       INNER JOIN user_table ON user_table.user_id = memo_author_user_id
@@ -8670,123 +8692,167 @@ RETURNS JSON AS $$
       INNER JOIN memo_status_table ON memo_status_memo_id = memo_id
       WHERE memo_id = '${memo_id}' AND memo_is_disabled = false
       LIMIT 1;
-      `
-    )[0];
+    `)[0];
 
     if (memo_data_raw.length === 0) {
-        memo_data_on_load = {};
+      memo_data_on_load = {};
     }
 
-    const {memo_subject, memo_reference_number, memo_date_created, memo_version, memo_date_updated, memo_status, user_id, user_avatar, user_first_name, user_last_name, user_job_title, user_signature_attachment_id} = memo_data_raw;
+    const {
+      memo_subject,
+      memo_reference_number,
+      memo_date_created,
+      memo_version,
+      memo_date_updated,
+      memo_status,
+      user_id,
+      user_avatar,
+      user_first_name,
+      user_last_name,
+      user_job_title,
+      user_signature_attachment_id
+    } = memo_data_raw;
 
     const memo_data = {
-        memo_id: memo_data_raw.memo_id,
-        memo_subject,
-        memo_reference_number,
-        memo_date_created,
-        memo_date_updated,
-        memo_status,
-        memo_version,
-        memo_author_user: {
-            user_id,
-            user_avatar,
-            user_first_name,
-            user_last_name,
-            user_job_title,
-            user_signature_attachment_id
-        }
+      memo_id: memo_data_raw.memo_id,
+      memo_subject,
+      memo_reference_number,
+      memo_date_created,
+      memo_date_updated,
+      memo_status,
+      memo_version,
+      memo_author_user: {
+        user_id,
+        user_avatar,
+        user_first_name,
+        user_last_name,
+        user_job_title,
+        user_signature_attachment_id
+      }
     };
 
     const signer_data_raw = plv8.execute(`
-        SELECT * 
-        FROM memo_signer_table 
-        INNER JOIN team_member_table tm ON tm.team_member_id = memo_signer_team_member_id 
-        INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id 
-        LEFT JOIN attachment_table ON attachment_id = ut.user_signature_attachment_id
-        WHERE memo_signer_memo_id = '${memo_id}'
+      SELECT
+        mst.*,
+        tm.*,
+        ut.*,
+        json_agg(sht.*) as signature_list
+      FROM memo_signer_table mst
+      INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
+      INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id
+      LEFT JOIN signature_history_table sht ON sht.signature_history_user_id = ut.user_id
+      WHERE mst.memo_signer_memo_id = '${memo_id}'
+      GROUP BY mst.memo_signer_id, tm.team_member_id, ut.user_id;
     `);
 
     const signer_data = signer_data_raw.map(row => {
-        const newSignerData = {
+      let signature_public_url = "";
+      const signatureList = row.signature_list || [];
+      const defaultSignature = signatureList[signatureList.length - 1];
+
+      const sortedSignatures = signatureList.slice().sort((a, b) => {
+        const aTime = new Date(a.signature_history_date_created).getTime();
+        const bTime = new Date(b.signature_history_date_created).getTime();
+        return aTime - bTime;
+      });
+
+      const signedDate = new Date(row.memo_signer_date_signed).getTime();
+
+      const signatureMatch = sortedSignatures.find((signature, index) => {
+        if (!signature) {
+            return false;
+        }
+        const nextSignatureDateCreatedTime = index < sortedSignatures.length - 1
+            ? new Date(sortedSignatures[index + 1].signature_history_date_created).getTime()
+            : 0;
+        return signedDate < nextSignatureDateCreatedTime;
+      });
+
+      if (signatureMatch) {
+        signature_public_url = signatureMatch.signature_history_value;
+      } else {
+        signature_public_url = defaultSignature
+          ? defaultSignature.signature_history_value
+          : "";
+      }
+
+      const newSignerData = {
         memo_signer_id: row.memo_signer_id,
         memo_signer_status: row.memo_signer_status,
         memo_signer_is_primary: row.memo_signer_is_primary,
         memo_signer_order: row.memo_signer_order,
+        memo_signer_date_created: row.memo_signer_date_created,
+        memo_signer_date_signed: row.memo_signer_date_signed,
         memo_signer_team_member: {
-                team_member_id: row.team_member_id,
-                user: {
-                    user_id: row.user_id,
-                    user_first_name: row.user_first_name,
-                    user_last_name: row.user_last_name,
-                    user_avatar: row.user_avatar,
-                    user_signature_attachment: {
-                        user_signature_attachment_id: row.attachment_id,
-                        attachment_value: row.attachment_value
-                    },
-                    user_job_title: row.user_job_title
-                }
-            }
-        }
-
-        return newSignerData;
+          team_member_id: row.team_member_id,
+          user: {
+            user_id: row.user_id,
+            user_first_name: row.user_first_name,
+            user_last_name: row.user_last_name,
+            user_avatar: row.user_avatar,
+            user_job_title: row.user_job_title
+          }
+        },
+        memo_signer_signature_public_url: signature_public_url,
+        signatureList
+      };
+      return newSignerData;
     });
 
     const line_item_data_raw = plv8.execute(`
-        SELECT * 
-        FROM memo_line_item_table 
-        LEFT JOIN memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id 
-        WHERE memo_line_item_memo_id = '${memo_id}'
+      SELECT *
+      FROM memo_line_item_table
+      LEFT JOIN memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id
+      WHERE memo_line_item_memo_id = '${memo_id}'
     `);
 
     const line_item_data = line_item_data_raw.map(row => ({
-        memo_line_item_id: row.memo_line_item_id,
-        memo_line_item_content: row.memo_line_item_content,
-        memo_line_item_date_created: row.memo_line_item_date_created,
-        memo_line_item_date_updated: row.memo_line_item_date_updated,
-        memo_line_item_order: row.memo_line_item_order,
-        memo_line_item_attachment: {
-            memo_line_item_attachment_id: row.memo_line_item_attachment_id,
-            memo_line_item_attachment_name: row.memo_line_item_attachment_name,
-            memo_line_item_attachment_caption: row.memo_line_item_attachment_caption,
-            memo_line_item_attachment_storage_bucket: row.memo_line_item_attachment_storage_bucket,
-            memo_line_item_attachment_public_url: row.memo_line_item_attachment_public_url,
-            memo_line_item_attachment_line_item_id: row.memo_line_item_attachment_line_item_id
-        }
-    }));
+      memo_line_item_id: row.memo_line_item_id,
+      memo_line_item_content: row.memo_line_item_content,
+      memo_line_item_date_created: row.memo_line_item_date_created,
+      memo_line_item_date_updated: row.memo_line_item_date_updated,
+      memo_line_item_order: row.memo_line_item_order,
+      memo_line_item_attachment: {
+        memo_line_item_attachment_id: row.memo_line_item_attachment_id,
+        memo_line_item_attachment_name: row.memo_line_item_attachment_name,
+        memo_line_item_attachment_caption: row.memo_line_item_attachment_caption,
+        memo_line_item_attachment_storage_bucket:
+          row.memo_line_item_attachment_storage_bucket,
+        memo_line_item_attachment_public_url:
+          row.memo_line_item_attachment_public_url,
+        memo_line_item_attachment_line_item_id:
+          row.memo_line_item_attachment_line_item_id
+      }
+    })).sort((a, b) => a.memo_line_item_order - b.memo_line_item_order);
 
-    const read_receipt_data = plv8.execute(
-      `
-        SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
-        FROM memo_read_receipt_table 
-        INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
-        LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
-        WHERE memo_read_receipt_memo_id = '${memo_id}'
-      `
-    );
+    const read_receipt_data = plv8.execute(`
+      SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
+      FROM memo_read_receipt_table
+      INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
+      INNER JOIN user_table ON user_id = team_member_user_id
+      LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
+      WHERE memo_read_receipt_memo_id = '${memo_id}'
+    `);
 
-    const agreement_data = plv8.execute(
-      `
-        SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
-        FROM memo_agreement_table
-        INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
-        LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
-        WHERE memo_agreement_memo_id = '${memo_id}'
-      `
-    )
+    const agreement_data = plv8.execute(`
+      SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
+      FROM memo_agreement_table
+      INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
+      INNER JOIN user_table ON user_id = team_member_user_id
+      LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
+      WHERE memo_agreement_memo_id = '${memo_id}'
+    `);
 
     memo_data_on_load = {
-        ...memo_data,
-        memo_signer_list: signer_data,
-        memo_line_item_list: line_item_data,
-        memo_read_receipt_list: read_receipt_data,
-        memo_agreement_list: agreement_data
-    }
- });
- return memo_data_on_load;
+      ...memo_data,
+      memo_signer_list: signer_data,
+      memo_line_item_list: line_item_data,
+      memo_read_receipt_list: read_receipt_data,
+      memo_agreement_list: agreement_data
+    };
+  });
+  return memo_data_on_load;
 $$ LANGUAGE plv8;
-
 
 
 CREATE OR REPLACE FUNCTION get_memo_list(
@@ -8912,7 +8978,9 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO memo_line_item_table (memo_line_item_id, memo_line_item_content, memo_line_item_order, memo_line_item_memo_id) VALUES ${memoLineItemTableValues}`);
 
-    plv8.execute(`INSERT INTO memo_line_item_attachment_table (memo_line_item_attachment_name,memo_line_item_attachment_caption,memo_line_item_attachment_storage_bucket,memo_line_item_attachment_public_url,memo_line_item_attachment_line_item_id) VALUES ${memoLineItemAttachmentTableValues}`);
+    if (memoLineItemAttachmentTableValues) {
+      plv8.execute(`INSERT INTO memo_line_item_attachment_table (memo_line_item_attachment_name,memo_line_item_attachment_caption,memo_line_item_attachment_storage_bucket,memo_line_item_attachment_public_url,memo_line_item_attachment_line_item_id) VALUES ${memoLineItemAttachmentTableValues}`);
+    }
  });
 $$ LANGUAGE plv8;
 
@@ -8965,37 +9033,50 @@ RETURNS JSON AS $$
     };
 
     const signer_data_raw = plv8.execute(`
-        SELECT * 
-        FROM memo_signer_table 
-        INNER JOIN team_member_table tm ON tm.team_member_id = memo_signer_team_member_id 
-        INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id 
-        LEFT JOIN attachment_table ON attachment_id = ut.user_signature_attachment_id
-        WHERE memo_signer_memo_id = '${memo_id}'
+      SELECT
+        mst.*,
+        tm.*,
+        ut.*,
+        json_agg(sht.*) as signature_list
+      FROM memo_signer_table mst
+      INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
+      INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id
+      LEFT JOIN signature_history_table sht ON sht.signature_history_user_id = ut.user_id
+      WHERE mst.memo_signer_memo_id = '${memo_id}'
+      GROUP BY mst.memo_signer_id, tm.team_member_id, ut.user_id;
     `);
 
     const signer_data = signer_data_raw.map(row => {
-        const newSignerData = {
+      let signature_public_url = "";
+      const signatureList = row.signature_list || [];
+      const defaultSignature = signatureList[signatureList.length - 1];
+
+      if (defaultSignature) {
+        signature_public_url = defaultSignature
+          ? defaultSignature.signature_history_value
+          : "";
+      }
+
+      const newSignerData = {
         memo_signer_id: row.memo_signer_id,
         memo_signer_status: row.memo_signer_status,
         memo_signer_is_primary: row.memo_signer_is_primary,
         memo_signer_order: row.memo_signer_order,
+        memo_signer_date_created: row.memo_signer_date_created,
+        memo_signer_date_signed: row.memo_signer_date_signed,
         memo_signer_team_member: {
-                team_member_id: row.team_member_id,
-                user: {
-                    user_id: row.user_id,
-                    user_first_name: row.user_first_name,
-                    user_last_name: row.user_last_name,
-                    user_avatar: row.user_avatar,
-                    user_signature_attachment: {
-                        user_signature_attachment_id: row.attachment_id,
-                        attachment_value: row.attachment_value
-                    },
-                    user_job_title: row.user_job_title
-                }
-            }
-        }
-
-        return newSignerData;
+          team_member_id: row.team_member_id,
+          user: {
+            user_id: row.user_id,
+            user_first_name: row.user_first_name,
+            user_last_name: row.user_last_name,
+            user_avatar: row.user_avatar,
+            user_job_title: row.user_job_title
+          }
+        },
+        memo_signer_signature_public_url: signature_public_url
+      };
+      return newSignerData;
     });
 
     const line_item_data_raw = plv8.execute(`
@@ -9044,8 +9125,7 @@ RETURNS JSON AS $$
       memo_author_user_id,
       memoSignerTableValues,
       memoLineItemTableValues,
-      memoLineItemAttachmentTableValues,
-      memoLineItemIdFilter
+      memoLineItemAttachmentTableValues
     } = input_data;
 
     const memo_count = plv8.execute(`
@@ -9105,20 +9185,22 @@ RETURNS JSON AS $$
       VALUES ${memoLineItemTableValues}
     `);
 
-    plv8.execute(`
-      INSERT INTO memo_line_item_attachment_table (
-        memo_line_item_attachment_name,
-        memo_line_item_attachment_caption,
-        memo_line_item_attachment_storage_bucket,
-        memo_line_item_attachment_public_url,
-        memo_line_item_attachment_line_item_id
-      ) 
-      VALUES ${memoLineItemAttachmentTableValues}
-    `);
+    if (memoLineItemAttachmentTableValues) {
+      plv8.execute(`
+        INSERT INTO memo_line_item_attachment_table (
+          memo_line_item_attachment_name,
+          memo_line_item_attachment_caption,
+          memo_line_item_attachment_storage_bucket,
+          memo_line_item_attachment_public_url,
+          memo_line_item_attachment_line_item_id
+        ) 
+        VALUES ${memoLineItemAttachmentTableValues}
+      `);
+    }
+    ;
   });
   return new_memo_data;
 $$ LANGUAGE plv8;
-
 
 -- End: memo queries
 
@@ -9281,8 +9363,10 @@ ALTER TABLE memo_date_updated_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_status_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_agreement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_format_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_valid_id_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_format_section_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE query_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_sla_table ENABLE ROW LEVEL SECURITY;
 
@@ -9474,11 +9558,13 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_read_receipt_table;
 DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_agreement_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_agreement_table;
 
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_table;
-
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_valid_id_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_valid_id_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_valid_id_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_section_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_subsection_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_attachment_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON query_table;
 
@@ -11105,8 +11191,19 @@ CREATE POLICY "Allow READ for anon users" ON "public"."memo_agreement_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
--- memo_format_table
-CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_table"
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_section_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_subsection_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_attachment_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)

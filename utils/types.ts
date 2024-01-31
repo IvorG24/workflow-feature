@@ -246,12 +246,35 @@ export type OtherExpensesTypeTableInsert =
 export type OtherExpensesTypeTableUpdate =
   Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
 
+export type SignatureHistoryTableRow =
+  Database["public"]["Tables"]["signature_history_table"]["Row"];
 export type UserValidIDTableRow =
   Database["public"]["Tables"]["user_valid_id_table"]["Row"];
 export type UserValidIDTableInsert =
   Database["public"]["Tables"]["user_valid_id_table"]["Insert"];
 export type UserValidIDTableUpdate =
   Database["public"]["Tables"]["user_valid_id_table"]["Update"];
+
+export type MemoFormatTableRow =
+  Database["public"]["Tables"]["memo_format_section_table"]["Row"];
+export type MemoFormatTableInsert =
+  Database["public"]["Tables"]["memo_format_section_table"]["Insert"];
+export type MemoFormatTableUpdate =
+  Database["public"]["Tables"]["memo_format_section_table"]["Update"];
+
+export type MemoFormatSubsectionTableRow =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Row"];
+export type MemoFormatSubsectionTableInsert =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Insert"];
+export type MemoFormatSubsectionTableUpdate =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Update"];
+
+export type MemoFormatAttachmentTableRow =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Row"];
+export type MemoFormatAttachmentTableInsert =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Insert"];
+export type MemoFormatAttachmentTableUpdate =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Update"];
 
 export type QueryTableRow = Database["public"]["Tables"]["query_table"]["Row"];
 
@@ -585,6 +608,7 @@ export type FormWithTeamMember = FormTableRow & {
 
 export type ItemWithDescriptionType = ItemTableRow & {
   item_division_id_list: string[];
+  item_level_three_description?: string;
 } & {
   item_description: ItemDescriptionTableRow[];
 };
@@ -606,6 +630,7 @@ export type ItemForm = {
   isAvailable: boolean;
   glAccount: string;
   division: string[];
+  divisionDescription: string;
 };
 
 export type ServiceForm = {
@@ -649,6 +674,7 @@ export type ItemWithDescriptionAndField = ItemTableRow & {
     })[];
     item_field: FieldTableRow;
   })[];
+  item_level_three_description?: string;
 };
 
 export type InvitationWithTeam = InvitationTableRow & {
@@ -987,7 +1013,7 @@ export type TeamMemberOnLoad = {
   member: TeamMemberTableRow & {
     team_member_user: UserTableRow & { user_employee_number: string };
   };
-  userValidId: UserValidIDTableRow;
+  userValidId: UserValidIDTableRow | undefined;
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -1180,10 +1206,8 @@ export type MemoSignerItem = {
     user_last_name: string;
     user_job_title: string | null;
     user_avatar: string | null;
-    user_signature_attachment:
-      | (AttachmentTableRow & { attachment_public_url?: string })
-      | null;
   };
+  signer_signature_public_url: string;
 };
 
 export type MemoLineItem = {
@@ -1198,16 +1222,12 @@ export type MemoType = MemoTableRow & {
   memo_status: string;
   memo_date_updated: string;
 } & {
-  memo_signer_list: (MemoSignerTableRow & { signature_public_url: string } & {
+  memo_signer_list: (MemoSignerTableRow & {
     memo_signer_team_member: {
       team_member_id: string;
-      user: UserTableRow & {
-        user_signature_attachment?: {
-          user_signature_attachment_id: string;
-          attachment_value: string;
-        };
-      };
+      user: UserTableRow;
     };
+    memo_signer_signature_public_url: string;
   })[];
 } & {
   memo_line_item_list: (MemoLineItemTableRow & {
@@ -1242,7 +1262,7 @@ export type EditMemoType = MemoTableRow & {
   memo_status: string;
   memo_date_updated: string;
 } & {
-  memo_signer_list: (MemoSignerTableRow & { signature_public_url?: string } & {
+  memo_signer_list: (MemoSignerTableRow & {
     memo_signer_team_member?: {
       team_member_id: string;
       user: {
@@ -1251,13 +1271,9 @@ export type EditMemoType = MemoTableRow & {
         user_avatar: string | null;
         user_job_title: string | null;
         user_id: string;
-      } & {
-        user_signature_attachment?: {
-          user_signature_attachment_id: string;
-          attachment_value: string;
-        };
       };
     };
+    memo_signer_signature_public_url: string;
   })[];
 } & {
   memo_line_item_list: (MemoLineItemTableRow & {
@@ -1286,7 +1302,7 @@ export type EditMemoType = MemoTableRow & {
 export type ReferenceMemoType = MemoTableRow & {
   memo_author_user: UserTableRow;
 } & {
-  memo_signer_list: (MemoSignerTableRow & { signature_public_url?: string } & {
+  memo_signer_list: (MemoSignerTableRow & {
     memo_signer_team_member?: {
       team_member_id: string;
       user: {
@@ -1295,13 +1311,9 @@ export type ReferenceMemoType = MemoTableRow & {
         user_avatar: string | null;
         user_job_title: string | null;
         user_id: string;
-      } & {
-        user_signature_attachment?: {
-          user_signature_attachment_id: string;
-          attachment_value: string;
-        };
       };
     };
+    memo_signer_signature_public_url: string;
   })[];
 } & {
   memo_line_item_list: (MemoLineItemTableRow & {
@@ -1325,29 +1337,6 @@ export type ReferenceMemoType = MemoTableRow & {
     user_last_name: string;
     user_employee_number: string;
   })[];
-};
-
-export type MemoFormatType = {
-  memo_format_id: string;
-  header: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-    logoPosition: string;
-  };
-  body: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
-  footer: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
 };
 
 export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {

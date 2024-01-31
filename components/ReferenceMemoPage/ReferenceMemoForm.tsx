@@ -19,6 +19,7 @@ import {
   Title,
   Tooltip,
 } from "@mantine/core";
+import { getHotkeyHandler } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import {
   IconArrowsExchange,
@@ -176,6 +177,8 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
       memo_signer_id: uuidv4(),
       memo_signer_memo_id: getValues("memo_id"),
       memo_signer_order: selectedSignerList.length + 1,
+      memo_signer_date_created: `${Date.now()}`,
+      memo_signer_date_signed: null,
       memo_signer_team_member: {
         team_member_id: selectedSigner.team_member_id,
         user: {
@@ -184,12 +187,10 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
           user_avatar,
           user_job_title,
           user_id,
-          user_signature_attachment: {
-            user_signature_attachment_id: `${selectedSigner.team_member_user.user_signature_attachment?.attachment_id}`,
-            attachment_value: `${selectedSigner.team_member_user.user_signature_attachment?.attachment_value}`,
-          },
         },
       },
+      memo_signer_signature_public_url:
+        selectedSigner.signer_signature_public_url,
     };
 
     insertSignerItem(selectedSignerList.length, newMemoSigner);
@@ -208,7 +209,7 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form>
       <Stack>
         <Paper p="md" radius="md">
           <Title order={3} mb="sm" color="dimmed">
@@ -351,9 +352,7 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
 
         <Paper p="md" radius="md">
           <Stack>
-            <Title order={3} color="dimmed">
-              Signers
-            </Title>
+            <Title order={3}>Approvers</Title>
             {selectedSignerList.map((signer, signerIndex) => {
               const user = signer.memo_signer_team_member?.user;
               const signerFullname = `${user?.user_first_name} ${user?.user_last_name}`;
@@ -401,7 +400,7 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                 searchable
                 clearable
                 nothingFound
-                placeholder="Select memo signer"
+                placeholder="Select memo approver"
                 data={currentSignerList.map(
                   ({
                     team_member_id,
@@ -420,10 +419,11 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
                     setSelectedSigner(signerMatch);
                   }
                 }}
+                onKeyDown={getHotkeyHandler([["Enter", handleAddMemoSigner]])}
               />
               <Checkbox
                 mt="sm"
-                label="Primary Signer"
+                label="Primary Approver"
                 checked={isSelectedSignerPrimary}
                 onChange={(event) =>
                   setIsSelectedSignerPrimary(event.currentTarget.checked)
@@ -435,13 +435,19 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
               variant="light"
               onClick={() => handleAddMemoSigner()}
             >
-              Add Memo Signer
+              Add Memo Approver
             </Button>
           </Stack>
         </Paper>
 
         <Box mb={42}>
-          <Button mb={12} size="md" fullWidth type="submit">
+          <Button
+            mb={12}
+            size="md"
+            fullWidth
+            type="button"
+            onClick={handleSubmit(onSubmit)}
+          >
             Submit
           </Button>
           <Button

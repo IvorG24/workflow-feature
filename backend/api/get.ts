@@ -1,3 +1,5 @@
+import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
+import { ItemOrderType } from "@/components/RequisitionFormPage/ItemList/ItemList";
 import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
@@ -18,7 +20,6 @@ import {
   FormType,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
-  MemoFormatType,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -34,6 +35,7 @@ import {
   RequestWithResponseType,
   SSOTOnLoad,
   ServiceWithScopeAndChoice,
+  SignatureHistoryTableRow,
   SignerRequestSLA,
   SignerWithProfile,
   TeamMemberOnLoad,
@@ -212,7 +214,10 @@ export const getRequestList = async (
     ?.map((value) => `request_view.request_form_id = '${value}'`)
     .join(" OR ");
   const projectCondition = project
-    ?.map((value) => `request_view.request_formsly_id_prefix = '${value}'`)
+    ?.map(
+      (value) =>
+        `request_view.request_formsly_id_prefix ILIKE '${value}' || '%'`
+    )
     .join(" OR ");
 
   const idFilterCondition = idFilter
@@ -744,16 +749,45 @@ export const getAllNotification = async (
 // Get item list
 export const getItemList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; limit: number; page: number; search?: string }
+  params: {
+    teamId: string;
+    limit: number;
+    page: number;
+    generalName: string;
+    description: string;
+    unitOfMeasurement: string;
+    glAccount: string;
+    division: string;
+    status: string;
+    sortColumn?: ItemOrderType;
+    sortOrder?: string;
+  }
 ) => {
-  const { teamId, search, limit, page } = params;
+  const {
+    teamId,
+    limit,
+    page,
+    generalName,
+    description,
+    unitOfMeasurement,
+    glAccount,
+    division,
+    status,
+    sortColumn,
+    sortOrder,
+  } = params;
 
   const start = (page - 1) * limit;
 
   let query = supabaseClient
     .from("item_table")
     .select(
-      "*, item_division_table(*), item_description: item_description_table(*)",
+      `
+        *, 
+        item_division_table!inner(*), 
+        item_description: item_description_table!inner(*),
+        item_level_three_description: item_level_three_description_table(*)
+      `,
       {
         count: "exact",
       }
@@ -762,11 +796,45 @@ export const getItemList = async (
     .eq("item_is_disabled", false)
     .eq("item_description.item_description_is_disabled", false);
 
-  if (search) {
-    query = query.ilike("item_general_name", `%${search}%`);
+  if (generalName) {
+    query = query.ilike("item_general_name", `${generalName}%`);
+  }
+  if (description) {
+    query = query.ilike(
+      "item_description.item_description_label",
+      `${description}%`
+    );
+  }
+  if (unitOfMeasurement) {
+    query = query.eq("item_unit", `${unitOfMeasurement}`);
+  }
+  if (glAccount) {
+    query = query.eq("item_gl_account", `${glAccount}`);
+  }
+  if (division) {
+    query = query.eq("item_division_table.item_division_value", `${division}`);
+  }
+  if (status) {
+    switch (status) {
+      case "active":
+        query = query.eq("item_is_available", true);
+        break;
+      case "inactive":
+        query = query.eq("item_is_available", false);
+        break;
+    }
   }
 
-  query.order("item_general_name", { ascending: true });
+  if (sortColumn) {
+    query.order(sortColumn, {
+      ascending: sortOrder === "asc",
+    });
+  } else {
+    query.order("item_general_name", {
+      ascending: true,
+    });
+  }
+
   query.order("item_description_order", {
     foreignTable: "item_description",
     ascending: true,
@@ -784,6 +852,7 @@ export const getItemList = async (
 
   const formattedData = data as unknown as (ItemWithDescriptionType & {
     item_division_table: { item_division_value: string }[];
+    item_level_three_description: { item_level_three_description: string }[];
   })[];
 
   return {
@@ -793,6 +862,10 @@ export const getItemList = async (
         item_division_id_list: data.item_division_table.map(
           (division) => division.item_division_value
         ),
+        item_level_three_description:
+          data.item_level_three_description.length !== 0
+            ? data.item_level_three_description[0].item_level_three_description
+            : "",
       };
     }),
     count,
@@ -802,10 +875,10 @@ export const getItemList = async (
 // Get all items
 export const getAllItems = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
+  params: { teamId: string; search?: string }
 ) => {
-  const { teamId } = params;
-  const { data, error } = await supabaseClient
+  const { teamId, search } = params;
+  let query = supabaseClient
     .from("item_table")
     .select("item_general_name")
     .eq("item_team_id", teamId)
@@ -813,6 +886,11 @@ export const getAllItems = async (
     .eq("item_is_available", true)
     .order("item_general_name", { ascending: true });
 
+  if (search) {
+    query = query.ilike("item_general_name", `${search}%`);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
 
   return data;
@@ -906,7 +984,23 @@ export const getItem = async (
   const { data, error } = await supabaseClient
     .from("item_table")
     .select(
-      "*, item_division_table(*), item_description: item_description_table(*, item_description_field: item_description_field_table(*, item_description_field_uom: item_description_field_uom_table(item_description_field_uom)), item_field: item_description_field_id(*))"
+      `
+        *, 
+        item_division_table(*), 
+        item_description: item_description_table(
+          *, 
+          item_description_field: item_description_field_table(
+            *, 
+            item_description_field_uom: item_description_field_uom_table(
+              item_description_field_uom
+            )
+          ), 
+          item_field: item_description_field_id(
+            *
+          )
+        ),
+        item_level_three_description: item_level_three_description_table(*)
+      `
     )
     .eq("item_team_id", teamId)
     .eq("item_general_name", itemName)
@@ -926,6 +1020,7 @@ export const getItem = async (
   if (error) throw error;
   const formattedData = data as unknown as ItemWithDescriptionAndField & {
     item_division_table: { item_division_value: string }[];
+    item_level_three_description: { item_level_three_description: string }[];
   };
 
   return {
@@ -933,6 +1028,11 @@ export const getItem = async (
     item_division_id_list: formattedData.item_division_table.map(
       (division) => division.item_division_value
     ),
+    item_level_three_description:
+      formattedData.item_level_three_description.length !== 0
+        ? formattedData.item_level_three_description[0]
+            .item_level_three_description
+        : "",
   } as unknown as ItemWithDescriptionAndField;
 };
 
@@ -2475,7 +2575,7 @@ export const getSupplier = async (
     .from("supplier_table")
     .select("supplier")
     .eq("supplier_team_id", teamId)
-    .ilike("supplier", `%${supplier}%`)
+    .ilike("supplier", `${supplier}%`)
     .order("supplier", { ascending: true })
     .limit(100);
   if (error) throw error;
@@ -2490,6 +2590,32 @@ export const getSupplier = async (
   });
 
   return supplierList;
+};
+
+// Get CSI
+export const getCSI = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { csi: string; fieldId: string }
+) => {
+  const { csi, fieldId } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_level_three_description")
+    .ilike("csi_code_level_three_description", `${csi}%`)
+    .order("csi_code_level_three_description", { ascending: true })
+    .limit(100);
+  if (error) throw error;
+
+  const csiList = data.map((csi, index) => {
+    return {
+      option_field_id: fieldId,
+      option_id: uuidv4(),
+      option_order: index + 1,
+      option_value: csi.csi_code_level_three_description,
+    };
+  });
+
+  return csiList;
 };
 
 // Get team member on load
@@ -3284,7 +3410,7 @@ export const getCSICode = async (
   return data as CSICodeTableRow;
 };
 
-// Fetch all itemm division option
+// Fetch all item division option
 export const getItemDivisionOption = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
@@ -3292,6 +3418,26 @@ export const getItemDivisionOption = async (
     .from("distinct_division_view")
     .select("csi_code_division_id, csi_code_division_description")
     .order("csi_code_division_id", { ascending: true });
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch all item unit of measurement option
+export const getItemUnitOfMeasurementOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("item_unit_of_measurement_table")
+    .select("item_unit_of_measurement_id, item_unit_of_measurement")
+    .eq("item_unit_of_measurement_is_available", true)
+    .eq("item_unit_of_measurement_is_disabled", false)
+    .eq("item_unit_of_measurement_team_id", teamId)
+    .order("item_unit_of_measurement", { ascending: true });
   if (error) throw error;
 
   return data;
@@ -4268,7 +4414,7 @@ export const getTeamMemoSignerList = async (
           user_last_name,
           user_job_title,
           user_avatar,
-          user_signature_attachment: user_signature_attachment_id(*)
+          signature_list: signature_history_table(*)
         )
       `
     )
@@ -4276,7 +4422,31 @@ export const getTeamMemoSignerList = async (
 
   if (error) throw error;
 
-  return data;
+  const dataWithType = data as unknown as {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string | null;
+      user_job_title: string | null;
+      user_avatar: string;
+      signature_list: SignatureHistoryTableRow[];
+    };
+  }[];
+
+  const formattedData = dataWithType.map((signer) => {
+    const signatureList = signer.team_member_user.signature_list ?? [];
+    const defaultSignature = signatureList[signatureList.length - 1];
+
+    return {
+      ...signer,
+      signer_signature_public_url: defaultSignature
+        ? defaultSignature.signature_history_value
+        : "",
+    };
+  });
+
+  return formattedData;
 };
 
 // Get memo
@@ -4377,37 +4547,78 @@ export const getMemoFormat = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
-    .from("memo_format_table")
-    .select("*")
-    .maybeSingle();
-
+    .from("memo_format_section_table")
+    .select(
+      "*, format_subsection: memo_format_subsection_table(*, subsection_attachment: memo_format_attachment_table(*))"
+    );
   if (error || !data) throw Error;
 
-  const formatData: MemoFormatType = {
-    memo_format_id: data.memo_format_id,
-    header: {
-      top: Number(data.memo_format_header_margin_top),
-      right: Number(data.memo_format_header_margin_right),
-      bottom: Number(data.memo_format_header_margin_bottom),
-      left: Number(data.memo_format_header_margin_left),
-      logoPosition: data.memo_format_header_logo_position,
-    },
-    body: {
-      top: Number(data.memo_format_body_margin_top),
-      right: Number(data.memo_format_body_margin_right),
-      bottom: Number(data.memo_format_body_margin_bottom),
-      left: Number(data.memo_format_body_margin_left),
-    },
-    footer: {
-      top: Number(data.memo_format_footer_margin_top),
-      right: Number(data.memo_format_footer_margin_right),
-      bottom: Number(data.memo_format_footer_margin_bottom),
-      left: Number(data.memo_format_footer_margin_left),
-    },
-  };
+  const sectionOrderList = ["header", "body", "footer"];
+  const sortedData = data.sort((a, b) => {
+    const aIndex = sectionOrderList.findIndex(
+      (section) => section === a.memo_format_section_name
+    );
+    const bIndex = sectionOrderList.findIndex(
+      (section) => section === b.memo_format_section_name
+    );
 
-  return formatData;
+    return aIndex - bIndex;
+  });
+
+  const sortedDataWithType =
+    sortedData as MemoFormatFormValues["formatSection"];
+
+  const sortedDataWithAttachmentFile = await Promise.all(
+    sortedDataWithType.map(async (section) => {
+      const updatedSubsectionList = await Promise.all(
+        section.format_subsection.map(async (subsection) => {
+          const updatedAttachmentList = await Promise.all(
+            subsection.subsection_attachment.map(async (attachment) => {
+              try {
+                const attachmentFileResponse = await fetch(
+                  `${attachment.memo_format_attachment_url}`
+                );
+
+                if (!attachmentFileResponse.ok) {
+                  throw new Error(
+                    `Failed to fetch attachment for ${attachment.memo_format_attachment_name}`
+                  );
+                }
+
+                const blob = await attachmentFileResponse.blob();
+                const newAttachmentFile = new File(
+                  [blob],
+                  attachment.memo_format_attachment_name,
+                  { type: blob.type }
+                );
+
+                return {
+                  ...attachment,
+                  memo_format_attachment_file: newAttachmentFile,
+                };
+              } catch (error) {
+                console.error(error);
+                return attachment;
+              }
+            })
+          );
+
+          return {
+            ...subsection,
+            subsection_attachment: updatedAttachmentList,
+          };
+        })
+      );
+
+      return {
+        ...section,
+        format_subsection: updatedSubsectionList,
+      };
+    })
+  );
+  return sortedDataWithAttachmentFile;
 };
+
 // Get type list
 export const getTypeList = async (
   supabaseClient: SupabaseClient<Database>,
@@ -4523,6 +4734,23 @@ export const getTypeOptions = async (
   return data;
 };
 
+// Get user signature list
+export const getUserSignatureList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { userId } = params;
+  const { data, error } = await supabaseClient
+    .from("signature_history_table")
+    .select("*")
+    .eq("signature_history_user_id", userId);
+
+  if (error) throw error;
+  return data;
+};
+
 // Get user valid id
 export const getUserValidID = async (
   supabaseClient: SupabaseClient<Database>,
@@ -4538,6 +4766,41 @@ export const getUserValidID = async (
   if (error) throw error;
 
   return data;
+};
+
+// Fetch csi code description based on division id
+export const getCSIDescriptionOptionBasedOnDivisionId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    divisionId: string[];
+  }
+) => {
+  const { divisionId } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_level_three_description, csi_code_division_id")
+    .in("csi_code_division_id", divisionId)
+    .order("csi_code_level_three_description", { ascending: true });
+  if (error) throw error;
+  return data;
+};
+
+// Fetch CSI Code based on level three description
+export const getLevelThreeDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    levelThreeDescription: string;
+  }
+) => {
+  const { levelThreeDescription } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("*")
+    .eq("csi_code_level_three_description", levelThreeDescription)
+    .single();
+  if (error) throw error;
+
+  return [data] as CSICodeTableRow[];
 };
 
 // Get query data

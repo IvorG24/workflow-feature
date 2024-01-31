@@ -141,6 +141,12 @@ export const trimObjectProperties = (obj: { [x: string]: string }) => {
   return trimmedObject;
 };
 
+export const escapeQuotes = (input: string): string => {
+  const escapedString = input.replace(/'/g, "''");
+
+  return escapedString;
+};
+
 type AnyObject = {
   [key: string]: unknown;
 };

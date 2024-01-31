@@ -50,7 +50,20 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
 
       if (data.memo_signer_list.length === 0) {
         return notifications.show({
-          message: "Signer is required. Please add atleast 1 signer.",
+          title: "Memo approvers are required",
+          message: "Please add atleast one approver.",
+          color: "red",
+        });
+      }
+
+      const isPrimarySignerExisting = data.memo_signer_list.filter(
+        (signer) => signer.memo_signer_is_primary
+      );
+
+      if (isPrimarySignerExisting.length <= 0) {
+        return notifications.show({
+          title: "Primary approver is required",
+          message: "Please select a primary approver.",
           color: "red",
         });
       }
@@ -140,13 +153,19 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
           onTabChange={(selectedTab: string) => setActiveTab(selectedTab)}
         >
           <Tabs.List>
-            <Tabs.Tab value="create" icon={<IconFileDescription size={14} />}>
-              Create
-            </Tabs.Tab>
             {!laptopView && (
-              <Tabs.Tab value="preview" icon={<IconEye size={14} />}>
-                Preview
-              </Tabs.Tab>
+              <>
+                {" "}
+                <Tabs.Tab
+                  value="create"
+                  icon={<IconFileDescription size={14} />}
+                >
+                  Create
+                </Tabs.Tab>
+                <Tabs.Tab value="preview" icon={<IconEye size={14} />}>
+                  Preview
+                </Tabs.Tab>
+              </>
             )}
           </Tabs.List>
 

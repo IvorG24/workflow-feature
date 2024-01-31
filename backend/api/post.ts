@@ -4,7 +4,7 @@ import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/Tea
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { parseJSONIfValid } from "@/utils/string";
+import { escapeQuotes, parseJSONIfValid } from "@/utils/string";
 import {
   AttachmentBucketType,
   AttachmentTableInsert,
@@ -314,7 +314,10 @@ export const createComment = async (
 export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    itemData: ItemTableInsert & {
+      item_division_id_list: string[];
+      item_level_three_description?: string;
+    };
     itemDescription: {
       description: string;
       withUoM: boolean;
@@ -336,7 +339,10 @@ export const createItem = async (
 export const updateItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    itemData: ItemTableInsert & {
+      item_division_id_list: string[];
+      item_level_three_description?: string;
+    };
     toAdd: ItemForm["descriptions"];
     toUpdate: ItemDescriptionTableUpdate[];
     toRemove: { fieldId: string; descriptionId: string }[];
@@ -1048,7 +1054,7 @@ export const createTeamMemo = async (
   const { data, error } = await supabaseClient.rpc("create_memo", {
     input_data,
   });
-
+  console.log(error);
   if (error) throw Error;
 
   return data as MemoTableRow;
@@ -1061,6 +1067,12 @@ const processAllMemoLineItems = async (
   const processedLineItems = await Promise.all(
     lineItemData.map(async (lineItem) => {
       const memo_line_item_id = uuidv4();
+
+      if (lineItem.memo_line_item_attachment_caption) {
+        lineItem.memo_line_item_attachment_caption = escapeQuotes(
+          lineItem.memo_line_item_attachment_caption
+        );
+      }
 
       if (lineItem.memo_line_item_attachment) {
         const bucket = "MEMO_ATTACHMENTS";
@@ -1078,7 +1090,11 @@ const processAllMemoLineItems = async (
         };
       }
 
-      return { ...lineItem, memo_line_item_id };
+      return {
+        ...lineItem,
+        memo_line_item_content: escapeQuotes(lineItem.memo_line_item_content),
+        memo_line_item_id,
+      };
     })
   );
 
@@ -1136,7 +1152,6 @@ export const agreeToMemo = async (
 };
 
 // create reference memo
-// update memo
 export const createReferenceMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: ReferenceMemoType
@@ -1159,7 +1174,9 @@ export const createReferenceMemo = async (
   const memoLineItemTableValues = updatedLineItemData
     .map(
       (lineItem, lineItemIndex) =>
-        `('${lineItem.memo_line_item_id}', '${lineItem.memo_line_item_content}', '${lineItemIndex}', '${memoId}')`
+        `('${lineItem.memo_line_item_id}', '${escapeQuotes(
+          lineItem.memo_line_item_content
+        )}', '${lineItemIndex}', '${memoId}')`
     )
     .join(",");
 
@@ -1171,7 +1188,9 @@ export const createReferenceMemo = async (
     .map(
       ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
         `('${lineItemAttachment?.memo_line_item_attachment_name}', '${
-          lineItemAttachment?.memo_line_item_attachment_caption ?? ""
+          escapeQuotes(
+            `${lineItemAttachment?.memo_line_item_attachment_caption}`
+          ) ?? ""
         }', '${
           lineItemAttachment?.memo_line_item_attachment_storage_bucket
         }', '${

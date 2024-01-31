@@ -6,7 +6,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { MemoFormatType, MemoType } from "@/utils/types";
+import { MemoType } from "@/utils/types";
 import {
   Avatar,
   Badge,
@@ -30,12 +30,12 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { IconCircleDashed, IconCircleX, IconShare } from "@tabler/icons-react";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
+import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
 import ExportMemoToPdf from "./ExportMemoToPdf";
 
 type Props = {
@@ -88,39 +88,14 @@ const renderMemoLineItems = (lineItem: MemoType["memo_line_item_list"][0]) => {
   );
 };
 
-const renderSignerItem = (
-  signerItem: MemoType["memo_signer_list"][0],
-  supabaseClient: SupabaseClient<Database>
-) => {
+const renderSignerItem = (signerItem: MemoType["memo_signer_list"][0]) => {
   const signerUserData = signerItem.memo_signer_team_member.user;
-  const signerSignature =
-    signerItem.memo_signer_team_member.user.user_signature_attachment;
-  let signatureSrc = "";
-
-  if (signerSignature) {
-    const {
-      data: { publicUrl },
-    } = supabaseClient.storage
-      .from("USER_SIGNATURES")
-      .getPublicUrl(signerSignature.attachment_value);
-
-    // check if valid public url
-    const startIndex =
-      publicUrl.indexOf("USER_SIGNATURES/") + "USER_SIGNATURES/".length;
-    const signaturePath = publicUrl.substring(startIndex);
-
-    if (signaturePath !== "null") {
-      signatureSrc = publicUrl;
-      signerItem.signature_public_url = publicUrl;
-    }
-  }
-
   return (
     <Stack key={signerItem.memo_signer_id} spacing={0}>
       <Image
         width={120}
         height={80}
-        src={signatureSrc}
+        src={signerItem.memo_signer_signature_public_url}
         alt="User signature"
         fit="contain"
         withPlaceholder
@@ -261,7 +236,9 @@ const MemoPage = ({ memo }: Props) => {
   const [openReaderListModal, setOpenReaderListModal] = useState(false);
   const [openAgreementListModal, setOpenAgreementListModal] = useState(false);
   const [hasUserAgreedToMemo, setHasUserAgreedToMemo] = useState(false);
-  const [memoFormat, setMemoFormat] = useState<MemoFormatType | null>(null);
+  const [memoFormat, setMemoFormat] = useState<
+    MemoFormatFormValues["formatSection"] | null
+  >(null);
   const [currentUrl, setCurrentUrl] = useState("");
 
   const handleApproveOrRejectMemo = async (
@@ -465,7 +442,7 @@ const MemoPage = ({ memo }: Props) => {
               )
             }
           >
-            Reference Memo
+            Use Memo As Template
           </Button>
           {memoFormat && (
             <ExportMemoToPdf
@@ -529,7 +506,7 @@ const MemoPage = ({ memo }: Props) => {
               <Flex gap={48}>
                 {currentSignedSignerList.map((signer) =>
                   signer.memo_signer_status === "APPROVED"
-                    ? renderSignerItem(signer, supabaseClient)
+                    ? renderSignerItem(signer)
                     : null
                 )}
               </Flex>
@@ -607,7 +584,7 @@ const MemoPage = ({ memo }: Props) => {
                       <Text>{readerFullname}</Text>
                     </Group>
                     <Text weight={600}>
-                      {reader.user_employee_number ?? "N/A"}
+                      {reader.user_employee_number ?? "No employee number"}
                     </Text>
                   </Group>
                 );
@@ -646,7 +623,7 @@ const MemoPage = ({ memo }: Props) => {
                       <Text>{memberFullname}</Text>
                     </Group>
                     <Text weight={600}>
-                      {member.user_employee_number ?? "N/A"}
+                      {member.user_employee_number ?? "No employee number"}
                     </Text>
                   </Group>
                 );

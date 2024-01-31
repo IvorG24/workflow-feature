@@ -70,6 +70,7 @@ const FormField = ({ field }: Props) => {
             label={field.field_name}
             {...inputProps}
             withAsterisk={field.field_is_required}
+            precision={2}
           />
         );
       case "SWITCH":

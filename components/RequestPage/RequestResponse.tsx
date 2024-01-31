@@ -121,6 +121,7 @@ const RequestResponse = ({
             label={response.label}
             value={parsedValue}
             {...inputProps}
+            precision={2}
           />
         );
       case "SWITCH":
