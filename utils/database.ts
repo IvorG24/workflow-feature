@@ -494,6 +494,35 @@ export type Database = {
           }
         ];
       };
+      item_level_three_description_table: {
+        Row: {
+          item_level_three_description: string;
+          item_level_three_description_date_created: string;
+          item_level_three_description_id: string;
+          item_level_three_description_item_id: string | null;
+        };
+        Insert: {
+          item_level_three_description: string;
+          item_level_three_description_date_created?: string;
+          item_level_three_description_id?: string;
+          item_level_three_description_item_id?: string | null;
+        };
+        Update: {
+          item_level_three_description?: string;
+          item_level_three_description_date_created?: string;
+          item_level_three_description_id?: string;
+          item_level_three_description_item_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_level_three_description__item_level_three_description_fkey";
+            columns: ["item_level_three_description_item_id"];
+            isOneToOne: false;
+            referencedRelation: "item_table";
+            referencedColumns: ["item_id"];
+          }
+        ];
+      };
       item_table: {
         Row: {
           item_date_created: string;

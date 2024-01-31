@@ -314,7 +314,10 @@ export const createComment = async (
 export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    itemData: ItemTableInsert & {
+      item_division_id_list: string[];
+      item_level_three_description?: string;
+    };
     itemDescription: {
       description: string;
       withUoM: boolean;
@@ -336,7 +339,10 @@ export const createItem = async (
 export const updateItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    itemData: ItemTableInsert & {
+      item_division_id_list: string[];
+      item_level_three_description?: string;
+    };
     toAdd: ItemForm["descriptions"];
     toUpdate: ItemDescriptionTableUpdate[];
     toRemove: { fieldId: string; descriptionId: string }[];
