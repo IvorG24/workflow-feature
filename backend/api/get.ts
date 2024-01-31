@@ -1,3 +1,4 @@
+import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { ItemOrderType } from "@/components/RequisitionFormPage/ItemList/ItemList";
 import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
@@ -19,7 +20,6 @@ import {
   FormType,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
-  MemoFormatType,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -4545,37 +4545,78 @@ export const getMemoFormat = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
-    .from("memo_format_table")
-    .select("*")
-    .maybeSingle();
-
+    .from("memo_format_section_table")
+    .select(
+      "*, format_subsection: memo_format_subsection_table(*, subsection_attachment: memo_format_attachment_table(*))"
+    );
   if (error || !data) throw Error;
 
-  const formatData: MemoFormatType = {
-    memo_format_id: data.memo_format_id,
-    header: {
-      top: Number(data.memo_format_header_margin_top),
-      right: Number(data.memo_format_header_margin_right),
-      bottom: Number(data.memo_format_header_margin_bottom),
-      left: Number(data.memo_format_header_margin_left),
-      logoPosition: data.memo_format_header_logo_position,
-    },
-    body: {
-      top: Number(data.memo_format_body_margin_top),
-      right: Number(data.memo_format_body_margin_right),
-      bottom: Number(data.memo_format_body_margin_bottom),
-      left: Number(data.memo_format_body_margin_left),
-    },
-    footer: {
-      top: Number(data.memo_format_footer_margin_top),
-      right: Number(data.memo_format_footer_margin_right),
-      bottom: Number(data.memo_format_footer_margin_bottom),
-      left: Number(data.memo_format_footer_margin_left),
-    },
-  };
+  const sectionOrderList = ["header", "body", "footer"];
+  const sortedData = data.sort((a, b) => {
+    const aIndex = sectionOrderList.findIndex(
+      (section) => section === a.memo_format_section_name
+    );
+    const bIndex = sectionOrderList.findIndex(
+      (section) => section === b.memo_format_section_name
+    );
 
-  return formatData;
+    return aIndex - bIndex;
+  });
+
+  const sortedDataWithType =
+    sortedData as MemoFormatFormValues["formatSection"];
+
+  const sortedDataWithAttachmentFile = await Promise.all(
+    sortedDataWithType.map(async (section) => {
+      const updatedSubsectionList = await Promise.all(
+        section.format_subsection.map(async (subsection) => {
+          const updatedAttachmentList = await Promise.all(
+            subsection.subsection_attachment.map(async (attachment) => {
+              try {
+                const attachmentFileResponse = await fetch(
+                  `${attachment.memo_format_attachment_url}`
+                );
+
+                if (!attachmentFileResponse.ok) {
+                  throw new Error(
+                    `Failed to fetch attachment for ${attachment.memo_format_attachment_name}`
+                  );
+                }
+
+                const blob = await attachmentFileResponse.blob();
+                const newAttachmentFile = new File(
+                  [blob],
+                  attachment.memo_format_attachment_name,
+                  { type: blob.type }
+                );
+
+                return {
+                  ...attachment,
+                  memo_format_attachment_file: newAttachmentFile,
+                };
+              } catch (error) {
+                console.error(error);
+                return attachment;
+              }
+            })
+          );
+
+          return {
+            ...subsection,
+            subsection_attachment: updatedAttachmentList,
+          };
+        })
+      );
+
+      return {
+        ...section,
+        format_subsection: updatedSubsectionList,
+      };
+    })
+  );
+  return sortedDataWithAttachmentFile;
 };
+
 // Get type list
 export const getTypeList = async (
   supabaseClient: SupabaseClient<Database>,
