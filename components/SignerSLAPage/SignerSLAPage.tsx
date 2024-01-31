@@ -1,5 +1,6 @@
 import { getFormSLA, getSignerSLA } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -43,6 +44,11 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
   const filterMethods = useForm<SLAFormValues>({
     mode: "onChange",
   });
+
+  const teamMember = useUserTeamMember();
+  const isAdminOrOwner =
+    teamMember?.team_member_role === "ADMIN" ||
+    teamMember?.team_member_role === "OWNER";
   const team = useActiveTeam();
   const handleFilterSignerSLA = async (data: SLAFormValues, page: number) => {
     if (!team) return;
@@ -120,19 +126,21 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
       <FormProvider {...filterMethods}>
         <Flex justify="space-between">
           <Title order={3}>Signer SLA</Title>
-          <Button
-            variant="light"
-            onClick={() =>
-              router.push(
-                `/${formatTeamNameToUrlKey(
-                  activeTeam.team_name ?? ""
-                )}/requests/sla/signer/settings`
-              )
-            }
-            leftIcon={<IconSettings size="1rem" />}
-          >
-            Settings
-          </Button>
+          {isAdminOrOwner && (
+            <Button
+              variant="light"
+              onClick={() =>
+                router.push(
+                  `/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/requests/sla/signer/settings`
+                )
+              }
+              leftIcon={<IconSettings size="1rem" />}
+            >
+              Settings
+            </Button>
+          )}
         </Flex>
         <form onSubmit={handleSubmit((data) => handleFilterSignerSLA(data, 1))}>
           <SignerSLAListFilter
