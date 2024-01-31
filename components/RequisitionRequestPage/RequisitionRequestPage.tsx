@@ -24,16 +24,23 @@ import {
   ReceiverStatusType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Accordion,
+  Container,
+  Flex,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import ExportToPdf from "../ExportToPDF/ExportToPdf";
-import ConnectedRequestSection from "../RequestPage/ConnectedRequestSections";
-import RequisitionCanvassSection from "../RequisitionCanvassPage/RequisitionCanvassSection";
+import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import RequisitionSummary from "../SummarySection/RequisitionSummary";
 
 type Props = {
@@ -59,10 +66,10 @@ export type ApproverDetailsType = {
 
 const RequisitionRequestPage = ({
   request,
-  // connectedForm,
-  connectedRequestIDList,
-  canvassRequest,
-}: Props) => {
+}: // connectedForm,
+// connectedRequestIDList,
+// canvassRequest,
+Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
@@ -229,10 +236,6 @@ const RequisitionRequestPage = ({
   });
 
   const requestDateCreated = moment(new Date()).format("YYYY-MM-DD");
-
-  const originalSectionList = request.request_form.form_section;
-  const sectionWithDuplicateList =
-    generateSectionWithDuplicateList(originalSectionList);
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -441,6 +444,10 @@ const RequisitionRequestPage = ({
     }
   }, [requestJira.id]);
 
+  const originalSectionList = request.request_form.form_section;
+  const sectionWithDuplicateList =
+    generateSectionWithDuplicateList(originalSectionList);
+
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
@@ -470,10 +477,10 @@ const RequisitionRequestPage = ({
         </Title>
         {!isFetchingApprover && approverDetails.length !== 0 && (
           <Group>
-            <ExportToPdf
-              request={request}
-              sectionWithDuplicateList={sectionWithDuplicateList}
-              approverDetails={approverDetails}
+            <ExportToPdfMenu
+              isFormslyForm={request.request_form.form_is_formsly_form}
+              formName={request.request_form.form_name}
+              requestId={request.request_formsly_id ?? request.request_id}
             />
             {/* {requestStatus === "APPROVED" ? (
             <Group>
@@ -513,31 +520,53 @@ const RequisitionRequestPage = ({
           jiraTicketStatus={jiraTicketStatus}
         />
 
-        {canvassRequest.length !== 0 ? (
+        {/* {canvassRequest.length !== 0 ? (
           <RequisitionCanvassSection canvassRequest={canvassRequest} />
-        ) : null}
+        ) : null} */}
 
-        <ConnectedRequestSection
+        {/* <ConnectedRequestSection
           connectedRequestIDList={connectedRequestIDList}
+        /> */}
+
+        <RequestSection
+          section={sectionWithDuplicateList[0]}
+          isFormslyForm={true}
+          isOnlyWithResponse
         />
 
-        {sectionWithDuplicateList.map((section, idx) => {
-          if (
-            idx === 0 &&
-            section.section_field[0].field_response?.request_response ===
-              '"null"'
-          )
-            return;
+        <Accordion>
+          <Accordion.Item key="item" value="item">
+            <Paper shadow="xs">
+              <Accordion.Control>
+                <Title order={4} color="dimmed">
+                  Item Section
+                </Title>
+              </Accordion.Control>
+            </Paper>
+            <Accordion.Panel>
+              <Stack spacing="xl" mt="lg">
+                {sectionWithDuplicateList.slice(1).map((section, idx) => {
+                  if (
+                    idx === 0 &&
+                    section.section_field[0].field_response
+                      ?.request_response === '"null"'
+                  )
+                    return;
 
-          return (
-            <RequestSection
-              key={section.section_id + idx}
-              section={section}
-              isFormslyForm={true}
-              isOnlyWithResponse
-            />
-          );
-        })}
+                  return (
+                    <RequestSection
+                      key={section.section_id + idx}
+                      section={section}
+                      isFormslyForm={true}
+                      isOnlyWithResponse
+                      index={idx + 1}
+                    />
+                  );
+                })}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
 
         <RequisitionSummary summaryData={sectionWithDuplicateList.slice(1)} />
 
