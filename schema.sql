@@ -641,6 +641,18 @@ CREATE TABLE query_table (
 
 -- End: Query table
 
+-- Start: Form SLA
+CREATE TABLE form_sla_table (
+    form_sla_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    form_sla_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    form_sla_date_updated TIMESTAMPTZ,
+    form_sla_hours INT NOT NULL,
+
+    form_sla_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+    form_sla_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+-- End: Form SLA
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -9617,6 +9629,93 @@ $$ LANGUAGE plv8;
 
 -- END: Get query data
 
+-- Start: Get signer sla
+
+CREATE OR REPLACE FUNCTION get_signer_sla(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      formId,
+      projectId,
+      singerId,
+      status,
+      page,
+      limit
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    let projectQuery = "";
+    if(Boolean(projectId)){
+      projectQuery = ` AND st.signer_team_project_id = '${projectId}' `
+    }
+    let statusQuery = "";
+    if(status!=='ALL'){
+      statusQuery = `AND CASE
+        WHEN (EXTRACT(EPOCH FROM (rst.request_signer_status_date_updated-rt.request_date_created)) / 3600) <= 1 THEN 'PASSED'
+        ELSE 'FAILED'
+      END = '${status}' `
+    }
+
+    const thresholdHours = plv8.execute(`
+        SELECT form_sla_hours FROM form_sla_table 
+        WHERE 
+          form_sla_team_id = '${teamId}'
+          AND form_sla_form_id = '${formId}';
+    `)[0].form_sla_hours;
+      
+    const signerRequestList = plv8.execute(`
+        SELECT 
+          rt.request_id,
+          rt.request_date_created,
+          rt.request_formsly_id_prefix || '-' || rt.request_formsly_id_serial AS formsly_id,
+          rst.request_signer_status_date_updated,
+          (rst.request_signer_status_date_updated-rt.request_date_created) AS time_difference,
+          CASE
+            WHEN (EXTRACT(EPOCH FROM (rst.request_signer_status_date_updated-rt.request_date_created)) / 3600) <= ${thresholdHours} THEN 'PASSED'
+            ELSE 'FAILED'
+          END AS status 
+        FROM request_signer_table rst
+          INNER JOIN request_table rt ON rt.request_id = rst.request_signer_request_id
+          INNER JOIN signer_table st ON st.signer_id = rst.request_signer_signer_id 
+        WHERE
+          rst.request_signer_status_date_updated IS NOT NULL
+          AND rst.request_signer_signer_id = '${singerId}'
+          AND st.signer_form_id = '${formId}'
+          ${statusQuery}
+          ${projectQuery}
+        ORDER BY rt.request_date_created DESC
+        LIMIT '${limit}' OFFSET '${start}';
+    `);
+
+    const totalCountQuery = plv8.execute(`
+        SELECT COUNT(*) AS total_count
+        FROM request_signer_table rst
+          INNER JOIN request_table rt ON rt.request_id = rst.request_signer_request_id
+          INNER JOIN signer_table st ON st.signer_id = rst.request_signer_signer_id 
+        WHERE
+          rst.request_signer_status_date_updated IS NOT NULL
+          AND rst.request_signer_signer_id = '${singerId}'
+          AND st.signer_form_id = '${formId}'
+          ${statusQuery}
+          ${projectQuery}
+    `);
+
+    returnData = {
+      signerRequestSLA: signerRequestList,
+      slaHours: thresholdHours,
+      signerRequestSLACount: Number(`${totalCountQuery[0].total_count}`)
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Get signer sla
+
 ---------- End: FUNCTIONS
 
 
@@ -9668,6 +9767,7 @@ ALTER TABLE user_valid_id_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_type_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE query_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_sla_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9888,6 +9988,10 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_type_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON query_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON form_sla_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_sla_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON form_sla_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -11740,6 +11844,23 @@ USING (
 CREATE POLICY "Allow READ for anon users" ON "public"."query_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+--- FORM_SLA_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
 
 -------- End: POLICIES
 

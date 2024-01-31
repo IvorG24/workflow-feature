@@ -1,5 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, formatTimeString } from "@/utils/string";
 import { SignerRequestSLA } from "@/utils/types";
 import {
   Alert,
@@ -48,7 +48,7 @@ const SignerSLAList = ({ signerSLAList }: Props) => {
                         )}/requests/${request.formsly_id}`}
                         target="_blank"
                       >
-                        {request.formsly_id}
+                        {request.formsly_id || request.request_id}
                       </Anchor>
                     </Text>
                   </td>
@@ -61,7 +61,7 @@ const SignerSLAList = ({ signerSLAList }: Props) => {
                     </Badge>
                   </td>
                   <td>
-                    <Text>{request.time_difference}</Text>
+                    <Text>{formatTimeString(request.time_difference)}</Text>
                   </td>
                   <td>
                     <Text>
@@ -87,7 +87,7 @@ const SignerSLAList = ({ signerSLAList }: Props) => {
           </Table>
         </ScrollArea>
       ) : (
-        <Alert icon={<IconAlertCircle size="1rem" />} mt="xl" color="orange">
+        <Alert icon={<IconAlertCircle size="1rem" />} color="orange">
           No results found for your form
         </Alert>
       )}

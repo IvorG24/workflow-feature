@@ -3,8 +3,10 @@ import {
   getProjectByID,
   getSignerWithProfile,
 } from "@/backend/api/get";
+import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { toTitleCase } from "@/utils/string";
+import { FormSLAWithForm } from "@/utils/types";
 import { Button, Container, Flex, Select, SelectProps } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -21,10 +23,11 @@ export type SLAFormValues = {
 
 type OptionList = SelectProps["data"];
 type Props = {
-  formOptions: OptionList;
+  slaFormList: FormSLAWithForm[];
+  onSearch: () => void;
 };
 
-const SignerSLAListFilter = ({ formOptions }: Props) => {
+const SignerSLAListFilter = ({ slaFormList, onSearch }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const {
     control,
@@ -33,9 +36,18 @@ const SignerSLAListFilter = ({ formOptions }: Props) => {
     formState: { errors },
   } = useFormContext<SLAFormValues>();
 
+  const formOptions = slaFormList
+    .map((slaForm) => ({
+      label: slaForm.form_table.form_name,
+      value: slaForm.form_sla_form_id,
+      disabled: slaForm.form_sla_hours <= 0,
+    }))
+    .filter((form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.label))
+    .sort((a, b) => (a.value === b.value ? 0 : a.value ? -1 : 1));
+
   const [projectList, setProjectList] = useState<OptionList | null>(null);
   const [signerList, setSignerList] = useState<OptionList | null>(null);
-
+  const [isFormslyForm, setIsFormslyForm] = useState(true);
   const [isFormChanging, setIsFormChanging] = useState(false);
   const [isProjectChanging, setIsProjectgChanging] = useState(false);
 
@@ -52,13 +64,26 @@ const SignerSLAListFilter = ({ formOptions }: Props) => {
       setValue("projectId", "");
       setValue("singerId", "");
 
-      const projectIdList = await getFormProjectIDs(supabaseClient, { formId });
-      const projects = await getProjectByID(supabaseClient, { projectIdList });
-      const projectOptions = projects.map((project) => ({
-        label: toTitleCase(project.team_project_name),
-        value: project.team_project_id,
-      }));
-      setProjectList(projectOptions);
+      const selectedForm = slaFormList.find(
+        (form) => form.form_sla_form_id === formId
+      );
+      if (selectedForm && selectedForm.form_table.form_is_formsly_form) {
+        setIsFormslyForm(true);
+        const projectIdList = await getFormProjectIDs(supabaseClient, {
+          formId,
+        });
+        const projects = await getProjectByID(supabaseClient, {
+          projectIdList,
+        });
+        const projectOptions = projects.map((project) => ({
+          label: toTitleCase(project.team_project_name),
+          value: project.team_project_id,
+        }));
+        setProjectList(projectOptions);
+      } else {
+        setIsFormslyForm(false);
+        await onProjectChange("");
+      }
     } catch (e) {
       console.error(e);
       notifications.show({
@@ -118,32 +143,34 @@ const SignerSLAListFilter = ({ formOptions }: Props) => {
             />
           )}
         />
-        <Controller
-          control={control}
-          name="projectId"
-          rules={{ required: "Project is required" }}
-          render={({ field: fieldProps }) => (
-            <Select
-              {...fieldProps}
-              onChange={(value) => {
-                fieldProps.onChange(value);
-                if (value) onProjectChange(value);
-              }}
-              placeholder="Select a project"
-              onDropdownOpen={() => {
-                if (projectList === null) {
-                  notifications.show({
-                    message: "Please select a form first then try again",
-                    color: "orange",
-                  });
-                }
-              }}
-              data={projectList || []}
-              disabled={isFormChanging}
-              error={errors.projectId?.message}
-            />
-          )}
-        />
+        {isFormslyForm && (
+          <Controller
+            control={control}
+            name="projectId"
+            rules={{ required: isFormslyForm ? "Project is required" : false }}
+            render={({ field: fieldProps }) => (
+              <Select
+                {...fieldProps}
+                onChange={(value) => {
+                  fieldProps.onChange(value);
+                  if (value) onProjectChange(value);
+                }}
+                placeholder="Select a project"
+                onDropdownOpen={() => {
+                  if (projectList === null) {
+                    notifications.show({
+                      message: "Please select a form first then try again",
+                      color: "orange",
+                    });
+                  }
+                }}
+                data={projectList || []}
+                disabled={isFormChanging}
+                error={errors.projectId?.message}
+              />
+            )}
+          />
+        )}
 
         <Controller
           control={control}
@@ -154,7 +181,7 @@ const SignerSLAListFilter = ({ formOptions }: Props) => {
               {...fieldProps}
               placeholder="Select a signer"
               onDropdownOpen={() => {
-                if (signerList === null) {
+                if (isFormslyForm && signerList === null) {
                   notifications.show({
                     message: "Please select a project first then try again",
                     color: "orange",
@@ -182,7 +209,7 @@ const SignerSLAListFilter = ({ formOptions }: Props) => {
           )}
         />
 
-        <Button type="submit" px="xs">
+        <Button type="submit" px="xs" onClick={onSearch}>
           <IconSearch />
         </Button>
       </Flex>

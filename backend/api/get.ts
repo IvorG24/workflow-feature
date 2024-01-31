@@ -4574,6 +4574,8 @@ export const getSignerSLA = async (
     projectId: string;
     singerId: string;
     status: string;
+    page: number;
+    limit: number;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -4584,6 +4586,7 @@ export const getSignerSLA = async (
   return data as unknown as {
     signerRequestSLA: SignerRequestSLA[];
     slaHours: number;
+    signerRequestSLACount: number;
   };
 };
 
@@ -4685,13 +4688,19 @@ export const getSignerWithProfile = async (
   }
 ) => {
   const { formId, projectId } = params;
-  const { data, error } = await supabaseClient
+  const query = supabaseClient
     .from("signer_table")
     .select(
       "*, signer_team_member: team_member_table(*, team_member_user: user_table(*))"
     )
-    .eq("signer_form_id", formId)
-    .eq("signer_team_project_id", projectId);
+    .eq("signer_form_id", formId);
+
+  if (projectId.length > 0) {
+    query.eq("signer_team_project_id", projectId);
+  } else {
+    query.is("signer_team_project_id", null);
+  }
+  const { data, error } = await query;
   if (error) throw error;
 
   return data as SignerWithProfile[];

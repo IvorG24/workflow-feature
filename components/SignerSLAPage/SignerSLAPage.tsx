@@ -1,6 +1,6 @@
 import { getFormSLA, getSignerSLA } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { FormSLAWithForm, SignerRequestSLA } from "@/utils/types";
@@ -10,6 +10,7 @@ import {
   Container,
   Flex,
   LoadingOverlay,
+  Pagination,
   Paper,
   Text,
   Title,
@@ -35,23 +36,15 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
   const [signerSLAList, setSignerSLAList] = useState<SignerRequestSLA[] | null>(
     null
   );
+  const [signerSLATotal, setSignerSLATotal] = useState(0);
   const [slaHours, setSlaHours] = useState<number | null>(null);
   const [isFetchingData, setIsFetchingData] = useState(false);
-
-  const formList = slaFormList
-    .map((slaForm) => ({
-      label: slaForm.form_table.form_name,
-      value: slaForm.form_sla_form_id,
-      disabled: slaForm.form_sla_hours <= 0,
-    }))
-    .filter((form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.label))
-    .sort((a, b) => (a.value === b.value ? 0 : a.value ? -1 : 1));
-
+  const [activePage, setActivePage] = useState(1);
   const filterMethods = useForm<SLAFormValues>({
     mode: "onChange",
   });
   const team = useActiveTeam();
-  const handleFilterSignerSLA = async (data: SLAFormValues) => {
+  const handleFilterSignerSLA = async (data: SLAFormValues, page: number) => {
     if (!team) return;
     if (!data.formId) {
       notifications.show({
@@ -70,9 +63,9 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
       });
 
       if (formSLA.form_sla_hours <= 0) {
-        const formName = formList.find(
-          (form) => form.value === data.formId
-        )?.label;
+        const formName = slaFormList.find(
+          (form) => form.form_sla_form_id === data.formId
+        )?.form_table.form_name;
         if (!formName) return;
         notifications.show({
           message: (
@@ -96,10 +89,13 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
         projectId: data.projectId,
         singerId: data.singerId,
         status: data.status,
+        page: page,
+        limit: ROW_PER_PAGE,
       });
 
       setSignerSLAList(signerSLA.signerRequestSLA);
       setSlaHours(signerSLA.slaHours);
+      setSignerSLATotal(signerSLA.signerRequestSLACount);
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -109,9 +105,16 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
       setIsFetchingData(false);
     }
   };
-  const { handleSubmit } = filterMethods;
+
+  const { handleSubmit, getValues } = filterMethods;
+
+  const handlePageChange = async (page: number) => {
+    setActivePage(page);
+    await handleFilterSignerSLA(getValues(), page);
+  };
+
   return (
-    <Container p={0}>
+    <Container p={0} pos="relative">
       <LoadingOverlay visible={isFetchingData} overlayBlur={2} />
 
       <FormProvider {...filterMethods}>
@@ -131,8 +134,11 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
             Settings
           </Button>
         </Flex>
-        <form onSubmit={handleSubmit(handleFilterSignerSLA)}>
-          <SignerSLAListFilter formOptions={formList} />
+        <form onSubmit={handleSubmit((data) => handleFilterSignerSLA(data, 1))}>
+          <SignerSLAListFilter
+            slaFormList={slaFormList}
+            onSearch={() => setActivePage(1)}
+          />
         </form>
 
         {signerSLAList && signerSLAList.length > 0 && slaHours !== null && (
@@ -147,6 +153,17 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
         <Paper mt="md" shadow="md" p="sm">
           <SignerSLAList signerSLAList={signerSLAList} />
         </Paper>
+
+        {signerSLATotal > 0 && (
+          <Flex justify="flex-end">
+            <Pagination
+              value={activePage}
+              onChange={(value) => handlePageChange(value)}
+              total={Math.ceil(signerSLATotal / ROW_PER_PAGE)}
+              mt="xl"
+            />
+          </Flex>
+        )}
       </FormProvider>
     </Container>
   );

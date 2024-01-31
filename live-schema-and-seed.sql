@@ -752,6 +752,18 @@ CREATE TABLE query_table (
 
 -- End: Query table
 
+-- Start: Form SLA
+CREATE TABLE form_sla_table (
+    form_sla_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    form_sla_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    form_sla_date_updated TIMESTAMPTZ,
+    form_sla_hours INT NOT NULL,
+
+    form_sla_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+    form_sla_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+-- End: Form SLA
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -9110,6 +9122,122 @@ $$ LANGUAGE plv8;
 
 -- End: memo queries
 
+
+-- Start: Get signer sla
+
+CREATE OR REPLACE FUNCTION get_signer_sla(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      formId,
+      projectId,
+      singerId,
+      status,
+      page,
+      limit
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    let projectQuery = "";
+    if(Boolean(projectId)){
+      projectQuery = ` AND st.signer_team_project_id = '${projectId}' `
+    }
+    let statusQuery = "";
+    if(status!=='ALL'){
+      statusQuery = `AND CASE
+        WHEN (EXTRACT(EPOCH FROM (rst.request_signer_status_date_updated-rt.request_date_created)) / 3600) <= 1 THEN 'PASSED'
+        ELSE 'FAILED'
+      END = '${status}' `
+    }
+
+    const thresholdHours = plv8.execute(`
+        SELECT form_sla_hours FROM form_sla_table 
+        WHERE 
+          form_sla_team_id = '${teamId}'
+          AND form_sla_form_id = '${formId}';
+    `)[0].form_sla_hours;
+      
+    const signerRequestList = plv8.execute(`
+        SELECT 
+          rt.request_id,
+          rt.request_date_created,
+          rt.request_formsly_id_prefix || '-' || rt.request_formsly_id_serial AS formsly_id,
+          rst.request_signer_status_date_updated,
+          (rst.request_signer_status_date_updated-rt.request_date_created) AS time_difference,
+          CASE
+            WHEN (EXTRACT(EPOCH FROM (rst.request_signer_status_date_updated-rt.request_date_created)) / 3600) <= ${thresholdHours} THEN 'PASSED'
+            ELSE 'FAILED'
+          END AS status 
+        FROM request_signer_table rst
+          INNER JOIN request_table rt ON rt.request_id = rst.request_signer_request_id
+          INNER JOIN signer_table st ON st.signer_id = rst.request_signer_signer_id 
+        WHERE
+          rst.request_signer_status_date_updated IS NOT NULL
+          AND rst.request_signer_signer_id = '${singerId}'
+          AND st.signer_form_id = '${formId}'
+          ${statusQuery}
+          ${projectQuery}
+        ORDER BY rt.request_date_created DESC
+        LIMIT '${limit}' OFFSET '${start}';
+    `);
+
+    const totalCountQuery = plv8.execute(`
+        SELECT COUNT(*) AS total_count
+        FROM request_signer_table rst
+          INNER JOIN request_table rt ON rt.request_id = rst.request_signer_request_id
+          INNER JOIN signer_table st ON st.signer_id = rst.request_signer_signer_id 
+        WHERE
+          rst.request_signer_status_date_updated IS NOT NULL
+          AND rst.request_signer_signer_id = '${singerId}'
+          AND st.signer_form_id = '${formId}'
+          ${statusQuery}
+          ${projectQuery}
+    `);
+
+
+    returnData = {
+      signerRequestSLA: signerRequestList,
+      slaHours: thresholdHours,
+      signerRequestSLACount: Number(`${totalCountQuery[0].total_count}`)
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Get signer sla
+
+-- START: Get query data
+
+CREATE OR REPLACE FUNCTION get_query_data(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      queryId
+    } = input_data;
+    
+    const selectedQuery = plv8.execute(`SELECT * FROM query_table WHERE query_id='${queryId}';`)[0];
+
+    const fetchedData = plv8.execute(selectedQuery.query_sql);
+    
+    BigInt.prototype.toJSON = function () {
+    return this.toString();
+    };
+
+    returnData ={queryData: JSON.stringify(fetchedData)}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- END: Get query data
+
 ---------- End: FUNCTIONS
 
 
@@ -9155,8 +9283,8 @@ ALTER TABLE memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_agreement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_valid_id_table ENABLE ROW LEVEL SECURITY;
-
 ALTER TABLE query_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_sla_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -9353,6 +9481,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON user_valid_id_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_valid_id_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON query_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON form_sla_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_sla_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON form_sla_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -11004,6 +11136,23 @@ CREATE POLICY "Allow READ for anon users" ON "public"."query_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
+--- FORM_SLA_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
 -------- End: POLICIES
 
 ---------- Start: INDEXES
@@ -11248,6 +11397,20 @@ INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) V
 INSERT INTO query_table (query_name, query_sql) VALUES
 ('Request average time from creation to resolved', 'SELECT team_project_name, AVG(request_status_date_updated-request_date_created) AS average_time_to_update FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NOT NULL GROUP BY team_project_name;'),
 ('Stale requests by project', 'SELECT team_project_name, COUNT(*) AS number_of_stale_requests FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NULL GROUP BY team_project_name;');
+
+INSERT INTO form_sla_table (form_sla_hours, form_sla_form_id, form_sla_team_id) VALUES
+(0,'7368a23b-601a-4ce8-adea-30b0cb483ab2', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'800723d3-a164-4063-9e18-5fff651a96f8', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'337658f1-0777-45f2-853f-b6f20551712e', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'b8408545-4354-47d0-a648-928c6755a94b', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+-- (0,'e5062660-9026-4629-bc2c-633826fdaa24', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'a732196f-9779-45e2-85fa-7320397e5b0a', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'5782d70a-5f6b-486c-a77f-401066afd005', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'8e173d92-c346-4fb5-8ef2-490105e19263', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'a5a28977-6956-45c1-a624-b9e90911502e');
 
 DROP FUNCTION IF EXISTS supplier_seed;
 CREATE FUNCTION supplier_seed()

@@ -217,7 +217,11 @@ const SignerSLASettingsPage = ({
                   >
                     Save
                   </Button>
-                  <Button variant="outline" miw={100}>
+                  <Button
+                    variant="outline"
+                    miw={100}
+                    onClick={handleCancelEdit}
+                  >
                     Cancel
                   </Button>
                 </Group>

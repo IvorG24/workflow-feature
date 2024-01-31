@@ -165,3 +165,9 @@ export const jsonToCsv = (jsonString: string): string => {
     return "";
   }
 };
+
+export const formatTimeString = (inputString: string): string => {
+  const [hours, minutes, seconds] = inputString.split(":").map(Number);
+  const formattedTime = `${hours}h:${minutes}m:${Math.round(seconds)}s`;
+  return formattedTime;
+};
