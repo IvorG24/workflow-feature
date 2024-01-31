@@ -161,16 +161,6 @@ const EditRequisitionRequestPage = ({
     }
   }, [team.team_id]);
 
-  // useEffect(() => {
-  //   replaceSection(request_form.form_section);
-  // }, [
-  //   request.request_form,
-  //   replaceSection,
-  //   requestFormMethods,
-  //   itemOptions,
-  //   request_form.form_section,
-  // ]);
-
   const handleEditRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
