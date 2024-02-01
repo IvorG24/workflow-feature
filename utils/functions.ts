@@ -355,6 +355,10 @@ export const getJiraRequestingProjectSite = (formslyItemCategory: string) => {
       id: "10949",
       label: "LUZ-23-006 LAND DEV LEMERY P1",
     },
+    "KALAYAAN 2 WIND POWER PROJECT": {
+      id: "11106",
+      label: " LUZ-23-009 KALAYAAN 2 WIND",
+    },
   };
 
   return categoryMappings[formslyItemCategory];
@@ -503,6 +507,7 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "LUZ-22-010 PHILIP MORRIS",
         "LUZ-12-051 CATUIRAN",
         "LUZ-23-002 EAST BAY 200MLD WTP",
+        " LUZ-23-009 KALAYAAN 2 WIND", // added on 2024-02-01 16:14 info from Bry Paras
       ],
       fullName: "Vincent Andallo- Luzon C Area Lead (Active)",
       jiraAccountId:
