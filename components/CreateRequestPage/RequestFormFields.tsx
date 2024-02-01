@@ -39,7 +39,9 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
+    isSearchingSupplier?: boolean;
+    csiSearch?: (value: string, index: number) => void;
+    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -70,6 +72,13 @@ type RequestFormFieldsProps = {
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
   };
+  otherExpensesMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    onCategoryChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
 };
 
 const RequestFormFields = ({
@@ -83,6 +92,7 @@ const RequestFormFields = ({
   formslyFormName = "",
   sourcedItemFormMethods,
   servicesMethods,
+  otherExpensesMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -229,6 +239,7 @@ const RequestFormFields = ({
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
+                precision={2}
               />
             )}
             rules={{
@@ -322,16 +333,21 @@ const RequestFormFields = ({
                       );
                     servicesMethods &&
                       servicesMethods.onCSICodeChange(sectionIndex, value);
+                    otherExpensesMethods &&
+                      otherExpensesMethods.onCSICodeChange(sectionIndex, value);
                   } else if (field.field_name === "Source Project") {
                     sourcedItemFormMethods?.onProjectSiteChange();
                   } else if (field.field_name === "Requesting Project") {
                     requisitionFormMethods?.onProjectNameChange(value);
                     subconFormMethods?.onProjectNameChange(value);
                     servicesMethods?.onProjectNameChange(value);
+                    otherExpensesMethods?.onProjectNameChange(value);
                   } else if (field.field_name === "Service Name") {
                     subconFormMethods?.onServiceNameChange(sectionIndex, value);
                   } else if (field.field_name === "CSI Division") {
                     servicesMethods?.onCSIDivisionChange(sectionIndex, value);
+                  } else if (field.field_name === "Category") {
+                    otherExpensesMethods?.onCategoryChange(sectionIndex, value);
                   }
                 }}
                 data={dropdownOption}
@@ -350,20 +366,33 @@ const RequestFormFields = ({
                       quotationFormMethods.supplierSearch &&
                         quotationFormMethods.supplierSearch(value);
                     }, 500);
+                  } else if (field.field_name === "Preferred Supplier") {
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+                    timeoutRef.current = setTimeout(() => {
+                      requisitionFormMethods?.supplierSearch &&
+                        requisitionFormMethods.supplierSearch(
+                          value,
+                          sectionIndex
+                        );
+                      otherExpensesMethods?.supplierSearch &&
+                        otherExpensesMethods?.supplierSearch(
+                          value,
+                          sectionIndex
+                        );
+                    }, 500);
                   } else if (
                     requisitionFormMethods &&
-                    field.field_name === "Preferred Supplier"
+                    field.field_name === "CSI Code Description"
                   ) {
                     if (timeoutRef.current) {
                       clearTimeout(timeoutRef.current);
                     }
 
                     timeoutRef.current = setTimeout(() => {
-                      requisitionFormMethods.supplierSearch &&
-                        requisitionFormMethods.supplierSearch(
-                          value,
-                          sectionIndex
-                        );
+                      requisitionFormMethods.csiSearch &&
+                        requisitionFormMethods.csiSearch(value, sectionIndex);
                     }, 500);
                   }
                 }}
@@ -372,7 +401,13 @@ const RequestFormFields = ({
                     quotationFormMethods.isSearching &&
                     field.field_name === "Supplier") ||
                   (requisitionFormMethods &&
-                    requisitionFormMethods.isSearching &&
+                    requisitionFormMethods.isSearchingSupplier &&
+                    field.field_name === "Preferred Supplier") ||
+                  (requisitionFormMethods &&
+                    requisitionFormMethods.isSearchingCSI &&
+                    field.field_name === "CSI Code Description") ||
+                  (otherExpensesMethods &&
+                    otherExpensesMethods.isSearching &&
                     field.field_name === "Preferred Supplier") ? (
                     <Loader size={16} />
                   ) : null
@@ -456,6 +491,7 @@ const RequestFormFields = ({
                         : new Date()
                       : undefined
                   }
+                  valueFormat="YYYY-MM-DD"
                 />
               );
             }}

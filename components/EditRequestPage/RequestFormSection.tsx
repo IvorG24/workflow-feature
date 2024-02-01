@@ -22,7 +22,9 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
+    isSearchingSupplier?: boolean;
+    csiSearch?: (value: string, index: number) => void;
+    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -56,6 +58,13 @@ type RequestFormSectionProps = {
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
   };
+  otherExpensesMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    onCategoryChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
 };
 
 const RequestFormSection = ({
@@ -71,6 +80,7 @@ const RequestFormSection = ({
   sourcedItemFormMethods,
   referenceOnly,
   serviceFormMethods,
+  otherExpensesMethods,
 }: RequestFormSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -109,6 +119,7 @@ const RequestFormSection = ({
             formslyFormName={formslyFormName}
             sourcedItemFormMethods={sourcedItemFormMethods}
             referenceOnly={referenceOnly}
+            otherExpensesMethods={otherExpensesMethods}
           />
         ))}
       </Stack>

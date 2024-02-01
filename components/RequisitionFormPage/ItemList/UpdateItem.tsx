@@ -1,7 +1,12 @@
-import { checkItemName, getItemDivisionOption } from "@/backend/api/get";
+import {
+  checkItemName,
+  getCSIDescriptionOptionBasedOnDivisionId,
+  getItemDivisionOption,
+  getItemUnitOfMeasurementOption,
+} from "@/backend/api/get";
 import { updateItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { GL_ACCOUNT_CHOICES, ITEM_UNIT_CHOICES } from "@/utils/constant";
+import { GL_ACCOUNT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   ItemDescriptionTableUpdate,
@@ -16,6 +21,7 @@ import {
   Container,
   Divider,
   Flex,
+  Loader,
   LoadingOverlay,
   MultiSelect,
   Select,
@@ -51,32 +57,71 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
   const [divisionIdOption, setDivisionIdOption] = useState<
     { label: string; value: string }[]
   >([]);
+  const [unitOfMeasurementOption, setUnitOfMeasurementOption] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [isFetchingOptions, setIsFetchingOptions] = useState(true);
+  const [divisionDescriptionOption, setDivisionDescriptionOption] = useState<
+    { label: string; value: string }[]
+  >([
+    {
+      label: editItem.item_level_three_description ?? "",
+      value: editItem.item_level_three_description ?? "",
+    },
+  ]);
+  const [
+    isFetchingDivisionDescriptionOption,
+    setIsFetchingDivisionDescriptionOption,
+  ] = useState(false);
 
   useEffect(() => {
-    const fetchDivisionOption = async () => {
+    const fetchOptions = async () => {
       try {
-        const option = await getItemDivisionOption(supabaseClient);
-
-        option &&
+        setIsFetchingOptions(true);
+        const divisionOption = await getItemDivisionOption(supabaseClient);
+        divisionOption &&
           setDivisionIdOption(
-            option.map((divisionId) => {
+            divisionOption.map((divisionId) => {
               return {
                 label: `${divisionId.csi_code_division_description}`,
                 value: `${divisionId.csi_code_division_id}`,
               };
             })
           );
+
+        const unitOfMeasurementOption = await getItemUnitOfMeasurementOption(
+          supabaseClient,
+          { teamId: activeTeam.team_id }
+        );
+        unitOfMeasurementOption &&
+          setUnitOfMeasurementOption(
+            unitOfMeasurementOption.map((uom) => {
+              return {
+                label: `${uom.item_unit_of_measurement}`,
+                value: `${uom.item_unit_of_measurement}`,
+              };
+            })
+          );
+
+        fetchDivisionDescriptionOption(editItem.item_division_id_list);
+        editItem.item_level_three_description &&
+          setValue(
+            "divisionDescription",
+            editItem.item_level_three_description
+          );
       } catch {
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
+      } finally {
+        setIsFetchingOptions(false);
       }
     };
-    fetchDivisionOption();
+    fetchOptions();
   }, []);
 
-  const { register, getValues, formState, handleSubmit, control } =
+  const { register, getValues, formState, handleSubmit, control, setValue } =
     useForm<ItemForm>({
       defaultValues: {
         descriptions: editItem.item_description.map((description) => {
@@ -92,6 +137,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
         isAvailable: true,
         glAccount: editItem.item_gl_account,
         division: editItem.item_division_id_list,
+        divisionDescription: editItem.item_level_three_description,
       },
     });
 
@@ -140,6 +186,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             item_gl_account: data.glAccount,
             item_team_id: activeTeam.team_id,
             item_division_id_list: data.division.map((id) => `'${id}'`),
+            item_level_three_description: data.divisionDescription,
           },
           formId: formId,
         }
@@ -173,9 +220,37 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
     return;
   };
 
+  const fetchDivisionDescriptionOption = async (value: string[]) => {
+    try {
+      setIsFetchingDivisionDescriptionOption(true);
+      setValue("divisionDescription", "");
+      const data = await getCSIDescriptionOptionBasedOnDivisionId(
+        supabaseClient,
+        {
+          divisionId: value,
+        }
+      );
+      const divisionDescriptionOption = data.map((description) => {
+        return {
+          label: description.csi_code_level_three_description,
+          value: description.csi_code_level_three_description,
+        };
+      });
+      setDivisionDescriptionOption(divisionDescriptionOption);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      setValue("division", []);
+    } finally {
+      setIsFetchingDivisionDescriptionOption(false);
+    }
+  };
+
   return (
     <Container p={0} fluid sx={{ position: "relative" }}>
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={formState.isSubmitting || isFetchingOptions} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
           Update Item
@@ -228,7 +303,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                 <Select
                   value={value as string}
                   onChange={onChange}
-                  data={ITEM_UNIT_CHOICES}
+                  data={unitOfMeasurementOption}
                   withAsterisk
                   error={formState.errors.unit?.message}
                   searchable
@@ -271,7 +346,10 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
               render={({ field: { value, onChange } }) => (
                 <MultiSelect
                   value={value as string[]}
-                  onChange={onChange}
+                  onChange={(value) => {
+                    fetchDivisionDescriptionOption(value);
+                    onChange(value);
+                  }}
                   data={divisionIdOption}
                   withAsterisk
                   error={formState.errors.division?.message}
@@ -286,6 +364,25 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                   value: true,
                 },
               }}
+            />
+            <Controller
+              control={control}
+              name="divisionDescription"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value}
+                  onChange={onChange}
+                  data={divisionDescriptionOption}
+                  error={formState.errors.division?.message}
+                  searchable
+                  clearable
+                  label="Division Description"
+                  disabled={divisionDescriptionOption.length === 0}
+                  rightSection={
+                    isFetchingDivisionDescriptionOption && <Loader size={16} />
+                  }
+                />
+              )}
             />
             {fields.map((field, index) => {
               return (

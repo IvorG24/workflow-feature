@@ -348,6 +348,7 @@ const Field = ({
             withAsterisk={isFieldRequired}
             className={classes.previewField}
             icon={<IconCalendar size={16} />}
+            valueFormat="YYYY-MM-DD"
           />
         )}
 

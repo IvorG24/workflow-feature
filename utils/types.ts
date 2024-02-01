@@ -192,19 +192,89 @@ export type TicketCommentTableInsert =
 export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
 
-export type UserOnboardTableRow =
-  Database["public"]["Tables"]["user_onboard_table"]["Row"];
-export type UserOnboardTableInsert =
-  Database["public"]["Tables"]["user_onboard_table"]["Insert"];
-export type UserOnboardTableUpdate =
-  Database["public"]["Tables"]["user_onboard_table"]["Update"];
-
 export type ServiceCategoryTableRow =
   Database["public"]["Tables"]["service_category_table"]["Row"];
 export type ServiceCategoryTableInsert =
   Database["public"]["Tables"]["service_category_table"]["Insert"];
 export type ServiceCategoryTableUpdate =
   Database["public"]["Tables"]["service_category_table"]["Update"];
+
+export type MemoTableRow = Database["public"]["Tables"]["memo_table"]["Row"];
+export type MemoTableInsert =
+  Database["public"]["Tables"]["memo_table"]["Insert"];
+export type MemoTableUpdate =
+  Database["public"]["Tables"]["memo_table"]["Update"];
+
+export type MemoSignerTableRow =
+  Database["public"]["Tables"]["memo_signer_table"]["Row"];
+export type MemoSignerTableInsert =
+  Database["public"]["Tables"]["memo_signer_table"]["Insert"];
+export type MemoSignerTableUpdate =
+  Database["public"]["Tables"]["memo_signer_table"]["Update"];
+
+export type MemoLineItemTableRow =
+  Database["public"]["Tables"]["memo_line_item_table"]["Row"];
+export type MemoLineItemTableInsert =
+  Database["public"]["Tables"]["memo_line_item_table"]["Insert"];
+export type MemoLineItemTableUpdate =
+  Database["public"]["Tables"]["memo_line_item_table"]["Update"];
+
+export type MemoLineItemAttachmentTableRow =
+  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Row"];
+export type MemoLineItemAttachmentTableInsert =
+  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Insert"];
+export type MemoLineItemAttachmentTableUpdate =
+  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Update"];
+
+export type MemoReadReceiptTableRow =
+  Database["public"]["Tables"]["memo_read_receipt_table"]["Row"];
+export type MemoReadReceiptTableInsert =
+  Database["public"]["Tables"]["memo_read_receipt_table"]["Insert"];
+export type MemoReadReceiptTableUpdate =
+  Database["public"]["Tables"]["memo_read_receipt_table"]["Update"];
+
+export type MemoAgreementTableRow =
+  Database["public"]["Tables"]["memo_agreement_table"]["Row"];
+export type MemoAgreementTableInsert =
+  Database["public"]["Tables"]["memo_agreement_table"]["Insert"];
+export type MemoAgreementTableUpdate =
+  Database["public"]["Tables"]["memo_agreement_table"]["Update"];
+export type OtherExpensesTypeTableRow =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Row"];
+export type OtherExpensesTypeTableInsert =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Insert"];
+export type OtherExpensesTypeTableUpdate =
+  Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
+
+export type SignatureHistoryTableRow =
+  Database["public"]["Tables"]["signature_history_table"]["Row"];
+export type UserValidIDTableRow =
+  Database["public"]["Tables"]["user_valid_id_table"]["Row"];
+export type UserValidIDTableInsert =
+  Database["public"]["Tables"]["user_valid_id_table"]["Insert"];
+export type UserValidIDTableUpdate =
+  Database["public"]["Tables"]["user_valid_id_table"]["Update"];
+
+export type MemoFormatTableRow =
+  Database["public"]["Tables"]["memo_format_section_table"]["Row"];
+export type MemoFormatTableInsert =
+  Database["public"]["Tables"]["memo_format_section_table"]["Insert"];
+export type MemoFormatTableUpdate =
+  Database["public"]["Tables"]["memo_format_section_table"]["Update"];
+
+export type MemoFormatSubsectionTableRow =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Row"];
+export type MemoFormatSubsectionTableInsert =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Insert"];
+export type MemoFormatSubsectionTableUpdate =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Update"];
+
+export type MemoFormatAttachmentTableRow =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Row"];
+export type MemoFormatAttachmentTableInsert =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Insert"];
+export type MemoFormatAttachmentTableUpdate =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Update"];
 
 // End: Database Table Types
 
@@ -214,9 +284,12 @@ export type MemberRoleType = "OWNER" | "APPROVER" | "MEMBER" | "ADMIN";
 export type AttachmentBucketType =
   | "USER_AVATARS"
   | "USER_SIGNATURES"
+  | "USER_VALID_IDS"
   | "TEAM_LOGOS"
   | "COMMENT_ATTACHMENTS"
-  | "REQUEST_ATTACHMENTS";
+  | "REQUEST_ATTACHMENTS"
+  | "MEMO_ATTACHMENTS"
+  | "TEAM_PROJECT_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
@@ -313,6 +386,8 @@ export type RequestWithResponseType = RequestTableRow & {
     form_name: string;
     form_description: string;
     form_is_formsly_form: boolean;
+    form_type?: string;
+    form_sub_type?: string;
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_section_duplicatable_id?: string;
@@ -425,6 +500,8 @@ export type FormType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
+  form_type?: string;
+  form_sub_type?: string;
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -472,6 +549,8 @@ export type FormWithResponseType = {
   form_is_hidden: boolean;
   form_is_formsly_form: boolean;
   form_is_for_every_member: boolean;
+  form_type?: string;
+  form_sub_type?: string;
   form_team_member: {
     team_member_id: string;
     team_member_user: {
@@ -520,6 +599,7 @@ export type FormWithTeamMember = FormTableRow & {
 
 export type ItemWithDescriptionType = ItemTableRow & {
   item_division_id_list: string[];
+  item_level_three_description?: string;
 } & {
   item_description: ItemDescriptionTableRow[];
 };
@@ -541,6 +621,7 @@ export type ItemForm = {
   isAvailable: boolean;
   glAccount: string;
   division: string[];
+  divisionDescription: string;
 };
 
 export type ServiceForm = {
@@ -584,6 +665,7 @@ export type ItemWithDescriptionAndField = ItemTableRow & {
     })[];
     item_field: FieldTableRow;
   })[];
+  item_level_three_description?: string;
 };
 
 export type InvitationWithTeam = InvitationTableRow & {
@@ -864,7 +946,7 @@ export type RequestListItemType = {
   request_jira_link?: string;
   request_otp_id?: string;
   request_team_member: {
-    team_member_team_id: string;
+    team_member_id: string;
     team_member_user: {
       user_id: string;
       user_first_name: string;
@@ -922,6 +1004,7 @@ export type TeamMemberOnLoad = {
   member: TeamMemberTableRow & {
     team_member_user: UserTableRow & { user_employee_number: string };
   };
+  userValidId: UserValidIDTableRow | undefined;
   groupList: {
     team_group_member_id: string;
     team_group: TeamGroupTableRow;
@@ -1104,4 +1187,157 @@ export type UserIssuedItem = {
       response: string;
     }[];
   }[];
+};
+
+export type MemoSignerItem = {
+  team_member_id: string;
+  team_member_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_job_title: string | null;
+    user_avatar: string | null;
+  };
+  signer_signature_public_url: string;
+};
+
+export type MemoLineItem = {
+  memo_line_item_content: string;
+  memo_line_item_attachment?: File | Blob;
+  memo_line_item_attachment_name?: string;
+  memo_line_item_attachment_caption?: string;
+};
+
+export type MemoType = MemoTableRow & {
+  memo_author_user: UserTableRow;
+  memo_status: string;
+  memo_date_updated: string;
+} & {
+  memo_signer_list: (MemoSignerTableRow & {
+    memo_signer_team_member: {
+      team_member_id: string;
+      user: UserTableRow;
+    };
+    memo_signer_signature_public_url: string;
+  })[];
+} & {
+  memo_line_item_list: (MemoLineItemTableRow & {
+    memo_line_item_attachment?: MemoLineItemAttachmentTableRow;
+  })[];
+} & {
+  memo_read_receipt_list: (MemoReadReceiptTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_employee_number: string;
+  })[];
+} & {
+  memo_agreement_list: (MemoAgreementTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_employee_number: string;
+  })[];
+};
+
+export type MemoListItemType = MemoTableRow & {
+  memo_author_user: UserTableRow;
+  memo_status: string;
+  memo_date_updated: string;
+} & { memo_signer_list: MemoType["memo_signer_list"] };
+
+export type EditMemoType = MemoTableRow & {
+  memo_author_user: UserTableRow;
+  memo_status: string;
+  memo_date_updated: string;
+} & {
+  memo_signer_list: (MemoSignerTableRow & {
+    memo_signer_team_member?: {
+      team_member_id: string;
+      user: {
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string | null;
+        user_job_title: string | null;
+        user_id: string;
+      };
+    };
+    memo_signer_signature_public_url: string;
+  })[];
+} & {
+  memo_line_item_list: (MemoLineItemTableRow & {
+    memo_line_item_attachment?: MemoLineItemAttachmentTableRow & {
+      memo_line_item_attachment_file?: File;
+    };
+  })[];
+} & {
+  memo_read_receipt_list: (MemoReadReceiptTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_employee_number: string;
+  })[];
+} & {
+  memo_agreement_list: (MemoAgreementTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_employee_number: string;
+  })[];
+};
+
+export type ReferenceMemoType = MemoTableRow & {
+  memo_author_user: UserTableRow;
+} & {
+  memo_signer_list: (MemoSignerTableRow & {
+    memo_signer_team_member?: {
+      team_member_id: string;
+      user: {
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string | null;
+        user_job_title: string | null;
+        user_id: string;
+      };
+    };
+    memo_signer_signature_public_url: string;
+  })[];
+} & {
+  memo_line_item_list: (MemoLineItemTableRow & {
+    memo_line_item_attachment?: MemoLineItemAttachmentTableRow & {
+      memo_line_item_attachment_file?: File;
+    };
+  })[];
+} & {
+  memo_read_receipt_list: (MemoReadReceiptTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_employee_number: string;
+  })[];
+} & {
+  memo_agreement_list: (MemoAgreementTableRow & {
+    user_avatar: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_employee_number: string;
+  })[];
+};
+
+export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
+  other_expenses_category: string;
+};
+
+export type UserValidIdWithUser = Omit<
+  UserValidIDTableRow,
+  "user_valid_id_user_id" | "user_valid_id_approver"
+> & {
+  user_valid_id_user_id: UserTableRow;
+  user_valid_id_approver: UserTableRow;
 };

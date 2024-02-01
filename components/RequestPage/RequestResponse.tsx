@@ -121,6 +121,7 @@ const RequestResponse = ({
             label={response.label}
             value={parsedValue}
             {...inputProps}
+            precision={2}
           />
         );
       case "SWITCH":
@@ -182,6 +183,7 @@ const RequestResponse = ({
             value={parsedValue ? new Date(parsedValue) : undefined}
             {...inputProps}
             icon={<IconCalendar size={16} />}
+            valueFormat="YYYY-MM-DD"
           />
         );
       case "TIME":

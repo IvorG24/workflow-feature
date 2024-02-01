@@ -1,7 +1,10 @@
-import { checkItemDescription } from "@/backend/api/get";
+import {
+  checkItemDescription,
+  getItemUnitOfMeasurementOption,
+} from "@/backend/api/get";
 import { createItemDescriptionField } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { ITEM_UNIT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   ItemDescriptionFieldForm,
@@ -21,7 +24,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
 
@@ -46,6 +49,42 @@ const CreateItemDescriptionField = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
+
+  const [isFetchingOptions, setIsFetchingOptions] = useState(true);
+  const [unitOfMeasurementOption, setUnitOfMeasurementOption] = useState<
+    { label: string; value: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchItemUnitOfMeasurement = async () => {
+      try {
+        setIsFetchingOptions(true);
+        const unitOfMeasurementOption = await getItemUnitOfMeasurementOption(
+          supabaseClient,
+          { teamId: activeTeam.team_id }
+        );
+
+        unitOfMeasurementOption &&
+          setUnitOfMeasurementOption(
+            unitOfMeasurementOption.map((uom) => {
+              return {
+                label: `${uom.item_unit_of_measurement}`,
+                value: `${uom.item_unit_of_measurement}`,
+              };
+            })
+          );
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsFetchingOptions(false);
+      }
+    };
+    fetchItemUnitOfMeasurement();
+  }, []);
 
   const { register, formState, handleSubmit, control, getValues } = useForm<{
     descriptions: ItemDescriptionFieldForm[];
@@ -127,7 +166,7 @@ const CreateItemDescriptionField = ({
 
   return (
     <Container p={0} fluid sx={{ position: "relative" }} mt="xl">
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={formState.isSubmitting || isFetchingOptions} />
 
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
@@ -196,7 +235,7 @@ const CreateItemDescriptionField = ({
                       render={({ field: { value, onChange } }) => (
                         <Select
                           value={value as string}
-                          data={ITEM_UNIT_CHOICES}
+                          data={unitOfMeasurementOption}
                           withAsterisk={isWithUoM}
                           clearable
                           error={

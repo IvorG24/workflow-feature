@@ -1,8 +1,10 @@
 import {
   checkIfRequestIsEditable,
+  getCSI,
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
+  getLevelThreeDescription,
   getProjectSignerWithTeamMember,
   getSupplier,
 } from "@/backend/api/get";
@@ -17,6 +19,7 @@ import { Database } from "@/utils/database";
 import { isStringParsable, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
+  CSICodeTableRow,
   FormType,
   FormWithResponseType,
   OptionTableRow,
@@ -90,7 +93,8 @@ const EditRequisitionRequestPage = ({
 
   const [signerList, setSignerList] = useState(initialSignerList);
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchingSupplier, setIsSearching] = useState(false);
+  const [isSearchingCSI, setIsSearchingCSI] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -101,6 +105,8 @@ const EditRequisitionRequestPage = ({
     form_description: request_form.form_description,
     form_date_created: request.request_date_created,
     form_team_member: request.request_team_member,
+    form_type: request_form.form_type,
+    form_sub_type: request_form.form_sub_type,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
@@ -471,10 +477,18 @@ const EditRequisitionRequestPage = ({
         teamId: team.team_id,
         itemName: value,
       });
+      const isWithDescription = Boolean(item.item_level_three_description);
+      let csiCodeList: CSICodeTableRow[] = [];
 
-      const csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-        divisionIdList: item.item_division_id_list,
-      });
+      if (item.item_level_three_description) {
+        csiCodeList = await getLevelThreeDescription(supabaseClient, {
+          levelThreeDescription: item.item_level_three_description,
+        });
+      } else {
+        csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
+          divisionIdList: item.item_division_id_list,
+        });
+      }
 
       const generalField: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
         [
@@ -509,7 +523,9 @@ const EditRequisitionRequestPage = ({
             field_response: newSection.section_field[4].field_response.map(
               (response) => ({
                 ...response,
-                request_response: "",
+                request_response: isWithDescription
+                  ? csiCodeList[0].csi_code_level_three_description
+                  : "",
                 request_response_id: uuidv4(),
               })
             ),
@@ -524,19 +540,99 @@ const EditRequisitionRequestPage = ({
             }),
           },
           ...newSection.section_field.slice(5, 9).map((field, fieldIdx) => {
-            return {
-              ...field,
-              field_response: newSection.section_field[
-                5 + fieldIdx
-              ].field_response.map((response) => ({
-                ...response,
-                request_response: "",
-                request_response_duplicatable_section_id:
-                  newSection.section_field[0].field_response[0]
-                    .request_response_duplicatable_section_id,
-                request_response_id: uuidv4(),
-              })),
-            };
+            if (isWithDescription) {
+              switch (field.field_name) {
+                case "CSI Code":
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response: csiCodeList[0].csi_code_section,
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+                case "Division Description":
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response:
+                        csiCodeList[0].csi_code_division_description,
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+                case "Level 2 Major Group Description":
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response:
+                        csiCodeList[0]
+                          .csi_code_level_two_major_group_description,
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+                case "Level 2 Minor Group Description":
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response:
+                        csiCodeList[0]
+                          .csi_code_level_two_minor_group_description,
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+                default:
+                  return {
+                    ...field,
+                    field_response: newSection.section_field[
+                      5 + fieldIdx
+                    ].field_response.map((response) => ({
+                      ...response,
+                      request_response: "",
+                      request_response_duplicatable_section_id:
+                        newSection.section_field[0].field_response[0]
+                          .request_response_duplicatable_section_id,
+                      request_response_id: uuidv4(),
+                    })),
+                  };
+              }
+            } else {
+              return {
+                ...field,
+                field_response: newSection.section_field[
+                  5 + fieldIdx
+                ].field_response.map((response) => ({
+                  ...response,
+                  request_response: "",
+                  request_response_duplicatable_section_id:
+                    newSection.section_field[0].field_response[0]
+                      .request_response_duplicatable_section_id,
+                  request_response_id: uuidv4(),
+                })),
+              };
+            }
           }),
           {
             ...newSection.section_field[9],
@@ -592,7 +688,12 @@ const EditRequisitionRequestPage = ({
     } else {
       const generalField: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
         [
-          ...newSection.section_field.slice(0, 3),
+          newSection.section_field[0],
+          {
+            ...newSection.section_field[1],
+            field_response: [],
+          },
+          newSection.section_field[2],
           ...newSection.section_field.slice(3, 9).map((field) => {
             return {
               ...field,
@@ -763,6 +864,25 @@ const EditRequisitionRequestPage = ({
     }
   };
 
+  const csiSearch = async (value: string, index: number) => {
+    if (!teamMember?.team_member_team_id) return;
+    try {
+      setIsSearchingCSI(true);
+      const csiList = await getCSI(supabaseClient, {
+        csi: value ?? "",
+        fieldId: request_form.form_section[1].section_field[4].field_id,
+      });
+      setValue(`sections.${index}.section_field.4.field_option`, csiList);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearchingCSI(false);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -799,9 +919,11 @@ const EditRequisitionRequestPage = ({
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
                       supplierSearch,
-                      isSearching,
+                      isSearchingSupplier,
+                      csiSearch,
+                      isSearchingCSI,
                     }}
-                    formslyFormName="Requisition"
+                    formslyFormName={request_form.form_name}
                     referenceOnly={referenceOnly}
                   />
                   {section.section_is_duplicatable &&

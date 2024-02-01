@@ -1,5 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getCommentAttachment, getFileUrl } from "@/backend/api/get";
+import { getCommentAttachment, getUserSignatureList } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -18,11 +18,11 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   generateJiraCommentPayload,
   generateJiraTicketPayload,
 } from "@/utils/functions";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ConnectedRequestIdList,
   ReceiverStatusType,
@@ -128,11 +128,40 @@ const RequisitionRequestPage = ({
               signer.request_signer_signer.signer_team_member.team_member_user
                 .user_signature_attachment_id
             ) {
-              signatureUrl = await getFileUrl(supabaseClient, {
-                path: signer.request_signer_signer.signer_team_member
-                  .team_member_user.user_signature_attachment_id,
-                bucket: "USER_SIGNATURES",
+              const signatureList = await getUserSignatureList(supabaseClient, {
+                userId:
+                  signer.request_signer_signer.signer_team_member
+                    .team_member_user.user_id,
               });
+
+              const defaultSignature = signatureList[signatureList.length - 1];
+
+              const signedDate = new Date(
+                `${signer.request_signer_status_date_updated}`
+              ).getTime();
+
+              const signatureMatch = signatureList.find((signature, index) => {
+                if (!signature) {
+                  return false;
+                }
+
+                const nextSignatureDateCreatedTime =
+                  index < signatureList.length - 1
+                    ? new Date(
+                        signatureList[index + 1].signature_history_date_created
+                      ).getTime()
+                    : 0;
+
+                return signedDate < nextSignatureDateCreatedTime;
+              });
+
+              if (signatureMatch) {
+                signatureUrl = signatureMatch.signature_history_value;
+              } else {
+                signatureUrl = defaultSignature
+                  ? defaultSignature.signature_history_value
+                  : "";
+              }
             }
 
             return {
@@ -203,13 +232,7 @@ const RequisitionRequestPage = ({
     initialCommentList: request.request_comment,
   });
 
-  const requestDateCreated = new Date(
-    request.request_date_created
-  ).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const requestDateCreated = moment(new Date()).format("YYYY-MM-DD");
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =

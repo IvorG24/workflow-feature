@@ -90,13 +90,22 @@ const RequestDetailsSection = ({
   );
 
   return (
-    <Paper
-      p="xl"
-      shadow="xs"
-      className="onboarding-requisition-request-request"
-    >
+    <Paper p="xl" shadow="xs">
       <Title order={2}>{request.request_form.form_name}</Title>
       <Text mt="xs">{request.request_form.form_description}</Text>
+
+      {request.request_form.form_type && request.request_form.form_sub_type && (
+        <Stack mt="xl" spacing="xs">
+          <Group>
+            <Title order={5}>Type:</Title>
+            <Text>{request.request_form.form_type}</Text>
+          </Group>
+          <Group>
+            <Title order={5}>Sub Type:</Title>
+            <Text>{request.request_form.form_sub_type}</Text>
+          </Group>
+        </Stack>
+      )}
 
       <Title order={5} mt="xl">
         Requested by:
@@ -138,13 +147,7 @@ const RequestDetailsSection = ({
                 on{" "}
                 {new Date(
                   primarySigner.request_signer_status_date_updated
-                ).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "numeric",
-                  day: "numeric",
-                  hour: "numeric",
-                  minute: "numeric",
-                })}
+                ).toISOString()}
               </Text>
             )}
         </Group>

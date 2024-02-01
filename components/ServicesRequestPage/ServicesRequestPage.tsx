@@ -24,6 +24,7 @@ import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
@@ -166,13 +167,7 @@ const ServicesRequestPage = ({ request }: Props) => {
     initialCommentList: request.request_comment,
   });
 
-  const requestDateCreated = new Date(
-    request.request_date_created
-  ).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const requestDateCreated = moment(new Date()).format("YYYY-MM-DD");
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =

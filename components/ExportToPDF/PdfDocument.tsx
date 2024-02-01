@@ -248,9 +248,7 @@ const PdfDocument = ({
 
                   {formatStatus(approver.status)}
                   <Text style={{ marginTop: "6px" }}>
-                    {approver.date
-                      ? new Date(approver.date).toLocaleDateString()
-                      : ""}
+                    {approver.date ? new Date(approver.date).toISOString() : ""}
                   </Text>
                 </View>
               </View>

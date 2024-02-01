@@ -20,6 +20,7 @@ import {
   Portal,
   Space,
   Stack,
+  Text,
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -27,7 +28,9 @@ import {
   IconCirclePlus,
   IconDashboard,
   IconFile,
+  IconFileDescription,
   IconFilePlus,
+  IconFileStack,
   IconFileText,
   IconFiles,
   IconListDetails,
@@ -73,6 +76,9 @@ const ReviewAppNavLink = () => {
   const renderCreateRequestMenu = () => {
     return (
       <Box h="fit-content" mt="md">
+        <Text size="xs" weight={400}>
+          Create
+        </Text>
         <Menu
           shadow="1px 1px 3px rgba(0, 0, 0, .25)"
           withArrow
@@ -97,6 +103,14 @@ const ReviewAppNavLink = () => {
               }
             >
               Create Ticket
+            </Button>
+            <Button
+              fw={400}
+              leftIcon={<IconFileDescription {...defaultIconProps} />}
+              variant="transparent"
+              onClick={() => router.push(`/${activeTeamNameToUrl}/memo/create`)}
+            >
+              Create Memo
             </Button>
           </Stack>
 
@@ -180,7 +194,19 @@ const ReviewAppNavLink = () => {
     );
   };
 
-  const tempCreateRequest = [
+  const analyticsSection = [
+    {
+      label: `Dashboard`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconDashboard {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/dashboard`,
+    },
+  ];
+
+  const createSection = [
     {
       label: "Create Request",
       icon: (
@@ -201,18 +227,18 @@ const ReviewAppNavLink = () => {
       ),
       href: requisitionForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
     },
-  ];
-
-  const overviewSection = [
     {
-      label: `Dashboard`,
+      label: "Create Memo",
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconDashboard {...defaultIconProps} />
+          <IconFileDescription {...defaultIconProps} />
         </Box>
       ),
-      href: `/${activeTeamNameToUrl}/dashboard`,
+      href: `/${activeTeamNameToUrl}/memo/create`,
     },
+  ];
+
+  const listSection = [
     {
       label: `${startCase(activeApp)} List`,
       icon: (
@@ -241,6 +267,15 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/tickets`,
+    },
+    {
+      label: `Memo List`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileStack {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/memo`,
     },
   ];
 
@@ -298,9 +333,16 @@ const ReviewAppNavLink = () => {
     };
     fetchApproverRequestList();
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
-
   return (
     <>
+      {!isEmpty(activeTeam) && hasTeam ? (
+        <NavLinkSection
+          label={"Analytics"}
+          links={analyticsSection}
+          {...defaultNavLinkProps}
+        />
+      ) : null}
+
       {requisitionForm &&
       requisitionForm.form_is_hidden === false &&
       requisitionForm.form_team_group.length &&
@@ -308,14 +350,18 @@ const ReviewAppNavLink = () => {
         unhiddenForms.length > 1 ? (
           renderCreateRequestMenu()
         ) : (
-          <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
+          <NavLinkSection
+            label="Create"
+            links={createSection}
+            {...defaultNavLinkProps}
+          />
         )
       ) : null}
 
       {!isEmpty(activeTeam) && hasTeam ? (
         <NavLinkSection
-          label={"Overview"}
-          links={overviewSection}
+          label={"List"}
+          links={listSection}
           {...defaultNavLinkProps}
         />
       ) : null}

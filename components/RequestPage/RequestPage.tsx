@@ -4,7 +4,7 @@ import {
   checkRIRItemQuantity,
   checkROItemQuantity,
   checkTransferReceiptItemQuantity,
-  getFileUrl,
+  getUserSignatureList,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
@@ -39,6 +39,7 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useRef, useState } from "react";
 import ExportToPdf from "../ExportToPDF/ExportToPdf";
@@ -105,11 +106,40 @@ const RequestPage = ({
               signer.request_signer_signer.signer_team_member.team_member_user
                 .user_signature_attachment_id
             ) {
-              signatureUrl = await getFileUrl(supabaseClient, {
-                path: signer.request_signer_signer.signer_team_member
-                  .team_member_user.user_signature_attachment_id,
-                bucket: "USER_SIGNATURES",
+              const signatureList = await getUserSignatureList(supabaseClient, {
+                userId:
+                  signer.request_signer_signer.signer_team_member
+                    .team_member_user.user_id,
               });
+
+              const defaultSignature = signatureList[signatureList.length - 1];
+
+              const signedDate = new Date(
+                `${signer.request_signer_status_date_updated}`
+              ).getTime();
+
+              const signatureMatch = signatureList.find((signature, index) => {
+                if (!signature) {
+                  return false;
+                }
+
+                const nextSignatureDateCreatedTime =
+                  index < signatureList.length - 1
+                    ? new Date(
+                        signatureList[index + 1].signature_history_date_created
+                      ).getTime()
+                    : 0;
+
+                return signedDate < nextSignatureDateCreatedTime;
+              });
+
+              if (signatureMatch) {
+                signatureUrl = signatureMatch.signature_history_value;
+              } else {
+                signatureUrl = defaultSignature
+                  ? defaultSignature.signature_history_value
+                  : "";
+              }
             }
 
             return {
@@ -184,13 +214,7 @@ const RequestPage = ({
     }
   );
 
-  const requestDateCreated = new Date(
-    request.request_date_created
-  ).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const requestDateCreated = moment(new Date()).format("YYYY-MM-DD");
 
   const originalSectionList = request.request_form.form_section;
 
@@ -784,19 +808,7 @@ const RequestPage = ({
 
         {request.request_form.form_name === "Requisition" &&
         request.request_form.form_is_formsly_form ? (
-          <RequisitionSummary
-            summaryData={sectionWithDuplicateList
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
+          <RequisitionSummary summaryData={sectionWithDuplicateList.slice(1)} />
         ) : null}
 
         {request.request_form.form_name === "Subcon" &&

@@ -10,11 +10,11 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
       const teamId = await getUserActiveTeamId(supabaseClient, {
         userId: user.id,
       });
-      const itemList = await getAllItems(supabaseClient, { teamId });
+      const items = await getAllItems(supabaseClient, { teamId });
 
       return {
         props: {
-          itemList,
+          items,
         },
       };
     } catch (error) {
@@ -30,17 +30,17 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 );
 
 type Props = {
-  itemList: { item_general_name: string }[];
+  items: { item_general_name: string }[];
 };
 
-const Page = ({ itemList }: Props) => {
+const Page = ({ items }: Props) => {
   return (
     <>
       <Meta
         description="Item Analytics Page"
         url="/{teamName}/item-analytics"
       />
-      <ItemAnalyticsPage itemList={itemList} />
+      <ItemAnalyticsPage items={items} />
     </>
   );
 };

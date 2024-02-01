@@ -75,6 +75,8 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
     form_description: form.form_description,
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
+    form_type: form.form_type,
+    form_sub_type: form.form_sub_type,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
@@ -101,6 +103,13 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
   }, [form, replaceSection, requestFormMethods]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
+    if (isFetchingSigner) {
+      notifications.show({
+        message: "Wait until all signers are fetched before submitting.",
+        color: "orange",
+      });
+      return;
+    }
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -338,6 +347,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
         resetSigner();
       }
     } catch (e) {
+      setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -390,7 +400,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    formslyFormName="Services"
+                    formslyFormName={form.form_name}
                     servicesMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onCSIDivisionChange: handleCSIDivisionChange,

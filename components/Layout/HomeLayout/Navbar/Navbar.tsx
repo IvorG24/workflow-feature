@@ -5,7 +5,6 @@ import {
   NavLink,
   Stack,
 } from "@mantine/core";
-import { useUser } from "@supabase/auth-helpers-react";
 import { IconCash, IconHome, IconPhone, IconStar } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { MouseEventHandler } from "react";
@@ -40,7 +39,6 @@ type NavbarProps = {
 
 const Navbar = ({ openNavbar, setOpenNavbar }: NavbarProps) => {
   const router = useRouter();
-  const user = useUser();
 
   return (
     <MediaQuery largerThan="sm" styles={{ display: "none" }}>
@@ -66,32 +64,23 @@ const Navbar = ({ openNavbar, setOpenNavbar }: NavbarProps) => {
           ))}
         </Stack>
         <Stack mt="md">
-          {user ? (
-            <Button onClick={() => router.push(`/userActiveTeam`)}>
-              Go to Formsly
-            </Button>
-          ) : null}
-          {!user ? (
-            <>
-              <Button
-                variant="outline"
-                onClick={(e) => {
-                  router.push("/sign-in");
-                  setOpenNavbar(e);
-                }}
-              >
-                Log in
-              </Button>
-              <Button
-                onClick={(e) => {
-                  router.push("/sign-up");
-                  setOpenNavbar(e);
-                }}
-              >
-                Sign up
-              </Button>
-            </>
-          ) : null}
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              router.push("/sign-in");
+              setOpenNavbar(e);
+            }}
+          >
+            Log in
+          </Button>
+          <Button
+            onClick={(e) => {
+              router.push("/sign-up");
+              setOpenNavbar(e);
+            }}
+          >
+            Sign up
+          </Button>
         </Stack>
       </MantineNavbar>
     </MediaQuery>

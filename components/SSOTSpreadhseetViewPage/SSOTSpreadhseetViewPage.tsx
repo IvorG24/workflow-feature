@@ -5,6 +5,7 @@ import {
   REQUISITION_FIELDS_ORDER,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import { addCommaToNumber } from "@/utils/string";
 import { SSOTResponseType, SSOTType } from "@/utils/types";
 import {
@@ -23,6 +24,7 @@ import {
 import { useElementSize, useViewportSize } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
@@ -1539,7 +1541,6 @@ const SSOTSpreadsheetView = ({
           );
         }
       );
-
       const items = fields.slice(0, -REQUISITION_FIELDS_ORDER.length);
 
       const sortedAndGroupedItems = sortAndGroupItems(items);
@@ -1595,9 +1596,9 @@ const SSOTSpreadsheetView = ({
               )}
               {requisitionTable.columnList["date_created"] && (
                 <td>
-                  {new Date(
-                    request.requisition_request_date_created
-                  ).toLocaleDateString()}
+                  {moment(
+                    new Date(request.requisition_request_date_created)
+                  ).format("YYYY-MM-DD")}
                 </td>
               )}
 
@@ -1617,9 +1618,9 @@ const SSOTSpreadsheetView = ({
                     showColumn && (
                       <td key={index}>
                         {response.request_response_field_type === "DATE"
-                          ? new Date(
-                              JSON.parse(response.request_response)
-                            ).toLocaleDateString()
+                          ? moment(
+                              new Date(safeParse(response.request_response))
+                            ).format("YYYY-MM-DD")
                           : JSON.parse(response.request_response) !== "null"
                           ? JSON.parse(response.request_response)
                           : ""}

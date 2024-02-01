@@ -1,7 +1,9 @@
 import {
+  getCSI,
   getCSICode,
   getCSICodeOptionsForItems,
   getItem,
+  getLevelThreeDescription,
   getProjectSignerWithTeamMember,
   getSupplier,
 } from "@/backend/api/get";
@@ -15,6 +17,7 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
+  CSICodeTableRow,
   FormType,
   FormWithResponseType,
   OptionTableRow,
@@ -77,7 +80,8 @@ const CreateRequisitionRequestPage = ({
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchingSupplier, setIsSearchingSupplier] = useState(false);
+  const [isSearchingCSI, setIsSearchingCSI] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -87,6 +91,8 @@ const CreateRequisitionRequestPage = ({
     form_description: form.form_description,
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
+    form_type: form.form_type,
+    form_sub_type: form.form_sub_type,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
@@ -123,6 +129,14 @@ const CreateRequisitionRequestPage = ({
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
+    if (isFetchingSigner) {
+      notifications.show({
+        message: "Wait until all signers are fetched before submitting.",
+        color: "orange",
+      });
+      return;
+    }
+
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -296,10 +310,18 @@ const CreateRequisitionRequestPage = ({
         teamId: team.team_id,
         itemName: value,
       });
+      const isWithDescription = Boolean(item.item_level_three_description);
+      let csiCodeList: CSICodeTableRow[] = [];
 
-      const csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-        divisionIdList: item.item_division_id_list,
-      });
+      if (item.item_level_three_description) {
+        csiCodeList = await getLevelThreeDescription(supabaseClient, {
+          levelThreeDescription: item.item_level_three_description,
+        });
+      } else {
+        csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
+          divisionIdList: item.item_division_id_list,
+        });
+      }
 
       const generalField = [
         {
@@ -318,7 +340,9 @@ const CreateRequisitionRequestPage = ({
         },
         {
           ...newSection.section_field[4],
-          field_response: "",
+          field_response: isWithDescription
+            ? csiCodeList[0].csi_code_level_three_description
+            : "",
           field_option: csiCodeList.map((csiCode, index) => {
             return {
               option_field_id: form.form_section[0].section_field[0].field_id,
@@ -329,10 +353,42 @@ const CreateRequisitionRequestPage = ({
           }),
         },
         ...newSection.section_field.slice(5, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
+          if (isWithDescription) {
+            switch (field.field_name) {
+              case "CSI Code":
+                return {
+                  ...field,
+                  field_response: csiCodeList[0].csi_code_section,
+                };
+              case "Division Description":
+                return {
+                  ...field,
+                  field_response: csiCodeList[0].csi_code_division_description,
+                };
+              case "Level 2 Major Group Description":
+                return {
+                  ...field,
+                  field_response:
+                    csiCodeList[0].csi_code_level_two_major_group_description,
+                };
+              case "Level 2 Minor Group Description":
+                return {
+                  ...field,
+                  field_response:
+                    csiCodeList[0].csi_code_level_two_minor_group_description,
+                };
+              default:
+                return {
+                  ...field,
+                  field_response: "",
+                };
+            }
+          } else {
+            return {
+              ...field,
+              field_response: "",
+            };
+          }
         }),
         {
           ...newSection.section_field[9],
@@ -387,7 +443,12 @@ const CreateRequisitionRequestPage = ({
       });
     } else {
       const generalField = [
-        ...newSection.section_field.slice(0, 3),
+        newSection.section_field[0],
+        {
+          ...newSection.section_field[1],
+          field_response: "",
+        },
+        newSection.section_field[2],
         ...newSection.section_field.slice(3, 9).map((field) => {
           return {
             ...field,
@@ -492,6 +553,7 @@ const CreateRequisitionRequestPage = ({
         resetSigner();
       }
     } catch (e) {
+      setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -504,7 +566,7 @@ const CreateRequisitionRequestPage = ({
   const supplierSearch = async (value: string, index: number) => {
     if (!teamMember?.team_member_team_id) return;
     try {
-      setIsSearching(true);
+      setIsSearchingSupplier(true);
       const supplierList = await getSupplier(supabaseClient, {
         supplier: value ?? "",
         teamId: teamMember.team_member_team_id,
@@ -517,7 +579,26 @@ const CreateRequisitionRequestPage = ({
         color: "red",
       });
     } finally {
-      setIsSearching(false);
+      setIsSearchingSupplier(false);
+    }
+  };
+
+  const csiSearch = async (value: string, index: number) => {
+    if (!teamMember?.team_member_team_id) return;
+    try {
+      setIsSearchingCSI(true);
+      const csiList = await getCSI(supabaseClient, {
+        csi: value ?? "",
+        fieldId: form.form_section[1].section_field[4].field_id,
+      });
+      setValue(`sections.${index}.section_field.4.field_option`, csiList);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsSearchingCSI(false);
     }
   };
 
@@ -549,9 +630,11 @@ const CreateRequisitionRequestPage = ({
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
                       supplierSearch,
-                      isSearching,
+                      isSearchingSupplier,
+                      csiSearch,
+                      isSearchingCSI,
                     }}
-                    formslyFormName="Requisition"
+                    formslyFormName={form.form_name}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

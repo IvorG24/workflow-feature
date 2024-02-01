@@ -112,7 +112,7 @@ const MemberList = ({
 
       setGroupMemberList(data as unknown as TeamMemberType[]);
       setGroupMemberListCount(Number(count));
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Error on fetching group member list",
         color: "red",

@@ -427,6 +427,114 @@ export const getJiraSourcingItemCategory = (formslyItemCategory: string) => {
   return categoryMappings[formslyItemCategory];
 };
 
+const getWarehouseCorporateLead = (formslyItemCategory: string) => {
+  const matcher = [
+    {
+      categories: ["Construction Items", "PED Items"],
+      fullName: "Meynard F. Gante",
+      jiraAccountId: "712020:5569bf38-2e86-4a70-9f86-24d79f271743",
+      emailAddress: "meynard.gante@staclara.com.ph",
+    }, // Consumables
+    {
+      categories: ["Fixed Asset", "Formworks"],
+      fullName: "Aljoy Mulles",
+      jiraAccountId: "712020:5408443f-bcc0-4a94-9292-9128ae67c599",
+      emailAddress: "aljoy.mulles@staclara.com.ph",
+    },
+    {
+      categories: ["Fuel"],
+      fullName: "Christian Balatero - Fuel Mgmt. Lead (Active)",
+      jiraAccountId: "712020:0c9a62a0-05e4-44e8-9dca-bdce04bca64b",
+      accountType: "atlassian",
+      emailAddress: "christian.balatero@staclara.com.ph",
+    },
+  ];
+
+  const matchedUser = matcher.find((matcherItem) =>
+    matcherItem.categories.includes(formslyItemCategory)
+  );
+
+  return matchedUser ? matchedUser.jiraAccountId : null;
+};
+
+const getWarehouseAreaLead = (formslyItemCategory: string) => {
+  const matcher = [
+    {
+      items: [
+        "LUZ-21-011 HERMOSA 500KV TL",
+        "LUZ-22-002 500KV BACKBONE S2",
+        "LUZ-21-002 KIANGAN",
+        "LUZ-21-009 TUMAUINI HEPPP",
+        "LUZ-21-012 160MW BALAOI WPP",
+        "LUZ-22-012A CAPARISPISAN",
+        "LUZ-23-003 MORONG PARK",
+        "CENTRAL OFFICE",
+      ],
+      fullName: "Rey Berlon",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:bace021b-e2a6-4981-a644-98ed7859f837",
+      emailAddress: "rey.berlon@staclara.com.ph",
+    },
+    {
+      items: [
+        "LUZ-18-018 SUMITOMO NSCR",
+        "LUZ-20-001 500KVA MARILAO",
+        "LUZ-14-041B VALENZUELA PLANT 2",
+        "LUZ-21-006 UPPER WAWA DAM",
+        "LUZ-19-002 SRE 40MLD MAGDIWANG",
+        "PILILIA YARD",
+        "ALAMINOS YARD",
+        "LUZ-22-004 MERALCO HDD 3",
+        "LUZ-23-005 MRT 7 NORTH AVE",
+      ],
+      fullName: "Rey Berlon",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:bace021b-e2a6-4981-a644-98ed7859f837",
+      emailAddress: "rey.berlon@staclara.com.ph",
+    },
+    {
+      items: [
+        "LUZ-20-003 ILIJAN",
+        "LUZ-21-007 ILIJAN CCPP",
+        "LUZ-18-007A STE TR4 PACKAGE C",
+        "LUZ-22-005 HUDSON PACKAGE 1",
+        "LUZ-23-001 HUDSON PACKAGE 2",
+        "LUZ-22-009 SOLID LF MAIN BLDG",
+        "LUZ-22-010 PHILIP MORRIS",
+        "LUZ-12-051 CATUIRAN",
+        "LUZ-23-002 EAST BAY 200MLD WTP",
+      ],
+      fullName: "Vincent Andallo- Luzon C Area Lead (Active)",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e8ab391d-90e2-46fb-9ae8-e81fa6991ab3",
+      emailAddress: "vincent.andallo.staclara@gmail.com",
+    },
+    {
+      items: [
+        "MIN-18-036 LAKEMAINIT",
+        "MIN-19-027 MALITBOG MINI HYDRO",
+        "MIN-21-015 MATI-1",
+        "MIN-21-016 CLARIN",
+        "MIN-21-005 12MW MANGIMA HPP",
+        "MIN-22-008 MALADUGAO HEPP",
+        "MIN-22-006 DAVAO HYDRO &amp; BW",
+        "MIN-15-077 MW SIGUIL HYDRO",
+        "VIZ-22-003 LOBOC 2",
+      ],
+      fullName: "Vincent Andallo- Luzon C Area Lead (Active)",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e8ab391d-90e2-46fb-9ae8-e81fa6991ab3",
+      emailAddress: "vincent.andallo.staclara@gmail.com",
+    },
+  ];
+
+  const matchedUser = matcher.find((matcherItem) =>
+    matcherItem.items.includes(formslyItemCategory)
+  );
+
+  return matchedUser ? matchedUser.jiraAccountId : null;
+};
+
 export const generateJiraTicketPayload = ({
   requestId,
   requestUrl,
@@ -461,6 +569,21 @@ export const generateJiraTicketPayload = ({
     throw Error("Item Category is not found on Jira Item Category");
   }
 
+  const warehouseCorporateLead = getWarehouseCorporateLead(
+    sourcingItemCategory.label
+  );
+  const warehouseAreaLead = getWarehouseAreaLead(requestingProjectSite.label);
+
+  if (!warehouseCorporateLead) {
+    console.error("Warehouse Corporate Lead is not found.");
+    throw Error("Warehouse Corporate Lead is not found.");
+  }
+
+  if (!warehouseAreaLead) {
+    console.error("Warehouse Area Lead is not found.");
+    throw Error("Warehouse Area Lead is not found.");
+  }
+
   const jiraTicketPayload = {
     form: {
       answers: {
@@ -481,6 +604,15 @@ export const generateJiraTicketPayload = ({
         },
         "6": {
           choices: [], // attachments
+        },
+        "11": {
+          users: [warehouseCorporateLead], // Warehouse Corporate Lead
+        },
+        "14": {
+          users: [warehouseAreaLead], // Warehouse Area Lead
+        },
+        "15": {
+          choices: ["1"], // Origin of Request
         },
       },
     },
@@ -563,3 +695,14 @@ export const generateJiraCommentPayload = (
 export const JoyRideNoSSR = dynamic(() => import("react-joyride"), {
   ssr: false,
 });
+
+export const getBase64 = (file: File) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.onerror = reject;
+  });
+};

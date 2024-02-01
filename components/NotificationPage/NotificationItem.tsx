@@ -8,10 +8,12 @@ import {
   Paper,
   Text,
   Tooltip,
+  useMantineTheme,
 } from "@mantine/core";
 import {
   IconFile,
   IconFileAlert,
+  IconFileDescription,
   IconFileDislike,
   IconFileLike,
   IconMail,
@@ -31,6 +33,8 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
   const router = useRouter();
   const tab = router.query.tab || "all";
 
+  const { colorScheme } = useMantineTheme();
+
   const getIcon = () => {
     const type = notification.notification_type;
     if (type === "APPROVE") return <IconFileLike size={20} color="#40C057" />;
@@ -45,6 +49,10 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
     else if (type === "REVIEW") return <IconMessage2 size={20} />;
     else if (type === "REVERSE")
       return <IconRefresh size={20} color="#FF922B" />;
+    else if (type === "MEMO-APPROVAL")
+      return <IconFileDescription size={20} color="#FF922B" />;
+    else if (type === "MEMO-APPROVED")
+      return <IconFileDescription size={20} color="#40C057" />;
   };
 
   return (
@@ -75,6 +83,8 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
           bg={
             notification.notification_is_read && tab !== "unread"
               ? "transparent"
+              : colorScheme === "dark"
+              ? "dark.6"
               : "#E7F5FF"
           }
         >
