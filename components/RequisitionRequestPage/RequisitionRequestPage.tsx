@@ -446,7 +446,7 @@ const RequisitionRequestPage = ({
 
       const jiraTicketPayload = generateJiraTicketPayload({
         requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_id}`,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "189",
         projectName,
         itemCategory,
