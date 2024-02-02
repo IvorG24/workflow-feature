@@ -76,9 +76,11 @@ const RequestActionSection = ({
 
     return newJiraTicketData.ok ? true : false;
   };
-  const handleApproveRequisitionRequest = async () => {
+  const handleApproveRequisitionRequest = async (
+    onCreateJiraTicket: () => Promise<string | null | undefined>
+  ) => {
     try {
-      if (onCreateJiraTicket) {
+      if (process.env.NODE_ENV === "production") {
         const jiraTicketResponse = await onCreateJiraTicket();
         if (!jiraTicketResponse) {
           notifications.show({
@@ -93,6 +95,8 @@ const RequestActionSection = ({
         const jiraTicketWebLink = jiraTicket._links.web;
 
         handleUpdateRequest("APPROVED", jiraTicket.issueKey, jiraTicketWebLink);
+      } else if (process.env.NODE_ENV === "development") {
+        handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
       }
     } catch (error) {
       notifications.show({
@@ -133,7 +137,7 @@ const RequestActionSection = ({
                   color="green"
                   onClick={async () => {
                     modals.close("approveRf");
-                    handleApproveRequisitionRequest();
+                    handleApproveRequisitionRequest(onCreateJiraTicket);
                   }}
                 >
                   Approve
