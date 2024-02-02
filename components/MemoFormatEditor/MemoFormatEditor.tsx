@@ -159,7 +159,6 @@ const MemoFormatEditor = ({ opened, close }: Props) => {
         color: "green",
       });
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Failed to save format",
         color: "red",

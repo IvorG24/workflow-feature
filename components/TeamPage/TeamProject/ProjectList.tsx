@@ -120,7 +120,7 @@ const ProjectList = ({
       setProjectList(data as TeamProjectTableRow[]);
       setProjectCount(Number(count));
       setSearchResult(data as TeamProjectTableRow[]);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Error on fetching project list",
         color: "red",

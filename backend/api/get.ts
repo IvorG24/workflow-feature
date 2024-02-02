@@ -40,6 +40,7 @@ import {
   TeamMemberType,
   TeamMemberWithUserDetails,
   TeamOnLoad,
+  TeamProjectTableRow,
   TeamTableRow,
   TicketListOnLoad,
   TicketListType,
@@ -2693,7 +2694,14 @@ export const getTeamProjectList = async (
 
   let query = supabaseClient
     .from("team_project_table")
-    .select("*", { count: "exact" })
+    .select(
+      `
+        *,
+        team_project_site_map_attachment: team_project_site_map_attachment_id(*),
+        team_project_boq_attachment: team_project_boq_attachment_id(*)
+      `,
+      { count: "exact" }
+    )
     .eq("team_project_team_id", teamId)
     .eq("team_project_is_disabled", false);
 
@@ -2706,10 +2714,29 @@ export const getTeamProjectList = async (
   query.range(start, start + limit - 1);
 
   const { data, count, error } = await query;
-
   if (error) throw error;
 
-  return { data, count };
+  const formattedData = data as unknown as (TeamProjectTableRow & {
+    team_project_site_map_attachment: { attachment_value: string | null };
+  } & {
+    team_project_boq_attachment: { attachment_value: string | null };
+  })[];
+
+  return {
+    data: formattedData.map((value) => {
+      return {
+        ...value,
+        team_project_site_map_attachment_id:
+          value.team_project_site_map_attachment
+            ? value.team_project_site_map_attachment.attachment_value
+            : "",
+        team_project_boq_attachment_id: value.team_project_boq_attachment
+          ? value.team_project_boq_attachment.attachment_value
+          : "",
+      };
+    }),
+    count,
+  };
 };
 
 // Check if team group exists
