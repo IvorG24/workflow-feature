@@ -652,7 +652,7 @@ CREATE TABLE item_level_three_description_table (
   item_level_three_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_level_three_description VARCHAR(4000) NOT NULL,
 
-  item_level_three_description_item_id UUID REFERENCES item_table(item_id),
+  item_level_three_description_item_id UUID REFERENCES item_table(item_id)
 );
 -- End: Item Level Three Description
 
@@ -11913,7 +11913,7 @@ USING (
 );
 
 --- ITEM_LEVEL_THREE_DESCRIPTION
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table "
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -11928,11 +11928,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_level_three_description_table "
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_level_three_description_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table "
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -11947,7 +11947,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table "
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
