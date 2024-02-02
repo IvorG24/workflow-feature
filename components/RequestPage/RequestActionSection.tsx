@@ -95,7 +95,6 @@ const RequestActionSection = ({
         handleUpdateRequest("APPROVED", jiraTicket.issueKey, jiraTicketWebLink);
       }
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Failed to approve requisition request",
         color: "red",
