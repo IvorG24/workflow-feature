@@ -452,7 +452,7 @@ const EditRequisitionRequestPage = ({
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
       .lastIndexOf(sectionId);
-    const sectionMatch = request_form.form_section.find(
+    const sectionMatch = formSections.find(
       (section) => section.section_id === sectionId
     );
     if (sectionMatch) {
