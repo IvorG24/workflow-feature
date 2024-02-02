@@ -3,9 +3,12 @@ import { updateSLAHours } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { FormSLAWithForm } from "@/utils/types";
 import {
   ActionIcon,
+  Anchor,
+  Breadcrumbs,
   Button,
   Container,
   Divider,
@@ -28,6 +31,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
+import moment from "moment";
 import { FormEvent, useState } from "react";
 
 type Props = {
@@ -41,6 +45,36 @@ const SignerSLASettingsPage = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
+
+  const breadCrumbitems = [
+    {
+      title: "SLA",
+      href: `/${formatTeamNameToUrlKey(
+        activeTeam.team_name ?? ""
+      )}/requests/sla`,
+      active: false,
+    },
+    {
+      title: "Signer",
+      href: `/${formatTeamNameToUrlKey(
+        activeTeam.team_name ?? ""
+      )}/requests/sla/signer`,
+      active: false,
+    },
+    {
+      title: "Settings",
+      href: "#",
+      active: true,
+    },
+  ].map((item, index) => (
+    <Anchor
+      href={item.href}
+      color={item.active ? "dimmed" : "blue"}
+      key={index}
+    >
+      {item.title}
+    </Anchor>
+  ));
 
   const [isUpdatingSLAForm, setIsUpdatingSLAForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,11 +105,9 @@ const SignerSLASettingsPage = ({
         if (!form_sla_date_updated) return <></>;
         return (
           <Text>
-            {`${new Date(
-              form_sla_date_updated
-            ).toLocaleDateString()} ${new Date(
-              form_sla_date_updated
-            ).toLocaleTimeString()}`}
+            {moment(new Date(form_sla_date_updated)).format(
+              "YYYY-MM-DD HH:mm:ss.SSS"
+            )}
           </Text>
         );
       },
@@ -179,6 +211,9 @@ const SignerSLASettingsPage = ({
     <Container p={0}>
       <Title order={2}>Signer SLA Settings</Title>
 
+      <Breadcrumbs separator=">" mt="xs">
+        {breadCrumbitems}
+      </Breadcrumbs>
       <Container p={0}>
         {selectedSlaForm ? (
           <Paper shadow="md" p="md" mt="md" pos="relative">

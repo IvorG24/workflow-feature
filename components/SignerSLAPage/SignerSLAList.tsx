@@ -11,6 +11,7 @@ import {
   Text,
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
+import moment from "moment";
 
 type Props = {
   signerSLAList: SignerRequestSLA[] | null;
@@ -65,20 +66,16 @@ const SignerSLAList = ({ signerSLAList }: Props) => {
                   </td>
                   <td>
                     <Text>
-                      {`${new Date(
-                        request.request_date_created
-                      ).toLocaleDateString()} ${new Date(
-                        request.request_date_created
-                      ).toLocaleTimeString()}`}
+                      {moment(new Date(request.request_date_created)).format(
+                        "YYYY-MM-DD HH:mm:ss.SSS"
+                      )}
                     </Text>
                   </td>
                   <td>
                     <Text>
-                      {`${new Date(
-                        request.request_signer_status_date_updated
-                      ).toLocaleDateString()} ${new Date(
-                        request.request_signer_status_date_updated
-                      ).toLocaleTimeString()}`}
+                      {moment(
+                        new Date(request.request_signer_status_date_updated)
+                      ).format("YYYY-MM-DD HH:mm:ss.SSS")}
                     </Text>
                   </td>
                 </tr>
