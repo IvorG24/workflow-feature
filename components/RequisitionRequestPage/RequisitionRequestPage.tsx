@@ -232,7 +232,7 @@ const RequisitionRequestPage = ({
     initialCommentList: request.request_comment,
   });
 
-  const requestDateCreated = moment(new Date()).format("YYYY-MM-DD");
+  const requestDateCreated = moment(new Date(request.request_date_created)).format("YYYY-MM-DD");
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
