@@ -9695,15 +9695,15 @@ RETURNS JSON AS $$
                   field_option: [
                     {
                       option_field_id: preferredSupplierField.field_id,
-                      option_id: JSON.parse(
+                      option_id: section.section_field[9].field_response[0] ? JSON.parse(
                         section.section_field[9].field_response[0]
                           .request_response
-                      ),
+                      ) : "",
                       option_order: 1,
-                      option_value: JSON.parse(
+                      option_value: section.section_field[9].field_response[0] ? JSON.parse(
                         section.section_field[9].field_response[0]
                           .request_response
-                      ),
+                      ) : "",
                     },
                   ],
                 }
