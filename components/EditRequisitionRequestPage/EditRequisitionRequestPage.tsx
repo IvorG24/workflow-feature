@@ -101,6 +101,9 @@ const EditRequisitionRequestPage = ({
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
   const [isSearchingSupplier, setIsSearching] = useState(false);
   const [isSearchingCSI, setIsSearchingCSI] = useState(false);
+  const [originalSections, setOriginalSections] = useState<
+    RequestWithResponseType["request_form"]["form_section"]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -150,6 +153,10 @@ const EditRequisitionRequestPage = ({
           index += 10;
         }
         replaceSection([{ ...request_form.form_section[0] }, ...newSection]);
+        setOriginalSections([
+          { ...request_form.form_section[0] },
+          ...newSection,
+        ]);
         setIsLoading(false);
       };
       fetchSections();
@@ -984,7 +991,7 @@ const EditRequisitionRequestPage = ({
               <Button
                 variant="outline"
                 color="red"
-                onClick={() => replaceSection(request_form.form_section)}
+                onClick={() => replaceSection(originalSections)}
               >
                 Reset
               </Button>
