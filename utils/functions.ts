@@ -527,7 +527,7 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "MIN-21-016 CLARIN",
         "MIN-21-005 12MW MANGIMA HPP",
         "MIN-22-008 MALADUGAO HEPP",
-        "MIN-22-006 DAVAO HYDRO &amp; BW",
+        "MIN-22-006 DAVAO HYDRO & BW",
         "MIN-15-077 MW SIGUIL HYDRO",
         "VIZ-22-003 LOBOC 2",
         "MIN-15-077  MW SIGUIL HYDRO",
