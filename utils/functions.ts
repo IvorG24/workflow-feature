@@ -530,14 +530,9 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "MIN-22-006 DAVAO HYDRO &amp; BW",
         "MIN-15-077 MW SIGUIL HYDRO",
         "VIZ-22-003 LOBOC 2",
+        "MIN-15-077  MW SIGUIL HYDRO",
+        "VIZ-23-008 SAN ISIDRO SOLAR",
       ],
-      fullName: "Vincent Andallo- Luzon C Area Lead (Active)",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e8ab391d-90e2-46fb-9ae8-e81fa6991ab3",
-      emailAddress: "vincent.andallo.staclara@gmail.com",
-    },
-    {
-      items: ["MIN-15-077  MW SIGUIL HYDRO", "VIZ-23-008 SAN ISIDRO SOLAR"],
       fullName: "Christopher Waga",
       jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
       emailAddress: "christopher.waga@staclara.com.ph",
