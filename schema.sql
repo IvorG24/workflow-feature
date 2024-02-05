@@ -9615,6 +9615,8 @@ RETURNS JSON AS $$
             AND item_is_available = true;
         `)[0];
 
+        if(!item) return null;
+
         const itemDescriptionList = plv8.execute(`
           SELECT * 
           FROM item_description_table
@@ -9733,7 +9735,7 @@ RETURNS JSON AS $$
             ...newFieldsWithOptions,
           ],
         };
-      });
+      }).filter(value => value);
  });
  return returnData;
 $$ LANGUAGE plv8;
