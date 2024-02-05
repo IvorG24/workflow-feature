@@ -1,5 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getUserSignatureList } from "@/backend/api/get";
+import { getCommentAttachment, getUserSignatureList } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -18,6 +18,10 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import {
+  generateJiraCommentPayload,
+  generateJiraTicketPayload,
+} from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ConnectedRequestIdList,
@@ -235,7 +239,7 @@ Props) => {
     initialCommentList: request.request_comment,
   });
 
-  const requestDateCreated = moment(new Date()).format("YYYY-MM-DD");
+  const requestDateCreated = moment(new Date(request.request_date_created)).format("YYYY-MM-DD");
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -422,6 +426,143 @@ Props) => {
   //   );
   // };
 
+  const handleCreateJiraTicket = async () => {
+    try {
+      setIsLoading(true);
+      if (!request.request_formsly_id) {
+        console.warn("formsly_id not found");
+        return null;
+      }
+      const projectName = request.request_project.team_project_name;
+      const itemCategory = sectionWithDuplicateList
+        .slice(1)
+        .map(
+          (section) => section.section_field[3].field_response?.request_response
+        ) as string[];
+
+      const primaryApproverJiraUserResponse = await fetch(
+        `/api/get-jira-user?approverEmail=${user?.user_email}`
+      );
+
+      const primaryApproverJiraUserData =
+        await primaryApproverJiraUserResponse.json();
+
+      const jiraTicketPayload = generateJiraTicketPayload({
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestTypeId: "189",
+        projectName,
+        itemCategory,
+        primaryApproverJiraAccountId: primaryApproverJiraUserData[0]
+          ? primaryApproverJiraUserData[0].accountId
+          : null,
+      });
+
+      const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(jiraTicketPayload),
+      });
+
+      const jiraTicketData = await jiraTicketResponse.json();
+
+      if (!jiraTicketResponse.ok) {
+        console.error(jiraTicketData.error);
+        notifications.show({
+          message: jiraTicketData.error,
+          color: "red",
+        });
+        return null;
+      }
+
+      if (requestCommentList.length > 0) {
+        await handleAddCommentToJiraTicket(jiraTicketData.issueKey);
+      }
+
+      return JSON.stringify(jiraTicketData);
+    } catch (error) {
+      console.error("Failed to create jira ticket", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCommentAttachmentList = async () => {
+    const commentListWithAttachmentUrl = await Promise.all(
+      requestCommentList.map(async (comment) => {
+        const commentAttachmentUrlList = await getCommentAttachment(
+          supabaseClient,
+          { commentId: comment.comment_id }
+        );
+
+        return {
+          ...comment,
+          comment_attachment: commentAttachmentUrlList,
+        };
+      })
+    );
+    return commentListWithAttachmentUrl.sort((a, b) => {
+      const aDate = moment(a.comment_date_created).valueOf();
+      const bDate = moment(b.comment_date_created).valueOf();
+
+      return aDate - bDate;
+    });
+  };
+
+  const handleAddCommentToJiraTicket = async (jiraTicketKey: string) => {
+    try {
+      // fetch comments with attachment
+      const rfCommentList = await fetchCommentAttachmentList();
+      const rfCommentListForJira = generateJiraCommentPayload(rfCommentList);
+
+      const bodyData = {
+        body: {
+          version: 1,
+          type: "doc",
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: "Formsly Request Comment List Before Approval",
+                  marks: [
+                    {
+                      type: "strong",
+                    },
+                  ],
+                },
+              ],
+            },
+            ...rfCommentListForJira,
+          ],
+        },
+      };
+
+      const jiraTicketCommentResponse = await fetch(
+        `/api/add-comment-to-jira-ticket?jiraTicketKey=${jiraTicketKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bodyData),
+        }
+      );
+
+      if (jiraTicketCommentResponse.ok) {
+        console.log("Comment added successfully");
+      } else {
+        console.error("Failed to add comment");
+      }
+      return jiraTicketCommentResponse;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
@@ -587,6 +728,7 @@ Props) => {
             isDeletable={isDeletable}
             isUserRequester={isUserRequester}
             requestId={request.request_id}
+            onCreateJiraTicket={handleCreateJiraTicket}
           />
         )}
 
@@ -604,6 +746,7 @@ Props) => {
           requestId: request.request_id,
           requestOwnerId: request.request_team_member.team_member_user.user_id,
           teamId: request.request_team_member.team_member_team_id,
+          requestJiraId: requestJira.id,
         }}
         requestCommentList={requestCommentList}
       />

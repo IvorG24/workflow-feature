@@ -36,6 +36,7 @@ type Props = {
   canSignerTakeAction?: boolean;
   isDeletable: boolean;
   isUserRequester?: boolean;
+  onCreateJiraTicket?: () => Promise<string | null | undefined>;
 };
 
 const RequestActionSection = ({
@@ -49,6 +50,7 @@ const RequestActionSection = ({
   canSignerTakeAction,
   isDeletable,
   isUserRequester,
+  onCreateJiraTicket,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -74,6 +76,35 @@ const RequestActionSection = ({
 
     return newJiraTicketData.ok ? true : false;
   };
+  const handleApproveRequisitionRequest = async (
+    onCreateJiraTicket: () => Promise<string | null | undefined>
+  ) => {
+    try {
+      if (process.env.NODE_ENV === "production") {
+        const jiraTicketResponse = await onCreateJiraTicket();
+        if (!jiraTicketResponse) {
+          notifications.show({
+            message: "Failed to create jira ticket",
+            color: "red",
+          });
+          return;
+        }
+
+        const jiraTicket = JSON.parse(jiraTicketResponse);
+
+        const jiraTicketWebLink = jiraTicket._links.web;
+
+        handleUpdateRequest("APPROVED", jiraTicket.issueKey, jiraTicketWebLink);
+      } else if (process.env.NODE_ENV === "development") {
+        handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
+      }
+    } catch (error) {
+      notifications.show({
+        message: "Failed to approve requisition request",
+        color: "red",
+      });
+    }
+  };
 
   const handleAction = (action: string, color: string) => {
     if (
@@ -90,83 +121,104 @@ const RequestActionSection = ({
             <Text size={14}>
               Are you sure you want to {action} this request?
             </Text>
-            <form
-              onSubmit={handleSubmit(async (data) => {
-                const checkJiraIdIfValid = await isValidJiraId(data.jiraId);
-                if (checkJiraIdIfValid) {
-                  handleUpdateRequest("APPROVED", data.jiraId.toUpperCase());
-                  modals.close("approveRf");
-                } else {
-                  notifications.show({
-                    message: "Jira ID is invalid or does not exist.",
-                    color: "red",
-                  });
-                  return "Jira ID is invalid.";
-                }
-              })}
-            >
-              <Stack mt="xl" spacing="xs">
-                <TextInput
-                  icon={<IconId size={16} />}
-                  placeholder="Jira ID"
-                  data-autofocus
-                  {...register("jiraId", {
-                    validate: {
-                      required: (value) => {
-                        if (!value) {
-                          notifications.show({
-                            message: "Jira ID is required.",
-                            color: "red",
-                          });
-                          return "Jira ID is required.";
-                        } else {
-                          return true;
-                        }
-                      },
-                      checkIfUnique: async (value) => {
-                        if (
-                          await checkIfJiraIDIsUnique(supabaseClient, {
-                            value: value.toUpperCase(),
-                          })
-                        ) {
-                          notifications.show({
-                            message:
-                              "Jira ID is already used by another request.",
-                            color: "red",
-                          });
-                          return "Jira ID is already used by another request.";
-                        } else {
-                          return true;
-                        }
-                      },
-                    },
-                  })}
-                  error={errors.jiraId?.message}
-                />
-              </Stack>
-
+            {onCreateJiraTicket ? (
               <Flex mt="md" align="center" justify="flex-end" gap="sm">
                 <Button
                   variant="default"
                   color="dimmed"
                   onClick={() => {
-                    resetValue();
                     modals.close("approveRf");
                   }}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" color="green">
+                <Button
+                  type="submit"
+                  color="green"
+                  onClick={async () => {
+                    modals.close("approveRf");
+                    handleApproveRequisitionRequest(onCreateJiraTicket);
+                  }}
+                >
                   Approve
                 </Button>
               </Flex>
-            </form>
+            ) : (
+              <form
+                onSubmit={handleSubmit(async (data) => {
+                  const checkJiraIdIfValid = await isValidJiraId(data.jiraId);
+                  if (checkJiraIdIfValid) {
+                    handleUpdateRequest("APPROVED", data.jiraId.toUpperCase());
+                    modals.close("approveRf");
+                  } else {
+                    notifications.show({
+                      message: "Jira ID is invalid or does not exist.",
+                      color: "red",
+                    });
+                    return "Jira ID is invalid.";
+                  }
+                })}
+              >
+                <Stack mt="xl" spacing="xs">
+                  <TextInput
+                    icon={<IconId size={16} />}
+                    placeholder="Jira ID"
+                    data-autofocus
+                    {...register("jiraId", {
+                      validate: {
+                        required: (value) => {
+                          if (!value) {
+                            notifications.show({
+                              message: "Jira ID is required.",
+                              color: "red",
+                            });
+                            return "Jira ID is required.";
+                          } else {
+                            return true;
+                          }
+                        },
+                        checkIfUnique: async (value) => {
+                          if (
+                            await checkIfJiraIDIsUnique(supabaseClient, {
+                              value: value.toUpperCase(),
+                            })
+                          ) {
+                            notifications.show({
+                              message:
+                                "Jira ID is already used by another request.",
+                              color: "red",
+                            });
+                            return "Jira ID is already used by another request.";
+                          } else {
+                            return true;
+                          }
+                        },
+                      },
+                    })}
+                    error={errors.jiraId?.message}
+                  />
+                </Stack>
+
+                <Flex mt="md" align="center" justify="flex-end" gap="sm">
+                  <Button
+                    variant="default"
+                    color="dimmed"
+                    onClick={() => {
+                      resetValue();
+                      modals.close("approveRf");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" color="green">
+                    Approve
+                  </Button>
+                </Flex>
+              </form>
+            )}
           </>
         ),
         centered: true,
-        onClose: () => {
-          resetValue();
-        },
       });
     } else {
       openConfirmModal({

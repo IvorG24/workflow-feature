@@ -255,6 +255,27 @@ export type UserValidIDTableInsert =
 export type UserValidIDTableUpdate =
   Database["public"]["Tables"]["user_valid_id_table"]["Update"];
 
+export type MemoFormatTableRow =
+  Database["public"]["Tables"]["memo_format_section_table"]["Row"];
+export type MemoFormatTableInsert =
+  Database["public"]["Tables"]["memo_format_section_table"]["Insert"];
+export type MemoFormatTableUpdate =
+  Database["public"]["Tables"]["memo_format_section_table"]["Update"];
+
+export type MemoFormatSubsectionTableRow =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Row"];
+export type MemoFormatSubsectionTableInsert =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Insert"];
+export type MemoFormatSubsectionTableUpdate =
+  Database["public"]["Tables"]["memo_format_subsection_table"]["Update"];
+
+export type MemoFormatAttachmentTableRow =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Row"];
+export type MemoFormatAttachmentTableInsert =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Insert"];
+export type MemoFormatAttachmentTableUpdate =
+  Database["public"]["Tables"]["memo_format_attachment_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1307,29 +1328,6 @@ export type ReferenceMemoType = MemoTableRow & {
     user_last_name: string;
     user_employee_number: string;
   })[];
-};
-
-export type MemoFormatType = {
-  memo_format_id: string;
-  header: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-    logoPosition: string;
-  };
-  body: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
-  footer: {
-    top: number;
-    right: number;
-    bottom: number;
-    left: number;
-  };
 };
 
 export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {

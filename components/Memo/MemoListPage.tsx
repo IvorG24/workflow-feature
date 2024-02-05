@@ -37,7 +37,7 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import MemoFormatEditor from "./MemoFormatEditor";
+import MemoFormatEditor from "../MemoFormatEditor/MemoFormatEditor";
 import MemoListItemRow from "./MemoListItemRow";
 
 type Props = {
@@ -393,7 +393,6 @@ const MemoListPage = ({
           mt="xl"
         />
       </Flex>
-
       <MemoFormatEditor
         opened={memoFormatEditorIsOpened}
         close={closeMemoFormatEditor}

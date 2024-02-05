@@ -1,13 +1,15 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
+import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
-import { parseMemoFormatTypeToDB } from "@/utils/functions";
+import { escapeQuotes } from "@/utils/string";
 import {
   AppType,
   EditMemoType,
   MemberRoleType,
   MemoAgreementTableRow,
-  MemoFormatType,
+  MemoFormatAttachmentTableInsert,
+  MemoFormatSubsectionTableUpdate,
   OtherExpensesTypeTableUpdate,
   SignerTableRow,
   TeamTableRow,
@@ -17,7 +19,7 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { getCurrentDate } from "./get";
+import { getCurrentDate, getMemoFormat } from "./get";
 import { uploadImage } from "./post";
 
 // Update Team
@@ -614,7 +616,9 @@ export const updateMemo = async (
   const memoLineItemTableValues = updatedLineItemData
     .map(
       (lineItem, lineItemIndex) =>
-        `('${lineItem.memo_line_item_id}', '${lineItem.memo_line_item_content}', '${lineItemIndex}', '${params.memo_id}')`
+        `('${lineItem.memo_line_item_id}', '${escapeQuotes(
+          lineItem.memo_line_item_content
+        )}', '${lineItemIndex}', '${params.memo_id}')`
     )
     .join(",");
 
@@ -625,9 +629,11 @@ export const updateMemo = async (
     )
     .map(
       ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
-        `('${lineItemAttachment?.memo_line_item_attachment_name}', '${
+        `('${
+          lineItemAttachment?.memo_line_item_attachment_name
+        }', '${escapeQuotes(
           lineItemAttachment?.memo_line_item_attachment_caption ?? ""
-        }', '${
+        )}', '${
           lineItemAttachment?.memo_line_item_attachment_storage_bucket
         }', '${
           lineItemAttachment?.memo_line_item_attachment_public_url
@@ -699,15 +705,95 @@ const processAllMemoLineItems = async (
 
 export const updateMemoFormat = async (
   supabaseClient: SupabaseClient<Database>,
-  params: MemoFormatType
+  params: MemoFormatFormValues["formatSection"]
 ) => {
-  const columnListToUpdate = parseMemoFormatTypeToDB(params);
-  const { error } = await supabaseClient
-    .from("memo_format_table")
-    .update(columnListToUpdate)
-    .eq("memo_format_id", params.memo_format_id);
+  const memoFormatSubsectionData: MemoFormatSubsectionTableUpdate[] = [];
+  const memoFormatAttachmentData: MemoFormatAttachmentTableInsert[] = [];
+  const removedMemoFormatAttachmentSubsectionIdList: string[] = [];
 
-  if (error) throw Error;
+  const memoFormatSectionTableData = params.map((section) => {
+    const { format_subsection, ...remainingSectionProps } = section;
+
+    format_subsection.forEach((subsection) => {
+      const { subsection_attachment, ...remainingSubsectionProps } = subsection;
+      memoFormatSubsectionData.push(remainingSubsectionProps);
+
+      if (subsection_attachment.length > 0) {
+        subsection_attachment.forEach((attachment) => {
+          if (attachment.memo_format_attachment_file) {
+            const attachmentTableRow = {
+              memo_format_attachment_id: attachment.memo_format_attachment_id,
+              memo_format_attachment_name:
+                attachment.memo_format_attachment_name,
+              memo_format_attachment_url: attachment.memo_format_attachment_url,
+              memo_format_attachment_subsection_id:
+                attachment.memo_format_attachment_subsection_id,
+              memo_format_attachment_order:
+                attachment.memo_format_attachment_order,
+            };
+            memoFormatAttachmentData.push(
+              attachmentTableRow as MemoFormatAttachmentTableInsert
+            );
+          }
+        });
+      } else {
+        removedMemoFormatAttachmentSubsectionIdList.push(
+          `${subsection.memo_format_subsection_id}`
+        );
+      }
+    });
+
+    return remainingSectionProps;
+  });
+
+  if (!memoFormatSubsectionData.length || !memoFormatSectionTableData.length) {
+    throw new Error(
+      "At least one of the required arrays is empty or undefined."
+    );
+  }
+
+  const { error: memoFormatSectionTableError } = await supabaseClient
+    .from("memo_format_section_table")
+    .upsert(memoFormatSectionTableData);
+
+  const { error: memoFormatSubsectionTableError } = await supabaseClient
+    .from("memo_format_subsection_table")
+    .upsert(memoFormatSubsectionData);
+
+  if (memoFormatAttachmentData.length > 0) {
+    const { error } = await supabaseClient
+      .from("memo_format_attachment_table")
+      .upsert(memoFormatAttachmentData);
+
+    if (error) throw Error;
+  }
+
+  const existingAttachmentIdList = memoFormatAttachmentData.map(
+    (d) => d.memo_format_attachment_id
+  );
+
+  // delete removed attachments
+  const { error: memoFormatAttachmentDeleteError } = await supabaseClient
+    .from("memo_format_attachment_table")
+    .delete()
+    .or(
+      `memo_format_attachment_subsection_id.in.(${removedMemoFormatAttachmentSubsectionIdList.join(
+        ","
+      )}), memo_format_attachment_id.not.in.(${existingAttachmentIdList.join(
+        ","
+      )})`
+    );
+
+  if (
+    memoFormatSectionTableError ||
+    memoFormatSubsectionTableError ||
+    memoFormatAttachmentDeleteError
+  )
+    throw Error;
+
+  const updatedFormatData = await getMemoFormat(supabaseClient);
+
+  return updatedFormatData;
 };
 
 // Update other expenses type
