@@ -1,5 +1,6 @@
 import { createTicket } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
@@ -20,7 +21,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -108,7 +108,7 @@ const CreateTicketPage = ({ member }: Props) => {
             </Stack>
             <Stack spacing={4}>
               <Title order={5}>Date</Title>
-              <Text>{moment().format("YYYY-MM-DD")}</Text>
+              <Text>{formatDate(new Date())}</Text>
             </Stack>
           </Group>
           <Divider />

@@ -1,3 +1,4 @@
+import { formatDate } from "@/utils/constant";
 import { toTitleCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TicketType } from "@/utils/types";
@@ -10,7 +11,6 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import moment from "moment";
 import { getTicketStatusColor } from "../TicketListPage/TicketListItem";
 
 type Props = {
@@ -40,7 +40,7 @@ const TicketDetailSection = ({ ticket }: Props) => {
         <Text>
           {`${requester.team_member_user.user_first_name} ${requester.team_member_user.user_last_name} opened this ticket on `}
           <Text span weight={600}>
-            {moment(ticket.ticket_date_created).format("YYYY-MM-DD")}
+            {formatDate(new Date(ticket.ticket_date_created))}
           </Text>
         </Text>
       </Group>
@@ -64,7 +64,8 @@ const TicketDetailSection = ({ ticket }: Props) => {
               approver.team_member_user.user_last_name
             } reviewed this ticket and marked as '${ticket.ticket_status.toLowerCase()}' on `}
             <Text span weight={600}>
-              {moment(ticket.ticket_status_date_updated).format("YYYY-MM-DD")}
+              {ticket.ticket_status_date_updated &&
+                formatDate(new Date(ticket.ticket_status_date_updated))}
             </Text>
           </Text>
         </Group>

@@ -1,3 +1,4 @@
+import { formatDate, formatTime } from "@/utils/constant";
 import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Chip,
@@ -83,9 +84,11 @@ const RequestSignerSection = ({ signerList }: Props) => {
                   signer.signer_action.toLowerCase(),
                   `${signer.signer_team_member.team_member_user.user_first_name} ${signer.signer_team_member.team_member_user.user_last_name}`,
                   signer.request_signer_status_date_updated
-                    ? new Date(
-                        signer.request_signer_status_date_updated
-                      ).toISOString()
+                    ? `${formatDate(
+                        new Date(signer.request_signer_status_date_updated)
+                      )} ${formatTime(
+                        new Date(signer.request_signer_status_date_updated)
+                      )}`
                     : ""
                 )}
               </Text>

@@ -1,3 +1,4 @@
+import { formatDate } from "@/utils/constant";
 import { getBase64 } from "@/utils/functions";
 import { EditMemoType } from "@/utils/types";
 import {
@@ -11,7 +12,6 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import moment from "moment";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 
@@ -98,7 +98,7 @@ const EditMemoPreview = ({ data }: Props) => {
         })} */}
         {memoData({
           label: "Date",
-          value: moment().format("YYYY-MM-DD"),
+          value: formatDate(new Date()),
         })}
         {memoData({
           label: "Author",

@@ -1,7 +1,7 @@
 import { getTeamFormSLAList } from "@/backend/api/get";
 import { updateSLAHours } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ROW_PER_PAGE } from "@/utils/constant";
+import { ROW_PER_PAGE, formatDate, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { FormSLAWithForm } from "@/utils/types";
@@ -31,7 +31,6 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { FormEvent, useState } from "react";
 
@@ -103,9 +102,9 @@ const SignerSLASettingsPage = ({
         if (!form_sla_date_updated) return <></>;
         return (
           <Text>
-            {moment(new Date(form_sla_date_updated)).format(
-              "YYYY-MM-DD HH:mm:ss.SSS"
-            )}
+            {`${formatDate(new Date(form_sla_date_updated))} ${formatTime(
+              new Date(form_sla_date_updated)
+            )}`}
           </Text>
         );
       },

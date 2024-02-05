@@ -1,4 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatDate, formatTime } from "@/utils/constant";
 import { formatTeamNameToUrlKey, formatTimeString } from "@/utils/string";
 import { SignerRequestSLA } from "@/utils/types";
 import {
@@ -11,7 +12,6 @@ import {
   Text,
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
-import moment from "moment";
 
 type Props = {
   signerSLAList: SignerRequestSLA[] | null;
@@ -66,16 +66,18 @@ const SignerSLAList = ({ signerSLAList }: Props) => {
                   </td>
                   <td>
                     <Text>
-                      {moment(new Date(request.request_date_created)).format(
-                        "YYYY-MM-DD HH:mm:ss.SSS"
-                      )}
+                      {`${formatDate(
+                        new Date(request.request_date_created)
+                      )} ${formatTime(new Date(request.request_date_created))}`}
                     </Text>
                   </td>
                   <td>
                     <Text>
-                      {moment(
+                      {`${formatDate(
                         new Date(request.request_signer_status_date_updated)
-                      ).format("YYYY-MM-DD HH:mm:ss.SSS")}
+                      )} ${formatTime(
+                        new Date(request.request_signer_status_date_updated)
+                      )}`}
                     </Text>
                   </td>
                 </tr>

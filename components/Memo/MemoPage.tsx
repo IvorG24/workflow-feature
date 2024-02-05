@@ -3,6 +3,7 @@ import { agreeToMemo, createNotification } from "@/backend/api/post";
 import { approveOrRejectMemo } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
@@ -31,7 +32,6 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCircleDashed, IconCircleX, IconShare } from "@tabler/icons-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
@@ -469,7 +469,7 @@ const MemoPage = ({ memo }: Props) => {
           })}
           {renderMemoDetails({
             label: "Date",
-            value: moment(memo.memo_date_created).format("YYYY-MM-DD"),
+            value: formatDate(new Date(memo.memo_date_created)),
           })}
           {renderMemoDetails({
             label: "Author",

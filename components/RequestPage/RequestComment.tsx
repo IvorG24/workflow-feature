@@ -1,6 +1,7 @@
 import { deleteComment } from "@/backend/api/delete";
 import { updateComment } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { formatDate, formatTime } from "@/utils/constant";
 import {
   getAvatarColor,
   getFileType,
@@ -216,8 +217,9 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                   </ThemeIcon>
                   <Stack m={0} p={0} spacing={0}>
                     <Text>
-                      {commentContent} on{" "}
-                      {new Date(comment.comment_date_created).toISOString()}
+                      {`${commentContent} on ${formatDate(
+                        new Date(comment.comment_date_created)
+                      )} ${formatTime(new Date(comment.comment_date_created))}`}
                     </Text>
                     <Text color="dimmed" size={12}>
                       {moment(comment.comment_date_created).fromNow()}

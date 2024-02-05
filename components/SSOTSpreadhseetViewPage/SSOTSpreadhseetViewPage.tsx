@@ -3,6 +3,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   DEFAULT_NUMBER_SSOT_ROWS,
   REQUISITION_FIELDS_ORDER,
+  formatDate,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
@@ -24,7 +25,6 @@ import {
 import { useElementSize, useViewportSize } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import moment from "moment";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import SSOTSpreadsheetViewFilter from "./SSOTSpreadsheetViewFilter";
@@ -1596,9 +1596,9 @@ const SSOTSpreadsheetView = ({
               )}
               {requisitionTable.columnList["date_created"] && (
                 <td>
-                  {moment(
+                  {formatDate(
                     new Date(request.requisition_request_date_created)
-                  ).format("YYYY-MM-DD")}
+                  )}
                 </td>
               )}
 
@@ -1618,9 +1618,9 @@ const SSOTSpreadsheetView = ({
                     showColumn && (
                       <td key={index}>
                         {response.request_response_field_type === "DATE"
-                          ? moment(
+                          ? formatDate(
                               new Date(safeParse(response.request_response))
-                            ).format("YYYY-MM-DD")
+                            )
                           : JSON.parse(response.request_response) !== "null"
                           ? JSON.parse(response.request_response)
                           : ""}

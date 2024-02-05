@@ -14,6 +14,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ConnectedRequestIdList,
@@ -40,7 +41,6 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { useRef } from "react";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
@@ -132,7 +132,7 @@ const RequestPage = ({
     }
   );
 
-  const requestDateCreated = moment(new Date()).format("YYYY-MM-DD");
+  const requestDateCreated = formatDate(new Date());
 
   const originalSectionList = request.request_form.form_section;
 

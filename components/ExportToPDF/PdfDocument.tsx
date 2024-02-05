@@ -1,3 +1,4 @@
+import { formatDate, formatTime } from "@/utils/constant";
 import {
   Document,
   Image,
@@ -248,7 +249,11 @@ const PdfDocument = ({
 
                   {formatStatus(approver.status)}
                   <Text style={{ marginTop: "6px" }}>
-                    {approver.date ? new Date(approver.date).toISOString() : ""}
+                    {approver.date
+                      ? `${formatDate(new Date(approver.date))} ${formatTime(
+                          new Date(approver.date)
+                        )}`
+                      : ""}
                   </Text>
                 </View>
               </View>
