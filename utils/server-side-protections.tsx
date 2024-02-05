@@ -123,6 +123,7 @@ export const withOwnerOrApprover = <P extends { [key: string]: any }>(
     context: GetServerSidePropsContext;
     supabaseClient: SupabaseClient<Database>;
     user: User;
+    teamId: string;
   }) => Promise<GetServerSidePropsResult<P>>
 ): GetServerSideProps<P> => {
   return async (
@@ -174,7 +175,7 @@ export const withOwnerOrApprover = <P extends { [key: string]: any }>(
       if (!isOwnerOrApprover)
         throw new Error("User is not an owner or approver");
 
-      return getServerSidePropsFunc({ context, supabaseClient, user });
+      return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
     } catch (error) {
       console.error(error);
       return {

@@ -38,6 +38,8 @@ import {
   SSOTOnLoad,
   ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
+  SignerRequestSLA,
+  SignerWithProfile,
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUserDetails,
@@ -4848,4 +4850,170 @@ export const getSectionInEditRequest = async (
   if (error) throw error;
 
   return data as RequestWithResponseType["request_form"]["form_section"];
+};
+
+// Get query data
+export const getQueryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    queryId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_query_data", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  const queryFetchedData = data as unknown as { queryData: string };
+  return queryFetchedData.queryData;
+};
+
+// Get query table
+export const getQueryList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient.from("query_table").select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Get signer sla
+export const getSignerSLA = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    formId: string;
+    projectId: string;
+    singerId: string;
+    status: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_signer_sla", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as {
+    signerRequestSLA: SignerRequestSLA[];
+    slaHours: number;
+    signerRequestSLACount: number;
+  };
+};
+
+// Get form sla
+export const getFormSLA = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    teamId: string;
+  }
+) => {
+  const { formId, teamId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("form_sla_table")
+    .select("*")
+    .eq("form_sla_form_id", formId)
+    .eq("form_sla_team_id", teamId)
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Get form sla table
+export const getTeamFormSLAList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { teamId, page, limit, search } = params;
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("form_sla_table")
+    .select("*, form_table!inner(*)", { count: "exact" })
+    .eq("form_sla_team_id", teamId);
+
+  if (search) {
+    query = query.ilike("form_table.form_name", `%${search}%`);
+  }
+
+  query.order("form_sla_date_updated", { ascending: true });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return { data, count };
+};
+
+// Fetch project id based on formId
+export const getFormProjectIDs = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+  }
+) => {
+  const { formId } = params;
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .select("signer_team_project_id")
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false);
+  if (error) throw error;
+
+  const stringArray = data.map((signer) => signer.signer_team_project_id);
+  const filteredData = stringArray.filter(Boolean);
+  return filteredData as string[];
+};
+
+// Fetch project by project id
+export const getProjectByID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectIdList: string[];
+  }
+) => {
+  const { projectIdList } = params;
+
+  const { data, error } = await supabaseClient
+    .from("team_project_table")
+    .select("*")
+    .in("team_project_id", projectIdList);
+  if (error) throw error;
+
+  return data;
+};
+
+export const getSignerWithProfile = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    projectId: string;
+  }
+) => {
+  const { formId, projectId } = params;
+  const query = supabaseClient
+    .from("signer_table")
+    .select(
+      "*, signer_team_member: team_member_table(*, team_member_user: user_table(*))"
+    )
+    .eq("signer_form_id", formId);
+
+  if (projectId.length > 0) {
+    query.eq("signer_team_project_id", projectId);
+  } else {
+    query.is("signer_team_project_id", null);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return data as SignerWithProfile[];
 };

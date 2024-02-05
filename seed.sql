@@ -482,3 +482,21 @@ INSERT INTO memo_format_subsection_table(memo_format_subsection_name, memo_forma
 ('left', '16435f18-7ad7-4a44-af87-a6a290787fdc', '16'),
 ('center', '16435f18-7ad7-4a44-af87-a6a290787fdc', '16'),
 ('right', '16435f18-7ad7-4a44-af87-a6a290787fdc', '16');
+
+INSERT INTO query_table (query_name, query_sql) VALUES
+('Request average time from creation to resolved', 'SELECT team_project_name, AVG(request_status_date_updated-request_date_created) AS average_time_to_update FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NOT NULL GROUP BY team_project_name;'),
+('Stale requests by project', 'SELECT team_project_name, COUNT(*) AS number_of_stale_requests FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NULL GROUP BY team_project_name;');
+
+INSERT INTO form_sla_table (form_sla_hours, form_sla_form_id, form_sla_team_id) VALUES
+(0,'7368a23b-601a-4ce8-adea-30b0cb483ab2', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'800723d3-a164-4063-9e18-5fff651a96f8', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'337658f1-0777-45f2-853f-b6f20551712e', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'b8408545-4354-47d0-a648-928c6755a94b', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+-- (0,'e5062660-9026-4629-bc2c-633826fdaa24', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'a732196f-9779-45e2-85fa-7320397e5b0a', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'5782d70a-5f6b-486c-a77f-401066afd005', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'8e173d92-c346-4fb5-8ef2-490105e19263', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'a5a28977-6956-45c1-a624-b9e90911502e');
