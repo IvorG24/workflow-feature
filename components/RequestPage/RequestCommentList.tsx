@@ -6,12 +6,12 @@ import {
 } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { formatDate, formatTime } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { RequestCommentType } from "@/utils/types";
 import { Divider, Group, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -174,7 +174,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
         return attachmentComment;
       });
 
-      const formattedDate = moment(comment.comment_date_created).format("LTS");
+      const formattedDate = formatTime(new Date(comment.comment_date_created));
       const jiraComment = {
         type: "blockquote",
         content: [
@@ -209,9 +209,9 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
                   type: "text",
                   text: `${commenter.user_first_name} ${
                     commenter.user_last_name
-                  } ${formattedDate} ${new Date(
-                    comment.comment_date_created
-                  ).toDateString()}`,
+                  } ${formattedDate} ${formatDate(
+                    new Date(comment.comment_date_created)
+                  )}`,
                   marks: [{ type: "strong" }],
                 },
               ],

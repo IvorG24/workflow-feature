@@ -1,8 +1,8 @@
 import LineChart from "@/components/Chart/LineChart";
 import ListChart from "@/components/Chart/ListChart";
+import { formatDate } from "@/utils/constant";
 import { LineChartDataType } from "@/utils/types";
 import { Box } from "@mantine/core";
-import moment from "moment";
 
 type ResponseChartProps = {
   type: string;
@@ -19,7 +19,7 @@ const ResponseChart = ({ type, data }: ResponseChartProps) => {
       case "DATE":
         const dateChartData = chartData.map((d) => ({
           ...d,
-          label: moment(new Date(d.label)).format("YYYY-MM-DD"),
+          label: formatDate(new Date(d.label)),
         }));
         return <LineChart data={getDataWithStartingPoint(dateChartData)} />;
 

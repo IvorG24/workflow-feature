@@ -2,6 +2,7 @@
 
 import moment from "moment";
 import dynamic from "next/dynamic";
+import { formatDate } from "./constant";
 import { RequestCommentType } from "./types";
 
 // check if a value is empty
@@ -675,9 +676,9 @@ export const generateJiraCommentPayload = (
               type: "text",
               text: `${commenter.user_first_name} ${
                 commenter.user_last_name
-              } ${formattedDate} ${new Date(
-                comment.comment_date_created
-              ).toDateString()}`,
+              } ${formattedDate} ${formatDate(
+                new Date(comment.comment_date_created)
+              )}`,
             },
             {
               type: "hardBreak",

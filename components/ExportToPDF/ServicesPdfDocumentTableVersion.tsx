@@ -1,3 +1,4 @@
+import { formatDate, formatTime } from "@/utils/constant";
 import {
   Document,
   Image,
@@ -413,7 +414,9 @@ const ServicesPdfDocumentTableVersion = ({
                       <View style={(styles.tableCell, styles.centerCell)}>
                         {approver.date && (
                           <Text style={styles.cellFontSize}>
-                            {new Date(approver.date).toISOString()}
+                            {`${formatDate(
+                              new Date(approver.date)
+                            )} ${formatTime(new Date(approver.date))}`}
                           </Text>
                         )}
                       </View>

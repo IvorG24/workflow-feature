@@ -1,4 +1,5 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
+import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 import { SectionWithField } from "./types";
 
@@ -1194,3 +1195,11 @@ export const FORM_SEGMENT_CHOCIES = [
   { label: "Form Details", value: "Form Details" },
   { label: "Form Lookup", value: "Form Lookup" },
 ];
+
+export const formatDate = (dateValue: Date) => {
+  return moment(dateValue).format("YYYY-MM-DD");
+};
+
+export const formatTime = (timeValue: Date) => {
+  return moment(timeValue).format("LT");
+};

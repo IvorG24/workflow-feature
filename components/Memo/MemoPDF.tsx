@@ -1,3 +1,4 @@
+import { formatDate } from "@/utils/constant";
 import { MemoType } from "@/utils/types";
 import {
   Document,
@@ -10,7 +11,6 @@ import {
   View,
 } from "@react-pdf/renderer";
 import { marked } from "marked";
-import moment from "moment";
 import Html from "react-pdf-html";
 import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
 
@@ -326,7 +326,7 @@ const MemoPDF = ({
             <View style={styles.memoHeaderInput}>
               <Text style={{ fontWeight: 600, width: "54px" }}>Date</Text>
               <Text>:</Text>
-              <Text>{moment(memo.memo_date_created).format("YYYY-MM-DD")}</Text>
+              <Text>{formatDate(new Date(memo.memo_date_created))}</Text>
             </View>
             <View style={styles.memoHeaderInput}>
               <Text style={{ fontWeight: 600, width: "54px" }}>From</Text>

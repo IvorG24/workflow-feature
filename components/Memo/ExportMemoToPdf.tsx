@@ -1,8 +1,8 @@
 import { MemoType } from "@/utils/types";
 import { Box, Button } from "@mantine/core";
 
+import { formatDate } from "@/utils/constant";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
-import moment from "moment";
 import { MemoFormatFormValues } from "../MemoFormatEditor/MemoFormatEditor";
 import MemoPDF from "./MemoPDF";
 
@@ -41,8 +41,8 @@ const ExportMemoToPdf = ({
     " " +
     memo.memo_author_user.user_last_name;
   const referenceNumber = memo.memo_reference_number;
-  const pdfFileName = `${moment(memo.memo_date_created).format(
-    "YYYY-MM-DD"
+  const pdfFileName = `${formatDate(
+    new Date(memo.memo_date_created)
   )}-${referenceNumber}-${authorFullname}`;
 
   const [instance] = usePDF({
