@@ -2617,7 +2617,8 @@ RETURNS JSON AS $$
               user_table.user_id,
               user_table.user_first_name,
               user_table.user_last_name,
-              user_table.user_avatar
+              user_table.user_avatar,
+              team_member_table.team_member_id
             FROM request_signer_table
             INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             INNER JOIN team_member_table ON signer_table.signer_team_member_id = team_member_table.team_member_id
@@ -2629,8 +2630,9 @@ RETURNS JSON AS $$
             request_signer_id: signer.request_signer_id,
             request_signer_status: signer.request_signer_status,
             request_signer: {
-              signer_is_primary_signer: signer.signer_is_primary_signer ,
+              signer_is_primary_signer: signer.signer_is_primary_signer,
               signer_team_member: {
+                signer_team_member_id: signer.team_member_id,
                 team_member_user: {
                   user_id: signer.user_id,
                   user_first_name: signer.user_first_name,
@@ -2676,6 +2678,7 @@ RETURNS JSON AS $$
     });
     return return_value
 $$ LANGUAGE plv8;
+
 
 -- End: Fetch request list
 
