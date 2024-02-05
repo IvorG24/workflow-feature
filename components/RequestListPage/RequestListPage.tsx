@@ -254,34 +254,19 @@ const RequestListPage = ({
           <Text>Manage your team requests here.</Text>
         </Box>
         {isFormslyTeam ? (
-          <Flex gap="md">
-            <Button
-              onClick={() =>
-                router.push(
-                  `/${formatTeamNameToUrlKey(
-                    activeTeam.team_name
-                  )}/requests/spreadsheet-view`
-                )
-              }
-              sx={{ flex: 1 }}
-              maw={300}
-            >
-              SSOT Spreadsheet View
-            </Button>
-            <Button
-              onClick={() =>
-                router.push(
-                  `/${formatTeamNameToUrlKey(
-                    activeTeam.team_name
-                  )}/requests/sla`
-                )
-              }
-              sx={{ flex: 1 }}
-              maw={300}
-            >
-              SLA
-            </Button>
-          </Flex>
+          <Button
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name
+                )}/requests/spreadsheet-view`
+              )
+            }
+            sx={{ flex: 1 }}
+            maw={300}
+          >
+            SSOT Spreadsheet View
+          </Button>
         ) : null}
         <Button
           variant="light"

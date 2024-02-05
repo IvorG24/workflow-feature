@@ -39,9 +39,7 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
   const breadCrumbitems = [
     {
       title: "SLA",
-      href: `/${formatTeamNameToUrlKey(
-        activeTeam.team_name ?? ""
-      )}/requests/sla`,
+      href: `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/sla`,
       active: false,
     },
     {
@@ -51,9 +49,9 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
     },
   ].map((item, index) => (
     <Anchor
-      href={item.href}
       color={item.active ? "dimmed" : "blue"}
       key={index}
+      onClick={() => router.push(item.href)}
     >
       {item.title}
     </Anchor>
@@ -158,7 +156,7 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
                 router.push(
                   `/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/requests/sla/signer/settings`
+                  )}/sla/signer/settings`
                 )
               }
               leftIcon={<IconSettings size="1rem" />}

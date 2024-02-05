@@ -30,7 +30,7 @@ export const SLA_LIST = [
     title: "Signer",
     description:
       "Signer SLA track, analyze, and optimize signer response times.",
-    href: "/requests/sla/signer",
+    href: "/sla/signer",
   },
 ];
 

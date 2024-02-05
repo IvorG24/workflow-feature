@@ -29,10 +29,7 @@ type Props = {
 const Page = ({ slaList }: Props) => {
   return (
     <>
-      <Meta
-        description="Signer SLA Page"
-        url="/{teamName}/requests/sla/signer"
-      />
+      <Meta description="Signer SLA Page" url="/{teamName}/sla/signer" />
       <SLAListPage slaList={slaList} />
     </>
   );

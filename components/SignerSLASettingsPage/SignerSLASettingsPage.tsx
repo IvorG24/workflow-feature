@@ -32,6 +32,7 @@ import {
 } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import moment from "moment";
+import { useRouter } from "next/router";
 import { FormEvent, useState } from "react";
 
 type Props = {
@@ -45,20 +46,17 @@ const SignerSLASettingsPage = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
+  const router = useRouter();
 
   const breadCrumbitems = [
     {
       title: "SLA",
-      href: `/${formatTeamNameToUrlKey(
-        activeTeam.team_name ?? ""
-      )}/requests/sla`,
+      href: `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/sla`,
       active: false,
     },
     {
       title: "Signer",
-      href: `/${formatTeamNameToUrlKey(
-        activeTeam.team_name ?? ""
-      )}/requests/sla/signer`,
+      href: `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/sla/signer`,
       active: false,
     },
     {
@@ -68,7 +66,7 @@ const SignerSLASettingsPage = ({
     },
   ].map((item, index) => (
     <Anchor
-      href={item.href}
+      onClick={() => router.push(item.href)}
       color={item.active ? "dimmed" : "blue"}
       key={index}
     >

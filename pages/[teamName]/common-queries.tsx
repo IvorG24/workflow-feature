@@ -32,7 +32,7 @@ type Props = {
 const Page = ({ queryList }: Props) => {
   return (
     <>
-      <Meta description="SLA Page" url="/{teamName}/requests/sla" />
+      <Meta description="SLA Page" url="/{teamName}/sla" />
       <CommonQueriesPage queryList={queryList} />
     </>
   );

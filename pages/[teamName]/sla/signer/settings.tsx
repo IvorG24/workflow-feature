@@ -42,7 +42,7 @@ const Page = ({ slaFormList, slaFormListCount }: Props) => {
     <>
       <Meta
         description="Signer SLA Settings Page"
-        url="/{teamName}/requests/sla/signer/settings"
+        url="/{teamName}/sla/signer/settings"
       />
       <SignerSLASettingsPage
         slaFormList={slaFormList}

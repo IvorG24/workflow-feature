@@ -30,6 +30,7 @@ import {
   IconFile,
   IconFileDescription,
   IconFilePlus,
+  IconFileReport,
   IconFileStack,
   IconFileText,
   IconFiles,
@@ -194,7 +195,7 @@ const ReviewAppNavLink = () => {
     );
   };
 
-  const analyticsSection = [
+  const metricsSection = [
     {
       label: `Dashboard`,
       icon: (
@@ -203,6 +204,15 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/dashboard`,
+    },
+    {
+      label: `SLA`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileReport {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/sla`,
     },
   ];
 
@@ -337,8 +347,8 @@ const ReviewAppNavLink = () => {
     <>
       {!isEmpty(activeTeam) && hasTeam ? (
         <NavLinkSection
-          label={"Analytics"}
-          links={analyticsSection}
+          label={"Metrics"}
+          links={metricsSection}
           {...defaultNavLinkProps}
         />
       ) : null}
