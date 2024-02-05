@@ -595,8 +595,6 @@ export const generateJiraTicketPayload = ({
     throw Error("Warehouse Area Lead is not found.");
   }
 
-  console.log(warehouseAreaLead);
-
   const jiraTicketPayload = {
     form: {
       answers: {

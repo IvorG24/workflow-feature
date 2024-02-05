@@ -3,10 +3,11 @@
 import { safeParse } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
-import { Button, Menu } from "@mantine/core";
+import { Flex, Loader } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
-import { IconList, IconTable } from "@tabler/icons-react";
 import moment from "moment";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
@@ -40,6 +41,7 @@ const ExportToPdf = ({
   sectionWithDuplicateList,
   approverDetails,
 }: Props) => {
+  const router = useRouter();
   const requestor = request.request_team_member.team_member_user;
   const requestDateCreated = getReadableDate(request.request_date_created);
 
@@ -198,43 +200,27 @@ const ExportToPdf = ({
     document: getDocument(),
   });
 
+  useEffect(() => {
+    if (!instance.loading && instanceTable.url && pdfFileName) {
+      const link = document.createElement("a");
+      link.href = instanceTable.url;
+      link.download = `${pdfFileName}-${router.query.type}`;
+      document.body.appendChild(link);
+      link.click();
+      window.close();
+    }
+  }, [instance.loading, instanceTable.url, pdfFileName, router]);
+
   return (
-    <>
-      {!instance.loading && approverDetails.length !== 0 ? (
-        <Menu width={200} shadow="md">
-          <Menu.Target>
-            <Button variant="light">Export to PDF</Button>
-          </Menu.Target>
-
-          <Menu.Dropdown>
-            {!request.request_form.form_is_formsly_form && (
-              <Menu.Item
-                component="a"
-                href={instance.url ? instance.url : "#"}
-                download={`${pdfFileName}-list-view`}
-                icon={<IconList size={16} />}
-              >
-                List View
-              </Menu.Item>
-            )}
-
-            {request.request_form.form_is_formsly_form &&
-              ["Requisition", "Services", "Other Expenses"].includes(
-                request.request_form.form_name
-              ) && (
-                <Menu.Item
-                  component="a"
-                  href={instanceTable.url ? instanceTable.url : "#"}
-                  download={`${pdfFileName}-table-view`}
-                  icon={<IconTable size={16} />}
-                >
-                  Table View
-                </Menu.Item>
-              )}
-          </Menu.Dropdown>
-        </Menu>
-      ) : null}
-    </>
+    <Flex
+      sx={{
+        height: "100vh",
+      }}
+      align="center"
+      justify="center"
+    >
+      <Loader />
+    </Flex>
   );
 };
 

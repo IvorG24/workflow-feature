@@ -16,6 +16,7 @@ import {
   CanvassType,
   ConnectedRequestItemType,
   CreateTicketPageOnLoad,
+  FieldTableRow,
   FormStatusType,
   FormType,
   ItemWithDescriptionAndField,
@@ -24,6 +25,7 @@ import {
   MemoType,
   NotificationOnLoad,
   NotificationTableRow,
+  OptionTableRow,
   OtherExpensesTypeTableRow,
   ReferenceMemoType,
   RequestByFormType,
@@ -4826,4 +4828,24 @@ export const getLevelThreeDescription = async (
   if (error) throw error;
 
   return [data] as CSICodeTableRow[];
+};
+
+// Fetch section in edit request
+export const getSectionInEditRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    supplierOptions: OptionTableRow[];
+    requestId: string;
+    teamId: string;
+    itemOptions: OptionTableRow[];
+    preferredSupplierField: FieldTableRow;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_edit_request_section", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as RequestWithResponseType["request_form"]["form_section"];
 };
