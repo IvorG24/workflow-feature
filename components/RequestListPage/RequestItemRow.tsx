@@ -27,6 +27,10 @@ type Props = {
 const useStyles = createStyles(() => ({
   requestor: {
     border: "solid 2px white",
+    cursor: "pointer",
+  },
+  clickable: {
+    cursor: "pointer",
   },
 }));
 
@@ -150,6 +154,11 @@ const RequestItemRow = ({ request }: Props) => {
             {...defaultAvatarProps}
             color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
             className={classes.requestor}
+            onClick={() =>
+              window.open(
+                `/member/${request.request_team_member.team_member_id}`
+              )
+            }
           >
             {requestor.user_first_name[0] + requestor.user_last_name[0]}
           </Avatar>
