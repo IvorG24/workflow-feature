@@ -6,6 +6,7 @@ import {
   getItem,
   getLevelThreeDescription,
   getProjectSignerWithTeamMember,
+  getSectionInEditRequest,
   getSupplier,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
@@ -20,6 +21,7 @@ import { isStringParsable, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CSICodeTableRow,
+  FieldTableRow,
   FormType,
   FormWithResponseType,
   OptionTableRow,
@@ -57,6 +59,8 @@ type Props = {
     special_approver_signer: FormType["form_signer"][0];
   }[];
   referenceOnly: boolean;
+  supplierOptions: OptionTableRow[];
+  preferredSupplierField?: FieldTableRow;
 };
 
 const EditRequisitionRequestPage = ({
@@ -65,6 +69,8 @@ const EditRequisitionRequestPage = ({
   projectOptions,
   specialApprover,
   referenceOnly,
+  supplierOptions,
+  preferredSupplierField,
 }: Props) => {
   const router = useRouter();
   const formId = request.request_form_id;
@@ -95,6 +101,9 @@ const EditRequisitionRequestPage = ({
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
   const [isSearchingSupplier, setIsSearching] = useState(false);
   const [isSearchingCSI, setIsSearchingCSI] = useState(false);
+  const [originalSections, setOriginalSections] = useState<
+    RequestWithResponseType["request_form"]["form_section"]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -123,14 +132,41 @@ const EditRequisitionRequestPage = ({
   });
 
   useEffect(() => {
-    replaceSection(request_form.form_section);
-  }, [
-    request.request_form,
-    replaceSection,
-    requestFormMethods,
-    itemOptions,
-    request_form.form_section,
-  ]);
+    if (!team.team_id || !preferredSupplierField) return;
+    try {
+      const fetchSections = async () => {
+        const newSection: RequestWithResponseType["request_form"]["form_section"] =
+          [];
+        let index = 1;
+        while (1) {
+          setIsLoading(true);
+          const data = await getSectionInEditRequest(supabaseClient, {
+            index,
+            supplierOptions,
+            requestId: request.request_id,
+            teamId: team.team_id,
+            itemOptions,
+            preferredSupplierField,
+          });
+          if (data.length === 0) break;
+          newSection.push(...data);
+          index += 10;
+        }
+        replaceSection([{ ...request_form.form_section[0] }, ...newSection]);
+        setOriginalSections([
+          { ...request_form.form_section[0] },
+          ...newSection,
+        ]);
+        setIsLoading(false);
+      };
+      fetchSections();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  }, [team.team_id]);
 
   const handleEditRequest = async (data: RequestFormValues) => {
     try {
@@ -423,7 +459,7 @@ const EditRequisitionRequestPage = ({
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
       .lastIndexOf(sectionId);
-    const sectionMatch = request_form.form_section.find(
+    const sectionMatch = formSections.find(
       (section) => section.section_id === sectionId
     );
     if (sectionMatch) {
@@ -845,7 +881,11 @@ const EditRequisitionRequestPage = ({
   };
 
   const supplierSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id) return;
+    if (
+      !teamMember?.team_member_team_id ||
+      !request.request_form.form_section[1]
+    )
+      return;
     try {
       setIsSearching(true);
       const supplierList = await getSupplier(supabaseClient, {
@@ -865,7 +905,8 @@ const EditRequisitionRequestPage = ({
   };
 
   const csiSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id) return;
+    if (!teamMember?.team_member_team_id || !request_form.form_section[1])
+      return;
     try {
       setIsSearchingCSI(true);
       const csiList = await getCSI(supabaseClient, {
@@ -950,7 +991,7 @@ const EditRequisitionRequestPage = ({
               <Button
                 variant="outline"
                 color="red"
-                onClick={() => replaceSection(request_form.form_section)}
+                onClick={() => replaceSection(originalSections)}
               >
                 Reset
               </Button>

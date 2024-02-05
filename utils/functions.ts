@@ -159,7 +159,7 @@ export const getJiraRequestingProjectSite = (formslyItemCategory: string) => {
       id: "10357",
       label: "LUZ-12-051 CATUIRAN",
     },
-    "LUZ-14-041B VALENZUELA PLANT 2": {
+    "VALENZUELA NETWORK": {
       id: "10175",
       label: "LUZ-14-041B VALENZUELA PLANT 2",
     },
@@ -187,11 +187,11 @@ export const getJiraRequestingProjectSite = (formslyItemCategory: string) => {
       id: "10180",
       label: "LUZ-18-007A STE TR4 PACKAGE C",
     },
-    "LUZ-18-018 SUMITOMO NSCR": {
+    NSCR: {
       id: "10181",
       label: "LUZ-18-018 SUMITOMO NSCR",
     },
-    "LUZ-18-033 SFEXWIDENING": {
+    "SUBIC FREEPORT EXPRESSWAY": {
       id: "10182",
       label: "LUZ-18-033 SFEXWIDENING",
     },
@@ -251,7 +251,7 @@ export const getJiraRequestingProjectSite = (formslyItemCategory: string) => {
       id: "10193",
       label: "LUZ-22-001 PNR TRP 01",
     },
-    "LUZ-22-002 500KV BACKBONE S2": {
+    "WESTERN LUZON BACKBONE": {
       id: "10194",
       label: "LUZ-22-002 500KV BACKBONE S2",
     },
@@ -351,13 +351,17 @@ export const getJiraRequestingProjectSite = (formslyItemCategory: string) => {
       id: "10785",
       label: "KRAH",
     },
-    "LUZ-23-006 LAND DEV LEMERY P1": {
+    "LEMERY BATANGAS": {
       id: "10949",
       label: "LUZ-23-006 LAND DEV LEMERY P1",
     },
     "KALAYAAN 2 WIND POWER PROJECT": {
       id: "11106",
       label: " LUZ-23-009 KALAYAAN 2 WIND",
+    },
+    "SAN ISIDRO SOLAR POWER PROJECT": {
+      id: "10960",
+      label: "VIZ-23-008 SAN ISIDRO SOLAR",
     },
   };
 
@@ -490,6 +494,7 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "ALAMINOS YARD",
         "LUZ-22-004 MERALCO HDD 3",
         "LUZ-23-005 MRT 7 NORTH AVE",
+        "LUZ-22-002 500KV BACKBONE S2",
       ],
       fullName: "Rey Berlon",
       jiraAccountId:
@@ -522,14 +527,15 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "MIN-21-016 CLARIN",
         "MIN-21-005 12MW MANGIMA HPP",
         "MIN-22-008 MALADUGAO HEPP",
-        "MIN-22-006 DAVAO HYDRO &amp; BW",
+        "MIN-22-006 DAVAO HYDRO & BW",
         "MIN-15-077 MW SIGUIL HYDRO",
         "VIZ-22-003 LOBOC 2",
+        "MIN-15-077  MW SIGUIL HYDRO",
+        "VIZ-23-008 SAN ISIDRO SOLAR",
       ],
-      fullName: "Vincent Andallo- Luzon C Area Lead (Active)",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e8ab391d-90e2-46fb-9ae8-e81fa6991ab3",
-      emailAddress: "vincent.andallo.staclara@gmail.com",
+      fullName: "Christopher Waga",
+      jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
+      emailAddress: "christopher.waga@staclara.com.ph",
     },
   ];
 

@@ -12,6 +12,7 @@ import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTr
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
+  FieldTableRow,
   FormType,
   OptionTableRow,
   RequestWithResponseType,
@@ -60,6 +61,8 @@ export type EditRequestOnLoadProps = {
     special_approver_signer: FormType["form_signer"][0];
   }[];
   referenceOnly: boolean;
+  supplierOptions?: OptionTableRow[];
+  preferredSupplierField?: FieldTableRow;
 };
 
 const Page = ({
@@ -72,6 +75,8 @@ const Page = ({
   sourceProjectList = {},
   specialApprover = [],
   referenceOnly,
+  supplierOptions = [],
+  preferredSupplierField,
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
 
@@ -85,6 +90,8 @@ const Page = ({
             projectOptions={projectOptions}
             specialApprover={specialApprover}
             referenceOnly={referenceOnly}
+            supplierOptions={supplierOptions}
+            preferredSupplierField={preferredSupplierField}
           />
         );
       case "Services":
