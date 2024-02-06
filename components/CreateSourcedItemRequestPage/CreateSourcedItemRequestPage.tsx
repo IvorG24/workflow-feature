@@ -1,5 +1,5 @@
 import {
-  checkRequisitionQuantity,
+  checkItemQuantity,
   getMultipleProjectSignerWithTeamMember,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
@@ -120,7 +120,7 @@ const CreateSourcedItemRequestPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.requisitionId
+      router.query.itemId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -130,7 +130,7 @@ const CreateSourcedItemRequestPage = ({
       if (!teamMember) return;
       setIsLoading(true);
 
-      const requisitionID = JSON.stringify(
+      const itemID = JSON.stringify(
         data.sections[0].section_field[0].field_response
       );
 
@@ -179,8 +179,8 @@ const CreateSourcedItemRequestPage = ({
         });
       });
 
-      const warningItemList = await checkRequisitionQuantity(supabaseClient, {
-        requisitionID,
+      const warningItemList = await checkItemQuantity(supabaseClient, {
+        itemID,
         itemFieldList,
         quantityFieldList,
       });
@@ -192,8 +192,7 @@ const CreateSourcedItemRequestPage = ({
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the
-                Requisition
+                There are items that will exceed the quantity limit of the Item
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (

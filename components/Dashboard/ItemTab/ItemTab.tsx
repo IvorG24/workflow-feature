@@ -9,7 +9,7 @@ type Props = {
   fieldResponseData: RequestResponseDataType[];
 };
 
-const RequisitionTab = ({ fieldResponseData }: Props) => {
+const ItemTab = ({ fieldResponseData }: Props) => {
   const [selectedPurchaseData, setSelectedPurchaseData] = useState("user");
   const [selectedBarChartItem, setSelectedBarChartItem] = useState("");
 
@@ -52,4 +52,4 @@ const RequisitionTab = ({ fieldResponseData }: Props) => {
   );
 };
 
-export default RequisitionTab;
+export default ItemTab;

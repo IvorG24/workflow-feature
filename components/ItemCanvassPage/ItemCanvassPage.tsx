@@ -42,7 +42,7 @@ type Props = {
   lowestAdditionalCharge: number;
 };
 
-const RequisitionCanvassPage = ({
+const ItemCanvassPage = ({
   canvassData,
   lowestPricePerItem,
   summaryData,
@@ -63,7 +63,7 @@ const RequisitionCanvassPage = ({
           response={{
             id: `${router.query.requestId}`,
             type: "LINK",
-            label: "Requisition ID",
+            label: "Item ID",
             value: `"${router.query.requestId}"`,
             options: [],
           }}
@@ -230,4 +230,4 @@ const RequisitionCanvassPage = ({
   );
 };
 
-export default RequisitionCanvassPage;
+export default ItemCanvassPage;

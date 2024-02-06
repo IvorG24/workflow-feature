@@ -1,8 +1,8 @@
 import { Box, Container, Paper } from "@mantine/core";
-import RequisitionTab from "../RequisitionTab/RequisitionTab";
+import RequsitionSearch from "../ItemSearch";
+import ItemTab from "../ItemTab/ItemTab";
 import RequestResponseSection from "./ResponseSection/RequestResponseSection";
 import SearchKeywordResponse from "./SearchKeywordResponse";
-import RequsitionSearch from "../RequisitionSearch";
 
 type ResponseTabProps = {
   selectedForm: string | null;
@@ -54,7 +54,7 @@ ResponseTabProps) => {
       <Box>
         {isRequsitionForm ? (
           <Box mt="md">
-            <RequisitionTab fieldResponseData={[]} />
+            <ItemTab fieldResponseData={[]} />
           </Box>
         ) : (
           <RequestResponseSection requestResponse={[]} />
@@ -65,7 +65,7 @@ ResponseTabProps) => {
         <Box>
           {isRequsitionForm ? (
             <Box mt="md">
-              <RequisitionTab fieldResponseData={fieldResponseData} />
+              <ItemTab fieldResponseData={fieldResponseData} />
             </Box>
           ) : (
             <RequestResponseSection requestResponse={fieldResponseData} />

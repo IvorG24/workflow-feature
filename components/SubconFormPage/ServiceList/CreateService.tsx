@@ -1,6 +1,6 @@
 import { checkServiceName } from "@/backend/api/get";
 import { createService } from "@/backend/api/post";
-import InputAddRemove from "@/components/RequisitionFormPage/InputAddRemove";
+import InputAddRemove from "@/components/ItemFormPage/InputAddRemove";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import { ServiceForm, ServiceWithScopeType } from "@/utils/types";

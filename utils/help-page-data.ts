@@ -79,7 +79,7 @@ export const helpPageData = [
 
     <h5>Team Projects</h5>
     <ol>
-        <li>Team projects are for forms that need project information. For example, in Formsly Requisition Form, members must enter a project name and can select their projects.</li>
+        <li>Team projects are for forms that need project information. For example, in Formsly Item Form, members must enter a project name and can select their projects.</li>
         <li>To add a project, click 'Add,' enter the project name in the 'Project Name' field, and click <strong>Save</strong>.</li>
         <li>To delete projects, check the box next to the project name and click <strong>Remove</strong>.</li>
         <li>To manage members in a project, click the project name, and a section will appear at the bottom of Team Projects for adding or removing members.</li>
@@ -96,12 +96,12 @@ export const helpPageData = [
   },
   {
     id: uuid(),
-    title: "How to add items in the Requisition Form",
+    title: "How to add items in the Item Form",
     content: `
     <p><strong>Only members with owner and approver roles can add items.</strong></p>
     <ol>
         <li>Go to <a target="__blank" href="https://formsly.io/team-requests/forms">Forms</a> page.</li>
-        <li>Once in the forms page, click <strong>Requisition</strong>. You will be redirected to the Requisition Form page.</li>
+        <li>Once in the forms page, click <strong>Item</strong>. You will be redirected to the Item Form page.</li>
         <li>To add an item, click <strong>Add</strong> found in the upper right corner of the Items Section.</li>
         <li>Enter all required fields. To add more item descriptions, click the <strong>"Plus Sign"</strong> button at the bottom.</li>
         <li>Once you have confirmed that all item details are correct, click <strong>Save</strong>.</li>

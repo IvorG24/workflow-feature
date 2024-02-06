@@ -109,7 +109,7 @@ const CreateReceivingInspectingReportPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.requisitionId
+      router.query.itemId
     );
     setValue(
       `sections.${0}.section_field.${1}.field_response`,

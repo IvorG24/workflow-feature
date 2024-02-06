@@ -201,7 +201,7 @@ type Props = {
   }[];
 };
 
-const RequisitionPdfDocumentTableVersion = ({
+const ItemPdfDocumentTableVersion = ({
   requestDetails,
   requestorDetails,
   requestIDs,
@@ -438,7 +438,7 @@ const RequisitionPdfDocumentTableVersion = ({
   );
 };
 
-export default RequisitionPdfDocumentTableVersion;
+export default ItemPdfDocumentTableVersion;
 
 const Footer = () => (
   <View style={styles.footer} fixed>

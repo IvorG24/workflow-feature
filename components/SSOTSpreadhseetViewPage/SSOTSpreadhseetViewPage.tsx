@@ -2,7 +2,7 @@ import { useSSOTTableFilter } from "@/hooks/useSSOTTableFilter";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   DEFAULT_NUMBER_SSOT_ROWS,
-  REQUISITION_FIELDS_ORDER,
+  ITEM_FIELDS_ORDER,
   formatDate,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -65,7 +65,7 @@ const useStyles = createStyles((theme) => ({
     minWidth: 500,
     maxWidth: 500,
   },
-  requisitionTable: {
+  itemTable: {
     "& th": {
       backgroundColor:
         theme.colorScheme === "dark"
@@ -180,8 +180,8 @@ type Props = {
 
 export type ShowColumnList = { [key: string]: boolean };
 
-const requisitionTableColumnList = [
-  "Requisition ID",
+const itemTableColumnList = [
+  "Item ID",
   "Jira ID",
   "OTP ID",
   "Date Created",
@@ -192,7 +192,7 @@ const requisitionTableColumnList = [
   "Purpose",
 ];
 
-const requisitionItemTableColumnList = [
+const itemItemTableColumnList = [
   "General Name",
   "Quantity",
   "Base Unit of Measurement",
@@ -293,7 +293,7 @@ const SSOTSpreadsheetView = ({
   const team = useActiveTeam();
   const viewport = useRef<HTMLDivElement>(null);
 
-  const [requisitionList, setRequisitionList] = useState(data);
+  const [itemList, setItemList] = useState(data);
   const [offset, setOffset] = useState(1);
   const [isInView, setIsInView] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -301,14 +301,11 @@ const SSOTSpreadsheetView = ({
     "always"
   );
   const [isFetchable, setIsFetchable] = useState(
-    requisitionList.length === DEFAULT_NUMBER_SSOT_ROWS
+    itemList.length === DEFAULT_NUMBER_SSOT_ROWS
   );
 
-  const requisitionTable = useSSOTTableFilter(true, requisitionTableColumnList);
-  const requisitionItemTable = useSSOTTableFilter(
-    true,
-    requisitionItemTableColumnList
-  );
+  const itemTable = useSSOTTableFilter(true, itemTableColumnList);
+  const itemItemTable = useSSOTTableFilter(true, itemItemTableColumnList);
 
   // const quotationTable = useSSOTTableFilter(true, quotationTableColumnList);
   // const quotationItemTable = useSSOTTableFilter(
@@ -344,8 +341,8 @@ const SSOTSpreadsheetView = ({
   // );
 
   const tables = {
-    requisitionTable,
-    requisitionItemTable,
+    itemTable,
+    itemItemTable,
     // quotationTable,
     // quotationItemTable,
     // sourcedItemTable,
@@ -384,10 +381,10 @@ const SSOTSpreadsheetView = ({
 
       const trimmedSearch = search.trim();
 
-      let requisitionFilterCount = 0;
-      requestingProjectList.length !== 0 && requisitionFilterCount++;
-      itemNameList.length !== 0 && requisitionFilterCount++;
-      trimmedSearch.length !== 0 && requisitionFilterCount++;
+      let itemFilterCount = 0;
+      requestingProjectList.length !== 0 && itemFilterCount++;
+      itemNameList.length !== 0 && itemFilterCount++;
+      trimmedSearch.length !== 0 && itemFilterCount++;
 
       const { data, error } = await supabaseClient.rpc("get_ssot", {
         input_data: {
@@ -395,12 +392,12 @@ const SSOTSpreadsheetView = ({
           pageNumber: 1,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
           search: trimmedSearch,
-          requisitionFilter: [
+          itemFilter: [
             ...requestingProjectList,
             ...itemNameList,
             ...(trimmedSearch ? [`${trimmedSearch}`] : []),
           ],
-          requisitionFilterCount,
+          itemFilterCount,
           supplierList,
         },
       });
@@ -412,7 +409,7 @@ const SSOTSpreadsheetView = ({
       } else {
         setIsFetchable(false);
       }
-      setRequisitionList(formattedData);
+      setItemList(formattedData);
       viewport.current &&
         viewport.current.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
@@ -441,10 +438,10 @@ const SSOTSpreadsheetView = ({
 
       const trimmedSearch = search.trim();
 
-      let requisitionFilterCount = 0;
-      requestingProjectList.length !== 0 && requisitionFilterCount++;
-      itemNameList.length !== 0 && requisitionFilterCount++;
-      trimmedSearch.length !== 0 && requisitionFilterCount++;
+      let itemFilterCount = 0;
+      requestingProjectList.length !== 0 && itemFilterCount++;
+      itemNameList.length !== 0 && itemFilterCount++;
+      trimmedSearch.length !== 0 && itemFilterCount++;
 
       const { data, error } = await supabaseClient.rpc("get_ssot", {
         input_data: {
@@ -452,12 +449,12 @@ const SSOTSpreadsheetView = ({
           pageNumber: offset,
           rowLimit: DEFAULT_NUMBER_SSOT_ROWS,
           search: trimmedSearch,
-          requisitionFilter: [
+          itemFilter: [
             ...requestingProjectList,
             ...itemNameList,
             ...(trimmedSearch ? [`${trimmedSearch}`] : []),
           ],
-          requisitionFilterCount,
+          itemFilterCount,
           supplierList: supplierList,
         },
       });
@@ -467,10 +464,10 @@ const SSOTSpreadsheetView = ({
         const formattedData = data as SSOTType[];
         if (formattedData.length < DEFAULT_NUMBER_SSOT_ROWS) {
           setIsFetchable(false);
-          setRequisitionList((prev) => [...prev, ...formattedData]);
+          setItemList((prev) => [...prev, ...formattedData]);
         } else {
           setIsFetchable(true);
-          setRequisitionList((prev) => [...prev, ...formattedData]);
+          setItemList((prev) => [...prev, ...formattedData]);
         }
       }
     } catch (e) {
@@ -503,7 +500,7 @@ const SSOTSpreadsheetView = ({
   }, [isInView]);
 
   // const renderRir = (
-  //   request: SSOTType["requisition_quotation_request"][0]["quotation_rir_request"]
+  //   request: SSOTType["item_quotation_request"][0]["quotation_rir_request"]
   // ) => {
   //   return request.map((request) => {
   //     const itemName: string[] = [];
@@ -689,7 +686,7 @@ const SSOTSpreadsheetView = ({
   // };
 
   // const renderTransferReceipt = (
-  //   request: SSOTType["requisition_sourced_item_request"][0]["sourced_item_ro_request"][0]["ro_transfer_receipt_request"]
+  //   request: SSOTType["item_sourced_item_request"][0]["sourced_item_ro_request"][0]["ro_transfer_receipt_request"]
   // ) => {
   //   return request.map((request) => {
   //     const itemName: string[] = [];
@@ -890,7 +887,7 @@ const SSOTSpreadsheetView = ({
   // };
 
   // const renderReleaseOrder = (
-  //   request: SSOTType["requisition_sourced_item_request"][0]["sourced_item_ro_request"]
+  //   request: SSOTType["item_sourced_item_request"][0]["sourced_item_ro_request"]
   // ) => {
   //   return request.map((request) => {
   //     const itemName: string[] = [];
@@ -1082,7 +1079,7 @@ const SSOTSpreadsheetView = ({
   // };
 
   // const renderQuotation = (
-  //   request: SSOTType["requisition_quotation_request"]
+  //   request: SSOTType["item_quotation_request"]
   // ) => {
   //   return request.map((request) => {
   //     const itemName: string[] = [];
@@ -1331,7 +1328,7 @@ const SSOTSpreadsheetView = ({
   // };
 
   // const renderSourcedItem = (
-  //   request: SSOTType["requisition_sourced_item_request"]
+  //   request: SSOTType["item_sourced_item_request"]
   // ) => {
   //   return request.map((request) => {
   //     const itemName: string[] = [];
@@ -1524,8 +1521,8 @@ const SSOTSpreadsheetView = ({
   //   });
   // };
 
-  const renderRequisition = () => {
-    return requisitionList.map((request) => {
+  const renderItem = () => {
+    return itemList.map((request) => {
       const itemName: string[] = [];
       const itemUnit: string[] = [];
       const itemQuantity: string[] = [];
@@ -1533,15 +1530,15 @@ const SSOTSpreadsheetView = ({
       const itemGlAccount: string[] = [];
       const itemCSICode: string[] = [];
 
-      const fields = request.requisition_request_response.sort(
+      const fields = request.item_request_response.sort(
         (a: SSOTResponseType, b: SSOTResponseType) => {
           return (
-            REQUISITION_FIELDS_ORDER.indexOf(a.request_response_field_name) -
-            REQUISITION_FIELDS_ORDER.indexOf(b.request_response_field_name)
+            ITEM_FIELDS_ORDER.indexOf(a.request_response_field_name) -
+            ITEM_FIELDS_ORDER.indexOf(b.request_response_field_name)
           );
         }
       );
-      const items = fields.slice(0, -REQUISITION_FIELDS_ORDER.length);
+      const items = fields.slice(0, -ITEM_FIELDS_ORDER.length);
 
       const sortedAndGroupedItems = sortAndGroupItems(items);
       sortedAndGroupedItems.forEach((group, groupIndex) => {
@@ -1579,40 +1576,36 @@ const SSOTSpreadsheetView = ({
       });
 
       return (
-        <tr key={request.requisition_request_id} className={classes.cell}>
-          {requisitionTable.show && (
+        <tr key={request.item_request_id} className={classes.cell}>
+          {itemTable.show && (
             <>
-              {requisitionTable.columnList["requisition_id"] && (
+              {itemTable.columnList["item_id"] && (
                 <td>
-                  {request.requisition_request_formsly_id ||
-                    request.requisition_request_id}
+                  {request.item_request_formsly_id || request.item_request_id}
                 </td>
               )}
-              {requisitionTable.columnList["jira_id"] && (
-                <td>{request.requisition_request_jira_id}</td>
+              {itemTable.columnList["jira_id"] && (
+                <td>{request.item_request_jira_id}</td>
               )}
-              {requisitionTable.columnList["otp_id"] && (
-                <td>{request.requisition_request_otp_id}</td>
+              {itemTable.columnList["otp_id"] && (
+                <td>{request.item_request_otp_id}</td>
               )}
-              {requisitionTable.columnList["date_created"] && (
+              {itemTable.columnList["date_created"] && (
                 <td>
-                  {formatDate(
-                    new Date(request.requisition_request_date_created)
-                  )}
+                  {formatDate(new Date(request.item_request_date_created))}
                 </td>
               )}
 
-              {requisitionTable.columnList["operations/engineering"] && (
-                <td>{`${request.requisition_request_owner.user_first_name} ${request.requisition_request_owner.user_last_name}`}</td>
+              {itemTable.columnList["operations/engineering"] && (
+                <td>{`${request.item_request_owner.user_first_name} ${request.item_request_owner.user_last_name}`}</td>
               )}
               {fields
-                .slice(-REQUISITION_FIELDS_ORDER.length)
+                .slice(-ITEM_FIELDS_ORDER.length)
                 .map((response, index) => {
                   const fieldName =
                     response.request_response_field_name.toLowerCase();
                   const columnPropName = fieldName.replace(/\s+/g, "_");
-                  const showColumn =
-                    requisitionTable.columnList[columnPropName];
+                  const showColumn = itemTable.columnList[columnPropName];
 
                   return (
                     showColumn && (
@@ -1628,40 +1621,38 @@ const SSOTSpreadsheetView = ({
                     )
                   );
                 })}
-              {requisitionItemTable.show && (
+              {itemItemTable.show && (
                 <td style={{ padding: 0 }}>
                   <Table
                     withBorder
                     withColumnBorders
                     pos="relative"
                     h="100%"
-                    className={classes.requisitionTable}
+                    className={classes.itemTable}
                     ref={containerRef}
                   >
                     <thead>
                       <tr>
-                        {requisitionItemTable.columnList["general_name"] && (
+                        {itemItemTable.columnList["general_name"] && (
                           <th className={classes.long}>General Name</th>
                         )}
-                        {requisitionItemTable.columnList["quantity"] && (
+                        {itemItemTable.columnList["quantity"] && (
                           <th className={classes.normal}>Quantity</th>
                         )}
-                        {requisitionItemTable.columnList[
+                        {itemItemTable.columnList[
                           "base_unit_of_measurement"
                         ] && (
                           <th className={classes.date}>
                             Base Unit of Measurement
                           </th>
                         )}
-                        {requisitionItemTable.columnList[
-                          "item_description"
-                        ] && (
+                        {itemItemTable.columnList["item_description"] && (
                           <th className={classes.description}>Description</th>
                         )}
-                        {requisitionItemTable.columnList["gl_account"] && (
+                        {itemItemTable.columnList["gl_account"] && (
                           <th className={classes.long}>GL Account</th>
                         )}
-                        {requisitionItemTable.columnList["csi_code"] && (
+                        {itemItemTable.columnList["csi_code"] && (
                           <th className={classes.long}>CSI Code</th>
                         )}
                       </tr>
@@ -1670,14 +1661,12 @@ const SSOTSpreadsheetView = ({
                       {itemName.map((item, index) => {
                         return (
                           <tr key={index} className={classes.cell}>
-                            {requisitionItemTable.columnList[
-                              "general_name"
-                            ] && (
+                            {itemItemTable.columnList["general_name"] && (
                               <td>
                                 <Text size={14}>{item}</Text>
                               </td>
                             )}
-                            {requisitionItemTable.columnList["quantity"] && (
+                            {itemItemTable.columnList["quantity"] && (
                               <td>
                                 <Text size={14}>
                                   {addCommaToNumber(
@@ -1686,16 +1675,14 @@ const SSOTSpreadsheetView = ({
                                 </Text>
                               </td>
                             )}
-                            {requisitionItemTable.columnList[
+                            {itemItemTable.columnList[
                               "base_unit_of_measurement"
                             ] && (
                               <td>
                                 <Text size={14}>{itemUnit[index]}</Text>
                               </td>
                             )}
-                            {requisitionItemTable.columnList[
-                              "item_description"
-                            ] && (
+                            {itemItemTable.columnList["item_description"] && (
                               <td>
                                 <pre
                                   style={{
@@ -1708,12 +1695,12 @@ const SSOTSpreadsheetView = ({
                                 </pre>
                               </td>
                             )}
-                            {requisitionItemTable.columnList["gl_account"] && (
+                            {itemItemTable.columnList["gl_account"] && (
                               <td>
                                 <Text size={14}>{itemGlAccount[index]}</Text>
                               </td>
                             )}
-                            {requisitionItemTable.columnList["csi_code"] && (
+                            {itemItemTable.columnList["csi_code"] && (
                               <td>
                                 <Text size={14}>{itemCSICode[index]}</Text>
                               </td>
@@ -1729,7 +1716,7 @@ const SSOTSpreadsheetView = ({
           )}
           {/* {quotationTable.show && (
             <td style={{ padding: 0 }}>
-              {request.requisition_quotation_request.length !== 0 ? (
+              {request.item_quotation_request.length !== 0 ? (
                 <Table
                   withBorder
                   withColumnBorders
@@ -1776,7 +1763,7 @@ const SSOTSpreadsheetView = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {renderQuotation(request.requisition_quotation_request)}
+                    {renderQuotation(request.item_quotation_request)}
                   </tbody>
                 </Table>
               ) : null}
@@ -1784,7 +1771,7 @@ const SSOTSpreadsheetView = ({
           )}
           {sourcedItemTable.show && (
             <td style={{ padding: 0 }}>
-              {request.requisition_sourced_item_request.length !== 0 ? (
+              {request.item_sourced_item_request.length !== 0 ? (
                 <Table
                   withBorder
                   withColumnBorders
@@ -1815,7 +1802,7 @@ const SSOTSpreadsheetView = ({
                   </thead>
                   <tbody>
                     {renderSourcedItem(
-                      request.requisition_sourced_item_request
+                      request.item_sourced_item_request
                     )}
                   </tbody>
                 </Table>
@@ -1902,52 +1889,50 @@ const SSOTSpreadsheetView = ({
               withColumnBorders
               pos="relative"
               h="100%"
-              className={classes.requisitionTable}
+              className={classes.itemTable}
               ref={containerRef}
             >
               <thead>
                 <tr>
-                  {requisitionTable.show && (
+                  {itemTable.show && (
                     <>
-                      {requisitionTable.columnList["requisition_id"] && (
-                        <th className={classes.long}>Requisition ID</th>
+                      {itemTable.columnList["item_id"] && (
+                        <th className={classes.long}>Item ID</th>
                       )}
-                      {requisitionTable.columnList["jira_id"] && (
+                      {itemTable.columnList["jira_id"] && (
                         <th className={classes.long}>Jira ID</th>
                       )}
-                      {requisitionTable.columnList["otp_id"] && (
+                      {itemTable.columnList["otp_id"] && (
                         <th className={classes.long}>OTP ID</th>
                       )}
-                      {requisitionTable.columnList["date_created"] && (
+                      {itemTable.columnList["date_created"] && (
                         <th className={classes.date}>Date Created</th>
                       )}
-                      {requisitionTable.columnList[
-                        "operations/engineering"
-                      ] && (
+                      {itemTable.columnList["operations/engineering"] && (
                         <th className={classes.processor}>
                           Operations / Engineering
                         </th>
                       )}
-                      {requisitionTable.columnList["requesting_project"] && (
+                      {itemTable.columnList["requesting_project"] && (
                         <th className={classes.long}>Requesting Project</th>
                       )}
-                      {requisitionTable.columnList["type"] && (
+                      {itemTable.columnList["type"] && (
                         <th className={classes.normal}>Type</th>
                       )}
-                      {requisitionTable.columnList["date_needed"] && (
+                      {itemTable.columnList["date_needed"] && (
                         <th className={classes.normal}>Date Needed</th>
                       )}
-                      {requisitionTable.columnList["purpose"] && (
+                      {itemTable.columnList["purpose"] && (
                         <th className={classes.long}>Purpose</th>
                       )}
-                      {requisitionItemTable.show && <th>Item</th>}
+                      {itemItemTable.show && <th>Item</th>}
                     </>
                   )}
                   {/* {quotationTable.show && <th>Quotation</th>}
                   {sourcedItemTable.show && <th>Sourced Item</th>} */}
                 </tr>
               </thead>
-              <tbody>{renderRequisition()}</tbody>
+              <tbody>{renderItem()}</tbody>
             </Table>
           </Box>
         </ScrollArea>

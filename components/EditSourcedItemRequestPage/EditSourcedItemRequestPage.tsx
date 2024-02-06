@@ -1,6 +1,6 @@
 import {
   checkIfRequestIsEditable,
-  checkRequisitionQuantity,
+  checkItemQuantity,
   getMultipleProjectSignerWithTeamMember,
 } from "@/backend/api/get";
 import { editRequest } from "@/backend/api/post";
@@ -120,7 +120,7 @@ const EditSourcedItemRequestPage = ({
       if (!teamMember) return;
       setIsLoading(true);
 
-      const requisitionID = JSON.stringify(
+      const itemID = JSON.stringify(
         data.sections[0].section_field[0].field_response[0].request_response
       );
 
@@ -179,8 +179,8 @@ const EditSourcedItemRequestPage = ({
         });
       });
 
-      const warningItemList = await checkRequisitionQuantity(supabaseClient, {
-        requisitionID,
+      const warningItemList = await checkItemQuantity(supabaseClient, {
+        itemID,
         itemFieldList,
         quantityFieldList,
       });
@@ -192,8 +192,7 @@ const EditSourcedItemRequestPage = ({
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the
-                Requisition
+                There are items that will exceed the quantity limit of the Item
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (

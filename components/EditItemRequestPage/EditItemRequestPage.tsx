@@ -63,7 +63,7 @@ type Props = {
   preferredSupplierField?: FieldTableRow;
 };
 
-const EditRequisitionRequestPage = ({
+const EditItemRequestPage = ({
   request,
   itemOptions,
   projectOptions,
@@ -955,7 +955,7 @@ const EditRequisitionRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     isSectionRemovable={isRemovable}
-                    requisitionFormMethods={{
+                    itemFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
@@ -1004,4 +1004,4 @@ const EditRequisitionRequestPage = ({
   );
 };
 
-export default EditRequisitionRequestPage;
+export default EditItemRequestPage;
