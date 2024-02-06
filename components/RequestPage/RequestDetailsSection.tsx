@@ -1,5 +1,6 @@
 import { checkIfOtpIdIsUnique } from "@/backend/api/get";
 import { updateOtpId } from "@/backend/api/update";
+import { formatDate, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   getAvatarColor,
@@ -144,10 +145,11 @@ const RequestDetailsSection = ({
             primarySigner.request_signer_status_date_updated &&
             ["APPROVED", "REJECTED"].includes(request.request_status) && (
               <Text color="dimmed">
-                on{" "}
-                {new Date(
-                  primarySigner.request_signer_status_date_updated
-                ).toISOString()}
+                {`on ${formatDate(
+                  new Date(primarySigner.request_signer_status_date_updated)
+                )} ${formatTime(
+                  new Date(primarySigner.request_signer_status_date_updated)
+                )}`}
               </Text>
             )}
         </Group>

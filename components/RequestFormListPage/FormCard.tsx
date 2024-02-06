@@ -1,4 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatDate, formatTime } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { FormWithOwnerType } from "@/utils/types";
@@ -141,7 +142,9 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
               </Avatar>
             </Tooltip>
             <Tooltip
-              label={moment(form.form_date_created).toISOString()}
+              label={`${formatDate(
+                new Date(form.form_date_created)
+              )} ${formatTime(new Date(form.form_date_created))}`}
               openDelay={400}
             >
               <Text size="xs" color="dimmed">

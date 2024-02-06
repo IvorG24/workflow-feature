@@ -995,6 +995,7 @@ export type RequestListItemType = {
     request_signer: {
       signer_is_primary_signer: boolean;
       signer_team_member: {
+        signer_team_member_id: string;
         team_member_user: {
           user_id: string;
           user_first_name: string;

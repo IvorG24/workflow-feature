@@ -18,6 +18,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { formatDate } from "@/utils/constant";
 import {
   generateJiraCommentPayload,
   generateJiraTicketPayload,
@@ -239,7 +240,7 @@ Props) => {
     initialCommentList: request.request_comment,
   });
 
-  const requestDateCreated = moment(new Date(request.request_date_created)).format("YYYY-MM-DD");
+  const requestDateCreated = formatDate(new Date(request.request_date_created));
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",

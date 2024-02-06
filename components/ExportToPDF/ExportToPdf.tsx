@@ -1,11 +1,11 @@
 "use client";
 
+import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
 import { Flex, Loader } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
@@ -33,8 +33,7 @@ Font.register({
   ],
 });
 
-const getReadableDate = (date: string) =>
-  moment(new Date(date)).format("YYYY-MM-DD");
+const getReadableDate = (date: string) => formatDate(new Date(date));
 
 const ExportToPdf = ({
   request,
@@ -143,8 +142,8 @@ const ExportToPdf = ({
       ""
     );
 
-  const pdfFileName = `${moment(request.request_date_created).format(
-    "YYYY-MM-DD"
+  const pdfFileName = `${formatDate(
+    new Date(request.request_date_created)
   )}-${request.request_form.form_name
     .split(" ")
     .join("-")}-${requestorFullName}`;

@@ -1,4 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestListItemType } from "@/utils/types";
@@ -16,7 +17,6 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import RequestSignerList from "./RequestSignerList";
 
@@ -27,6 +27,10 @@ type Props = {
 const useStyles = createStyles(() => ({
   requestor: {
     border: "solid 2px white",
+    cursor: "pointer",
+  },
+  clickable: {
+    cursor: "pointer",
   },
 }));
 
@@ -150,6 +154,11 @@ const RequestItemRow = ({ request }: Props) => {
             {...defaultAvatarProps}
             color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
             className={classes.requestor}
+            onClick={() =>
+              window.open(
+                `/member/${request.request_team_member.team_member_id}`
+              )
+            }
           >
             {requestor.user_first_name[0] + requestor.user_last_name[0]}
           </Avatar>
@@ -166,7 +175,7 @@ const RequestItemRow = ({ request }: Props) => {
       </Grid.Col>
       <Grid.Col span="content">
         <Text miw={105}>
-          {moment(request.request_date_created).format("YYYY-MM-DD")}
+          {formatDate(new Date(request.request_date_created))}
         </Text>
       </Grid.Col>
       <Grid.Col span="content">

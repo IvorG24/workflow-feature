@@ -77,25 +77,6 @@ export const isUUID = (str: string | string[] | undefined) => {
   return uuidPattern.test(str);
 };
 
-export const convertTimestampToDateTime = (
-  timestamptz: string
-): { date: string; time: string } | null => {
-  try {
-    const timestamp = new Date(timestamptz);
-    const date = timestamp.toISOString().split("T")[0];
-    const hours = timestamp.getHours() % 12 || 12;
-    const minutes = timestamp.getMinutes().toString().padStart(2, "0");
-    const time = `${hours}:${minutes} ${
-      timestamp.getHours() < 12 ? "AM" : "PM"
-    }`;
-
-    return { date, time };
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
 export const getInitials = (fullname: string) => {
   const words = fullname.trim().split(" ");
   const initials = words.map((word) => word[0].toUpperCase()).join("");

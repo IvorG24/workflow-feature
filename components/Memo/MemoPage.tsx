@@ -3,11 +3,13 @@ import { agreeToMemo, createNotification } from "@/backend/api/post";
 import { approveOrRejectMemo } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { MemoType } from "@/utils/types";
 import {
+  Anchor,
   Avatar,
   Badge,
   Box,
@@ -31,7 +33,6 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCircleDashed, IconCircleX, IconShare } from "@tabler/icons-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
@@ -143,6 +144,14 @@ const renderMemoReadReceiptSection = (
                 color={getAvatarColor(
                   Number(`${reader.user_id.charCodeAt(0)}`)
                 )}
+                sx={{
+                  cursor: "pointer",
+                }}
+                onClick={() =>
+                  window.open(
+                    `/member/${reader.memo_read_receipt_by_team_member_id}`
+                  )
+                }
               >
                 {getInitials(
                   `${reader.user_first_name} ${reader.user_last_name}`
@@ -186,6 +195,12 @@ const renderAgreementReceiptSection = (
                 color={getAvatarColor(
                   Number(`${member.user_id.charCodeAt(0)}`)
                 )}
+                sx={{ cursor: "pointer" }}
+                onClick={() =>
+                  window.open(
+                    `/member/${member.memo_agreement_by_team_member_id}`
+                  )
+                }
               >
                 {getInitials(
                   `${member.user_first_name} ${member.user_last_name}`
@@ -469,7 +484,7 @@ const MemoPage = ({ memo }: Props) => {
           })}
           {renderMemoDetails({
             label: "Date",
-            value: moment(memo.memo_date_created).format("YYYY-MM-DD"),
+            value: formatDate(new Date(memo.memo_date_created)),
           })}
           {renderMemoDetails({
             label: "Author",
@@ -578,10 +593,23 @@ const MemoPage = ({ memo }: Props) => {
                         color={getAvatarColor(
                           Number(`${reader.user_id.charCodeAt(0)}`)
                         )}
+                        sx={{ cursor: "pointer" }}
+                        onClick={() =>
+                          window.open(
+                            `/member/${reader.memo_read_receipt_by_team_member_id}`
+                          )
+                        }
                       >
                         {getInitials(readerFullname)}
                       </Avatar>
-                      <Text>{readerFullname}</Text>
+                      <Text>
+                        <Anchor
+                          href={`/member/${reader.memo_read_receipt_by_team_member_id}`}
+                          target="_blank"
+                        >
+                          {readerFullname}
+                        </Anchor>
+                      </Text>
                     </Group>
                     <Text weight={600}>
                       {reader.user_employee_number ?? "No employee number"}
@@ -617,10 +645,25 @@ const MemoPage = ({ memo }: Props) => {
                         color={getAvatarColor(
                           Number(`${member.user_id.charCodeAt(0)}`)
                         )}
+                        sx={{
+                          cursor: "pointer",
+                        }}
+                        onClick={() =>
+                          window.open(
+                            `/member/${member.memo_agreement_by_team_member_id}`
+                          )
+                        }
                       >
                         {getInitials(memberFullname)}
                       </Avatar>
-                      <Text>{memberFullname}</Text>
+                      <Text>
+                        <Anchor
+                          href={`/member/${member.memo_agreement_by_team_member_id}`}
+                          target="_blank"
+                        >
+                          {memberFullname}
+                        </Anchor>
+                      </Text>
                     </Group>
                     <Text weight={600}>
                       {member.user_employee_number ?? "No employee number"}
