@@ -245,7 +245,7 @@ CREATE TABLE comment_table(
 );
 -- End: Comments
 
--- Start: Requisition Form
+-- Start: Item Form
 CREATE TABLE item_table(
   item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -290,7 +290,7 @@ CREATE TABLE item_description_field_table(
   item_description_field_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
--- End: Requisition Form
+-- End: Item Form
 
 -- Start: Quotation Form
 
@@ -815,8 +815,8 @@ plv8.subtransaction(function(){
     pageNumber,
     rowLimit,
     search,
-    requisitionFilter,
-    requisitionFilterCount,
+    itemFilter,
+    itemFilterCount,
     supplierList
   } = input_data;
 
@@ -826,14 +826,14 @@ plv8.subtransaction(function(){
   const team_owner = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${activeTeam}' AND team_member_role='OWNER'`)[0];
 
   // Fetch team formsly forms
-  const requisition_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Requisition' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+  const item_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
   const sourced_item_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Sourced Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
   const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
   const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
   const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
   const transfer_receipt_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Transfer Receipt' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
-  let requisition_requests;
+  let item_requests;
   let searchCondition = '';
   let condition = '';
   let supplierCondition = '';
@@ -842,9 +842,9 @@ plv8.subtransaction(function(){
     searchCondition = `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
   }
 
-  if(requisitionFilterCount || supplierList.length !== 0){
-    if(requisitionFilterCount){
-      condition = requisitionFilter.map(value => `request_response_table.request_response = '"${value}"'`).join(' OR ');
+  if(itemFilterCount || supplierList.length !== 0){
+    if(itemFilterCount){
+      condition = itemFilter.map(value => `request_response_table.request_response = '"${value}"'`).join(' OR ');
     }
 
     if(supplierList.length !== 0){
@@ -857,17 +857,17 @@ plv8.subtransaction(function(){
       }
 
       const sectionId = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${quotation_form.form_id}' AND section_name='ID'`)[0];
-      const fieldId = plv8.execute(`SELECT field_id FROM field_table WHERE field_section_id='${sectionId.section_id}' AND field_name='Requisition ID'`)[0];
+      const fieldId = plv8.execute(`SELECT field_id FROM field_table WHERE field_section_id='${sectionId.section_id}' AND field_name='Item ID'`)[0];
 
-      const requisitionCondition = quotationRequestIdList.map(requestId => `(request_response_request_id='${requestId.request_id}' AND request_response_field_id='${fieldId.field_id}')`).join(" OR ");
-      const requisitionIdList = plv8.execute(`SELECT request_response FROM request_response_table WHERE ${requisitionCondition}`);
+      const itemCondition = quotationRequestIdList.map(requestId => `(request_response_request_id='${requestId.request_id}' AND request_response_field_id='${fieldId.field_id}')`).join(" OR ");
+      const itemIdList = plv8.execute(`SELECT request_response FROM request_response_table WHERE ${itemCondition}`);
 
-      supplierCondition = requisitionIdList.map(requestId => `request_view.request_id = '${JSON.parse(requestId.request_response)}'`).join(' OR ');
+      supplierCondition = itemIdList.map(requestId => `request_view.request_id = '${JSON.parse(requestId.request_response)}'`).join(' OR ');
     }
 
     let orCondition = [...(condition ? [`${condition}`] : []), ...(searchCondition ? [`${searchCondition}`] : [])].join(' OR ');
 
-    requisition_requests = plv8.execute(
+    item_requests = plv8.execute(
       `
         SELECT * FROM (
           SELECT 
@@ -882,30 +882,30 @@ plv8.subtransaction(function(){
           FROM request_view INNER JOIN request_response_table ON request_view.request_id = request_response_table.request_response_request_id 
           WHERE 
             request_view.request_status = 'APPROVED'
-            AND request_view.request_form_id = '${requisition_form.form_id}'
+            AND request_view.request_form_id = '${item_form.form_id}'
             AND (
               ${[...(orCondition ? [`${orCondition}`] : []), ...(supplierCondition ? [`${supplierCondition}`] : [])].join(' AND ')}
             )
           ORDER BY request_view.request_status_date_updated DESC
         ) AS a 
-        WHERE a.RowNumber = ${requisitionFilterCount ? requisitionFilterCount : 1}
+        WHERE a.RowNumber = ${itemFilterCount ? itemFilterCount : 1}
         OFFSET ${rowStart} 
         ROWS FETCH FIRST ${rowLimit} ROWS ONLY
       `
     );
         
   }else{
-    requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_view.request_jira_id, request_view.request_otp_id, request_date_created, request_team_member_id FROM request_view WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+    item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_view.request_jira_id, request_view.request_otp_id, request_date_created, request_team_member_id FROM request_view WHERE request_status='APPROVED' AND request_form_id='${item_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
   }
 
-  ssot_data = requisition_requests.map((requisition) => {
-    // Requisition request response
-    const requisition_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${requisition.request_id}'`);
+  ssot_data = item_requests.map((item) => {
+    // Item request response
+    const item_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${item.request_id}'`);
     
-    if(!requisition_response) return;
+    if(!item_response) return;
 
-    // Requisition request response with fields
-    const requisition_response_fields = requisition_response.map(response => {
+    // Item request response with fields
+    const item_response_fields = item_response.map(response => {
       const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
 
       return {
@@ -916,10 +916,10 @@ plv8.subtransaction(function(){
       }
     });
 
-    // Requisition team member
-    const requisition_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${requisition.request_team_member_id}'`)[0];
+    // Item team member
+    const item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${item.request_team_member_id}'`)[0];
 
-    const quotation_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}'`);
+    const quotation_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}'`);
     let quotation_list = [];
     if(quotation_ids.length !== 0){
       let quotation_condition = "";
@@ -993,7 +993,7 @@ plv8.subtransaction(function(){
       });
     }
 
-    const sourced_item_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${sourced_item_form.form_id}'`);
+    const sourced_item_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${sourced_item_form.form_id}'`);
     let sourced_item_list = [];
     if(sourced_item_ids.length !== 0){
       let sourced_item_condition = "";
@@ -1106,15 +1106,15 @@ plv8.subtransaction(function(){
     } 
 
     return {
-      requisition_request_id: requisition.request_id,
-      requisition_request_formsly_id: requisition.request_formsly_id,
-      requisition_request_jira_id: requisition.request_jira_id,
-      requisition_request_otp_id: requisition.request_otp_id,
-      requisition_request_date_created: requisition.request_date_created,
-      requisition_request_response: requisition_response_fields,
-      requisition_request_owner: requisition_team_member,
-      requisition_quotation_request: quotation_list,
-      requisition_sourced_item_request: sourced_item_list,
+      item_request_id: item.request_id,
+      item_request_formsly_id: item.request_formsly_id,
+      item_request_jira_id: item.request_jira_id,
+      item_request_otp_id: item.request_otp_id,
+      item_request_date_created: item.request_date_created,
+      item_request_response: item_response_fields,
+      item_request_owner: item_team_member,
+      item_quotation_request: quotation_list,
+      item_sourced_item_request: sourced_item_list,
     }
   })
 });
@@ -1755,9 +1755,9 @@ $$ LANGUAGE plv8;
 
 -- End: Get user's active team id
 
--- Start: check if Requisition form can be activated
+-- Start: check if Item form can be activated
 
-CREATE OR REPLACE FUNCTION check_requisition_form_status(
+CREATE OR REPLACE FUNCTION check_item_form_status(
     team_id TEXT,
     form_id TEXT
 )
@@ -1782,7 +1782,7 @@ RETURNS Text as $$
  return return_data;
 $$ LANGUAGE plv8;
 
--- End: check if Requisition form can be activated
+-- End: check if Item form can be activated
 
 -- Start: check if Subcon form can be activated
 
@@ -2044,16 +2044,16 @@ $$ LANGUAGE plv8;
 
 -- End: Update form signer
 
--- Start: Check if the approving or creating quotation item quantity are less than the requisition quantity
+-- Start: Check if the approving or creating quotation item quantity are less than the item quantity
 
-CREATE OR REPLACE FUNCTION check_requisition_quantity(
+CREATE OR REPLACE FUNCTION check_item_quantity(
     input_data JSON
 )
 RETURNS JSON AS $$
     let item_data
     plv8.subtransaction(function(){
         const {
-            requisitionID,
+            itemID,
             itemFieldList,
             quantityFieldList
         } = input_data;
@@ -2066,7 +2066,7 @@ RETURNS JSON AS $$
                 INNER JOIN form_table ON request_form_id = form_id 
                 WHERE 
                     request_status = 'APPROVED'
-                    AND request_response = '${requisitionID}' 
+                    AND request_response = '${itemID}' 
                     AND form_is_formsly_form = true 
                     AND (form_name = 'Quotation' OR form_name = 'Sourced Item')
             `
@@ -2194,7 +2194,7 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating quotation item quantity are less than the requisition quantity
+-- End: Check if the approving or creating quotation item quantity are less than the item quantity
 
 -- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
 
@@ -2749,9 +2749,9 @@ $$ LANGUAGE plv8;
 
 -- End: Fetch request list
 
--- Start: Approve sourced requisition request
+-- Start: Approve sourced item request
 
-CREATE OR REPLACE FUNCTION approve_sourced_requisition_request(
+CREATE OR REPLACE FUNCTION approve_sourced_item_request(
     input_data JSON
 )
 RETURNS VOID AS $$
@@ -2761,7 +2761,7 @@ RETURNS VOID AS $$
       teamId,
       responseData,
       itemWithDupId,
-      requisitionID
+      itemID
     } = input_data;
 
     plv8.execute(`
@@ -2784,7 +2784,7 @@ RETURNS VOID AS $$
         INNER JOIN team_member_table ON form_table.form_team_member_id = team_member_table.team_member_id
         INNER JOIN section_table ON form_table.form_id = section_table.section_form_id
         INNER JOIN field_table ON section_table.section_id = field_table.field_section_id
-        WHERE form_table.form_name='Requisition'
+        WHERE form_table.form_name='Item'
         AND team_member_table.team_member_team_id='${teamId}'
         AND section_table.section_name='Item'
         AND field_table.field_name='Source Project'
@@ -2793,7 +2793,7 @@ RETURNS VOID AS $$
 
     const parsedData = JSON.parse(responseData);
 
-    const inputData = parsedData.sections.map((section) => `('"${section.section_field[2].field_response}"', '${form.field_id}', ${itemWithDupId[`${section.section_field[0].field_response}`] ? `'${itemWithDupId[`${section.section_field[0].field_response}`]}'` : null}, '${requisitionID}')`).join(",");
+    const inputData = parsedData.sections.map((section) => `('"${section.section_field[2].field_response}"', '${form.field_id}', ${itemWithDupId[`${section.section_field[0].field_response}`] ? `'${itemWithDupId[`${section.section_field[0].field_response}`]}'` : null}, '${itemID}')`).join(",");
     plv8.execute(`INSERT INTO request_response_table (request_response, request_response_field_id, request_response_duplicatable_section_id, request_response_request_id) VALUES ${inputData}`);
 
   });
@@ -3218,7 +3218,7 @@ RETURNS JSON as $$
       );
 
       const requestList = {
-        Requisition: [],
+        Item: [],
         "Sourced Item": [],
         "Quotation": [],
         "Receiving Inspecting Report": [],
@@ -3233,8 +3233,8 @@ RETURNS JSON as $$
           request_formsly_id: response.request_formsly_id,
         };
         switch (response.form_name) {
-          case "Requisition":
-            requestList["Requisition"].push(newFormattedData);
+          case "Item":
+            requestList["Item"].push(newFormattedData);
             break;
           case "Sourced Item":
             requestList["Sourced Item"].push(newFormattedData);
@@ -3257,7 +3257,7 @@ RETURNS JSON as $$
         }
       });
 
-      if (request.request_form.form_name === "Requisition") {
+      if (request.request_form.form_name === "Item") {
         const connectedForm = [];
         const formList = plv8.execute(
           `SELECT 
@@ -3830,7 +3830,7 @@ RETURNS JSON AS $$
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const ssotData = plv8.execute(`SELECT get_ssot('{ "activeTeam": "${teamId}", "pageNumber": 1, "rowLimit": 10, "search": "", "requisitionFilter": [], "requisitionFilterCount": 0, "supplierList": [] }');`)[0].get_ssot;
+    const ssotData = plv8.execute(`SELECT get_ssot('{ "activeTeam": "${teamId}", "pageNumber": 1, "rowLimit": 10, "search": "", "itemFilter": [], "itemFilterCount": 0, "supplierList": [] }');`)[0].get_ssot;
 
     const itemList = plv8.execute(`SELECT * FROM item_table WHERE item_team_id='${teamId}' AND item_is_disabled=false AND item_is_available=true ORDER BY item_general_name ASC;`);
 
@@ -4360,7 +4360,7 @@ RETURNS JSON as $$
       const teamProjectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit}`);
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false`)[0].count;
     
-      if(formName === 'Requisition'){
+      if(formName === 'Item'){
         const items = [];
         const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false ORDER BY item_general_name ASC LIMIT ${limit}`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
@@ -4454,7 +4454,7 @@ RETURNS JSON as $$
     const {
       formId,
       userId,
-      requisitionId,
+      itemId,
       quotationId,
       sourcedItemId,
       releaseOrderId
@@ -4611,14 +4611,14 @@ RETURNS JSON as $$
     };
 
     let requestProjectId = "";
-    if (requisitionId) {
+    if (itemId) {
       const requestData = plv8.execute(
         `
           SELECT 
             request_project_id
           FROM request_table
           WHERE 
-            request_id = '${requisitionId}'
+            request_id = '${itemId}'
             AND request_is_disabled = false
         `
       )[0];
@@ -4626,7 +4626,7 @@ RETURNS JSON as $$
     }
 
     if (form.form_is_formsly_form) {
-      if (form.form_name === "Requisition") {
+      if (form.form_name === "Item") {
         const itemData = plv8.execute(
           `
             SELECT *
@@ -5019,7 +5019,7 @@ RETURNS JSON as $$
           SELECT team_project_table.*
           FROM request_table
           INNER JOIN  team_project_table ON team_project_id = request_project_id
-          WHERE request_id = '${requisitionId}'
+          WHERE request_id = '${itemId}'
         `
       )[0];
 
@@ -5076,7 +5076,7 @@ RETURNS JSON as $$
             SELECT COUNT(*) 
             FROM request_table 
             WHERE 
-              request_id = '${requisitionId}'
+              request_id = '${itemId}'
               AND request_status = 'APPROVED'
               AND request_is_disabled = false
           `
@@ -5094,7 +5094,7 @@ RETURNS JSON as $$
             FROM request_response_table 
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
-              request_response_request_id = '${requisitionId}'
+              request_response_request_id = '${itemId}'
             ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
           `
         );
@@ -5208,7 +5208,7 @@ RETURNS JSON as $$
             SELECT COUNT(*) 
             FROM request_table 
             WHERE 
-              request_id = '${requisitionId}'
+              request_id = '${itemId}'
               AND request_status = 'APPROVED'
               AND request_is_disabled = false
           `
@@ -5226,7 +5226,7 @@ RETURNS JSON as $$
             FROM request_response_table 
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
-              request_response_request_id = '${requisitionId}'
+              request_response_request_id = '${itemId}'
             ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
           `
         );
@@ -5307,7 +5307,7 @@ RETURNS JSON as $$
             FROM request_table 
             WHERE 
               (
-                request_id = '${requisitionId}'
+                request_id = '${itemId}'
                 OR request_id = '${quotationId}'
               )
               AND request_status = 'APPROVED'
@@ -5401,7 +5401,7 @@ RETURNS JSON as $$
             FROM request_table 
             WHERE 
               (
-                request_id = '${requisitionId}'
+                request_id = '${itemId}'
                 OR request_id = '${sourcedItemId}'
               )
               AND request_status = 'APPROVED'
@@ -5510,7 +5510,7 @@ RETURNS JSON as $$
             FROM request_table 
             WHERE 
               (
-                request_id = '${requisitionId}'
+                request_id = '${itemId}'
                 OR request_id = '${sourcedItemId}'
                 OR request_id = '${releaseOrderId}'
               )
@@ -5733,7 +5733,7 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_is_formsly_form && (requestData.form_name === "Requisition" || requestData.form_name === "Subcon")) {
+    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon")) {
       sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
@@ -5919,9 +5919,9 @@ $$ LANGUAGE plv8;
 
 -- END: Get request
 
--- Start: Get all approved requisition json
+-- Start: Get all approved item json
 
-CREATE OR REPLACE FUNCTION get_all_approved_requisition_json(
+CREATE OR REPLACE FUNCTION get_all_approved_item_json(
   team_id TEXT
 )
 RETURNS JSON as $$
@@ -5931,23 +5931,23 @@ RETURNS JSON as $$
     const team_owner = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_role='OWNER'`)[0];
 
     // Fetch team formsly forms
-    const requisition_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Requisition' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+    const item_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const sourced_item_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Sourced Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
     const transfer_receipt_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Transfer Receipt' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
-    const requisition_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${requisition_form.form_id}' ORDER BY request_status_date_updated DESC`);
+    const item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_table WHERE request_status='APPROVED' AND request_form_id='${item_form.form_id}' ORDER BY request_status_date_updated DESC`);
     
-    ssot_data = requisition_requests.map((requisition) => {
-      // Requisition request response
-      const requisition_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${requisition.request_id}'`);
+    ssot_data = item_requests.map((item) => {
+      // Item request response
+      const item_response = plv8.execute(`SELECT request_response, request_response_field_id, request_response_duplicatable_section_id FROM request_response_table WHERE request_response_request_id='${item.request_id}'`);
       
-      if(!requisition_response) return;
+      if(!item_response) return;
 
-      // Requisition request response with fields
-      const requisition_response_fields = requisition_response.map(response => {
+      // Item request response with fields
+      const item_response_fields = item_response.map(response => {
         const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
 
         return {
@@ -5958,10 +5958,10 @@ RETURNS JSON as $$
         }
       });
 
-      // Requisition team member
-      const requisition_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${requisition.request_team_member_id}'`)[0];
+      // Item team member
+      const item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${item.request_team_member_id}'`)[0];
 
-      const quotation_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}'`);
+      const quotation_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${quotation_form.form_id}'`);
       let quotation_list = [];
       if(quotation_ids.length !== 0){
         let quotation_condition = "";
@@ -6035,7 +6035,7 @@ RETURNS JSON as $$
         });
       }
 
-      const sourced_item_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${requisition.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${sourced_item_form.form_id}'`);
+      const sourced_item_ids = plv8.execute(`SELECT request_table.request_id FROM request_response_table INNER JOIN request_table ON request_response_table.request_response_request_id=request_table.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_table.request_status='APPROVED' AND request_table.request_form_id='${sourced_item_form.form_id}'`);
       let sourced_item_list = [];
       if(sourced_item_ids.length !== 0){
         let sourced_item_condition = "";
@@ -6150,20 +6150,20 @@ RETURNS JSON as $$
       
 
       return {
-        requisition_request_id: requisition.request_id,
-        requisition_request_formsly_id: requisition.request_formsly_id,
-        requisition_request_date_created: requisition.request_date_created,
-        requisition_request_response: requisition_response_fields,
-        requisition_request_owner: requisition_team_member,
-        requisition_quotation_request: quotation_list,
-        requisition_sourced_item_request: sourced_item_list,
+        item_request_id: item.request_id,
+        item_request_formsly_id: item.request_formsly_id,
+        item_request_date_created: item.request_date_created,
+        item_request_response: item_response_fields,
+        item_request_owner: item_team_member,
+        item_quotation_request: quotation_list,
+        item_sourced_item_request: sourced_item_list,
       }
     })
   });
   return ssot_data;
 $$ LANGUAGE plv8;
 
--- End: Get all approved requisition json
+-- End: Get all approved item json
 
 
 -- Start: Create ticket on load
@@ -6692,7 +6692,7 @@ RETURNS JSON AS $$
         WHERE 
           field_name = 'General Name' AND
           team_member_team_id = '${teamId}' AND
-          form_name = 'Requisition' AND
+          form_name = 'Item' AND
           form_is_formsly_form = true
       `
     )[0].field_id;
@@ -6934,7 +6934,7 @@ RETURNS JSON AS $$
         }));
       }
 
-      if (form.form_name === "Requisition") {
+      if (form.form_name === "Item") {
         const itemList = plv8.execute(`
           SELECT * FROM item_table 
           WHERE item_team_id='${teamId}'
@@ -7520,8 +7520,8 @@ RETURNS JSON AS $$
           projectOptions
         }
       } else if (form.form_name === "Sourced Item") {
-        const requisitionId = JSON.parse(form.form_section[0].section_field.find(
-          (field) => field.field_name === "Requisition ID"
+        const itemId = JSON.parse(form.form_section[0].section_field.find(
+          (field) => field.field_name === "Item ID"
         )?.field_response[0].request_response);
 
         const requestResponseData = plv8.execute(`
@@ -7532,7 +7532,7 @@ RETURNS JSON AS $$
             FROM request_response_table 
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
-              request_response_request_id = '${requisitionId}'
+              request_response_request_id = '${itemId}'
             ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
         `);
 
@@ -7913,7 +7913,7 @@ RETURNS JSON AS $$
           requestingProject: request.request_project.team_project_name,
         }
       } else if (form.form_name === "Quotation") {
-        const requisitionId =
+        const itemId =
           JSON.parse(form.form_section[0].section_field.slice(-1)[0].field_response[0]
             .request_response);
         
@@ -7925,7 +7925,7 @@ RETURNS JSON AS $$
             FROM request_response_table 
             INNER JOIN field_table ON field_id  = request_response_field_id
             WHERE 
-              request_response_request_id = '${requisitionId}'
+              request_response_request_id = '${itemId}'
             ORDER BY request_response_duplicatable_section_id, field_name, field_order ASC
         `);
 
@@ -11294,7 +11294,7 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '5b4ba109-ee91-44fa-a514-1652b57d3c5f');
 
 INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id) VALUES
-('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'REQUESTER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition 
+('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'REQUESTER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Item 
 ('51277fb9-7f1f-4c80-a122-c3fea3cf3ed7', 'PURCHASER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Quotation
 ('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'WAREHOUSE', 'a5a28977-6956-45c1-a624-b9e90911502e'); -- Sourced Item , Release Order , Transfer Receipt, Receiving Inspecting Report
 
@@ -11314,7 +11314,7 @@ INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', '989dbcc2-fdfe-48c7-806a-98cf80e1bf42');
 
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_is_disabled) VALUES
-('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Requisition', 'formsly premade Requisition form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
+('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Item', 'formsly premade Item form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Item', 'formsly premade Sourced Item form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false),
@@ -11323,7 +11323,7 @@ INSERT INTO form_table (form_id, form_name, form_description, form_app, form_tea
 ('7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'Subcon', 'formsly premade Subcon form.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, true, false, false);
 
 INSERT INTO section_table (section_id, section_name, section_order, section_is_duplicatable, section_form_id) VALUES
--- Requisition
+-- Item
 ('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 
@@ -11356,7 +11356,7 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('afd6fecd-e619-41ca-b9d2-cc1e96d4dce2', 'Service', 2, true, '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8');
 
 INSERT INTO field_table (field_id, field_name, field_type, field_order, field_section_id, field_is_required, field_is_read_only) VALUES
--- Requisition 
+-- Item 
 ('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Requesting Project', 'DROPDOWN', 1, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
@@ -11373,14 +11373,14 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('b69182a9-dc96-472b-aa31-b1f2f92ec78b', 'Level 2 Minor Group Description', 'TEXT', 13, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 
 -- Sourced Item 
-('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),
+('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Item ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),
 
 ('bdaa7b68-8ca3-443c-999c-3adec9339709', 'Item', 'DROPDOWN', 2, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 ('8c15e0f0-f360-4826-a684-5ab4ecb52009', 'Quantity', 'NUMBER', 3, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 ('4982e986-865c-4574-9767-4951b4f6c155', 'Source Project', 'DROPDOWN', 4, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 
 -- Quotation 
-('df0cb109-e34d-498f-ac51-af2139628ac0', 'Requisition ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
+('df0cb109-e34d-498f-ac51-af2139628ac0', 'Item ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
 
 ('2a43aedd-017c-4675-ad4c-00debbac7050', 'Supplier', 'DROPDOWN', 2, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Supplier Quotation', 'FILE', 3, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
@@ -11404,7 +11404,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('5dfbc04b-6f2d-4b55-818c-8f7031cdcdc2', 'Quantity', 'NUMBER', 19, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 
 -- Receiving Inspecting Report 
-('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Requisition ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
+('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Item ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Quotation ID', 'LINK', 2, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('18975198-02d3-49b4-af40-232c2c915ba7', 'DR', 'FILE', 3, '39831fe4-00f3-4b5e-b840-aae8f1469841', true, false),
 ('6317b506-816f-4ce4-a083-b9a94c900446', 'SI', 'FILE', 4, '39831fe4-00f3-4b5e-b840-aae8f1469841', false, false),
@@ -11414,7 +11414,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('d440c116-830b-4339-bcf8-ca49aba9c395', 'Receiving Status', 'TEXT', 8, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true), 
 
 -- Release Order 
-('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Requisition ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
+('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Item ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
 ('9fe04f40-a250-4a16-9e6a-b6c8a0b5a4c1', 'Sourced Item ID', 'LINK', 2, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
 ('3a8b66dc-2853-467a-a82b-72dd9bc29b40', 'Item', 'DROPDOWN', 3, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
 ('4050bfbe-0cbe-443b-a4c7-3851dba2d7c8', 'Quantity', 'NUMBER', 4, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
@@ -11422,7 +11422,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('2ea7acb6-37a4-4ced-b5d2-b944c3a1de37', 'Source Project', 'TEXT', 6, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
 
 -- Transfer Receipt 
-('c336e79e-4a89-49f7-92c3-6de1dddc977b', 'Requisition ID', 'LINK', 1, '47b11674-d641-4680-834e-7fd48f43696b', true, true),
+('c336e79e-4a89-49f7-92c3-6de1dddc977b', 'Item ID', 'LINK', 1, '47b11674-d641-4680-834e-7fd48f43696b', true, true),
 ('0778f0ba-bb0f-4110-b19f-38d999d8e8f1', 'Sourced Item ID', 'LINK', 2, '47b11674-d641-4680-834e-7fd48f43696b', true, true),
 ('a4004713-7b1d-436f-a765-a8da3912f83f', 'Release Order ID', 'LINK', 3, '47b11674-d641-4680-834e-7fd48f43696b', true, true),
 ('b4e8eda9-a83b-4e56-8455-ab2e32db93f6', 'Transfer Shipment', 'FILE', 4, 'c3d7f001-32ce-4e44-8677-7d2dd16c45dd', true, false),
@@ -11443,7 +11443,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('9569b7dc-204b-464c-be0e-87c2d3bec678', 'Service Name', 'DROPDOWN', 7, 'afd6fecd-e619-41ca-b9d2-cc1e96d4dce2', true, false);
 
 INSERT INTO option_table (option_id, option_value, option_order, option_field_id) VALUES
--- Requisition 
+-- Item 
 ('f97eb24f-53b2-452b-966e-9a2f1dfd812d', 'Cash Purchase - Advance Payment', 1, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('6ce7fa3a-9e85-4ab1-9f3b-de931071fa26', 'Cash Purchase - Local Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 3, '6882287e-57c7-42ae-a672-b0d6c8979b01'),

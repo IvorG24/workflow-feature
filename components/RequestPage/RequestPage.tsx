@@ -1,6 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  checkRequisitionQuantity,
+  checkItemQuantity,
   checkRIRItemQuantity,
   checkROItemQuantity,
   checkTransferReceiptItemQuantity,
@@ -44,10 +44,10 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useRef } from "react";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
+import ItemSummary from "../SummarySection/ItemSummary";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
-import RequisitionSummary from "../SummarySection/RequisitionSummary";
 import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
 import SubconSummary from "../SummarySection/SubconSummary";
 import TransferReceiptSummary from "../SummarySection/TransferReceiptSummary";
@@ -159,7 +159,7 @@ const RequestPage = ({
         request.request_status === "PENDING"
       ) {
         if (request.request_form.form_name === "Quotation") {
-          const requisitionID =
+          const itemID =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[3];
@@ -185,14 +185,11 @@ const RequestPage = ({
             quantityFieldList.push(quantity);
           });
 
-          const warningItemList = await checkRequisitionQuantity(
-            supabaseClient,
-            {
-              requisitionID,
-              itemFieldList,
-              quantityFieldList,
-            }
-          );
+          const warningItemList = await checkItemQuantity(supabaseClient, {
+            itemID,
+            itemFieldList,
+            quantityFieldList,
+          });
 
           if (warningItemList && warningItemList.length !== 0) {
             modals.open({
@@ -202,7 +199,7 @@ const RequestPage = ({
                 <Box maw={390}>
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
-                    Requisition
+                    Item
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -218,7 +215,7 @@ const RequestPage = ({
             return;
           }
         } else if (request.request_form.form_name === "Sourced Item") {
-          const requisitionID =
+          const itemID =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[1];
@@ -243,14 +240,11 @@ const RequestPage = ({
             quantityFieldList.push(quantity);
           });
 
-          const warningItemList = await checkRequisitionQuantity(
-            supabaseClient,
-            {
-              requisitionID,
-              itemFieldList,
-              quantityFieldList,
-            }
-          );
+          const warningItemList = await checkItemQuantity(supabaseClient, {
+            itemID,
+            itemFieldList,
+            quantityFieldList,
+          });
 
           if (warningItemList && warningItemList.length !== 0) {
             modals.open({
@@ -260,7 +254,7 @@ const RequestPage = ({
                 <Box maw={390}>
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
-                    Requisition
+                    Item
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -546,19 +540,19 @@ const RequestPage = ({
       activeTeam.team_name
     )}/forms/${formId}`;
     if (["Quotation", "Sourced Item"].includes(formName)) {
-      directory += `/create?requisitionId=${request.request_id}`;
+      directory += `/create?itemId=${request.request_id}`;
     } else if (formName === "Release Order") {
-      directory += `/create?requisitionId=${JSON.parse(
+      directory += `/create?itemId=${JSON.parse(
         request.request_form.form_section[0].section_field[0].field_response[0]
           .request_response
       )}&sourcedItemId=${request.request_id}`;
     } else if (formName === "Receiving Inspecting Report") {
-      directory += `/create?requisitionId=${JSON.parse(
+      directory += `/create?itemId=${JSON.parse(
         request.request_form.form_section[0].section_field[0].field_response[0]
           .request_response
       )}&quotationId=${request.request_id}`;
     } else if (formName === "Transfer Receipt") {
-      directory += `/create?requisitionId=${JSON.parse(
+      directory += `/create?itemId=${JSON.parse(
         request.request_form.form_section[0].section_field[0].field_response[0]
           .request_response
       )}&sourcedItemId=${JSON.parse(
@@ -708,7 +702,7 @@ const RequestPage = ({
             />
           ) : null} */}
 
-          {request.request_form.form_name === "Requisition" && (
+          {request.request_form.form_name === "Item" && (
             <>
               <RequestSection
                 section={sectionWithDuplicateList[0]}
@@ -752,7 +746,7 @@ const RequestPage = ({
             </>
           )}
 
-          {request.request_form.form_name !== "Requisition" &&
+          {request.request_form.form_name !== "Item" &&
             sectionWithDuplicateList.map((section, idx) => (
               <RequestSection
                 key={section.section_id + idx}
@@ -764,9 +758,9 @@ const RequestPage = ({
             ))}
         </Stack>
 
-        {request.request_form.form_name === "Requisition" &&
+        {request.request_form.form_name === "Item" &&
         request.request_form.form_is_formsly_form ? (
-          <RequisitionSummary summaryData={sectionWithDuplicateList.slice(1)} />
+          <ItemSummary summaryData={sectionWithDuplicateList.slice(1)} />
         ) : null}
 
         {request.request_form.form_name === "Subcon" &&

@@ -1,7 +1,7 @@
+import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
-import RequisitionRequestPage from "@/components/RequisitionRequestPage/RequisitionRequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import {
@@ -69,9 +69,9 @@ const Page = ({
   projectSignerStatus,
 }: Props) => {
   const formslyForm = () => {
-    if (request.request_form.form_name === "Requisition") {
+    if (request.request_form.form_name === "Item") {
       return (
-        <RequisitionRequestPage
+        <ItemRequestPage
           request={request}
           connectedForm={connectedForm}
           connectedRequestIDList={connectedRequestIDList}
