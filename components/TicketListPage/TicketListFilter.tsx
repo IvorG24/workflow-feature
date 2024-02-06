@@ -1,4 +1,4 @@
-import { TeamMemberWithUserType } from "@/utils/types";
+import { TeamMemberWithUserType, TicketCategoryList } from "@/utils/types";
 import {
   ActionIcon,
   Flex,
@@ -18,7 +18,7 @@ import { FilterFormValues } from "./TicketListPage";
 
 type Props = {
   // requestList: RequestType[];
-  categoryList: string[];
+  categoryList: TicketCategoryList;
   teamMemberList: TeamMemberWithUserType[];
   handleFilterTicketList: () => void;
 };
@@ -69,8 +69,8 @@ const TicketListFilter = ({
   ];
 
   const categoryList = initialCategoryList.map((category) => ({
-    value: category.toUpperCase(),
-    label: category,
+    value: category.categoryName.toUpperCase(),
+    label: category.categoryName,
   }));
 
   const { register, getValues, control, setValue } =

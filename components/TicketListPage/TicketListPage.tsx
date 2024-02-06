@@ -1,6 +1,9 @@
 import { getTicketList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { DEFAULT_TICKET_LIST_LIMIT } from "@/utils/constant";
+import {
+  DEFAULT_TICKET_LIST_LIMIT,
+  TICKET_CATEGORY_LIST,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   TeamMemberWithUserType,
@@ -45,13 +48,6 @@ type Props = {
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
 };
-
-const TEMP_DEFAULT_TICKET_LIST_LIMIT = 13;
-export const TEMP_DEFAULT_TICKET_CATEGORY_LIST = [
-  "Item Request",
-  "General",
-  "Feature Request",
-];
 
 const TicketListPage = ({
   ticketList: inititalTicketList,
@@ -197,7 +193,7 @@ const TicketListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterTicketList)}>
             <TicketListFilter
-              categoryList={TEMP_DEFAULT_TICKET_CATEGORY_LIST}
+              categoryList={TICKET_CATEGORY_LIST}
               handleFilterTicketList={handleFilterTicketList}
               teamMemberList={teamMemberList}
             />
@@ -257,9 +253,7 @@ const TicketListPage = ({
                 {ticketList.map((ticket, idx) => (
                   <Box key={ticket.ticket_id}>
                     <TicketListItem ticket={ticket} />
-                    {idx + 1 < TEMP_DEFAULT_TICKET_LIST_LIMIT ? (
-                      <Divider />
-                    ) : null}
+                    {idx + 1 < DEFAULT_TICKET_LIST_LIMIT ? <Divider /> : null}
                   </Box>
                 ))}
               </Stack>
@@ -282,7 +276,7 @@ const TicketListPage = ({
         <Pagination
           value={activePage}
           onChange={setActivePage}
-          total={Math.ceil(ticketListCount / TEMP_DEFAULT_TICKET_LIST_LIMIT)}
+          total={Math.ceil(ticketListCount / DEFAULT_TICKET_LIST_LIMIT)}
           mt="xl"
         />
       </Flex>

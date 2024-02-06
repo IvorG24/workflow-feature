@@ -2055,39 +2055,140 @@ export interface Database {
           }
         ]
       }
+      ticket_field_table: {
+        Row: {
+          ticket_field_description: string | null
+          ticket_field_id: string
+          ticket_field_is_read_only: boolean
+          ticket_field_is_required: boolean
+          ticket_field_name: string
+          ticket_field_order: number
+          ticket_field_ticket_type: string
+          ticket_field_type: string
+        }
+        Insert: {
+          ticket_field_description?: string | null
+          ticket_field_id?: string
+          ticket_field_is_read_only?: boolean
+          ticket_field_is_required?: boolean
+          ticket_field_name: string
+          ticket_field_order: number
+          ticket_field_ticket_type: string
+          ticket_field_type: string
+        }
+        Update: {
+          ticket_field_description?: string | null
+          ticket_field_id?: string
+          ticket_field_is_read_only?: boolean
+          ticket_field_is_required?: boolean
+          ticket_field_name?: string
+          ticket_field_order?: number
+          ticket_field_ticket_type?: string
+          ticket_field_type?: string
+        }
+        Relationships: []
+      }
+      ticket_option_table: {
+        Row: {
+          ticket_option_id: string
+          ticket_option_order: number
+          ticket_option_ticket_field_id: string
+          ticket_option_value: string
+        }
+        Insert: {
+          ticket_option_id?: string
+          ticket_option_order: number
+          ticket_option_ticket_field_id: string
+          ticket_option_value: string
+        }
+        Update: {
+          ticket_option_id?: string
+          ticket_option_order?: number
+          ticket_option_ticket_field_id?: string
+          ticket_option_value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_option_table_ticket_option_ticket_field_id_fkey"
+            columns: ["ticket_option_ticket_field_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_field_table"
+            referencedColumns: ["ticket_field_id"]
+          }
+        ]
+      }
+      ticket_response_table: {
+        Row: {
+          ticket_response: string
+          ticket_response_id: string
+          ticket_response_order: number
+          ticket_response_ticket_field_id: string
+          ticket_response_ticket_id: string
+        }
+        Insert: {
+          ticket_response: string
+          ticket_response_id?: string
+          ticket_response_order: number
+          ticket_response_ticket_field_id: string
+          ticket_response_ticket_id: string
+        }
+        Update: {
+          ticket_response?: string
+          ticket_response_id?: string
+          ticket_response_order?: number
+          ticket_response_ticket_field_id?: string
+          ticket_response_ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_response_table_ticket_response_ticket_field_id_fkey"
+            columns: ["ticket_response_ticket_field_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_field_table"
+            referencedColumns: ["ticket_field_id"]
+          },
+          {
+            foreignKeyName: "ticket_response_table_ticket_response_ticket_id_fkey"
+            columns: ["ticket_response_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_table"
+            referencedColumns: ["ticket_id"]
+          }
+        ]
+      }
       ticket_table: {
         Row: {
           ticket_approver_team_member_id: string | null
           ticket_category: string
           ticket_date_created: string
-          ticket_description: string
+          ticket_description: string | null
           ticket_id: string
           ticket_requester_team_member_id: string
           ticket_status: string
           ticket_status_date_updated: string | null
-          ticket_title: string
+          ticket_title: string | null
         }
         Insert: {
           ticket_approver_team_member_id?: string | null
           ticket_category: string
           ticket_date_created?: string
-          ticket_description: string
+          ticket_description?: string | null
           ticket_id?: string
           ticket_requester_team_member_id: string
           ticket_status?: string
           ticket_status_date_updated?: string | null
-          ticket_title: string
+          ticket_title?: string | null
         }
         Update: {
           ticket_approver_team_member_id?: string | null
           ticket_category?: string
           ticket_date_created?: string
-          ticket_description?: string
+          ticket_description?: string | null
           ticket_id?: string
           ticket_requester_team_member_id?: string
           ticket_status?: string
           ticket_status_date_updated?: string | null
-          ticket_title?: string
+          ticket_title?: string | null
         }
         Relationships: [
           {

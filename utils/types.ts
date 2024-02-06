@@ -285,6 +285,27 @@ export type FormSLATableInsert =
 export type FormSLATableUpdate =
   Database["public"]["Tables"]["form_sla_table"]["Update"];
 
+export type TicketFieldTableRow =
+  Database["public"]["Tables"]["ticket_field_table"]["Row"];
+export type TicketFieldTableInsert =
+  Database["public"]["Tables"]["ticket_field_table"]["Insert"];
+export type TicketFieldTableUpdate =
+  Database["public"]["Tables"]["ticket_field_table"]["Update"];
+
+export type TicketOptionTableRow =
+  Database["public"]["Tables"]["ticket_option_table"]["Row"];
+export type TicketOptionTableInsert =
+  Database["public"]["Tables"]["ticket_option_table"]["Insert"];
+export type TicketOptionTableUpdate =
+  Database["public"]["Tables"]["ticket_option_table"]["Update"];
+
+export type TicketResponseTableRow =
+  Database["public"]["Tables"]["ticket_response_table"]["Row"];
+export type TicketResponseTableInsert =
+  Database["public"]["Tables"]["ticket_response_table"]["Insert"];
+export type TicketResponseTableUpdate =
+  Database["public"]["Tables"]["ticket_response_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1369,3 +1390,14 @@ export type SignerWithProfile = SignerTableRow & {
 export type FormSLAWithForm = {
   form_table: FormTableRow;
 } & FormSLATableRow;
+
+export type TicketCategoryList = {
+  categoryName: string;
+  overridable: boolean;
+  additionalFields: boolean;
+}[];
+
+export type TicketFieldWithResponse = {
+  options: TicketOptionTableRow[];
+  response: string;
+} & TicketFieldTableRow;

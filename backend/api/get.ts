@@ -5017,3 +5017,21 @@ export const getSignerWithProfile = async (
 
   return data as SignerWithProfile[];
 };
+
+// Get ticket fields by type
+export const getTicketFields = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketType: string;
+  }
+) => {
+  const { ticketType } = params;
+
+  const { data, error } = await supabaseClient
+    .from("ticket_field_table")
+    .select("*")
+    .eq("ticket_field_ticket_type", ticketType);
+  if (error) throw error;
+
+  return data;
+};
