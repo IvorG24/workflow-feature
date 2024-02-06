@@ -1,125 +1,44 @@
-import { getTicketFields } from "@/backend/api/get";
-import { createTicket } from "@/backend/api/post";
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { TICKET_CATEGORY_LIST } from "@/utils/constant";
-import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
-import { CreateTicketPageOnLoad, TicketFieldWithResponse } from "@/utils/types";
+import { CreateTicketPageOnLoad } from "@/utils/types";
 import {
   Avatar,
-  Button,
+  Box,
   Container,
   Divider,
   Group,
+  LoadingOverlay,
   Paper,
   Select,
   Stack,
   Text,
-  TextInput,
-  Textarea,
   Title,
 } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import moment from "moment";
-import { useRouter } from "next/router";
 import { useState } from "react";
-import {
-  Controller,
-  FormProvider,
-  useFieldArray,
-  useForm,
-} from "react-hook-form";
-import TicketFieldList from "./TicketFieldList";
-
-export type CreateTicketFormValues = {
-  title: string;
-  category: string;
-  description: string;
-  fields: TicketFieldWithResponse[] | null;
-};
+import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
+import TicketForm from "./TicketForm";
 
 type Props = {
   member: CreateTicketPageOnLoad["member"];
 };
 
 const CreateTicketPage = ({ member }: Props) => {
-  const supabaseClient = createPagesBrowserClient<Database>();
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const activeTeam = useActiveTeam();
+  const [category, setCategory] = useState<string | null>(null);
 
-  const createTicketFormMethods = useForm<CreateTicketFormValues>();
-  const {
-    handleSubmit,
-    register,
-    formState: { errors },
-    control,
-  } = createTicketFormMethods;
-
-  const { fields: ticketFields, replace: replaceField } = useFieldArray({
-    control,
-    name: "fields",
-  });
-
-  const handleCreateTicket = async (data: CreateTicketFormValues) => {
-    try {
-      setIsLoading(true);
-
-      const ticket = await createTicket(supabaseClient, {
-        ...data,
-        requester: `${member?.team_member_id}`,
-      });
-
-      notifications.show({
-        message: "Ticket created.",
-        color: "green",
-      });
-      router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
-          ticket.ticket_id
-        }`
-      );
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
+  const getTicketForm = () => {
+    switch (category) {
+      case "Request Custom CSI":
+        return <TicketRequestCustomCSIForm setIsLoading={setIsLoading} />;
+      default:
+        return (
+          <TicketForm
+            category={category}
+            memberId={`${member?.team_member_id}`}
+          />
+        );
     }
-  };
-
-  const handleCategoryChange = async (ticketType: string | null) => {
-    try {
-      if (!ticketType) {
-        replaceField([]);
-        return;
-      }
-      const fieldList = await getTicketFields(supabaseClient, {
-        ticketType,
-      });
-
-      const fieldWithResponse = fieldList.map((field) => {
-        return {
-          ...field,
-          options: [],
-          response: "",
-        };
-      });
-
-      replaceField(fieldWithResponse);
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  };
-
-  const handleItemNameChange = (index: number, value: string | null) => {
-    console.log(value);
   };
 
   return (
@@ -157,68 +76,22 @@ const CreateTicketPage = ({ member }: Props) => {
             </Stack>
           </Group>
           <Divider />
-          <FormProvider {...createTicketFormMethods}>
-            <form onSubmit={handleSubmit(handleCreateTicket)}>
-              <Stack>
-                <Controller
-                  control={control}
-                  name={"category"}
-                  render={({
-                    field: { value, onChange },
-                    fieldState: { error },
-                  }) => (
-                    <Select
-                      value={value as string}
-                      onChange={(value) => {
-                        onChange(value as string);
-                        handleCategoryChange(value);
-                      }}
-                      data={TICKET_CATEGORY_LIST.map(
-                        (category) => category.categoryName
-                      )}
-                      error={error?.message}
-                      readOnly={isLoading}
-                    />
-                  )}
-                  rules={{ required: "This field is required" }}
-                />
+          <Box pos="relative">
+            <LoadingOverlay visible={isLoading} overlayBlur={2} />
 
-                {ticketFields.length > 0 ? (
-                  <TicketFieldList
-                    ticketFields={ticketFields}
-                    requestCustomCSIMethodsFormMethods={{
-                      onItemNameChange: handleItemNameChange,
-                    }}
-                  />
-                ) : (
-                  <>
-                    <TextInput
-                      label="Title"
-                      {...register("title", {
-                        required: "This field is required",
-                      })}
-                      error={errors.title?.message}
-                      readOnly={isLoading}
-                    />
-                    <Textarea
-                      label="Description"
-                      minRows={6}
-                      autosize={true}
-                      {...register("description", {
-                        required: "This field is required",
-                      })}
-                      error={errors.description?.message}
-                      readOnly={isLoading}
-                    />
-                  </>
-                )}
+            <Select
+              placeholder="Select a ticket type"
+              value={category}
+              onChange={setCategory}
+              data={TICKET_CATEGORY_LIST.map(
+                (category) => category.categoryName
+              )}
+              required={true}
+              readOnly={isLoading}
+            />
 
-                <Button type="submit" size="md" loading={isLoading}>
-                  Submit
-                </Button>
-              </Stack>
-            </form>
-          </FormProvider>
+            {getTicketForm()}
+          </Box>
         </Stack>
       </Paper>
     </Container>

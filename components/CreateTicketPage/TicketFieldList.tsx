@@ -1,8 +1,11 @@
+import { TicketFieldWithResponse } from "@/utils/types";
 import { Flex } from "@mantine/core";
 import { FieldArrayWithId } from "react-hook-form";
-import { CreateTicketFormValues } from "./CreateTicketPage";
 import TicketFormFields from "./TicketFormFields";
 
+export type CreateTicketFormValues = {
+  fields: TicketFieldWithResponse[] | null;
+};
 type Props = {
   ticketFields: FieldArrayWithId<CreateTicketFormValues, "fields", "id">[];
   requestCustomCSIMethodsFormMethods?: {
@@ -15,7 +18,7 @@ const TicketFieldList = ({
   requestCustomCSIMethodsFormMethods,
 }: Props) => {
   return (
-    <Flex direction="column">
+    <Flex direction="column" gap="xs" mt="md">
       {ticketFields.map((ticketField, ticketFieldIdx) => (
         <TicketFormFields
           ticketField={ticketField}
