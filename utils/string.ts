@@ -154,7 +154,7 @@ export const jsonToCsv = (jsonString: string): string => {
 };
 
 export const formatTimeString = (inputString: string): string => {
-  const [hours, minutes, seconds] = inputString.split(":").map(Number);
-  const formattedTime = `${hours}h:${minutes}m:${Math.round(seconds)}s`;
+  const [hours, minutes, seconds] = inputString.split(":");
+  const formattedTime = `${hours}h:${minutes}m:${Math.round(Number(seconds))}s`;
   return formattedTime;
 };

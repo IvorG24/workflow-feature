@@ -43,7 +43,7 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
       active: false,
     },
     {
-      title: "Signer",
+      title: "Approver",
       href: "#",
       active: true,
     },
@@ -148,7 +148,7 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
 
       <FormProvider {...filterMethods}>
         <Flex justify="space-between">
-          <Title order={2}>Signer SLA</Title>
+          <Title order={2}>Approver SLA</Title>
           {isAdminOrOwner && (
             <Button
               variant="light"
@@ -156,7 +156,7 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
                 router.push(
                   `/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/sla/signer/settings`
+                  )}/sla/approver/settings`
                 )
               }
               leftIcon={<IconSettings size="1rem" />}
