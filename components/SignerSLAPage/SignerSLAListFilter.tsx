@@ -175,11 +175,11 @@ const SignerSLAListFilter = ({ slaFormList, onSearch }: Props) => {
         <Controller
           control={control}
           name="singerId"
-          rules={{ required: "Signer is required" }}
+          rules={{ required: "Approver is required" }}
           render={({ field: fieldProps }) => (
             <Select
               {...fieldProps}
-              placeholder="Select a signer"
+              placeholder="Select a approver"
               onDropdownOpen={() => {
                 if (isFormslyForm && signerList === null) {
                   notifications.show({

@@ -28,10 +28,10 @@ export const UNHIDEABLE_FORMLY_FORMS = [
 
 export const SLA_LIST = [
   {
-    title: "Signer",
+    title: "Approver",
     description:
-      "Signer SLA track, analyze, and optimize signer response times.",
-    href: "/sla/signer",
+      "Approver SLA track, analyze, and optimize signer response times.",
+    href: "/sla/approver",
   },
 ];
 

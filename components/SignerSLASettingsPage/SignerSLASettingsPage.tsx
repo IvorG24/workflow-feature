@@ -54,8 +54,10 @@ const SignerSLASettingsPage = ({
       active: false,
     },
     {
-      title: "Signer",
-      href: `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/sla/signer`,
+      title: "Approver",
+      href: `/${formatTeamNameToUrlKey(
+        activeTeam.team_name ?? ""
+      )}/sla/approver`,
       active: false,
     },
     {
