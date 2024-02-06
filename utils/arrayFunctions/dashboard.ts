@@ -1,4 +1,4 @@
-import { DataItem } from "@/components/Dashboard/RequisitionTab/PurchaseTrend";
+import { DataItem } from "@/components/Dashboard/ItemTab/PurchaseTrend";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   FieldType,
@@ -48,7 +48,7 @@ export const generateFormslyResponseData = (
   formName: string
 ) => {
   switch (formName) {
-    case "Requisition":
+    case "Item":
       return generateRequsitionFormData(sectionList);
 
     case "Quotation":

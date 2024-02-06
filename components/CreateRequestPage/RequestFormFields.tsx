@@ -34,7 +34,7 @@ type RequestFormFieldsProps = {
   };
   sectionIndex: number;
   fieldIndex: number;
-  requisitionFormMethods?: {
+  itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
@@ -85,7 +85,7 @@ const RequestFormFields = ({
   field,
   sectionIndex,
   fieldIndex,
-  requisitionFormMethods,
+  itemFormMethods,
   subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
@@ -246,7 +246,7 @@ const RequestFormFields = ({
               ...fieldRules,
               validate: {
                 checkIfZero: (value) =>
-                  (requisitionFormMethods || quotationFormMethods) &&
+                  (itemFormMethods || quotationFormMethods) &&
                   field.field_name === "Quantity" &&
                   value === 0
                     ? "Quantity value is required"
@@ -315,10 +315,7 @@ const RequestFormFields = ({
                   onChange(value);
 
                   if (field.field_name === "General Name") {
-                    requisitionFormMethods?.onGeneralNameChange(
-                      sectionIndex,
-                      value
-                    );
+                    itemFormMethods?.onGeneralNameChange(sectionIndex, value);
                   } else if (field.field_name === "Item") {
                     quotationFormMethods?.onItemChange(
                       sectionIndex,
@@ -326,11 +323,8 @@ const RequestFormFields = ({
                       prevValue === null ? null : `${prevValue}`
                     );
                   } else if (field.field_name === "CSI Code Description") {
-                    requisitionFormMethods &&
-                      requisitionFormMethods.onCSICodeChange(
-                        sectionIndex,
-                        value
-                      );
+                    itemFormMethods &&
+                      itemFormMethods.onCSICodeChange(sectionIndex, value);
                     servicesMethods &&
                       servicesMethods.onCSICodeChange(sectionIndex, value);
                     otherExpensesMethods &&
@@ -338,7 +332,7 @@ const RequestFormFields = ({
                   } else if (field.field_name === "Source Project") {
                     sourcedItemFormMethods?.onProjectSiteChange();
                   } else if (field.field_name === "Requesting Project") {
-                    requisitionFormMethods?.onProjectNameChange(value);
+                    itemFormMethods?.onProjectNameChange(value);
                     subconFormMethods?.onProjectNameChange(value);
                     servicesMethods?.onProjectNameChange(value);
                     otherExpensesMethods?.onProjectNameChange(value);
@@ -371,11 +365,8 @@ const RequestFormFields = ({
                       clearTimeout(timeoutRef.current);
                     }
                     timeoutRef.current = setTimeout(() => {
-                      requisitionFormMethods?.supplierSearch &&
-                        requisitionFormMethods.supplierSearch(
-                          value,
-                          sectionIndex
-                        );
+                      itemFormMethods?.supplierSearch &&
+                        itemFormMethods.supplierSearch(value, sectionIndex);
                       otherExpensesMethods?.supplierSearch &&
                         otherExpensesMethods?.supplierSearch(
                           value,
@@ -383,7 +374,7 @@ const RequestFormFields = ({
                         );
                     }, 500);
                   } else if (
-                    requisitionFormMethods &&
+                    itemFormMethods &&
                     field.field_name === "CSI Code Description"
                   ) {
                     if (timeoutRef.current) {
@@ -391,8 +382,8 @@ const RequestFormFields = ({
                     }
 
                     timeoutRef.current = setTimeout(() => {
-                      requisitionFormMethods.csiSearch &&
-                        requisitionFormMethods.csiSearch(value, sectionIndex);
+                      itemFormMethods.csiSearch &&
+                        itemFormMethods.csiSearch(value, sectionIndex);
                     }, 500);
                   }
                 }}
@@ -400,11 +391,11 @@ const RequestFormFields = ({
                   (quotationFormMethods &&
                     quotationFormMethods.isSearching &&
                     field.field_name === "Supplier") ||
-                  (requisitionFormMethods &&
-                    requisitionFormMethods.isSearchingSupplier &&
+                  (itemFormMethods &&
+                    itemFormMethods.isSearchingSupplier &&
                     field.field_name === "Preferred Supplier") ||
-                  (requisitionFormMethods &&
-                    requisitionFormMethods.isSearchingCSI &&
+                  (itemFormMethods &&
+                    itemFormMethods.isSearchingCSI &&
                     field.field_name === "CSI Code Description") ||
                   (otherExpensesMethods &&
                     otherExpensesMethods.isSearching &&

@@ -1,10 +1,10 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
+import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
-import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
 import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubconRequestPage";
@@ -82,9 +82,9 @@ const Page = ({
 
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <EditRequisitionRequestPage
+          <EditItemRequestPage
             request={request}
             itemOptions={itemOptions}
             projectOptions={projectOptions}

@@ -6,7 +6,7 @@ type Props = {
   summaryData: DuplicateSectionType[];
 };
 
-const RequisitionSummary = ({ summaryData }: Props) => {
+const ItemSummary = ({ summaryData }: Props) => {
   const isWithPreferredSupplier = summaryData
     .map((data) => {
       return data.section_field.findIndex(
@@ -108,4 +108,4 @@ const RequisitionSummary = ({ summaryData }: Props) => {
   );
 };
 
-export default RequisitionSummary;
+export default ItemSummary;

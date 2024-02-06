@@ -27,7 +27,7 @@ import Overview from "./OverviewTab/Overview";
 // response tab is hidden
 const TABS = ["overview"];
 // const SPECIAL_FORMS = [
-//   "Requisition",
+//   "Item",
 //   "Receiving Inspecting Report",
 //   "Quotation",
 // ];
@@ -92,13 +92,11 @@ const Dashboard = ({ ticketListCount }: Props) => {
     }));
   useEffect(() => {
     if (formData.length) {
-      const requisitionIndex = formData
-        .map((form) => form.label)
-        .indexOf("Requisition");
+      const itemIndex = formData.map((form) => form.label).indexOf("Item");
 
       if (selectedForm) return;
-      if (requisitionIndex !== -1) {
-        setSelectedForm(formData[requisitionIndex].value);
+      if (itemIndex !== -1) {
+        setSelectedForm(formData[itemIndex].value);
       } else {
         setSelectedForm(formData[0].value ?? null);
       }

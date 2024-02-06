@@ -76,7 +76,7 @@ const RequestActionSection = ({
 
     return newJiraTicketData.ok ? true : false;
   };
-  const handleApproveRequisitionRequest = async (
+  const handleApproveItemRequest = async (
     onCreateJiraTicket: () => Promise<string | null | undefined>
   ) => {
     try {
@@ -100,7 +100,7 @@ const RequestActionSection = ({
       }
     } catch (error) {
       notifications.show({
-        message: "Failed to approve requisition request",
+        message: "Failed to approve item request",
         color: "red",
       });
     }
@@ -137,7 +137,7 @@ const RequestActionSection = ({
                   color="green"
                   onClick={async () => {
                     modals.close("approveRf");
-                    handleApproveRequisitionRequest(onCreateJiraTicket);
+                    handleApproveItemRequest(onCreateJiraTicket);
                   }}
                 >
                   Approve

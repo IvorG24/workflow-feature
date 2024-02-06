@@ -46,7 +46,7 @@ import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
-import RequisitionSummary from "../SummarySection/RequisitionSummary";
+import ItemSummary from "../SummarySection/ItemSummary";
 
 type Props = {
   request: RequestWithResponseType;
@@ -69,7 +69,7 @@ export type ApproverDetailsType = {
   signature: string | null;
 };
 
-const RequisitionRequestPage = ({
+const ItemRequestPage = ({
   request,
 }: // connectedForm,
 // connectedRequestIDList,
@@ -636,7 +636,7 @@ Props) => {
                       key={form.form_id}
                       onClick={() =>
                         router.push(
-                          `/team-requests/forms/${form.form_id}/create?requisitionId=${request.request_id}`
+                          `/team-requests/forms/${form.form_id}/create?itemId=${request.request_id}`
                         )
                       }
                       sx={{ flex: 1 }}
@@ -663,7 +663,7 @@ Props) => {
         />
 
         {/* {canvassRequest.length !== 0 ? (
-          <RequisitionCanvassSection canvassRequest={canvassRequest} />
+          <ItemCanvassSection canvassRequest={canvassRequest} />
         ) : null} */}
 
         {/* <ConnectedRequestSection
@@ -710,7 +710,7 @@ Props) => {
           </Accordion.Item>
         </Accordion>
 
-        <RequisitionSummary summaryData={sectionWithDuplicateList.slice(1)} />
+        <ItemSummary summaryData={sectionWithDuplicateList.slice(1)} />
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
@@ -755,4 +755,4 @@ Props) => {
   );
 };
 
-export default RequisitionRequestPage;
+export default ItemRequestPage;

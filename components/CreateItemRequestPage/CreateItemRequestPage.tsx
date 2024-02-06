@@ -61,7 +61,7 @@ type Props = {
   }[];
 };
 
-const CreateRequisitionRequestPage = ({
+const CreateItemRequestPage = ({
   form,
   itemOptions,
   projectOptions,
@@ -625,7 +625,7 @@ const CreateRequisitionRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    requisitionFormMethods={{
+                    itemFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
@@ -664,4 +664,4 @@ const CreateRequisitionRequestPage = ({
   );
 };
 
-export default CreateRequisitionRequestPage;
+export default CreateItemRequestPage;

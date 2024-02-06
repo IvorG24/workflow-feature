@@ -1,9 +1,9 @@
 import { getForm } from "@/backend/api/get";
+import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
-import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
 import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import SubconFormPage from "@/components/SubconFormPage/SubconFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -84,9 +84,9 @@ const Page = ({
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <RequisitionFormPage
+          <ItemFormPage
             items={items}
             itemListCount={itemListCount}
             teamMemberList={teamMemberList}

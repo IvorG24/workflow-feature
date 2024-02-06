@@ -8,10 +8,10 @@ import { Flex, Loader } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
+import { ApproverDetailsType } from "../ItemRequestPage/ItemRequestPage";
+import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
-import RequisitionPdfDocumentTableVersion from "./RequisitionPdfDocumentTableVersion";
 import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
 
 type Props = {
@@ -150,9 +150,9 @@ const ExportToPdf = ({
 
   const getDocument = () => {
     switch (request.request_form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <RequisitionPdfDocumentTableVersion
+          <ItemPdfDocumentTableVersion
             requestDetails={requestDetails}
             requestorDetails={requestorDetails}
             requestIDs={requestIDs}
