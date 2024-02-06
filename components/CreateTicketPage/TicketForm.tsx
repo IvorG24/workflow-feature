@@ -15,6 +15,7 @@ type Props = {
 };
 
 type CreateTicketDefaultFormValues = {
+  category: string;
   title: string;
   description: string;
 };

@@ -57,8 +57,8 @@ const TicketResponseSection = ({
     formState: { errors },
   } = useForm<TicketResponseFormValues>({
     defaultValues: {
-      title: ticket.ticket_title,
-      description: ticket.ticket_description,
+      title: `${ticket.ticket_title}`,
+      description: `${ticket.ticket_description}`,
     },
   });
 
@@ -227,7 +227,7 @@ const TicketResponseSection = ({
             </Text>
 
             <Flex direction="column">
-              {ticket.ticket_description.split("\n").map((line, id) => (
+              {`${ticket.ticket_description}`.split("\n").map((line, id) => (
                 <Text key={id}>{line}</Text>
               ))}
             </Flex>

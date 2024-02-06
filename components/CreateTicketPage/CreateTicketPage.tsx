@@ -1,4 +1,4 @@
-import { TICKET_CATEGORY_LIST } from "@/utils/constant";
+import { formatDate, TICKET_CATEGORY_LIST } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { CreateTicketPageOnLoad } from "@/utils/types";
 import {
@@ -14,7 +14,6 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import moment from "moment";
 import { useState } from "react";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
 import TicketForm from "./TicketForm";
@@ -72,7 +71,7 @@ const CreateTicketPage = ({ member }: Props) => {
             </Stack>
             <Stack spacing={4}>
               <Title order={5}>Date</Title>
-              <Text>{moment().format("YYYY-MM-DD")}</Text>
+              <Text>{formatDate(new Date())}</Text>
             </Stack>
           </Group>
           <Divider />

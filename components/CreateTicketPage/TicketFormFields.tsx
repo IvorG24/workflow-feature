@@ -1,7 +1,7 @@
 import { TicketFieldWithResponse } from "@/utils/types";
 import { Select, TextInput, Textarea } from "@mantine/core";
 import { Controller, FieldArrayWithId, useFormContext } from "react-hook-form";
-import { CreateTicketFormValues } from "./CreateTicketPage";
+import { CreateTicketFormValues } from "./TicketFieldList";
 
 type Props = {
   ticketField: FieldArrayWithId<CreateTicketFormValues, "fields", "id">;
