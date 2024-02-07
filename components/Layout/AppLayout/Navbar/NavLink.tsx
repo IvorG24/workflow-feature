@@ -67,10 +67,9 @@ const ReviewAppNavLink = () => {
 
   const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
 
-  const rfForm = forms.filter(
+  const itemForm = forms.filter(
     (form) => form.form_is_formsly_form && form.form_name === "Item"
-  )[0];
-  const itemForm = rfForm as unknown as FormTableRow & {
+  )[0] as unknown as FormTableRow & {
     form_team_group: string[];
   };
 

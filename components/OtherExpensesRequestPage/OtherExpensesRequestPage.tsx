@@ -407,7 +407,7 @@ const OtherExpensesRequestPage = ({ request }: Props) => {
             isDeletable={isDeletable}
             isUserRequester={isUserRequester}
             requestId={request.request_id}
-            isRf
+            isItemForm
           />
         )}
 

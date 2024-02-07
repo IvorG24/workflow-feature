@@ -28,7 +28,7 @@ type Props = {
     jiraId?: string,
     jiraLink?: string
   ) => void;
-  isRf?: boolean;
+  isItemForm?: boolean;
   isCashPurchase?: boolean;
   isUserPrimarySigner?: boolean;
   requestId: string;
@@ -43,7 +43,7 @@ const RequestActionSection = ({
   handleCancelRequest,
   openPromptDeleteModal,
   handleUpdateRequest,
-  isRf,
+  isItemForm,
   isCashPurchase,
   isUserPrimarySigner,
   isEditable,
@@ -108,7 +108,7 @@ const RequestActionSection = ({
 
   const handleAction = (action: string, color: string) => {
     if (
-      isRf &&
+      isItemForm &&
       action === "approve" &&
       isUserPrimarySigner &&
       !isCashPurchase
