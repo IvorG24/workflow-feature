@@ -800,7 +800,7 @@ export const getItemList = async (
     .eq("item_description.item_description_is_disabled", false);
 
   if (generalName) {
-    query = query.ilike("item_general_name", `${generalName}%`);
+    query = query.ilike("item_general_name", `%${generalName}%`);
   }
   if (description) {
     query = query.ilike(
