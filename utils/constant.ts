@@ -18,34 +18,14 @@ export const DEFAULT_ITEM_ANALYTICS_ROWS = 20;
 export const DEFAULT_ON_SCROLL_LIMIT = 10;
 
 export const TICKET_CATEGORY_LIST = [
-  { categoryName: "General", overridable: true, additionalFields: true },
-  {
-    categoryName: "Feature Request",
-    overridable: true,
-    additionalFields: true,
-  },
-  { categoryName: "Item Request", overridable: true, additionalFields: true },
-  {
-    categoryName: "Request Custom CSI",
-    overridable: true,
-    additionalFields: true,
-  },
-  {
-    categoryName: "Request Item CSI",
-    overridable: true,
-    additionalFields: true,
-  },
-  {
-    categoryName: "Request Item Option",
-    overridable: true,
-    additionalFields: true,
-  },
-  {
-    categoryName: "Incident Report for Employees",
-    overridable: true,
-    additionalFields: true,
-  },
-  { categoryName: "Bug Report", overridable: true, additionalFields: true },
+  "General",
+  "Feature Request",
+  "Item Request",
+  "Request Custom CSI",
+  "Request Item CSI",
+  "Request Item Option",
+  "Incident Report for Employees",
+  "Bug Report",
 ];
 
 export const UNHIDEABLE_FORMLY_FORMS = [

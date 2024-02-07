@@ -2004,6 +2004,27 @@ export type Database = {
           }
         ]
       }
+      ticket_category_table: {
+        Row: {
+          ticket_category: string
+          ticket_category_id: string
+          ticket_category_is_active: boolean
+          ticket_category_is_disabled: boolean
+        }
+        Insert: {
+          ticket_category: string
+          ticket_category_id?: string
+          ticket_category_is_active?: boolean
+          ticket_category_is_disabled?: boolean
+        }
+        Update: {
+          ticket_category?: string
+          ticket_category_id?: string
+          ticket_category_is_active?: boolean
+          ticket_category_is_disabled?: boolean
+        }
+        Relationships: []
+      }
       ticket_comment_table: {
         Row: {
           ticket_comment_content: string
@@ -2057,60 +2078,65 @@ export type Database = {
       }
       ticket_field_table: {
         Row: {
-          ticket_field_description: string | null
           ticket_field_id: string
           ticket_field_is_read_only: boolean
           ticket_field_is_required: boolean
           ticket_field_name: string
           ticket_field_order: number
-          ticket_field_ticket_type: string
+          ticket_field_section_id: string
           ticket_field_type: string
         }
         Insert: {
-          ticket_field_description?: string | null
           ticket_field_id?: string
           ticket_field_is_read_only?: boolean
           ticket_field_is_required?: boolean
           ticket_field_name: string
           ticket_field_order: number
-          ticket_field_ticket_type: string
+          ticket_field_section_id: string
           ticket_field_type: string
         }
         Update: {
-          ticket_field_description?: string | null
           ticket_field_id?: string
           ticket_field_is_read_only?: boolean
           ticket_field_is_required?: boolean
           ticket_field_name?: string
           ticket_field_order?: number
-          ticket_field_ticket_type?: string
+          ticket_field_section_id?: string
           ticket_field_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ticket_field_table_ticket_field_section_id_fkey"
+            columns: ["ticket_field_section_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_section_table"
+            referencedColumns: ["ticket_section_id"]
+          }
+        ]
       }
       ticket_option_table: {
         Row: {
+          ticket_option_field_id: string
           ticket_option_id: string
           ticket_option_order: number
-          ticket_option_ticket_field_id: string
           ticket_option_value: string
         }
         Insert: {
+          ticket_option_field_id: string
           ticket_option_id?: string
           ticket_option_order: number
-          ticket_option_ticket_field_id: string
           ticket_option_value: string
         }
         Update: {
+          ticket_option_field_id?: string
           ticket_option_id?: string
           ticket_option_order?: number
-          ticket_option_ticket_field_id?: string
           ticket_option_value?: string
         }
         Relationships: [
           {
-            foreignKeyName: "ticket_option_table_ticket_option_ticket_field_id_fkey"
-            columns: ["ticket_option_ticket_field_id"]
+            foreignKeyName: "ticket_option_table_ticket_option_field_id_fkey"
+            columns: ["ticket_option_field_id"]
             isOneToOne: false
             referencedRelation: "ticket_field_table"
             referencedColumns: ["ticket_field_id"]
@@ -2119,30 +2145,30 @@ export type Database = {
       }
       ticket_response_table: {
         Row: {
-          ticket_response: string
+          ticket_response_duplicatable_section_id: string | null
+          ticket_response_field_id: string
           ticket_response_id: string
-          ticket_response_order: number
-          ticket_response_ticket_field_id: string
           ticket_response_ticket_id: string
+          ticket_response_value: string
         }
         Insert: {
-          ticket_response: string
+          ticket_response_duplicatable_section_id?: string | null
+          ticket_response_field_id: string
           ticket_response_id?: string
-          ticket_response_order: number
-          ticket_response_ticket_field_id: string
           ticket_response_ticket_id: string
+          ticket_response_value: string
         }
         Update: {
-          ticket_response?: string
+          ticket_response_duplicatable_section_id?: string | null
+          ticket_response_field_id?: string
           ticket_response_id?: string
-          ticket_response_order?: number
-          ticket_response_ticket_field_id?: string
           ticket_response_ticket_id?: string
+          ticket_response_value?: string
         }
         Relationships: [
           {
-            foreignKeyName: "ticket_response_table_ticket_response_ticket_field_id_fkey"
-            columns: ["ticket_response_ticket_field_id"]
+            foreignKeyName: "ticket_response_table_ticket_response_field_id_fkey"
+            columns: ["ticket_response_field_id"]
             isOneToOne: false
             referencedRelation: "ticket_field_table"
             referencedColumns: ["ticket_field_id"]
@@ -2156,39 +2182,65 @@ export type Database = {
           }
         ]
       }
+      ticket_section_table: {
+        Row: {
+          ticket_section_category_id: string
+          ticket_section_id: string
+          ticket_section_is_duplicatable: boolean
+          ticket_section_name: string
+        }
+        Insert: {
+          ticket_section_category_id: string
+          ticket_section_id?: string
+          ticket_section_is_duplicatable?: boolean
+          ticket_section_name: string
+        }
+        Update: {
+          ticket_section_category_id?: string
+          ticket_section_id?: string
+          ticket_section_is_duplicatable?: boolean
+          ticket_section_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_section_table_ticket_section_category_id_fkey"
+            columns: ["ticket_section_category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_category_table"
+            referencedColumns: ["ticket_category_id"]
+          }
+        ]
+      }
       ticket_table: {
         Row: {
           ticket_approver_team_member_id: string | null
-          ticket_category: string
+          ticket_category_id: string
           ticket_date_created: string
-          ticket_description: string | null
           ticket_id: string
+          ticket_is_disabled: boolean
           ticket_requester_team_member_id: string
           ticket_status: string
           ticket_status_date_updated: string | null
-          ticket_title: string | null
         }
         Insert: {
           ticket_approver_team_member_id?: string | null
-          ticket_category: string
+          ticket_category_id: string
           ticket_date_created?: string
-          ticket_description?: string | null
           ticket_id?: string
+          ticket_is_disabled?: boolean
           ticket_requester_team_member_id: string
           ticket_status?: string
           ticket_status_date_updated?: string | null
-          ticket_title?: string | null
         }
         Update: {
           ticket_approver_team_member_id?: string | null
-          ticket_category?: string
+          ticket_category_id?: string
           ticket_date_created?: string
-          ticket_description?: string | null
           ticket_id?: string
+          ticket_is_disabled?: boolean
           ticket_requester_team_member_id?: string
           ticket_status?: string
           ticket_status_date_updated?: string | null
-          ticket_title?: string | null
         }
         Relationships: [
           {
@@ -2197,6 +2249,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "team_member_table"
             referencedColumns: ["team_member_id"]
+          },
+          {
+            foreignKeyName: "ticket_table_ticket_category_id_fkey"
+            columns: ["ticket_category_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_category_table"
+            referencedColumns: ["ticket_category_id"]
           },
           {
             foreignKeyName: "ticket_table_ticket_requester_team_member_id_fkey"
@@ -2847,6 +2906,12 @@ export type Database = {
         Returns: Json
       }
       get_team_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_ticket_form: {
         Args: {
           input_data: Json
         }

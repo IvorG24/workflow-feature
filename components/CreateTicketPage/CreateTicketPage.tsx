@@ -1,6 +1,8 @@
-import { formatDate, TICKET_CATEGORY_LIST } from "@/utils/constant";
+import { getTicketForm } from "@/backend/api/get";
+import { formatDate } from "@/utils/constant";
+import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
-import { CreateTicketPageOnLoad } from "@/utils/types";
+import { CreateTicketFormValues, CreateTicketPageOnLoad } from "@/utils/types";
 import {
   Avatar,
   Box,
@@ -10,31 +12,67 @@ import {
   LoadingOverlay,
   Paper,
   Select,
+  Skeleton,
   Stack,
   Text,
   Title,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useState } from "react";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
 import TicketForm from "./TicketForm";
 
 type Props = {
   member: CreateTicketPageOnLoad["member"];
+  categorylist: CreateTicketPageOnLoad["categoryList"];
 };
 
-const CreateTicketPage = ({ member }: Props) => {
+const CreateTicketPage = ({ member, categorylist }: Props) => {
+  const supabaseClient = createPagesBrowserClient<Database>();
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingForm, setIsFetchingForm] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
+  const [ticketForm, setTicketForm] = useState<CreateTicketFormValues | null>(
+    null
+  );
 
-  const getTicketForm = () => {
+  const categoryOptions = categorylist.map(
+    ({ ticket_category }) => ticket_category
+  );
+
+  const handleCategoryChange = async (category: string | null) => {
+    try {
+      setIsFetchingForm(true);
+      if (!category) return;
+      const ticketFormData = await getTicketForm(supabaseClient, { category });
+      setTicketForm(ticketFormData);
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingForm(false);
+    }
+  };
+
+  const renderTicketForm = () => {
     switch (category) {
       case "Request Custom CSI":
-        return <TicketRequestCustomCSIForm setIsLoading={setIsLoading} />;
+        return (
+          <TicketRequestCustomCSIForm
+            category={category}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
       default:
         return (
           <TicketForm
             category={category}
-            memberId={`${member?.team_member_id}`}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
           />
         );
     }
@@ -79,17 +117,29 @@ const CreateTicketPage = ({ member }: Props) => {
             <LoadingOverlay visible={isLoading} overlayBlur={2} />
 
             <Select
-              placeholder="Select a ticket type"
+              placeholder="Select a ticket category"
               value={category}
-              onChange={setCategory}
-              data={TICKET_CATEGORY_LIST.map(
-                (category) => category.categoryName
-              )}
+              onChange={(value) => {
+                setCategory(value);
+                if (value) handleCategoryChange(value);
+              }}
+              data={categoryOptions}
               required={true}
               readOnly={isLoading}
             />
 
-            {getTicketForm()}
+            {!isFetchingForm ? (
+              renderTicketForm()
+            ) : (
+              <Box>
+                <Skeleton height={14} mt="md" w="40%" radius="xs" />
+                <Skeleton height={32} mt={6} radius="xs" />
+                <Skeleton height={14} mt="md" w="40%" radius="xs" />
+                <Skeleton height={200} mt={6} radius="xs" />
+
+                <Skeleton height={32} mt="md" radius="xs" />
+              </Box>
+            )}
           </Box>
         </Stack>
       </Paper>

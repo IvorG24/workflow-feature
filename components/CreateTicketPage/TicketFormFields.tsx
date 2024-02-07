@@ -1,11 +1,13 @@
-import { TicketFieldWithResponse } from "@/utils/types";
-import { Select, TextInput, Textarea } from "@mantine/core";
-import { Controller, FieldArrayWithId, useFormContext } from "react-hook-form";
-import { CreateTicketFormValues } from "./TicketFieldList";
+import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
+import { CreateTicketFormValues, TicketSection } from "@/utils/types";
+import { FileInput, Select, TextInput, Textarea } from "@mantine/core";
+import { IconFile } from "@tabler/icons-react";
+import { Controller, useFormContext } from "react-hook-form";
 
 type Props = {
-  ticketField: FieldArrayWithId<CreateTicketFormValues, "fields", "id">;
+  ticketField: TicketSection["ticket_section_fields"][0];
   ticketFieldIdx: number;
+  ticketSectionIdx: number;
   requestCustomCSIMethodsFormMethods?: {
     onItemNameChange: (index: number, value: string | null) => void;
   };
@@ -14,6 +16,7 @@ type Props = {
 const TicketFormFields = ({
   ticketField,
   ticketFieldIdx,
+  ticketSectionIdx,
   requestCustomCSIMethodsFormMethods,
 }: Props) => {
   const {
@@ -22,12 +25,12 @@ const TicketFormFields = ({
     formState: { errors },
   } = useFormContext<CreateTicketFormValues>();
 
-  const fieldError = errors.fields?.[ticketFieldIdx]?.response?.message;
+  const fieldError =
+    errors.ticket_sections?.[ticketSectionIdx]?.ticket_section_fields?.[0]
+      ?.ticket_field_response?.message;
 
   const inputProps = {
     label: ticketField.ticket_field_name,
-    description: ticketField.ticket_field_description,
-    required: ticketField.ticket_field_is_required,
     readOnly: ticketField.ticket_field_is_read_only,
     variant: ticketField.ticket_field_is_read_only ? "filled" : "default",
     error: fieldError,
@@ -36,19 +39,22 @@ const TicketFormFields = ({
   const fieldRules = {
     required: {
       value: ticketField.ticket_field_is_required,
-      message: "This field is required",
+      message: `${ticketField.ticket_field_name} is required`,
     },
   };
 
-  const renderField = (field: TicketFieldWithResponse) => {
+  const renderField = (field: TicketSection["ticket_section_fields"][0]) => {
     switch (field.ticket_field_type) {
       case "TEXT":
         return (
           <TextInput
             {...inputProps}
-            {...register(`fields.${ticketFieldIdx}.response`, {
-              ...fieldRules,
-            })}
+            {...register(
+              `ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`,
+              {
+                ...fieldRules,
+              }
+            )}
             error={fieldError}
             withAsterisk={field.ticket_field_is_required}
           />
@@ -58,19 +64,23 @@ const TicketFormFields = ({
         return (
           <Textarea
             {...inputProps}
-            {...register(`fields.${ticketFieldIdx}.response`, {
-              ...fieldRules,
-            })}
+            {...register(
+              `ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`,
+              {
+                ...fieldRules,
+              }
+            )}
+            minRows={3}
             error={fieldError}
             withAsterisk={field.ticket_field_is_required}
           />
         );
 
-      case "DROPDOWN":
+      case "SELECT":
         return (
           <Controller
             control={control}
-            name={`fields.${ticketFieldIdx}.response`}
+            name={`ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`}
             render={({ field: { value, onChange } }) => (
               <Select
                 value={value as string}
@@ -93,6 +103,38 @@ const TicketFormFields = ({
               />
             )}
             rules={{ ...fieldRules }}
+          />
+        );
+
+      case "FILE":
+        return (
+          <Controller
+            control={control}
+            name={`ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`}
+            render={({ field }) => (
+              <FileInput
+                {...inputProps}
+                icon={<IconFile size={16} />}
+                value={field.value as File | null}
+                clearable
+                multiple={false}
+                onChange={field.onChange}
+                error={fieldError}
+              />
+            )}
+            rules={{
+              ...fieldRules,
+              validate: {
+                fileSize: (value) => {
+                  if (!value) return true;
+                  const formattedValue = value as File;
+                  return formattedValue.size !== undefined
+                    ? formattedValue.size <= MAX_FILE_SIZE ||
+                        `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`
+                    : true;
+                },
+              },
+            }}
           />
         );
     }

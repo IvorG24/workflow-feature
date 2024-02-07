@@ -1,63 +1,54 @@
-import { createTicket } from "@/backend/api/post";
-import { useActiveTeam } from "@/stores/useTeamStore";
-import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
-import { Button, TextInput, Textarea } from "@mantine/core";
+import { CreateTicketFormValues } from "@/utils/types";
+import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Dispatch, SetStateAction, useEffect } from "react";
+import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { uuid as uuidv4 } from "uuidv4";
+import TicketFormSection from "../CreateTicketPage/TicketFormSection";
 
 type Props = {
   category: string | null;
-  memberId: string;
+  ticketForm: CreateTicketFormValues | null;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
 };
 
-type CreateTicketDefaultFormValues = {
-  category: string;
-  title: string;
-  description: string;
-};
+const TicketRequestCustomCSIForm = ({
+  category,
+  ticketForm,
+  setIsLoading,
+}: Props) => {
+  console.log(ticketForm);
+  // const supabaseClient = createPagesBrowserClient<Database>();
+  //   const router = useRouter();
+  //   const activeTeam = useActiveTeam();
 
-const TicketForm = ({ category, memberId }: Props) => {
-  const supabaseClient = createPagesBrowserClient<Database>();
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const activeTeam = useActiveTeam();
+  const createTicketFormMethods = useForm<CreateTicketFormValues>();
+  const { handleSubmit, control, getValues } = createTicketFormMethods;
 
   const {
-    handleSubmit,
-    register,
-    formState: { errors },
-  } = useForm<CreateTicketDefaultFormValues>();
+    fields: ticketSections,
+    replace: replaceSection,
+    insert: addSection,
+  } = useFieldArray({
+    control,
+    name: "ticket_sections",
+  });
 
-  const handleCreateTicket = async (data: CreateTicketDefaultFormValues) => {
+  const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
-      if (!category) {
-        notifications.show({
-          message: "Ticket type is required.",
-          color: "red",
-        });
-        return;
-      }
-
-      const ticket = await createTicket(supabaseClient, {
-        ...data,
-        category: `${category}`,
-        requester: memberId,
-      });
+      console.log(category);
+      console.log(data);
 
       notifications.show({
         message: "Ticket created.",
         color: "green",
       });
-      router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
-          ticket.ticket_id
-        }`
-      );
+      //   router.push(
+      //     `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
+      //       ticket.ticket_id
+      //     }`
+      //   );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -68,36 +59,84 @@ const TicketForm = ({ category, memberId }: Props) => {
     }
   };
 
+  const handleItemNameChange = (index: number, value: string | null) => {
+    console.log(index, value);
+  };
+
+  const handleDuplicateSection = (sectionId: string) => {
+    const sectionLastIndex = ticketSections
+      .map((sectionItem) => sectionItem.ticket_section_id)
+      .lastIndexOf(sectionId);
+    const sectionMatch = ticketSections.find(
+      (section) => section.ticket_section_id === sectionId
+    );
+    if (sectionMatch) {
+      const sectionDuplicatableId = uuidv4();
+      const duplicatedFieldsWithDuplicatableId =
+        sectionMatch.ticket_section_fields.map((field) => ({
+          ...field,
+          ticket_field_section_id: sectionDuplicatableId,
+        }));
+      const newSection = {
+        ...sectionMatch,
+        ticket_section_field: duplicatedFieldsWithDuplicatableId,
+      };
+      addSection(sectionLastIndex + 1, newSection);
+      return;
+    }
+  };
+
+  useEffect(() => {
+    if (ticketForm) {
+      replaceSection(ticketForm.ticket_sections);
+    }
+  }, []);
+
   return (
     <>
-      <form onSubmit={handleSubmit(handleCreateTicket)}>
-        <TextInput
-          label="Title"
-          {...register("title", {
-            required: "This field is required",
-          })}
-          error={errors.title?.message}
-          readOnly={isLoading}
-          mt="xs"
-        />
-        <Textarea
-          label="Description"
-          minRows={6}
-          autosize={true}
-          {...register("description", {
-            required: "This field is required",
-          })}
-          error={errors.description?.message}
-          readOnly={isLoading}
-          mt="xs"
-        />
+      <FormProvider {...createTicketFormMethods}>
+        <form onSubmit={handleSubmit(handleCreateTicket)}>
+          {ticketSections.map((ticketSection, ticketSectionIdx) => {
+            const sectionIdToFind = ticketSection.ticket_section_id;
+            const sectionLastIndex = getValues("ticket_sections")
+              .map((sectionItem) => sectionItem.ticket_section_id)
+              .lastIndexOf(sectionIdToFind);
 
-        <Button fullWidth mt="lg" type="submit" size="md" loading={isLoading}>
-          Submit
-        </Button>
-      </form>
+            return (
+              <>
+                <TicketFormSection
+                  ticketSection={ticketSection}
+                  ticketSectionIdx={ticketSectionIdx}
+                  requestCustomCSIMethodsFormMethods={{
+                    onItemNameChange: handleItemNameChange,
+                  }}
+                />
+                {ticketSection.ticket_section_is_duplicatable &&
+                  ticketSectionIdx === sectionLastIndex && (
+                    <Button
+                      mt="md"
+                      variant="default"
+                      onClick={() =>
+                        handleDuplicateSection(ticketSection.ticket_section_id)
+                      }
+                      fullWidth
+                    >
+                      {ticketSection.ticket_section_name} +
+                    </Button>
+                  )}
+              </>
+            );
+          })}
+
+          {ticketSections.length > 0 && (
+            <Button type="submit" mt="lg" fullWidth>
+              Submit
+            </Button>
+          )}
+        </form>
+      </FormProvider>
     </>
   );
 };
 
-export default TicketForm;
+export default TicketRequestCustomCSIForm;

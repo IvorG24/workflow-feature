@@ -285,6 +285,20 @@ export type FormSLATableInsert =
 export type FormSLATableUpdate =
   Database["public"]["Tables"]["form_sla_table"]["Update"];
 
+export type TicketCategoryTableRow =
+  Database["public"]["Tables"]["ticket_category_table"]["Row"];
+export type TicketCategoryTableInsert =
+  Database["public"]["Tables"]["ticket_category_table"]["Insert"];
+export type TicketCategoryTableUpdate =
+  Database["public"]["Tables"]["ticket_category_table"]["Update"];
+
+export type TicketSectionTableRow =
+  Database["public"]["Tables"]["ticket_section_table"]["Row"];
+export type TicketSectionTableInsert =
+  Database["public"]["Tables"]["ticket_section_table"]["Insert"];
+export type TicketSectionTableUpdate =
+  Database["public"]["Tables"]["ticket_section_table"]["Update"];
+
 export type TicketFieldTableRow =
   Database["public"]["Tables"]["ticket_field_table"]["Row"];
 export type TicketFieldTableInsert =
@@ -1114,6 +1128,7 @@ export type CreateTicketPageOnLoad = {
       user_email: string;
     };
   };
+  categoryList: TicketCategoryTableRow[];
 };
 
 export type TicketListType = [
@@ -1389,13 +1404,13 @@ export type FormSLAWithForm = {
   form_table: FormTableRow;
 } & FormSLATableRow;
 
-export type TicketCategoryList = {
-  categoryName: string;
-  overridable: boolean;
-  additionalFields: boolean;
-}[];
+export type TicketSection = TicketSectionTableRow & {
+  ticket_section_fields: (TicketFieldTableRow & {
+    ticket_field_option: TicketOptionTableRow[];
+    ticket_field_response?: unknown;
+  })[];
+};
 
-export type TicketFieldWithResponse = {
-  options: TicketOptionTableRow[];
-  response: string;
-} & TicketFieldTableRow;
+export type CreateTicketFormValues = {
+  ticket_sections: TicketSection[];
+};

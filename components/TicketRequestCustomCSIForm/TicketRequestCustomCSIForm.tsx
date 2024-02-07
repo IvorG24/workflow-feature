@@ -1,35 +1,37 @@
-import { getTicketFields } from "@/backend/api/get";
-import { Database } from "@/utils/database";
-import { Button, Stack } from "@mantine/core";
+import { CreateTicketFormValues } from "@/utils/types";
+import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import TicketFieldList, {
-  CreateTicketFormValues,
-} from "../CreateTicketPage/TicketFieldList";
+import TicketFormSection from "../CreateTicketPage/TicketFormSection";
 
 type Props = {
+  category: string;
+  ticketForm: CreateTicketFormValues | null;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
 };
 
-const TicketRequestCustomCSIForm = ({ setIsLoading }: Props) => {
-  const ticketType = "Request Custom CSI";
-  const supabaseClient = createPagesBrowserClient<Database>();
+const TicketRequestCustomCSIForm = ({
+  category,
+  ticketForm,
+  setIsLoading,
+}: Props) => {
+  // const supabaseClient = createPagesBrowserClient<Database>();
   //   const router = useRouter();
   //   const activeTeam = useActiveTeam();
 
   const createTicketFormMethods = useForm<CreateTicketFormValues>();
   const { handleSubmit, control } = createTicketFormMethods;
 
-  const { fields: ticketFields, replace: replaceField } = useFieldArray({
+  const { fields: ticketSections, replace: replaceSection } = useFieldArray({
     control,
-    name: "fields",
+    name: "ticket_sections",
   });
 
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
+      console.log(category);
       console.log(data);
 
       notifications.show({
@@ -51,61 +53,34 @@ const TicketRequestCustomCSIForm = ({ setIsLoading }: Props) => {
     }
   };
 
-  const handleCategoryChange = async (ticketType: string | null) => {
-    try {
-      if (!ticketType) {
-        replaceField([]);
-        return;
-      }
-      const fieldList = await getTicketFields(supabaseClient, {
-        ticketType,
-      });
-
-      const fieldWithResponse = fieldList.map((field) => {
-        return {
-          ...field,
-          options: [],
-          response: "",
-        };
-      });
-
-      replaceField(fieldWithResponse);
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  };
-
   const handleItemNameChange = (index: number, value: string | null) => {
-    console.log(value);
+    console.log(index, value);
   };
 
   useEffect(() => {
-    handleCategoryChange(ticketType);
+    if (ticketForm) {
+      replaceSection(ticketForm.ticket_sections);
+    }
   }, []);
 
   return (
     <>
       <FormProvider {...createTicketFormMethods}>
         <form onSubmit={handleSubmit(handleCreateTicket)}>
-          <Stack>
-            {ticketFields.length > 0 && (
-              <>
-                <TicketFieldList
-                  ticketFields={ticketFields}
-                  requestCustomCSIMethodsFormMethods={{
-                    onItemNameChange: handleItemNameChange,
-                  }}
-                />
-
-                <Button type="submit" size="md">
-                  Submit
-                </Button>
-              </>
-            )}
-          </Stack>
+          {ticketSections.map((ticketSection, ticketSectionIdx) => (
+            <>
+              <TicketFormSection
+                ticketSection={ticketSection}
+                ticketSectionIdx={ticketSectionIdx}
+                requestCustomCSIMethodsFormMethods={{
+                  onItemNameChange: handleItemNameChange,
+                }}
+              />
+            </>
+          ))}
+          <Button type="submit" mt="lg" fullWidth>
+            Submit
+          </Button>
         </form>
       </FormProvider>
     </>

@@ -15,6 +15,7 @@ import {
   CanvassLowestPriceType,
   CanvassType,
   ConnectedRequestItemType,
+  CreateTicketFormValues,
   CreateTicketPageOnLoad,
   FieldTableRow,
   FormStatusType,
@@ -5018,20 +5019,29 @@ export const getSignerWithProfile = async (
   return data as SignerWithProfile[];
 };
 
-// Get ticket fields by type
-export const getTicketFields = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    ticketType: string;
-  }
+// Get ticket category list
+export const getTicketCategoryList = async (
+  supabaseClient: SupabaseClient<Database>
 ) => {
-  const { ticketType } = params;
-
   const { data, error } = await supabaseClient
-    .from("ticket_field_table")
-    .select("*")
-    .eq("ticket_field_ticket_type", ticketType);
+    .from("ticket_category_table")
+    .select("*");
   if (error) throw error;
 
   return data;
+};
+
+// Get ticket form
+export const getTicketForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    category: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_ticket_form", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as CreateTicketFormValues;
 };
