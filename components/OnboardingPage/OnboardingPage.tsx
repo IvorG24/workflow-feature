@@ -6,6 +6,7 @@ import {
   uploadImage,
 } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { ID_OPTIONS } from "@/utils/constant";
 import {
   formatTeamNameToUrlKey,
   isUUID,
@@ -81,6 +82,7 @@ const OnboardingPage = ({ user }: Props) => {
     clearErrors,
     control,
     setValue,
+    watch,
   } = useForm<OnboardUserParams>({
     defaultValues: { user_id: user.id, user_email: user.email },
     reValidateMode: "onChange",
@@ -186,6 +188,8 @@ const OnboardingPage = ({ user }: Props) => {
       setIsLoading(false);
     }
   };
+
+  const idLabel = idType === "Company ID" ? "Employee Number" : "ID Number";
 
   return (
     <Container p={0} mih="100vh" fluid>
@@ -392,17 +396,9 @@ const OnboardingPage = ({ user }: Props) => {
                         onChange(value);
                         setIdType(value);
                       }}
-                      data={[
-                        {
-                          value: "Philippine Driver's License",
-                          label: "Philippine Driver's License",
-                        },
-                        {
-                          value: "Philippine Passport",
-                          label: "Philippine Passport",
-                        },
-                      ]}
+                      data={ID_OPTIONS}
                       error={errors.user_id_type?.message}
+                      mt="sm"
                     />
                   )}
                 />
@@ -410,16 +406,16 @@ const OnboardingPage = ({ user }: Props) => {
 
               <Grid.Col xs={2} sm={1}>
                 <TextInput
-                  label="ID number"
+                  label={idLabel}
                   {...register("user_id_number", {
-                    required: "ID Number is required",
+                    required: `${idLabel} is required`,
                     minLength: {
                       value: 6,
-                      message: "ID Number must have at least 8 characters",
+                      message: `${idLabel} must have at least 8 characters`,
                     },
                     maxLength: {
                       value: 16,
-                      message: "ID Number must be shorter than 16 characters",
+                      message: `${idLabel} must be shorter than 16 characters`,
                     },
                   })}
                   error={errors.user_id_number?.message}

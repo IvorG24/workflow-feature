@@ -1203,3 +1203,38 @@ export const formatDate = (dateValue: Date) => {
 export const formatTime = (timeValue: Date) => {
   return moment(timeValue).format("LT");
 };
+
+export const ID_OPTIONS = [
+  {
+    value: "Company ID",
+    label: "Company ID",
+  },
+  {
+    value: "Pag-IBIG",
+    label: "Pag-IBIG",
+  },
+  {
+    value: "PhilHealth",
+    label: "PhilHealth",
+  },
+  {
+    value: "Philippine Driver's License",
+    label: "Philippine Driver's License",
+  },
+  {
+    value: "Philippine Identification (PhilID) / ePhilID",
+    label: "Philippine Identification (PhilID) / ePhilID",
+  },
+  {
+    value: "Philippine Passport",
+    label: "Philippine Passport",
+  },
+  {
+    value: "SSS",
+    label: "SSS",
+  },
+  {
+    value: "Unified Multi-Purpose Identification (UMID) Card",
+    label: "Unified Multi-Purpose Identification (UMID) Card",
+  },
+];
