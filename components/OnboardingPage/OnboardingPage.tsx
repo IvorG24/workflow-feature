@@ -82,7 +82,6 @@ const OnboardingPage = ({ user }: Props) => {
     clearErrors,
     control,
     setValue,
-    watch,
   } = useForm<OnboardUserParams>({
     defaultValues: { user_id: user.id, user_email: user.email },
     reValidateMode: "onChange",
