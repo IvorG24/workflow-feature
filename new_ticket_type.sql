@@ -154,8 +154,8 @@ RETURNS JSON AS $$
       `
     )[0];
 
-    const categoryList = plv8.execute(`SELECT * FROM ticket_category_table;`);
-   
+    const categoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
+
     returnData = { member, categoryList }
  });
  return returnData;
@@ -210,8 +210,6 @@ RETURNS JSON AS $$
         ticket_section_fields: fieldWithOption,
       }
     });
-    
-
    
     returnData = { ticket_sections: sectionList }
  });

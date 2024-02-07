@@ -26,8 +26,9 @@ const TicketFormFields = ({
   } = useFormContext<CreateTicketFormValues>();
 
   const fieldError =
-    errors.ticket_sections?.[ticketSectionIdx]?.ticket_section_fields?.[0]
-      ?.ticket_field_response?.message;
+    errors.ticket_sections?.[ticketSectionIdx]?.ticket_section_fields?.[
+      ticketFieldIdx
+    ]?.ticket_field_response?.message;
 
   const inputProps = {
     label: ticketField.ticket_field_name,

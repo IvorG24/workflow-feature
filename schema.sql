@@ -6413,12 +6413,70 @@ RETURNS JSON AS $$
       `
     )[0];
 
-    returnData = { member }
+    const categoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
+
+    returnData = { member, categoryList }
  });
  return returnData;
 $$ LANGUAGE plv8;
 
--- Start: Create ticket on load
+-- End: Create ticket on load
+
+-- Start: Get ticket form
+
+CREATE OR REPLACE FUNCTION get_ticket_form(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      category
+    } = input_data;
+
+    let ticketForm
+
+    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
+    
+    const sectionData = plv8.execute(`SELECT * FROM ticket_section_table WHERE ticket_section_category_id='${categoryData.ticket_category_id}'`);
+    
+    const sectionList = sectionData.map(section => {
+      const fieldData = plv8.execute(
+        `
+          SELECT *
+          FROM ticket_field_table
+          WHERE ticket_field_section_id = '${section.ticket_section_id}'
+          ORDER BY ticket_field_order ASC
+        `
+      );
+      const fieldWithOption = fieldData.map(field => {
+        const optionData = plv8.execute(
+          `
+            SELECT *
+            FROM ticket_option_table
+            WHERE ticket_option_field_id = '${field.ticket_field_id}'
+            ORDER BY ticket_option_order ASC
+          `
+        );
+        return {
+          ...field,
+          ticket_field_option: optionData,
+          ticket_field_response: ""
+        };
+      });
+
+      return {
+        ...section,
+        ticket_section_fields: fieldWithOption,
+      }
+    });
+   
+    returnData = { ticket_sections: sectionList }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Get ticket form
 
 -- Start: Create ticket
 
