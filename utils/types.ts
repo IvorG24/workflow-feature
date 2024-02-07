@@ -1131,26 +1131,24 @@ export type CreateTicketPageOnLoad = {
   categoryList: TicketCategoryTableRow[];
 };
 
-export type TicketListType = [
-  {
-    ticket_requester: {
-      team_member_id: string;
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string | null;
-      user_email: string;
-    };
-    ticket_approver: {
-      team_member_id: string;
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string | null;
-      user_email: string;
-    };
-  } & TicketTableRow
-];
+export type TicketListType = ({
+  ticket_requester: {
+    team_member_id: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    user_email: string;
+  };
+  ticket_approver: {
+    team_member_id: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    user_email: string;
+  };
+} & TicketTableRow & { ticket_category: string })[];
 
 export type TicketType = {
   ticket_requester: CreateTicketPageOnLoad["member"];

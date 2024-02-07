@@ -1,4 +1,4 @@
-import { TeamMemberWithUserType, TicketCategoryList } from "@/utils/types";
+import { TeamMemberWithUserType, TicketCategoryTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Flex,
@@ -18,7 +18,7 @@ import { FilterFormValues } from "./TicketListPage";
 
 type Props = {
   // requestList: RequestType[];
-  categoryList: TicketCategoryList;
+  ticketCategoryList: TicketCategoryTableRow[];
   teamMemberList: TeamMemberWithUserType[];
   handleFilterTicketList: () => void;
 };
@@ -32,7 +32,7 @@ type FilterSelectedValuesType = {
 
 const TicketListFilter = ({
   // requestList,
-  categoryList: initialCategoryList,
+  ticketCategoryList,
   teamMemberList,
   handleFilterTicketList,
 }: Props) => {
@@ -68,9 +68,9 @@ const TicketListFilter = ({
     { value: "CLOSED", label: "Closed" },
   ];
 
-  const categoryList = initialCategoryList.map((category) => ({
-    value: category.categoryName.toUpperCase(),
-    label: category.categoryName,
+  const categoryList = ticketCategoryList.map((category) => ({
+    value: category.ticket_category_id,
+    label: category.ticket_category,
   }));
 
   const { register, getValues, control, setValue } =

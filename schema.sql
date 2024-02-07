@@ -376,22 +376,84 @@ CREATE TABLE csi_code_table(
   csi_code_level_three_description VARCHAR(4000) NOT NULL
 );
 
+-- Start: Ticket Category
+
+CREATE TABLE ticket_category_table(
+  ticket_category_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_category VARCHAR(4000) NOT NULL, 
+  ticket_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  ticket_category_is_active BOOLEAN DEFAULT true NOT NULL
+);
+
+-- END: Ticket Category
+
+-- Start: Ticket Section
+
+CREATE TABLE ticket_section_table(
+  ticket_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_section_name VARCHAR(4000) NOT NULL,
+  ticket_section_is_duplicatable BOOLEAN DEFAULT false NOT NULL,
+  
+  ticket_section_category_id UUID REFERENCES ticket_category_table(ticket_category_id) NOT NULL
+);
+
+-- END: Ticket Section
+
+-- Start: Ticket Field
+
+CREATE TABLE ticket_field_table(
+  ticket_field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_field_name VARCHAR(4000) NOT NULL,
+  ticket_field_type VARCHAR(4000) NOT NULL,
+  ticket_field_is_required BOOLEAN DEFAULT true NOT NULL,
+  ticket_field_is_read_only BOOLEAN DEFAULT false NOT NULL,
+  ticket_field_order INT NOT NULL,
+  
+  ticket_field_section_id UUID REFERENCES ticket_section_table(ticket_section_id) NOT NULL
+);
+
+-- END: Ticket Field
+
+-- Start: Ticket Option
+
+CREATE TABLE ticket_option_table(
+  ticket_option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_option_value VARCHAR(4000) NOT NULL,
+  ticket_option_order INT NOT NULL,
+  
+  ticket_option_field_id UUID REFERENCES ticket_field_table(ticket_field_id) NOT NULL
+);
+
+-- END: Ticket Option
+
 -- Start: Ticket
 
 CREATE TABLE ticket_table(
   ticket_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  ticket_title VARCHAR(4000) NOT NULL,
-  ticket_description VARCHAR(4000) NOT NULL,
-  ticket_category VARCHAR(4000) NOT NULL,
   ticket_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   ticket_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   ticket_status_date_updated TIMESTAMPTZ,
+  ticket_is_disabled BOOLEAN DEFAULT false NOT NULL,
   
+  ticket_category_id UUID REFERENCES ticket_category_table(ticket_category_id) NOT NULL,
   ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
   ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
 -- END: Ticket
+
+-- Start: Ticket Response
+
+CREATE TABLE ticket_response_table(
+  ticket_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_response_value VARCHAR(4000) NOT NULL,
+  ticket_response_duplicatable_section_id UUID,
+  
+  ticket_response_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
+  ticket_response_field_id UUID REFERENCES ticket_field_table(ticket_field_id) NOT NULL
+);
+
+-- END: Ticket Response
 
 -- Start: Ticket comment
 
@@ -6651,16 +6713,18 @@ RETURNS JSON AS $$
       const ticket_list = plv8.execute(
         `
           SELECT DISTINCT
-            ticket_table.*
+            ticket_table.*,
+            ticket_category_table.ticket_category
           FROM ticket_table
-          INNER JOIN team_member_table tm ON ticket_table.ticket_requester_team_member_id = tm.team_member_id
-          WHERE tm.team_member_team_id = '${teamId}'
+          INNER JOIN team_member_table ON ticket_requester_team_member_id = team_member_id
+          INNER JOIN ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
+          WHERE team_member_team_id = '${teamId}'
           ${requester}
           ${approver}
           ${status}
           ${category}
           ${search}
-          ORDER BY ticket_table.ticket_date_created ${sort} 
+          ORDER BY ticket_date_created ${sort} 
           OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
         `
       );
@@ -6748,7 +6812,9 @@ RETURNS JSON AS $$
 
     const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
 
-    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count}
+    const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
+
+    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
  });
  return returnData;
 $$ LANGUAGE plv8;

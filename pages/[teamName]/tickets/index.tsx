@@ -3,7 +3,11 @@ import { getTicketListOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TicketListPage from "@/components/TicketListPage/TicketListPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { TeamMemberWithUserType, TicketListType } from "@/utils/types";
+import {
+  TeamMemberWithUserType,
+  TicketCategoryTableRow,
+  TicketListType,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -17,6 +21,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         props: requestListData,
       };
     } catch (error) {
+      console.log(error);
       return {
         redirect: {
           destination: "/500",
@@ -31,9 +36,15 @@ type Props = {
   ticketList: TicketListType;
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  ticketCategoryList: TicketCategoryTableRow[];
 };
 
-const Page = ({ ticketList, ticketListCount, teamMemberList }: Props) => {
+const Page = ({
+  ticketList,
+  ticketListCount,
+  teamMemberList,
+  ticketCategoryList,
+}: Props) => {
   return (
     <>
       <Meta description="Ticket List Page" url="/<teamName>/tickets" />
@@ -42,6 +53,7 @@ const Page = ({ ticketList, ticketListCount, teamMemberList }: Props) => {
         ticketList={ticketList}
         ticketListCount={ticketListCount}
         teamMemberList={teamMemberList}
+        ticketCategoryList={ticketCategoryList}
       />
     </>
   );

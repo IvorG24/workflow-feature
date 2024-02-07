@@ -1,6 +1,6 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
-import { formatTeamNameToUrlKey, toTitleCase } from "@/utils/string";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TicketListType } from "@/utils/types";
 import {
@@ -64,7 +64,6 @@ const TicketListItem = ({ ticket }: Props) => {
         <Flex justify="space-between">
           <Text
             truncate
-            maw={150}
             component="a"
             sx={{
               ":hover": {
@@ -80,7 +79,9 @@ const TicketListItem = ({ ticket }: Props) => {
           >
             {ticket.ticket_id}
           </Text>
-          <CopyButton value={ticket.ticket_id}>
+          <CopyButton
+            value={`${process.env.NEXT_PUBLIC_SITE_URL}/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`}
+          >
             {({ copied, copy }) => (
               <Tooltip
                 label={copied ? "Copied" : "Copy ticket id"}
@@ -94,18 +95,12 @@ const TicketListItem = ({ ticket }: Props) => {
           </CopyButton>
         </Flex>
       </Grid.Col>
+
       <Grid.Col span={2}>
-        <Flex justify="space-between">
-          <Text truncate maw={150}>
-            {ticket.ticket_title}
-          </Text>
-        </Flex>
+        <Text miw={105}>{ticket.ticket_category}</Text>
       </Grid.Col>
 
       <Grid.Col span={2}>
-        <Text>{toTitleCase(ticket.ticket_category)}</Text>
-      </Grid.Col>
-      <Grid.Col span={1}>
         <Badge
           variant="filled"
           color={getTicketStatusColor(ticket.ticket_status)}
@@ -127,34 +122,27 @@ const TicketListItem = ({ ticket }: Props) => {
           <Text>{`${requester.user_first_name} ${requester.user_last_name}`}</Text>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1}>
+      <Grid.Col span="auto">
         {ticket.ticket_approver_team_member_id && (
           <Flex px={0} gap={8} wrap="wrap">
-            <Tooltip
-              key={approver.user_id}
-              label={`${approver.user_first_name} ${approver.user_last_name}`}
-              withArrow
-            >
-              <Avatar
-                src={approver.user_avatar || null}
-                {...defaultAvatarProps}
-                color={getAvatarColor(
-                  Number(`${approver.team_member_id.charCodeAt(0)}`)
-                )}
-                className={classes.requester}
-              >
-                {approver.user_first_name[0] + approver.user_last_name[0]}
-              </Avatar>
-            </Tooltip>
+            <Avatar
+              src={approver.user_avatar || null}
+              {...defaultAvatarProps}
+              color={getAvatarColor(
+                Number(`${approver.team_member_id.charCodeAt(0)}`)
+              )}
+              className={classes.requester}
+            ></Avatar>
+            <Text>{`${approver.user_first_name} ${approver.user_last_name}`}</Text>
           </Flex>
         )}
       </Grid.Col>
-      <Grid.Col span="content">
+      <Grid.Col span={1}>
         <Text miw={105}>
           {formatDate(new Date(ticket.ticket_date_created))}
         </Text>
       </Grid.Col>
-      <Grid.Col span="content">
+      <Grid.Col span={1}>
         <Group position="center">
           <ActionIcon
             color="blue"

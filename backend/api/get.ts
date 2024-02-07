@@ -4113,7 +4113,7 @@ export const getTicketList = async (
     ?.map((value) => `ticket_table.ticket_status = '${value}'`)
     .join(" OR ");
   const categoryCondition = category
-    ?.map((value) => `ticket_table.ticket_category = '${value}'`)
+    ?.map((value) => `ticket_table.ticket_category_id = '${value}'`)
     .join(" OR ");
 
   const searchCondition =

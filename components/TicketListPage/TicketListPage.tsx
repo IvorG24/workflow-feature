@@ -1,12 +1,10 @@
 import { getTicketList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  DEFAULT_TICKET_LIST_LIMIT,
-  TICKET_CATEGORY_LIST,
-} from "@/utils/constant";
+import { DEFAULT_TICKET_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   TeamMemberWithUserType,
+  TicketCategoryTableRow,
   TicketListType,
   TicketStatusType,
 } from "@/utils/types";
@@ -47,12 +45,14 @@ type Props = {
   ticketList: TicketListType;
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  ticketCategoryList: TicketCategoryTableRow[];
 };
 
 const TicketListPage = ({
   ticketList: inititalTicketList,
   ticketListCount: inititalTicketListCount,
   teamMemberList,
+  ticketCategoryList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -182,7 +182,7 @@ const TicketListPage = ({
   }, [activePage]);
 
   return (
-    <Container maw={1300} h="100%">
+    <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap">
         <Box>
           <Title order={4}>Ticket List Page</Title>
@@ -193,7 +193,7 @@ const TicketListPage = ({
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterTicketList)}>
             <TicketListFilter
-              categoryList={TICKET_CATEGORY_LIST}
+              ticketCategoryList={ticketCategoryList}
               handleFilterTicketList={handleFilterTicketList}
               teamMemberList={teamMemberList}
             />
@@ -224,12 +224,9 @@ const TicketListPage = ({
                       <Text weight={600}>Ticket ID</Text>
                     </Grid.Col>
                     <Grid.Col span={2}>
-                      <Text weight={600}>Title</Text>
+                      <Text weight={600}>Ticket Category</Text>
                     </Grid.Col>
-                    <Grid.Col span="auto">
-                      <Text weight={600}>Category</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
+                    <Grid.Col span={2}>
                       <Text weight={600}>Status</Text>
                     </Grid.Col>
 
@@ -238,13 +235,13 @@ const TicketListPage = ({
                         Requester
                       </Text>
                     </Grid.Col>
-                    <Grid.Col span={1}>
+                    <Grid.Col span="auto">
                       <Text weight={600}>Approver</Text>
                     </Grid.Col>
-                    <Grid.Col span="content">
+                    <Grid.Col span={1}>
                       <Text weight={600}>Date Created</Text>
                     </Grid.Col>
-                    <Grid.Col span="content">
+                    <Grid.Col span={1} sx={{ textAlign: "center" }}>
                       <Text weight={600}>View</Text>
                     </Grid.Col>
                   </Grid>
