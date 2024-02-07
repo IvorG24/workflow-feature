@@ -1,6 +1,6 @@
 import {
   checkIfTeamGroupMember,
-  checkRequisitionFormStatus,
+  checkItemFormStatus,
   getProjectSigner,
   getTeamProjectList,
 } from "@/backend/api/get";
@@ -50,8 +50,8 @@ import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import FormSection from "../RequestFormPage/FormSection";
-import RequisitionFormDetails from "./RequisitionFormDetails/RequisitionFormDetails";
-import RequisitionLookup from "./RequisitionLookup/RequisitionLookup";
+import ItemFormDetails from "./ItemFormDetails/ItemFormDetails";
+import ItemLookup from "./ItemLookup/ItemLookup";
 
 type Props = {
   items: ItemWithDescriptionType[];
@@ -63,7 +63,7 @@ type Props = {
   teamProjectListCount: number;
 };
 
-const RequisitionFormPage = ({
+const ItemFormPage = ({
   items,
   itemListCount,
   teamMemberList,
@@ -281,7 +281,7 @@ const RequisitionFormPage = ({
 
   const handleFormVisibilityRestriction = async () => {
     try {
-      const result = await checkRequisitionFormStatus(supabaseClient, {
+      const result = await checkItemFormStatus(supabaseClient, {
         teamId: team.team_id,
         formId: `${formId}`,
       });
@@ -407,7 +407,7 @@ const RequisitionFormPage = ({
       ) : null}
 
       {segmentValue === "Form Details" ? (
-        <RequisitionFormDetails
+        <ItemFormDetails
           isCreatingItem={isCreatingItem}
           editItem={editItem}
           itemList={itemList}
@@ -421,7 +421,7 @@ const RequisitionFormPage = ({
         />
       ) : null}
 
-      {segmentValue === "Form Lookup" ? <RequisitionLookup /> : null}
+      {segmentValue === "Form Lookup" ? <ItemLookup /> : null}
 
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Requester Details</Title>
@@ -562,4 +562,4 @@ const RequisitionFormPage = ({
   );
 };
 
-export default RequisitionFormPage;
+export default ItemFormPage;

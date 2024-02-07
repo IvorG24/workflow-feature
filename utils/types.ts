@@ -772,10 +772,7 @@ export type RequestDashboardOverviewData = RequestTableRow & {
   })[];
 };
 
-export type ConnectedFormsType =
-  | "Requisition"
-  | "Invoice"
-  | "Account Payable Voucher";
+export type ConnectedFormsType = "Item" | "Invoice" | "Account Payable Voucher";
 
 export type SearchKeywordResponseType = RequestResponseTableRow & {
   request_form: {
@@ -821,13 +818,13 @@ export type RequestResponseDataType = {
   responseData: FieldWithResponseType;
 };
 export type FormslyFormType = {
-  Requisition: string[];
+  Item: string[];
   Quotation: string[];
   "Receiving Inspecting Report": string[];
 };
 
 export type FormslyFormKeyType =
-  | "Requisition"
+  | "Item"
   | "Quotation"
   | "Receiving Inspecting Report";
 
@@ -839,7 +836,7 @@ export type RequestSignerListType =
     };
   };
 export type TeamGroupForFormType =
-  | "Requisition"
+  | "Item"
   | "Quotation"
   | "Receiving Inspecting Report"
   | "Audit";
@@ -857,14 +854,14 @@ export type SSOTResponseType = {
 };
 
 export type SSOTType = {
-  requisition_request_formsly_id: string;
-  requisition_request_jira_id: string;
-  requisition_request_otp_id: string;
-  requisition_request_id: string;
-  requisition_request_date_created: string;
-  requisition_request_owner: SSOTRequestOwnerType;
-  requisition_request_response: SSOTResponseType[];
-  requisition_quotation_request: {
+  item_request_formsly_id: string;
+  item_request_jira_id: string;
+  item_request_otp_id: string;
+  item_request_id: string;
+  item_request_date_created: string;
+  item_request_owner: SSOTRequestOwnerType;
+  item_request_response: SSOTResponseType[];
+  item_quotation_request: {
     quotation_request_id: string;
     quotation_request_formsly_id: string;
     quotation_request_date_created: string;
@@ -878,7 +875,7 @@ export type SSOTType = {
       rir_request_response: SSOTResponseType[];
     }[];
   }[];
-  requisition_sourced_item_request: {
+  item_sourced_item_request: {
     sourced_item_request_id: string;
     sourced_item_request_formsly_id: string;
     sourced_item_request_date_created: string;
@@ -899,7 +896,7 @@ export type SSOTType = {
       }[];
     }[];
   }[];
-  requisition_cheque_reference_request: {
+  item_cheque_reference_request: {
     cheque_reference_request_id: string;
     cheque_reference_request_formsly_id: string;
     cheque_reference_request_date_created: string;
@@ -1016,7 +1013,7 @@ export type ConnectedRequestIdList = {
   [key: string]: ConnectedRequestItemType[];
 };
 
-export type RequisitionFieldsType = FieldTableRow & {
+export type ItemFieldsType = FieldTableRow & {
   field_option: OptionTableRow[];
 } & { field_response: RequestResponseTableRow[] }[];
 

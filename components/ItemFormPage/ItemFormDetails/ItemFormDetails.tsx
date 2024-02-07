@@ -19,7 +19,7 @@ type Props = {
   selectedItem: ItemWithDescriptionType | null;
 };
 
-const RequisitionFormDetails = ({
+const ItemFormDetails = ({
   isCreatingItem,
   editItem,
   itemList,
@@ -79,4 +79,4 @@ const RequisitionFormDetails = ({
   );
 };
 
-export default RequisitionFormDetails;
+export default ItemFormDetails;

@@ -32,7 +32,7 @@ const ExportToPdfMenu = ({ isFormslyForm, formName, requestId }: Props) => {
         )}
 
         {isFormslyForm &&
-          ["Requisition", "Services", "Other Expenses"].includes(formName) && (
+          ["Item", "Services", "Other Expenses"].includes(formName) && (
             <Menu.Item
               icon={<IconTable size={16} />}
               onClick={() => {

@@ -68,9 +68,9 @@ const ReviewAppNavLink = () => {
   const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
 
   const rfForm = forms.filter(
-    (form) => form.form_is_formsly_form && form.form_name === "Requisition"
+    (form) => form.form_is_formsly_form && form.form_name === "Item"
   )[0];
-  const requisitionForm = rfForm as unknown as FormTableRow & {
+  const itemForm = rfForm as unknown as FormTableRow & {
     form_team_group: string[];
   };
 
@@ -224,8 +224,8 @@ const ReviewAppNavLink = () => {
           <IconFile {...defaultIconProps} />
         </Box>
       ),
-      href: requisitionForm
-        ? `/${activeTeamNameToUrl}/forms/${requisitionForm.form_id}/create`
+      href: itemForm
+        ? `/${activeTeamNameToUrl}/forms/${itemForm.form_id}/create`
         : "",
     },
     {
@@ -235,7 +235,7 @@ const ReviewAppNavLink = () => {
           <IconTicket {...defaultIconProps} />
         </Box>
       ),
-      href: requisitionForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
+      href: itemForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
     },
     {
       label: "Create Memo",
@@ -353,9 +353,9 @@ const ReviewAppNavLink = () => {
         />
       ) : null}
 
-      {requisitionForm &&
-      requisitionForm.form_is_hidden === false &&
-      requisitionForm.form_team_group.length &&
+      {itemForm &&
+      itemForm.form_is_hidden === false &&
+      itemForm.form_team_group.length &&
       hasTeam ? (
         unhiddenForms.length > 1 ? (
           renderCreateRequestMenu()

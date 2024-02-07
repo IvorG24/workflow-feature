@@ -15,7 +15,7 @@ import RequestResponse from "../RequestPage/RequestResponse";
 
 type Props = { canvassRequest: string[] };
 
-const RequisitionCanvassSection = ({ canvassRequest }: Props) => {
+const ItemCanvassSection = ({ canvassRequest }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
 
@@ -68,4 +68,4 @@ const RequisitionCanvassSection = ({ canvassRequest }: Props) => {
   );
 };
 
-export default RequisitionCanvassSection;
+export default ItemCanvassSection;

@@ -62,9 +62,9 @@ const RequestDetailsSection = ({
   const [isAddingOtpID, setIsAddingOtpID] = useState(false);
   const [otpID, setOtpID] = useState(request.request_otp_id);
 
-  const isFormslyRequisitionRequest =
+  const isFormslyItemRequest =
     request.request_form.form_is_formsly_form &&
-    ["Requisition", "Services"].includes(request.request_form.form_name);
+    ["Item", "Services"].includes(request.request_form.form_name);
 
   const handleUpdateOtpID = async ({ otpID }: { otpID: string }) => {
     try {
@@ -195,7 +195,7 @@ const RequestDetailsSection = ({
           )}
         </Group>
       )}
-      {isFormslyRequisitionRequest &&
+      {isFormslyItemRequest &&
         !isAddingOtpID &&
         requestStatus === "APPROVED" &&
         !`${router.pathname}`.includes("public-request") &&

@@ -2,7 +2,8 @@
 
 import { getUserSignatureList } from "@/backend/api/get";
 import ExportToPdf from "@/components/ExportToPDF/ExportToPdf";
-import { ApproverDetailsType } from "@/components/RequisitionRequestPage/RequisitionRequestPage";
+import { ApproverDetailsType } from "@/components/ItemRequestPage/ItemRequestPage";
+import Meta from "@/components/Meta/Meta";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { RequestWithResponseType } from "@/utils/types";
 import { notifications } from "@mantine/notifications";
@@ -125,6 +126,7 @@ const Page = ({ request }: Props) => {
 
   return (
     <>
+      <Meta description="Export to PDF" url="/" />
       {!isFetchingApprover && approverDetails.length !== 0 && (
         <ExportToPdf
           request={request}

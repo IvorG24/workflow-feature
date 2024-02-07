@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       attachment_table: {
@@ -2518,7 +2518,7 @@ export interface Database {
         }
         Returns: undefined
       }
-      approve_sourced_requisition_request: {
+      approve_sourced_item_request: {
         Args: {
           input_data: Json
         }
@@ -2551,14 +2551,14 @@ export interface Database {
         }
         Returns: Json
       }
-      check_requisition_form_status: {
+      check_item_form_status: {
         Args: {
           team_id: string
           form_id: string
         }
         Returns: string
       }
-      check_requisition_quantity: {
+      check_item_quantity: {
         Args: {
           input_data: Json
         }
@@ -2734,7 +2734,7 @@ export interface Database {
         }
         Returns: string
       }
-      get_all_approved_requisition_json: {
+      get_all_approved_item_json: {
         Args: {
           team_id: string
         }
