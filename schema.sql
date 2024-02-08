@@ -1252,6 +1252,8 @@ RETURNS JSON AS $$
         endId = `Q`;
       } else if(formName==='Services') {
         endId = `S`;
+      } else if(formName==='Other Expenses') {
+        endId = `OE`;
       } else if(formName==='PED Equipment') {
         endId = `PE`;
       } else if(formName==='PED Part') {
@@ -12378,6 +12380,356 @@ TO authenticated
 USING (
   memo_author_user_id = auth.uid()
 );
+
+-- memo_signer_table
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_signer_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+-- memo_line_item_table
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_line_item_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+-- memo_line_item_attachment_table
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_line_item_attachment_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+-- memo_date_updated_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_date_updated_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_date_updated_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for auth users" ON "public"."memo_date_updated_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_date_updated_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM memo_table
+    WHERE memo_id = memo_date_updated_memo_id
+    AND memo_author_user_id = auth.uid()
+  )
+);
+
+-- memo_status_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_status_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_status_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for auth users" ON "public"."memo_status_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_status_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM memo_table
+    WHERE memo_id = memo_status_memo_id
+    AND memo_author_user_id = auth.uid()
+  )
+);
+
+-- memo_read_receipt_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_read_receipt_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_read_receipt_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+-- memo_agreement_table
+CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_agreement_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."memo_agreement_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- USER_VALID_ID_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."user_valid_id_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."user_valid_id_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."user_valid_id_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+--- other_expenses_category_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_category_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE other_expenses_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."other_expenses_category_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_category_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE other_expenses_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_category_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM other_expenses_category_table
+    JOIN team_table ON other_expenses_category_team_id = team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE other_expenses_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- other_expenses_type_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_type_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM other_expenses_category_table
+    JOIN team_table ON team_id = other_expenses_category_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE other_expenses_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."other_expenses_type_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_type_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM other_expenses_category_table
+    JOIN team_table ON team_id = other_expenses_category_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE other_expenses_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_type_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM other_expenses_category_table
+    JOIN team_table ON team_id = other_expenses_category_team_id
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE other_expenses_category_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- item_unit_of_measurement_table
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_unit_of_measurement_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE item_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_unit_of_measurement_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_unit_of_measurement_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE item_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_unit_of_measurement_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 
+    FROM team_table
+    JOIN team_member_table ON team_member_team_id = team_id
+    WHERE item_unit_of_measurement_team_id = team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- ITEM_LEVEL_THREE_DESCRIPTION
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_level_three_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_level_three_description_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_level_three_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM item_table as it
+    JOIN team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    WHERE it.item_id = item_level_three_description_item_id
+    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_section_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_subsection_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_attachment_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+--- QUERY_TABLE
+
+CREATE POLICY "Allow READ for anon users" ON "public"."query_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- FORM_SLA_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for anon users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."form_sla_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
 
 -------- End: POLICIES
 
