@@ -156,7 +156,7 @@ export const getJiraRequestingProjectSite = (formslyItemCategory: string) => {
       id: "10293",
       label: "MORONG CRUSHING PLANT",
     },
-    "LUZ-12-051 CATUIRAN": {
+    CATUIRAN: {
       id: "10357",
       label: "LUZ-12-051 CATUIRAN",
     },
@@ -511,7 +511,6 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "LUZ-23-001 HUDSON PACKAGE 2",
         "LUZ-22-009 SOLID LF MAIN BLDG",
         "LUZ-22-010 PHILIP MORRIS",
-        "LUZ-12-051 CATUIRAN",
         "LUZ-23-002 EAST BAY 200MLD WTP",
         " LUZ-23-009 KALAYAAN 2 WIND", // added on 2024-02-01 16:14 info from Bry Paras
       ],
@@ -537,6 +536,13 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
       fullName: "Christopher Waga",
       jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
       emailAddress: "christopher.waga@staclara.com.ph",
+    },
+    {
+      items: ["LUZ-12-051 CATUIRAN"],
+      fullName: "Jay Quiroz",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d8344027-3578-4f50-8b8a-11fe72244208",
+      emailAddress: "jayquiroz.santaclara@gmail.com",
     },
   ];
 
