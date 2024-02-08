@@ -29,6 +29,7 @@ const TicketRequestCustomCSIForm = ({
     fields: ticketSections,
     replace: replaceSection,
     insert: addSection,
+    remove: removeSection,
   } = useFieldArray({
     control,
     name: "ticket_sections",
@@ -75,13 +76,26 @@ const TicketRequestCustomCSIForm = ({
       const duplicatedFieldsWithDuplicatableId =
         sectionMatch.ticket_section_fields.map((field) => ({
           ...field,
+          ticket_field_response: "",
           ticket_field_section_id: sectionDuplicatableId,
         }));
       const newSection = {
         ...sectionMatch,
+        field_section_duplicatable_id: sectionDuplicatableId,
         ticket_section_field: duplicatedFieldsWithDuplicatableId,
       };
       addSection(sectionLastIndex + 1, newSection);
+      return;
+    }
+  };
+
+  const handleRemoveSection = (sectionDuplicatableId: string) => {
+    const sectionMatchIndex = ticketSections.findIndex(
+      (section) =>
+        section.field_section_duplicatable_id === sectionDuplicatableId
+    );
+    if (sectionMatchIndex) {
+      removeSection(sectionMatchIndex);
       return;
     }
   };
@@ -110,12 +124,17 @@ const TicketRequestCustomCSIForm = ({
                   requestCustomCSIMethodsFormMethods={{
                     onItemNameChange: handleItemNameChange,
                   }}
+                  onRemoveSection={() =>
+                    handleRemoveSection(
+                      ticketSection.field_section_duplicatable_id ?? ""
+                    )
+                  }
                 />
                 {ticketSection.ticket_section_is_duplicatable &&
                   ticketSectionIdx === sectionLastIndex && (
                     <Button
                       mt="md"
-                      variant="default"
+                      variant="light"
                       onClick={() =>
                         handleDuplicateSection(ticketSection.ticket_section_id)
                       }

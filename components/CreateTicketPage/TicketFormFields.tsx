@@ -40,7 +40,7 @@ const TicketFormFields = ({
   const fieldRules = {
     required: {
       value: ticketField.ticket_field_is_required,
-      message: `${ticketField.ticket_field_name} is required`,
+      message: `${ticketField.ticket_field_name.replace(/\?/g, '')} is required`,
     },
   };
 

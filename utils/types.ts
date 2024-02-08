@@ -1403,6 +1403,7 @@ export type FormSLAWithForm = {
 } & FormSLATableRow;
 
 export type TicketSection = TicketSectionTableRow & {
+  field_section_duplicatable_id?: string;
   ticket_section_fields: (TicketFieldTableRow & {
     ticket_field_option: TicketOptionTableRow[];
     ticket_field_response?: unknown;
