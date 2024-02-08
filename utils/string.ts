@@ -164,7 +164,3 @@ export const formatCSICode = (inputString: string) => {
   numericString = numericString.substring(0, 8);
   return numericString.replace(/(\d{2})(?=\d)/g, "$1 ");
 };
-
-export const removeExtraSpaces = (inputString: string) => {
-  return inputString.replace(/\s+/g, " ").trim();
-};

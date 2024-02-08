@@ -1,4 +1,5 @@
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
+import { formatCSICode } from "@/utils/string";
 import { CreateTicketFormValues, TicketSection } from "@/utils/types";
 import { FileInput, Select, TextInput, Textarea } from "@mantine/core";
 import { IconFile } from "@tabler/icons-react";
@@ -66,7 +67,7 @@ const TicketFormFields = ({
                     category === "Request Custom CSI" &&
                     ticketField.ticket_field_name === "CSI Code"
                   ) {
-                    value = value.replace(/(\d{2})(?=\d)/g, "$1 ");
+                    value = formatCSICode(value);
                   }
                   onChange(value);
                 }}
