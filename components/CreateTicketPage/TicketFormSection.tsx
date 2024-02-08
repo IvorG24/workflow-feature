@@ -13,16 +13,12 @@ type Props = {
   ticketSectionIdx: number;
   onRemoveSection?: (sectionDuplicatableId: string) => void;
   onDuplicateSection?: () => void;
-  requestCustomCSIMethodsFormMethods?: {
-    onCSICodeDescriptionChange: (value: string) => void;
-  };
 };
 
 const TicketFormSection = ({
   ticketSectionIdx,
   ticketSection,
   onRemoveSection,
-  requestCustomCSIMethodsFormMethods,
 }: Props) => {
   const { field_section_duplicatable_id } = ticketSection;
   return (
@@ -61,9 +57,6 @@ const TicketFormSection = ({
               ticketField={ticketField}
               ticketFieldIdx={ticketFieldIdx}
               ticketSectionIdx={ticketSectionIdx}
-              requestCustomCSIMethodsFormMethods={
-                requestCustomCSIMethodsFormMethods
-              }
               key={ticketField.ticket_field_id}
             />
           );

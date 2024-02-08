@@ -8,16 +8,12 @@ type Props = {
   ticketField: TicketSection["ticket_section_fields"][0];
   ticketFieldIdx: number;
   ticketSectionIdx: number;
-  requestCustomCSIMethodsFormMethods?: {
-    onCSICodeDescriptionChange: (value: string) => void;
-  };
 };
 
 const TicketFormFields = ({
   ticketField,
   ticketFieldIdx,
   ticketSectionIdx,
-  requestCustomCSIMethodsFormMethods,
 }: Props) => {
   const {
     register,
@@ -51,27 +47,16 @@ const TicketFormFields = ({
     switch (field.ticket_field_type) {
       case "TEXT":
         return (
-          <Controller
-            control={control}
-            name={`ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`}
-            render={({ field }) => (
-              <TextInput
-                {...inputProps}
-                value={`${field.value}`}
-                onChange={(event) => {
-                  console.log(event.currentTarget.value);
-                  if (ticketField.ticket_field_name === "Item Name") {
-                    requestCustomCSIMethodsFormMethods?.onCSICodeDescriptionChange(
-                      event.currentTarget.value
-                    );
-                  }
-                  field.onChange(event.currentTarget.value);
-                }}
-                error={fieldError}
-                withAsterisk={ticketField.ticket_field_is_required}
-              />
+          <TextInput
+            {...inputProps}
+            {...register(
+              `ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`,
+              {
+                ...fieldRules,
+              }
             )}
-            rules={{ ...fieldRules }}
+            error={fieldError}
+            withAsterisk={field.ticket_field_is_required}
           />
         );
 

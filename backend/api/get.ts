@@ -5046,3 +5046,37 @@ export const getTicketForm = async (
 
   return data as unknown as CreateTicketFormValues;
 };
+
+// Check CSI Code if it already exists
+export const checkCSICode = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    csiCode: string;
+  }
+) => {
+  const { csiCode } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_section")
+    .ilike("csi_code_section", csiCode)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+};
+
+// Check CSI Code Description if it already exists
+export const checkCSICodeDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    csiCodeDescription: string;
+  }
+) => {
+  const { csiCodeDescription } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_level_three_description")
+    .ilike("csi_code_level_three_description", csiCodeDescription)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+};

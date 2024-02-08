@@ -1,6 +1,9 @@
+import { checkCSICode, checkCSICodeDescription } from "@/backend/api/get";
+import { Database } from "@/utils/database";
 import { CreateTicketFormValues } from "@/utils/types";
 import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import TicketFormSection from "../CreateTicketPage/TicketFormSection";
@@ -16,12 +19,12 @@ const TicketRequestCustomCSIForm = ({
   ticketForm,
   setIsLoading,
 }: Props) => {
-  // const supabaseClient = createPagesBrowserClient<Database>();
+  const supabaseClient = createPagesBrowserClient<Database>();
   //   const router = useRouter();
   //   const activeTeam = useActiveTeam();
 
   const createTicketFormMethods = useForm<CreateTicketFormValues>();
-  const { handleSubmit, control } = createTicketFormMethods;
+  const { handleSubmit, control, setError } = createTicketFormMethods;
 
   const { fields: ticketSections, replace: replaceSection } = useFieldArray({
     control,
@@ -31,6 +34,21 @@ const TicketRequestCustomCSIForm = ({
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
+
+      // check if csi exists
+      const csiCodeDescription =
+        data.ticket_sections[0].ticket_section_fields[1].ticket_field_response;
+      const csiCode =
+        data.ticket_sections[0].ticket_section_fields[2].ticket_field_response;
+
+      const csiExists = await checkIfCSIExists(
+        `${csiCode}`,
+        `${csiCodeDescription}`
+      );
+
+      if (csiExists) return;
+      console.log(csiCode);
+      console.log(csiExists);
       console.log(category);
       console.log(data);
 
@@ -53,8 +71,32 @@ const TicketRequestCustomCSIForm = ({
     }
   };
 
-  const handleCSICodeDescriptionChange = async (value: string) => {
-    console.log(value);
+  const checkIfCSIExists = async (
+    csiCode: string,
+    csiCodeDescription: string
+  ) => {
+    const csiCodeDescriptionExists = await checkCSICodeDescription(
+      supabaseClient,
+      {
+        csiCodeDescription: `${csiCodeDescription}`,
+      }
+    );
+    if (csiCodeDescriptionExists)
+      setError(
+        `ticket_sections.0.ticket_section_fields.1.ticket_field_response`,
+        { message: "CSI Code Description already exists" }
+      );
+
+    const csiCodeExists = await checkCSICode(supabaseClient, {
+      csiCode: `${csiCode}`,
+    });
+    if (csiCodeExists)
+      setError(
+        `ticket_sections.0.ticket_section_fields.2.ticket_field_response`,
+        { message: "CSI Code already exists" }
+      );
+
+    return csiCodeExists || csiCodeDescriptionExists;
   };
 
   useEffect(() => {
@@ -72,9 +114,6 @@ const TicketRequestCustomCSIForm = ({
               <TicketFormSection
                 ticketSection={ticketSection}
                 ticketSectionIdx={ticketSectionIdx}
-                requestCustomCSIMethodsFormMethods={{
-                  onCSICodeDescriptionChange: handleCSICodeDescriptionChange,
-                }}
               />
             </>
           ))}
