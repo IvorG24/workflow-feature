@@ -5048,7 +5048,7 @@ export const getTicketForm = async (
 };
 
 // Check CSI Code if it already exists
-export const checkCSICode = async (
+export const checkCSICodeExists = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     csiCode: string;
@@ -5065,7 +5065,7 @@ export const checkCSICode = async (
 };
 
 // Check CSI Code Description if it already exists
-export const checkCSICodeDescription = async (
+export const checkCSICodeDescriptionExists = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     csiCodeDescription: string;
@@ -5076,6 +5076,25 @@ export const checkCSICodeDescription = async (
     .from("csi_code_table")
     .select("csi_code_level_three_description")
     .ilike("csi_code_level_three_description", csiCodeDescription)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+};
+
+// Check CSI Code if it already exists for item
+export const checkCSICodeItemExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    divisionId: string;
+    itemId: string;
+  }
+) => {
+  const { divisionId, itemId } = params;
+  const { data, error } = await supabaseClient
+    .from("item_division_table")
+    .select("*")
+    .eq("item_division_value", divisionId)
+    .eq("item_division_item_id", itemId)
     .maybeSingle();
   if (error) throw error;
   return Boolean(data);

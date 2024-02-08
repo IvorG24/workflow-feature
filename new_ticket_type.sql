@@ -199,9 +199,11 @@ RETURNS JSON AS $$
             ORDER BY ticket_option_order ASC
           `
         );
+        const optionList = optionData.map((option)=> option.ticket_option_value);
+
         return {
           ...field,
-          ticket_field_option: optionData,
+          ticket_field_option: optionList,
           ticket_field_response: ""
         };
       });
@@ -220,16 +222,7 @@ RETURNS JSON AS $$
         AND item_is_available = true
         ORDER BY item_general_name ASC;
       `);
-
-      const fieldId = sectionList[0].ticket_section_fields[0].ticket_field_id
-      const itemOptions = itemList.map((item, index) => {
-        return {
-          ticket_option_field_id: fieldId,
-          ticket_option_id: item.item_id,
-          ticket_option_order: index,
-          ticket_option_value: item.item_general_name,
-        };
-      });
+      const itemOptions = itemList.map((option)=> option.item_general_name);
 
       const ticket_sections = sectionList.map(section => {
 
@@ -255,25 +248,30 @@ RETURNS JSON AS $$
         AND item_is_available = true
         ORDER BY item_general_name ASC;
       `);
+      const itemOptions = itemList.map((option)=> option.item_general_name);
 
-      const fieldId = sectionList[0].ticket_section_fields[0].ticket_field_id
-      const itemOptions = itemList.map((item, index) => {
-        return {
-          ticket_option_field_id: fieldId,
-          ticket_option_id: item.item_id,
-          ticket_option_order: index,
-          ticket_option_value: item.item_general_name,
-        };
-      });
+      const csiCodeDescriptionList = plv8.execute(`
+        SELECT * FROM csi_code_table 
+        ORDER BY csi_code_level_three_description ASC;
+      `);
+      const csiCodeDescriptionOptions = csiCodeDescriptionList.map((option)=> option.csi_code_level_three_description);
 
       const ticket_sections = sectionList.map(section => {
 
         const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
+          let fieldOptions = []
+          if(fieldIdx === 0){
+            fieldOptions = itemOptions
+          }else if(fieldIdx === 1){
+            fieldOptions = csiCodeDescriptionOptions
+          }
+
           return {
             ...field,
-            ticket_field_option: fieldIdx === 0 ? itemOptions : [],
+            ticket_field_option: fieldOptions,
           };
         });
+        
 
         return {
           ...section,

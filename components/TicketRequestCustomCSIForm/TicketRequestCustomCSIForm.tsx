@@ -1,4 +1,7 @@
-import { checkCSICode, checkCSICodeDescription } from "@/backend/api/get";
+import {
+  checkCSICodeDescriptionExists,
+  checkCSICodeExists,
+} from "@/backend/api/get";
 import { Database } from "@/utils/database";
 import { CreateTicketFormValues } from "@/utils/types";
 import { Button } from "@mantine/core";
@@ -47,8 +50,6 @@ const TicketRequestCustomCSIForm = ({
       );
 
       if (csiExists) return;
-      console.log(csiCode);
-      console.log(csiExists);
       console.log(category);
       console.log(data);
 
@@ -75,7 +76,7 @@ const TicketRequestCustomCSIForm = ({
     csiCode: string,
     csiCodeDescription: string
   ) => {
-    const csiCodeDescriptionExists = await checkCSICodeDescription(
+    const csiCodeDescriptionExists = await checkCSICodeDescriptionExists(
       supabaseClient,
       {
         csiCodeDescription: `${csiCodeDescription}`,
@@ -87,7 +88,7 @@ const TicketRequestCustomCSIForm = ({
         { message: "CSI Code Description already exists" }
       );
 
-    const csiCodeExists = await checkCSICode(supabaseClient, {
+    const csiCodeExists = await checkCSICodeExists(supabaseClient, {
       csiCode: `${csiCode}`,
     });
     if (csiCodeExists)

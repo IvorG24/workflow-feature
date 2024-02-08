@@ -22,6 +22,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useState } from "react";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
+import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
 import TicketForm from "./TicketForm";
 
 type Props = {
@@ -67,6 +68,14 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
       case "Request Custom CSI":
         return (
           <TicketRequestCustomCSIForm
+            category={category}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+      case "Request Item CSI":
+        return (
+          <TicketRequestItemCSIForm
             category={category}
             ticketForm={ticketForm}
             setIsLoading={setIsLoading}

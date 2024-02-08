@@ -8,12 +8,16 @@ type Props = {
   ticketField: TicketSection["ticket_section_fields"][0];
   ticketFieldIdx: number;
   ticketSectionIdx: number;
+  requestItemCSIMethods?: {
+    onCSICodeChange: (sectionIndex: number, value: string | null) => void;
+  };
 };
 
 const TicketFormFields = ({
   ticketField,
   ticketFieldIdx,
   ticketSectionIdx,
+  requestItemCSIMethods,
 }: Props) => {
   const {
     register,
@@ -77,9 +81,6 @@ const TicketFormFields = ({
         );
 
       case "SELECT":
-        const selectOptions = ticketField.ticket_field_option.map(
-          (option) => option.ticket_option_value
-        );
         return (
           <Controller
             control={control}
@@ -89,8 +90,13 @@ const TicketFormFields = ({
                 value={value as string}
                 onChange={(value) => {
                   onChange(value);
+                  if (ticketField.ticket_field_name === "CSI Code Description")
+                    requestItemCSIMethods?.onCSICodeChange(
+                      ticketSectionIdx,
+                      value
+                    );
                 }}
-                data={selectOptions}
+                data={ticketField.ticket_field_option}
                 withAsterisk={field.ticket_field_is_required}
                 {...inputProps}
                 clearable
