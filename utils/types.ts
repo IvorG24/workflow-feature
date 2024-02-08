@@ -333,7 +333,8 @@ export type AttachmentBucketType =
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS"
   | "MEMO_ATTACHMENTS"
-  | "TEAM_PROJECT_ATTACHMENTS";
+  | "TEAM_PROJECT_ATTACHMENTS"
+  | "TICKET_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =

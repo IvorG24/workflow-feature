@@ -6591,23 +6591,28 @@ $$ LANGUAGE plv8;
 -- Start: Create ticket
 
 CREATE OR REPLACE FUNCTION create_ticket(
-  input_data JSON
+    input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
-      requester,
       category,
-      title,
-      description,
+      ticketId,
+      teamMemberId,
+      responseValues,
     } = input_data;
 
-    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_category, ticket_title, ticket_description, ticket_requester_team_member_id) VALUES ('${category}','${title}','${description}','${requester}') RETURNING *;`)[0];
+    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
 
+    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_id,ticket_requester_team_member_id,ticket_category_id) VALUES ('${ticketId}','${teamMemberId}','${categoryData.ticket_category_id}') RETURNING *;`)[0];
+
+    plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
+    
  });
  return returnData;
 $$ LANGUAGE plv8;
+
 
 -- End: Create ticket
 

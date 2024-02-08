@@ -121,6 +121,10 @@ INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field
 
 -- Start: Create ticket on load
 
+INSERT INTO storage.buckets (id, name) VALUES ('TICKET_ATTACHMENTS', 'TICKET_ATTACHMENTS');
+
+UPDATE storage.buckets SET public = true;
+
 CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
     input_data JSON
 )
@@ -325,6 +329,32 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
+-- Start: Create ticket
+
+CREATE OR REPLACE FUNCTION create_ticket(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      category,
+      ticketId,
+      teamMemberId,
+      responseValues,
+    } = input_data;
+
+    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
+
+    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_id,ticket_requester_team_member_id,ticket_category_id) VALUES ('${ticketId}','${teamMemberId}','${categoryData.ticket_category_id}') RETURNING *;`)[0];
+
+    plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
+    
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create ticket
 
 CREATE OR REPLACE FUNCTION update_tickets()
 RETURNS JSON AS $$

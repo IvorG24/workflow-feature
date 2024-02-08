@@ -69,6 +69,7 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
         return (
           <TicketRequestCustomCSIForm
             category={category}
+            memberId={member.team_member_id}
             ticketForm={ticketForm}
             setIsLoading={setIsLoading}
           />
@@ -77,6 +78,7 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
         return (
           <TicketRequestItemCSIForm
             category={category}
+            memberId={member.team_member_id}
             ticketForm={ticketForm}
             setIsLoading={setIsLoading}
           />
@@ -85,6 +87,7 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
         return (
           <TicketForm
             category={category}
+            memberId={member.team_member_id}
             ticketForm={ticketForm}
             setIsLoading={setIsLoading}
           />

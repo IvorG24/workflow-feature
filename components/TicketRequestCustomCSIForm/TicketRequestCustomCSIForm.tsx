@@ -2,29 +2,35 @@ import {
   checkCSICodeDescriptionExists,
   checkCSICodeExists,
 } from "@/backend/api/get";
+import { createTicket } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketFormValues } from "@/utils/types";
 import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import TicketFormSection from "../CreateTicketPage/TicketFormSection";
 
 type Props = {
   category: string;
+  memberId: string;
   ticketForm: CreateTicketFormValues | null;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
 };
 
 const TicketRequestCustomCSIForm = ({
   category,
+  memberId,
   ticketForm,
   setIsLoading,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  //   const router = useRouter();
-  //   const activeTeam = useActiveTeam();
+  const router = useRouter();
+  const activeTeam = useActiveTeam();
 
   const createTicketFormMethods = useForm<CreateTicketFormValues>();
   const { handleSubmit, control, setError } = createTicketFormMethods;
@@ -50,18 +56,23 @@ const TicketRequestCustomCSIForm = ({
       );
 
       if (csiExists) return;
-      console.log(category);
-      console.log(data);
+
+      const ticket = await createTicket(supabaseClient, {
+        category,
+        teamMemberId: memberId,
+        ticketFormValues: data,
+      });
 
       notifications.show({
         message: "Ticket created.",
         color: "green",
       });
-      //   router.push(
-      //     `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
-      //       ticket.ticket_id
-      //     }`
-      //   );
+
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
+          ticket.ticket_id
+        }`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
