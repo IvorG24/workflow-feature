@@ -114,6 +114,7 @@ const TicketRequestCustomCSIForm = ({
             return (
               <>
                 <TicketFormSection
+                  category={`${category}`}
                   ticketSection={ticketSection}
                   ticketSectionIdx={ticketSectionIdx}
                   onRemoveSection={() =>

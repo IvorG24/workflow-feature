@@ -5,6 +5,7 @@ import { IconFile } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form";
 
 type Props = {
+  category: string;
   ticketField: TicketSection["ticket_section_fields"][0];
   ticketFieldIdx: number;
   ticketSectionIdx: number;
@@ -14,6 +15,7 @@ type Props = {
 };
 
 const TicketFormFields = ({
+  category,
   ticketField,
   ticketFieldIdx,
   ticketSectionIdx,
@@ -51,16 +53,28 @@ const TicketFormFields = ({
     switch (field.ticket_field_type) {
       case "TEXT":
         return (
-          <TextInput
-            {...inputProps}
-            {...register(
-              `ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`,
-              {
-                ...fieldRules,
-              }
+          <Controller
+            control={control}
+            name={`ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`}
+            render={({ field: { value, onChange } }) => (
+              <TextInput
+                {...inputProps}
+                value={`${value}`}
+                onChange={(e) => {
+                  let value = e.currentTarget.value;
+                  if (
+                    category === "Request Custom CSI" &&
+                    ticketField.ticket_field_name === "CSI Code"
+                  ) {
+                    value = value.replace(/(\d{2})(?=\d)/g, "$1 ");
+                  }
+                  onChange(value);
+                }}
+                error={fieldError}
+                withAsterisk={field.ticket_field_is_required}
+              />
             )}
-            error={fieldError}
-            withAsterisk={field.ticket_field_is_required}
+            rules={{ ...fieldRules }}
           />
         );
 

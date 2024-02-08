@@ -113,6 +113,7 @@ const TicketRequestCustomCSIForm = ({
           {ticketSections.map((ticketSection, ticketSectionIdx) => (
             <>
               <TicketFormSection
+                category={category}
                 ticketSection={ticketSection}
                 ticketSectionIdx={ticketSectionIdx}
               />

@@ -5,6 +5,7 @@ import { FieldArrayWithId } from "react-hook-form";
 import TicketFormFields from "./TicketFormFields";
 
 type Props = {
+  category: string;
   ticketSection: FieldArrayWithId<
     CreateTicketFormValues,
     "ticket_sections",
@@ -19,6 +20,7 @@ type Props = {
 };
 
 const TicketFormSection = ({
+  category,
   ticketSectionIdx,
   ticketSection,
   onRemoveSection,
@@ -58,6 +60,7 @@ const TicketFormSection = ({
         (ticketField, ticketFieldIdx) => {
           return (
             <TicketFormFields
+              category={category}
               ticketField={ticketField}
               ticketFieldIdx={ticketFieldIdx}
               ticketSectionIdx={ticketSectionIdx}
