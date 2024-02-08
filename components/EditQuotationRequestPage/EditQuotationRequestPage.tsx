@@ -1,6 +1,6 @@
 import {
   checkIfRequestIsEditable,
-  checkRequisitionQuantity,
+  checkItemQuantity,
   getSupplier,
 } from "@/backend/api/get";
 import { editRequest } from "@/backend/api/post";
@@ -123,7 +123,7 @@ const EditQuotationRequestPage = ({
       if (!teamMember) return;
       setIsLoading(true);
 
-      const requisitionID = JSON.stringify(
+      const itemID = JSON.stringify(
         formSections[0].section_field[0].field_response
       );
       const tempRequestId = uuidv4();
@@ -155,8 +155,8 @@ const EditQuotationRequestPage = ({
         });
       });
 
-      const warningItemList = await checkRequisitionQuantity(supabaseClient, {
-        requisitionID,
+      const warningItemList = await checkItemQuantity(supabaseClient, {
+        itemID,
         itemFieldList,
         quantityFieldList,
       });
@@ -168,8 +168,7 @@ const EditQuotationRequestPage = ({
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the
-                Requisition
+                There are items that will exceed the quantity limit of the Item
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
@@ -445,7 +444,7 @@ const EditQuotationRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Quotation"
+                    formslyFormName={form.form_name}
                     onRemoveSection={handleRemoveSection}
                     isSectionRemovable={isRemovable}
                     quotationFormMethods={{

@@ -1,4 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey, toTitleCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TicketListType } from "@/utils/types";
@@ -15,7 +16,6 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 
 type Props = {
@@ -151,7 +151,7 @@ const TicketListItem = ({ ticket }: Props) => {
       </Grid.Col>
       <Grid.Col span="content">
         <Text miw={105}>
-          {moment(ticket.ticket_date_created).format("MMM DD, YYYY")}
+          {formatDate(new Date(ticket.ticket_date_created))}
         </Text>
       </Grid.Col>
       <Grid.Col span="content">

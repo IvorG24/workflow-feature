@@ -4,7 +4,7 @@ import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/Tea
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { parseJSONIfValid } from "@/utils/string";
+import { escapeQuotes, parseJSONIfValid } from "@/utils/string";
 import {
   AttachmentBucketType,
   AttachmentTableInsert,
@@ -20,7 +20,12 @@ import {
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
+  MemoAgreementTableRow,
+  MemoLineItem,
+  MemoTableRow,
   NotificationTableInsert,
+  OtherExpensesTypeTableInsert,
+  ReferenceMemoType,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestTableRow,
@@ -35,9 +40,9 @@ import {
   TeamTableInsert,
   TicketCommentTableInsert,
   TicketTableRow,
-  UserOnboardTableInsert,
   UserTableInsert,
   UserTableRow,
+  UserValidIDTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -105,7 +110,7 @@ export const uploadFile = async (
 // Create User
 export const createUser = async (
   supabaseClient: SupabaseClient<Database>,
-  params: UserTableInsert
+  params: UserTableInsert & { user_employee_number: string }
 ) => {
   const { user_phone_number } = params;
 
@@ -312,7 +317,10 @@ export const createComment = async (
 export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    itemData: ItemTableInsert & {
+      item_division_id_list: string[];
+      item_level_three_description?: string;
+    };
     itemDescription: {
       description: string;
       withUoM: boolean;
@@ -334,7 +342,10 @@ export const createItem = async (
 export const updateItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    itemData: ItemTableInsert & {
+      item_division_id_list: string[];
+      item_level_three_description?: string;
+    };
     toAdd: ItemForm["descriptions"];
     toUpdate: ItemDescriptionTableUpdate[];
     toRemove: { fieldId: string; descriptionId: string }[];
@@ -820,6 +831,8 @@ export const createTeamProject = async (
     teamProjectName: string;
     teamProjectInitials: string;
     teamProjectTeamId: string;
+    siteMapId: string;
+    boqId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -977,23 +990,6 @@ export const createTicketComment = async (
   return { data, error };
 };
 
-// Create onboard
-export const createOnboard = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    onboardData: UserOnboardTableInsert;
-  }
-) => {
-  const { onboardData } = params;
-  const { data, error } = await supabaseClient
-    .from("user_onboard_table")
-    .insert(onboardData)
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-};
-
 // Create row in lookup table
 export const createRowInLookupTable = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1023,6 +1019,284 @@ export const createRowInLookupTable = async (
     status: Boolean(formattedData[status]),
     value: formattedData[value],
   };
+};
+
+// Create memo
+export const createTeamMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    memoData: {
+      memo_author_user_id: string;
+      memo_subject: string;
+      memo_team_id: string;
+      memo_reference_number: string;
+    };
+    signerData: {
+      memo_signer_order: number;
+      memo_signer_is_primary: boolean;
+      memo_signer_team_member_id: string;
+      memo_signer_user_id: string;
+    }[];
+    lineItemData: MemoLineItem[];
+  }
+) => {
+  const { memoData, signerData, lineItemData } = params;
+
+  // upload attachments
+  const updatedLineItemData = await processAllMemoLineItems(
+    lineItemData,
+    supabaseClient
+  );
+
+  const input_data = {
+    memoData,
+    signerData,
+    lineItemData: updatedLineItemData,
+  };
+
+  // create memo
+  const { data, error } = await supabaseClient.rpc("create_memo", {
+    input_data,
+  });
+  if (error) throw Error;
+
+  return data as MemoTableRow;
+};
+
+const processAllMemoLineItems = async (
+  lineItemData: MemoLineItem[],
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const processedLineItems = await Promise.all(
+    lineItemData.map(async (lineItem) => {
+      const memo_line_item_id = uuidv4();
+
+      if (lineItem.memo_line_item_attachment_caption) {
+        lineItem.memo_line_item_attachment_caption = escapeQuotes(
+          lineItem.memo_line_item_attachment_caption
+        );
+      }
+
+      if (lineItem.memo_line_item_attachment) {
+        const bucket = "MEMO_ATTACHMENTS";
+        const attachmentPublicUrl = await uploadImage(supabaseClient, {
+          id: uuidv4(),
+          image: lineItem.memo_line_item_attachment,
+          bucket,
+        });
+
+        return {
+          ...lineItem,
+          memo_line_item_id,
+          memo_line_item_attachment_public_url: attachmentPublicUrl,
+          memo_line_item_attachment_storage_bucket: bucket,
+        };
+      }
+
+      return {
+        ...lineItem,
+        memo_line_item_content: escapeQuotes(lineItem.memo_line_item_content),
+        memo_line_item_id,
+      };
+    })
+  );
+
+  return JSON.parse(JSON.stringify(processedLineItems));
+};
+
+// End create memo
+
+// Agree to memo
+
+export const agreeToMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { memoId: string; teamMemberId: string }
+) => {
+  const { memoId, teamMemberId } = params;
+
+  const { count, error: CountError } = await supabaseClient
+    .from("memo_agreement_table")
+    .select("*", { count: "exact" })
+    .eq("memo_agreement_by_team_member_id", teamMemberId)
+    .eq("memo_agreement_memo_id", memoId);
+
+  if (CountError) throw Error;
+
+  if (Number(count) === 0) {
+    const { data, error } = await supabaseClient
+      .from("memo_agreement_table")
+      .insert({
+        memo_agreement_by_team_member_id: teamMemberId,
+        memo_agreement_memo_id: memoId,
+      })
+      .select(
+        "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name, user_employee_number: user_employee_number_table(user_employee_number)))"
+      )
+      .maybeSingle();
+
+    if (error) throw Error;
+
+    return data as unknown as MemoAgreementTableRow & {
+      memo_agreement_by_team_member: {
+        user_data: {
+          user_avatar: string;
+          user_id: string;
+          user_first_name: string;
+          user_last_name: string;
+          user_employee_number: {
+            user_employee_number: string;
+          }[];
+        };
+      };
+    };
+  }
+
+  return null;
+};
+
+// create reference memo
+export const createReferenceMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: ReferenceMemoType
+) => {
+  const memoId = uuidv4();
+  const updatedLineItemData: ReferenceMemoType["memo_line_item_list"] =
+    await processReferenceMemoLineItems(
+      params.memo_line_item_list,
+      supabaseClient,
+      memoId
+    );
+
+  const memoSignerTableValues = params.memo_signer_list
+    .map(
+      (signer, signerIndex) =>
+        `('${signer.memo_signer_is_primary}', '${signerIndex}', '${signer.memo_signer_team_member?.team_member_id}', '${memoId}')`
+    )
+    .join(",");
+
+  const memoLineItemTableValues = updatedLineItemData
+    .map(
+      (lineItem, lineItemIndex) =>
+        `('${lineItem.memo_line_item_id}', '${escapeQuotes(
+          lineItem.memo_line_item_content
+        )}', '${lineItemIndex}', '${memoId}')`
+    )
+    .join(",");
+
+  const memoLineItemAttachmentTableValues = updatedLineItemData
+    .filter(
+      (lineItem) =>
+        lineItem.memo_line_item_attachment?.memo_line_item_attachment_name
+    )
+    .map(
+      ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
+        `('${lineItemAttachment?.memo_line_item_attachment_name}', '${
+          escapeQuotes(
+            `${lineItemAttachment?.memo_line_item_attachment_caption}`
+          ) ?? ""
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_storage_bucket
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_public_url
+        }', '${memo_line_item_id}')`
+    )
+    .join(",");
+
+  const input_data = {
+    memo_id: memoId,
+    memo_subject: params.memo_subject,
+    memo_reference_number: params.memo_reference_number,
+    memo_team_id: params.memo_team_id,
+    memo_author_user_id: params.memo_author_user_id,
+    memoSignerTableValues,
+    memoLineItemTableValues,
+    memoLineItemAttachmentTableValues,
+  };
+
+  const { data, error } = await supabaseClient.rpc("create_reference_memo", {
+    input_data,
+  });
+
+  if (error) throw Error;
+
+  return data as unknown as ReferenceMemoType;
+};
+
+const processReferenceMemoLineItems = async (
+  lineItemData: ReferenceMemoType["memo_line_item_list"],
+  supabaseClient: SupabaseClient<Database>,
+  memoId: string
+) => {
+  const processedLineItems = await Promise.all(
+    lineItemData.map(async (lineItem) => {
+      const memoLineItemId = uuidv4();
+      const file =
+        lineItem.memo_line_item_attachment &&
+        lineItem.memo_line_item_attachment.memo_line_item_attachment_file;
+
+      if (file) {
+        const bucket = "MEMO_ATTACHMENTS";
+        const attachmentPublicUrl = await uploadImage(supabaseClient, {
+          id: `${lineItem.memo_line_item_id}-${file.name}`,
+          image: file,
+          bucket,
+        });
+
+        return {
+          memo_line_item_id: memoLineItemId,
+          memo_line_item_content: lineItem.memo_line_item_content,
+          memo_line_item_memo_id: memoId,
+          memo_line_item_attachment: {
+            memo_line_item_attachment_public_url: attachmentPublicUrl,
+            memo_line_item_attachment_storage_bucket: bucket,
+            memo_line_item_attachment_name: file.name,
+            memo_line_item_attachment_caption:
+              lineItem.memo_line_item_attachment
+                ?.memo_line_item_attachment_caption ?? "",
+          },
+        };
+      }
+
+      return {
+        memo_line_item_id: memoLineItemId,
+        memo_line_item_content: lineItem.memo_line_item_content,
+        memo_line_item_memo_id: memoId,
+      };
+    })
+  );
+
+  return JSON.parse(JSON.stringify(processedLineItems));
+};
+// Create row in other expenses type table
+export const createRowInOtherExpensesTypeTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    inputData: OtherExpensesTypeTableInsert;
+  }
+) => {
+  const { inputData } = params;
+  const { data, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .insert(inputData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data;
+};
+
+// Create Valid ID
+export const createValidID = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: UserValidIDTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("user_valid_id_table")
+    .insert(params)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
 };
 
 // Create equipment

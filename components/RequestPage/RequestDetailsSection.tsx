@@ -1,5 +1,6 @@
 import { checkIfOtpIdIsUnique } from "@/backend/api/get";
 import { updateOtpId } from "@/backend/api/update";
+import { formatDate, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   getAvatarColor,
@@ -61,9 +62,9 @@ const RequestDetailsSection = ({
   const [isAddingOtpID, setIsAddingOtpID] = useState(false);
   const [otpID, setOtpID] = useState(request.request_otp_id);
 
-  const isFormslyRequisitionRequest =
+  const isFormslyItemRequest =
     request.request_form.form_is_formsly_form &&
-    ["Requisition", "Services", "PED Equipment", "PED Part"].includes(
+    ["Item", "Services", "PED Equipment", "PED Part"].includes(
       request.request_form.form_name
     );
 
@@ -92,13 +93,22 @@ const RequestDetailsSection = ({
   );
 
   return (
-    <Paper
-      p="xl"
-      shadow="xs"
-      className="onboarding-requisition-request-request"
-    >
+    <Paper p="xl" shadow="xs">
       <Title order={2}>{request.request_form.form_name}</Title>
       <Text mt="xs">{request.request_form.form_description}</Text>
+
+      {request.request_form.form_type && request.request_form.form_sub_type && (
+        <Stack mt="xl" spacing="xs">
+          <Group>
+            <Title order={5}>Type:</Title>
+            <Text>{request.request_form.form_type}</Text>
+          </Group>
+          <Group>
+            <Title order={5}>Sub Type:</Title>
+            <Text>{request.request_form.form_sub_type}</Text>
+          </Group>
+        </Stack>
+      )}
 
       <Title order={5} mt="xl">
         Requested by:
@@ -137,15 +147,11 @@ const RequestDetailsSection = ({
             primarySigner.request_signer_status_date_updated &&
             ["APPROVED", "REJECTED"].includes(request.request_status) && (
               <Text color="dimmed">
-                on{" "}
-                {new Date(request.request_date_created).toLocaleDateString(
-                  "en-US",
-                  {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  }
-                )}
+                {`on ${formatDate(
+                  new Date(primarySigner.request_signer_status_date_updated)
+                )} ${formatTime(
+                  new Date(primarySigner.request_signer_status_date_updated)
+                )}`}
               </Text>
             )}
         </Group>
@@ -191,7 +197,7 @@ const RequestDetailsSection = ({
           )}
         </Group>
       )}
-      {isFormslyRequisitionRequest &&
+      {isFormslyItemRequest &&
         !isAddingOtpID &&
         requestStatus === "APPROVED" &&
         !`${router.pathname}`.includes("public-request") &&

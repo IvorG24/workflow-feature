@@ -15,12 +15,14 @@ type RequestFormSectionProps = {
   section: Section;
   sectionIndex: number;
   onRemoveSection?: (sectionDuplicatableId: string) => void;
-  requisitionFormMethods?: {
+  itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
+    isSearchingSupplier?: boolean;
+    csiSearch?: (value: string, index: number) => void;
+    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -48,6 +50,13 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
+  otherExpensesMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    onCategoryChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
   };
@@ -79,7 +88,7 @@ const RequestFormSection = ({
   section,
   sectionIndex,
   onRemoveSection,
-  requisitionFormMethods,
+  itemFormMethods,
   subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
@@ -88,17 +97,13 @@ const RequestFormSection = ({
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
+  otherExpensesMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
 
-  let sectionClassname = "";
-  if (section.section_name === "Main")
-    sectionClassname = "onboarding-create-request-main-section";
-  else if (section.section_name === "Item")
-    sectionClassname = "onboarding-create-request-item-section";
   return (
-    <Paper p="xl" shadow="xs" className={sectionClassname}>
+    <Paper p="xl" shadow="xs">
       <Group position="apart">
         <Title order={4} color="dimmed">
           {section.section_name}
@@ -111,7 +116,6 @@ const RequestFormSection = ({
               }
               variant="light"
               color="red"
-              className="onboarding-create-request-remove-item"
             >
               <IconTrash size={16} />
             </ActionIcon>
@@ -129,7 +133,7 @@ const RequestFormSection = ({
             }}
             sectionIndex={sectionIndex}
             fieldIndex={idx}
-            requisitionFormMethods={requisitionFormMethods}
+            itemFormMethods={itemFormMethods}
             subconFormMethods={subconFormMethods}
             quotationFormMethods={quotationFormMethods}
             rirFormMethods={rirFormMethods}
@@ -138,6 +142,7 @@ const RequestFormSection = ({
             servicesFormMethods={servicesFormMethods}
             pedEquipmentFormMethods={pedEquipmentFormMethods}
             pedPartFormMethods={pedPartFormMethods}
+            otherExpensesMethods={otherExpensesMethods}
           />
         ))}
       </Stack>

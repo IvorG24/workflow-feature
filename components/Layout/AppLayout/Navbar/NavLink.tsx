@@ -12,14 +12,26 @@ import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
-import { Box, Button, Divider, Menu, Space, Stack } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Divider,
+  Menu,
+  Portal,
+  Space,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
   IconCirclePlus,
   IconDashboard,
   IconFile,
+  IconFileDescription,
   IconFilePlus,
+  IconFileReport,
+  IconFileStack,
   IconFileText,
   IconFiles,
   IconListDetails,
@@ -56,15 +68,18 @@ const ReviewAppNavLink = () => {
   const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
 
   const rfForm = forms.filter(
-    (form) => form.form_is_formsly_form && form.form_name === "Requisition"
+    (form) => form.form_is_formsly_form && form.form_name === "Item"
   )[0];
-  const requisitionForm = rfForm as unknown as FormTableRow & {
+  const itemForm = rfForm as unknown as FormTableRow & {
     form_team_group: string[];
   };
 
   const renderCreateRequestMenu = () => {
     return (
       <Box h="fit-content" mt="md">
+        <Text size="xs" weight={400}>
+          Create
+        </Text>
         <Menu
           shadow="1px 1px 3px rgba(0, 0, 0, .25)"
           withArrow
@@ -90,22 +105,32 @@ const ReviewAppNavLink = () => {
             >
               Create Ticket
             </Button>
+            <Button
+              fw={400}
+              leftIcon={<IconFileDescription {...defaultIconProps} />}
+              variant="transparent"
+              onClick={() => router.push(`/${activeTeamNameToUrl}/memo/create`)}
+            >
+              Create Memo
+            </Button>
           </Stack>
 
-          <Menu.Dropdown>
-            {unhiddenForms.map((form) => (
-              <Menu.Item
-                key={form.form_id}
-                onClick={() =>
-                  router.push(
-                    `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
-                  )
-                }
-              >
-                {form.form_name}
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
+          <Portal>
+            <Menu.Dropdown>
+              {unhiddenForms.map((form) => (
+                <Menu.Item
+                  key={form.form_id}
+                  onClick={() =>
+                    router.push(
+                      `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                    )
+                  }
+                >
+                  {form.form_name}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Portal>
         </Menu>
       </Box>
     );
@@ -143,55 +168,34 @@ const ReviewAppNavLink = () => {
             </Button>
           </Stack>
 
-          <Menu.Dropdown>
-            <Menu.Item
-              key={"all-form"}
-              onClick={() => router.push(`/${activeTeamNameToUrl}/forms/`)}
-              c="blue"
-            >
-              View All
-            </Menu.Item>
-            <Divider />
-            {unhiddenForms.map((form) => (
+          <Portal>
+            <Menu.Dropdown>
               <Menu.Item
-                key={form.form_id}
-                onClick={() =>
-                  router.push(`/${activeTeamNameToUrl}/forms/${form.form_id}`)
-                }
+                key={"all-form"}
+                onClick={() => router.push(`/${activeTeamNameToUrl}/forms/`)}
+                c="blue"
               >
-                {form.form_name}
+                View All
               </Menu.Item>
-            ))}
-          </Menu.Dropdown>
+              <Divider />
+              {unhiddenForms.map((form) => (
+                <Menu.Item
+                  key={form.form_id}
+                  onClick={() =>
+                    router.push(`/${activeTeamNameToUrl}/forms/${form.form_id}`)
+                  }
+                >
+                  {form.form_name}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Portal>
         </Menu>
       </Box>
     );
   };
 
-  const tempCreateRequest = [
-    {
-      label: "Create Request",
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconFile {...defaultIconProps} />
-        </Box>
-      ),
-      href: requisitionForm
-        ? `/${activeTeamNameToUrl}/forms/${requisitionForm.form_id}/create`
-        : "",
-    },
-    {
-      label: "Create Ticket",
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconTicket {...defaultIconProps} />
-        </Box>
-      ),
-      href: requisitionForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
-    },
-  ];
-
-  const overviewSection = [
+  const metricsSection = [
     {
       label: `Dashboard`,
       icon: (
@@ -201,6 +205,50 @@ const ReviewAppNavLink = () => {
       ),
       href: `/${activeTeamNameToUrl}/dashboard`,
     },
+    {
+      label: `SLA`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileReport {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/sla`,
+    },
+  ];
+
+  const createSection = [
+    {
+      label: "Create Request",
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFile {...defaultIconProps} />
+        </Box>
+      ),
+      href: itemForm
+        ? `/${activeTeamNameToUrl}/forms/${itemForm.form_id}/create`
+        : "",
+    },
+    {
+      label: "Create Ticket",
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconTicket {...defaultIconProps} />
+        </Box>
+      ),
+      href: itemForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
+    },
+    {
+      label: "Create Memo",
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileDescription {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/memo/create`,
+    },
+  ];
+
+  const listSection = [
     {
       label: `${startCase(activeApp)} List`,
       icon: (
@@ -229,6 +277,15 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/tickets`,
+    },
+    {
+      label: `Memo List`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileStack {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/memo`,
     },
   ];
 
@@ -286,24 +343,35 @@ const ReviewAppNavLink = () => {
     };
     fetchApproverRequestList();
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
-
   return (
     <>
-      {requisitionForm &&
-      requisitionForm.form_is_hidden === false &&
-      requisitionForm.form_team_group.length &&
+      {!isEmpty(activeTeam) && hasTeam ? (
+        <NavLinkSection
+          label={"Metrics"}
+          links={metricsSection}
+          {...defaultNavLinkProps}
+        />
+      ) : null}
+
+      {itemForm &&
+      itemForm.form_is_hidden === false &&
+      itemForm.form_team_group.length &&
       hasTeam ? (
         unhiddenForms.length > 1 ? (
           renderCreateRequestMenu()
         ) : (
-          <NavLinkSection links={tempCreateRequest} {...defaultNavLinkProps} />
+          <NavLinkSection
+            label="Create"
+            links={createSection}
+            {...defaultNavLinkProps}
+          />
         )
       ) : null}
 
       {!isEmpty(activeTeam) && hasTeam ? (
         <NavLinkSection
-          label={"Overview"}
-          links={overviewSection}
+          label={"List"}
+          links={listSection}
           {...defaultNavLinkProps}
         />
       ) : null}

@@ -1,11 +1,12 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getTeamProjectList } from "@/backend/api/get";
+import { getFileUrl, getTeamProjectList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
 import { TeamProjectTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  Badge,
   Box,
   Button,
   Checkbox,
@@ -19,7 +20,7 @@ import {
 import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
+import { IconFile, IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
@@ -119,7 +120,7 @@ const ProjectList = ({
       setProjectList(data as TeamProjectTableRow[]);
       setProjectCount(Number(count));
       setSearchResult(data as TeamProjectTableRow[]);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Error on fetching project list",
         color: "red",
@@ -173,6 +174,25 @@ const ProjectList = ({
     );
     setSelectedProject(newSelectedProject || null);
   };
+
+  const handleFileClick = async (path: string) => {
+    setIsLoading(true);
+    try {
+      const url = await getFileUrl(supabaseClient, {
+        bucket: "TEAM_PROJECT_ATTACHMENTS",
+        path: path,
+      });
+      window.open(url);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const columnData: DataTableColumn<TeamProjectTableRow>[] = [
     {
       accessor: "checkbox",
@@ -226,6 +246,42 @@ const ProjectList = ({
           {team_project_code}
         </Text>
       ),
+    },
+    {
+      accessor: "team_project_site_map_attachment_id",
+      title: "Site Map",
+      textAlignment: "center",
+      render: ({ team_project_site_map_attachment_id }) =>
+        team_project_site_map_attachment_id && (
+          <Badge
+            className={classes.clickableColumn}
+            onClick={() => {
+              handleFileClick(team_project_site_map_attachment_id);
+            }}
+          >
+            <Flex align="center" justify="center" gap={3}>
+              <IconFile size={14} /> <Text>File</Text>
+            </Flex>
+          </Badge>
+        ),
+    },
+    {
+      accessor: "team_project_boq_attachment_id",
+      title: "BOQ",
+      textAlignment: "center",
+      render: ({ team_project_boq_attachment_id }) =>
+        team_project_boq_attachment_id && (
+          <Badge
+            className={classes.clickableColumn}
+            onClick={() => {
+              handleFileClick(team_project_boq_attachment_id);
+            }}
+          >
+            <Flex align="center" justify="center" gap={3}>
+              <IconFile size={14} /> <Text>File</Text>
+            </Flex>
+          </Badge>
+        ),
     },
   ];
 

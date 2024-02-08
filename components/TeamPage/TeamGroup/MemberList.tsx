@@ -112,7 +112,7 @@ const MemberList = ({
 
       setGroupMemberList(data as unknown as TeamMemberType[]);
       setGroupMemberListCount(Number(count));
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Error on fetching group member list",
         color: "red",
@@ -208,6 +208,17 @@ const MemberList = ({
       title: "Email",
       render: ({ team_member }) => (
         <Text>{team_member.team_member_user.user_email}</Text>
+      ),
+    },
+    {
+      accessor: "team_member.team_member_project_list",
+      title: "Project",
+      render: ({ team_member }) => (
+        <Text>
+          {team_member.team_member_project_list
+            ? team_member.team_member_project_list.join(", ")
+            : ""}
+        </Text>
       ),
     },
   ];

@@ -1,3 +1,5 @@
+import moment from "moment";
+
 export const isValidTeamName = (name: string): boolean => {
   const allowedCharsRegex = /^[a-zA-Z0-9 ,;\/?:@&=+$\-_.!]*$/;
 
@@ -75,22 +77,79 @@ export const isUUID = (str: string | string[] | undefined) => {
   return uuidPattern.test(str);
 };
 
-export const convertTimestampToDateTime = (
-  timestamptz: string
-): { date: string; time: string } | null => {
-  try {
-    const timestamp = new Date(timestamptz);
-    const date = timestamp.toISOString().split("T")[0];
-    const hours = timestamp.getHours() % 12 || 12;
-    const minutes = timestamp.getMinutes().toString().padStart(2, "0");
-    const time = `${hours}:${minutes} ${
-      timestamp.getHours() < 12 ? "AM" : "PM"
-    }`;
+export const getInitials = (fullname: string) => {
+  const words = fullname.trim().split(" ");
+  const initials = words.map((word) => word[0].toUpperCase()).join("");
+  return initials;
+};
 
-    return { date, time };
+export const getMemoReferencePrefix = (teamName: string) => {
+  return `MEMO-${teamName.toUpperCase().split(" ").join("")}-${moment().format(
+    "YYYY"
+  )}`;
+};
+
+export const addAmpersandBetweenWords = (searchString: string) => {
+  const sanitizedString = searchString.replace(/[^\w\s]/gi, "");
+
+  const words = sanitizedString.split(" ");
+
+  if (words.length > 1) {
+    const result = words.join(" & ");
+    return result;
+  }
+
+  return sanitizedString;
+};
+
+export const convertDateNowToTimestampz = () => {
+  const currentTimestamp = new Date(Date.now());
+  const supabaseTimestampz = currentTimestamp.toISOString();
+  return supabaseTimestampz;
+};
+
+export const removeMultipleSpaces = (text: string) => {
+  return text.replace(/\s+/g, " ");
+};
+
+export const trimObjectProperties = (obj: { [x: string]: string }) => {
+  const trimmedObject: { [x: string]: string } = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key) && typeof obj[key] === "string") {
+      trimmedObject[key] = obj[key].trim();
+    }
+  }
+  return trimmedObject;
+};
+
+export const escapeQuotes = (input: string): string => {
+  const escapedString = input.replace(/'/g, "''");
+
+  return escapedString;
+};
+
+type AnyObject = {
+  [key: string]: unknown;
+};
+
+export const jsonToCsv = (jsonString: string): string => {
+  try {
+    const jsonArray: AnyObject[] = JSON.parse(jsonString);
+
+    if (!jsonArray.length) {
+      throw new Error("Invalid JSON array");
+    }
+
+    const keys = Object.keys(jsonArray[0]);
+
+    const csvContent = `${keys.join(", ")}\n${jsonArray
+      .map((obj) => keys.map((key) => obj[key]).join(", "))
+      .join("\n")}`;
+
+    return csvContent;
   } catch (error) {
-    console.error(error);
-    return null;
+    console.error("Error converting JSON to CSV");
+    return "";
   }
 };
 

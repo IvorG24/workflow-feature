@@ -37,7 +37,7 @@ function convertToHyphenCase(input: string): string {
 const SSOTSpreadsheetViewTableFilter = (props: Props) => {
   const switchInputProps = { color: "green" };
   const [showFilterColumnModal, setShowFilterColumnModal] = useState(false);
-  const [accordionValue, setAccordionValue] = useState("requisition-table");
+  const [accordionValue, setAccordionValue] = useState("item-table");
   const defaultFilterSettings = props.tables;
   const [
     localFilterSettings,
@@ -191,16 +191,16 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
             value={accordionValue}
             onChange={(value: string) => setAccordionValue(value)}
           >
-            <Accordion.Item value="requisition-table">
-              <Accordion.Control>Requisition Table</Accordion.Control>
+            <Accordion.Item value="item-table">
+              <Accordion.Control>Item Table</Accordion.Control>
               <Accordion.Panel>
                 <Box w="100%" p="sm">
                   <Group mb="sm" position="apart">
-                    <Text weight={600}>Requisition Table</Text>
+                    <Text weight={600}>Item Table</Text>
                     <Switch
-                      checked={requisitionTable.show}
+                      checked={itemTable.show}
                       onChange={(e) =>
-                        requisitionTable.setShow(e.currentTarget.checked)
+                        itemTable.setShow(e.currentTarget.checked)
                       }
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
@@ -210,35 +210,35 @@ const SSOTSpreadsheetViewTableFilter = (props: Props) => {
                   </Group>
                   <Flex gap="sm" direction="column">
                     {renderColumnListFilter(
-                      requisitionTable,
-                      !requisitionTable.show
+                      itemTable,
+                      !itemTable.show
                     )}
                   </Flex>
                 </Box>
               </Accordion.Panel>
             </Accordion.Item>
-            <Accordion.Item value="requisition-item-table">
-              <Accordion.Control>Requisition Item Table</Accordion.Control>
+            <Accordion.Item value="item-item-table">
+              <Accordion.Control>Item Item Table</Accordion.Control>
               <Accordion.Panel>
                 <Box w="100%" p="sm">
                   <Group mb="sm" position="apart">
                     <Text weight={600}>Item Description Table</Text>
                     <Switch
-                      checked={requisitionItemTable.show}
+                      checked={itemItemTable.show}
                       onChange={(e) =>
-                        requisitionItemTable.setShow(e.currentTarget.checked)
+                        itemItemTable.setShow(e.currentTarget.checked)
                       }
                       onLabel={<IconEye size="1rem" stroke={2.5} />}
                       offLabel={<IconEyeOff size="1rem" stroke={2.5} />}
-                      disabled={!requisitionTable.show}
+                      disabled={!itemTable.show}
                       {...switchInputProps}
                       styles={{ track: { cursor: "pointer" } }}
                     />
                   </Group>
                   <Flex gap="sm" direction="column">
                     {renderTableFilter(
-                      requisitionItemTable,
-                      !requisitionTable.show || !requisitionItemTable.show
+                      itemItemTable,
+                      !itemTable.show || !itemItemTable.show
                     )}
                   </Flex>
                 </Box>

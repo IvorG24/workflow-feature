@@ -1,4 +1,5 @@
 import StackedBarChart from "@/components/Chart/StackedBarChart";
+import { formatDate } from "@/utils/constant";
 import { startCase } from "@/utils/string";
 import { getStatusToColorForCharts } from "@/utils/styling";
 import {
@@ -12,7 +13,6 @@ import {
   Title,
 } from "@mantine/core";
 import { IconChartBar, IconSquareRoundedFilled } from "@tabler/icons-react";
-import moment from "moment";
 import { useEffect, useState } from "react";
 import { MonthlyRequestDataTypeWithTotal } from "./Overview";
 
@@ -72,24 +72,17 @@ const RequestStatistics = ({
     setChartData(newChartData);
   };
 
-  const startDate = moment(startDateFilter).format("MMM DD, YYYY");
-  const endDate = moment(endDateFilter).format("MMM DD, YYYY");
+  const startDate = formatDate(startDateFilter ?? new Date());
+  const endDate = formatDate(endDateFilter ?? new Date());
   const xAxisChartLabel =
-    startDate === endDate ? startDate : `${startDate} - ${endDate}`;
+    startDate === endDate ? startDate : `${startDate} to ${endDate}`;
 
   useEffect(() => {
     setChartData(monthlyChartData);
   }, [monthlyChartData]);
 
   return (
-    <Paper
-      w="100%"
-      h="100%"
-      p="lg"
-      withBorder
-      sx={{ flex: 1 }}
-      className="onboarding-dashboard-monthly-statistics"
-    >
+    <Paper w="100%" h="100%" p="lg" withBorder sx={{ flex: 1 }}>
       <Stack>
         <Group position="apart">
           <Group spacing="xs" mb="sm">

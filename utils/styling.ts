@@ -22,6 +22,23 @@ export const defaultMantineColorList = [
   "teal",
 ];
 
+export const defaultMantineColorHexList = [
+  "#25262B",
+  "#868E96",
+  "#FA5252",
+  "#E64980",
+  "#BE4BDB",
+  "#7950F2",
+  "#4C6EF5",
+  "#228BE6",
+  "#15AABF",
+  "#12B886",
+  "#40C057",
+  "#82C91E",
+  "#FAB005",
+  "#FD7E14",
+];
+
 export const getAvatarColor = (number: number) => {
   const randomColor =
     defaultMantineColorList[number % defaultMantineColorList.length];
@@ -40,10 +57,21 @@ export const getStatusToColor = (status: string) => {
       return "gray";
   }
 };
-export const mobileNumberFormatter = (value: string | undefined) =>
-  !Number.isNaN(parseFloat(value ? value : "0"))
-    ? `${value}`.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3")
-    : "";
+export const mobileNumberFormatter = (value: string | undefined) => {
+  const cleanedNumber = value ? value.replace(/\D/g, "") : "";
+
+  if (cleanedNumber.length === 10) {
+    const formattedNumber = cleanedNumber.replace(
+      /(\d{3})(\d{3})(\d{4})/,
+      "$1 $2 $3"
+    );
+    return formattedNumber;
+  } else if (cleanedNumber.length === 0) {
+    return "";
+  } else {
+    return "Invalid phone number";
+  }
+};
 
 export const getStatusToColorForCharts = (status: string) => {
   switch (status.toLowerCase()) {

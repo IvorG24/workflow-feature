@@ -1,8 +1,11 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
+import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
+import { escapeQuotes } from "@/utils/string";
 import {
   AppType,
+  EditMemoType,
   EquipmentDescriptionTableUpdate,
   EquipmentLookupChoices,
   EquipmentLookupTableUpdate,
@@ -12,6 +15,10 @@ import {
   ItemForm,
   ItemTableInsert,
   MemberRoleType,
+  MemoAgreementTableRow,
+  MemoFormatAttachmentTableInsert,
+  MemoFormatSubsectionTableUpdate,
+  OtherExpensesTypeTableUpdate,
   SignerTableRow,
   TeamTableRow,
   TeamTableUpdate,
@@ -20,7 +27,8 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { getCurrentDate } from "./get";
+import { getCurrentDate, getMemoFormat } from "./get";
+import { uploadImage } from "./post";
 
 // Update Team
 export const updateTeam = async (
@@ -70,7 +78,7 @@ export const updateUserActiveTeam = async (
 };
 
 // Update User
-export const udpateUser = async (
+export const updateUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: UserTableUpdate
 ) => {
@@ -668,4 +676,347 @@ export const updateLookup = async (
     status: Boolean(formattedData[status]),
     value: formattedData[value],
   };
+};
+
+// approve or reject memo
+export const approveOrRejectMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    memoSignerId: string;
+    memoId: string;
+    action: string;
+    isPrimarySigner: boolean;
+    memoSignerTeamMemberId: string;
+  }
+) => {
+  const {
+    memoSignerId,
+    memoId,
+    action,
+    isPrimarySigner,
+    memoSignerTeamMemberId,
+  } = params;
+
+  const currentDate = (await getCurrentDate(supabaseClient)).toISOString();
+
+  const { error } = await supabaseClient
+    .from("memo_signer_table")
+    .update({
+      memo_signer_status: action,
+      memo_signer_date_signed: `${currentDate}`,
+    })
+    .eq("memo_signer_id", memoSignerId);
+
+  if (error) throw Error;
+
+  if (isPrimarySigner) {
+    const { error } = await supabaseClient
+      .from("memo_status_table")
+      .update({
+        memo_status: action,
+        memo_status_date_updated: `${currentDate}`,
+      })
+      .eq("memo_status_memo_id", memoId);
+    if (error) throw Error;
+  }
+
+  // agree to memo
+  if (action.toLowerCase() === "approved") {
+    const { count } = await supabaseClient
+      .from("memo_agreement_table")
+      .select("*", { count: "exact" })
+      .eq("memo_agreement_by_team_member_id", memoSignerTeamMemberId)
+      .eq("memo_agreement_memo_id", memoId);
+
+    if (Number(count) === 0) {
+      const { data, error: MemoAgreementError } = await supabaseClient
+        .from("memo_agreement_table")
+        .insert({
+          memo_agreement_by_team_member_id: memoSignerTeamMemberId,
+          memo_agreement_memo_id: memoId,
+        })
+        .select(
+          "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name, user_employee_number: user_employee_number_table(user_employee_number)))"
+        )
+        .maybeSingle();
+      if (MemoAgreementError) throw Error;
+
+      return data as unknown as MemoAgreementTableRow & {
+        memo_agreement_by_team_member: {
+          user_data: {
+            user_avatar: string;
+            user_id: string;
+            user_first_name: string;
+            user_last_name: string;
+            user_employee_number: {
+              user_employee_number: string;
+            }[];
+          };
+        };
+      };
+    }
+  }
+};
+
+// update memo
+export const updateMemo = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: EditMemoType
+) => {
+  const updatedLineItemData: EditMemoType["memo_line_item_list"] =
+    await processAllMemoLineItems(params.memo_line_item_list, supabaseClient);
+
+  const memoSignerTableValues = params.memo_signer_list
+    .map(
+      (signer, signerIndex) =>
+        `('${signer.memo_signer_is_primary}', '${signerIndex}', '${signer.memo_signer_team_member?.team_member_id}', '${params.memo_id}')`
+    )
+    .join(",");
+
+  const memoLineItemTableValues = updatedLineItemData
+    .map(
+      (lineItem, lineItemIndex) =>
+        `('${lineItem.memo_line_item_id}', '${escapeQuotes(
+          lineItem.memo_line_item_content
+        )}', '${lineItemIndex}', '${params.memo_id}')`
+    )
+    .join(",");
+
+  const memoLineItemAttachmentTableValues = updatedLineItemData
+    .filter(
+      (lineItem) =>
+        lineItem.memo_line_item_attachment?.memo_line_item_attachment_name
+    )
+    .map(
+      ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
+        `('${
+          lineItemAttachment?.memo_line_item_attachment_name
+        }', '${escapeQuotes(
+          lineItemAttachment?.memo_line_item_attachment_caption ?? ""
+        )}', '${
+          lineItemAttachment?.memo_line_item_attachment_storage_bucket
+        }', '${
+          lineItemAttachment?.memo_line_item_attachment_public_url
+        }', '${memo_line_item_id}')`
+    )
+    .join(",");
+
+  const memoLineItemIdFilter = params.memo_line_item_list
+    .map((lineItem) => `'${lineItem.memo_line_item_id}'`)
+    .join(",");
+
+  const input_data = {
+    memo_id: params.memo_id,
+    memo_subject: params.memo_subject,
+    memoSignerTableValues,
+    memoLineItemTableValues,
+    memoLineItemAttachmentTableValues,
+    memoLineItemIdFilter,
+  };
+
+  const { error } = await supabaseClient.rpc("edit_memo", { input_data });
+
+  if (error) throw Error;
+};
+
+const processAllMemoLineItems = async (
+  lineItemData: EditMemoType["memo_line_item_list"],
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const processedLineItems = await Promise.all(
+    lineItemData.map(async (lineItem) => {
+      const file =
+        lineItem.memo_line_item_attachment &&
+        lineItem.memo_line_item_attachment.memo_line_item_attachment_file;
+
+      if (file) {
+        const bucket = "MEMO_ATTACHMENTS";
+        const attachmentPublicUrl = await uploadImage(supabaseClient, {
+          id: `${lineItem.memo_line_item_id}-${file.name}`,
+          image: file,
+          bucket,
+        });
+
+        return {
+          memo_line_item_id: lineItem.memo_line_item_id,
+          memo_line_item_content: lineItem.memo_line_item_content,
+          memo_line_item_memo_id: lineItem.memo_line_item_memo_id,
+          memo_line_item_attachment: {
+            memo_line_item_attachment_public_url: attachmentPublicUrl,
+            memo_line_item_attachment_storage_bucket: bucket,
+            memo_line_item_attachment_name: file.name,
+            memo_line_item_attachment_caption:
+              lineItem.memo_line_item_attachment
+                ?.memo_line_item_attachment_caption ?? "",
+          },
+        };
+      }
+
+      return {
+        memo_line_item_id: lineItem.memo_line_item_id,
+        memo_line_item_content: lineItem.memo_line_item_content,
+        memo_line_item_memo_id: lineItem.memo_line_item_memo_id,
+      };
+    })
+  );
+
+  return JSON.parse(JSON.stringify(processedLineItems));
+};
+
+export const updateMemoFormat = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: MemoFormatFormValues["formatSection"]
+) => {
+  const memoFormatSubsectionData: MemoFormatSubsectionTableUpdate[] = [];
+  const memoFormatAttachmentData: MemoFormatAttachmentTableInsert[] = [];
+  const removedMemoFormatAttachmentSubsectionIdList: string[] = [];
+
+  const memoFormatSectionTableData = params.map((section) => {
+    const { format_subsection, ...remainingSectionProps } = section;
+
+    format_subsection.forEach((subsection) => {
+      const { subsection_attachment, ...remainingSubsectionProps } = subsection;
+      memoFormatSubsectionData.push(remainingSubsectionProps);
+
+      if (subsection_attachment.length > 0) {
+        subsection_attachment.forEach((attachment) => {
+          if (attachment.memo_format_attachment_file) {
+            const attachmentTableRow = {
+              memo_format_attachment_id: attachment.memo_format_attachment_id,
+              memo_format_attachment_name:
+                attachment.memo_format_attachment_name,
+              memo_format_attachment_url: attachment.memo_format_attachment_url,
+              memo_format_attachment_subsection_id:
+                attachment.memo_format_attachment_subsection_id,
+              memo_format_attachment_order:
+                attachment.memo_format_attachment_order,
+            };
+            memoFormatAttachmentData.push(
+              attachmentTableRow as MemoFormatAttachmentTableInsert
+            );
+          }
+        });
+      } else {
+        removedMemoFormatAttachmentSubsectionIdList.push(
+          `${subsection.memo_format_subsection_id}`
+        );
+      }
+    });
+
+    return remainingSectionProps;
+  });
+
+  if (!memoFormatSubsectionData.length || !memoFormatSectionTableData.length) {
+    throw new Error(
+      "At least one of the required arrays is empty or undefined."
+    );
+  }
+
+  const { error: memoFormatSectionTableError } = await supabaseClient
+    .from("memo_format_section_table")
+    .upsert(memoFormatSectionTableData);
+
+  const { error: memoFormatSubsectionTableError } = await supabaseClient
+    .from("memo_format_subsection_table")
+    .upsert(memoFormatSubsectionData);
+
+  if (memoFormatAttachmentData.length > 0) {
+    const { error } = await supabaseClient
+      .from("memo_format_attachment_table")
+      .upsert(memoFormatAttachmentData);
+
+    if (error) throw Error;
+  }
+
+  const existingAttachmentIdList = memoFormatAttachmentData.map(
+    (d) => d.memo_format_attachment_id
+  );
+
+  // delete removed attachments
+  const { error: memoFormatAttachmentDeleteError } = await supabaseClient
+    .from("memo_format_attachment_table")
+    .delete()
+    .or(
+      `memo_format_attachment_subsection_id.in.(${removedMemoFormatAttachmentSubsectionIdList.join(
+        ","
+      )}), memo_format_attachment_id.not.in.(${existingAttachmentIdList.join(
+        ","
+      )})`
+    );
+
+  if (
+    memoFormatSectionTableError ||
+    memoFormatSubsectionTableError ||
+    memoFormatAttachmentDeleteError
+  )
+    throw Error;
+
+  const updatedFormatData = await getMemoFormat(supabaseClient);
+
+  return updatedFormatData;
+};
+
+// Update other expenses type
+export const updateOtherExpensesType = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    updateData: OtherExpensesTypeTableUpdate;
+    otherExpensesTypeId: string;
+  }
+) => {
+  const { updateData, otherExpensesTypeId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("other_expenses_type_table")
+    .update(updateData)
+    .eq("other_expenses_type_id", otherExpensesTypeId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data;
+};
+
+// Update valid id status and add approver
+export const approveOrRejectValidId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    validIdId: string;
+    approverUserId: string;
+    status: "APPROVED" | "REJECTED";
+  }
+) => {
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+  const { error } = await supabaseClient
+    .from("user_valid_id_table")
+    .update({
+      user_valid_id_status: params.status,
+      user_valid_id_approver: params.approverUserId,
+      user_valid_id_date_updated: `${currentDate}`,
+    })
+    .eq("user_valid_id_id", params.validIdId);
+
+  if (error) throw error;
+};
+
+// Update SLA Hours
+export const updateSLAHours = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    form_sla_id: string;
+    form_sla_hours: number;
+  }
+) => {
+  const { form_sla_hours, form_sla_id } = params;
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+
+  const { data, error } = await supabaseClient
+    .from("form_sla_table")
+    .update({ form_sla_hours, form_sla_date_updated: `${currentDate}` })
+    .eq("form_sla_id", form_sla_id)
+    .select("*, form_table!inner(*)");
+
+  if (error) throw error;
+  return data[0];
 };

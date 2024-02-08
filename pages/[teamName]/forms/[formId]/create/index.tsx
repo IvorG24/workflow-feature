@@ -1,10 +1,11 @@
+import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
+import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
-import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
 import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
 import CreateSubconRequestPage from "@/components/CreateSubconRequestPage/CreateSubconRequestPage";
@@ -24,7 +25,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           input_data: {
             formId: context.query.formId,
             userId: user.id,
-            requisitionId: context.query.requisitionId,
+            itemId: context.query.itemId,
             quotationId: context.query.quotationId,
             sourcedItemId: context.query.sourcedItemId,
             releaseOrderId: context.query.releaseOrderId,
@@ -77,9 +78,9 @@ const Page = ({
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <CreateRequisitionRequestPage
+          <CreateItemRequestPage
             form={form}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
@@ -97,6 +98,13 @@ const Page = ({
       case "Services":
         return (
           <CreateServicesRequestPage
+            form={form}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Other Expenses":
+        return (
+          <CreateOtherExpensesRequestPage
             form={form}
             projectOptions={projectOptions}
           />

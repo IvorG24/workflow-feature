@@ -1,9 +1,9 @@
 import { useUserIntials, useUserProfile } from "@/stores/useUserStore";
+import { formatDate } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import { Avatar, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import { IconCalendar } from "@tabler/icons-react";
-import moment from "moment";
 
 type Props = {
   formDetails: {
@@ -11,6 +11,8 @@ type Props = {
     form_description: string;
     form_date_created: string;
     form_team_member: RequestWithResponseType["request_team_member"];
+    form_type?: string;
+    form_sub_type?: string;
   };
   requestingProject?: string;
 };
@@ -19,14 +21,33 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
   const userProfile = useUserProfile();
   const userInitials = useUserIntials();
 
-  const { form_name, form_description, form_date_created } = formDetails;
+  const {
+    form_name,
+    form_description,
+    form_date_created,
+    form_type,
+    form_sub_type,
+  } = formDetails;
 
-  const formDateCreated = moment(form_date_created).format("MMM DD, YYYY");
+  const formDateCreated = formatDate(new Date(form_date_created));
 
   return (
     <Paper p="xl" shadow="xs">
       <Title order={2}>{form_name}</Title>
       <Text mt="xs">{form_description}</Text>
+
+      {form_type && form_sub_type && (
+        <Stack mt="xl" spacing="xs">
+          <Group>
+            <Title order={5}>Type:</Title>
+            <Text>{form_type}</Text>
+          </Group>
+          <Group>
+            <Title order={5}>Sub Type:</Title>
+            <Text>{form_sub_type}</Text>
+          </Group>
+        </Stack>
+      )}
 
       <Title order={5} mt="xl">
         Requested by:

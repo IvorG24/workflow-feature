@@ -1,10 +1,9 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  checkRequisitionQuantity,
+  checkItemQuantity,
   checkRIRItemQuantity,
   checkROItemQuantity,
   checkTransferReceiptItemQuantity,
-  getFileUrl,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
@@ -15,6 +14,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ConnectedRequestIdList,
@@ -26,12 +26,14 @@ import {
   RequestWithResponseType,
 } from "@/utils/types";
 import {
+  Accordion,
   Box,
   Button,
   Container,
   Flex,
   Group,
   List,
+  Paper,
   Stack,
   Text,
   Title,
@@ -40,17 +42,15 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useEffect, useRef, useState } from "react";
-import ExportToPdf from "../ExportToPDF/ExportToPdf";
-import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
+import { useRef } from "react";
+import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
+import ItemSummary from "../SummarySection/ItemSummary";
 import QuotationSummary from "../SummarySection/QuotationSummary";
 import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
 import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
-import RequisitionSummary from "../SummarySection/RequisitionSummary";
 import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
 import SubconSummary from "../SummarySection/SubconSummary";
 import TransferReceiptSummary from "../SummarySection/TransferReceiptSummary";
-import ConnectedRequestSection from "./ConnectedRequestSections";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
@@ -76,69 +76,17 @@ const RequestPage = ({
   request,
   isFormslyForm = false,
   connectedFormIdAndGroup,
-  connectedRequestIDList,
+  // connectedRequestIDList,
   projectSignerStatus: initialProjectSignerStatus,
   isAnon = false,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-
-  const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
-    []
-  );
-  const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   // const [currentServerDate, setCurrentServerDate] = useState("");
 
   const user = useUserProfile();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
-
-  useEffect(() => {
-    try {
-      setIsFetchingApprover(true);
-      const fetchApproverDetails = async () => {
-        const data = await Promise.all(
-          request.request_signer.map(async (signer) => {
-            let signatureUrl: string | null = null;
-            if (
-              signer.request_signer_status === "APPROVED" &&
-              signer.request_signer_signer.signer_team_member.team_member_user
-                .user_signature_attachment_id
-            ) {
-              signatureUrl = await getFileUrl(supabaseClient, {
-                path: signer.request_signer_signer.signer_team_member
-                  .team_member_user.user_signature_attachment_id,
-                bucket: "USER_SIGNATURES",
-              });
-            }
-
-            return {
-              name: `${signer.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${signer.request_signer_signer.signer_team_member.team_member_user.user_last_name}`,
-              jobDescription:
-                signer.request_signer_signer.signer_team_member.team_member_user
-                  .user_job_title,
-              status: signer.request_signer_status,
-              date: signer.request_signer_status_date_updated,
-              signature: signatureUrl,
-            };
-          })
-        );
-        setApproverDetails(data);
-
-        // const serverDate = (
-        //   await getCurrentDate(supabaseClient)
-        // ).toLocaleString();
-        // setCurrentServerDate(serverDate);
-      };
-      if (request) {
-        fetchApproverDetails();
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsFetchingApprover(false);
-    }
-  }, [request]);
 
   const { setIsLoading } = useLoadingActions();
   const pageContentRef = useRef<HTMLDivElement>(null);
@@ -184,13 +132,7 @@ const RequestPage = ({
     }
   );
 
-  const requestDateCreated = new Date(
-    request.request_date_created
-  ).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const requestDateCreated = formatDate(new Date());
 
   const originalSectionList = request.request_form.form_section;
 
@@ -217,7 +159,7 @@ const RequestPage = ({
         request.request_status === "PENDING"
       ) {
         if (request.request_form.form_name === "Quotation") {
-          const requisitionID =
+          const itemID =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[3];
@@ -243,14 +185,11 @@ const RequestPage = ({
             quantityFieldList.push(quantity);
           });
 
-          const warningItemList = await checkRequisitionQuantity(
-            supabaseClient,
-            {
-              requisitionID,
-              itemFieldList,
-              quantityFieldList,
-            }
-          );
+          const warningItemList = await checkItemQuantity(supabaseClient, {
+            itemID,
+            itemFieldList,
+            quantityFieldList,
+          });
 
           if (warningItemList && warningItemList.length !== 0) {
             modals.open({
@@ -260,7 +199,7 @@ const RequestPage = ({
                 <Box maw={390}>
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
-                    Requisition
+                    Item
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -276,7 +215,7 @@ const RequestPage = ({
             return;
           }
         } else if (request.request_form.form_name === "Sourced Item") {
-          const requisitionID =
+          const itemID =
             request.request_form.form_section[0].section_field[0]
               .field_response[0].request_response;
           const itemSection = request.request_form.form_section[1];
@@ -301,14 +240,11 @@ const RequestPage = ({
             quantityFieldList.push(quantity);
           });
 
-          const warningItemList = await checkRequisitionQuantity(
-            supabaseClient,
-            {
-              requisitionID,
-              itemFieldList,
-              quantityFieldList,
-            }
-          );
+          const warningItemList = await checkItemQuantity(supabaseClient, {
+            itemID,
+            itemFieldList,
+            quantityFieldList,
+          });
 
           if (warningItemList && warningItemList.length !== 0) {
             modals.open({
@@ -318,7 +254,7 @@ const RequestPage = ({
                 <Box maw={390}>
                   <Title order={5}>
                     There are items that will exceed the quantity limit of the
-                    Requisition
+                    Item
                   </Title>
                   <List size="sm" mt="md" spacing="xs">
                     {warningItemList.map((item) => (
@@ -604,19 +540,19 @@ const RequestPage = ({
       activeTeam.team_name
     )}/forms/${formId}`;
     if (["Quotation", "Sourced Item"].includes(formName)) {
-      directory += `/create?requisitionId=${request.request_id}`;
+      directory += `/create?itemId=${request.request_id}`;
     } else if (formName === "Release Order") {
-      directory += `/create?requisitionId=${JSON.parse(
+      directory += `/create?itemId=${JSON.parse(
         request.request_form.form_section[0].section_field[0].field_response[0]
           .request_response
       )}&sourcedItemId=${request.request_id}`;
     } else if (formName === "Receiving Inspecting Report") {
-      directory += `/create?requisitionId=${JSON.parse(
+      directory += `/create?itemId=${JSON.parse(
         request.request_form.form_section[0].section_field[0].field_response[0]
           .request_response
       )}&quotationId=${request.request_id}`;
     } else if (formName === "Transfer Receipt") {
-      directory += `/create?requisitionId=${JSON.parse(
+      directory += `/create?itemId=${JSON.parse(
         request.request_form.form_section[0].section_field[0].field_response[0]
           .request_response
       )}&sourcedItemId=${JSON.parse(
@@ -723,13 +659,11 @@ const RequestPage = ({
           Request
         </Title>
         <Group>
-          {!isFetchingApprover && approverDetails.length !== 0 && (
-            <ExportToPdf
-              request={request}
-              sectionWithDuplicateList={sectionWithDuplicateList}
-              approverDetails={approverDetails}
-            />
-          )}
+          <ExportToPdfMenu
+            isFormslyForm={request.request_form.form_is_formsly_form}
+            formName={request.request_form.form_name}
+            requestId={request.request_formsly_id ?? request.request_id}
+          />
 
           {connectedFormIdAndGroup &&
           connectedFormIdAndGroup.formId &&
@@ -762,41 +696,71 @@ const RequestPage = ({
             requestStatus={requestStatus as FormStatusType}
           />
 
-          {connectedRequestIDList ? (
+          {/* {connectedRequestIDList ? (
             <ConnectedRequestSection
               connectedRequestIDList={connectedRequestIDList}
             />
-          ) : null}
+          ) : null} */}
 
-          {sectionWithDuplicateList.map((section, idx) => (
-            <RequestSection
-              key={section.section_id + idx}
-              section={section}
-              isFormslyForm={isFormslyForm}
-              isAnon={isAnon}
-              isOnlyWithResponse={
-                request.request_form.form_name === "Requisition" ||
-                request.request_form.form_name === "Subcon"
-              }
-            />
-          ))}
+          {request.request_form.form_name === "Item" && (
+            <>
+              <RequestSection
+                section={sectionWithDuplicateList[0]}
+                isFormslyForm={true}
+                isOnlyWithResponse
+              />
+
+              <Accordion>
+                <Accordion.Item key="item" value="item">
+                  <Paper shadow="xs">
+                    <Accordion.Control>
+                      <Title order={4} color="dimmed">
+                        Item Section
+                      </Title>
+                    </Accordion.Control>
+                  </Paper>
+                  <Accordion.Panel>
+                    <Stack spacing="xl" mt="lg">
+                      {sectionWithDuplicateList.slice(1).map((section, idx) => {
+                        if (
+                          idx === 0 &&
+                          section.section_field[0].field_response
+                            ?.request_response === '"null"'
+                        )
+                          return;
+
+                        return (
+                          <RequestSection
+                            key={section.section_id + idx}
+                            section={section}
+                            isFormslyForm={true}
+                            isOnlyWithResponse
+                            index={idx + 1}
+                          />
+                        );
+                      })}
+                    </Stack>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
+            </>
+          )}
+
+          {request.request_form.form_name !== "Item" &&
+            sectionWithDuplicateList.map((section, idx) => (
+              <RequestSection
+                key={section.section_id + idx}
+                section={section}
+                isFormslyForm={isFormslyForm}
+                isAnon={isAnon}
+                isOnlyWithResponse={request.request_form.form_name === "Subcon"}
+              />
+            ))}
         </Stack>
 
-        {request.request_form.form_name === "Requisition" &&
+        {request.request_form.form_name === "Item" &&
         request.request_form.form_is_formsly_form ? (
-          <RequisitionSummary
-            summaryData={sectionWithDuplicateList
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
+          <ItemSummary summaryData={sectionWithDuplicateList.slice(1)} />
         ) : null}
 
         {request.request_form.form_name === "Subcon" &&
@@ -914,6 +878,12 @@ const RequestPage = ({
             isEditable={isEditable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
+            onCreateJiraTicket={async () => {
+              console.log(
+                "Currently Formlsy does not support the creation of Jira Ticket of other forms"
+              );
+              return null;
+            }}
           />
         )}
 

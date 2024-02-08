@@ -283,7 +283,7 @@ const AdminList = ({
         </Group>
       </Flex>
       <DataTable
-        idAccessor="team_group_admin_id"
+        idAccessor="team_member_id"
         mt="xs"
         withBorder
         fw="bolder"

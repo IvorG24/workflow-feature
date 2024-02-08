@@ -1,10 +1,11 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
+import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
+import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
-import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
 import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubconRequestPage";
@@ -12,6 +13,7 @@ import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTr
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
+  FieldTableRow,
   FormType,
   OptionTableRow,
   RequestWithResponseType,
@@ -60,6 +62,8 @@ export type EditRequestOnLoadProps = {
     special_approver_signer: FormType["form_signer"][0];
   }[];
   referenceOnly: boolean;
+  supplierOptions?: OptionTableRow[];
+  preferredSupplierField?: FieldTableRow;
   categoryOptions?: OptionTableRow[];
 };
 
@@ -73,24 +77,37 @@ const Page = ({
   sourceProjectList = {},
   specialApprover = [],
   referenceOnly,
+  supplierOptions = [],
+  preferredSupplierField,
   categoryOptions = [],
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
+
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <EditRequisitionRequestPage
+          <EditItemRequestPage
             request={request}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
             specialApprover={specialApprover}
             referenceOnly={referenceOnly}
+            supplierOptions={supplierOptions}
+            preferredSupplierField={preferredSupplierField}
           />
         );
       case "Services":
         return (
           <EditServicesRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "Other Expenses":
+        return (
+          <EditOtherExpensesRequestPage
             request={request}
             projectOptions={projectOptions}
             referenceOnly={referenceOnly}

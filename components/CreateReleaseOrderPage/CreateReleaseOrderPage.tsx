@@ -111,7 +111,7 @@ const CreateReleaseOrderPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.requisitionId
+      router.query.itemId
     );
     setValue(
       `sections.${0}.section_field.${1}.field_response`,
@@ -458,7 +458,7 @@ const CreateReleaseOrderPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Quotation"
+                    formslyFormName={form.form_name}
                     onRemoveSection={handleRemoveSection}
                     quotationFormMethods={{ onItemChange: handleItemChange }}
                     rirFormMethods={{ onQuantityChange: handleQuantityChange }}

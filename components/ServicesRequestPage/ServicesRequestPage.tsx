@@ -18,6 +18,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
 import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
@@ -26,7 +27,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import ExportToPdf from "../ExportToPDF/ExportToPdf";
+import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import ServicesSummary from "../SummarySection/ServicesSummary";
 
 type Props = {
@@ -166,13 +167,7 @@ const ServicesRequestPage = ({ request }: Props) => {
     initialCommentList: request.request_comment,
   });
 
-  const requestDateCreated = new Date(
-    request.request_date_created
-  ).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const requestDateCreated = formatDate(new Date());
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
@@ -346,10 +341,10 @@ const ServicesRequestPage = ({ request }: Props) => {
         </Title>
         {!isFetchingApprover && approverDetails.length !== 0 && (
           <Group>
-            <ExportToPdf
-              request={request}
-              sectionWithDuplicateList={sectionWithDuplicateList}
-              approverDetails={approverDetails}
+            <ExportToPdfMenu
+              isFormslyForm={request.request_form.form_is_formsly_form}
+              formName={request.request_form.form_name}
+              requestId={request.request_formsly_id ?? request.request_id}
             />
           </Group>
         )}

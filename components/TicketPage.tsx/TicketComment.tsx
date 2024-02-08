@@ -1,4 +1,5 @@
 import { getCommentAttachment } from "@/backend/api/get";
+import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   getAvatarColor,
@@ -145,7 +146,7 @@ const TicketComment = ({ comment }: Props) => {
                 </Text>
                 <Text color="dimmed" size={12}>
                   {moment(comment.ticket_comment_date_created).fromNow()},{" "}
-                  {new Date(comment.ticket_comment_date_created).toDateString()}
+                  {formatDate(new Date(comment.ticket_comment_date_created))}
                 </Text>
               </Stack>
             </Flex>
@@ -171,10 +172,8 @@ const TicketComment = ({ comment }: Props) => {
               <Text size={14}>
                 {`${commenter.team_member_user.user_first_name} ${commenter.team_member_user.user_last_name}`}
               </Text>
-              <Text size={14}>
-                {moment(comment.ticket_comment_date_created).format(
-                  "MMM DD, YYYY"
-                )}
+              <Text size={14} color="dimmed">
+                {formatDate(new Date(comment.ticket_comment_date_created))}
               </Text>
             </Group>
             <Flex direction="column">

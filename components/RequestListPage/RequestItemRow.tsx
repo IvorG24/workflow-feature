@@ -1,4 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { RequestListItemType } from "@/utils/types";
@@ -16,7 +17,6 @@ import {
   createStyles,
 } from "@mantine/core";
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import RequestSignerList from "./RequestSignerList";
 
@@ -27,6 +27,10 @@ type Props = {
 const useStyles = createStyles(() => ({
   requestor: {
     border: "solid 2px white",
+    cursor: "pointer",
+  },
+  clickable: {
+    cursor: "pointer",
   },
 }));
 
@@ -47,7 +51,7 @@ const RequestItemRow = ({ request }: Props) => {
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
-      <Grid.Col span={1} className="onboarding-request-list-row-rid">
+      <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
             <Anchor
@@ -60,7 +64,13 @@ const RequestItemRow = ({ request }: Props) => {
             </Anchor>
           </Text>
 
-          <CopyButton value={requestId}>
+          <CopyButton
+            value={`${
+              process.env.NEXT_PUBLIC_SITE_URL
+            }/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/requests/${requestId}`}
+          >
             {({ copied, copy }) => (
               <Tooltip
                 label={
@@ -78,7 +88,7 @@ const RequestItemRow = ({ request }: Props) => {
           </CopyButton>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1} className="onboarding-request-list-row-jira">
+      <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
             <Anchor href={request.request_jira_link} target="_blank">
@@ -101,7 +111,7 @@ const RequestItemRow = ({ request }: Props) => {
           )}
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1} className="onboarding-request-list-row-otp">
+      <Grid.Col span={1}>
         <Flex justify="space-between">
           <Text truncate maw={150}>
             {request.request_otp_id}
@@ -123,12 +133,12 @@ const RequestItemRow = ({ request }: Props) => {
         </Flex>
       </Grid.Col>
 
-      <Grid.Col span={2} className="onboarding-request-list-row-form">
+      <Grid.Col span={2}>
         <Tooltip label={request.request_form.form_name} openDelay={2000}>
           <Text truncate>{request.request_form.form_name}</Text>
         </Tooltip>
       </Grid.Col>
-      <Grid.Col span={1} className="onboarding-request-list-row-status">
+      <Grid.Col span={1}>
         <Badge
           variant="filled"
           color={getStatusToColor(request.request_status)}
@@ -137,32 +147,38 @@ const RequestItemRow = ({ request }: Props) => {
         </Badge>
       </Grid.Col>
 
-      <Grid.Col
-        span="auto"
-        offset={0.5}
-        className="onboarding-request-list-row-requester"
-      >
+      <Grid.Col span="auto" offset={0.5}>
         <Flex px={0} gap={8} wrap="wrap">
           <Avatar
             src={requestor.user_avatar}
             {...defaultAvatarProps}
             color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
             className={classes.requestor}
+            onClick={() =>
+              window.open(
+                `/member/${request.request_team_member.team_member_id}`
+              )
+            }
           >
             {requestor.user_first_name[0] + requestor.user_last_name[0]}
           </Avatar>
-          <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
+          <Anchor
+            href={`/member/${request.request_team_member.team_member_id}`}
+            target="_blank"
+          >
+            <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
+          </Anchor>
         </Flex>
       </Grid.Col>
-      <Grid.Col span={1} className="onboarding-request-list-row-approver">
+      <Grid.Col span={1}>
         <RequestSignerList signerList={request_signer} />
       </Grid.Col>
-      <Grid.Col span="content" className="onboarding-request-list-row-date">
+      <Grid.Col span="content">
         <Text miw={105}>
-          {moment(request.request_date_created).format("MMM DD, YYYY")}
+          {formatDate(new Date(request.request_date_created))}
         </Text>
       </Grid.Col>
-      <Grid.Col span="content" className="onboarding-request-list-row-view">
+      <Grid.Col span="content">
         <Group position="center">
           <ActionIcon
             color="blue"

@@ -17,12 +17,14 @@ type RequestFormSectionProps = {
   sectionIndex: number;
   onRemoveSection?: (index: number) => void;
   isSectionRemovable?: boolean;
-  requisitionFormMethods?: {
+  itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
+    isSearchingSupplier?: boolean;
+    csiSearch?: (value: string, index: number) => void;
+    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -56,6 +58,13 @@ type RequestFormSectionProps = {
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
   };
+  otherExpensesMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    onCategoryChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
   pedEquipmentFormMethods?: {
     onCategoryChange: (value: string | null, index: number) => void;
     onProjectNameChange: (value: string | null) => void;
@@ -85,7 +94,7 @@ const RequestFormSection = ({
   sectionIndex,
   onRemoveSection,
   isSectionRemovable,
-  requisitionFormMethods,
+  itemFormMethods,
   subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
@@ -95,6 +104,7 @@ const RequestFormSection = ({
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
+  otherExpensesMethods,
 }: RequestFormSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -125,7 +135,7 @@ const RequestFormSection = ({
             }}
             sectionIndex={sectionIndex}
             fieldIndex={idx}
-            requisitionFormMethods={requisitionFormMethods}
+            itemFormMethods={itemFormMethods}
             subconFormMethods={subconFormMethods}
             quotationFormMethods={quotationFormMethods}
             servicesFormMethods={servicesFormMethods}
@@ -133,6 +143,7 @@ const RequestFormSection = ({
             formslyFormName={formslyFormName}
             sourcedItemFormMethods={sourcedItemFormMethods}
             referenceOnly={referenceOnly}
+            otherExpensesMethods={otherExpensesMethods}
             pedEquipmentFormMethods={pedEquipmentFormMethods}
             pedPartFormMethods={pedPartFormMethods}
           />

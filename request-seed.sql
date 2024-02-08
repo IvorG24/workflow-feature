@@ -7,7 +7,7 @@ CREATE TEMPORARY TABLE seed_variable_table (
 
 INSERT INTO seed_variable_table (var_key, var_value) VALUES
 ('ownerMemberId', gen_random_uuid()),
-('requisitionFormId', gen_random_uuid()),
+('itemFormId', gen_random_uuid()),
 ('quotationFormId', gen_random_uuid()),
 ('rirFormId', gen_random_uuid()),
 ('sourcedItemFormId', gen_random_uuid()),
@@ -25,7 +25,7 @@ DECLARE
 -- form ids
   allFieldsFormId UUID;
   duplicateFieldsFormId UUID;
-  requisitionFormId UUID;
+  itemFormId UUID;
   quotationFormId UUID;
   rirFormId UUID;
   sourcedItemFormId UUID;
@@ -64,9 +64,9 @@ SELECT var_value INTO duplicateFieldsFormId
   FROM seed_variable_table
   WHERE var_key = 'duplicateFieldsFormId';
 
-SELECT var_value INTO requisitionFormId
+SELECT var_value INTO itemFormId
   FROM seed_variable_table
-  WHERE var_key = 'requisitionFormId';
+  WHERE var_key = 'itemFormId';
 
 SELECT var_value INTO quotationFormId
   FROM seed_variable_table
@@ -91,7 +91,7 @@ SELECT var_value INTO transferReceiptFormId
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member) VALUES
 (allFieldsFormId, 'All Fields', 'test all types of fields', 'REQUEST', ownerMemberId, false, false, true),
 (duplicateFieldsFormId, 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', ownerMemberId, false, false, true),
-(requisitionFormId, 'Requisition', 'formsly premade Requisition form', 'REQUEST', ownerMemberId, true, false, false),
+(itemFormId, 'Item', 'formsly premade Item form', 'REQUEST', ownerMemberId, true, false, false),
 (quotationFormId, 'Quotation', 'formsly premade Quotation form', 'REQUEST', ownerMemberId, true, true, false),
 (rirFormId, 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', ownerMemberId, true, true, false),
 (sourcedItemFormId, 'Sourced Item', 'formsly premade Sourced Item form.', 'REQUEST', ownerMemberId, true, true, false),
@@ -117,7 +117,7 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 (duplicateFieldsSection2, 'Normal Section 2', 2, false, duplicateFieldsFormId),
 (duplicateFieldsSection3, 'Duplicatable Section 3', 3, true, duplicateFieldsFormId),
 
--- Requisition
+-- Item
 ('4825cada-afc4-4657-affd-7f5be69a48e6', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 
@@ -171,7 +171,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('f5e0af5e-266c-464c-81ea-fdaf0dbb9669', 'Date field', 'DATE', 9, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false, false),
 ('0f1d0f3b-5e8b-4666-b978-a249a981498f', 'Time field', 'TIME', 10, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false, false),
 
--- Requisition 
+-- Item 
 ('eb64f865-e034-4efb-8809-b162bb33175b', 'Requesting Project', 'DROPDOWN', 1, '4825cada-afc4-4657-affd-7f5be69a48e6', true, false),
 ('d644d57b-dc0c-4f44-9cef-403fd73a7cf2', 'Type', 'DROPDOWN', 2, '4825cada-afc4-4657-affd-7f5be69a48e6', true, false),
 ('f0432de0-0fbe-4351-a258-3272e2d29db4', 'Date Needed', 'DATE', 3, '4825cada-afc4-4657-affd-7f5be69a48e6', true, false),
@@ -196,14 +196,14 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('a6745b58-c88d-41dc-82f4-887c0062c03d', 'Size', 'DROPDOWN', 15, 'c44e8f72-c112-4fb4-a5a4-b2619ac77aa1', true, false),
 
 -- Sourced Item 
-('f8f77f42-63a5-4053-8b2e-36d0f5174e94', 'Requisition ID', 'LINK', 1, 'dc06e690-9dd1-46e8-a769-0f83ea5cb215', true, true),
+('f8f77f42-63a5-4053-8b2e-36d0f5174e94', 'Item ID', 'LINK', 1, 'dc06e690-9dd1-46e8-a769-0f83ea5cb215', true, true),
 
 ('5a7cf568-e3f6-45fc-b624-23ef1b136934', 'Item', 'DROPDOWN', 2, '26a2cb17-1b90-434a-a8f1-e54479af3927', true, false),
 ('3d68b209-bc8b-4644-aeab-1ba3af3917cc', 'Quantity', 'NUMBER', 3, '26a2cb17-1b90-434a-a8f1-e54479af3927', true, false),
 ('13fd2110-2c14-467e-82f5-0768809d14fc', 'Source Project', 'DROPDOWN', 4, '26a2cb17-1b90-434a-a8f1-e54479af3927', true, false),
 
 -- Quotation 
-('81849f8f-5d5e-4877-b530-f049d349f6da', 'Requisition ID', 'LINK', 1, '92ba57aa-ee3d-47bc-889f-744c4ea68565', true, true),
+('81849f8f-5d5e-4877-b530-f049d349f6da', 'Item ID', 'LINK', 1, '92ba57aa-ee3d-47bc-889f-744c4ea68565', true, true),
 
 ('4ea7b1fe-e219-4b35-bae8-d8d37578b8fc', 'Supplier', 'DROPDOWN', 2, '1ada0454-f349-462a-8178-3f91c24a89d4', true, false),
 ('dd48cc60-7756-47e5-870b-a3689cf3eb17', 'Supplier Quotation', 'FILE', 3, '1ada0454-f349-462a-8178-3f91c24a89d4', true, false),
@@ -227,7 +227,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('33a0af42-7451-460d-8073-9f5a2c6649e8', 'Quantity', 'NUMBER', 19, '46647207-4894-4ed6-9c75-1d0f37ea3d72', true, false),
 
 -- Receiving Inspecting Report 
-('8ff92103-06ff-408e-afcf-1c9a1c31f1a7', 'Requisition ID', 'LINK', 1, '322a7743-2771-419a-880e-da6e69eb2b67', true, true),
+('8ff92103-06ff-408e-afcf-1c9a1c31f1a7', 'Item ID', 'LINK', 1, '322a7743-2771-419a-880e-da6e69eb2b67', true, true),
 ('c36ffc50-38e6-436c-b6f6-408909a36fcb', 'Quotation ID', 'LINK', 2, '322a7743-2771-419a-880e-da6e69eb2b67', true, true),
 ('f5c5b66e-6f41-418b-ba52-c8d94fdd4b26', 'DR', 'FILE', 3, '942ecf49-1ce4-4dbb-a570-231844546a58', true, false),
 ('70d2a4d6-e567-4ebc-9995-0ca6421e5c73', 'SI', 'FILE', 4, '942ecf49-1ce4-4dbb-a570-231844546a58', false, false),
@@ -237,7 +237,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('4869a22f-835c-40e6-9851-b27eb4460467', 'Receiving Status', 'TEXT', 8, '0c069155-289d-4628-8985-bdac8bc65cd3', true, true), 
 
 -- Release Order 
-('18d29716-ea57-412f-af0f-e4a505ec6efc', 'Requisition ID', 'LINK', 1, 'b9a5efac-c020-42cf-8196-97792583e1a4', true, true),
+('18d29716-ea57-412f-af0f-e4a505ec6efc', 'Item ID', 'LINK', 1, 'b9a5efac-c020-42cf-8196-97792583e1a4', true, true),
 ('73a5c1f3-bb0e-40c6-8e0d-224e52350561', 'Sourced Item ID', 'LINK', 2, 'b9a5efac-c020-42cf-8196-97792583e1a4', true, true),
 ('3bf6959e-012a-4fc9-820f-e67f42cb9edf', 'Item', 'DROPDOWN', 3, '396d543e-e86d-41cd-80eb-c1d8d9c24b30', true, false),
 ('1ded6e1d-82f3-4936-a33c-7351e2ec9078', 'Quantity', 'NUMBER', 4, '396d543e-e86d-41cd-80eb-c1d8d9c24b30', true, false),
@@ -245,7 +245,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('662ac92f-b340-4121-ac71-1efa41f52909', 'Source Project', 'TEXT', 6, '396d543e-e86d-41cd-80eb-c1d8d9c24b30', true, true), 
 
 -- Transfer Receipt 
-('efa6673c-0aea-4ee5-ab3a-11d1fdb26179', 'Requisition ID', 'LINK', 1, '5c8cf8df-a20e-46bb-8e22-b0e2a90624ab', true, true),
+('efa6673c-0aea-4ee5-ab3a-11d1fdb26179', 'Item ID', 'LINK', 1, '5c8cf8df-a20e-46bb-8e22-b0e2a90624ab', true, true),
 ('dd3e524c-46b0-4883-9c35-931e24a24e5b', 'Sourced Item ID', 'LINK', 2, '5c8cf8df-a20e-46bb-8e22-b0e2a90624ab', true, true),
 ('6feb5d81-3893-4e91-aec8-a8ded5c78419', 'Release Order ID', 'LINK', 3, '5c8cf8df-a20e-46bb-8e22-b0e2a90624ab', true, true),
 ('675a4329-20da-4fc2-8d66-80755f2fef7c', 'Transfer Shipment', 'FILE', 4, '7018f1d5-5ffd-4853-8fca-9cce1e7a2409', true, false),
@@ -274,7 +274,7 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 (gen_random_uuid(), 'Multiselect 3', 3, 'ec6831ee-ea45-468e-bd5c-fb29a7297a56'),
 ('a4c9cf29-c4cc-4b6f-af3d-6a50946af85e', 'Cash Purchase - Advance Payment', 1, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2'),
 ('c22aa5ed-7dc8-45b1-8917-2d12290f8936', 'Cash Purchase - Local Purchase', 2, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2'),
-('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Requisition', 3, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2');
+('72d99515-3fcd-47cf-abb6-bbcccf4982fe', 'Item', 3, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2');
 
 -- Add items
 INSERT INTO item_table (item_id, item_general_name, item_unit, item_team_id, item_gl_account, item_division_id_list) VALUES 
@@ -318,8 +318,8 @@ INSERT INTO supplier_table (supplier_id, supplier, supplier_team_id) VALUES
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('a6be17fc-1298-411a-b158-abb3b16cdfb6', TRUE, 'Approved', 1, allFieldsFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
 ('a92fa55d-9972-4dc5-9369-1cec51635c4a', TRUE, 'Approved', 1, duplicateFieldsFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
-('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, requisitionFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
-('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, requisitionFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
+('ab5287ae-50df-4e27-a2f8-84c6ce472abc', TRUE, 'Approved', 1, itemFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744'),
+('18dcb6e5-a572-4fe9-9ad9-c86279723098', FALSE, 'Approved', 2, itemFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
 ('5d640270-11a2-43e2-9316-de0414b837c0', TRUE, 'Approved', 1, quotationFormId, 'a750df8c-35fe-48d6-862a-1135c8f96a9a'),
 ('ac286d08-cfb3-42b2-9eab-4e5b9cedbf68', TRUE, 'Approved', 1, rirFormId, '0a61a37f-7805-4fe5-8856-3c7fa801c744');
 
@@ -331,13 +331,13 @@ DO $$
 DECLARE
   ownerMemberId UUID;
 
-  requisitionRequestId UUID;
+  itemRequestId UUID;
   rirRequestId UUID;
   allFieldsRequestId UUID;
   quotationRequestId UUID;
   duplicateFieldsRequestId UUID;
 
-  requisitionFormId UUID;
+  itemFormId UUID;
   quotationFormId UUID;
   rirFormId UUID;
   sourcedItemFormId UUID;
@@ -364,13 +364,13 @@ SELECT var_value INTO ownerMemberId
   FROM seed_variable_table
   WHERE var_key = 'ownerMemberId';
 
-SELECT var_value INTO requisitionFormId
+SELECT var_value INTO itemFormId
   FROM seed_variable_table
-  WHERE var_key = 'requisitionFormId';
+  WHERE var_key = 'itemFormId';
 
   WHILE counter <= 5000 LOOP
     -- Generate request_id
-    requisitionRequestId := gen_random_uuid();
+    itemRequestId := gen_random_uuid();
     quotationRequestId := gen_random_uuid();
 
     -- Generate random request_status
@@ -404,98 +404,98 @@ SELECT var_value INTO requisitionFormId
   request_date_created := date_trunc('year', current_date) + random() * (current_date - date_trunc('year', current_date));
 
 
-    -- Create Requisition request
+    -- Create Item request
     INSERT INTO request_table (request_id, request_team_member_id, request_form_id, request_status, request_date_created) VALUES
-      (requisitionRequestId, ownerMemberId, requisitionFormId, request_status, request_date_created);
+      (itemRequestId, ownerMemberId, itemFormId, request_status, request_date_created);
 
     -- Request signer table
     INSERT INTO request_signer_table (request_signer_id, request_signer_status, request_signer_request_id, request_signer_signer_id) VALUES
-      (gen_random_uuid(), request_signer_status, requisitionRequestId, 'ab5287ae-50df-4e27-a2f8-84c6ce472abc'),
-      (gen_random_uuid(), request_signer_status, requisitionRequestId, '18dcb6e5-a572-4fe9-9ad9-c86279723098');
+      (gen_random_uuid(), request_signer_status, itemRequestId, 'ab5287ae-50df-4e27-a2f8-84c6ce472abc'),
+      (gen_random_uuid(), request_signer_status, itemRequestId, '18dcb6e5-a572-4fe9-9ad9-c86279723098');
 
     INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
       -- Main Section
       -- Requesting Project
-      (gen_random_uuid(), '"LAKE MAINIT"', NULL, 'eb64f865-e034-4efb-8809-b162bb33175b', requisitionRequestId),
+      (gen_random_uuid(), '"LAKE MAINIT"', NULL, 'eb64f865-e034-4efb-8809-b162bb33175b', itemRequestId),
       -- Type
-      (gen_random_uuid(), '"Cash Purchase - Local Purchase"', NULL, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2', requisitionRequestId),
+      (gen_random_uuid(), '"Cash Purchase - Local Purchase"', NULL, 'd644d57b-dc0c-4f44-9cef-403fd73a7cf2', itemRequestId),
       -- Date Needed
-      (gen_random_uuid(), '"' || request_date_created || '"', NULL, 'f0432de0-0fbe-4351-a258-3272e2d29db4', requisitionRequestId),
+      (gen_random_uuid(), '"' || request_date_created || '"', NULL, 'f0432de0-0fbe-4351-a258-3272e2d29db4', itemRequestId),
       -- Purpose
-      (gen_random_uuid(), '"purpose"', NULL, 'e05152c4-f172-4394-9a6d-cfc229ee99a9', requisitionRequestId),
+      (gen_random_uuid(), '"purpose"', NULL, 'e05152c4-f172-4394-9a6d-cfc229ee99a9', itemRequestId),
 
       -- Item Section
 
       -- General Name
-      (gen_random_uuid(), '"Gasoline"', NULL, 'b857e53a-690b-418b-9fb7-732748875b17', requisitionRequestId),
+      (gen_random_uuid(), '"Gasoline"', NULL, 'b857e53a-690b-418b-9fb7-732748875b17', itemRequestId),
       -- Base Unit of Measurement
-      (gen_random_uuid(), '"litre"', NULL, '697efd8f-f522-4396-9af7-cc817992f10a', requisitionRequestId),
+      (gen_random_uuid(), '"litre"', NULL, '697efd8f-f522-4396-9af7-cc817992f10a', itemRequestId),
       -- Quantity
-      (gen_random_uuid(), item_quantity1, NULL, 'cb7f89ba-58db-4be7-bd8a-6ec6315afe3d', requisitionRequestId),
+      (gen_random_uuid(), item_quantity1, NULL, 'cb7f89ba-58db-4be7-bd8a-6ec6315afe3d', itemRequestId),
       -- GL Account
-      (gen_random_uuid(), '"0x22141"', NULL, '94e628bc-0d39-4312-9e26-514707ab2b86', requisitionRequestId),
+      (gen_random_uuid(), '"0x22141"', NULL, '94e628bc-0d39-4312-9e26-514707ab2b86', itemRequestId),
       -- CSI Code Description
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4614a0f6-8a1c-4b1f-8f30-60ff6b11f236', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4614a0f6-8a1c-4b1f-8f30-60ff6b11f236', itemRequestId),
       -- CSI Code
-      (gen_random_uuid(), '"00 00 00"', NULL, '2ad09f4e-6369-45af-99a8-ef945300c3b2', requisitionRequestId),
+      (gen_random_uuid(), '"00 00 00"', NULL, '2ad09f4e-6369-45af-99a8-ef945300c3b2', itemRequestId),
       -- Division Description
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4541cc61-49c9-4ec5-bcb8-5146bc31de6c', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4541cc61-49c9-4ec5-bcb8-5146bc31de6c', itemRequestId),
       -- Level 2 Major Group Description'
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '83530e5f-0bc4-4983-9079-485384996e20', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '83530e5f-0bc4-4983-9079-485384996e20', itemRequestId),
       -- Level 2 Minor Group Description
-      (gen_random_uuid(), '"Project Documentation"', NULL, '1d88906e-f786-4d8a-8992-a2f11e7a55dd', requisitionRequestId),
+      (gen_random_uuid(), '"Project Documentation"', NULL, '1d88906e-f786-4d8a-8992-a2f11e7a55dd', itemRequestId),
       -- Type
-      (gen_random_uuid(), '"Diesel"', NULL, '25e93bd3-30f0-4920-a0e8-6bde5a44898c', requisitionRequestId),
+      (gen_random_uuid(), '"Diesel"', NULL, '25e93bd3-30f0-4920-a0e8-6bde5a44898c', itemRequestId),
       -- Brand
-      (gen_random_uuid(), '"Shell"', NULL, 'db862c96-01ec-499c-b9f1-faf7b674074d', requisitionRequestId),
+      (gen_random_uuid(), '"Shell"', NULL, 'db862c96-01ec-499c-b9f1-faf7b674074d', itemRequestId),
 
       -- General Name
-      (gen_random_uuid(), '"Wood"', duplicatatable_section_id1, 'b857e53a-690b-418b-9fb7-732748875b17', requisitionRequestId),
+      (gen_random_uuid(), '"Wood"', duplicatatable_section_id1, 'b857e53a-690b-418b-9fb7-732748875b17', itemRequestId),
       -- Base Unit of Measurement
-      (gen_random_uuid(), '"piece"', duplicatatable_section_id1, '697efd8f-f522-4396-9af7-cc817992f10a', requisitionRequestId),
+      (gen_random_uuid(), '"piece"', duplicatatable_section_id1, '697efd8f-f522-4396-9af7-cc817992f10a', itemRequestId),
       -- Quantity
-      (gen_random_uuid(), item_quantity2, duplicatatable_section_id1, 'cb7f89ba-58db-4be7-bd8a-6ec6315afe3d', requisitionRequestId),
+      (gen_random_uuid(), item_quantity2, duplicatatable_section_id1, 'cb7f89ba-58db-4be7-bd8a-6ec6315afe3d', itemRequestId),
       -- GL Account
-      (gen_random_uuid(), '"0x22141"', duplicatatable_section_id1, '94e628bc-0d39-4312-9e26-514707ab2b86', requisitionRequestId),
+      (gen_random_uuid(), '"0x22141"', duplicatatable_section_id1, '94e628bc-0d39-4312-9e26-514707ab2b86', itemRequestId),
       -- CSI Code Description
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4614a0f6-8a1c-4b1f-8f30-60ff6b11f236', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4614a0f6-8a1c-4b1f-8f30-60ff6b11f236', itemRequestId),
       -- CSI Code
-      (gen_random_uuid(), '"00 00 00"', NULL, '2ad09f4e-6369-45af-99a8-ef945300c3b2', requisitionRequestId),
+      (gen_random_uuid(), '"00 00 00"', NULL, '2ad09f4e-6369-45af-99a8-ef945300c3b2', itemRequestId),
       -- Division Description
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4541cc61-49c9-4ec5-bcb8-5146bc31de6c', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4541cc61-49c9-4ec5-bcb8-5146bc31de6c', itemRequestId),
       -- Level 2 Major Group Description'
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '83530e5f-0bc4-4983-9079-485384996e20', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '83530e5f-0bc4-4983-9079-485384996e20', itemRequestId),
       -- Level 2 Minor Group Description
-      (gen_random_uuid(), '"Project Documentation"', NULL, '1d88906e-f786-4d8a-8992-a2f11e7a55dd', requisitionRequestId),
+      (gen_random_uuid(), '"Project Documentation"', NULL, '1d88906e-f786-4d8a-8992-a2f11e7a55dd', itemRequestId),
       -- Length
-      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, 'bef47113-a186-4755-9764-263b5c246a41', requisitionRequestId),
+      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, 'bef47113-a186-4755-9764-263b5c246a41', itemRequestId),
       -- Width
-      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, '6e539c9f-8ab2-46f1-a8a6-89cc928c3612', requisitionRequestId),
+      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, '6e539c9f-8ab2-46f1-a8a6-89cc928c3612', itemRequestId),
       -- Height
-      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, '0af6a571-3bef-4f8c-8716-2bca5a5250fc', requisitionRequestId),
+      (gen_random_uuid(), '"1 inch"', duplicatatable_section_id1, '0af6a571-3bef-4f8c-8716-2bca5a5250fc', itemRequestId),
 
       -- General Name
-      (gen_random_uuid(), '"Nail"', duplicatatable_section_id2, 'b857e53a-690b-418b-9fb7-732748875b17', requisitionRequestId),
+      (gen_random_uuid(), '"Nail"', duplicatatable_section_id2, 'b857e53a-690b-418b-9fb7-732748875b17', itemRequestId),
       -- Base Unit of Measurement
-      (gen_random_uuid(), '"bag"', duplicatatable_section_id2, '697efd8f-f522-4396-9af7-cc817992f10a', requisitionRequestId),
+      (gen_random_uuid(), '"bag"', duplicatatable_section_id2, '697efd8f-f522-4396-9af7-cc817992f10a', itemRequestId),
       -- Quantity
-      (gen_random_uuid(), item_quantity3, duplicatatable_section_id2, 'cb7f89ba-58db-4be7-bd8a-6ec6315afe3d', requisitionRequestId),
+      (gen_random_uuid(), item_quantity3, duplicatatable_section_id2, 'cb7f89ba-58db-4be7-bd8a-6ec6315afe3d', itemRequestId),
       -- CSI Code Description
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4614a0f6-8a1c-4b1f-8f30-60ff6b11f236', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4614a0f6-8a1c-4b1f-8f30-60ff6b11f236', itemRequestId),
       -- CSI Code
-      (gen_random_uuid(), '"00 00 00"', NULL, '2ad09f4e-6369-45af-99a8-ef945300c3b2', requisitionRequestId),
+      (gen_random_uuid(), '"00 00 00"', NULL, '2ad09f4e-6369-45af-99a8-ef945300c3b2', itemRequestId),
       -- Division Description
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4541cc61-49c9-4ec5-bcb8-5146bc31de6c', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '4541cc61-49c9-4ec5-bcb8-5146bc31de6c', itemRequestId),
       -- Level 2 Major Group Description'
-      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '83530e5f-0bc4-4983-9079-485384996e20', requisitionRequestId),
+      (gen_random_uuid(), '"Procurement and Contracting Requirements"', NULL, '83530e5f-0bc4-4983-9079-485384996e20', itemRequestId),
       -- Level 2 Minor Group Description
-      (gen_random_uuid(), '"Project Documentation"', NULL, '1d88906e-f786-4d8a-8992-a2f11e7a55dd', requisitionRequestId),
+      (gen_random_uuid(), '"Project Documentation"', NULL, '1d88906e-f786-4d8a-8992-a2f11e7a55dd', itemRequestId),
       -- GL Account
-      (gen_random_uuid(), '"0x221422"', duplicatatable_section_id2, '94e628bc-0d39-4312-9e26-514707ab2b86', requisitionRequestId),
+      (gen_random_uuid(), '"0x221422"', duplicatatable_section_id2, '94e628bc-0d39-4312-9e26-514707ab2b86', itemRequestId),
       -- Material
-      (gen_random_uuid(), '"Metal"', duplicatatable_section_id2, '03003ee0-811a-44e9-b420-aaac9f80d1de', requisitionRequestId),
+      (gen_random_uuid(), '"Metal"', duplicatatable_section_id2, '03003ee0-811a-44e9-b420-aaac9f80d1de', itemRequestId),
       -- Size
-      (gen_random_uuid(), '"5 inch"', duplicatatable_section_id2, 'a6745b58-c88d-41dc-82f4-887c0062c03d', requisitionRequestId);
+      (gen_random_uuid(), '"5 inch"', duplicatatable_section_id2, 'a6745b58-c88d-41dc-82f4-887c0062c03d', itemRequestId);
 
 
     -- Create Quotation Form
@@ -508,7 +508,7 @@ SELECT var_value INTO requisitionFormId
     END INTO quotation_request_status;
 
 
-    -- Create Quotation Request if Requisition Request is APPROVED
+    -- Create Quotation Request if Item Request is APPROVED
     IF request_status = 'APPROVED'
     THEN
 
@@ -524,8 +524,8 @@ SELECT var_value INTO requisitionFormId
     (gen_random_uuid(), quotation_request_status, quotationRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');
 
     INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
-    -- Requisition ID
-    (gen_random_uuid(), '"' || requisitionRequestId || '"', NULL, '81849f8f-5d5e-4877-b530-f049d349f6da', quotationRequestId),
+    -- Item ID
+    (gen_random_uuid(), '"' || itemRequestId || '"', NULL, '81849f8f-5d5e-4877-b530-f049d349f6da', quotationRequestId),
     -- Supplier
     (gen_random_uuid(), '"Begul Builders Corporation"', NULL, '4ea7b1fe-e219-4b35-bae8-d8d37578b8fc', quotationRequestId),
     -- Supplier Quotation
@@ -579,8 +579,8 @@ SELECT var_value INTO requisitionFormId
     (gen_random_uuid(), rirRequestStatus, rirRequestId, '5d640270-11a2-43e2-9316-de0414b837c0');
     
     INSERT INTO request_response_table (request_response_id, request_response, request_response_duplicatable_section_id, request_response_field_id, request_response_request_id) VALUES
-    -- Requisition ID
-    (gen_random_uuid(), '"' || requisitionRequestId || '"', NULL, '8ff92103-06ff-408e-afcf-1c9a1c31f1a7', rirRequestId),
+    -- Item ID
+    (gen_random_uuid(), '"' || itemRequestId || '"', NULL, '8ff92103-06ff-408e-afcf-1c9a1c31f1a7', rirRequestId),
     -- Quotation ID
     (gen_random_uuid(), '"' || quotationRequestId || '"', NULL, 'c36ffc50-38e6-436c-b6f6-408909a36fcb', rirRequestId),
     -- DR

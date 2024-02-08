@@ -34,12 +34,14 @@ type RequestFormFieldsProps = {
   };
   sectionIndex: number;
   fieldIndex: number;
-  requisitionFormMethods?: {
+  itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
+    isSearchingSupplier?: boolean;
+    csiSearch?: (value: string, index: number) => void;
+    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -67,6 +69,13 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
+    supplierSearch?: (value: string, index: number) => void;
+    isSearching?: boolean;
+  };
+  otherExpensesMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+    onCategoryChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
   };
@@ -98,7 +107,7 @@ const RequestFormFields = ({
   field,
   sectionIndex,
   fieldIndex,
-  requisitionFormMethods,
+  itemFormMethods,
   subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
@@ -107,6 +116,7 @@ const RequestFormFields = ({
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
+  otherExpensesMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -253,13 +263,14 @@ const RequestFormFields = ({
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
+                precision={2}
               />
             )}
             rules={{
               ...fieldRules,
               validate: {
                 checkIfZero: (value) =>
-                  (requisitionFormMethods || quotationFormMethods) &&
+                  (itemFormMethods || quotationFormMethods) &&
                   field.field_name === "Quantity" &&
                   value === 0
                     ? "Quantity value is required"
@@ -329,10 +340,7 @@ const RequestFormFields = ({
 
                   switch (field.field_name) {
                     case "General Name":
-                      requisitionFormMethods?.onGeneralNameChange(
-                        sectionIndex,
-                        value
-                      );
+                      itemFormMethods?.onGeneralNameChange(sectionIndex, value);
                       break;
                     case "Item":
                       quotationFormMethods?.onItemChange(
@@ -342,43 +350,30 @@ const RequestFormFields = ({
                       );
                       break;
                     case "CSI Code Description":
-                      requisitionFormMethods &&
-                        requisitionFormMethods.onCSICodeChange(
-                          sectionIndex,
-                          value
-                        );
-                      servicesFormMethods &&
-                        servicesFormMethods.onCSICodeChange(
-                          sectionIndex,
-                          value
-                        );
+                      itemFormMethods &&
+                      itemFormMethods.onCSICodeChange(sectionIndex, value);
+                    servicesFormMethods &&
+                    servicesFormMethods.onCSICodeChange(sectionIndex, value);
+                    otherExpensesMethods &&
+                      otherExpensesMethods.onCSICodeChange(sectionIndex, value);
                       break;
                     case "Source Project":
                       sourcedItemFormMethods?.onProjectSiteChange();
                       break;
                     case "Requesting Project":
-                      requisitionFormMethods?.onProjectNameChange(value);
+                      itemFormMethods?.onProjectNameChange(value);
                       subconFormMethods?.onProjectNameChange(value);
                       servicesFormMethods?.onProjectNameChange(value);
+                      otherExpensesMethods?.onProjectNameChange(value);
                       break;
                     case "Service Name":
-                      subconFormMethods?.onServiceNameChange(
-                        sectionIndex,
-                        value
-                      );
+                      subconFormMethods?.onServiceNameChange(sectionIndex, value);
                       break;
                     case "CSI Division":
-                      servicesFormMethods?.onCSIDivisionChange(
-                        sectionIndex,
-                        value
-                      );
+                      servicesFormMethods?.onCSIDivisionChange(sectionIndex, value);
                       break;
                     case "Category":
-                      pedEquipmentFormMethods?.onCategoryChange(
-                        value,
-                        sectionIndex
-                      );
-                      pedPartFormMethods?.onCategoryChange(value);
+                      otherExpensesMethods?.onCategoryChange(sectionIndex, value);
                       break;
                     case "Type of Order":
                       pedPartFormMethods?.onTypeOfOrderChange(
@@ -449,20 +444,30 @@ const RequestFormFields = ({
                       quotationFormMethods.supplierSearch &&
                         quotationFormMethods.supplierSearch(value);
                     }, 500);
+                  } else if (field.field_name === "Preferred Supplier") {
+                    if (timeoutRef.current) {
+                      clearTimeout(timeoutRef.current);
+                    }
+                    timeoutRef.current = setTimeout(() => {
+                      itemFormMethods?.supplierSearch &&
+                        itemFormMethods.supplierSearch(value, sectionIndex);
+                      otherExpensesMethods?.supplierSearch &&
+                        otherExpensesMethods?.supplierSearch(
+                          value,
+                          sectionIndex
+                        );
+                    }, 500);
                   } else if (
-                    requisitionFormMethods &&
-                    field.field_name === "Preferred Supplier"
+                    itemFormMethods &&
+                    field.field_name === "CSI Code Description"
                   ) {
                     if (timeoutRef.current) {
                       clearTimeout(timeoutRef.current);
                     }
 
                     timeoutRef.current = setTimeout(() => {
-                      requisitionFormMethods.supplierSearch &&
-                        requisitionFormMethods.supplierSearch(
-                          value,
-                          sectionIndex
-                        );
+                      itemFormMethods.csiSearch &&
+                        itemFormMethods.csiSearch(value, sectionIndex);
                     }, 500);
                   }
                 }}
@@ -470,8 +475,14 @@ const RequestFormFields = ({
                   (quotationFormMethods &&
                     quotationFormMethods.isSearching &&
                     field.field_name === "Supplier") ||
-                  (requisitionFormMethods &&
-                    requisitionFormMethods.isSearching &&
+                  (itemFormMethods &&
+                    itemFormMethods.isSearchingSupplier &&
+                    field.field_name === "Preferred Supplier") ||
+                  (itemFormMethods &&
+                    itemFormMethods.isSearchingCSI &&
+                    field.field_name === "CSI Code Description") ||
+                  (otherExpensesMethods &&
+                    otherExpensesMethods.isSearching &&
                     field.field_name === "Preferred Supplier") ? (
                     <Loader size={16} />
                   ) : null
@@ -555,6 +566,7 @@ const RequestFormFields = ({
                         : new Date()
                       : undefined
                   }
+                  valueFormat="YYYY-MM-DD"
                 />
               );
             }}

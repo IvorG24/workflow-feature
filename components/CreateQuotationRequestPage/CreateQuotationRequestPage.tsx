@@ -1,4 +1,4 @@
-import { checkRequisitionQuantity, getSupplier } from "@/backend/api/get";
+import { checkItemQuantity, getSupplier } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -111,7 +111,7 @@ const CreateQuotationRequestPage = ({
     ]);
     setValue(
       `sections.${0}.section_field.${0}.field_response`,
-      router.query.requisitionId
+      router.query.itemId
     );
   }, [form, replaceSection, requestFormMethods, itemOptions]);
 
@@ -121,7 +121,7 @@ const CreateQuotationRequestPage = ({
       if (!teamMember) return;
       setIsLoading(true);
 
-      const requisitionID = JSON.stringify(
+      const itemID = JSON.stringify(
         data.sections[0].section_field[0].field_response
       );
       const tempRequestId = uuidv4();
@@ -153,8 +153,8 @@ const CreateQuotationRequestPage = ({
         });
       });
 
-      const warningItemList = await checkRequisitionQuantity(supabaseClient, {
-        requisitionID,
+      const warningItemList = await checkItemQuantity(supabaseClient, {
+        itemID,
         itemFieldList,
         quantityFieldList,
       });
@@ -166,8 +166,7 @@ const CreateQuotationRequestPage = ({
           children: (
             <Box maw={390}>
               <Title order={5}>
-                There are items that will exceed the quantity limit of the
-                Requisition
+                There are items that will exceed the quantity limit of the Item
               </Title>
               <List size="sm" mt="md" spacing="xs">
                 {warningItemList.map((item) => (
@@ -420,7 +419,7 @@ const CreateQuotationRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName="Quotation"
+                    formslyFormName={form.form_name}
                     onRemoveSection={handleRemoveSection}
                     quotationFormMethods={{
                       onItemChange: handleItemChange,

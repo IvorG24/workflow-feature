@@ -1,5 +1,5 @@
+import ItemCanvassPage from "@/components/ItemCanvassPage/ItemCanvassPage";
 import Meta from "@/components/Meta/Meta";
-import RequisitionCanvassPage from "@/components/RequisitionCanvassPage/RequisitionCanvassPage";
 import { isEmpty } from "@/utils/functions";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
@@ -85,7 +85,7 @@ const Page = ({
         description="Canvass Page"
         url="/<teamName>/request/<requestId>/canvass"
       />
-      <RequisitionCanvassPage
+      <ItemCanvassPage
         canvassData={canvassData}
         lowestPricePerItem={lowestPricePerItem}
         summaryData={summaryData}
