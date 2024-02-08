@@ -81,7 +81,7 @@ const CreatePEDEquipmentRequestPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
@@ -218,6 +218,7 @@ const CreatePEDEquipmentRequestPage = ({
         resetSigner();
       }
     } catch (e) {
+      setValue(`sections.0.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

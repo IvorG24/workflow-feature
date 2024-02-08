@@ -2,7 +2,6 @@ import {
   getEquipmentBrandAndModelOption,
   getEquipmentUOMAndCategoryOption,
 } from "@/backend/api/get";
-import { updateEquipmentPart } from "@/backend/api/update";
 
 import { Database } from "@/utils/database";
 import {
@@ -35,8 +34,8 @@ type Props = {
 };
 
 const UpdateEquipmentPart = ({
-  selectedEquipment,
-  setEquipmentPartList,
+  // selectedEquipment,
+  // setEquipmentPartList,
   setEditEquipmentPart,
   editEquipmentPart,
 }: Props) => {
@@ -112,7 +111,7 @@ const UpdateEquipmentPart = ({
   const { register, formState, handleSubmit, control } =
     useForm<EquipmentPartForm>({
       defaultValues: {
-        name: editEquipmentPart.equipment_part_name,
+        name: editEquipmentPart.equipment_part_general_name,
         partNumber: editEquipmentPart.equipment_part_number,
         brand: editEquipmentPart.equipment_part_brand_id,
         model: editEquipmentPart.equipment_part_model_id,
@@ -123,55 +122,56 @@ const UpdateEquipmentPart = ({
     });
 
   const onSubmit = async (data: EquipmentPartForm) => {
-    try {
-      const newEquipmentPart: EquipmentPartType = await updateEquipmentPart(
-        supabaseClient,
-        {
-          equipmentPartData: {
-            equipment_part_id: editEquipmentPart.equipment_part_id,
-            equipment_part_name: data.name.toUpperCase(),
-            equipment_part_number: data.partNumber,
-            equipment_part_brand_id: data.brand,
-            equipment_part_model_id: data.model,
-            equipment_part_unit_of_measurement_id: data.uom,
-            equipment_part_component_category_id: data.category,
-            equipment_part_equipment_id: selectedEquipment.equipment_id,
-            equipment_part_is_available: data.isAvailable,
-          },
-          brand: brandOption.find((brand) => brand.value === data.brand)
-            ?.label as string,
-          model: modelOption.find((model) => model.value === data.model)
-            ?.label as string,
-          uom: uomOption.find((uom) => uom.value === data.uom)?.label as string,
-          category: categoryOption.find(
-            (category) => category.value === data.category
-          )?.label as string,
-        }
-      );
+    console.log(data);
+    // try {
+    //   const newEquipmentPart: EquipmentPartType = await updateEquipmentPart(
+    //     supabaseClient,
+    //     {
+    //       equipmentPartData: {
+    //         equipment_part_id: editEquipmentPart.equipment_part_id,
+    //         equipment_part_name: data.name.toUpperCase(),
+    //         equipment_part_number: data.partNumber,
+    //         equipment_part_brand_id: data.brand,
+    //         equipment_part_model_id: data.model,
+    //         equipment_part_unit_of_measurement_id: data.uom,
+    //         equipment_part_component_category_id: data.category,
+    //         equipment_part_equipment_id: selectedEquipment.equipment_id,
+    //         equipment_part_is_available: data.isAvailable,
+    //       },
+    //       brand: brandOption.find((brand) => brand.value === data.brand)
+    //         ?.label as string,
+    //       model: modelOption.find((model) => model.value === data.model)
+    //         ?.label as string,
+    //       uom: uomOption.find((uom) => uom.value === data.uom)?.label as string,
+    //       category: categoryOption.find(
+    //         (category) => category.value === data.category
+    //       )?.label as string,
+    //     }
+    //   );
 
-      setEquipmentPartList((prev) => {
-        return prev.map((equipment) => {
-          if (
-            equipment.equipment_part_id === editEquipmentPart.equipment_part_id
-          ) {
-            return newEquipmentPart;
-          } else {
-            return equipment;
-          }
-        });
-      });
-      notifications.show({
-        message: "Equipment Part updated.",
-        color: "green",
-      });
-      setEditEquipmentPart(null);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-    return;
+    //   setEquipmentPartList((prev) => {
+    //     return prev.map((equipment) => {
+    //       if (
+    //         equipment.equipment_part_id === editEquipmentPart.equipment_part_id
+    //       ) {
+    //         return newEquipmentPart;
+    //       } else {
+    //         return equipment;
+    //       }
+    //     });
+    //   });
+    //   notifications.show({
+    //     message: "Equipment Part updated.",
+    //     color: "green",
+    //   });
+    //   setEditEquipmentPart(null);
+    // } catch (e) {
+    //   notifications.show({
+    //     message: "Something went wrong. Please try again later.",
+    //     color: "red",
+    //   });
+    // }
+    // return;
   };
 
   return (

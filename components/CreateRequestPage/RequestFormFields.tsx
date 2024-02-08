@@ -351,11 +351,17 @@ const RequestFormFields = ({
                       break;
                     case "CSI Code Description":
                       itemFormMethods &&
-                      itemFormMethods.onCSICodeChange(sectionIndex, value);
-                    servicesFormMethods &&
-                    servicesFormMethods.onCSICodeChange(sectionIndex, value);
-                    otherExpensesMethods &&
-                      otherExpensesMethods.onCSICodeChange(sectionIndex, value);
+                        itemFormMethods.onCSICodeChange(sectionIndex, value);
+                      servicesFormMethods &&
+                        servicesFormMethods.onCSICodeChange(
+                          sectionIndex,
+                          value
+                        );
+                      otherExpensesMethods &&
+                        otherExpensesMethods.onCSICodeChange(
+                          sectionIndex,
+                          value
+                        );
                       break;
                     case "Source Project":
                       sourcedItemFormMethods?.onProjectSiteChange();
@@ -367,13 +373,27 @@ const RequestFormFields = ({
                       otherExpensesMethods?.onProjectNameChange(value);
                       break;
                     case "Service Name":
-                      subconFormMethods?.onServiceNameChange(sectionIndex, value);
+                      subconFormMethods?.onServiceNameChange(
+                        sectionIndex,
+                        value
+                      );
                       break;
                     case "CSI Division":
-                      servicesFormMethods?.onCSIDivisionChange(sectionIndex, value);
+                      servicesFormMethods?.onCSIDivisionChange(
+                        sectionIndex,
+                        value
+                      );
                       break;
                     case "Category":
-                      otherExpensesMethods?.onCategoryChange(sectionIndex, value);
+                      otherExpensesMethods?.onCategoryChange(
+                        sectionIndex,
+                        value
+                      );
+                      pedEquipmentFormMethods?.onCategoryChange(
+                        value,
+                        sectionIndex
+                      );
+                      pedPartFormMethods?.onCategoryChange(value);
                       break;
                     case "Type of Order":
                       pedPartFormMethods?.onTypeOfOrderChange(

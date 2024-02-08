@@ -12376,11 +12376,7 @@ CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
-  user_onboard_user_id IN (
-    SELECT user_onboard_user_id  
-    FROM user_onboard_table 
-    WHERE user_onboard_user_id = auth.uid()
-  )
+  memo_author_user_id = auth.uid()
 );
 
 -------- End: POLICIES

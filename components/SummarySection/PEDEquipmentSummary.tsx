@@ -7,11 +7,7 @@ type Props = {
 
 const PEDEquipmentSummary = ({ summaryData }: Props) => {
   return (
-    <Paper
-      p="xl"
-      shadow="xs"
-      className="onboarding-requisition-request-summary"
-    >
+    <Paper p="xl" shadow="xs" className="onboarding-item-request-summary">
       <Title order={4} color="dimmed">
         Summary
       </Title>

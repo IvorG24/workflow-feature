@@ -153,8 +153,8 @@ export const jsonToCsv = (jsonString: string): string => {
   }
 };
 
-export const capitalize = (str: string) => {
-  return str.replace(/\b\w/g, function (match) {
-    return match.toUpperCase();
-  });
+export const formatTimeString = (inputString: string): string => {
+  const [hours, minutes, seconds] = inputString.split(":");
+  const formattedTime = `${hours}h:${minutes}m:${Math.round(Number(seconds))}s`;
+  return formattedTime;
 };

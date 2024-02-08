@@ -1,10 +1,7 @@
 import {
-  checkPEDPart,
   getEquipmentBrandAndModelOption,
   getEquipmentUOMAndCategoryOption,
 } from "@/backend/api/get";
-import { createEquipmentPart } from "@/backend/api/post";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   EquipmentPartForm,
@@ -36,14 +33,14 @@ type Props = {
 };
 
 const CreateEquipmentPart = ({
-  selectedEquipment,
+  // selectedEquipment,
   setIsCreatingEquipmentPart,
-  setEquipmentPartList,
-  setEquipmentPartCount,
-}: Props) => {
+}: // setEquipmentPartList,
+// setEquipmentPartCount,
+Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
-  const teamMember = useUserTeamMember();
+  // const teamMember = useUserTeamMember();
 
   const [brandOption, setBrandOption] = useState<
     { label: string; value: string }[]
@@ -126,55 +123,56 @@ const CreateEquipmentPart = ({
     });
 
   const onSubmit = async (data: EquipmentPartForm) => {
-    try {
-      const params = {
-        equipment_part_name: data.name.toUpperCase(),
-        equipment_part_number: data.partNumber.toUpperCase(),
-        equipment_part_brand_id: data.brand,
-        equipment_part_model_id: data.model,
-        equipment_part_unit_of_measurement_id: data.uom,
-        equipment_part_component_category_id: data.category,
-        equipment_part_equipment_id: selectedEquipment.equipment_id,
-        equipment_part_encoder_team_member_id: teamMember?.team_member_id,
-        equipment_part_is_available: data.isAvailable,
-      };
+    console.log(data);
+    // try {
+    //   const params = {
+    //     equipment_part_name: data.name.toUpperCase(),
+    //     equipment_part_number: data.partNumber.toUpperCase(),
+    //     equipment_part_brand_id: data.brand,
+    //     equipment_part_model_id: data.model,
+    //     equipment_part_unit_of_measurement_id: data.uom,
+    //     equipment_part_component_category_id: data.category,
+    //     equipment_part_equipment_id: selectedEquipment.equipment_id,
+    //     equipment_part_encoder_team_member_id: teamMember?.team_member_id,
+    //     equipment_part_is_available: data.isAvailable,
+    //   };
 
-      if (await checkPEDPart(supabaseClient, { equipmentPartData: params })) {
-        notifications.show({
-          message: "Equipment Part already exists.",
-          color: "orange",
-        });
-        return;
-      }
+    //   if (await checkPEDPart(supabaseClient, { equipmentPartData: params })) {
+    //     notifications.show({
+    //       message: "Equipment Part already exists.",
+    //       color: "orange",
+    //     });
+    //     return;
+    //   }
 
-      const newEquipmentPart = await createEquipmentPart(supabaseClient, {
-        equipmentPartData: params,
-        brand: brandOption.find((brand) => brand.value === data.brand)
-          ?.label as string,
-        model: modelOption.find((model) => model.value === data.model)
-          ?.label as string,
-        uom: uomOption.find((uom) => uom.value === data.uom)?.label as string,
-        category: categoryOption.find(
-          (category) => category.value === data.category
-        )?.label as string,
-      });
-      setEquipmentPartList((prev) => {
-        prev.unshift(newEquipmentPart);
-        return prev;
-      });
-      setEquipmentPartCount((prev) => prev + 1);
-      notifications.show({
-        message: "Equipment Part created.",
-        color: "green",
-      });
-      setIsCreatingEquipmentPart(false);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-    return;
+    //   const newEquipmentPart = await createEquipmentPart(supabaseClient, {
+    //     equipmentPartData: params,
+    //     brand: brandOption.find((brand) => brand.value === data.brand)
+    //       ?.label as string,
+    //     model: modelOption.find((model) => model.value === data.model)
+    //       ?.label as string,
+    //     uom: uomOption.find((uom) => uom.value === data.uom)?.label as string,
+    //     category: categoryOption.find(
+    //       (category) => category.value === data.category
+    //     )?.label as string,
+    //   });
+    //   setEquipmentPartList((prev) => {
+    //     prev.unshift(newEquipmentPart);
+    //     return prev;
+    //   });
+    //   setEquipmentPartCount((prev) => prev + 1);
+    //   notifications.show({
+    //     message: "Equipment Part created.",
+    //     color: "green",
+    //   });
+    //   setIsCreatingEquipmentPart(false);
+    // } catch (e) {
+    //   notifications.show({
+    //     message: "Something went wrong. Please try again later.",
+    //     color: "red",
+    //   });
+    // }
+    // return;
   };
 
   return (

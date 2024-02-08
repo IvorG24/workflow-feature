@@ -1,4 +1,4 @@
-import { convertTimestampToDateTime } from "@/utils/string";
+import { formatDate, formatTime } from "@/utils/constant";
 import {
   Document,
   Image,
@@ -422,12 +422,9 @@ const PEDPartPdfDocumentTableVersion = ({
                       <View style={(styles.tableCell, styles.centerCell)}>
                         {approver.date && (
                           <Text style={styles.cellFontSize}>
-                            {new Date(approver.date).toLocaleDateString()}
-                          </Text>
-                        )}
-                        {approver.date && (
-                          <Text style={styles.cellFontSize}>
-                            {convertTimestampToDateTime(approver.date)?.time}
+                            {`${formatDate(
+                              new Date(approver.date)
+                            )} ${formatTime(new Date(approver.date))}`}
                           </Text>
                         )}
                       </View>

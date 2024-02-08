@@ -16,12 +16,12 @@ import {
   CanvassType,
   ConnectedRequestItemType,
   CreateTicketPageOnLoad,
-  FieldTableRow,
   EquipmentDescriptionTableRow,
   EquipmentLookupChoices,
-  EquipmentPartTableInsert,
+  EquipmentPartTableRow,
   EquipmentPartType,
   EquipmentTableRow,
+  FieldTableRow,
   FormStatusType,
   FormType,
   ItemDescriptionTableRow,
@@ -4225,6 +4225,23 @@ export const getAllGroupOfTeamMember = async (
   return formattedData.map((group) => group.team_group.team_group_name);
 };
 
+// Check if team name already exists
+export const checkIfTeamNameExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamName: string }
+) => {
+  const { teamName } = params;
+
+  const { count, error } = await supabaseClient
+    .from("team_table")
+    .select("*", { count: "exact" })
+    .ilike("team_name", teamName);
+
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
 // Get equipment list
 export const getEquipmentList = async (
   supabaseClient: SupabaseClient<Database>,
@@ -4480,7 +4497,7 @@ export const getEquipmentUOMAndCategoryOption = async (
 export const checkPEDPart = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    equipmentPartData: EquipmentPartTableInsert;
+    equipmentPartData: EquipmentPartTableRow;
   }
 ) => {
   const { equipmentPartData } = params;
@@ -4613,343 +4630,6 @@ export const getEquipmentLookupList = async (
     }),
     count,
   };
-};
-
-// Get equipment list
-export const getEquipmentList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; limit: number; page: number; search?: string }
-) => {
-  const { teamId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("equipment_table")
-    .select(
-      "*, equipment_category: equipment_equipment_category_id(equipment_category)",
-      {
-        count: "exact",
-      }
-    )
-    .eq("equipment_team_id", teamId)
-    .eq("equipment_is_disabled", false);
-
-  if (search) {
-    query = query.ilike("equipment_name", `%${search}%`);
-  }
-
-  query.order("equipment_name", { ascending: true });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  const formattedData = data as unknown as EquipmentTableRow &
-    { equipment_category: { equipment_category: string } }[];
-
-  return {
-    data: formattedData.map((equipment) => {
-      return {
-        ...equipment,
-        equipment_category: equipment.equipment_category.equipment_category,
-      };
-    }),
-    count,
-  };
-};
-
-// check if equipment name already exists
-export const checkEquipmentName = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { equipmentName: string; teamId: string }
-) => {
-  const { equipmentName, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .from("equipment_table")
-    .select("*", { count: "exact", head: true })
-    .eq("equipment_name", equipmentName)
-    .eq("equipment_is_disabled", false)
-    .eq("equipment_team_id", teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Fetch all equipment category option
-export const getEquipmentCategoryOption = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string }
-) => {
-  const { teamId } = params;
-  const { data, error } = await supabaseClient
-    .from("equipment_category_table")
-    .select("*")
-    .eq("equipment_category_team_id", teamId)
-    .eq("equipment_category_is_available", true)
-    .eq("equipment_category_is_disabled", false)
-    .order("equipment_category", { ascending: true });
-  if (error) throw error;
-
-  return data;
-};
-
-// Get equipment description list
-export const getEquipmentDescriptionList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { equipmentId: string; limit: number; page: number; search?: string }
-) => {
-  const { equipmentId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("equipment_description_table")
-    .select(
-      `
-        *,
-        equipment_description_brand: equipment_description_brand_id(equipment_brand),
-        equipment_description_model: equipment_description_model_id(equipment_model)
-      `,
-      {
-        count: "exact",
-      }
-    )
-    .eq("equipment_description_equipment_id", equipmentId)
-    .eq("equipment_description_is_disabled", false);
-
-  if (search) {
-    query = query.or(
-      `equipment_description_property_number.ilike.%${search}%, equipment_description_serial_number.ilike.%${search}%`
-    );
-  }
-
-  query.order("equipment_description_property_number", { ascending: true });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-
-  if (error) throw error;
-
-  const formattedData = data as unknown as (ItemDescriptionTableRow & {
-    equipment_description_brand: { equipment_brand: string };
-    equipment_description_model: { equipment_model: string };
-  })[];
-
-  return {
-    data: formattedData.map((description) => {
-      return {
-        ...description,
-        equipment_description_brand:
-          description.equipment_description_brand.equipment_brand,
-        equipment_description_model:
-          description.equipment_description_model.equipment_model,
-      };
-    }),
-    count,
-  };
-};
-
-// Fetch all equipment description brand and model option
-export const getEquipmentBrandAndModelOption = async (
-  supabaseClient: SupabaseClient<Database>
-) => {
-  const { data: brandList, error: brandError } = await supabaseClient
-    .from("equipment_brand_table")
-    .select("*")
-    .order("equipment_brand", { ascending: true });
-  if (brandError) throw brandError;
-
-  const { data: modelList, error: modelError } = await supabaseClient
-    .from("equipment_model_table")
-    .select("*")
-    .order("equipment_model", { ascending: true });
-  if (modelError) throw modelError;
-
-  return {
-    brandList,
-    modelList,
-  };
-};
-
-// check if propert number already exists
-export const checkPropertyNumber = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { propertyNumber: string; teamId: string }
-) => {
-  const { propertyNumber, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .from("equipment_description_table")
-    .select(
-      "*, equipment_description_equipment: equipment_description_equipment_id(*)",
-      { count: "exact", head: true }
-    )
-    .eq("equipment_description_property_number", propertyNumber)
-    .eq("equipment_description_is_disabled", false)
-    .eq("equipment_description_equipment.equipment_team_id", teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// check if serial number already exists
-export const checkSerialNumber = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { serialNumber: string; teamId: string }
-) => {
-  const { serialNumber, teamId } = params;
-
-  const { count, error } = await supabaseClient
-    .from("equipment_description_table")
-    .select(
-      "*, equipment_description_equipment: equipment_description_equipment_id(*)",
-      { count: "exact", head: true }
-    )
-    .eq("equipment_description_serial_number", serialNumber)
-    .eq("equipment_description_is_disabled", false)
-    .eq("equipment_description_equipment.equipment_team_id", teamId);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Get equipment part list
-export const getEquipmentPartList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { equipmentId: string; limit: number; page: number; search?: string }
-) => {
-  const { data, error } = await supabaseClient.rpc("get_equipment_part_list", {
-    input_data: params,
-  });
-
-  if (error) throw error;
-
-  const formattedData = data as {
-    data: EquipmentPartType[];
-    count: number;
-  };
-  return {
-    data: formattedData.data,
-    count: formattedData.count,
-  };
-};
-
-// Fetch all equipment uom option
-export const getEquipmentUOMAndCategoryOption = async (
-  supabaseClient: SupabaseClient<Database>
-) => {
-  const { data: uomList, error: uomListError } = await supabaseClient
-    .from("equipment_unit_of_measurement_table")
-    .select("*")
-    .eq("equipment_unit_of_measurement_is_available", true)
-    .eq("equipment_unit_of_measurement_is_disabled", false)
-    .order("equipment_unit_of_measurement", { ascending: true });
-  if (uomListError) throw uomListError;
-
-  const { data: categoryList, error: categoryError } = await supabaseClient
-    .from("equipment_component_category_table")
-    .select("*")
-    .eq("equipment_component_category_is_available", true)
-    .eq("equipment_component_category_is_disabled", false)
-    .order("equipment_component_category", { ascending: true });
-  if (categoryError) throw categoryError;
-
-  return {
-    uomList,
-    categoryList,
-  };
-};
-
-// Check PED part if already exists
-export const checkPEDPart = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    equipmentPartData: EquipmentPartTableInsert;
-  }
-) => {
-  const { equipmentPartData } = params;
-  const { count, error } = await supabaseClient
-    .from("equipment_part_table")
-    .select("*", { count: "exact", head: true })
-    .eq(
-      "equipment_part_general_name_id",
-      equipmentPartData.equipment_part_general_name_id
-    )
-    .eq("equipment_part_number", equipmentPartData.equipment_part_number)
-    .eq("equipment_part_brand_id", equipmentPartData.equipment_part_brand_id)
-    .eq("equipment_part_model_id", equipmentPartData.equipment_part_model_id)
-    .eq(
-      "equipment_part_unit_of_measurement_id",
-      equipmentPartData.equipment_part_unit_of_measurement_id
-    )
-    .eq(
-      "equipment_part_component_category_id",
-      equipmentPartData.equipment_part_component_category_id
-    )
-    .eq(
-      "equipment_part_equipment_id",
-      equipmentPartData.equipment_part_equipment_id
-    )
-    .eq("equipment_part_is_disabled", false);
-  if (error) throw error;
-
-  return Boolean(count);
-};
-
-// Get equipment category list
-export const getEquipmentCategoryList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; limit: number; page: number; search?: string }
-) => {
-  const { teamId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("equipment_category_table")
-    .select("*", { count: "exact" })
-    .eq("equipment_category_team_id", teamId)
-    .eq("equipment_category_is_disabled", false);
-
-  if (search) {
-    query = query.ilike("equipment_category", `%${search}%`);
-  }
-
-  query.order("equipment_category", { ascending: true });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  return {
-    data,
-    count,
-  };
-};
-
-// check if equipment lookup table value already exists
-export const checkEquipmentLookupTable = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { lookupTableName: string; value: string; teamId: string }
-) => {
-  const { lookupTableName, value, teamId } = params;
-  const { count, error } = await supabaseClient
-    .from(`${lookupTableName}_table`)
-    .select("*", { count: "exact", head: true })
-    .eq(`${lookupTableName}`, value)
-    .eq(`${lookupTableName}_is_disabled`, false)
-    .eq(`${lookupTableName}_team_id`, teamId);
-  if (error) throw error;
-
-  return Boolean(count);
 };
 
 // Get onboard list

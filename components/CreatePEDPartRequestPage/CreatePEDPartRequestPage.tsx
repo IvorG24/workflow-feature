@@ -321,6 +321,11 @@ const CreatePEDPartRequestPage = ({
         resetSigner();
       }
     } catch (e) {
+      const fields = getValues(`sections.0.section_field`);
+      setValue(
+        `sections.0.section_field.${fields.length - 1}.field_response`,
+        ""
+      );
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
