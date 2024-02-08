@@ -84,13 +84,13 @@ INSERT INTO ticket_section_table (ticket_section_id, ticket_section_name, ticket
 
 INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field_type, ticket_field_is_required, ticket_field_is_read_only, ticket_field_order, ticket_field_section_id) VALUES 
 ('849c0073-ec1e-4557-beed-6e930cd69c78', 'Title', 'TEXT', true, false, 1, '0db787b2-092f-4499-ab82-2c42a459c8f0'),
-('8b034462-a8d3-4649-8832-d248d94024c1', 'Description', 'TEXT', true, false, 2, '0db787b2-092f-4499-ab82-2c42a459c8f0'),
+('8b034462-a8d3-4649-8832-d248d94024c1', 'Description', 'TEXTAREA', true, false, 2, '0db787b2-092f-4499-ab82-2c42a459c8f0'),
 
 ('2bcf2775-5a25-43fc-9422-3665e9585af0', 'Title', 'TEXT', true, false, 1, 'caac5b9c-c233-4370-b45d-37f43c73cbdb'),
-('b5ff3145-e454-40bf-a1f4-96516807c34a', 'Description', 'TEXT', true, false, 2, 'caac5b9c-c233-4370-b45d-37f43c73cbdb'),
+('b5ff3145-e454-40bf-a1f4-96516807c34a', 'Description', 'TEXTAREA', true, false, 2, 'caac5b9c-c233-4370-b45d-37f43c73cbdb'),
 
 ('2fb7b796-2e56-48cb-b0c8-db43a6ed97c3', 'Title', 'TEXT', true, false, 1, '2b701e68-18e5-4bd6-a966-5809ea11e236'),
-('f22f1777-b776-4dbd-bd5f-a1baacd01d18', 'Description', 'TEXT', true, false, 2, '2b701e68-18e5-4bd6-a966-5809ea11e236'),
+('f22f1777-b776-4dbd-bd5f-a1baacd01d18', 'Description', 'TEXTAREA', true, false, 2, '2b701e68-18e5-4bd6-a966-5809ea11e236'),
 
 ('c272d2d6-c652-4cb0-8aee-71cfac888b4b', 'Item Name', 'SELECT', true, false, 1, '5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e'),
 ('072c4570-74ca-4629-9fd7-c7ecf5303621', 'CSI Code Description', 'TEXT', true, false, 2, '5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e'),
@@ -272,6 +272,45 @@ RETURNS JSON AS $$
           };
         });
         
+        return {
+          ...section,
+          ticket_section_fields: fieldWithOption,
+        }
+      })
+      returnData = { ticket_sections }
+
+    } else if (category === "Incident Report for Employees"){
+        const memberList = plv8.execute(`
+          SELECT 
+            tmt.team_member_id, 
+            tmt.team_member_role, 
+            json_build_object( 
+              'user_id', usert.user_id, 
+              'user_first_name', usert.user_first_name, 
+              'user_last_name', usert.user_last_name, 
+              'user_avatar', usert.user_avatar, 
+              'user_email', usert.user_email 
+            ) AS team_member_user  
+          FROM team_member_table tmt
+            JOIN user_table usert ON usert.user_id = tmt.team_member_user_id
+          WHERE 
+            tmt.team_member_team_id = '${teamId}'
+            AND tmt.team_member_is_disabled = false;
+        `);
+        const memberOptions = memberList.map((option)=> ({label: `${option.team_member_user.user_first_name} ${option.team_member_user.user_last_name}`, value:option.team_member_id}));
+
+        const ticket_sections = sectionList.map(section => {
+          const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
+          let fieldOptions = []
+          if(fieldIdx === 0){
+            fieldOptions = memberOptions
+          }
+
+          return {
+            ...field,
+            ticket_field_option: fieldOptions,
+          };
+        });
 
         return {
           ...section,
