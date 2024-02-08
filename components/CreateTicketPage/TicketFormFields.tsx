@@ -9,7 +9,7 @@ type Props = {
   ticketFieldIdx: number;
   ticketSectionIdx: number;
   requestCustomCSIMethodsFormMethods?: {
-    onItemNameChange: (index: number, value: string | null) => void;
+    onCSICodeDescriptionChange: (value: string) => void;
   };
 };
 
@@ -40,7 +40,10 @@ const TicketFormFields = ({
   const fieldRules = {
     required: {
       value: ticketField.ticket_field_is_required,
-      message: `${ticketField.ticket_field_name.replace(/\?/g, '')} is required`,
+      message: `${ticketField.ticket_field_name.replace(
+        /\?/g,
+        ""
+      )} is required`,
     },
   };
 
@@ -48,16 +51,27 @@ const TicketFormFields = ({
     switch (field.ticket_field_type) {
       case "TEXT":
         return (
-          <TextInput
-            {...inputProps}
-            {...register(
-              `ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`,
-              {
-                ...fieldRules,
-              }
+          <Controller
+            control={control}
+            name={`ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`}
+            render={({ field }) => (
+              <TextInput
+                {...inputProps}
+                value={`${field.value}`}
+                onChange={(event) => {
+                  console.log(event.currentTarget.value);
+                  if (ticketField.ticket_field_name === "Item Name") {
+                    requestCustomCSIMethodsFormMethods?.onCSICodeDescriptionChange(
+                      event.currentTarget.value
+                    );
+                  }
+                  field.onChange(event.currentTarget.value);
+                }}
+                error={fieldError}
+                withAsterisk={ticketField.ticket_field_is_required}
+              />
             )}
-            error={fieldError}
-            withAsterisk={field.ticket_field_is_required}
+            rules={{ ...fieldRules }}
           />
         );
 
@@ -78,6 +92,9 @@ const TicketFormFields = ({
         );
 
       case "SELECT":
+        const selectOptions = ticketField.ticket_field_option.map(
+          (option) => option.ticket_option_value
+        );
         return (
           <Controller
             control={control}
@@ -87,15 +104,8 @@ const TicketFormFields = ({
                 value={value as string}
                 onChange={(value) => {
                   onChange(value);
-
-                  if (field.ticket_field_name === "Item Name") {
-                    requestCustomCSIMethodsFormMethods?.onItemNameChange(
-                      ticketFieldIdx,
-                      value
-                    );
-                  }
                 }}
-                data={[]}
+                data={selectOptions}
                 withAsterisk={field.ticket_field_is_required}
                 {...inputProps}
                 clearable

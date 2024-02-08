@@ -17,7 +17,6 @@ const TicketRequestCustomCSIForm = ({
   ticketForm,
   setIsLoading,
 }: Props) => {
-  console.log(ticketForm);
   // const supabaseClient = createPagesBrowserClient<Database>();
   //   const router = useRouter();
   //   const activeTeam = useActiveTeam();
@@ -58,10 +57,6 @@ const TicketRequestCustomCSIForm = ({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleItemNameChange = (index: number, value: string | null) => {
-    console.log(index, value);
   };
 
   const handleDuplicateSection = (sectionId: string) => {
@@ -121,9 +116,6 @@ const TicketRequestCustomCSIForm = ({
                 <TicketFormSection
                   ticketSection={ticketSection}
                   ticketSectionIdx={ticketSectionIdx}
-                  requestCustomCSIMethodsFormMethods={{
-                    onItemNameChange: handleItemNameChange,
-                  }}
                   onRemoveSection={() =>
                     handleRemoveSection(
                       ticketSection.field_section_duplicatable_id ?? ""

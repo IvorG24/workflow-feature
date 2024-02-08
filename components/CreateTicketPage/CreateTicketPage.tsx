@@ -1,4 +1,5 @@
 import { getTicketForm } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
@@ -30,6 +31,7 @@ type Props = {
 
 const CreateTicketPage = ({ member, categorylist }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const activeTeam = useActiveTeam();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingForm, setIsFetchingForm] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
@@ -45,7 +47,10 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
     try {
       setIsFetchingForm(true);
       if (!category) return;
-      const ticketFormData = await getTicketForm(supabaseClient, { category });
+      const ticketFormData = await getTicketForm(supabaseClient, {
+        category,
+        teamId: activeTeam.team_id,
+      });
       setTicketForm(ticketFormData);
     } catch (error) {
       notifications.show({

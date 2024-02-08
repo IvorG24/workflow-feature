@@ -5036,6 +5036,7 @@ export const getTicketForm = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     category: string;
+    teamId: string;
   }
 ) => {
   const { data, error } = await supabaseClient

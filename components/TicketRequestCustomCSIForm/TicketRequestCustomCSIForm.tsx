@@ -53,8 +53,8 @@ const TicketRequestCustomCSIForm = ({
     }
   };
 
-  const handleItemNameChange = (index: number, value: string | null) => {
-    console.log(index, value);
+  const handleCSICodeDescriptionChange = async (value: string) => {
+    console.log(value);
   };
 
   useEffect(() => {
@@ -73,7 +73,7 @@ const TicketRequestCustomCSIForm = ({
                 ticketSection={ticketSection}
                 ticketSectionIdx={ticketSectionIdx}
                 requestCustomCSIMethodsFormMethods={{
-                  onItemNameChange: handleItemNameChange,
+                  onCSICodeDescriptionChange: handleCSICodeDescriptionChange,
                 }}
               />
             </>

@@ -171,7 +171,8 @@ RETURNS JSON AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
-      category
+      category,
+      teamId,
     } = input_data;
 
     let ticketForm
@@ -210,8 +211,79 @@ RETURNS JSON AS $$
         ticket_section_fields: fieldWithOption,
       }
     });
-   
-    returnData = { ticket_sections: sectionList }
+
+    if(category === "Request Custom CSI"){
+      const itemList = plv8.execute(`
+        SELECT * FROM item_table 
+        WHERE item_team_id='${teamId}'
+        AND item_is_disabled = false
+        AND item_is_available = true
+        ORDER BY item_general_name ASC;
+      `);
+
+      const fieldId = sectionList[0].ticket_section_fields[0].ticket_field_id
+      const itemOptions = itemList.map((item, index) => {
+        return {
+          ticket_option_field_id: fieldId,
+          ticket_option_id: item.item_id,
+          ticket_option_order: index,
+          ticket_option_value: item.item_general_name,
+        };
+      });
+
+      const ticket_sections = sectionList.map(section => {
+
+        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
+          return {
+            ...field,
+            ticket_field_option: fieldIdx === 0 ? itemOptions : [],
+          };
+        });
+
+        return {
+          ...section,
+          ticket_section_fields: fieldWithOption,
+        }
+      })
+      returnData = { ticket_sections }
+
+    } else if (category === "Request Item CSI"){
+      const itemList = plv8.execute(`
+        SELECT * FROM item_table 
+        WHERE item_team_id='${teamId}'
+        AND item_is_disabled = false
+        AND item_is_available = true
+        ORDER BY item_general_name ASC;
+      `);
+
+      const fieldId = sectionList[0].ticket_section_fields[0].ticket_field_id
+      const itemOptions = itemList.map((item, index) => {
+        return {
+          ticket_option_field_id: fieldId,
+          ticket_option_id: item.item_id,
+          ticket_option_order: index,
+          ticket_option_value: item.item_general_name,
+        };
+      });
+
+      const ticket_sections = sectionList.map(section => {
+
+        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
+          return {
+            ...field,
+            ticket_field_option: fieldIdx === 0 ? itemOptions : [],
+          };
+        });
+
+        return {
+          ...section,
+          ticket_section_fields: fieldWithOption,
+        }
+      })
+      returnData = { ticket_sections }
+    } else {
+      returnData = { ticket_sections: sectionList }
+    }
  });
  return returnData;
 $$ LANGUAGE plv8;

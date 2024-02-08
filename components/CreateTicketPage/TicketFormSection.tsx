@@ -14,7 +14,7 @@ type Props = {
   onRemoveSection?: (sectionDuplicatableId: string) => void;
   onDuplicateSection?: () => void;
   requestCustomCSIMethodsFormMethods?: {
-    onItemNameChange: (index: number, value: string | null) => void;
+    onCSICodeDescriptionChange: (value: string) => void;
   };
 };
 
