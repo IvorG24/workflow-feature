@@ -3434,11 +3434,10 @@ export const getCSICode = async (
   const { data, error } = await supabaseClient
     .from("csi_code_table")
     .select("*")
-    .eq("csi_code_level_three_description", csiCode)
-    .single();
+    .eq("csi_code_level_three_description", csiCode);
   if (error) throw error;
 
-  return data as CSICodeTableRow;
+  return data[0] as CSICodeTableRow;
 };
 
 // Fetch all item division option
