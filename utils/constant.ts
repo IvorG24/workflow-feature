@@ -28,6 +28,11 @@ export const TICKET_CATEGORY_LIST = [
   "Bug Report",
 ];
 
+export const READ_ONLY_TICKET_CATEGORY_LIST = [
+  "Incident Report for Employees",
+  "Bug Report",
+];
+
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",
   "Receiving Inspecting Report",

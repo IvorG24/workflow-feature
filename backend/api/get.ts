@@ -43,6 +43,7 @@ import {
   SignerWithProfile,
   TeamMemberOnLoad,
   TeamMemberType,
+  TeamMemberWithUser,
   TeamMemberWithUserDetails,
   TeamOnLoad,
   TeamProjectTableRow,
@@ -4155,7 +4156,6 @@ export const getTicketListOnLoad = async (
     .rpc("get_ticket_list_on_load", { input_data: params })
     .select("*");
   if (error) throw error;
-
   return data as unknown as TicketListOnLoad;
 };
 
@@ -5098,4 +5098,30 @@ export const checkCSICodeItemExists = async (
     .maybeSingle();
   if (error) throw error;
   return Boolean(data);
+};
+
+// Get team member with user
+export const getMemberUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { data } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+      *,
+      team_member_user: team_member_user_id!inner(
+        user_id, 
+        user_first_name, 
+        user_last_name, 
+        user_username, 
+        user_avatar
+      )`
+    )
+    .eq("team_member_id", params.teamMemberId)
+    .single();
+
+  return data as unknown as TeamMemberWithUser;
 };

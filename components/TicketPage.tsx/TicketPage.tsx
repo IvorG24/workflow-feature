@@ -5,7 +5,11 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
+import {
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  TicketType,
+} from "@/utils/types";
 import {
   Button,
   Container,
@@ -21,24 +25,34 @@ import { v4 as uuidv4 } from "uuid";
 import TicketActionSection from "./TicketActionSection";
 import TicketCommentSection from "./TicketCommentSection";
 import TicketDetailSection from "./TicketDetailSection";
+import TicketOverride from "./TicketOverride";
 import TicketResponseSection from "./TicketResponseSection";
 
 type Props = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
+  ticketForm: CreateTicketFormValues;
 };
 
-const TicketPage = ({ ticket: initialTicket, user }: Props) => {
+const TicketPage = ({
+  ticket: initialTicket,
+  ticketForm: initialTicketForm,
+  user,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
   const [ticket, setTicket] = useState(initialTicket);
   const [isEditingResponse, setIsEditingResponse] = useState(false);
-
+  const [ticketForm, setTicketForm] =
+    useState<CreateTicketFormValues>(initialTicketForm);
   const requestCommentList = useRealtimeTicketCommentList(supabaseClient, {
     ticketId: ticket.ticket_id,
     initialCommentList: ticket.ticket_comment,
   });
+
+  const canUserEditResponse =
+    ticket.ticket_approver_team_member_id === user.team_member_id;
 
   const handleAssignTicketToUser = async () => {
     if (!teamMember) return;
@@ -103,16 +117,23 @@ const TicketPage = ({ ticket: initialTicket, user }: Props) => {
           <Divider mt="md" />
           <TicketResponseSection
             ticket={ticket}
-            user={user}
-            isApprover={
-              ticket.ticket_approver_team_member_id === user.team_member_id
-            }
-            setTicket={setTicket}
+            ticketForm={ticketForm}
+            category={ticket.ticket_category}
+            canUserEditResponse={canUserEditResponse}
             isEditingResponse={isEditingResponse}
             setIsEditingResponse={setIsEditingResponse}
           />
+
+          {isEditingResponse && (
+            <TicketOverride
+              category={ticket.ticket_category}
+              ticketForm={ticketForm}
+              memberId={`${ticket.ticket_approver_team_member_id}`}
+            />
+          )}
+
           {ticket.ticket_status === "UNDER REVIEW" &&
-            !isEditingResponse &&
+            isEditingResponse &&
             ticket.ticket_requester_team_member_id !== user.team_member_id && (
               <>
                 <Divider mt="md" />

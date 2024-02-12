@@ -2,7 +2,11 @@ import { getTicketOnLoad } from "@/backend/api/get";
 import Meta from "@/components/Meta/Meta";
 import TicketPage from "@/components/TicketPage.tsx/TicketPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
-import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
+import {
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  TicketType,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps =
@@ -34,13 +38,14 @@ export const getServerSideProps: GetServerSideProps =
 type Props = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
+  ticketForm: CreateTicketFormValues;
 };
 
-const Page = ({ ticket, user }: Props) => {
+const Page = ({ ticket, user, ticketForm }: Props) => {
   return (
     <>
       <Meta description="Ticket Page" url="/<teamName>/tickets/[ticketId]" />
-      <TicketPage ticket={ticket} user={user} />
+      <TicketPage ticket={ticket} user={user} ticketForm={ticketForm} />
     </>
   );
 };

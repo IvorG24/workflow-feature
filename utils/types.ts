@@ -1152,6 +1152,7 @@ export type TicketListType = ({
 } & TicketTableRow & { ticket_category: string })[];
 
 export type TicketType = {
+  ticket_category: string;
   ticket_requester: CreateTicketPageOnLoad["member"];
   ticket_approver: CreateTicketPageOnLoad["member"] | null;
   ticket_comment: {
@@ -1180,6 +1181,7 @@ export type TicketType = {
 export type TicketPageOnLoad = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
+  ticketForm: CreateTicketFormValues;
 };
 
 export type TicketCommentType =
@@ -1191,6 +1193,7 @@ export type TicketListOnLoad = {
   ticketList: TicketListType[];
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  ticketCategoryList: TicketCategoryTableRow[];
 };
 
 export type ApproverUnresolvedRequestListType = {
@@ -1413,4 +1416,8 @@ export type TicketSection = TicketSectionTableRow & {
 
 export type CreateTicketFormValues = {
   ticket_sections: TicketSection[];
+};
+
+export type TeamMemberWithUser = TeamMemberTableRow & {
+  team_member_user: UserTableRow;
 };

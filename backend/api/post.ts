@@ -1290,7 +1290,7 @@ export const createTicket = async (
       if (responseValue) {
         if (field.ticket_field_type === "FILE") {
           const fileResponse = responseValue as File;
-          const uploadId = `${field.ticket_field_id}${
+          const uploadId = `***${fileResponse.name}***${field.ticket_field_id}${
             section.ticket_section_id ? `_${field.ticket_field_section_id}` : ""
           }`;
           if (fileResponse["type"].split("/")[0] === "image") {

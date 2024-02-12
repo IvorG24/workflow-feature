@@ -21,7 +21,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         props: requestListData,
       };
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return {
         redirect: {
           destination: "/500",

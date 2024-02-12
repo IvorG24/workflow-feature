@@ -3,7 +3,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketFormValues } from "@/utils/types";
-import { Button } from "@mantine/core";
+import { Button, Flex } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
@@ -17,13 +17,15 @@ type Props = {
   memberId: string;
   ticketForm: CreateTicketFormValues | null;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
+  isEdit?: boolean;
 };
 
-const TicketRequestCustomCSIForm = ({
+const TicketForm = ({
   category,
   memberId,
   ticketForm,
   setIsLoading,
+  isEdit,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -62,6 +64,33 @@ const TicketRequestCustomCSIForm = ({
           ticket.ticket_id
         }`
       );
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditTicket = async (data: CreateTicketFormValues) => {
+    try {
+      setIsLoading(true);
+      if (!category) return;
+      // edit ticket
+      console.log(data);
+
+      notifications.show({
+        message: "Ticket overriden.",
+        color: "green",
+      });
+
+      // router.push(
+      //   `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
+      //     ticket.ticket_id
+      //   }`
+      // );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -117,7 +146,11 @@ const TicketRequestCustomCSIForm = ({
   return (
     <>
       <FormProvider {...createTicketFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateTicket)}>
+        <form
+          onSubmit={handleSubmit(
+            isEdit ? handleEditTicket : handleCreateTicket
+          )}
+        >
           {ticketSections.map((ticketSection, ticketSectionIdx) => {
             const sectionIdToFind = ticketSection.ticket_section_id;
             const sectionLastIndex = getValues("ticket_sections")
@@ -125,7 +158,7 @@ const TicketRequestCustomCSIForm = ({
               .lastIndexOf(sectionIdToFind);
 
             return (
-              <>
+              <Flex direction="column" key={ticketSectionIdx}>
                 <TicketFormSection
                   category={`${category}`}
                   ticketSection={ticketSection}
@@ -149,13 +182,13 @@ const TicketRequestCustomCSIForm = ({
                       {ticketSection.ticket_section_name} +
                     </Button>
                   )}
-              </>
+              </Flex>
             );
           })}
 
           {ticketSections.length > 0 && (
             <Button type="submit" mt="lg" fullWidth>
-              Submit
+              {isEdit ? "Save Changes" : "Submit"}
             </Button>
           )}
         </form>
@@ -164,4 +197,4 @@ const TicketRequestCustomCSIForm = ({
   );
 };
 
-export default TicketRequestCustomCSIForm;
+export default TicketForm;
