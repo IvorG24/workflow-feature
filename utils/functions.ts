@@ -544,6 +544,13 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d8344027-3578-4f50-8b8a-11fe72244208",
       emailAddress: "jayquiroz.santaclara@gmail.com",
     },
+    {
+      items: ["LUZ-19-021 MERALCO HDD PROJECT"],
+      fullName: "amernito villanueva",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:7df296bc-1270-49b3-9690-f19250338d98",
+      emailAddress: "amernito.villanueva@staclara.com.ph",
+    },
   ];
 
   const matchedUser = matcher.find((matcherItem) =>
