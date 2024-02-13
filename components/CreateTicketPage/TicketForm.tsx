@@ -163,6 +163,7 @@ const TicketForm = ({
                   category={`${category}`}
                   ticketSection={ticketSection}
                   ticketSectionIdx={ticketSectionIdx}
+                  isEdit={isEdit}
                   onRemoveSection={() =>
                     handleRemoveSection(
                       ticketSection.field_section_duplicatable_id ?? ""
