@@ -168,7 +168,6 @@ $$ LANGUAGE plv8;
 
 -- End: Create ticket on load
 
-
 -- Start: Get ticket form
 
 CREATE OR REPLACE FUNCTION get_ticket_form(
@@ -296,11 +295,11 @@ RETURNS JSON AS $$
       `);
       const itemOptions = itemList.map((option)=> option.item_general_name);
 
-      const ticket_sections = sectionList.map(section => {
+      const ticket_sections = sectionList.map((section, sectionIdx) => {
 
         const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
           let fieldOptions = []
-          if(fieldIdx === 0){
+          if(sectionIdx===0 && fieldIdx === 0){
             fieldOptions = itemOptions
           }
 
@@ -404,17 +403,69 @@ RETURNS JSON as $$
 
     const responseData = plv8.execute(`SELECT * FROM ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
 
-    const ticketFormWithResponse = {
-      ticket_sections: ticketForm.ticket_sections.map(section=>({
+    const originalTicketSections = ticketForm.ticket_sections.map(section=>({
         ...section,
+        field_section_duplicatable_id: null,
         ticket_section_fields: section.ticket_section_fields.map(field=>{
-          const response =  responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)[0].ticket_response_value
-          
           return {
             ...field,
-            ticket_field_response: response
+            ticket_field_response: responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)
           }
         })
+      }))
+
+    
+    const sectionWithDuplicateList = [];
+    originalTicketSections.forEach((section) => {
+      const hasDuplicates = section.ticket_section_fields.some((field) =>
+        field.ticket_field_response.some(
+          (response) => response.ticket_response_duplicatable_section_id !== null
+        )
+      );
+      if (section.ticket_section_is_duplicatable && hasDuplicates) {
+        const fieldResponse = section.ticket_section_fields.flatMap((field) => field.ticket_field_response);
+
+        const uniqueIdList = fieldResponse.reduce((unique, item) => {
+          const { ticket_response_duplicatable_section_id } = item;
+          const isDuplicate = unique.some((uniqueItem) =>
+            uniqueItem.includes(`${ticket_response_duplicatable_section_id}`)
+          );
+          if (!isDuplicate) {
+            unique.push(`${ticket_response_duplicatable_section_id}`);
+          }
+          return unique;
+        }, []);
+
+        const duplicateSectionList = uniqueIdList.map((id) => ({
+          ...section,
+          field_section_duplicatable_id: id==="null" ? null : id,
+          ticket_section_fields: section.ticket_section_fields.map((field) => ({
+            ...field,
+            ticket_field_response: [
+
+              field.ticket_field_response.filter(
+                (response) =>
+                  `${response.ticket_response_duplicatable_section_id}` === id
+              )[0] || null,
+            ]
+          })),
+        }));
+
+        duplicateSectionList.forEach((duplicateSection) =>
+          sectionWithDuplicateList.push(duplicateSection)
+        );
+      } else {
+        sectionWithDuplicateList.push(section);
+      }
+    });
+
+    const ticketFormWithResponse = {
+      ticket_sections: sectionWithDuplicateList.map(section=>({
+        ...section,
+        ticket_section_fields: section.ticket_section_fields.map(field=>({
+          ...field,
+          ticket_field_response: field.ticket_field_response[0].ticket_response_value
+        }))
       }))
     }
 
@@ -515,7 +566,7 @@ RETURNS JSON as $$
         }
       )},
     user: member,
-    ticketForm: ticketFormWithResponse
+    ticketForm: ticketFormWithResponse,
     }
  });
  return returnData;

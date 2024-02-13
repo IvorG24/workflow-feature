@@ -3,6 +3,7 @@ import { useState } from "react";
 import TicketForm from "../CreateTicketPage/TicketForm";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
 import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
+import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
 
 type Props = {
   category: string;
@@ -124,6 +125,15 @@ const TicketOverride = ({
       case "Request Item CSI":
         return (
           <TicketRequestItemCSIForm
+            category={category}
+            memberId={memberId}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+      case "Request Item Option":
+        return (
+          <TicketRequestItemOptionForm
             category={category}
             memberId={memberId}
             ticketForm={ticketForm}
