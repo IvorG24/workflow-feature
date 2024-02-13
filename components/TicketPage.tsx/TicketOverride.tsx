@@ -1,4 +1,6 @@
+import { parseJSONIfValid } from "@/utils/string";
 import { CreateTicketFormValues } from "@/utils/types";
+import { Box, LoadingOverlay } from "@mantine/core";
 import { useState } from "react";
 import TicketForm from "../CreateTicketPage/TicketForm";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
@@ -9,12 +11,16 @@ type Props = {
   category: string;
   ticketForm: CreateTicketFormValues;
   memberId: string;
+  onOverrideTicket: () => void;
+  onClose?: () => void;
 };
 
 const TicketOverride = ({
   category,
   ticketForm: initialTicketForm,
   memberId,
+  onOverrideTicket,
+  onClose,
 }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -23,9 +29,10 @@ const TicketOverride = ({
       ...section,
       ticket_section_fields: section.ticket_section_fields.map((field) => ({
         ...field,
-        ticket_field_response: `${JSON.parse(
-          `${field.ticket_field_response}`
-        )}`,
+        ticket_field_response:
+          typeof field.ticket_field_response === "string"
+            ? parseJSONIfValid(`${field.ticket_field_response}`)
+            : field.ticket_field_response,
       })),
     })),
   };
@@ -120,6 +127,9 @@ const TicketOverride = ({
             memberId={memberId}
             ticketForm={ticketForm}
             setIsLoading={setIsLoading}
+            isEdit={true}
+            onOverrideTicket={onOverrideTicket}
+            onClose={onClose}
           />
         );
       case "Request Item CSI":
@@ -129,6 +139,9 @@ const TicketOverride = ({
             memberId={memberId}
             ticketForm={ticketForm}
             setIsLoading={setIsLoading}
+            isEdit={true}
+            onOverrideTicket={onOverrideTicket}
+            onClose={onClose}
           />
         );
       case "Request Item Option":
@@ -138,6 +151,9 @@ const TicketOverride = ({
             memberId={memberId}
             ticketForm={ticketForm}
             setIsLoading={setIsLoading}
+            isEdit={true}
+            onOverrideTicket={onOverrideTicket}
+            onClose={onClose}
           />
         );
       default:
@@ -148,11 +164,22 @@ const TicketOverride = ({
             ticketForm={ticketForm}
             setIsLoading={setIsLoading}
             isEdit={true}
+            onOverrideTicket={onOverrideTicket}
+            onClose={onClose}
           />
         );
     }
   };
-  return renderTicketForm();
+  return (
+    <Box pos="relative">
+      <LoadingOverlay
+        visible={isLoading}
+        overlayBlur={2}
+        sx={{ position: "fixed" }}
+      />
+      {renderTicketForm()}{" "}
+    </Box>
+  );
 };
 
 export default TicketOverride;

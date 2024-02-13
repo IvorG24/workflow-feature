@@ -674,6 +674,28 @@ $$ LANGUAGE plv8;
 
 -- End: Create ticket
 
+-- Start: Edit ticket
+
+CREATE OR REPLACE FUNCTION edit_ticket(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      ticketId,
+      responseValues,
+    } = input_data;
+
+    plv8.execute(`DELETE FROM ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
+    plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
+    
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create ticket
+
 CREATE OR REPLACE FUNCTION update_tickets()
 RETURNS JSON AS $$
   plv8.subtransaction(function(){

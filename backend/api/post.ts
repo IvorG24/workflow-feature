@@ -1290,8 +1290,10 @@ export const createTicket = async (
       if (responseValue) {
         if (field.ticket_field_type === "FILE") {
           const fileResponse = responseValue as File;
-          const uploadId = `___${fileResponse.name}___${field.ticket_field_id}${
-            section.ticket_section_id ? `_${field.ticket_field_section_id}` : ""
+          const uploadId = `${field.ticket_field_id}${
+            section.ticket_section_id
+              ? `_${field.ticket_field_section_id}___${fileResponse.name}___`
+              : ""
           }`;
           if (fileResponse["type"].split("/")[0] === "image") {
             responseValue = await uploadImage(supabaseClient, {
@@ -1350,4 +1352,80 @@ export const createTicket = async (
   if (error) throw error;
 
   return data as TicketTableRow;
+};
+
+// Edit ticket
+export const editTicket = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketId: string;
+    ticketFormValues: CreateTicketFormValues;
+  }
+) => {
+  const { ticketId, ticketFormValues } = params;
+
+  // get request response
+  const requestResponseInput: TicketResponseTableInsert[] = [];
+  for (const section of ticketFormValues.ticket_sections) {
+    for (const field of section.ticket_section_fields) {
+      let responseValue = field.ticket_field_response;
+      if (responseValue) {
+        if (field.ticket_field_type === "FILE") {
+          const fileResponse = responseValue as File;
+          const uploadId = `${field.ticket_field_id}${
+            section.ticket_section_id
+              ? `_${field.ticket_field_section_id}___${fileResponse.name}___`
+              : ""
+          }`;
+          if (fileResponse["type"].split("/")[0] === "image") {
+            responseValue = await uploadImage(supabaseClient, {
+              id: uploadId,
+              image: fileResponse,
+              bucket: "TICKET_ATTACHMENTS",
+            });
+          } else {
+            responseValue = await uploadFile(supabaseClient, {
+              id: uploadId,
+              file: fileResponse,
+              bucket: "TICKET_ATTACHMENTS",
+            });
+          }
+        }
+        const response = {
+          ticket_response_value: JSON.stringify(responseValue),
+          ticket_response_duplicatable_section_id:
+            section.field_section_duplicatable_id ?? null,
+          ticket_response_field_id: field.ticket_field_id,
+          ticket_response_ticket_id: ticketId,
+        };
+        requestResponseInput.push(response);
+      }
+    }
+  }
+
+  const responseValues = requestResponseInput
+    .map((response) => {
+      const escapedResponse = response.ticket_response_value.replace(
+        /'/g,
+        "''"
+      );
+      return `('${escapedResponse}',${
+        response.ticket_response_duplicatable_section_id
+          ? `'${response.ticket_response_duplicatable_section_id}'`
+          : "NULL"
+      },'${response.ticket_response_field_id}','${
+        response.ticket_response_ticket_id
+      }')`;
+    })
+    .join(",");
+
+  // edit ticket
+  const { error } = await supabaseClient.rpc("edit_ticket", {
+    input_data: {
+      ticketId,
+      responseValues,
+    },
+  });
+  if (error) throw error;
+  else return true;
 };

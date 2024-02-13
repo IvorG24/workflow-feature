@@ -1219,10 +1219,3 @@ export const formatDate = (dateValue: Date) => {
 export const formatTime = (timeValue: Date) => {
   return moment(timeValue).format("LT");
 };
-
-export const createTicketFilePlaceholder = (url: string) => {
-  const urlArray = `${url}`.split("___");
-  const fileName = urlArray[urlArray.length - 2].replace("%20", " ");
-  const fileContent = "temporary";
-  return new File([fileContent], fileName);
-};

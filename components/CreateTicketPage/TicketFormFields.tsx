@@ -1,12 +1,9 @@
-import {
-  MAX_FILE_SIZE,
-  MAX_FILE_SIZE_IN_MB,
-  createTicketFilePlaceholder,
-} from "@/utils/constant";
+import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { formatCSICode } from "@/utils/string";
 import { CreateTicketFormValues, TicketSection } from "@/utils/types";
 import { FileInput, Select, TextInput, Textarea } from "@mantine/core";
 import { IconFile } from "@tabler/icons-react";
+import { useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
 type Props = {
@@ -36,6 +33,7 @@ const TicketFormFields = ({
     register,
     control,
     formState: { errors },
+    setValue,
   } = useFormContext<CreateTicketFormValues>();
 
   const fieldError =
@@ -59,6 +57,31 @@ const TicketFormFields = ({
       )} is required`,
     },
   };
+
+  const fetchFile = async () => {
+    try {
+      const fileLink = `${ticketField.ticket_field_response}`;
+      if (!fileLink) return;
+
+      const response = await fetch(fileLink);
+      const blob = await response.blob();
+      const urlArray = `${fileLink}`.split("___");
+      const fileName = urlArray[urlArray.length - 2].replace("%20", " ");
+      const file = new File([blob], fileName, { type: blob.type });
+      setValue(
+        `ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`,
+        file
+      );
+    } catch (error) {
+      console.error("Error downloading file:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (isEdit && ticketField.ticket_field_type === "FILE") {
+      fetchFile();
+    }
+  }, [isEdit]);
 
   const renderField = (field: TicketSection["ticket_section_fields"][0]) => {
     switch (field.ticket_field_type) {
@@ -147,11 +170,7 @@ const TicketFormFields = ({
               <FileInput
                 {...inputProps}
                 icon={<IconFile size={16} />}
-                value={
-                  isEdit && typeof field.value === "string"
-                    ? createTicketFilePlaceholder(`${field.value}`)
-                    : (field.value as File | null)
-                }
+                value={field.value as File | null}
                 clearable
                 multiple={false}
                 onChange={field.onChange}

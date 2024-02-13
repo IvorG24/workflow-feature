@@ -10,6 +10,7 @@ type Props = {
   canUserEditResponse: boolean;
   setIsEditingResponse: Dispatch<SetStateAction<boolean>>;
   isEditingResponse: boolean;
+  setTicketForm: Dispatch<SetStateAction<CreateTicketFormValues>>;
 };
 
 const TicketResponseSection = ({
@@ -19,6 +20,7 @@ const TicketResponseSection = ({
   canUserEditResponse,
   isEditingResponse,
   setIsEditingResponse,
+  setTicketForm,
 }: Props) => {
   return (
     <Stack>
@@ -83,7 +85,11 @@ const TicketResponseSection = ({
                     <Text size={14} weight={600}>
                       {field.ticket_field_name}
                     </Text>
-                    <TicketResponseValue category={category} field={field} />
+                    <TicketResponseValue
+                      category={category}
+                      field={field}
+                      setTicketForm={setTicketForm}
+                    />
                   </Box>
                 );
               })}

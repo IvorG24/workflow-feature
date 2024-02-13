@@ -1,6 +1,7 @@
 import { getItem } from "@/backend/api/get";
-import { createTicket } from "@/backend/api/post";
+import { createTicket, editTicket } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketFormValues } from "@/utils/types";
@@ -19,6 +20,8 @@ type Props = {
   ticketForm: CreateTicketFormValues | null;
   isEdit?: boolean;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
+  onOverrideTicket?: () => void;
+  onClose?: () => void;
 };
 
 const TicketRequestItemOptionForm = ({
@@ -27,10 +30,14 @@ const TicketRequestItemOptionForm = ({
   ticketForm,
   isEdit,
   setIsLoading,
+  onOverrideTicket,
+  onClose,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const activeTeam = useActiveTeam();
+  const { ticketId } = router.query;
+  const user = useUserProfile();
 
   const createTicketFormMethods = useForm<CreateTicketFormValues>();
   const { handleSubmit, getValues, control } = createTicketFormMethods;
@@ -78,20 +85,20 @@ const TicketRequestItemOptionForm = ({
   const handleEditTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
-      if (!category) return;
-      // edit ticket
-      console.log(data);
+      if (!category && !ticketId && user) return;
+
+      const edited = await editTicket(supabaseClient, {
+        ticketId: `${ticketId}`,
+        ticketFormValues: data,
+      });
+      if (!edited) return;
+      if (onOverrideTicket) onOverrideTicket();
+      if (onClose) onClose();
 
       notifications.show({
         message: "Ticket overriden.",
         color: "green",
       });
-
-      // router.push(
-      //   `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
-      //     ticket.ticket_id
-      //   }`
-      // );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

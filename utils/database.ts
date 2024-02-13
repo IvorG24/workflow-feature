@@ -2739,6 +2739,12 @@ export type Database = {
         }
         Returns: Json
       }
+      edit_ticket: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       edit_ticket_response: {
         Args: {
           input_data: Json

@@ -1,3 +1,4 @@
+import { getTicketOnLoad } from "@/backend/api/get";
 import { createNotification, createTicketComment } from "@/backend/api/post";
 import { assignTicket } from "@/backend/api/update";
 import useRealtimeTicketCommentList from "@/hooks/useRealtimeTicketCommentList";
@@ -53,6 +54,22 @@ const TicketPage = ({
 
   const canUserEditResponse =
     ticket.ticket_approver_team_member_id === user.team_member_id;
+
+  const handleOverrideTicket = async () => {
+    try {
+      const newTicket = await getTicketOnLoad(supabaseClient, {
+        ticketId: ticket.ticket_id,
+        userId: user.team_member_user.user_id,
+      });
+
+      setTicketForm(newTicket.ticketForm);
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
 
   const handleAssignTicketToUser = async () => {
     if (!teamMember) return;
@@ -122,13 +139,16 @@ const TicketPage = ({
             canUserEditResponse={canUserEditResponse}
             isEditingResponse={isEditingResponse}
             setIsEditingResponse={setIsEditingResponse}
+            setTicketForm={setTicketForm}
           />
 
           {isEditingResponse && (
             <TicketOverride
               category={ticket.ticket_category}
               ticketForm={ticketForm}
+              onOverrideTicket={() => handleOverrideTicket()}
               memberId={`${ticket.ticket_approver_team_member_id}`}
+              onClose={() => setIsEditingResponse(false)}
             />
           )}
 
