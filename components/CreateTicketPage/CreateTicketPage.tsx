@@ -83,6 +83,8 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
             setIsLoading={setIsLoading}
           />
         );
+      case "Request Item Option":
+        return <></>;
       default:
         return (
           <TicketForm

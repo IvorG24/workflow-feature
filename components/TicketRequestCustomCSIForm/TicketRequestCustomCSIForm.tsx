@@ -19,6 +19,7 @@ type Props = {
   category: string;
   memberId: string;
   ticketForm: CreateTicketFormValues | null;
+  isEdit?: boolean;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
 };
 
@@ -26,6 +27,7 @@ const TicketRequestCustomCSIForm = ({
   category,
   memberId,
   ticketForm,
+  isEdit,
   setIsLoading,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -83,6 +85,33 @@ const TicketRequestCustomCSIForm = ({
     }
   };
 
+  const handleEditTicket = async (data: CreateTicketFormValues) => {
+    try {
+      setIsLoading(true);
+      if (!category) return;
+      // edit ticket
+      console.log(data);
+
+      notifications.show({
+        message: "Ticket overriden.",
+        color: "green",
+      });
+
+      // router.push(
+      //   `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
+      //     ticket.ticket_id
+      //   }`
+      // );
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const checkIfCSIExists = async (
     csiCode: string,
     csiCodeDescription: string
@@ -120,7 +149,11 @@ const TicketRequestCustomCSIForm = ({
   return (
     <>
       <FormProvider {...createTicketFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateTicket)}>
+        <form
+          onSubmit={handleSubmit(
+            isEdit ? handleEditTicket : handleCreateTicket
+          )}
+        >
           {ticketSections.map((ticketSection, ticketSectionIdx) => (
             <>
               <TicketFormSection
@@ -131,7 +164,7 @@ const TicketRequestCustomCSIForm = ({
             </>
           ))}
           <Button type="submit" mt="lg" fullWidth>
-            Submit
+            {isEdit ? "Save Changes" : "Submit"}
           </Button>
         </form>
       </FormProvider>
