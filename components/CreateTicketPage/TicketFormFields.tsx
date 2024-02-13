@@ -18,6 +18,9 @@ type Props = {
   requestItemCSIMethods?: {
     onCSICodeChange: (sectionIndex: number, value: string | null) => void;
   };
+  requestItemOptionMethods?: {
+    onItemNameChange: (sectionIndex: number, value: string | null) => void;
+  };
 };
 
 const TicketFormFields = ({
@@ -27,6 +30,7 @@ const TicketFormFields = ({
   ticketSectionIdx,
   isEdit,
   requestItemCSIMethods,
+  requestItemOptionMethods,
 }: Props) => {
   const {
     register,
@@ -113,6 +117,11 @@ const TicketFormFields = ({
                   onChange(value);
                   if (ticketField.ticket_field_name === "CSI Code Description")
                     requestItemCSIMethods?.onCSICodeChange(
+                      ticketSectionIdx,
+                      value
+                    );
+                  else if (ticketField.ticket_field_name === "Item Name")
+                    requestItemOptionMethods?.onItemNameChange(
                       ticketSectionIdx,
                       value
                     );

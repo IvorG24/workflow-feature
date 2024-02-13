@@ -23,6 +23,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useState } from "react";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
 import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
+import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
 import TicketForm from "./TicketForm";
 
 type Props = {
@@ -84,7 +85,14 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
           />
         );
       case "Request Item Option":
-        return <></>;
+        return (
+          <TicketRequestItemOptionForm
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
       default:
         return (
           <TicketForm

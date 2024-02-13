@@ -13,10 +13,12 @@ type Props = {
   >;
   ticketSectionIdx: number;
   onRemoveSection?: (sectionDuplicatableId: string) => void;
-  onDuplicateSection?: () => void;
   isEdit?: boolean;
   requestItemCSIMethods?: {
     onCSICodeChange: (sectionIndex: number, value: string | null) => void;
+  };
+  requestItemOptionMethods?: {
+    onItemNameChange: (sectionIndex: number, value: string | null) => void;
   };
 };
 
@@ -27,6 +29,7 @@ const TicketFormSection = ({
   onRemoveSection,
   isEdit,
   requestItemCSIMethods,
+  requestItemOptionMethods,
 }: Props) => {
   const { field_section_duplicatable_id } = ticketSection;
   return (
@@ -68,6 +71,7 @@ const TicketFormSection = ({
               ticketSectionIdx={ticketSectionIdx}
               isEdit={isEdit}
               requestItemCSIMethods={requestItemCSIMethods}
+              requestItemOptionMethods={requestItemOptionMethods}
               key={ticketField.ticket_field_id}
             />
           );

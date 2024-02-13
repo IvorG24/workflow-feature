@@ -286,6 +286,37 @@ RETURNS JSON AS $$
       })
       returnData = { ticket_sections }
 
+    } else if (category === "Request Item Option"){
+      const itemList = plv8.execute(`
+        SELECT * FROM item_table 
+        WHERE item_team_id='${teamId}'
+        AND item_is_disabled = false
+        AND item_is_available = true
+        ORDER BY item_general_name ASC;
+      `);
+      const itemOptions = itemList.map((option)=> option.item_general_name);
+
+      const ticket_sections = sectionList.map(section => {
+
+        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
+          let fieldOptions = []
+          if(fieldIdx === 0){
+            fieldOptions = itemOptions
+          }
+
+          return {
+            ...field,
+            ticket_field_option: fieldOptions,
+          };
+        });
+        
+        return {
+          ...section,
+          ticket_section_fields: fieldWithOption,
+        }
+      })
+      returnData = { ticket_sections }
+
     } else if (category === "Incident Report for Employees"){
         const memberList = plv8.execute(`
           SELECT 
