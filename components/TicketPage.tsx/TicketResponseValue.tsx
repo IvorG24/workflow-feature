@@ -61,7 +61,8 @@ const TicketResponseValue = ({ category, field }: Props) => {
                   radius="xl"
                 >
                   {(
-                    [0] + memberProfile.team_member_user?.user_last_name[0]
+                    memberProfile.team_member_user?.user_first_name[0] +
+                    memberProfile.team_member_user?.user_last_name[0]
                   ).toUpperCase()}
                 </Avatar>
                 <Flex direction="column">
@@ -84,9 +85,8 @@ const TicketResponseValue = ({ category, field }: Props) => {
         }
 
       case "FILE":
-        const urlArray = `${parsedValue}`.split("***");
-        const fileName =
-          urlArray.length > 0 ? urlArray[urlArray.length - 2] : "";
+        const urlArray = `${parsedValue}`.split("___");
+        const fileName = urlArray[urlArray.length - 2].replace("%20", " ");
         return (
           <Button
             variant="light"
