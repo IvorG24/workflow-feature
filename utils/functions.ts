@@ -560,6 +560,215 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
   return matchedUser ? matchedUser.jiraAccountId : null;
 };
 
+const getWarehouseRepresentative = (formslyProjectSite: string) => {
+  const matcher = [
+    {
+      items: ["ALAMINOS YARD"],
+      fullName: "Adrian Ingles",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:fa6354ae-36a4-44f7-b155-e74c520cb592",
+      emailAddress: "adrian.ingles.23@gmail.com",
+    },
+    {
+      items: ["LUZ-21-007 ILIJAN CCPP"],
+      fullName: "Edwin Cardano",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:59dfdc78-441f-4d8c-b5e8-52f9965fa8ad",
+      emailAddress: "e.cardano24@gmail.com",
+    },
+    {
+      items: ["LUZ-22-012A CAPARISPISAN", " LUZ-23-009 KALAYAAN 2 WIND"],
+      fullName: "Ruslee Sanque",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:eb303e83-dae7-486c-8e3b-3ebc04daaaf1",
+      emailAddress: "rusleesanque1796@gmail.com",
+    },
+    {
+      items: [
+        "CENTRAL OFFICE",
+        "LUZ-18-033 SFEXWIDENING",
+        "LUZ-14-041B VALENZUELA PLANT 2",
+      ],
+      fullName: "Christine Joy Gamay",
+      jiraAccountId: "712020:86bb273e-5485-4a8f-ab7a-a9e1f858defb",
+      emailAddress: "cjmgamay01@gmail.com",
+    },
+    {
+      items: ["MIN-21-016 CLARIN"],
+      fullName: "Regan Villanueva",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:db97d534-58b4-48ee-9066-af600f630cc1",
+      emailAddress: "clarin.whse@gmail.com",
+    },
+    {
+      items: ["MIN-22-006 DAVAO HYDRO & BW"],
+      fullName: "John Adrian Alvarez",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:4520b753-e94e-466c-8bfb-fe0592b3ec41",
+      emailAddress: "johnadrianalvarez8@gmail.com",
+    },
+    {
+      items: ["LUZ-21-011 HERMOSA 500KV TL"],
+      fullName: "Rommelito Bautista",
+      jiraAccountId: "712020:d0ffb8e6-b409-400b-9b18-b91e9eae67d0",
+      emailAddress: "rommelito.bautista@staclara.com.ph",
+    },
+    {
+      items: ["LUZ-22-005 HUDSON PACKAGE 1"],
+      fullName: "Michael Ventura",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:cb6d0086-aa76-4f24-a65e-33fb4e5a88ec",
+      emailAddress: "michaeljohnventura6@gmail.com",
+    },
+    {
+      items: ["LUZ-21-002 KIANGAN"],
+      fullName: "Jumar Cernechez",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d2cffd15-9d2f-4ce8-bdf3-95209e8e0013",
+      emailAddress: "jcernechez07@gmail.com",
+    },
+    {
+      items: [
+        "MIN-18-036 LAKEMAINIT",
+        "MIN-21-005 12MW MANGIMA HPP",
+        "MIN-14-026B MANOLO",
+      ],
+      fullName: "Andrew T. Castillo",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:81f9ade1-4161-41f3-964c-6389241c90eb",
+      emailAddress: "andrew.castillo.staclara@gmail.com",
+    },
+    {
+      items: ["LUZ-23-006 LAND DEV LEMERY P1"],
+      fullName: "Edwin Probadora",
+      jiraAccountId: "712020:5f585f80-6478-4f71-9ed4-04d0d8cdf416",
+      emailAddress: "edwin.probadora@staclara.com.ph",
+    },
+    {
+      items: ["MIN-22-008 MALADUGAO HEPP"],
+      fullName: "Mary Ann Arances",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:b829d9d4-f93a-4c83-b663-12847ac7b616",
+      emailAddress: "maryarances27@gmail.com",
+    },
+    {
+      items: ["MIN-19-027 MALITBOG MINI HYDRO", "MIN-21-015 MATI-1"],
+      fullName: "Ceilo Dann Oppus",
+      jiraAccountId: "712020:d9f9431e-c022-41e2-8963-356ad5448bc4",
+      emailAddress: "ceilo.opus@staclara.com.ph",
+    },
+    {
+      items: ["LUZ-20-001 500KVA MARILAO"],
+      fullName: "Jonalyn Cabrera",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:697bb839-4388-4f81-942a-522bd01ec1e1",
+      emailAddress: "jonalyn.cabrera@gmail.com",
+    },
+    {
+      items: ["LUZ-19-021 MERALCO HDD PROJECT"],
+      fullName: "Ronald V. Sim",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:fa1eeb31-2e4c-44ec-bb6c-f55732861c0f",
+      emailAddress: "jonalyn.cabrera@gmail.com",
+    },
+    {
+      items: ["LUZ-23-003 MORONG PARK"],
+      fullName: "Rogelio Bolo",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:b28fffc9-0c94-4808-a74e-15eeee5d2403",
+      emailAddress: "rbolo59@gmail.com",
+    },
+    {
+      items: ["LUZ-23-005 MRT 7 NORTH AVE"],
+      fullName: "Andres Abalayan",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:9fb99a39-2e66-460a-affc-7ee13731e3a2",
+      emailAddress: "andres.abalayan@staclara.com.ph",
+    },
+    {
+      items: ["LUZ-18-018 SUMITOMO NSCR"],
+      fullName: "Montano Bulalaque",
+      jiraAccountId: "712020:39d96cbd-511b-47db-846c-7a7097bb5989",
+      emailAddress: "montano.bulalaque@staclara.com.ph",
+    },
+    {
+      items: ["LUZ-22-010 PHILIP MORRIS"],
+      fullName: "Medardo Quiatchon",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e7e36b0d-3ff6-4d66-84e9-29b12beb10b0",
+      emailAddress: "medzkilen@gmail.com",
+    },
+    {
+      items: ["PILILIA YARD"],
+      fullName: "Benedick Tibay",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:71ca30a1-354f-4ed6-bb03-c41f50d6a056",
+      emailAddress: "jbstibay30@gmail.com",
+    },
+    {
+      items: ["VIZ-23-008 SAN ISIDRO SOLAR"],
+      fullName: "Darryl M. Canoza",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:8467ef1e-f619-4ee5-accf-f155329e8122",
+      emailAddress: "darrylcanoza12@gmail.com",
+    },
+    {
+      items: ["SANTISIMO YARD"],
+      fullName: "Edwin Probadora",
+      jiraAccountId: "712020:5f585f80-6478-4f71-9ed4-04d0d8cdf416",
+      emailAddress: "edwin.probadora@staclara.com.ph",
+    },
+    {
+      items: ["MIN-15-077  MW SIGUIL HYDRO"],
+      fullName: "Joel E. Gucela",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+      emailAddress: "gucelaje2231@gmail.com",
+    },
+    {
+      items: ["LUZ-22-009 SOLID LF MAIN BLDG"],
+      fullName: "Levi Saturinas",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:737946a6-5539-4cba-a877-2573e31b813d",
+      emailAddress: "levisaturinas.scic@gmail.com",
+    },
+    {
+      items: ["LUZ-18-007A STE TR4 PACKAGE C"],
+      fullName: "Jovenyle Battalao",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d0caa6e9-94c2-4427-bddf-6b4fef814da5",
+      emailAddress: "levisaturinas.scic@gmail.com",
+    },
+    {
+      items: ["LUZ-21-009 TUMAUINI HEPPP"],
+      fullName: "Richard Aguinaldo",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:777da3c6-162b-4990-a534-5bcc6bbc9003",
+      emailAddress: "levisaturinas.scic@gmail.com",
+    },
+    {
+      items: ["LUZ-22-002 500KV BACKBONE S2"],
+      fullName: "Romel Llarenas",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e409b14e-8ad9-4eb7-bf08-35d897452539",
+      emailAddress: "llarenasromelb@gmail.com",
+    },
+    {
+      items: ["LUZ-12-051 CATUIRAN"],
+      fullName: "Jay Quiroz",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d8344027-3578-4f50-8b8a-11fe72244208",
+      emailAddress: "jayquiroz.santaclara@gmail.com",
+    },
+  ];
+
+  const matchedUser = matcher.find((matcherItem) =>
+    matcherItem.items.includes(formslyProjectSite)
+  );
+
+  return matchedUser ? matchedUser.jiraAccountId : null;
+};
+
 export const generateJiraTicketPayload = ({
   requestId,
   requestUrl,
@@ -598,6 +807,9 @@ export const generateJiraTicketPayload = ({
     sourcingItemCategory.label
   );
   const warehouseAreaLead = getWarehouseAreaLead(requestingProjectSite.label);
+  const warehouseRepresentative = getWarehouseRepresentative(
+    requestingProjectSite.label
+  );
 
   if (!warehouseCorporateLead) {
     console.error("Warehouse Corporate Lead is not found.");
@@ -607,6 +819,11 @@ export const generateJiraTicketPayload = ({
   if (!warehouseAreaLead) {
     console.error("Warehouse Area Lead is not found.");
     throw Error("Warehouse Area Lead is not found.");
+  }
+
+  if (!warehouseRepresentative) {
+    console.error("Warehouse Representative is not found.");
+    throw Error("Warehouse Representative is not found.");
   }
 
   const jiraTicketPayload = {
@@ -646,6 +863,7 @@ export const generateJiraTicketPayload = ({
     requestParticipants: [] as string[],
     requestTypeId: requestTypeId,
     serviceDeskId: "17",
+    raiseOnBehalfOf: warehouseRepresentative,
   };
 
   if (primaryApproverJiraAccountId) {
