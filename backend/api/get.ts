@@ -18,7 +18,7 @@ import {
   CreateTicketPageOnLoad,
   EquipmentDescriptionTableRow,
   EquipmentLookupChoices,
-  EquipmentPartTableRow,
+  EquipmentPartTableInsert,
   EquipmentPartType,
   EquipmentTableRow,
   FieldTableRow,
@@ -4404,6 +4404,21 @@ export const getEquipmentBrandAndModelOption = async (
   };
 };
 
+// Fetch all equipment name option
+export const getEquipmentNameOption = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data: nameList, error: nameError } = await supabaseClient
+    .from("equipment_general_name_table")
+    .select("*")
+    .order("equipment_general_name", { ascending: true });
+  if (nameError) throw nameError;
+
+  return {
+    nameList,
+  };
+};
+
 // check if propert number already exists
 export const checkPropertyNumber = async (
   supabaseClient: SupabaseClient<Database>,
@@ -4497,7 +4512,7 @@ export const getEquipmentUOMAndCategoryOption = async (
 export const checkPEDPart = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    equipmentPartData: EquipmentPartTableRow;
+    equipmentPartData: EquipmentPartTableInsert;
   }
 ) => {
   const { equipmentPartData } = params;
@@ -5515,156 +5530,19 @@ export const getItemSectionChoices = async (
   }
 ) => {
   const { equipmentId, generalName, componentCategory, brand, model } = params;
-  let query = supabaseClient
-    .from("equipment_part_table")
-    .select(
-      `
-        equipment_part_id,
-        equipment_part_general_name: equipment_part_general_name_id!inner(equipment_general_name)
-        ${
-          generalName
-            ? ", equipment_part_component_category: equipment_part_component_category_id!inner(equipment_component_category)"
-            : ""
-        }
-        ${
-          componentCategory
-            ? ", equipment_part_brand: equipment_part_brand_id!inner(equipment_brand)"
-            : ""
-        }
-        ${
-          brand
-            ? ", equipment_part_model: equipment_part_model_id!inner(equipment_model)"
-            : ""
-        }
-        ${model ? ", equipment_part_number" : ""}
-      `
-    )
-    .eq("equipment_part_is_disabled", false)
-    .eq("equipment_part_is_available", true)
-    .eq("equipment_part_general_name.equipment_general_name_is_disabled", false)
-    .eq(
-      "equipment_part_general_name.equipment_general_name_is_available",
-      true
-    );
-
-  if (equipmentId) {
-    query = query.eq("equipment_part_equipment_id", equipmentId);
-  }
-  if (generalName) {
-    query = query.eq(
-      "equipment_part_general_name.equipment_general_name",
-      generalName
-    );
-  }
-  if (componentCategory) {
-    query = query.eq(
-      "equipment_part_component_category.equipment_component_category_is_disabled",
-      false
-    );
-    query = query.eq(
-      "equipment_part_component_category.equipment_component_category_is_available",
-      true
-    );
-    query = query.eq(
-      "equipment_part_component_category.equipment_component_category",
-      componentCategory
-    );
-  }
-  if (brand) {
-    query = query.eq("equipment_part_brand.equipment_brand_is_disabled", false);
-    query = query.eq("equipment_part_brand.equipment_brand_is_available", true);
-    query = query.eq("equipment_part_brand.equipment_brand", brand);
-  }
-  if (model) {
-    query = query.eq("equipment_part_model.equipment_model_is_disabled", false);
-    query = query.eq("equipment_part_model.equipment_model_is_available", true);
-    query = query.eq("equipment_part_model.equipment_model", model);
-  }
-
-  const { data, error } = await query;
-
+  const { data, error } = await supabaseClient.rpc("get_item_section_choices", {
+    input_data: {
+      equipmentId: equipmentId ? equipmentId.replace(/'/g, "''") : undefined,
+      generalName: generalName ? generalName.replace(/'/g, "''") : undefined,
+      componentCategory: componentCategory
+        ? componentCategory.replace(/'/g, "''")
+        : undefined,
+      brand: brand ? brand.replace(/'/g, "''") : undefined,
+      model: model ? model.replace(/'/g, "''") : undefined,
+    },
+  });
   if (error) throw error;
-
-  const tempList: string[] = [];
-  if (!equipmentId) {
-    return [];
-  } else if (!generalName) {
-    const formattedData = data as unknown as {
-      equipment_part_id: string;
-      equipment_part_general_name: { equipment_general_name: string };
-    }[];
-
-    return formattedData.filter((value) => {
-      if (
-        !tempList.includes(
-          value.equipment_part_general_name.equipment_general_name
-        )
-      ) {
-        tempList.push(value.equipment_part_general_name.equipment_general_name);
-        return value;
-      }
-    });
-  } else if (!componentCategory) {
-    const formattedData = data as unknown as {
-      equipment_part_id: string;
-      equipment_part_component_category: {
-        equipment_component_category: string;
-      };
-    }[];
-
-    return formattedData.filter((value) => {
-      if (
-        !tempList.includes(
-          value.equipment_part_component_category.equipment_component_category
-        )
-      ) {
-        tempList.push(
-          value.equipment_part_component_category.equipment_component_category
-        );
-        return value;
-      }
-    });
-  } else if (!brand) {
-    const formattedData = data as unknown as {
-      equipment_part_id: string;
-      equipment_part_brand: {
-        equipment_brand: string;
-      };
-    }[];
-
-    return formattedData.filter((value) => {
-      if (!tempList.includes(value.equipment_part_brand.equipment_brand)) {
-        tempList.push(value.equipment_part_brand.equipment_brand);
-        return value;
-      }
-    });
-  } else if (!model) {
-    const formattedData = data as unknown as {
-      equipment_part_id: string;
-      equipment_part_model: {
-        equipment_model: string;
-      };
-    }[];
-
-    return formattedData.filter((value) => {
-      if (!tempList.includes(value.equipment_part_model.equipment_model)) {
-        tempList.push(value.equipment_part_model.equipment_model);
-        return value;
-      }
-    });
-  } else {
-    const formattedData = data as unknown as {
-      equipment_part_id: string;
-      equipment_part_number: string;
-    }[];
-
-    return formattedData.filter((value) => {
-      if (!tempList.includes(value.equipment_part_number)) {
-        tempList.push(value.equipment_part_number);
-        return value;
-      }
-    });
-  }
+  return data;
 };
 
 // Fetch item unit of measurement based on given parameters
@@ -5796,13 +5674,14 @@ export const getEquipmentSectionChoices = async (
   if (!brand) {
     const formattedData = data[0] as unknown as {
       equipment_id: string;
-      equipment_description: {
+      equipment_description?: {
         equipment_description_brand: {
           equipment_brand: string;
         };
       }[];
       equipment_name: string;
     };
+    if (!formattedData?.equipment_description) return [];
 
     return formattedData.equipment_description.filter((value) => {
       if (
@@ -5815,13 +5694,14 @@ export const getEquipmentSectionChoices = async (
   } else {
     const formattedData = data[0] as unknown as {
       equipment_id: string;
-      equipment_description: {
+      equipment_description?: {
         equipment_description_model: {
           equipment_model: string;
         };
       }[];
       equipment_name: string;
     };
+    if (!formattedData?.equipment_description) return [];
 
     return formattedData.equipment_description.filter((value) => {
       if (

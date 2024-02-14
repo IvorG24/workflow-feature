@@ -1,7 +1,11 @@
 import {
+  checkPEDPart,
   getEquipmentBrandAndModelOption,
+  getEquipmentNameOption,
   getEquipmentUOMAndCategoryOption,
 } from "@/backend/api/get";
+import { createEquipmentPart } from "@/backend/api/post";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   EquipmentPartForm,
@@ -33,15 +37,17 @@ type Props = {
 };
 
 const CreateEquipmentPart = ({
-  // selectedEquipment,
+  selectedEquipment,
   setIsCreatingEquipmentPart,
-}: // setEquipmentPartList,
-// setEquipmentPartCount,
-Props) => {
+  setEquipmentPartList,
+  setEquipmentPartCount,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
-  // const teamMember = useUserTeamMember();
-
+  const teamMember = useUserTeamMember();
+  const [nameOption, setNameOption] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [brandOption, setBrandOption] = useState<
     { label: string; value: string }[]
   >([]);
@@ -56,8 +62,9 @@ Props) => {
   >([]);
 
   useEffect(() => {
-    const fetchBrandAndModelOption = async () => {
+    const fetchOptions = async () => {
       try {
+        const { nameList } = await getEquipmentNameOption(supabaseClient);
         const { brandList, modelList } = await getEquipmentBrandAndModelOption(
           supabaseClient
         );
@@ -69,6 +76,15 @@ Props) => {
               return {
                 label: `${brand.equipment_brand}`,
                 value: `${brand.equipment_brand_id}`,
+              };
+            })
+          );
+        nameList &&
+          setNameOption(
+            nameList.map((name) => {
+              return {
+                label: `${name.equipment_general_name}`,
+                value: `${name.equipment_general_name_id}`,
               };
             })
           );
@@ -106,7 +122,7 @@ Props) => {
         });
       }
     };
-    fetchBrandAndModelOption();
+    fetchOptions();
   }, []);
 
   const { register, formState, handleSubmit, control } =
@@ -123,56 +139,56 @@ Props) => {
     });
 
   const onSubmit = async (data: EquipmentPartForm) => {
-    console.log(data);
-    // try {
-    //   const params = {
-    //     equipment_part_name: data.name.toUpperCase(),
-    //     equipment_part_number: data.partNumber.toUpperCase(),
-    //     equipment_part_brand_id: data.brand,
-    //     equipment_part_model_id: data.model,
-    //     equipment_part_unit_of_measurement_id: data.uom,
-    //     equipment_part_component_category_id: data.category,
-    //     equipment_part_equipment_id: selectedEquipment.equipment_id,
-    //     equipment_part_encoder_team_member_id: teamMember?.team_member_id,
-    //     equipment_part_is_available: data.isAvailable,
-    //   };
+    try {
+      const params = {
+        equipment_part_general_name_id: data.name,
+        equipment_part_number: data.partNumber.toUpperCase(),
+        equipment_part_brand_id: data.brand,
+        equipment_part_model_id: data.model,
+        equipment_part_unit_of_measurement_id: data.uom,
+        equipment_part_component_category_id: data.category,
+        equipment_part_equipment_id: selectedEquipment.equipment_id,
+        equipment_part_encoder_team_member_id: teamMember?.team_member_id,
+        equipment_part_is_available: data.isAvailable,
+      };
 
-    //   if (await checkPEDPart(supabaseClient, { equipmentPartData: params })) {
-    //     notifications.show({
-    //       message: "Equipment Part already exists.",
-    //       color: "orange",
-    //     });
-    //     return;
-    //   }
+      if (await checkPEDPart(supabaseClient, { equipmentPartData: params })) {
+        notifications.show({
+          message: "Equipment Part already exists.",
+          color: "orange",
+        });
+        return;
+      }
 
-    //   const newEquipmentPart = await createEquipmentPart(supabaseClient, {
-    //     equipmentPartData: params,
-    //     brand: brandOption.find((brand) => brand.value === data.brand)
-    //       ?.label as string,
-    //     model: modelOption.find((model) => model.value === data.model)
-    //       ?.label as string,
-    //     uom: uomOption.find((uom) => uom.value === data.uom)?.label as string,
-    //     category: categoryOption.find(
-    //       (category) => category.value === data.category
-    //     )?.label as string,
-    //   });
-    //   setEquipmentPartList((prev) => {
-    //     prev.unshift(newEquipmentPart);
-    //     return prev;
-    //   });
-    //   setEquipmentPartCount((prev) => prev + 1);
-    //   notifications.show({
-    //     message: "Equipment Part created.",
-    //     color: "green",
-    //   });
-    //   setIsCreatingEquipmentPart(false);
-    // } catch (e) {
-    //   notifications.show({
-    //     message: "Something went wrong. Please try again later.",
-    //     color: "red",
-    //   });
-    // }
-    // return;
+      const newEquipmentPart = await createEquipmentPart(supabaseClient, {
+        equipmentPartData: params,
+        name: nameOption.find((name) => name.value === data.name)
+          ?.label as string,
+        brand: brandOption.find((brand) => brand.value === data.brand)
+          ?.label as string,
+        model: modelOption.find((model) => model.value === data.model)
+          ?.label as string,
+        uom: uomOption.find((uom) => uom.value === data.uom)?.label as string,
+        category: categoryOption.find(
+          (category) => category.value === data.category
+        )?.label as string,
+      });
+      setEquipmentPartList((prev) => {
+        prev.unshift(newEquipmentPart);
+        return prev;
+      });
+      setEquipmentPartCount((prev) => prev + 1);
+      notifications.show({
+        message: "Equipment Part created.",
+        color: "green",
+      });
+      setIsCreatingEquipmentPart(false);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
   };
 
   return (
@@ -186,20 +202,25 @@ Props) => {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Flex direction="column" gap={16}>
-            <TextInput
-              {...register("name", {
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value}
+                  onChange={onChange}
+                  data={nameOption}
+                  withAsterisk
+                  error={formState.errors.name?.message}
+                  searchable
+                  clearable
+                  label="Name"
+                />
+              )}
+              rules={{
                 required: {
                   message: "Name is required",
                   value: true,
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="Name"
-              error={formState.errors.name?.message}
-              sx={{
-                input: {
-                  textTransform: "uppercase",
                 },
               }}
             />

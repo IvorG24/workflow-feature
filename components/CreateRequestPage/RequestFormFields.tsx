@@ -90,7 +90,6 @@ type RequestFormFieldsProps = {
     onCategoryChange: (value: string | null) => void;
     onEquipmentNameChange: (value: string | null) => void;
     onPropertyNumberChange: (value: string | null) => void;
-    onPurposeTypeChange: (value: string | null) => void;
     onTypeOfOrderChange: (
       prevValue: string | null,
       value: string | null
@@ -371,6 +370,8 @@ const RequestFormFields = ({
                       subconFormMethods?.onProjectNameChange(value);
                       servicesFormMethods?.onProjectNameChange(value);
                       otherExpensesMethods?.onProjectNameChange(value);
+                      pedPartFormMethods?.onProjectNameChange(value);
+                      pedEquipmentFormMethods?.onProjectNameChange(value);
                       break;
                     case "Service Name":
                       subconFormMethods?.onServiceNameChange(
@@ -410,13 +411,6 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
-                      break;
-                    case "Project Name":
-                      pedPartFormMethods?.onProjectNameChange(value);
-                      pedEquipmentFormMethods?.onProjectNameChange(value);
-                      break;
-                    case "Purpose Type":
-                      pedPartFormMethods?.onPurposeTypeChange(value);
                       break;
                     case "General Item Name":
                       pedPartFormMethods?.onGeneralItemNameChange(

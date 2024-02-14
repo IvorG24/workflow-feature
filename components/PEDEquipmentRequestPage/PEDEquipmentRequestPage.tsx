@@ -26,7 +26,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import ExportToPdf from "../ExportToPDF/ExportToPdf";
+import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import PEDEquipmentSummary from "../SummarySection/PEDEquipmentSummary";
 
 type Props = {
@@ -346,10 +346,10 @@ const PEDEquipmentRequestPage = ({ request }: Props) => {
         </Title>
         {!isFetchingApprover && approverDetails.length !== 0 && (
           <Group>
-            <ExportToPdf
-              request={request}
-              sectionWithDuplicateList={sectionWithDuplicateList}
-              approverDetails={approverDetails}
+            <ExportToPdfMenu
+              isFormslyForm={request.request_form.form_is_formsly_form}
+              formName={request.request_form.form_name}
+              requestId={request.request_formsly_id ?? request.request_id}
             />
           </Group>
         )}

@@ -7,6 +7,10 @@ const PEDLookup = () => {
     { table: "equipment_category", label: "Category" },
     { table: "equipment_brand", label: "Brand" },
     { table: "equipment_model", label: "Model" },
+    {
+      table: "capacity_unit_of_measurement",
+      label: "Capacity Unif of Measurement",
+    },
   ] as { table: EquipmentLookupChoices; label: string }[];
 
   return (

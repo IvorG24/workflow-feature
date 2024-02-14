@@ -1,7 +1,9 @@
 import {
   getEquipmentBrandAndModelOption,
+  getEquipmentNameOption,
   getEquipmentUOMAndCategoryOption,
 } from "@/backend/api/get";
+import { updateEquipmentPart } from "@/backend/api/update";
 
 import { Database } from "@/utils/database";
 import {
@@ -34,13 +36,16 @@ type Props = {
 };
 
 const UpdateEquipmentPart = ({
-  // selectedEquipment,
-  // setEquipmentPartList,
+  selectedEquipment,
+  setEquipmentPartList,
   setEditEquipmentPart,
   editEquipmentPart,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
+  const [nameOption, setNameOption] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [brandOption, setBrandOption] = useState<
     { label: string; value: string }[]
   >([]);
@@ -55,13 +60,23 @@ const UpdateEquipmentPart = ({
   >([]);
 
   useEffect(() => {
-    const fetchBrandAndModelOption = async () => {
+    const fetchOptions = async () => {
       try {
+        const { nameList } = await getEquipmentNameOption(supabaseClient);
         const { brandList, modelList } = await getEquipmentBrandAndModelOption(
           supabaseClient
         );
         const { uomList, categoryList } =
           await getEquipmentUOMAndCategoryOption(supabaseClient);
+        nameList &&
+          setNameOption(
+            nameList.map((name) => {
+              return {
+                label: `${name.equipment_general_name}`,
+                value: `${name.equipment_general_name_id}`,
+              };
+            })
+          );
         brandList &&
           setBrandOption(
             brandList.map((brand) => {
@@ -105,13 +120,13 @@ const UpdateEquipmentPart = ({
         });
       }
     };
-    fetchBrandAndModelOption();
+    fetchOptions();
   }, []);
 
   const { register, formState, handleSubmit, control } =
     useForm<EquipmentPartForm>({
       defaultValues: {
-        name: editEquipmentPart.equipment_part_general_name,
+        name: editEquipmentPart.equipment_part_general_name_id,
         partNumber: editEquipmentPart.equipment_part_number,
         brand: editEquipmentPart.equipment_part_brand_id,
         model: editEquipmentPart.equipment_part_model_id,
@@ -122,56 +137,56 @@ const UpdateEquipmentPart = ({
     });
 
   const onSubmit = async (data: EquipmentPartForm) => {
-    console.log(data);
-    // try {
-    //   const newEquipmentPart: EquipmentPartType = await updateEquipmentPart(
-    //     supabaseClient,
-    //     {
-    //       equipmentPartData: {
-    //         equipment_part_id: editEquipmentPart.equipment_part_id,
-    //         equipment_part_name: data.name.toUpperCase(),
-    //         equipment_part_number: data.partNumber,
-    //         equipment_part_brand_id: data.brand,
-    //         equipment_part_model_id: data.model,
-    //         equipment_part_unit_of_measurement_id: data.uom,
-    //         equipment_part_component_category_id: data.category,
-    //         equipment_part_equipment_id: selectedEquipment.equipment_id,
-    //         equipment_part_is_available: data.isAvailable,
-    //       },
-    //       brand: brandOption.find((brand) => brand.value === data.brand)
-    //         ?.label as string,
-    //       model: modelOption.find((model) => model.value === data.model)
-    //         ?.label as string,
-    //       uom: uomOption.find((uom) => uom.value === data.uom)?.label as string,
-    //       category: categoryOption.find(
-    //         (category) => category.value === data.category
-    //       )?.label as string,
-    //     }
-    //   );
+    try {
+      const newEquipmentPart: EquipmentPartType = await updateEquipmentPart(
+        supabaseClient,
+        {
+          equipmentPartData: {
+            equipment_part_id: editEquipmentPart.equipment_part_id,
+            equipment_part_general_name_id: data.name,
+            equipment_part_number: data.partNumber,
+            equipment_part_brand_id: data.brand,
+            equipment_part_model_id: data.model,
+            equipment_part_unit_of_measurement_id: data.uom,
+            equipment_part_component_category_id: data.category,
+            equipment_part_equipment_id: selectedEquipment.equipment_id,
+            equipment_part_is_available: data.isAvailable,
+          },
+          name: nameOption.find((name) => name.value === data.name)
+            ?.label as string,
+          brand: brandOption.find((brand) => brand.value === data.brand)
+            ?.label as string,
+          model: modelOption.find((model) => model.value === data.model)
+            ?.label as string,
+          uom: uomOption.find((uom) => uom.value === data.uom)?.label as string,
+          category: categoryOption.find(
+            (category) => category.value === data.category
+          )?.label as string,
+        }
+      );
 
-    //   setEquipmentPartList((prev) => {
-    //     return prev.map((equipment) => {
-    //       if (
-    //         equipment.equipment_part_id === editEquipmentPart.equipment_part_id
-    //       ) {
-    //         return newEquipmentPart;
-    //       } else {
-    //         return equipment;
-    //       }
-    //     });
-    //   });
-    //   notifications.show({
-    //     message: "Equipment Part updated.",
-    //     color: "green",
-    //   });
-    //   setEditEquipmentPart(null);
-    // } catch (e) {
-    //   notifications.show({
-    //     message: "Something went wrong. Please try again later.",
-    //     color: "red",
-    //   });
-    // }
-    // return;
+      setEquipmentPartList((prev) => {
+        return prev.map((equipment) => {
+          if (
+            equipment.equipment_part_id === editEquipmentPart.equipment_part_id
+          ) {
+            return newEquipmentPart;
+          } else {
+            return equipment;
+          }
+        });
+      });
+      notifications.show({
+        message: "Equipment Part updated.",
+        color: "green",
+      });
+      setEditEquipmentPart(null);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
   };
 
   return (
@@ -185,20 +200,36 @@ const UpdateEquipmentPart = ({
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Flex direction="column" gap={16}>
-            <TextInput
-              {...register("name", {
+            <Controller
+              control={control}
+              name="name"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value}
+                  onChange={onChange}
+                  data={
+                    nameOption.length
+                      ? nameOption
+                      : [
+                          {
+                            label:
+                              editEquipmentPart.equipment_part_general_name,
+                            value:
+                              editEquipmentPart.equipment_part_general_name_id,
+                          },
+                        ]
+                  }
+                  withAsterisk
+                  error={formState.errors.name?.message}
+                  searchable
+                  clearable
+                  label="Name"
+                />
+              )}
+              rules={{
                 required: {
                   message: "Name is required",
                   value: true,
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="Name"
-              error={formState.errors.name?.message}
-              sx={{
-                input: {
-                  textTransform: "uppercase",
                 },
               }}
             />

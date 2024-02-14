@@ -1,3 +1,5 @@
+import { formatDate } from "@/utils/constant";
+import { safeParse } from "@/utils/functions";
 import { DuplicateSectionType } from "@/utils/types";
 import { Paper, ScrollArea, Table, Title } from "@mantine/core";
 
@@ -34,6 +36,10 @@ const PEDEquipmentSummary = ({ summaryData }: Props) => {
               <th>Equipment Name</th>
               <th>Brand</th>
               <th>Model</th>
+              <th>Capacity</th>
+              <th>Capacity UoM</th>
+              <th>Date Needed</th>
+              <th>Purpose</th>
             </tr>
           </thead>
           <tbody>
@@ -41,9 +47,15 @@ const PEDEquipmentSummary = ({ summaryData }: Props) => {
               return (
                 <tr key={index}>
                   {summary.section_field.map((field) => {
-                    const response = field.field_response
-                      ?.request_response as string;
-                    return <td key={field.field_id}>{JSON.parse(response)}</td>;
+                    const response = safeParse(
+                      field.field_response?.request_response as string
+                    );
+
+                    if (field.field_type === "DATE")
+                      return (
+                        <td key={field.field_id}>{formatDate(response)}</td>
+                      );
+                    return <td key={field.field_id}>{response}</td>;
                   })}
                 </tr>
               );

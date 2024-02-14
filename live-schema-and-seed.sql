@@ -11728,7 +11728,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('eff5d1ab-c0bc-4b97-814d-d1a900dc6fc2', 'Equipment Serial No.', 'TEXT', 8, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
 ('124fce5f-e848-422a-a502-df71f3f14e8a', 'Purpose Type', 'DROPDOWN', 9, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
 ('a9928556-1a99-4d5f-b4b6-93eafb675a50', 'Purpose Description', 'TEXT', 10, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
-('b051ce7e-980e-4bbc-ad78-3b2c058e49cc', 'Project Name', 'TEXT', 11, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('b051ce7e-980e-4bbc-ad78-3b2c058e49cc', 'Requesting Project', 'TEXT', 11, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
 ('95708a5f-655e-4b8e-af2c-7eb577a5168c', 'Equipment Service Report', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
 ('12f7bd37-603a-43b0-883c-42188db5fbc2', 'Tire Thread Depth Measurement Form', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
 ('c0c76f97-9939-4ef1-b8d6-fd1edd81a5d0', 'Photo of Voltage on Tester', 'FILE', 12, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
@@ -11741,7 +11741,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 -- PED Equipment
 ('289cea0b-f295-476d-a6f6-83469deffa0c', 'Request Type', 'DROPDOWN', 1, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
 ('2782a46e-42eb-4f01-9aad-f76e91422b98', 'Purpose Description', 'TEXT', 2, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
-('197f0e69-39f2-4f51-b49a-8c383a1a325e', 'Project Name', 'DROPDOWN', 3, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
+('197f0e69-39f2-4f51-b49a-8c383a1a325e', 'Requesting Project', 'DROPDOWN', 3, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
 ('6de3b943-470a-474f-87e5-35c01f9cf8c4', 'Equipment Loading Form', 'FILE', 4, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
 ('662b6f69-a534-4837-b64a-4599a9df4405', 'Category', 'DROPDOWN', 5, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 ('2c715814-fecf-448e-9b78-460d8a536714', 'Equipment Name', 'DROPDOWN', 6, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),

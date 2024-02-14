@@ -100,7 +100,6 @@ type RequestFormFieldsProps = {
     onCategoryChange: (value: string | null) => void;
     onEquipmentNameChange: (value: string | null) => void;
     onPropertyNumberChange: (value: string | null) => void;
-    onPurposeTypeChange: (value: string | null) => void;
     onTypeOfOrderChange: (
       prevValue: string | null,
       value: string | null
@@ -155,12 +154,9 @@ const RequestFormFields = ({
       ?.message;
 
   const readOnly =
-    (field.field_name === "Requesting Project" &&
-      !referenceOnly &&
-      ["Item", "Subcon"].includes(formslyFormName)) ||
-    (field.field_name === "Project Name" &&
-      !referenceOnly &&
-      ["PED Equipment"].includes(formslyFormName))
+    field.field_name === "Requesting Project" &&
+    !referenceOnly &&
+    ["Item", "Subcon", "PED Equipment", "PED Part"].includes(formslyFormName)
       ? true
       : field.field_is_read_only;
 
@@ -419,7 +415,10 @@ const RequestFormFields = ({
                     onChange(value);
                     switch (field.field_name) {
                       case "General Name":
-                        itemFormMethods?.onGeneralNameChange(sectionIndex, value);
+                        itemFormMethods?.onGeneralNameChange(
+                          sectionIndex,
+                          value
+                        );
                         break;
                       case "Item":
                         quotationFormMethods?.onItemChange(
@@ -430,22 +429,27 @@ const RequestFormFields = ({
                         break;
                       case "CSI Code Description":
                         itemFormMethods &&
-                        itemFormMethods.onCSICodeChange(sectionIndex, value);
-                      servicesFormMethods &&
-                        servicesFormMethods.onCSICodeChange(sectionIndex, value);
-                      otherExpensesMethods &&
-                        otherExpensesMethods.onCSICodeChange(
-                          sectionIndex,
-                          value
-                        );
+                          itemFormMethods.onCSICodeChange(sectionIndex, value);
+                        servicesFormMethods &&
+                          servicesFormMethods.onCSICodeChange(
+                            sectionIndex,
+                            value
+                          );
+                        otherExpensesMethods &&
+                          otherExpensesMethods.onCSICodeChange(
+                            sectionIndex,
+                            value
+                          );
                         break;
                       case "Source Project":
                         sourcedItemFormMethods?.onProjectSiteChange();
                         break;
                       case "Requesting Project":
                         itemFormMethods?.onProjectNameChange(value);
-                      subconFormMethods?.onProjectNameChange(value);
-                      otherExpensesMethods?.onProjectNameChange(value);
+                        subconFormMethods?.onProjectNameChange(value);
+                        otherExpensesMethods?.onProjectNameChange(value);
+                        pedPartFormMethods?.onProjectNameChange(value);
+                        pedEquipmentFormMethods?.onProjectNameChange(value);
                         break;
                       case "Service Name":
                         subconFormMethods?.onServiceNameChange(
@@ -485,13 +489,6 @@ const RequestFormFields = ({
                           value,
                           sectionIndex
                         );
-                        break;
-                      case "Project Name":
-                        pedPartFormMethods?.onProjectNameChange(value);
-                        pedEquipmentFormMethods?.onProjectNameChange(value);
-                        break;
-                      case "Purpose Type":
-                        pedPartFormMethods?.onPurposeTypeChange(value);
                         break;
                       case "General Item Name":
                         pedPartFormMethods?.onGeneralItemNameChange(

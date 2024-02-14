@@ -14,10 +14,6 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { createRange } from "@/utils/arrayFunctions/arrayFunctions";
-import {
-  PURPOSE_TYPE_EQUIVALENT_FIELD,
-  PURPOSE_TYPE_OPTION_TYPE,
-} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -128,10 +124,10 @@ const CreatePEDPartRequestPage = ({
 
       setIsLoading(true);
 
-      const response = data.sections[0].section_field[9]
+      const response = data.sections[0].section_field[0]
         .field_response as string;
 
-      const projectId = data.sections[0].section_field[9].field_option.find(
+      const projectId = data.sections[0].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
 
@@ -230,62 +226,66 @@ const CreatePEDPartRequestPage = ({
 
   const handleCategoryChange = async (value: string | null) => {
     const newSection = getValues(`sections.0`);
-    resetItemSection();
-    if (value) {
-      const categoryId = categoryOptions.find(
-        (category) => category.option_value === value
-      );
-      if (!categoryId) return;
-      const equipmentName = await getEquipmentName(supabaseClient, {
-        category: categoryId.option_id,
-      });
+    try {
+      resetItemSection();
+      if (value) {
+        const categoryId = categoryOptions.find(
+          (category) => category.option_value === value
+        );
+        if (!categoryId) return;
+        const equipmentName = await getEquipmentName(supabaseClient, {
+          category: categoryId.option_id,
+        });
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 2),
-        {
-          ...newSection.section_field[2],
-          field_response: "",
-          field_option: equipmentName.map((equipment, index) => {
+        const generalField = [
+          ...newSection.section_field.slice(0, 3),
+          {
+            ...newSection.section_field[3],
+            field_response: "",
+            field_option: equipmentName.map((equipment, index) => {
+              return {
+                option_field_id: form.form_section[0].section_field[3].field_id,
+                option_id: equipment.equipment_id,
+                option_order: index,
+                option_value: equipment.equipment_name,
+              };
+            }),
+          },
+          ...newSection.section_field.slice(4, 8).map((field) => {
             return {
-              option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: equipment.equipment_id,
-              option_order: index,
-              option_value: equipment.equipment_name,
+              ...field,
+              field_response: "",
             };
           }),
-        },
-        ...newSection.section_field.slice(3, 7).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(7),
-      ];
+          ...newSection.section_field.slice(8),
+        ];
 
-      updateSection(0, {
-        ...newSection,
-        section_field: generalField,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 2),
-        {
-          ...newSection.section_field[2],
-          field_response: "",
-          field_option: [],
-        },
-        ...newSection.section_field.slice(3, 7).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(7),
-      ];
-      updateSection(0, {
-        ...newSection,
-        section_field: generalField,
+        updateSection(0, {
+          ...newSection,
+          section_field: generalField,
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(3, 8).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+          ...newSection.section_field.slice(8),
+        ];
+        updateSection(0, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.0.section_field.${1}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
@@ -338,187 +338,165 @@ const CreatePEDPartRequestPage = ({
   const handleEquipmentNameChange = async (value: string | null) => {
     const newSection = getValues(`sections.0`);
     resetItemSection();
-    if (value) {
-      const equipmentOptions = newSection.section_field[2].field_option;
-      const equipmentId = equipmentOptions.find(
-        (equipment) => equipment.option_value === value
-      );
-      if (!equipmentId) return;
-      const equipmentPropertyNumber = await getEquipmentPropertyNumber(
-        supabaseClient,
-        {
-          equipmentId: equipmentId?.option_id,
-        }
-      );
+    try {
+      if (value) {
+        const equipmentOptions = newSection.section_field[3].field_option;
+        const equipmentId = equipmentOptions.find(
+          (equipment) => equipment.option_value === value
+        );
+        if (!equipmentId) return;
+        const equipmentPropertyNumber = await getEquipmentPropertyNumber(
+          supabaseClient,
+          {
+            equipmentId: equipmentId?.option_id,
+          }
+        );
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 3),
-        {
-          ...newSection.section_field[3],
-          field_response: "",
-          field_option: equipmentPropertyNumber.map((propertyNumber, index) => {
+        const generalField = [
+          ...newSection.section_field.slice(0, 4),
+          {
+            ...newSection.section_field[4],
+            field_response: "",
+            field_option: equipmentPropertyNumber.map(
+              (propertyNumber, index) => {
+                return {
+                  option_field_id:
+                    form.form_section[0].section_field[0].field_id,
+                  option_id:
+                    propertyNumber.equipment_description_property_number,
+                  option_order: index,
+                  option_value:
+                    propertyNumber.equipment_description_property_number,
+                };
+              }
+            ),
+          },
+          ...newSection.section_field.slice(5, 8).map((field) => {
             return {
-              option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: propertyNumber.equipment_description_property_number,
-              option_order: index,
-              option_value:
-                propertyNumber.equipment_description_property_number,
+              ...field,
+              field_response: "",
             };
           }),
-        },
-        ...newSection.section_field.slice(4, 7).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(7),
-      ];
+          ...newSection.section_field.slice(8),
+        ];
 
-      updateSection(0, {
-        ...newSection,
-        section_field: generalField,
-      });
+        updateSection(0, {
+          ...newSection,
+          section_field: generalField,
+        });
 
-      const equipmentGeneralNameChoices = await getItemSectionChoices(
-        supabaseClient,
-        { equipmentId: equipmentId.option_id }
-      );
-      setEquipmentId(equipmentId.option_id);
+        const data = await getItemSectionChoices(supabaseClient, {
+          equipmentId: equipmentId.option_id,
+        });
+        const equipmentGeneralNameChoices = data as {
+          equipment_part_id: string;
+          equipment_general_name: string;
+        }[];
 
-      const generalItemNameOption = equipmentGeneralNameChoices.map(
-        (choice, index) => {
-          const formattedChoice = choice as {
-            equipment_part_id: string;
-            equipment_part_general_name: { equipment_general_name: string };
-          };
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: choice.equipment_part_id,
-            option_order: index,
-            option_value:
-              formattedChoice.equipment_part_general_name
-                .equipment_general_name,
-          };
-        }
-      );
-      setGeneralItemNameChoices(generalItemNameOption);
+        setEquipmentId(equipmentId.option_id);
 
-      createRange(1, formSections.length - 1).forEach((index) => {
-        setValue(
-          `sections.${index}.section_field.0.field_option`,
-          generalItemNameOption
+        const generalItemNameOption = equipmentGeneralNameChoices.map(
+          (choice, index) => {
+            return {
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: choice.equipment_part_id,
+              option_order: index,
+              option_value: choice.equipment_general_name,
+            };
+          }
         );
+        setGeneralItemNameChoices(generalItemNameOption);
+
+        createRange(1, formSections.length - 1).forEach((index) => {
+          setValue(
+            `sections.${index}.section_field.0.field_option`,
+            generalItemNameOption
+          );
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 4),
+          ...newSection.section_field.slice(4, 8).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+          ...newSection.section_field.slice(8),
+        ];
+        updateSection(0, {
+          ...newSection,
+          section_field: generalField,
+        });
+        setEquipmentId("");
+        setGeneralItemNameChoices([]);
+      }
+    } catch (e) {
+      setValue(`sections.0.section_field.${3}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 3),
-        {
-          ...newSection.section_field[3],
-          field_response: "",
-          field_option: [],
-        },
-        ...newSection.section_field.slice(4, 7).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(7),
-      ];
-      updateSection(0, {
-        ...newSection,
-        section_field: generalField,
-      });
-      setEquipmentId("");
-      setGeneralItemNameChoices([]);
     }
   };
 
   const handlePropertyNumberChange = async (value: string | null) => {
     const newSection = getValues(`sections.0`);
+    try {
+      if (value) {
+        const equipmentDescription = await getEquipmentDescription(
+          supabaseClient,
+          {
+            propertyNumber: value,
+          }
+        );
 
-    if (value) {
-      const equipmentDescription = await getEquipmentDescription(
-        supabaseClient,
-        {
-          propertyNumber: value,
-        }
-      );
+        const generalField = [
+          ...newSection.section_field.slice(0, 5),
+          {
+            ...newSection.section_field[5],
+            field_response:
+              equipmentDescription.equipment_description_brand.equipment_brand,
+          },
+          {
+            ...newSection.section_field[6],
+            field_response:
+              equipmentDescription.equipment_description_model.equipment_model,
+          },
+          {
+            ...newSection.section_field[7],
+            field_response:
+              equipmentDescription.equipment_description_serial_number,
+          },
+          ...newSection.section_field.slice(8),
+        ];
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 4),
-        {
-          ...newSection.section_field[4],
-          field_response:
-            equipmentDescription.equipment_description_brand.equipment_brand,
-        },
-        {
-          ...newSection.section_field[5],
-          field_response:
-            equipmentDescription.equipment_description_model.equipment_model,
-        },
-        {
-          ...newSection.section_field[6],
-          field_response:
-            equipmentDescription.equipment_description_serial_number,
-        },
-        ...newSection.section_field.slice(7),
-      ];
-
-      updateSection(0, {
-        ...newSection,
-        section_field: generalField,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 4),
-        ...newSection.section_field.slice(4, 7).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(7),
-      ];
-      updateSection(0, {
-        ...newSection,
-        section_field: generalField,
-      });
-    }
-  };
-
-  const handlePurposeTypeChange = async (value: string | null) => {
-    const newSection = getValues(`sections.0`);
-    if (value) {
-      const fieldIndex =
-        PURPOSE_TYPE_EQUIVALENT_FIELD[value as PURPOSE_TYPE_OPTION_TYPE];
-
-      const generalField = [
-        ...newSection.section_field.slice(0, 10),
-        {
-          ...form.form_section[0].section_field[fieldIndex],
-        },
-      ];
-
-      updateSection(0, {
-        ...newSection,
-        section_field: generalField,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 4),
-        ...newSection.section_field.slice(4, 7).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(7),
-      ];
-      updateSection(0, {
-        ...newSection,
-        section_field: generalField,
+        updateSection(0, {
+          ...newSection,
+          section_field: generalField,
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 5),
+          ...newSection.section_field.slice(5, 8).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+            };
+          }),
+          ...newSection.section_field.slice(8),
+        ];
+        updateSection(0, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.0.section_field.${4}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
@@ -528,46 +506,90 @@ const CreatePEDPartRequestPage = ({
     value: string | null
   ) => {
     const section = getValues(`sections.0`);
-    resetItemSection();
+    try {
+      resetItemSection();
 
-    if (value === "Bulk") {
-      setStoredFields([
-        {
-          ...section.section_field[2],
-          field_response: "",
-        },
-        ...section.section_field.slice(3, 7),
-      ]);
-      const generalField = [
-        ...section.section_field.slice(0, 2),
-        ...section.section_field.slice(7),
-      ];
-      updateSection(0, {
-        ...section,
-        section_field: generalField,
-      });
-    } else if (prevValue === "Bulk") {
-      const generalField = [
-        ...section.section_field.slice(0, 2),
-        ...storedFields,
-        ...section.section_field.slice(2),
-      ];
-      setStoredFields([]);
-      updateSection(0, {
-        ...section,
-        section_field: generalField,
-      });
-    } else {
-      updateSection(0, {
-        ...section,
-        section_field: [
-          ...section.section_field.slice(0, 2),
+      if (value === "Bulk") {
+        setStoredFields([
+          ...section.section_field.slice(3, 8).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+            };
+          }),
+        ]);
+        const generalField = [
+          ...section.section_field.slice(0, 3),
+          ...section.section_field.slice(8),
+        ];
+        updateSection(0, {
+          ...section,
+          section_field: generalField,
+        });
+
+        const data = await getItemSectionChoices(supabaseClient, {});
+        const equipmentGeneralNameChoices = data as {
+          equipment_part_id: string;
+          equipment_general_name: string;
+        }[];
+
+        const generalItemNameOption = equipmentGeneralNameChoices.map(
+          (choice, index) => {
+            return {
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: choice.equipment_part_id,
+              option_order: index,
+              option_value: choice.equipment_general_name,
+            };
+          }
+        );
+        setGeneralItemNameChoices(generalItemNameOption);
+
+        createRange(1, formSections.length - 1).forEach((index) => {
+          setValue(
+            `sections.${index}.section_field.0.field_option`,
+            generalItemNameOption
+          );
+        });
+
+        setEquipmentId("");
+      } else if (prevValue === "Bulk") {
+        const generalField = [
+          ...section.section_field.slice(0, 3),
+          ...storedFields,
+          ...section.section_field.slice(3),
+        ];
+        setStoredFields([]);
+        updateSection(0, {
+          ...section,
+          section_field: generalField,
+        });
+      } else {
+        const generalField = [
+          ...section.section_field.slice(0, 3),
           {
-            ...section.section_field[2],
+            ...section.section_field[3],
             field_response: "",
           },
-          ...section.section_field.slice(3),
-        ],
+          ...section.section_field.slice(4, 8).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+          ...section.section_field.slice(8),
+        ];
+        updateSection(0, {
+          ...section,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.0.section_field.${2}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
@@ -577,66 +599,68 @@ const CreatePEDPartRequestPage = ({
     index: number
   ) => {
     const newSection = getValues(`sections.${index}`);
-    if (value) {
-      const equipmentComponentCategoryChoices = await getItemSectionChoices(
-        supabaseClient,
-        {
+    try {
+      if (value) {
+        const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: value,
-        }
-      );
+        });
 
-      const componentCategoryOption = equipmentComponentCategoryChoices.map(
-        (choice, index) => {
-          const formattedChoice = choice as {
-            equipment_part_id: string;
-            equipment_part_component_category: {
-              equipment_component_category: string;
+        const equipmentComponentCategoryChoices = data as {
+          equipment_part_id: string;
+          equipment_component_category: string;
+        }[];
+
+        const componentCategoryOption = equipmentComponentCategoryChoices.map(
+          (choice, index) => {
+            return {
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: choice.equipment_part_id,
+              option_order: index,
+              option_value: choice.equipment_component_category,
             };
-          };
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: choice.equipment_part_id,
-            option_order: index,
-            option_value:
-              formattedChoice.equipment_part_component_category
-                .equipment_component_category,
-          };
-        }
-      );
+          }
+        );
 
-      const generalField = [
-        { ...newSection.section_field[0] },
-        {
-          ...newSection.section_field[1],
-          field_option: componentCategoryOption,
-        },
-        ...newSection.section_field.slice(2).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    } else {
-      const generalField = [
-        { ...newSection.section_field[0] },
-        ...newSection.section_field.slice(1).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
+        const generalField = [
+          { ...newSection.section_field[0] },
+          {
+            ...newSection.section_field[1],
+            field_option: componentCategoryOption,
+          },
+          ...newSection.section_field.slice(2).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      } else {
+        const generalField = [
+          { ...newSection.section_field[0] },
+          ...newSection.section_field.slice(1).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.${index}.section_field.${0}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
@@ -646,185 +670,205 @@ const CreatePEDPartRequestPage = ({
     index: number
   ) => {
     const newSection = getValues(`sections.${index}`);
-    if (value) {
-      const brandOptionChoices = await getItemSectionChoices(supabaseClient, {
-        equipmentId: equipmentId,
-        generalName: newSection.section_field[0].field_response as string,
-        componentCategory: value,
-      });
-
-      const brandOption = brandOptionChoices.map((choice, index) => {
-        const formattedChoice = choice as {
+    try {
+      if (value) {
+        const data = await getItemSectionChoices(supabaseClient, {
+          equipmentId: equipmentId,
+          generalName: newSection.section_field[0].field_response as string,
+          componentCategory: value,
+        });
+        const brandOptionChoices = data as {
           equipment_part_id: string;
-          equipment_part_brand: {
-            equipment_brand: string;
-          };
-        };
-        return {
-          option_field_id: form.form_section[0].section_field[0].field_id,
-          option_id: choice.equipment_part_id,
-          option_order: index,
-          option_value: formattedChoice.equipment_part_brand.equipment_brand,
-        };
-      });
+          equipment_brand: string;
+        }[];
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 2),
-        {
-          ...newSection.section_field[2],
-          field_option: brandOption,
-        },
-        ...newSection.section_field.slice(3).map((field) => {
+        const brandOption = brandOptionChoices.map((choice, index) => {
           return {
-            ...field,
-            field_response: "",
-            field_option: [],
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: choice.equipment_part_id,
+            option_order: index,
+            option_value: choice.equipment_brand,
           };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 2),
-        ...newSection.section_field.slice(2).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
+        });
+
+        const generalField = [
+          ...newSection.section_field.slice(0, 2),
+          {
+            ...newSection.section_field[2],
+            field_option: brandOption,
+          },
+          ...newSection.section_field.slice(3).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 2),
+          ...newSection.section_field.slice(2).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.${index}.section_field.${1}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
 
   const handleBrandChange = async (value: string | null, index: number) => {
     const newSection = getValues(`sections.${index}`);
-    if (value) {
-      const modelOptionChoices = await getItemSectionChoices(supabaseClient, {
-        equipmentId: equipmentId,
-        generalName: newSection.section_field[0].field_response as string,
-        componentCategory: newSection.section_field[1].field_response as string,
-        brand: value,
-      });
-
-      const modelOption = modelOptionChoices.map((choice, index) => {
-        const formattedChoice = choice as {
+    try {
+      if (value) {
+        const data = await getItemSectionChoices(supabaseClient, {
+          equipmentId: equipmentId,
+          generalName: newSection.section_field[0].field_response as string,
+          componentCategory: newSection.section_field[1]
+            .field_response as string,
+          brand: value,
+        });
+        const modelOptionChoices = data as {
           equipment_part_id: string;
-          equipment_part_model: {
-            equipment_model: string;
-          };
-        };
-        return {
-          option_field_id: form.form_section[0].section_field[0].field_id,
-          option_id: choice.equipment_part_id,
-          option_order: index,
-          option_value: formattedChoice.equipment_part_model.equipment_model,
-        };
-      });
+          equipment_model: string;
+        }[];
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 3),
-        {
-          ...newSection.section_field[3],
-          field_option: modelOption,
-        },
-        ...newSection.section_field.slice(4).map((field) => {
+        const modelOption = modelOptionChoices.map((choice, index) => {
           return {
-            ...field,
-            field_response: "",
-            field_option: [],
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: choice.equipment_part_id,
+            option_order: index,
+            option_value: choice.equipment_model,
           };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 3),
-        ...newSection.section_field.slice(3).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
+        });
+
+        const generalField = [
+          ...newSection.section_field.slice(0, 3),
+          {
+            ...newSection.section_field[3],
+            field_option: modelOption,
+          },
+          ...newSection.section_field.slice(4).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(3).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.${index}.section_field.${2}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
 
   const handleModelChange = async (value: string | null, index: number) => {
     const newSection = getValues(`sections.${index}`);
-    if (value) {
-      const partNumberOptionChoices = await getItemSectionChoices(
-        supabaseClient,
-        {
+    try {
+      if (value) {
+        const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: newSection.section_field[0].field_response as string,
           componentCategory: newSection.section_field[1]
             .field_response as string,
           brand: newSection.section_field[2].field_response as string,
           model: value,
-        }
-      );
-
-      const partNumberOption = partNumberOptionChoices.map((choice, index) => {
-        const formattedChoice = choice as {
+        });
+        const partNumberOptionChoices = data as {
           equipment_part_id: string;
           equipment_part_number: string;
-        };
-        return {
-          option_field_id: form.form_section[0].section_field[0].field_id,
-          option_id: choice.equipment_part_id,
-          option_order: index,
-          option_value: formattedChoice.equipment_part_number,
-        };
-      });
+        }[];
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 4),
-        {
-          ...newSection.section_field[4],
-          field_option: partNumberOption,
-        },
-        ...newSection.section_field.slice(5).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 5),
-        ...newSection.section_field.slice(5).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
+        const partNumberOption = partNumberOptionChoices.map(
+          (choice, index) => {
+            return {
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: choice.equipment_part_id,
+              option_order: index,
+              option_value: choice.equipment_part_number,
+            };
+          }
+        );
+
+        const generalField = [
+          ...newSection.section_field.slice(0, 4),
+          {
+            ...newSection.section_field[4],
+            field_option: partNumberOption,
+          },
+          ...newSection.section_field.slice(5).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 4),
+          ...newSection.section_field.slice(4).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.${index}.section_field.${3}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
@@ -834,40 +878,52 @@ const CreatePEDPartRequestPage = ({
     index: number
   ) => {
     const newSection = getValues(`sections.${index}`);
-    if (value) {
-      const equipmentPartUoM = await getItemUnitOfMeasurement(supabaseClient, {
-        generalName: newSection.section_field[0].field_response as string,
-        componentCategory: newSection.section_field[1].field_response as string,
-        brand: newSection.section_field[2].field_response as string,
-        model: newSection.section_field[3].field_response as string,
-        partNumber: value,
-      });
+    try {
+      if (value) {
+        const equipmentPartUoM = await getItemUnitOfMeasurement(
+          supabaseClient,
+          {
+            generalName: newSection.section_field[0].field_response as string,
+            componentCategory: newSection.section_field[1]
+              .field_response as string,
+            brand: newSection.section_field[2].field_response as string,
+            model: newSection.section_field[3].field_response as string,
+            partNumber: value,
+          }
+        );
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 6),
-        {
-          ...newSection.section_field[6],
-          field_response: equipmentPartUoM,
-        },
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 6),
-        ...newSection.section_field.slice(6).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
+        const generalField = [
+          ...newSection.section_field.slice(0, 6),
+          {
+            ...newSection.section_field[6],
+            field_response: equipmentPartUoM,
+          },
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 5),
+          ...newSection.section_field.slice(5).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.${index}.section_field.${4}.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
@@ -901,7 +957,6 @@ const CreatePEDPartRequestPage = ({
                       onCategoryChange: handleCategoryChange,
                       onEquipmentNameChange: handleEquipmentNameChange,
                       onPropertyNumberChange: handlePropertyNumberChange,
-                      onPurposeTypeChange: handlePurposeTypeChange,
                       onTypeOfOrderChange: handleTypeOfOrderChange,
                       onGeneralItemNameChange: handleGeneralItemNameChange,
                       onComponentCategoryChange: handleComponentCategoryChange,

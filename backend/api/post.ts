@@ -1350,13 +1350,14 @@ export const createEquipmentPart = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     equipmentPartData: EquipmentPartTableInsert;
+    name: string;
     brand: string;
     model: string;
     uom: string;
     category: string;
   }
 ) => {
-  const { equipmentPartData, brand, model, uom, category } = params;
+  const { equipmentPartData, name, brand, model, uom, category } = params;
   const { data, error } = await supabaseClient
     .from("equipment_part_table")
     .insert(equipmentPartData)
@@ -1366,6 +1367,7 @@ export const createEquipmentPart = async (
 
   return {
     ...data,
+    equipment_part_general_name: name,
     equipment_part_brand: brand,
     equipment_part_model: model,
     equipment_part_unit_of_measurement: uom,

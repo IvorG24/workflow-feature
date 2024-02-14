@@ -275,6 +275,10 @@ RETURNS VOID AS $$
       "WIRE",
     ];
 
+    const capacityUoMList = [
+      "Kilogram",
+      "Ton"
+    ]
 
     const TEAM_ID = "a5a28977-6956-45c1-a624-b9e90911502e";
 
@@ -307,6 +311,10 @@ RETURNS VOID AS $$
     // Component Category
     const component_category_input = componentCategoryList.map((category) => `('${category}', '${TEAM_ID}')`).join(',');
     const componentCategoryData = plv8.execute(`INSERT INTO equipment_component_category_table (equipment_component_category, equipment_component_category_team_id) VALUES ${component_category_input} RETURNING *`);
+
+    // Capacity UoM
+    const capacity_uom_input = capacityUoMList.map((uom) => `('${uom}', '${TEAM_ID}')`).join(',');
+    const capacityUoMData = plv8.execute(`INSERT INTO capacity_unit_of_measurement_table (capacity_unit_of_measurement, capacity_unit_of_measurement_team_id) VALUES ${capacity_uom_input} RETURNING *`);
 
     const getInitials = (str) => {
       const words = str.split(" ");

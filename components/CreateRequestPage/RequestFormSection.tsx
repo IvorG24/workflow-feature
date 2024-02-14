@@ -71,7 +71,6 @@ type RequestFormSectionProps = {
     onCategoryChange: (value: string | null) => void;
     onEquipmentNameChange: (value: string | null) => void;
     onPropertyNumberChange: (value: string | null) => void;
-    onPurposeTypeChange: (value: string | null) => void;
     onTypeOfOrderChange: (
       prevValue: string | null,
       value: string | null

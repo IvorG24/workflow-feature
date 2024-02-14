@@ -2,6 +2,7 @@ import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
+import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
@@ -116,6 +117,15 @@ const Page = ({
       case "PED Equipment":
         return (
           <EditPEDEquipmentRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "PED Part":
+        return (
+          <EditPEDPartRequestPage
             request={request}
             projectOptions={projectOptions}
             categoryOptions={categoryOptions}

@@ -221,7 +221,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
         },
       };
 
-      const jiraTicketCommentResponse = await fetch(
+      await fetch(
         `/api/add-comment-to-jira-ticket?jiraTicketKey=${jiraTicketKey}`,
         {
           method: "POST",
@@ -231,14 +231,8 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
           body: JSON.stringify(bodyData),
         }
       );
-
-      if (jiraTicketCommentResponse.ok) {
-        console.log("Jira comment added successfully");
-      } else {
-        console.error("Failed to add comment");
-      }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
 

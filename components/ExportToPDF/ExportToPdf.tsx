@@ -119,19 +119,29 @@ const ExportToPdf = ({
   const requestItems = sectionWithDuplicateList.map((section) => {
     const title = section.section_name;
 
-    const fields = section.section_field.map((field) => {
-      let response = "";
-      if (field.field_response?.request_response) {
-        response = safeParse(field.field_response?.request_response);
-      }
-      const responseValue =
-        field.field_type !== "DATE" ? response : getReadableDate(response);
+    const fields = section.section_field
+      .filter((field) => field.field_response)
+      .map((field) => {
+        let response = "";
+        if (field.field_response?.request_response) {
+          response = safeParse(field.field_response?.request_response);
+        }
 
-      return {
-        label: field.field_name,
-        value: `${responseValue}`,
-      };
-    });
+        switch (field.field_type) {
+          case "DATE":
+            response = getReadableDate(response);
+            break;
+          case "FILE":
+            response = "File";
+          default:
+            response;
+        }
+
+        return {
+          label: field.field_name,
+          value: `${response}`,
+        };
+      });
 
     const newSection = { title, fields: fields.filter((f) => f !== undefined) };
 
