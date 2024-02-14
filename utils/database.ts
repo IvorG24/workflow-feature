@@ -2648,6 +2648,12 @@ export type Database = {
         }
         Returns: Json
       }
+      create_custom_csi: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       create_formsly_premade_forms: {
         Args: {
           input_data: Json

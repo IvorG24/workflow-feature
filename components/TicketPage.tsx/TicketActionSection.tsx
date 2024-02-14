@@ -1,10 +1,22 @@
-import { createNotification, createTicketComment } from "@/backend/api/post";
+import {
+  checkCSICodeDescriptionExists,
+  checkCSICodeExists,
+} from "@/backend/api/get";
+import {
+  createCustomCSI,
+  createNotification,
+  createTicketComment,
+} from "@/backend/api/post";
 import { updateTicketStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
-import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
+import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
+import {
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  TicketType,
+} from "@/utils/types";
 import { Button, Flex, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -15,11 +27,12 @@ import { v4 as uuidv4 } from "uuid";
 
 type Props = {
   ticket: TicketType;
+  ticketForm: CreateTicketFormValues;
   setTicket: Dispatch<SetStateAction<TicketType>>;
   user: CreateTicketPageOnLoad["member"];
 };
 
-const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
+const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
@@ -136,6 +149,59 @@ const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
       ),
     });
 
+  const handleTicketClosing = async () => {
+    switch (ticket.ticket_category) {
+      case "Request Custom CSI":
+        return handleCustomCSIClosing();
+      default:
+        return true;
+    }
+  };
+
+  const handleCustomCSIClosing = async () => {
+    try {
+      setIsLoading(true);
+
+      // check if csi exists
+      const itemName = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`
+      );
+      const csiCodeDescription = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`
+      );
+      const csiCode = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
+      );
+
+      const csiCodeDescriptionExists = await checkCSICodeDescriptionExists(
+        supabaseClient,
+        { csiCodeDescription }
+      );
+
+      const csiCodeExists = await checkCSICodeExists(supabaseClient, {
+        csiCode,
+      });
+
+      if (csiCodeDescriptionExists || csiCodeExists) return false;
+      // add custom csi
+      const csiAdded = await createCustomCSI(supabaseClient, {
+        csiCode,
+        csiCodeDescription,
+        itemName,
+      });
+
+      return csiAdded;
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <Text weight={600}>Ticket Action</Text>
@@ -154,7 +220,16 @@ const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
           size="md"
           color="green"
           loading={isLoading}
-          onClick={() => handleUpdateTicketStatus("CLOSED", null)}
+          onClick={async () => {
+            const canClose = await handleTicketClosing();
+            if (canClose) handleUpdateTicketStatus("CLOSED", null);
+            else {
+              notifications.show({
+                message: "Ticket can't be closed. Please try again later.",
+                color: "orange",
+              });
+            }
+          }}
         >
           Close
         </Button>

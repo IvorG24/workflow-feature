@@ -153,12 +153,13 @@ const TicketPage = ({
           )}
 
           {ticket.ticket_status === "UNDER REVIEW" &&
-            isEditingResponse &&
+            !isEditingResponse &&
             ticket.ticket_requester_team_member_id !== user.team_member_id && (
               <>
                 <Divider mt="md" />
                 <TicketActionSection
                   ticket={ticket}
+                  ticketForm={ticketForm}
                   setTicket={setTicket}
                   user={user}
                 />

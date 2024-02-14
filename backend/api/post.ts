@@ -1429,3 +1429,22 @@ export const editTicket = async (
   if (error) throw error;
   else return true;
 };
+
+// Create custom CSI
+export const createCustomCSI = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemName: string;
+    csiCodeDescription: string;
+    csiCode: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("create_custom_csi", {
+    input_data: {
+      ...params,
+    },
+  });
+  if (error) throw error;
+  console.log(data);
+  return Boolean(data);
+};

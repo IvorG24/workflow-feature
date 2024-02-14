@@ -61,6 +61,139 @@ CREATE TABLE ticket_response_table(
 
 -- END: Ticket Response
 
+ALTER TABLE csi_code_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_section_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_field_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_option_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_response_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON csi_code_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON csi_code_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON csi_code_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_category_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_category_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_section_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_section_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_section_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_field_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_field_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_field_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_option_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_option_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_option_table;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_response_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_response_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_response_table;
+
+--- CSI_CODE_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."csi_code_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."csi_code_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."csi_code_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+--- TICKET_CATEGORY_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_category_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_category_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_category_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+--- TICKET_SECTION_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_section_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_section_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_section_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+--- TICKET_FIELD_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_field_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_field_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_field_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+--- TICKET_OPTION_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_option_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_option_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_option_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
+--- TICKET_RESPONSE_TABLE
+
+CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_response_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_response_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_response_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated 
+USING(true)
+WITH CHECK (true);
+
 INSERT INTO ticket_category_table (ticket_category_id, ticket_category) VALUES
 ('1e9aef8b-cf84-4443-9e07-d9ad2461a301', 'General'),
 ('a2cfde15-1b4a-41b2-8415-08221148ca2d', 'Feature Request'),
@@ -646,6 +779,66 @@ RETURNS JSON as $$
 $$ LANGUAGE plv8;
 
 -- End: Assign ticket
+
+
+-- Start: Create custom csi
+
+CREATE OR REPLACE FUNCTION create_custom_csi(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      itemName,
+      csiCodeDescription,
+      csiCode
+    } = input_data;
+    
+    const csiCodeArray = csiCode.split(" ");
+    const csi_code_division_id = csiCodeArray[0];
+    const csi_code_level_two_major_group_id = csiCodeArray[1][0];
+    const csi_code_level_two_minor_group_id = csiCodeArray[1][1];
+    const csi_code_level_three_id = csiCodeArray[2];
+
+    const referrence = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
+        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}';
+    `)[0];
+
+    if(referrence){
+    const csi = plv8.execute(`
+      INSERT INTO csi_code_table (csi_code_section, csi_code_division_id, csi_code_division_description, csi_code_level_two_major_group_id,csi_code_level_two_major_group_description, csi_code_level_two_minor_group_id, csi_code_level_two_minor_group_description, csi_code_level_three_id, csi_code_level_three_description) 
+      VALUES ('${csiCode}','${csi_code_division_id}','${referrence.csi_code_division_description}','${csi_code_level_two_major_group_id}','${referrence.csi_code_level_two_major_group_description}','${csi_code_level_two_minor_group_id}','${referrence.csi_code_level_two_minor_group_description}','${csi_code_level_three_id}','${csiCodeDescription}') 
+      RETURNING *;
+     `)[0];
+
+    const item = plv8.execute(`
+      SELECT *
+      FROM item_table
+      WHERE item_general_name = '${itemName}'
+    `)[0];
+
+    const itemDivision = plv8.execute(`
+      INSERT INTO item_division_table (item_division_value, item_division_item_id) 
+      VALUES ('${csi_code_division_id}','${item.item_id}') 
+      RETURNING *;
+     `)[0];
+
+
+     returnData = Boolean(csi) && Boolean(itemDivision)
+    }else{
+      returnData = false
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create custom csi
 
 -- Start: Create ticket
 
