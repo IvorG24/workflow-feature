@@ -91,6 +91,7 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_option_ta
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_response_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_response_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_response_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON ticket_response_table;
 
 --- CSI_CODE_TABLE
 
@@ -193,6 +194,11 @@ AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
+
+CREATE POLICY "Allow DELETE for authenticated users" ON "public"."ticket_response_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated 
+USING(true);
 
 INSERT INTO ticket_category_table (ticket_category_id, ticket_category) VALUES
 ('1e9aef8b-cf84-4443-9e07-d9ad2461a301', 'General'),
@@ -597,7 +603,9 @@ RETURNS JSON as $$
         ...section,
         ticket_section_fields: section.ticket_section_fields.map(field=>({
           ...field,
-          ticket_field_response: field.ticket_field_response[0].ticket_response_value
+          ticket_field_response: field.ticket_field_response[0].ticket_response_value,
+          ticket_field_response_referrence: field.ticket_field_response[0].ticket_response_value,
+          ticket_field_response_id: field.ticket_field_response[0].ticket_response_id
         }))
       }))
     }

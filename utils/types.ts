@@ -1411,6 +1411,8 @@ export type TicketSection = TicketSectionTableRow & {
   ticket_section_fields: (TicketFieldTableRow & {
     ticket_field_option: string[] | { label: string; value: string }[];
     ticket_field_response?: unknown;
+    ticket_field_response_referrence?: unknown;
+    ticket_field_response_id?: string;
   })[];
 };
 

@@ -175,13 +175,12 @@ const TicketRequestCustomCSIForm = ({
           )}
         >
           {ticketSections.map((ticketSection, ticketSectionIdx) => (
-            <>
-              <TicketFormSection
-                category={category}
-                ticketSection={ticketSection}
-                ticketSectionIdx={ticketSectionIdx}
-              />
-            </>
+            <TicketFormSection
+              category={category}
+              ticketSection={ticketSection}
+              ticketSectionIdx={ticketSectionIdx}
+              key={ticketSectionIdx}
+            />
           ))}
           <Button type="submit" mt="lg" fullWidth>
             {isEdit ? "Save Changes" : "Submit"}

@@ -45,8 +45,7 @@ const TicketRequestItemCSIForm = ({
   const {
     fields: ticketSections,
     replace: replaceSection,
-    remove: removeSection,
-    insert: insertSection,
+    update: updateSection,
   } = useFieldArray({
     control,
     name: "ticket_sections",
@@ -175,8 +174,7 @@ const TicketRequestItemCSIForm = ({
         },
       ];
 
-      removeSection(index);
-      insertSection(index, {
+      updateSection(index, {
         ...newSection,
         ticket_section_fields: generalField,
       });
@@ -190,8 +188,7 @@ const TicketRequestItemCSIForm = ({
           };
         }),
       ];
-      removeSection(index);
-      insertSection(index, {
+      updateSection(index, {
         ...newSection,
         ticket_section_fields: generalField,
       });
@@ -213,16 +210,15 @@ const TicketRequestItemCSIForm = ({
           )}
         >
           {ticketSections.map((ticketSection, ticketSectionIdx) => (
-            <>
-              <TicketFormSection
-                category={category}
-                ticketSection={ticketSection}
-                ticketSectionIdx={ticketSectionIdx}
-                requestItemCSIMethods={{
-                  onCSICodeChange: handleCSICodeChange,
-                }}
-              />
-            </>
+            <TicketFormSection
+              category={category}
+              ticketSection={ticketSection}
+              ticketSectionIdx={ticketSectionIdx}
+              requestItemCSIMethods={{
+                onCSICodeChange: handleCSICodeChange,
+              }}
+              key={ticketSection.field_section_duplicatable_id}
+            />
           ))}
           <Button type="submit" mt="lg" fullWidth>
             {isEdit ? "Save Changes" : "Submit"}

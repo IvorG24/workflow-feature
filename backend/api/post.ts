@@ -1370,7 +1370,10 @@ export const editTicket = async (
     for (const field of section.ticket_section_fields) {
       let responseValue = field.ticket_field_response;
       if (responseValue) {
-        if (field.ticket_field_type === "FILE") {
+        if (
+          field.ticket_field_type === "FILE" &&
+          typeof responseValue !== "string"
+        ) {
           const fileResponse = responseValue as File;
           const uploadId = `${field.ticket_field_id}${
             section.ticket_section_id
@@ -1445,6 +1448,5 @@ export const createCustomCSI = async (
     },
   });
   if (error) throw error;
-  console.log(data);
   return Boolean(data);
 };

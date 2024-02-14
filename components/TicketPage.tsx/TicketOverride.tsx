@@ -29,10 +29,12 @@ const TicketOverride = ({
       ...section,
       ticket_section_fields: section.ticket_section_fields.map((field) => ({
         ...field,
-        ticket_field_response:
-          typeof field.ticket_field_response === "string"
-            ? parseJSONIfValid(`${field.ticket_field_response}`)
-            : field.ticket_field_response,
+        ticket_field_response: parseJSONIfValid(
+          `${field.ticket_field_response}`
+        ),
+        ticket_field_response_referrence: parseJSONIfValid(
+          `${field.ticket_field_response_referrence}`
+        ),
       })),
     })),
   };

@@ -90,6 +90,7 @@ const TicketForm = ({
         ticketId: `${ticketId}`,
         ticketFormValues: data,
       });
+
       if (!edited) return;
       if (onOverrideTicket) onOverrideTicket();
       if (onClose) onClose();
