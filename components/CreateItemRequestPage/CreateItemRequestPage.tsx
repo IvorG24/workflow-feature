@@ -82,6 +82,7 @@ const CreateItemRequestPage = ({
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
   const [isSearchingSupplier, setIsSearchingSupplier] = useState(false);
   const [isSearchingCSI, setIsSearchingCSI] = useState(false);
+  const [itemDivisionIdList, setItemDivisionIdList] = useState<string[][]>([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -305,162 +306,176 @@ const CreateItemRequestPage = ({
   ) => {
     const newSection = getValues(`sections.${index}`);
 
-    if (value) {
-      const item = await getItem(supabaseClient, {
-        teamId: team.team_id,
-        itemName: value,
-      });
-      const isWithDescription = Boolean(item.item_level_three_description);
-      let csiCodeList: CSICodeTableRow[] = [];
+    try {
+      if (value) {
+        const item = await getItem(supabaseClient, {
+          teamId: team.team_id,
+          itemName: value,
+        });
+        const isWithDescription = Boolean(item.item_level_three_description);
+        let csiCodeList: CSICodeTableRow[] = [];
 
-      if (item.item_level_three_description) {
-        csiCodeList = await getLevelThreeDescription(supabaseClient, {
-          levelThreeDescription: item.item_level_three_description,
+        if (item.item_level_three_description) {
+          csiCodeList = await getLevelThreeDescription(supabaseClient, {
+            levelThreeDescription: item.item_level_three_description,
+          });
+        } else {
+          csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
+            divisionIdList: item.item_division_id_list,
+          });
+        }
+
+        const generalField = [
+          {
+            ...newSection.section_field[0],
+          },
+          {
+            ...newSection.section_field[1],
+            field_response: item.item_unit,
+          },
+          {
+            ...newSection.section_field[2],
+          },
+          {
+            ...newSection.section_field[3],
+            field_response: item.item_gl_account,
+          },
+          {
+            ...newSection.section_field[4],
+            field_response: isWithDescription
+              ? csiCodeList[0].csi_code_level_three_description
+              : "",
+            field_option: csiCodeList.map((csiCode, index) => {
+              return {
+                option_field_id: form.form_section[0].section_field[0].field_id,
+                option_id: csiCode.csi_code_id,
+                option_order: index,
+                option_value: csiCode.csi_code_level_three_description,
+              };
+            }),
+          },
+          ...newSection.section_field.slice(5, 9).map((field) => {
+            if (isWithDescription) {
+              switch (field.field_name) {
+                case "CSI Code":
+                  return {
+                    ...field,
+                    field_response: csiCodeList[0].csi_code_section,
+                  };
+                case "Division Description":
+                  return {
+                    ...field,
+                    field_response:
+                      csiCodeList[0].csi_code_division_description,
+                  };
+                case "Level 2 Major Group Description":
+                  return {
+                    ...field,
+                    field_response:
+                      csiCodeList[0].csi_code_level_two_major_group_description,
+                  };
+                case "Level 2 Minor Group Description":
+                  return {
+                    ...field,
+                    field_response:
+                      csiCodeList[0].csi_code_level_two_minor_group_description,
+                  };
+                default:
+                  return {
+                    ...field,
+                    field_response: "",
+                  };
+              }
+            } else {
+              return {
+                ...field,
+                field_response: "",
+              };
+            }
+          }),
+          {
+            ...newSection.section_field[9],
+          },
+        ];
+        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
+
+        const newFields = item.item_description.map((description) => {
+          const options = description.item_description_field.map(
+            (options, optionIndex) => {
+              return {
+                option_field_id: description.item_field.field_id,
+                option_id: options.item_description_field_id,
+                option_order: optionIndex + 1,
+                option_value: `${options.item_description_field_value}${
+                  description.item_description_is_with_uom
+                    ? ` ${options.item_description_field_uom[0].item_description_field_uom}`
+                    : ""
+                }`,
+              };
+            }
+          );
+
+          const index = options.findIndex(
+            (value) => value.option_value === "Any"
+          );
+          if (index !== -1) {
+            const anyOption = options[index];
+            options.splice(index, 1);
+            options.unshift({ ...anyOption });
+          }
+
+          return {
+            ...description.item_field,
+            field_section_duplicatable_id: duplicatableSectionId,
+            field_option: options,
+            field_response: index !== -1 ? "Any" : "",
+          };
+        });
+
+        updateSection(index, {
+          ...newSection,
+          section_field: [
+            ...generalField.map((field) => {
+              return {
+                ...field,
+                field_section_duplicatable_id: duplicatableSectionId,
+              };
+            }),
+            ...newFields,
+          ],
+        });
+
+        setItemDivisionIdList((prev) => {
+          prev[index] = item.item_division_id_list;
+          return prev;
         });
       } else {
-        csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-          divisionIdList: item.item_division_id_list,
-        });
-      }
-
-      const generalField = [
-        {
-          ...newSection.section_field[0],
-        },
-        {
-          ...newSection.section_field[1],
-          field_response: item.item_unit,
-        },
-        {
-          ...newSection.section_field[2],
-        },
-        {
-          ...newSection.section_field[3],
-          field_response: item.item_gl_account,
-        },
-        {
-          ...newSection.section_field[4],
-          field_response: isWithDescription
-            ? csiCodeList[0].csi_code_level_three_description
-            : "",
-          field_option: csiCodeList.map((csiCode, index) => {
-            return {
-              option_field_id: form.form_section[0].section_field[0].field_id,
-              option_id: csiCode.csi_code_id,
-              option_order: index,
-              option_value: csiCode.csi_code_level_three_description,
-            };
-          }),
-        },
-        ...newSection.section_field.slice(5, 9).map((field) => {
-          if (isWithDescription) {
-            switch (field.field_name) {
-              case "CSI Code":
-                return {
-                  ...field,
-                  field_response: csiCodeList[0].csi_code_section,
-                };
-              case "Division Description":
-                return {
-                  ...field,
-                  field_response: csiCodeList[0].csi_code_division_description,
-                };
-              case "Level 2 Major Group Description":
-                return {
-                  ...field,
-                  field_response:
-                    csiCodeList[0].csi_code_level_two_major_group_description,
-                };
-              case "Level 2 Minor Group Description":
-                return {
-                  ...field,
-                  field_response:
-                    csiCodeList[0].csi_code_level_two_minor_group_description,
-                };
-              default:
-                return {
-                  ...field,
-                  field_response: "",
-                };
-            }
-          } else {
+        const generalField = [
+          newSection.section_field[0],
+          {
+            ...newSection.section_field[1],
+            field_response: "",
+          },
+          newSection.section_field[2],
+          ...newSection.section_field.slice(3, 9).map((field) => {
             return {
               ...field,
               field_response: "",
-            };
-          }
-        }),
-        {
-          ...newSection.section_field[9],
-        },
-      ];
-      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-
-      const newFields = item.item_description.map((description) => {
-        const options = description.item_description_field.map(
-          (options, optionIndex) => {
-            return {
-              option_field_id: description.item_field.field_id,
-              option_id: options.item_description_field_id,
-              option_order: optionIndex + 1,
-              option_value: `${options.item_description_field_value}${
-                description.item_description_is_with_uom
-                  ? ` ${options.item_description_field_uom[0].item_description_field_uom}`
-                  : ""
-              }`,
-            };
-          }
-        );
-
-        const index = options.findIndex(
-          (value) => value.option_value === "Any"
-        );
-        if (index !== -1) {
-          const anyOption = options[index];
-          options.splice(index, 1);
-          options.unshift({ ...anyOption });
-        }
-
-        return {
-          ...description.item_field,
-          field_section_duplicatable_id: duplicatableSectionId,
-          field_option: options,
-          field_response: index !== -1 ? "Any" : "",
-        };
-      });
-
-      updateSection(index, {
-        ...newSection,
-        section_field: [
-          ...generalField.map((field) => {
-            return {
-              ...field,
-              field_section_duplicatable_id: duplicatableSectionId,
+              field_option: [],
             };
           }),
-          ...newFields,
-        ],
-      });
-    } else {
-      const generalField = [
-        newSection.section_field[0],
-        {
-          ...newSection.section_field[1],
-          field_response: "",
-        },
-        newSection.section_field[2],
-        ...newSection.section_field.slice(3, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-            field_option: [],
-          };
-        }),
-        newSection.section_field[9],
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
+          newSection.section_field[9],
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.${index}.section_field.0.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
@@ -468,56 +483,64 @@ const CreateItemRequestPage = ({
   const handleCSICodeChange = async (index: number, value: string | null) => {
     const newSection = getValues(`sections.${index}`);
 
-    if (value) {
-      const csiCode = await getCSICode(supabaseClient, { csiCode: value });
+    try {
+      if (value) {
+        const csiCode = await getCSICode(supabaseClient, { csiCode: value });
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 5),
-        {
-          ...newSection.section_field[5],
-          field_response: csiCode?.csi_code_section,
-        },
-        {
-          ...newSection.section_field[6],
-          field_response: csiCode?.csi_code_division_description,
-        },
-        {
-          ...newSection.section_field[7],
-          field_response: csiCode?.csi_code_level_two_major_group_description,
-        },
-        {
-          ...newSection.section_field[8],
-          field_response: csiCode?.csi_code_level_two_minor_group_description,
-        },
-        ...newSection.section_field.slice(9),
-      ];
-      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
+        const generalField = [
+          ...newSection.section_field.slice(0, 5),
+          {
+            ...newSection.section_field[5],
+            field_response: csiCode?.csi_code_section,
+          },
+          {
+            ...newSection.section_field[6],
+            field_response: csiCode?.csi_code_division_description,
+          },
+          {
+            ...newSection.section_field[7],
+            field_response: csiCode?.csi_code_level_two_major_group_description,
+          },
+          {
+            ...newSection.section_field[8],
+            field_response: csiCode?.csi_code_level_two_minor_group_description,
+          },
+          ...newSection.section_field.slice(9),
+        ];
+        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
-      updateSection(index, {
-        ...newSection,
-        section_field: [
-          ...generalField.map((field) => {
+        updateSection(index, {
+          ...newSection,
+          section_field: [
+            ...generalField.map((field) => {
+              return {
+                ...field,
+                field_section_duplicatable_id: duplicatableSectionId,
+              };
+            }),
+          ],
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 4),
+          ...newSection.section_field.slice(4, 9).map((field) => {
             return {
               ...field,
-              field_section_duplicatable_id: duplicatableSectionId,
+              field_response: "",
             };
           }),
-        ],
-      });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 4),
-        ...newSection.section_field.slice(4, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(9),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
+          ...newSection.section_field.slice(9),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      setValue(`sections.${index}.section_field.4.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     }
   };
@@ -585,11 +608,14 @@ const CreateItemRequestPage = ({
 
   const csiSearch = async (value: string, index: number) => {
     if (!teamMember?.team_member_team_id) return;
+    if (!itemDivisionIdList[index]) return;
+
     try {
       setIsSearchingCSI(true);
       const csiList = await getCSI(supabaseClient, {
         csi: value ?? "",
         fieldId: form.form_section[1].section_field[4].field_id,
+        divisionIdList: itemDivisionIdList[index],
       });
       setValue(`sections.${index}.section_field.4.field_option`, csiList);
     } catch (e) {

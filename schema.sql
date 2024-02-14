@@ -10529,7 +10529,9 @@ RETURNS JSON AS $$
       }
     });
 
-    returnData = sectionWithDuplicateList
+    const itemDivisionIdList = [];
+
+    const sectionData = sectionWithDuplicateList
       .slice(index, index + 10).map((section) => {
         const isWithPreferredSupplier =
           section.section_field[9].field_name === "Preferred Supplier";
@@ -10540,7 +10542,7 @@ RETURNS JSON AS $$
 
         const item = plv8.execute(`
           SELECT *
-          FROM item_table 
+          FROM item_table
           WHERE item_team_id = '${teamId}'
             AND item_general_name = '${itemName}'
             AND item_is_disabled = false
@@ -10548,6 +10550,10 @@ RETURNS JSON AS $$
         `)[0];
 
         if(!item) return null;
+
+        const divisionList = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${item.item_id}'`);
+
+        itemDivisionIdList.push(divisionList.map(division => division.item_division_value));
 
         const itemDescriptionList = plv8.execute(`
           SELECT * 
@@ -10668,6 +10674,11 @@ RETURNS JSON AS $$
           ],
         };
       }).filter(value => value);
+    
+    returnData = {
+      sectionData,
+      itemDivisionIdList
+    }
  });
  return returnData;
 $$ LANGUAGE plv8;

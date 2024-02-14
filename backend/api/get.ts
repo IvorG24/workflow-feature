@@ -2604,14 +2604,16 @@ export const getSupplier = async (
 // Get CSI
 export const getCSI = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { csi: string; fieldId: string }
+  params: { csi: string; fieldId: string; divisionIdList: string[] }
 ) => {
-  const { csi, fieldId } = params;
+  const { csi, fieldId, divisionIdList } = params;
+
   const { data, error } = await supabaseClient
     .from("csi_code_table")
     .select("csi_code_level_three_description")
     .ilike("csi_code_level_three_description", `${csi}%`)
     .order("csi_code_level_three_description", { ascending: true })
+    .in("csi_code_division_id", divisionIdList)
     .limit(100);
   if (error) throw error;
 
@@ -3438,11 +3440,10 @@ export const getCSICode = async (
   const { data, error } = await supabaseClient
     .from("csi_code_table")
     .select("*")
-    .eq("csi_code_level_three_description", csiCode)
-    .single();
+    .eq("csi_code_level_three_description", csiCode);
   if (error) throw error;
 
-  return data as CSICodeTableRow;
+  return data[0] as CSICodeTableRow;
 };
 
 // Fetch all item division option
@@ -5285,7 +5286,12 @@ export const getSectionInEditRequest = async (
     .select("*");
   if (error) throw error;
 
-  return data as RequestWithResponseType["request_form"]["form_section"];
+  const formattedData = data as unknown as {
+    sectionData: RequestWithResponseType["request_form"]["form_section"];
+    itemDivisionIdList: string[][];
+  };
+
+  return formattedData;
 };
 
 // Get query data
