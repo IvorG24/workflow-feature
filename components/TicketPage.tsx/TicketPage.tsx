@@ -4,6 +4,7 @@ import { assignTicket } from "@/backend/api/update";
 import useRealtimeTicketCommentList from "@/hooks/useRealtimeTicketCommentList";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { READ_ONLY_TICKET_CATEGORY_LIST } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -53,7 +54,8 @@ const TicketPage = ({
   });
 
   const canUserEditResponse =
-    ticket.ticket_approver_team_member_id === user.team_member_id;
+    ticket.ticket_approver_team_member_id === user.team_member_id &&
+    !READ_ONLY_TICKET_CATEGORY_LIST.includes(ticket.ticket_category);
 
   const handleOverrideTicket = async () => {
     try {
@@ -139,11 +141,11 @@ const TicketPage = ({
             canUserEditResponse={canUserEditResponse}
             isEditingResponse={isEditingResponse}
             setIsEditingResponse={setIsEditingResponse}
-            setTicketForm={setTicketForm}
           />
 
           {isEditingResponse && (
             <TicketOverride
+              ticket={ticket}
               category={ticket.ticket_category}
               ticketForm={ticketForm}
               onOverrideTicket={() => handleOverrideTicket()}

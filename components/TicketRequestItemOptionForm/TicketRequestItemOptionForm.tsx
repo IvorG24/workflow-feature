@@ -22,6 +22,9 @@ type Props = {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
   onOverrideTicket?: () => void;
   onClose?: () => void;
+  onOverrideResponseComment: (
+    formValues: CreateTicketFormValues
+  ) => Promise<void>;
 };
 
 const TicketRequestItemOptionForm = ({
@@ -32,6 +35,7 @@ const TicketRequestItemOptionForm = ({
   setIsLoading,
   onOverrideTicket,
   onClose,
+  onOverrideResponseComment,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -92,6 +96,8 @@ const TicketRequestItemOptionForm = ({
         ticketFormValues: data,
       });
       if (!edited) return;
+
+      await onOverrideResponseComment(data);
       if (onOverrideTicket) onOverrideTicket();
       if (onClose) onClose();
 
@@ -170,7 +176,7 @@ const TicketRequestItemOptionForm = ({
       const newSection = {
         ...sectionMatch,
         field_section_duplicatable_id: sectionDuplicatableId,
-        ticket_section_field: duplicatedFieldsWithDuplicatableId,
+        ticket_section_fields: duplicatedFieldsWithDuplicatableId,
       };
       insertSection(sectionLastIndex + 1, newSection);
       return;

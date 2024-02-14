@@ -17,17 +17,6 @@ export const DEFAULT_NUMBER_SSOT_ROWS = 10;
 export const DEFAULT_ITEM_ANALYTICS_ROWS = 20;
 export const DEFAULT_ON_SCROLL_LIMIT = 10;
 
-export const TICKET_CATEGORY_LIST = [
-  "General",
-  "Feature Request",
-  "Item Request",
-  "Request Custom CSI",
-  "Request Item CSI",
-  "Request Item Option",
-  "Incident Report for Employees",
-  "Bug Report",
-];
-
 export const READ_ONLY_TICKET_CATEGORY_LIST = [
   "Incident Report for Employees",
   "Bug Report",

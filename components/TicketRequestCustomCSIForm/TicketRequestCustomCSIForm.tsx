@@ -24,6 +24,9 @@ type Props = {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
   onOverrideTicket?: () => void;
   onClose?: () => void;
+  onOverrideResponseComment: (
+    formValues: CreateTicketFormValues
+  ) => Promise<void>;
 };
 
 const TicketRequestCustomCSIForm = ({
@@ -34,6 +37,7 @@ const TicketRequestCustomCSIForm = ({
   setIsLoading,
   onOverrideTicket,
   onClose,
+  onOverrideResponseComment,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
@@ -115,6 +119,8 @@ const TicketRequestCustomCSIForm = ({
         ticketFormValues: data,
       });
       if (!edited) return;
+
+      await onOverrideResponseComment(data);
       if (onOverrideTicket) onOverrideTicket();
       if (onClose) onClose();
 
