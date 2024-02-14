@@ -1,5 +1,4 @@
 import { formatDate } from "@/utils/constant";
-import { toTitleCase } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TicketType } from "@/utils/types";
 import {
@@ -73,7 +72,7 @@ const TicketDetailSection = ({ ticket }: Props) => {
       <Divider />
       <Stack spacing={4}>
         <Text>Category</Text>
-        <Text weight={600}>{toTitleCase(ticket.ticket_category)}</Text>
+        <Text weight={600}>{ticket.ticket_category}</Text>
       </Stack>
       <Stack spacing={4}>
         <Text>Status</Text>

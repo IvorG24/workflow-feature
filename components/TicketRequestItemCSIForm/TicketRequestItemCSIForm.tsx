@@ -94,8 +94,17 @@ const TicketRequestItemCSIForm = ({
   const handleEditTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
-      if (!category && !ticketId && user) return;
 
+      // check if csi exists
+      const itemName =
+        data.ticket_sections[0].ticket_section_fields[0].ticket_field_response;
+      const csiCode =
+        data.ticket_sections[0].ticket_section_fields[2].ticket_field_response;
+      const divisionId = `${csiCode}`.split(" ")[0];
+      const csiExists = await checkIfCSIExists(`${divisionId}`, `${itemName}`);
+      if (csiExists) return;
+
+      if (!category && !ticketId && user) return;
       const edited = await editTicket(supabaseClient, {
         ticketId: `${ticketId}`,
         ticketFormValues: data,

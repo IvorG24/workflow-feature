@@ -95,6 +95,19 @@ const TicketRequestCustomCSIForm = ({
   const handleEditTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
+
+      // check if csi exists
+      const csiCodeDescription =
+        data.ticket_sections[0].ticket_section_fields[1].ticket_field_response;
+      const csiCode =
+        data.ticket_sections[0].ticket_section_fields[2].ticket_field_response;
+
+      const csiExists = await checkIfCSIExists(
+        `${csiCode}`,
+        `${csiCodeDescription}`
+      );
+      if (csiExists) return;
+
       if (!category && !ticketId && user) return;
 
       const edited = await editTicket(supabaseClient, {
