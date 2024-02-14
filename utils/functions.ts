@@ -669,7 +669,7 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       fullName: "Ronald V. Sim",
       jiraAccountId:
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:fa1eeb31-2e4c-44ec-bb6c-f55732861c0f",
-      emailAddress: "jonalyn.cabrera@gmail.com",
+      emailAddress: "simronald11@gmail.com",
     },
     {
       items: ["LUZ-23-003 MORONG PARK"],
@@ -737,14 +737,14 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       fullName: "Jovenyle Battalao",
       jiraAccountId:
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d0caa6e9-94c2-4427-bddf-6b4fef814da5",
-      emailAddress: "levisaturinas.scic@gmail.com",
+      emailAddress: "battalaojovenyle25@gmail.com",
     },
     {
       items: ["LUZ-21-009 TUMAUINI HEPPP"],
       fullName: "Richard Aguinaldo",
       jiraAccountId:
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:777da3c6-162b-4990-a534-5bcc6bbc9003",
-      emailAddress: "levisaturinas.scic@gmail.com",
+      emailAddress: "richardaguinaldo11@gmail.com",
     },
     {
       items: ["LUZ-22-002 500KV BACKBONE S2"],
