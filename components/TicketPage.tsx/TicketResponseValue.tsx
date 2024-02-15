@@ -102,7 +102,7 @@ const TicketResponseValue = ({ category, field }: Props) => {
                   {getFileType(fileName)}
                 </Avatar>
                 <Text truncate size="xs">
-                  {shortenFileName(fileName, 60)}
+                  {shortenFileName(fileName, 30)}
                 </Text>
               </Flex>
             }

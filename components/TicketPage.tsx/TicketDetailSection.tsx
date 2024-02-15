@@ -5,7 +5,7 @@ import {
   Avatar,
   Badge,
   Divider,
-  Group,
+  Flex,
   Stack,
   Text,
   Title,
@@ -22,7 +22,8 @@ const TicketDetailSection = ({ ticket }: Props) => {
   return (
     <Stack>
       <Title order={3}>Ticket Request</Title>
-      <Group spacing={8}>
+
+      <Flex gap="xs">
         <Avatar
           size="sm"
           src={requester.team_member_user.user_avatar}
@@ -42,9 +43,9 @@ const TicketDetailSection = ({ ticket }: Props) => {
             {formatDate(new Date(ticket.ticket_date_created))}
           </Text>
         </Text>
-      </Group>
+      </Flex>
       {approver && (
-        <Group spacing={8}>
+        <Flex gap="xs">
           <Avatar
             size="sm"
             src={approver.team_member_user.user_avatar}
@@ -67,7 +68,7 @@ const TicketDetailSection = ({ ticket }: Props) => {
                 formatDate(new Date(ticket.ticket_status_date_updated))}
             </Text>
           </Text>
-        </Group>
+        </Flex>
       )}
       <Divider />
       <Stack spacing={4}>
