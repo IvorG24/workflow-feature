@@ -492,10 +492,11 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "LUZ-21-006 UPPER WAWA DAM",
         "LUZ-19-002 SRE 40MLD MAGDIWANG",
         "PILILIA YARD",
-        "ALAMINOS YARD",
         "LUZ-22-004 MERALCO HDD 3",
         "LUZ-23-005 MRT 7 NORTH AVE",
         "LUZ-22-002 500KV BACKBONE S2",
+        "LUZ-19-021 MERALCO HDD PROJECT",
+        "LUZ-18-033 SFEXWIDENING",
       ],
       fullName: "Rey Berlon",
       jiraAccountId:
@@ -512,7 +513,11 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "LUZ-22-009 SOLID LF MAIN BLDG",
         "LUZ-22-010 PHILIP MORRIS",
         "LUZ-23-002 EAST BAY 200MLD WTP",
-        " LUZ-23-009 KALAYAAN 2 WIND", // added on 2024-02-01 16:14 info from Bry Paras
+        " LUZ-23-009 KALAYAAN 2 WIND",
+        "ALAMINOS YARD",
+        "LUZ-23-006 LAND DEV LEMERY P1",
+        "SANTISIMO YARD",
+        "LUZ-12-051 CATUIRAN",
       ],
       fullName: "Vincent Andallo- Luzon C Area Lead (Active)",
       jiraAccountId:
@@ -532,24 +537,11 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "VIZ-22-003 LOBOC 2",
         "MIN-15-077  MW SIGUIL HYDRO",
         "VIZ-23-008 SAN ISIDRO SOLAR",
+        "MIN-14-026B MANOLO",
       ],
       fullName: "Christopher Waga",
       jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
       emailAddress: "christopher.waga@staclara.com.ph",
-    },
-    {
-      items: ["LUZ-12-051 CATUIRAN"],
-      fullName: "Jay Quiroz",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d8344027-3578-4f50-8b8a-11fe72244208",
-      emailAddress: "jayquiroz.santaclara@gmail.com",
-    },
-    {
-      items: ["LUZ-19-021 MERALCO HDD PROJECT"],
-      fullName: "amernito villanueva",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:7df296bc-1270-49b3-9690-f19250338d98",
-      emailAddress: "amernito.villanueva@staclara.com.ph",
     },
   ];
 
