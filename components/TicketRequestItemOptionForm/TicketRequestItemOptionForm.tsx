@@ -22,7 +22,7 @@ type Props = {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
   onOverrideTicket?: () => void;
   onClose?: () => void;
-  onOverrideResponseComment: (
+  onOverrideResponseComment?: (
     formValues: CreateTicketFormValues
   ) => Promise<void>;
 };
@@ -97,7 +97,7 @@ const TicketRequestItemOptionForm = ({
       });
       if (!edited) return;
 
-      await onOverrideResponseComment(data);
+      if (onOverrideResponseComment) await onOverrideResponseComment(data);
       if (onOverrideTicket) onOverrideTicket();
       if (onClose) onClose();
 
