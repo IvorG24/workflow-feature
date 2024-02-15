@@ -25,7 +25,16 @@ import {
 } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
-import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Accordion,
+  Container,
+  Flex,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -539,26 +548,39 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
           isOnlyWithResponse
         />
 
-        <Stack spacing="xl">
-          {sectionWithDuplicateList.slice(1).map((section, idx) => {
-            if (
-              idx === 0 &&
-              section.section_field[0].field_response?.request_response ===
-                '"null"'
-            )
-              return;
+        <Accordion>
+          <Accordion.Item key="item" value="item">
+            <Paper shadow="xs">
+              <Accordion.Control>
+                <Title order={4} color="dimmed">
+                  Item Section
+                </Title>
+              </Accordion.Control>
+            </Paper>
+            <Accordion.Panel>
+              <Stack spacing="xl" mt="lg">
+                {sectionWithDuplicateList.slice(1).map((section, idx) => {
+                  if (
+                    idx === 0 &&
+                    section.section_field[0].field_response
+                      ?.request_response === '"null"'
+                  )
+                    return;
 
-            return (
-              <RequestSection
-                key={section.section_id + idx}
-                section={section}
-                isFormslyForm={true}
-                isOnlyWithResponse
-                index={idx + 1}
-              />
-            );
-          })}
-        </Stack>
+                  return (
+                    <RequestSection
+                      key={section.section_id + idx}
+                      section={section}
+                      isFormslyForm={true}
+                      isOnlyWithResponse
+                      index={idx + 1}
+                    />
+                  );
+                })}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
 
         <PEDConsumableSummary
           summaryData={sectionWithDuplicateList.slice(1)}
