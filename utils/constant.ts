@@ -40,6 +40,14 @@ export const SLA_LIST = [
   },
 ];
 
+export const REPORT_LIST = [
+  {
+    title: "Incident Report for Employees",
+    description: "Track and analyze report for a user.",
+    href: "/report/incident-report",
+  },
+];
+
 export const UUID_EXP =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
 
@@ -1214,4 +1222,25 @@ export const createTicketFilePlaceholder = (url: string) => {
   const fileName = urlArray[urlArray.length - 2].replace("%20", " ");
   const fileContent = "temporary";
   return new File([fileContent], fileName);
+};
+
+export const generateYearList = (
+  startYear = 2000,
+  endYear = 2050
+): string[] => {
+  const years: string[] = [];
+  for (let year = startYear; year <= endYear; year++) {
+    years.push(year.toString());
+  }
+  return years;
+};
+
+export const generateMonthList = (): string[] => {
+  const months: string[] = [];
+  const date = new Date();
+  for (let i = 0; i < 12; i++) {
+    date.setMonth(i);
+    months.push(date.toLocaleString(undefined, { month: "long" }));
+  }
+  return months;
 };

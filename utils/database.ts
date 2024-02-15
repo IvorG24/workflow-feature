@@ -2845,6 +2845,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_incident_report: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_memo_list: {
         Args: {
           input_data: Json

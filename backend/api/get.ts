@@ -4,7 +4,12 @@ import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { addAmpersandBetweenWords, regExp, startCase } from "@/utils/string";
+import {
+  addAmpersandBetweenWords,
+  parseJSONIfValid,
+  regExp,
+  startCase,
+} from "@/utils/string";
 import {
   AppType,
   ApproverUnresolvedRequestListType,
@@ -5124,4 +5129,36 @@ export const getMemberUser = async (
     .single();
 
   return data as unknown as TeamMemberWithUser;
+};
+
+// Get incident report
+export const getIncidentReport = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    reporteeId: string;
+    interval: string;
+    year: string;
+    month: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_incident_report", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  const returnData = data as unknown as {
+    interval: string;
+    year: string;
+    month: string;
+    data: string;
+  };
+
+  return {
+    interval: returnData.interval,
+    month: returnData.month,
+    year: returnData.year,
+    data: parseJSONIfValid(returnData.data) as {
+      date: string;
+      report_count: number;
+    }[],
+  };
 };

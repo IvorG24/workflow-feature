@@ -1423,3 +1423,8 @@ export type CreateTicketFormValues = {
 export type TeamMemberWithUser = TeamMemberTableRow & {
   team_member_user: UserTableRow;
 };
+
+export type IncidentReport = {
+  interval: string;
+  data: { date: string; report_count: number }[];
+};

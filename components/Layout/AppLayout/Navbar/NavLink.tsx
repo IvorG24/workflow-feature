@@ -35,6 +35,7 @@ import {
   IconFileText,
   IconFiles,
   IconListDetails,
+  IconReportAnalytics,
   IconTicket,
   IconUsersGroup,
 } from "@tabler/icons-react";
@@ -212,6 +213,15 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/sla`,
+    },
+    {
+      label: `Report`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconReportAnalytics {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/report`,
     },
   ];
 

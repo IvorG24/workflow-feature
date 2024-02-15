@@ -263,6 +263,78 @@ INSERT INTO storage.buckets (id, name) VALUES ('TICKET_ATTACHMENTS', 'TICKET_ATT
 
 UPDATE storage.buckets SET public = true;
 
+-- Start: Incident report metrics
+
+CREATE OR REPLACE FUNCTION get_incident_report(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      reporteeId,
+      interval,
+      year,
+      month
+    } = input_data;
+
+    let data = []
+    if(interval==='Monthly'){
+      data = plv8.execute(`
+        SELECT 
+            DATE_TRUNC('month', tt.ticket_date_created) AS date,
+            COUNT(*) AS report_count
+        FROM 
+            ticket_response_table trt
+            INNER JOIN ticket_field_table  tft ON tft.ticket_field_id = trt.ticket_response_field_id 
+            INNER JOIN ticket_section_table  tst ON tst.ticket_section_id = tft.ticket_field_section_id 
+            INNER JOIN ticket_category_table  tct ON tct.ticket_category_id = tst.ticket_section_category_id 
+            INNER JOIN ticket_table  tt ON tt.ticket_id = trt.ticket_response_ticket_id 
+        WHERE 
+            trt.ticket_response_value ILIKE '%' || '${reporteeId}' || '%'
+            AND tft.ticket_field_name='Reportee'
+            AND tt.ticket_status = 'CLOSED'
+            AND EXTRACT(YEAR FROM tt.ticket_date_created) = ${year}
+        GROUP BY 
+            DATE_TRUNC('month', tt.ticket_date_created)
+        ORDER BY 
+            date;
+      `);
+
+    }else{
+      data = plv8.execute(`
+        SELECT 
+            DATE_TRUNC('day', tt.ticket_date_created) AS date,
+            COUNT(*) AS report_count
+        FROM 
+            ticket_response_table trt
+            INNER JOIN ticket_field_table tft ON tft.ticket_field_id = trt.ticket_response_field_id 
+            INNER JOIN ticket_section_table tst ON tst.ticket_section_id = tft.ticket_field_section_id 
+            INNER JOIN ticket_category_table tct ON tct.ticket_category_id = tst.ticket_section_category_id 
+            INNER JOIN ticket_table tt ON tt.ticket_id = trt.ticket_response_ticket_id 
+        WHERE 
+            trt.ticket_response_value ILIKE '%' || '${reporteeId}' || '%'
+            AND tft.ticket_field_name = 'Reportee'
+            AND tt.ticket_status = 'CLOSED'
+            AND EXTRACT(YEAR FROM tt.ticket_date_created) = ${year}
+            AND EXTRACT(MONTH FROM tt.ticket_date_created) = ${month}
+        GROUP BY 
+            DATE_TRUNC('day', tt.ticket_date_created)
+        ORDER BY 
+            date;
+      `);
+    }
+
+    BigInt.prototype.toJSON = function() {
+        return this.toString()
+    } 
+    returnData={interval,month,year,data:JSON.stringify(data)}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Incident report metrics
+
 -- Start: Create ticket on load
 
 CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
