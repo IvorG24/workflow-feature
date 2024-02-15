@@ -2,6 +2,7 @@ import { getForm } from "@/backend/api/get";
 import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
+import PEDConsumableFormPage from "@/components/PEDConsumableFormPage/PEDConsumableFormPage";
 import PEDEquipmentFormPage from "@/components/PEDEquipmentFormPage/PEDEquipmentFormPage";
 import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
@@ -120,6 +121,18 @@ const Page = ({
           <PEDEquipmentFormPage
             equipments={equipments}
             equipmentListCount={equipmentListCount}
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "PED Consumable":
+        return (
+          <PEDConsumableFormPage
+            items={items}
+            itemListCount={itemListCount}
             teamMemberList={teamMemberList}
             form={form}
             teamGroupList={teamGroupList}

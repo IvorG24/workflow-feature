@@ -105,16 +105,7 @@ const CreatePEDPartRequestPage = ({
   });
 
   useEffect(() => {
-    const newFields = form.form_section[0].section_field.filter(
-      (field) => field.field_type !== "FILE"
-    );
-    replaceSection([
-      {
-        ...form.form_section[0],
-        section_field: newFields,
-      },
-      form.form_section[1],
-    ]);
+    replaceSection(form.form_section);
   }, [form, requestFormMethods]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
@@ -321,11 +312,7 @@ const CreatePEDPartRequestPage = ({
         resetSigner();
       }
     } catch (e) {
-      const fields = getValues(`sections.0.section_field`);
-      setValue(
-        `sections.0.section_field.${fields.length - 1}.field_response`,
-        ""
-      );
+      setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -951,7 +938,7 @@ const CreatePEDPartRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    formslyFormName="PED Part"
+                    formslyFormName={form.form_name}
                     pedPartFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onCategoryChange: handleCategoryChange,

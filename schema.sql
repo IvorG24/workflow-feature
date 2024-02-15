@@ -846,6 +846,16 @@ CREATE TABLE capacity_unit_of_measurement_table(
 
 -- End: Capacity unit of measurement table
 
+-- Start: Item description consumable field table
+
+CREATE TABLE item_description_consumable_field_table (
+  item_description_consumable_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_description_consumable_field_item_description_id UUID REFERENCES item_description_table(item_description_id) NOT NULL,
+  item_description_consumable_field_field_id UUID REFERENCES field_table(field_id) NOT NULL
+);
+
+-- End: Item description consumable field table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -1273,6 +1283,8 @@ RETURNS JSON AS $$
         endId = `PE`;
       } else if(formName==='PED Part') {
         endId = `PP`;
+      } else if(formName==='PED Consumable') {
+        endId = `PC`;
       } else if(formName==='Sourced Item') {
         endId = `SI`;
       } else if(formName==='Receiving Inspecting Report') {
@@ -3637,7 +3649,7 @@ RETURNS JSON as $$
           connectedRequestIDList: requestList,
           request
         };
-      } else{
+      } else {
         returnData =  {
           connectedRequestIDList: requestList,
           request
@@ -4488,7 +4500,7 @@ RETURNS JSON as $$
       const teamProjectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit}`);
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false`)[0].count;
     
-      if(formName === 'Item'){
+      if (formName === 'Item') {
         const items = [];
         const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false ORDER BY item_general_name ASC LIMIT ${limit}`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
@@ -4514,7 +4526,7 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`),
         }
-      } else if (formName === 'PED Part'){
+      } else if (formName === 'PED Part') {
         const equipments = plv8.execute(`SELECT equipment_table.*, equipment_category FROM equipment_table INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false ORDER BY equipment_name ASC LIMIT ${limit}`);
         const equipmentListCount = plv8.execute(`SELECT COUNT(*) FROM equipment_table WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false`)[0].count;
 
@@ -4526,7 +4538,7 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`),
         }
-      } else if (formName === 'PED Equipment'){
+      } else if (formName === 'PED Equipment') {
         const equipments = plv8.execute(`SELECT equipment_table.*, equipment_category FROM equipment_table INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false ORDER BY equipment_name ASC LIMIT ${limit}`);
         const equipmentListCount = plv8.execute(`SELECT COUNT(*) FROM equipment_table WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false`)[0].count;
 
@@ -4538,7 +4550,33 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`),
         }
-      } else if (formName === 'Quotation'){
+      } else if (formName === 'PED Consumable') {
+        const items = [];
+        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants' ORDER BY item_general_name ASC LIMIT ${limit}`);
+        const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants'`)[0].count;
+
+        itemData.forEach(value => {
+          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC`);
+          const itemDivision = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${value.item_id}' ORDER BY item_division_value ASC`);
+          const itemDivisionDescription = plv8.execute(`SELECT * FROM item_level_three_description_table WHERE item_level_three_description_item_id = '${value.item_id}'`);
+          
+          items.push({
+            ...value,
+            item_division_id_list: itemDivision.map(division => division.item_division_value),
+            item_description: itemDescription,
+            item_level_three_description: itemDivisionDescription.length !== 0 ? itemDivisionDescription[0].item_level_three_description : ""
+          })
+        })
+
+        returnData = {
+          items,
+          itemListCount: Number(`${itemListCount}`),
+          teamMemberList,
+          teamGroupList,
+          teamProjectList,
+          teamProjectListCount: Number(`${teamProjectListCount}`),
+        }
+      } else if (formName === 'Quotation') {
         const suppliers = plv8.execute(`SELECT * FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false ORDER BY supplier_date_created DESC LIMIT ${limit}`);
         const supplierListCount = plv8.execute(`SELECT COUNT(*) FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false`)[0].count;
 
@@ -4550,7 +4588,7 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`)
         }
-      } else if (formName === 'Subcon'){
+      } else if (formName === 'Subcon') {
         const services = [];
         const serviceData = plv8.execute(`SELECT * FROM service_table WHERE service_team_id = '${teamId}' AND service_is_disabled = false LIMIT ${limit}`);
         const serviceListCount = plv8.execute(`SELECT COUNT(*) FROM service_table WHERE service_team_id = '${teamId}' AND service_is_disabled = false`)[0].count;
@@ -4576,7 +4614,7 @@ RETURNS JSON as $$
           suppliers,
           supplierListCount: Number(`${supplierListCount}`),
         }
-      } else if (formName === 'Other Expenses'){
+      } else if (formName === 'Other Expenses') {
         const otherExpensesTypes = plv8.execute(`
           SELECT 
             other_expenses_type_table.*,
@@ -5520,6 +5558,123 @@ RETURNS JSON as $$
           categoryOptions
         }
         return;
+      } else if (form.form_name === "PED Consumable") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.*
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const equipmentPropertyNumbers = plv8.execute(
+          `
+            SELECT equipment_description_table.*
+            FROM equipment_description_table
+            INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id
+            WHERE 
+              equipment_team_id = '${teamMember.team_member_team_id}'
+              AND equipment_description_is_disabled = false
+              AND equipment_description_is_available = true
+            ORDER BY equipment_description_property_number
+          `
+        );
+
+        const propertyNumberOptions = equipmentPropertyNumbers.map((propertyNumber, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: propertyNumber.equipment_description_id,
+            option_order: index,
+            option_value: propertyNumber.equipment_description_property_number,
+          };
+        });
+
+        const itemData = plv8.execute(
+          `
+            SELECT *
+            FROM item_table
+            WHERE
+              item_team_id = '${teamId}'
+              AND item_is_disabled = false
+              AND item_is_available = true
+              AND item_gl_account = 'Fuel, Oil, Lubricants'
+              ORDER BY item_general_name ASC
+          `
+        );
+
+        const items = itemData.map(item => {
+           const itemDescriptionData = plv8.execute(
+            `
+              SELECT *
+              FROM item_description_table
+              WHERE
+                item_description_item_id = '${item.item_id}'
+            `
+          );
+          return {
+            ...item,
+            item_description: itemDescriptionData
+          }
+        });
+
+        const itemOptions = items.map((item, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: item.item_id,
+            option_order: index,
+            option_value: item.item_general_name,
+          };
+        });
+        
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_option: propertyNumberOptions,
+                  },
+                  ...form.form_section[1].section_field.slice(1, 4),
+                  {
+                    ...form.form_section[1].section_field[4],
+                    field_option: itemOptions,
+                  },
+                  ...form.form_section[1].section_field.slice(5, 7),
+                ],
+              },
+            ],
+          },
+          projectOptions,
+          itemOptions,
+          propertyNumberOptions
+        }
+        return;
       }
 
       const project = plv8.execute(
@@ -6244,7 +6399,7 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon")) {
+    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Consumable")) {
       sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
@@ -9285,6 +9440,214 @@ plv8.subtransaction(function(){
         projectOptions,
         categoryOptions
       }
+    } else if (form.form_name === "PED Consumable") {
+      const equipmentPropertyNumbers = plv8.execute(
+        `
+          SELECT equipment_description_table.*
+          FROM equipment_description_table
+          INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id
+          WHERE 
+            equipment_team_id = '${teamId}'
+            AND equipment_description_is_disabled = false
+            AND equipment_description_is_available = true
+          ORDER BY equipment_description_property_number
+        `
+      );
+      const propertyNumberOptions = equipmentPropertyNumbers.map((propertyNumber, index) => {
+        return {
+          option_field_id: form.form_section[1].section_field[0].field_id,
+          option_id: propertyNumber.equipment_description_id,
+          option_order: index,
+          option_value: propertyNumber.equipment_description_property_number,
+        };
+      });
+
+      const itemList = plv8.execute(`
+        SELECT * FROM item_table 
+        WHERE item_team_id='${teamId}'
+          AND item_is_disabled = false
+          AND item_is_available = true
+          AND item_gl_account = 'Fuel, Oil, Lubricants'
+        ORDER BY item_general_name ASC
+      `);
+
+      const itemOptions = itemList.map((item, index) => {
+        return {
+          option_field_id:
+            request.request_form.form_section[1].section_field[0].field_id,
+          option_id: item.item_id,
+          option_order: index,
+          option_value: item.item_general_name,
+        };
+      });
+
+      const isBulk = JSON.parse(form.form_section[0].section_field[2].field_response[0].request_response) === "Bulk";
+
+      const sectionData = sectionWithDuplicateList.slice(1).map((section) => {
+        const itemName = JSON.parse(
+          section.section_field[isBulk ? 0 : 4].field_response[0].request_response
+        );
+
+        const item = plv8.execute(`
+          SELECT *
+          FROM item_table
+          WHERE item_team_id = '${teamId}'
+            AND item_general_name = '${itemName}'
+            AND item_is_disabled = false
+            AND item_is_available = true
+            AND item_gl_account = 'Fuel, Oil, Lubricants'
+        `)[0];
+
+        if(!item) return null;
+
+        const itemDescriptionList = plv8.execute(`
+          SELECT * 
+          FROM item_description_table
+          INNER JOIN item_description_consumable_field_table ON item_description_consumable_field_item_description_id = item_description_id
+          WHERE item_description_item_id = '${item.item_id}'
+            AND item_description_is_disabled = false
+            AND item_description_is_available = true;
+        `);
+
+        const itemDescriptionWithField = itemDescriptionList
+          .map((description) => {
+
+            const itemDescriptionFieldList = plv8.execute(`
+              SELECT * 
+              FROM item_description_field_table
+              LEFT JOIN item_description_field_uom_table ON item_description_field_id = item_description_field_uom_item_description_field_id
+              WHERE item_description_field_item_description_id = '${description.item_description_id}'
+                AND item_description_field_is_disabled = false
+                AND item_description_field_is_available = true;
+            `);
+
+            const field = plv8.execute(`
+              SELECT * 
+              FROM field_table
+              WHERE field_id = '${description.item_description_consumable_field_field_id}';
+            `)[0];
+
+            return {
+              ...description,
+              item_description_field: itemDescriptionFieldList,
+              item_field: field
+            }
+          });
+
+        const newFieldsWithOptions = itemDescriptionWithField.map(
+          (description) => {
+            const options = description.item_description_field.map(
+              (options, optionIndex) => {
+                return {
+                  option_field_id: description.item_field.field_id,
+                  option_id: options.item_description_field_id,
+                  option_order: optionIndex + 1,
+                  option_value: `${options.item_description_field_value}${
+                    options.item_description_field_uom
+                      ? ` ${options.item_description_field_uom}`
+                      : ""
+                  }`,
+                };
+              }
+            );
+
+            const descriptionList = section.section_field.slice(isBulk ? 3: 7);
+
+            const field = descriptionList.find(
+              (refDescription) =>
+                refDescription.field_id === description.item_field.field_id
+            );
+
+            return {
+              ...field,
+              field_option: options,
+            };
+          }
+        );
+
+        if (isBulk) {
+          const optionalFieldData = plv8.execute(
+            `
+              SELECT * FROM field_table 
+              WHERE 
+                field_section_id = 'b232d5a5-6212-405e-8d35-5f9127dca1aa'
+              ORDER BY field_order
+              LIMIT 4
+            `
+          );
+
+          return {
+            ...section,
+            section_field: [
+              {
+                ...optionalFieldData[0],
+                field_option: propertyNumberOptions,
+                field_response: []
+              },
+              ...optionalFieldData.slice(1).map(field => {
+                return {
+                  ...field,
+                  field_response: []
+                }
+              }),
+              {
+                ...section.section_field[0],
+                field_option: itemOptions,
+              },
+              ...section.section_field.slice(1, 3),
+              ...newFieldsWithOptions,
+            ],
+          };
+        } else {
+          return {
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: propertyNumberOptions,
+              },
+              ...section.section_field.slice(1, 4),
+              {
+                ...section.section_field[4],
+                field_option: itemOptions,
+              },
+              ...section.section_field.slice(5, 7),
+              ...newFieldsWithOptions,
+            ],
+          };
+        }
+      }).filter(value => value);
+    
+      const formattedRequest = {
+        ...request,
+        request_form: {
+          ...form,
+          form_section: [
+            {
+              ...form.form_section[0],
+              section_field: [
+                {
+                  ...form.form_section[0].section_field[0],
+                  field_option: projectOptions
+                },
+                ...form.form_section[0].section_field.slice(1)
+              ]
+            },
+            ...sectionData,
+          ],
+        },
+        request_signer:
+          projectSignerList.length !== 0
+            ? projectSignerList
+            : request.request_signer,
+      };
+
+      returnData = {
+        request: formattedRequest,
+        projectOptions,
+        itemOptions,
+        propertyNumberOptions,
+      }
     } else {
       returnData = { request };
     }
@@ -9292,7 +9655,6 @@ plv8.subtransaction(function(){
 });
 return returnData;
 $$ LANGUAGE plv8;
-
 
 -- End: Get Edit Request on load
 

@@ -63,7 +63,7 @@ type Props = {
   teamProjectListCount: number;
 };
 
-const ItemFormPage = ({
+const PEDConsumableFormPage = ({
   items,
   itemListCount,
   teamMemberList,
@@ -562,4 +562,4 @@ const ItemFormPage = ({
   );
 };
 
-export default ItemFormPage;
+export default PEDConsumableFormPage;

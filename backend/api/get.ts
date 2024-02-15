@@ -25,6 +25,7 @@ import {
   FormStatusType,
   FormType,
   ItemDescriptionTableRow,
+  ItemTableRow,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
   MemoListItemType,
@@ -5718,4 +5719,65 @@ export const getEquipmentSectionChoices = async (
       }
     });
   }
+};
+
+export const getConsumableItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; itemName: string }
+) => {
+  const { teamId, itemName } = params;
+
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .select(
+      `
+        *, 
+        item_description: item_description_table(
+          *, 
+          item_description_field: item_description_field_table(
+            *, 
+            item_description_field_uom: item_description_field_uom_table(
+              item_description_field_uom
+            )
+          ),
+          item_field: item_description_consumable_field_table(
+            item_description_consumable_field: item_description_consumable_field_field_id(*)
+          )
+        )
+      `
+    )
+    .eq("item_team_id", teamId)
+    .eq("item_general_name", itemName)
+    .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
+    .eq("item_description.item_description_is_disabled", false)
+    .eq("item_description.item_description_is_available", true)
+    .eq(
+      "item_description.item_description_field.item_description_field_is_disabled",
+      false
+    )
+    .eq(
+      "item_description.item_description_field.item_description_field_is_available",
+      true
+    )
+    .single();
+  if (error) throw error;
+
+  const formattedData = data as unknown as ItemTableRow & {
+    item_description: {
+      item_field: { item_description_consumable_field: FieldTableRow }[];
+    }[];
+  };
+
+  return {
+    ...formattedData,
+    item_description: formattedData.item_description.map((description) => {
+      const itemField =
+        description.item_field[0].item_description_consumable_field;
+      return {
+        ...description,
+        item_field: itemField,
+      };
+    }),
+  } as unknown as ItemWithDescriptionAndField;
 };

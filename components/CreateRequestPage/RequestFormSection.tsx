@@ -81,6 +81,15 @@ type RequestFormSectionProps = {
     onModelChange: (value: string | null, index: number) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
   };
+  pedConsumableFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null, index: number) => void;
+    onRequestTypeChange: (
+      prevValue: string | null,
+      value: string | null
+    ) => void;
+    onGeneralNameChange: (value: string | null, index: number) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -97,6 +106,7 @@ const RequestFormSection = ({
   pedEquipmentFormMethods,
   pedPartFormMethods,
   otherExpensesMethods,
+  pedConsumableFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -142,6 +152,7 @@ const RequestFormSection = ({
             pedEquipmentFormMethods={pedEquipmentFormMethods}
             pedPartFormMethods={pedPartFormMethods}
             otherExpensesMethods={otherExpensesMethods}
+            pedConsumableFormMethods={pedConsumableFormMethods}
           />
         ))}
       </Stack>

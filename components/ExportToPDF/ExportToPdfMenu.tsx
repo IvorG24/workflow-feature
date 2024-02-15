@@ -38,6 +38,7 @@ const ExportToPdfMenu = ({ isFormslyForm, formName, requestId }: Props) => {
             "Other Expenses",
             "PED Equipment",
             "PED Part",
+            "PED Consumable",
           ].includes(formName) && (
             <Menu.Item
               icon={<IconTable size={16} />}

@@ -1,5 +1,6 @@
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
+import CreatePEDConsumableRequestPage from "@/components/CreatePEDConsumableRequestPage/CreatePEDConsumableRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
@@ -51,7 +52,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   form: FormWithResponseType;
-  itemOptions: OptionTableRow[];
+  itemOptions?: OptionTableRow[];
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
@@ -63,11 +64,12 @@ type Props = {
     special_approver_signer: FormType["form_signer"][0];
   }[];
   categoryOptions?: OptionTableRow[];
+  propertyNumberOptions?: OptionTableRow[];
 };
 
 const Page = ({
   form,
-  itemOptions,
+  itemOptions = [],
   sourceProjectList = {},
   requestProjectId = "",
   projectOptions = [],
@@ -75,6 +77,7 @@ const Page = ({
   serviceOptions = [],
   specialApprover = [],
   categoryOptions = [],
+  propertyNumberOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -123,6 +126,15 @@ const Page = ({
             form={form}
             projectOptions={projectOptions}
             categoryOptions={categoryOptions}
+          />
+        );
+      case "PED Consumable":
+        return (
+          <CreatePEDConsumableRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            itemOptions={itemOptions}
+            propertyNumberOptions={propertyNumberOptions}
           />
         );
       case "Sourced Item":

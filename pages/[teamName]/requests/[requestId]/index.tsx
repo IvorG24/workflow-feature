@@ -1,6 +1,7 @@
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
+import PEDConsumableRequestPage from "@/components/PEDConsumableRequestPage/PEDConsumableRequestPage";
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
@@ -88,6 +89,8 @@ const Page = ({
       return <PEDEquipmentRequestPage request={request} />;
     } else if (request.request_form.form_name === "PED Part") {
       return <PEDPartRequestPage request={request} />;
+    } else if (request.request_form.form_name === "PED Consumable") {
+      return <PEDConsumableRequestPage request={request} />;
     } else {
       return (
         <RequestPage

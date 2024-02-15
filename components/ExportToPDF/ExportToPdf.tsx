@@ -11,6 +11,8 @@ import { useEffect } from "react";
 import { ApproverDetailsType } from "../ItemRequestPage/ItemRequestPage";
 import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
+import PEDConsumableBulkPdfDocumentTableVersion from "./PEDConsumableBulkPdfDocumentTableVersion";
+import PEDConsumableSinglePdfDocumentTableVersion from "./PEDConsumableSinglePdfDocumentTableVersion";
 import PEDEquipmentPdfDocumentTableVersion from "./PEDEquipmentPdfDocumentTableVersion";
 import PEDPartPdfDocumentTableVersion from "./PEDPartPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
@@ -212,6 +214,28 @@ const ExportToPdf = ({
             approverDetails={approverDetails}
           />
         );
+      case "PED Consumable":
+        if (requestItems[0].fields[2].value === "Single") {
+          return (
+            <PEDConsumableSinglePdfDocumentTableVersion
+              requestDetails={requestDetails}
+              requestorDetails={requestorDetails}
+              requestIDs={requestIDs}
+              requestItems={requestItems}
+              approverDetails={approverDetails}
+            />
+          );
+        } else if (requestItems[0].fields[2].value === "Bulk") {
+          return (
+            <PEDConsumableBulkPdfDocumentTableVersion
+              requestDetails={requestDetails}
+              requestorDetails={requestorDetails}
+              requestIDs={requestIDs}
+              requestItems={requestItems}
+              approverDetails={approverDetails}
+            />
+          );
+        }
     }
   };
 

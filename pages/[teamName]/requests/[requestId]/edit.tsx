@@ -1,6 +1,7 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
+import EditPEDConsumableRequestPage from "@/components/EditPEDConsumableRequestPage/EditPEDConsumableRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
@@ -66,6 +67,7 @@ export type EditRequestOnLoadProps = {
   supplierOptions?: OptionTableRow[];
   preferredSupplierField?: FieldTableRow;
   categoryOptions?: OptionTableRow[];
+  propertyNumberOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -81,6 +83,7 @@ const Page = ({
   supplierOptions = [],
   preferredSupplierField,
   categoryOptions = [],
+  propertyNumberOptions = [],
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
 
@@ -129,6 +132,16 @@ const Page = ({
             request={request}
             projectOptions={projectOptions}
             categoryOptions={categoryOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "PED Consumable":
+        return (
+          <EditPEDConsumableRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            itemOptions={itemOptions}
+            propertyNumberOptions={propertyNumberOptions}
             referenceOnly={referenceOnly}
           />
         );
