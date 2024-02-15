@@ -831,10 +831,10 @@ export const generateJiraTicketPayload = ({
   const jiraTicketPayload = {
     form: {
       answers: {
-        "1": {
+        "21": {
           choices: [requestingProjectSite.id], // Requesting Project Site
         },
-        "2": {
+        "23": {
           choices: [sourcingItemCategory.id], // Item Category
         },
         "3": {
@@ -843,7 +843,7 @@ export const generateJiraTicketPayload = ({
         "4": {
           text: requestId, // Formsly ID
         },
-        "5": {
+        "20": {
           text: requestUrl, // Formsly URL
         },
         "6": {
