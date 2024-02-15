@@ -784,7 +784,9 @@ export const generateJiraTicketPayload = ({
   itemCategory: string[];
   primaryApproverJiraAccountId: string | null;
 }) => {
-  const requestingProjectSite = getJiraRequestingProjectSite(projectName);
+  const requestingProjectSite = getJiraRequestingProjectSite(
+    projectName.includes("CENTRAL OFFICE") ? "CENTRAL OFFICE" : projectName
+  );
   const sourcingItemCategory = getJiraSourcingItemCategory(
     JSON.parse(itemCategory[0])
   );
