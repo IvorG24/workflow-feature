@@ -197,6 +197,7 @@ const UpdateEquipmentDescription = ({
                   textTransform: "uppercase",
                 },
               }}
+              disabled
             />
             <Controller
               control={control}

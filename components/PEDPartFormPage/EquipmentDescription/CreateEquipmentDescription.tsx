@@ -1,7 +1,7 @@
 import {
-  checkPropertyNumber,
   checkSerialNumber,
   getEquipmentBrandAndModelOption,
+  getEquipmentPropertyCount,
 } from "@/backend/api/get";
 import { createEquipmentDescription } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -92,7 +92,6 @@ const CreateEquipmentDescription = ({
   const { register, formState, handleSubmit, control } =
     useForm<EquipmentDescriptionForm>({
       defaultValues: {
-        propertyNumber: "",
         serialNumber: "",
         brand: "",
         model: "",
@@ -102,12 +101,12 @@ const CreateEquipmentDescription = ({
 
   const onSubmit = async (data: EquipmentDescriptionForm) => {
     try {
+      const propertyNumber = await getEquipmentPropertyCount(supabaseClient);
       const newEquipmentDescription = await createEquipmentDescription(
         supabaseClient,
         {
           equipmentDescriptionData: {
-            equipment_description_property_number:
-              data.propertyNumber.toUpperCase(),
+            equipment_description_property_number: `${propertyNumber}`,
             equipment_description_serial_number:
               data.serialNumber.toLocaleUpperCase(),
             equipment_description_brand_id: data.brand,
@@ -153,35 +152,6 @@ const CreateEquipmentDescription = ({
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <Flex direction="column" gap={16}>
-            <TextInput
-              {...register("propertyNumber", {
-                required: {
-                  message: "Property number is required",
-                  value: true,
-                },
-                validate: {
-                  duplicate: async (value) => {
-                    const isExisting = await checkPropertyNumber(
-                      supabaseClient,
-                      {
-                        propertyNumber: value.toUpperCase(),
-                        teamId: activeTeam.team_id,
-                      }
-                    );
-                    return isExisting ? "Property number already exists" : true;
-                  },
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="Property Number"
-              error={formState.errors.propertyNumber?.message}
-              sx={{
-                input: {
-                  textTransform: "uppercase",
-                },
-              }}
-            />
             <Controller
               control={control}
               name="brand"

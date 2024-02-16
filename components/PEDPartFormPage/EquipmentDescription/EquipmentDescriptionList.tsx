@@ -3,6 +3,7 @@ import { getEquipmentDescriptionList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
+import { getInitials } from "@/utils/string";
 import {
   EquipmentDescriptionType,
   EquipmentWithCategoryType,
@@ -308,7 +309,10 @@ const EquipmentDescriptionList = ({
             accessor: "equipment_description_property_number",
             title: "Property Number",
             render: ({ equipment_description_property_number }) => (
-              <Text>{equipment_description_property_number}</Text>
+              <Text>
+                {getInitials(selectedEquipment.equipment_category)}-
+                {equipment_description_property_number}
+              </Text>
             ),
           },
           {

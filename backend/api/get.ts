@@ -5781,3 +5781,14 @@ export const getConsumableItem = async (
     }),
   } as unknown as ItemWithDescriptionAndField;
 };
+
+// Fetch equipment property count
+export const getEquipmentPropertyCount = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { count, error } = await supabaseClient
+    .from("equipment_description_table")
+    .select("*", { count: "exact", head: true });
+  if (error || !count) throw error;
+  return count + 1;
+};
