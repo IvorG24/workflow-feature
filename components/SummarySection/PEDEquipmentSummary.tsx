@@ -37,7 +37,7 @@ const PEDEquipmentSummary = ({ summaryData }: Props) => {
               <th>Brand</th>
               <th>Model</th>
               <th>Capacity</th>
-              <th>Capacity UoM</th>
+              <th>Capacity Unit of Measure</th>
               <th>Date Needed</th>
               <th>Purpose</th>
             </tr>

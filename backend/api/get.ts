@@ -5489,7 +5489,7 @@ export const getEquipmentPropertyNumber = async (
 ) => {
   const { equipmentId } = params;
   const { data, error } = await supabaseClient
-    .from("equipment_description_table")
+    .from("equipment_description_view")
     .select("*")
     .eq("equipment_description_is_disabled", false)
     .eq("equipment_description_is_available", true)
@@ -5508,13 +5508,13 @@ export const getEquipmentDescription = async (
 ) => {
   const { propertyNumber } = params;
   const { data, error } = await supabaseClient
-    .from("equipment_description_table")
+    .from("equipment_description_view")
     .select(
       "*, equipment_description_brand: equipment_description_brand_id(equipment_brand), equipment_description_model: equipment_description_model_id(equipment_model)"
     )
     .eq("equipment_description_is_disabled", false)
     .eq("equipment_description_is_available", true)
-    .eq("equipment_description_property_number", propertyNumber)
+    .eq("equipment_description_property_number_with_category", propertyNumber)
     .single();
   if (error) throw error;
 

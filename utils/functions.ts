@@ -949,3 +949,13 @@ export const getBase64 = (file: File) => {
     reader.onerror = reject;
   });
 };
+
+export const fetchNumberFromString = (inputString: string) => {
+  const regex = /\d+/g;
+  const matches = inputString.match(regex);
+  if (matches) {
+    return parseInt(matches[0]);
+  } else {
+    return null;
+  }
+};

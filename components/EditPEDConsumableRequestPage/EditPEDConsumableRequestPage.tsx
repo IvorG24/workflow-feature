@@ -12,7 +12,11 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { isStringParsable, safeParse } from "@/utils/functions";
+import {
+  fetchNumberFromString,
+  isStringParsable,
+  safeParse,
+} from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -166,9 +170,44 @@ const EditPEDConsumableRequestPage = ({
         return;
       }
 
+      const isBulk =
+        JSON.parse(
+          data.sections[0].section_field[2].field_response[0].request_response
+        ) === "Bulk";
+
+      let newData = data;
+
+      if (!isBulk) {
+        newData = {
+          sections: [
+            data.sections[0],
+            ...data.sections.slice(1).map((section) => {
+              return {
+                ...section,
+                section_field: [
+                  {
+                    ...section.section_field[0],
+                    field_response: [
+                      {
+                        ...section.section_field[0].field_response[0],
+                        request_response: `"${fetchNumberFromString(
+                          section.section_field[0].field_response[0]
+                            .request_response as string
+                        )}"`,
+                      },
+                    ],
+                  },
+                  ...section.section_field.slice(1),
+                ],
+              };
+            }),
+          ],
+        };
+      }
+
       const edittedRequest = await editRequest(supabaseClient, {
         requestId: request.request_id,
-        requestFormValues: data,
+        requestFormValues: newData,
         signers: signerList,
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
@@ -187,6 +226,7 @@ const EditPEDConsumableRequestPage = ({
         }-${edittedRequest.request_formsly_id_serial}`
       );
     } catch (error) {
+      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -228,8 +268,35 @@ const EditPEDConsumableRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
+      const isBulk =
+        JSON.parse(
+          data.sections[0].section_field[2].field_response[0].request_response
+        ) === "Bulk";
+
+      let newData = formattedData;
+
+      if (!isBulk) {
+        newData = [
+          formattedData[0],
+          ...formattedData.slice(1).map((section) => {
+            return {
+              ...section,
+              section_field: [
+                {
+                  ...section.section_field[0],
+                  field_response: `${fetchNumberFromString(
+                    section.section_field[0].field_response as string
+                  )}`,
+                },
+                ...section.section_field.slice(1),
+              ],
+            };
+          }),
+        ];
+      }
+
       const newRequest = await createRequest(supabaseClient, {
-        requestFormValues: { sections: formattedData },
+        requestFormValues: { sections: newData },
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: signerList,
@@ -252,6 +319,7 @@ const EditPEDConsumableRequestPage = ({
         }-${newRequest.request_formsly_id_serial}`
       );
     } catch (error) {
+      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

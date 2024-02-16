@@ -231,7 +231,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('88bd7505-6211-4052-acf9-a37b358e2440', 'Model', 'DROPDOWN', 15, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
 ('65b88de2-f6bd-4e6d-8d33-b5a4bd69555c', 'Part Number', 'DROPDOWN', 16, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
 ('346cee79-f6f4-406e-8633-812ead35d2ed', 'Quantity', 'NUMBER', 17, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
-('545eafd4-3e97-4b2f-9a40-add2617cfefc', 'Unit of Measurement', 'TEXT', 18, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, true),
+('545eafd4-3e97-4b2f-9a40-add2617cfefc', 'Unit of Measure', 'TEXT', 18, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, true),
 
 -- PED Equipment
 ('197f0e69-39f2-4f51-b49a-8c383a1a325e', 'Requesting Project', 'DROPDOWN', 1, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
@@ -243,7 +243,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('ce9d94a2-bfef-48ea-977a-b3e1918ac90e', 'Brand', 'DROPDOWN', 6, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 ('6bd08eb7-f872-4475-8323-4eca2abf4264', 'Model', 'DROPDOWN', 7, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 ('c62daaad-909d-45a7-8c1e-6aed470043fa', 'Capacity', 'NUMBER', 8, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
-('23532c68-1115-4a6f-a167-dfdec1863543', 'Capacity UoM', 'DROPDOWN', 9, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('23532c68-1115-4a6f-a167-dfdec1863543', 'Capacity Unit of Measure', 'DROPDOWN', 9, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 ('ecd5f3c3-75a4-475e-941d-ae294f3e512d', 'Date Needed', 'DATE', 10, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 ('93b5fd9c-f9c1-4a99-b10b-253d36eedc2a', 'Purpose', 'TEXT', 11, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 
@@ -258,7 +258,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('5eed4963-e011-4a1e-a03c-a901636d0dfa', 'Equipment Model', 'TEXT', 7, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, true),
 ('9638fdb6-4f8a-41cf-bf26-68b94f479a51', 'Equipment Serial No.', 'TEXT', 8, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, true),
 ('7971912e-bdea-4820-9e1d-ff501296a62c', 'General Name', 'DROPDOWN', 9, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, false),
-('c81706d5-bebf-4ffd-813b-71f57b219de5', 'Base Unit of Measurement', 'TEXT', 10, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, true),
+('c81706d5-bebf-4ffd-813b-71f57b219de5', 'Unit of Measure', 'TEXT', 10, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, true),
 ('137bbd25-2f65-4b65-86e7-7f5726857084', 'Quantity', 'NUMBER', 11, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, false),
 
 -- Sourced Item 

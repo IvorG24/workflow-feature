@@ -3682,6 +3682,53 @@ RETURNS JSON as $$
           connectedRequestIDList: requestList,
           request
         };
+      } else if (request.request_form.form_name === "PED Consumable") {
+        const isBulk = JSON.parse(request.request_form.form_section[0].section_field[2].field_response[0].request_response) === "Bulk"
+
+        if(isBulk){
+            returnData =  {
+            connectedRequestIDList: requestList,
+            request
+          };
+          return;
+        }
+
+        const propertyNumberResponse = request.request_form.form_section[1].section_field[0].field_response.map(fieldResponse => {
+          const categoryData = plv8.execute(
+            `
+              SELECT equipment_description_property_number_with_category FROM equipment_description_view 
+              WHERE equipment_description_property_number = '${JSON.parse(fieldResponse.request_response)}' 
+            `
+          )[0].equipment_description_property_number_with_category;
+
+          return {
+            ...fieldResponse,
+            request_response: `"${categoryData}"`
+          }
+        });
+
+        returnData =  {
+          connectedRequestIDList: requestList,
+          request: {
+            ...request,
+            request_form: {
+              ...request.request_form,
+              form_section: [
+                request.request_form.form_section[0],
+                {
+                  ...request.request_form.form_section[1],
+                  section_field: [
+                    {
+                      ...request.request_form.form_section[1].section_field[0],
+                      field_response: propertyNumberResponse
+                    },
+                    ...request.request_form.form_section[1].section_field.slice(1)
+                  ] 
+                }
+              ]
+            }
+          }
+        };
       } else {
         returnData =  {
           connectedRequestIDList: requestList,
@@ -5615,14 +5662,14 @@ RETURNS JSON as $$
 
         const equipmentPropertyNumbers = plv8.execute(
           `
-            SELECT equipment_description_table.*
-            FROM equipment_description_table
+            SELECT equipment_description_view.*
+            FROM equipment_description_view
             INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id
             WHERE 
               equipment_team_id = '${teamMember.team_member_team_id}'
               AND equipment_description_is_disabled = false
               AND equipment_description_is_available = true
-            ORDER BY equipment_description_property_number
+            ORDER BY equipment_description_property_number_with_category
           `
         );
 
@@ -5631,7 +5678,7 @@ RETURNS JSON as $$
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: propertyNumber.equipment_description_id,
             option_order: index,
-            option_value: propertyNumber.equipment_description_property_number,
+            option_value: propertyNumber.equipment_description_property_number_with_category,
           };
         });
 
@@ -9199,7 +9246,7 @@ plv8.subtransaction(function(){
 
         const equipmentPropertyNumbers = plv8.execute(
           `
-            SELECT * FROM equipment_description_table 
+            SELECT * FROM equipment_description_view
             WHERE 
               equipment_description_equipment_id = '${equipmentId}'
               AND equipment_description_is_disabled = false
@@ -9211,7 +9258,7 @@ plv8.subtransaction(function(){
             option_field_id: form.form_section[0].section_field[1].field_id,
             option_id: equipmentPropertyNumber.equipment_description_id,
             option_order: index,
-            option_value: equipmentPropertyNumber.equipment_description_property_number,
+            option_value: equipmentPropertyNumber.equipment_description_property_number_with_category,
           };
         });
 
@@ -9476,14 +9523,14 @@ plv8.subtransaction(function(){
     } else if (form.form_name === "PED Consumable") {
       const equipmentPropertyNumbers = plv8.execute(
         `
-          SELECT equipment_description_table.*
-          FROM equipment_description_table
+          SELECT equipment_description_view.*
+          FROM equipment_description_view
           INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id
           WHERE 
             equipment_team_id = '${teamId}'
             AND equipment_description_is_disabled = false
             AND equipment_description_is_available = true
-          ORDER BY equipment_description_property_number
+          ORDER BY equipment_description_property_number_with_category
         `
       );
       const propertyNumberOptions = equipmentPropertyNumbers.map((propertyNumber, index) => {
@@ -9491,7 +9538,7 @@ plv8.subtransaction(function(){
           option_field_id: form.form_section[1].section_field[0].field_id,
           option_id: propertyNumber.equipment_description_id,
           option_order: index,
-          option_value: propertyNumber.equipment_description_property_number,
+          option_value: propertyNumber.equipment_description_property_number_with_category,
         };
       });
 
@@ -9632,12 +9679,23 @@ plv8.subtransaction(function(){
             ],
           };
         } else {
+          const categoryData = plv8.execute(
+            `
+              SELECT equipment_description_property_number_with_category FROM equipment_description_view 
+              WHERE equipment_description_property_number = '${JSON.parse(section.section_field[0].field_response[0].request_response)}' 
+            `
+          )[0].equipment_description_property_number_with_category;
+
           return {
             ...section,
             section_field: [
               {
                 ...section.section_field[0],
                 field_option: propertyNumberOptions,
+                field_response: [{
+                  ...section.section_field[0].field_response[0],
+                  request_response: categoryData
+                }]
               },
               ...section.section_field.slice(1, 4),
               {
@@ -13633,6 +13691,16 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
 CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_table;
+CREATE VIEW equipment_description_view AS 
+  SELECT
+    equipment_description_table.*,
+    (
+      SELECT CONCAT(STRING_AGG(SUBSTRING(word, 1, 1), ''), '-', equipment_description_property_number) AS equipment_description_property_number_with_category
+      FROM regexp_split_to_table(equipment_category, ' ') AS word
+    ) 
+  FROM equipment_description_table
+  INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id
+  INNER JOIN equipment_category_table ON equipment_category_id = equipment_equipment_category_id;
 
 -------- End: VIEWS
 

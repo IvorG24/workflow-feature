@@ -334,7 +334,7 @@ RETURNS VOID AS $$
 
     // EQUIPMENT DESCRIPTION
     const equipment_description_input = equipmentWithCategory.map((equipment, index) => {
-      const propertyNumber = `${getInitials(equipment.equipment_category)}-${index+1}`
+      const propertyNumber = `${index + 1}`
       const serialNumber = generateRandomString(10);
       const brandId = brandData[(Math.floor(Math.random() * brandData.length))].equipment_brand_id;
       const modelId = modelData[(Math.floor(Math.random() * modelData.length))].equipment_model_id;

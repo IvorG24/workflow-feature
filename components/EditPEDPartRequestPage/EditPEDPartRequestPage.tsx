@@ -16,7 +16,11 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { createRange } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
-import { isStringParsable, safeParse } from "@/utils/functions";
+import {
+  fetchNumberFromString,
+  isStringParsable,
+  safeParse,
+} from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -176,9 +180,34 @@ const EditPEDPartRequestPage = ({
         return;
       }
 
+      const newData = {
+        sections: [
+          {
+            ...data.sections[0],
+            section_field: [
+              ...data.sections[0].section_field.slice(0, 4),
+              {
+                ...data.sections[0].section_field[4],
+                field_response: [
+                  {
+                    ...data.sections[0].section_field[4].field_response[0],
+                    request_response: `${fetchNumberFromString(
+                      data.sections[0].section_field[4].field_response[0]
+                        .request_response as string
+                    )}`,
+                  },
+                ],
+              },
+              ...data.sections[0].section_field.slice(5),
+            ],
+          },
+          ...data.sections.slice(1),
+        ],
+      };
+
       const edittedRequest = await editRequest(supabaseClient, {
         requestId: request.request_id,
-        requestFormValues: data,
+        requestFormValues: newData,
         signers: signerList,
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
@@ -238,8 +267,25 @@ const EditPEDPartRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
+      const newData = [
+        {
+          ...formattedData[0],
+          section_field: [
+            ...formattedData[0].section_field.slice(0, 4),
+            {
+              ...formattedData[0].section_field[4],
+              field_response: `${fetchNumberFromString(
+                formattedData[0].section_field[4].field_response as string
+              )}`,
+            },
+            ...formattedData[0].section_field.slice(5),
+          ],
+        },
+        ...formattedData.slice(1),
+      ];
+
       const newRequest = await createRequest(supabaseClient, {
-        requestFormValues: { sections: formattedData },
+        requestFormValues: { sections: newData },
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: signerList,

@@ -11,6 +11,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { fetchNumberFromString } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -122,8 +123,34 @@ const CreatePEDConsumableRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
+      const isBulk =
+        data.sections[0].section_field[2].field_response === "Bulk";
+
+      let newData = data;
+      if (!isBulk) {
+        newData = {
+          sections: [
+            data.sections[0],
+            ...data.sections.slice(1).map((section) => {
+              return {
+                ...section,
+                section_field: [
+                  {
+                    ...section.section_field[0],
+                    field_response: `${fetchNumberFromString(
+                      section.section_field[0].field_response as string
+                    )}`,
+                  },
+                  ...section.section_field.slice(1),
+                ],
+              };
+            }),
+          ],
+        };
+      }
+
       const request = await createRequest(supabaseClient, {
-        requestFormValues: data,
+        requestFormValues: newData,
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: signerList,
