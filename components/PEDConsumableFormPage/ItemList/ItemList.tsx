@@ -629,41 +629,6 @@ const ItemList = ({
             ),
           },
           {
-            accessor: "item_gl_account",
-            title: "GL Account",
-            render: ({ item_gl_account, item_id }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-              >
-                {item_gl_account}
-              </Text>
-            ),
-            sortable: true,
-          },
-          {
-            accessor: "item_division_id_list",
-            title: "Division",
-            render: ({
-              item_division_id_list,
-              item_id,
-              item_level_three_description,
-            }) => (
-              <Text
-                className={classes.clickableColumn}
-                onClick={() => {
-                  handleColumnClick(item_id);
-                }}
-              >
-                {item_level_three_description
-                  ? item_level_three_description
-                  : item_division_id_list.join(", ")}
-              </Text>
-            ),
-          },
-          {
             accessor: "item_is_available",
             title: "Status",
             textAlignment: "center",

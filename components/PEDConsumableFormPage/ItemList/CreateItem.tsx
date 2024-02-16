@@ -7,7 +7,6 @@ import {
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { GL_ACCOUNT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
@@ -111,6 +110,7 @@ const CreateItem = ({
         descriptions: [{ description: "", withUoM: false }],
         generalName: "",
         unit: "",
+        glAccount: "Fuel, Oil, Lubricants",
         isAvailable: true,
       },
     });
@@ -268,12 +268,18 @@ const CreateItem = ({
                 <Select
                   value={value as string}
                   onChange={onChange}
-                  data={GL_ACCOUNT_CHOICES}
+                  data={[
+                    {
+                      label: "Fuel, Oil, Lubricants",
+                      value: "Fuel, Oil, Lubricants",
+                    },
+                  ]}
                   withAsterisk
                   error={formState.errors.glAccount?.message}
                   searchable
                   clearable
                   label="GL Account"
+                  disabled
                 />
               )}
               rules={{
@@ -282,6 +288,7 @@ const CreateItem = ({
                   value: true,
                 },
               }}
+              defaultValue="Fuel, Oil, Lubricants"
             />
             <Controller
               control={control}

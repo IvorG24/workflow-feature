@@ -1487,24 +1487,27 @@ RETURNS JSON AS $$
     } = input_data;
 
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_encoder_team_member_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_encoder_team_member_id}') RETURNING *;`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_encoder_team_member_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_encoder_team_member_id}') RETURNING *`)[0];
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");
     let itemDivisionDescription;
-    if(item_level_three_description){
-      itemDivisionDescription = plv8.execute(`INSERT INTO item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_result.item_id}', '${item_level_three_description}') RETURNING *`)[0];
+    if (item_level_three_description) {
+      itemDivisionDescription = plv8.execute(`INSERT INTO item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_result.item_id}', '${item_level_three_description}') RETURNING *`)[0].item_level_three_description;
     }
     const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
-    const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
+    const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item'`)[0];
 
     const itemDescriptionInput = [];
     const fieldInput= [];
+    const consumableDescriptionFieldInput = [];
 
     itemDescription.forEach((description) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
+        item_description_id: descriptionId,
         item_description_label: description.description,
         item_description_item_id: item_result.item_id,
         item_description_is_available: true,
@@ -1520,23 +1523,36 @@ RETURNS JSON AS $$
         field_section_id: section_id,
         field_is_required: true,
       });
+      if (item_gl_account === 'Fuel, Oil, Lubricants') {
+        consumableDescriptionFieldInput.push({
+          item_description_consumable_field_item_description_id: descriptionId,
+          item_description_consumable_field_field_id: fieldId
+        })
+      }
     });
 
     const itemDescriptionValues = itemDescriptionInput
       .map((item) =>
-        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
+        `('${item.item_description_id}','${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
       )
       .join(",");
 
     const fieldValues = fieldInput
       .map((field) =>
         `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
-      )
-      .join(",");
+      ).join(",");
 
-    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
+    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
     
-    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *;`);
+    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+
+    if(item_gl_account === 'Fuel, Oil, Lubricants' && consumableDescriptionFieldInput.length){
+      const consumableFieldValues = consumableDescriptionFieldInput
+        .map((consumableField) =>
+          `('${consumableField.item_description_consumable_field_item_description_id}','${consumableField.item_description_consumable_field_field_id}')`
+        ).join(",");
+      plv8.execute(`INSERT INTO item_description_consumable_field_table (item_description_consumable_field_item_description_id, item_description_consumable_field_field_id) VALUES ${consumableFieldValues}`);
+    }
 
     item_data = {
       ...item_result, 
@@ -1592,11 +1608,14 @@ RETURNS JSON AS $$
     const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
 
     const itemDescriptionInput = [];
-    const fieldInput= [];
+    const fieldInput = [];
+    const consumableDescriptionFieldInput = [];
 
     toAdd.forEach((description) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
+        item_description_id: descriptionId,
         item_description_label: description.description,
         item_description_item_id: item_result.item_id,
         item_description_is_available: true,
@@ -1612,11 +1631,17 @@ RETURNS JSON AS $$
         field_section_id: section_id,
         field_is_required: true,
       });
+      if (item_gl_account === 'Fuel, Oil, Lubricants') {
+        consumableDescriptionFieldInput.push({
+          item_description_consumable_field_item_description_id: descriptionId,
+          item_description_consumable_field_field_id: fieldId
+        })
+      }
     });
 
     const itemDescriptionValues = itemDescriptionInput
       .map((item) =>
-        `('${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
+        `('${item.item_description_id}','${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
       )
       .join(",");
 
@@ -1671,7 +1696,15 @@ RETURNS JSON AS $$
     if(fieldValues.length && itemDescriptionValues.length){
       plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
 
-      addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+      addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+
+      if(item_gl_account === 'Fuel, Oil, Lubricants' && consumableDescriptionFieldInput.length){
+        const consumableFieldValues = consumableDescriptionFieldInput
+          .map((consumableField) =>
+            `('${consumableField.item_description_consumable_field_item_description_id}','${consumableField.item_description_consumable_field_field_id}')`
+          ).join(",");
+        plv8.execute(`INSERT INTO item_description_consumable_field_table (item_description_consumable_field_item_description_id, item_description_consumable_field_field_id) VALUES ${consumableFieldValues}`);
+      }
     }
 
     plv8.execute(`DELETE FROM item_division_table WHERE item_division_item_id='${item_id}'`);
