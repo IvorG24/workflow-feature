@@ -34,7 +34,6 @@ export const getServerSideProps: GetServerSideProps =
           props: data as Props,
         };
       } catch (e) {
-        console.log(e);
         return {
           redirect: {
             destination: "/500",
@@ -91,18 +90,27 @@ const Page = ({
     } else if (request.request_form.form_name === "PED Equipment") {
       return <PEDEquipmentRequestPage request={request} />;
     } else if (request.request_form.form_name === "PED Part") {
-      const propertyNumberValue = safeParse(
-        request.request_form.form_section[0].section_field[4].field_response[0]
-          .request_response
-      );
-      if (Number(propertyNumberValue)) {
-        const categoryValue = safeParse(
-          request.request_form.form_section[0].section_field[1]
+      if (
+        JSON.parse(
+          request.request_form.form_section[0].section_field[2]
+            .field_response[0].request_response
+        ) === "Single"
+      ) {
+        const propertyNumberValue = safeParse(
+          request.request_form.form_section[0].section_field[4]
             .field_response[0].request_response
         );
-        const value = `"${getInitials(categoryValue)}-${propertyNumberValue}"`;
-        request.request_form.form_section[0].section_field[4].field_response[0].request_response =
-          value;
+        if (Number(propertyNumberValue)) {
+          const categoryValue = safeParse(
+            request.request_form.form_section[0].section_field[1]
+              .field_response[0].request_response
+          );
+          const value = `"${getInitials(
+            categoryValue
+          )}-${propertyNumberValue}"`;
+          request.request_form.form_section[0].section_field[4].field_response[0].request_response =
+            value;
+        }
       }
       return <PEDPartRequestPage request={request} />;
     } else if (request.request_form.form_name === "PED Consumable") {
