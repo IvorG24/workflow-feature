@@ -1234,6 +1234,7 @@ export type EquipmentForm = {
   name: string;
   category: string;
   isAvailable: boolean;
+  shorthand: string;
 };
 
 export type EquipmentDescriptionType = EquipmentDescriptionTableRow & {

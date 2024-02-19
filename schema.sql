@@ -506,6 +506,7 @@ CREATE TABLE equipment_table(
   equipment_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_name VARCHAR(4000) NOT NULL,
+  equipment_name_shorthand VARCHAR(4000) NOT NULL,
   equipment_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_is_available BOOLEAN DEFAULT true NOT NULL,
   
@@ -3696,10 +3697,10 @@ RETURNS JSON as $$
         const propertyNumberResponse = request.request_form.form_section[1].section_field[0].field_response.map(fieldResponse => {
           const categoryData = plv8.execute(
             `
-              SELECT equipment_description_property_number_with_category FROM equipment_description_view 
+              SELECT equipment_description_property_number_with_prefix FROM equipment_description_view 
               WHERE equipment_description_property_number = '${JSON.parse(fieldResponse.request_response)}' 
             `
-          )[0].equipment_description_property_number_with_category;
+          )[0].equipment_description_property_number_with_prefix;
 
           return {
             ...fieldResponse,
@@ -5669,7 +5670,7 @@ RETURNS JSON as $$
               equipment_team_id = '${teamMember.team_member_team_id}'
               AND equipment_description_is_disabled = false
               AND equipment_description_is_available = true
-            ORDER BY equipment_description_property_number_with_category
+            ORDER BY equipment_description_property_number_with_prefix
           `
         );
 
@@ -5678,7 +5679,7 @@ RETURNS JSON as $$
             option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: propertyNumber.equipment_description_id,
             option_order: index,
-            option_value: propertyNumber.equipment_description_property_number_with_category,
+            option_value: propertyNumber.equipment_description_property_number_with_prefix,
           };
         });
 
@@ -9261,7 +9262,7 @@ plv8.subtransaction(function(){
             option_field_id: form.form_section[0].section_field[1].field_id,
             option_id: equipmentPropertyNumber.equipment_description_id,
             option_order: index,
-            option_value: equipmentPropertyNumber.equipment_description_property_number_with_category,
+            option_value: equipmentPropertyNumber.equipment_description_property_number_with_prefix,
           };
         });
 
@@ -9535,7 +9536,7 @@ plv8.subtransaction(function(){
             equipment_team_id = '${teamId}'
             AND equipment_description_is_disabled = false
             AND equipment_description_is_available = true
-          ORDER BY equipment_description_property_number_with_category
+          ORDER BY equipment_description_property_number_with_prefix
         `
       );
       const propertyNumberOptions = equipmentPropertyNumbers.map((propertyNumber, index) => {
@@ -9543,7 +9544,7 @@ plv8.subtransaction(function(){
           option_field_id: form.form_section[1].section_field[0].field_id,
           option_id: propertyNumber.equipment_description_id,
           option_order: index,
-          option_value: propertyNumber.equipment_description_property_number_with_category,
+          option_value: propertyNumber.equipment_description_property_number_with_prefix,
         };
       });
 
@@ -9686,10 +9687,10 @@ plv8.subtransaction(function(){
         } else {
           const categoryData = plv8.execute(
             `
-              SELECT equipment_description_property_number_with_category FROM equipment_description_view 
+              SELECT equipment_description_property_number_with_prefix FROM equipment_description_view 
               WHERE equipment_description_property_number = '${JSON.parse(section.section_field[0].field_response[0].request_response)}' 
             `
-          )[0].equipment_description_property_number_with_category;
+          )[0].equipment_description_property_number_with_prefix;
 
           return {
             ...section,
@@ -13701,16 +13702,7 @@ CREATE INDEX request_list_idx ON request_table (request_id, request_date_created
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
 CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_table;
-CREATE VIEW equipment_description_view AS 
-  SELECT
-    equipment_description_table.*,
-    (
-      SELECT CONCAT(STRING_AGG(SUBSTRING(word, 1, 1), ''), '-', equipment_description_property_number) AS equipment_description_property_number_with_category
-      FROM regexp_split_to_table(equipment_category, ' ') AS word
-    ) 
-  FROM equipment_description_table
-  INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id
-  INNER JOIN equipment_category_table ON equipment_category_id = equipment_equipment_category_id;
+CREATE VIEW equipment_description_view AS SELECT equipment_description_table.*, CONCAT(equipment_name_shorthand, '-', equipment_description_property_number) AS equipment_description_property_number_with_prefix FROM equipment_description_table INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id;
 
 -------- End: VIEWS
 

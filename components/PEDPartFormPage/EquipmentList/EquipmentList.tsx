@@ -334,6 +334,13 @@ const EquipmentList = ({
             ),
           },
           {
+            accessor: "equipment_name_shorthand",
+            title: "Shorthand",
+            render: ({ equipment_name_shorthand }) => (
+              <Text>{equipment_name_shorthand}</Text>
+            ),
+          },
+          {
             accessor: "status",
             title: "Status",
             textAlignment: "center",

@@ -93,8 +93,7 @@ const UpdateEquipmentDescription = ({
   const { register, formState, handleSubmit, control } =
     useForm<EquipmentDescriptionForm>({
       defaultValues: {
-        propertyNumber:
-          editEquipmentDescription.equipment_description_property_number,
+        propertyNumber: `${selectedEquipment.equipment_name_shorthand}-${editEquipmentDescription.equipment_description_property_number}`,
         serialNumber:
           editEquipmentDescription.equipment_description_serial_number,
         brand: editEquipmentDescription.equipment_description_brand_id,

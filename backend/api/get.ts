@@ -4429,12 +4429,12 @@ export const checkPropertyNumber = async (
   const { propertyNumber, teamId } = params;
 
   const { count, error } = await supabaseClient
-    .from("equipment_description_table")
+    .from("equipment_description_view")
     .select(
       "*, equipment_description_equipment: equipment_description_equipment_id(*)",
       { count: "exact", head: true }
     )
-    .eq("equipment_description_property_number", propertyNumber)
+    .eq("equipment_description_property_number_with_prefix", propertyNumber)
     .eq("equipment_description_is_disabled", false)
     .eq("equipment_description_equipment.equipment_team_id", teamId);
   if (error) throw error;
@@ -5514,7 +5514,7 @@ export const getEquipmentDescription = async (
     )
     .eq("equipment_description_is_disabled", false)
     .eq("equipment_description_is_available", true)
-    .eq("equipment_description_property_number_with_category", propertyNumber)
+    .eq("equipment_description_property_number_with_prefix", propertyNumber)
     .single();
   if (error) throw error;
 
@@ -5780,15 +5780,4 @@ export const getConsumableItem = async (
       };
     }),
   } as unknown as ItemWithDescriptionAndField;
-};
-
-// Fetch equipment property count
-export const getEquipmentPropertyCount = async (
-  supabaseClient: SupabaseClient<Database>
-) => {
-  const { count, error } = await supabaseClient
-    .from("equipment_description_table")
-    .select("*", { count: "exact", head: true });
-  if (error || !count) throw error;
-  return count + 1;
 };

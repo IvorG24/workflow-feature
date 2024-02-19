@@ -282,6 +282,12 @@ RETURNS VOID AS $$
 
     const TEAM_ID = "a5a28977-6956-45c1-a624-b9e90911502e";
 
+    const getInitials = (str) => {
+      const words = str.split(" ");
+      const initials = words.map(word => word.charAt(0).toUpperCase());
+      return initials.join("");
+    }
+
     // CATEGORY
     const category_input = categoryList.map((category) => `('${category}', '${TEAM_ID}')`).join(',');
     const categoryData = plv8.execute(`INSERT INTO equipment_category_table (equipment_category, equipment_category_team_id) VALUES ${category_input} RETURNING *`);
@@ -289,9 +295,10 @@ RETURNS VOID AS $$
     // EQUIPMENT
     const equipment_input = equipmentNameList.map((equipmentName, index) => {
       const category = categoryData.find(value => value.equipment_category === `${equipmentCategoryList[index]}`);
-      return `('${equipmentName}', '${category.equipment_category_id}', '${TEAM_ID}')`;
+      const shorthand = getInitials(equipmentName)
+      return `('${equipmentName}', '${shorthand}', '${category.equipment_category_id}', '${TEAM_ID}')`;
     }).join(',');
-    const equipmentData = plv8.execute(`INSERT INTO equipment_table (equipment_name, equipment_equipment_category_id, equipment_team_id) VALUES ${equipment_input} RETURNING *`);
+    const equipmentData = plv8.execute(`INSERT INTO equipment_table (equipment_name, equipment_name_shorthand, equipment_equipment_category_id, equipment_team_id) VALUES ${equipment_input} RETURNING *`);
     const equipmentWithCategory = equipmentData.map(equipment => {
       return plv8.execute(`SELECT * FROM equipment_table INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id WHERE equipment_id = '${equipment.equipment_id}'`)[0];
     });
@@ -315,12 +322,6 @@ RETURNS VOID AS $$
     // Capacity UoM
     const capacity_uom_input = capacityUoMList.map((uom) => `('${uom}', '${TEAM_ID}')`).join(',');
     const capacityUoMData = plv8.execute(`INSERT INTO capacity_unit_of_measurement_table (capacity_unit_of_measurement, capacity_unit_of_measurement_team_id) VALUES ${capacity_uom_input} RETURNING *`);
-
-    const getInitials = (str) => {
-      const words = str.split(" ");
-      const initials = words.map(word => word.charAt(0).toUpperCase());
-      return initials.join("");
-    }
 
     const generateRandomString = (length) => {
       const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

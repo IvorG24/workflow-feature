@@ -74,6 +74,7 @@ const UpdateEquipment = ({
         name: editEquipment.equipment_name,
         category: editEquipment.equipment_equipment_category_id,
         isAvailable: editEquipment.equipment_is_available,
+        shorthand: editEquipment.equipment_name_shorthand,
       },
     }
   );
@@ -89,6 +90,7 @@ const UpdateEquipment = ({
             equipment_equipment_category_id: data.category,
             equipment_team_id: activeTeam.team_id,
             equipment_id: editEquipment.equipment_id,
+            equipment_name_shorthand: data.shorthand.toUpperCase(),
           },
           category: categoryOption.find(
             (value) => value.value === data.category
@@ -169,6 +171,30 @@ const UpdateEquipment = ({
                 },
               }}
               error={formState.errors.name?.message}
+            />
+            <TextInput
+              {...register("shorthand", {
+                required: { message: "Shorthand is required", value: true },
+                maxLength: {
+                  message: "Shorthand must be shorter than 10 characters",
+                  value: 10,
+                },
+                validate: {
+                  validCharacters: (value) =>
+                    value.match(/^[a-zA-Z0-9 ]*$/)
+                      ? true
+                      : "Shorthand must not include invalid character/s",
+                },
+              })}
+              withAsterisk
+              w="100%"
+              label="Shorthand"
+              sx={{
+                input: {
+                  textTransform: "uppercase",
+                },
+              }}
+              error={formState.errors.shorthand?.message}
             />
             <Controller
               control={control}

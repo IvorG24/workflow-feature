@@ -15,7 +15,6 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { createRange } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
-import { fetchNumberFromString } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -123,34 +122,8 @@ const CreatePEDPartRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
-      const isBulk =
-        data.sections[0].section_field[2].field_response === "Bulk";
-
-      let newData = data;
-
-      if (!isBulk) {
-        newData = {
-          sections: [
-            {
-              ...data.sections[0],
-              section_field: [
-                ...data.sections[0].section_field.slice(0, 4),
-                {
-                  ...data.sections[0].section_field[4],
-                  field_response: `${fetchNumberFromString(
-                    data.sections[0].section_field[4].field_response as string
-                  )}`,
-                },
-                ...data.sections[0].section_field.slice(5),
-              ],
-            },
-            ...data.sections.slice(1),
-          ],
-        };
-      }
-
       const request = await createRequest(supabaseClient, {
-        requestFormValues: newData,
+        requestFormValues: data,
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: signerList,
@@ -359,6 +332,7 @@ const CreatePEDPartRequestPage = ({
           (equipment) => equipment.option_value === value
         );
         if (!equipmentId) return;
+
         const equipmentPropertyNumber = await getEquipmentPropertyNumber(
           supabaseClient,
           {
@@ -376,11 +350,9 @@ const CreatePEDPartRequestPage = ({
                 return {
                   option_field_id:
                     form.form_section[0].section_field[0].field_id,
-                  option_id:
-                    propertyNumber.equipment_description_property_number_with_category,
+                  option_id: `${propertyNumber.equipment_description_id}`,
                   option_order: index,
-                  option_value:
-                    propertyNumber.equipment_description_property_number_with_category,
+                  option_value: `${propertyNumber.equipment_description_property_number_with_prefix}`,
                 };
               }
             ),

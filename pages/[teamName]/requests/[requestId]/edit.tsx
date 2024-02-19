@@ -13,9 +13,7 @@ import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/
 import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubconRequestPage";
 import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTransferReceiptPage";
 import Meta from "@/components/Meta/Meta";
-import { safeParse } from "@/utils/functions";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { getInitials } from "@/utils/string";
 import {
   FieldTableRow,
   FormType,
@@ -133,29 +131,6 @@ const Page = ({
           />
         );
       case "PED Part":
-        if (
-          JSON.parse(
-            request.request_form.form_section[0].section_field[2]
-              .field_response[0].request_response
-          ) === "Single"
-        ) {
-          const propertyNumberValue = safeParse(
-            request.request_form.form_section[0].section_field[4]
-              .field_response[0].request_response
-          );
-          if (Number(propertyNumberValue)) {
-            const categoryValue = safeParse(
-              request.request_form.form_section[0].section_field[1]
-                .field_response[0].request_response
-            );
-            const value = `"${getInitials(
-              categoryValue
-            )}-${propertyNumberValue}"`;
-            request.request_form.form_section[0].section_field[4].field_response[0].request_response =
-              value;
-          }
-        }
-
         return (
           <EditPEDPartRequestPage
             request={request}
