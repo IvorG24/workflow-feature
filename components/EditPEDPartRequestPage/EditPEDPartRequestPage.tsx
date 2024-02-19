@@ -54,6 +54,7 @@ type Props = {
   projectOptions: OptionTableRow[];
   categoryOptions: OptionTableRow[];
   referenceOnly: boolean;
+  generalItemNameOptions: OptionTableRow[];
 };
 
 const EditPEDPartRequestPage = ({
@@ -61,6 +62,7 @@ const EditPEDPartRequestPage = ({
   projectOptions,
   categoryOptions,
   referenceOnly,
+  generalItemNameOptions,
 }: Props) => {
   const router = useRouter();
   const formId = request.request_form_id;
@@ -90,7 +92,7 @@ const EditPEDPartRequestPage = ({
   >([]);
   const [generalItemNameChoices, setGeneralItemNameChoices] = useState<
     OptionTableRow[]
-  >([]);
+  >(generalItemNameOptions);
   const [equipmentId, setEquipmentId] = useState("");
 
   const requestorProfile = useUserProfile();
@@ -333,11 +335,14 @@ const EditPEDPartRequestPage = ({
               ...field,
               field_section_duplicatable_id: sectionDuplicatableId,
               field_option: generalItemNameChoices,
+              field_response: [],
             };
 
           return {
             ...field,
             field_section_duplicatable_id: sectionDuplicatableId,
+            field_response: [],
+            field_option: [],
           };
         }
       );

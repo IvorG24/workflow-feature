@@ -9218,6 +9218,8 @@ plv8.subtransaction(function(){
       let headerSection;
       let itemSectionList = [];
 
+      let generalItemNameOptions = [];
+
       if (typeOfOrder === "Single"){
         const categoryResponse = JSON.parse(form.form_section[0].section_field[1].field_response[0].request_response);
         const equipmentNameResponse = JSON.parse(form.form_section[0].section_field[3].field_response[0].request_response);
@@ -9518,7 +9520,8 @@ plv8.subtransaction(function(){
       returnData = {
         request: formattedRequest,
         projectOptions,
-        categoryOptions
+        categoryOptions,
+        generalItemNameOptions
       }
     } else if (form.form_name === "PED Consumable") {
       const equipmentPropertyNumbers = plv8.execute(

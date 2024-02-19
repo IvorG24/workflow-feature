@@ -70,6 +70,7 @@ export type EditRequestOnLoadProps = {
   preferredSupplierField?: FieldTableRow;
   categoryOptions?: OptionTableRow[];
   propertyNumberOptions?: OptionTableRow[];
+  generalItemNameOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -86,6 +87,7 @@ const Page = ({
   preferredSupplierField,
   categoryOptions = [],
   propertyNumberOptions = [],
+  generalItemNameOptions = [],
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
 
@@ -150,6 +152,7 @@ const Page = ({
             projectOptions={projectOptions}
             categoryOptions={categoryOptions}
             referenceOnly={referenceOnly}
+            generalItemNameOptions={generalItemNameOptions}
           />
         );
       case "PED Consumable":
