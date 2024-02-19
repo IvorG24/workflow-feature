@@ -902,15 +902,24 @@ RETURNS JSON AS $$
       FROM item_table
       WHERE item_general_name = '${itemName}'
     `)[0];
-
+  
     const itemDivision = plv8.execute(`
+      SELECT *
+      FROM item_division_table
+      WHERE item_division_item_id='${item.item_id}'
+      AND item_division_value='${csi_code_division_id}';
+    `);
+
+    if(itemDivision.lenght<=0){
+     plv8.execute(`
       INSERT INTO item_division_table (item_division_value, item_division_item_id) 
       VALUES ('${csi_code_division_id}','${item.item_id}') 
       RETURNING *;
      `)[0];
+    }
 
 
-     returnData = Boolean(csi) && Boolean(itemDivision)
+     returnData = Boolean(csi)
     }else{
       returnData = false
     }

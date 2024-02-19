@@ -1,9 +1,12 @@
 import {
   checkCSICodeDescriptionExists,
   checkCSICodeExists,
+  checkCSICodeItemExists,
+  getItem,
 } from "@/backend/api/get";
 import {
   createCustomCSI,
+  createItemDivision,
   createNotification,
   createTicketComment,
 } from "@/backend/api/post";
@@ -153,8 +156,10 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
     switch (ticket.ticket_category) {
       case "Request Custom CSI":
         return handleCustomCSIClosing();
+      case "Request Item CSI":
+        return handleItemCSIClosing();
       default:
-        return true;
+        return;
     }
   };
 
@@ -182,15 +187,65 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
         csiCode,
       });
 
-      if (csiCodeDescriptionExists || csiCodeExists) return false;
-      // add custom csi
-      const csiAdded = await createCustomCSI(supabaseClient, {
-        csiCode,
-        csiCodeDescription,
+      if (!csiCodeDescriptionExists && !csiCodeExists) {
+        // add custom csi
+        const csiAdded = await createCustomCSI(supabaseClient, {
+          csiCode,
+          csiCodeDescription,
+          itemName,
+        });
+
+        if (csiAdded) {
+          notifications.show({
+            message: "Something went wrong. Please try again later.",
+            color: "red",
+          });
+          return false;
+        }
+      }
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return {
+        canClose: false,
+        message: "",
+      };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleItemCSIClosing = async () => {
+    try {
+      setIsLoading(true);
+
+      // check if csi exists
+      const itemName = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`
+      );
+      const csiCode = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
+      );
+      const divisionId = `${csiCode}`.split(" ")[0];
+      const item = await getItem(supabaseClient, {
         itemName,
+        teamId: activeTeam.team_id,
+      });
+      if (!item) return;
+      const csiCodeItemExists = await checkCSICodeItemExists(supabaseClient, {
+        divisionId,
+        itemId: item.item_id,
       });
 
-      return csiAdded;
+      if (csiCodeItemExists) return false;
+      // add custom csi
+      const newDiv = await createItemDivision(supabaseClient, {
+        itemId: item.item_id,
+        divisionId,
+      });
+      console.log(newDiv);
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -221,14 +276,8 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
           color="green"
           loading={isLoading}
           onClick={async () => {
-            const canClose = await handleTicketClosing();
-            if (canClose) handleUpdateTicketStatus("CLOSED", null);
-            else {
-              notifications.show({
-                message: "Ticket can't be closed. Please try again later.",
-                color: "orange",
-              });
-            }
+            await handleTicketClosing();
+            handleUpdateTicketStatus("CLOSED", null);
           }}
         >
           Close

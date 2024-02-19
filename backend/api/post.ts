@@ -1450,3 +1450,21 @@ export const createCustomCSI = async (
   if (error) throw error;
   return Boolean(data);
 };
+
+// Create item division
+export const createItemDivision = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemId: string;
+    divisionId: string;
+  }
+) => {
+  const { divisionId, itemId } = params;
+  const { data, error } = await supabaseClient
+    .from("item_division_table")
+    .insert({ item_division_value: divisionId, item_division_item_id: itemId });
+  console.log(data);
+  console.log(error);
+  if (error) throw error;
+  return data;
+};
