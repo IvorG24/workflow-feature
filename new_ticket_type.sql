@@ -685,9 +685,9 @@ RETURNS JSON as $$
     });
 
     const ticketFormWithResponse = {
-      ticket_sections: sectionWithDuplicateList.map(section=>({
+      ticket_sections: sectionWithDuplicateList.map((section, sectionIdx)=>({
         ...section,
-        ticket_section_fields: section.ticket_section_fields.map(field=>{
+        ticket_section_fields: section.ticket_section_fields.map((field,fieldIdx)=>{
           const responseArray = field.ticket_field_response
           let response = ""
           let responseId = ""
@@ -695,9 +695,18 @@ RETURNS JSON as $$
             response = field.ticket_field_response[0]?.ticket_response_value || "" 
             responseId = field.ticket_field_response[0]?.ticket_response_id || ""
           }
+
+          let fieldOptions = field.ticket_field_option
+          if(ticket.ticket_category === "Request Item Option" && sectionIdx === 0 && fieldIdx === 1){
+            const itemName = JSON.parse(sectionWithDuplicateList[0].ticket_section_fields[0].ticket_field_response[0]?.ticket_response_value)
+            const item = plv8.execute(`SELECT * FROM item_table WHERE item_general_name = '${itemName}';`)[0];
+            const itemDescriptionList = plv8.execute(`SELECT item_description_label FROM item_description_table WHERE item_description_item_id = '${item.item_id}';`);
+            fieldOptions = itemDescriptionList.map((description)=>description.item_description_label)
+          }
           
           return {
             ...field,
+            ticket_field_option: fieldOptions,
             ticket_field_response: response,
             ticket_field_response_referrence: response,
             ticket_field_response_id: responseId
