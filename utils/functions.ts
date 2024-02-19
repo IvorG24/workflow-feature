@@ -612,12 +612,19 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:cb6d0086-aa76-4f24-a65e-33fb4e5a88ec",
       emailAddress: "michaeljohnventura6@gmail.com",
     },
+    // {
+    //   items: ["LUZ-21-002 KIANGAN"],
+    //   fullName: "Jumar Cernechez",
+    //   jiraAccountId:
+    //     "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d2cffd15-9d2f-4ce8-bdf3-95209e8e0013",
+    //   emailAddress: "jcernechez07@gmail.com",
+    // },
     {
       items: ["LUZ-21-002 KIANGAN"],
-      fullName: "Jumar Cernechez",
+      fullName: "Reyshel Tobias",
       jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d2cffd15-9d2f-4ce8-bdf3-95209e8e0013",
-      emailAddress: "jcernechez07@gmail.com",
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:cfd9f478-136a-4dbb-9471-ab353b88bb43",
+      emailAddress: "reysheltobias@gmail.com",
     },
     {
       items: [
