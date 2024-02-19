@@ -89,7 +89,7 @@ const Page = ({
   categoryOptions = [],
   propertyNumberOptions = [],
   generalItemNameOptions = [],
-  equipmentId
+  equipmentId,
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
 
@@ -133,21 +133,29 @@ const Page = ({
           />
         );
       case "PED Part":
-        const propertyNumberValue = safeParse(
-          request.request_form.form_section[0].section_field[4]
-            .field_response[0].request_response
-        );
-        if (Number(propertyNumberValue)) {
-          const categoryValue = safeParse(
-            request.request_form.form_section[0].section_field[1]
+        if (
+          JSON.parse(
+            request.request_form.form_section[0].section_field[2]
+              .field_response[0].request_response
+          ) === "Single"
+        ) {
+          const propertyNumberValue = safeParse(
+            request.request_form.form_section[0].section_field[4]
               .field_response[0].request_response
           );
-          const value = `"${getInitials(
-            categoryValue
-          )}-${propertyNumberValue}"`;
-          request.request_form.form_section[0].section_field[4].field_response[0].request_response =
-            value;
+          if (Number(propertyNumberValue)) {
+            const categoryValue = safeParse(
+              request.request_form.form_section[0].section_field[1]
+                .field_response[0].request_response
+            );
+            const value = `"${getInitials(
+              categoryValue
+            )}-${propertyNumberValue}"`;
+            request.request_form.form_section[0].section_field[4].field_response[0].request_response =
+              value;
+          }
         }
+
         return (
           <EditPEDPartRequestPage
             request={request}

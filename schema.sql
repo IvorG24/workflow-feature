@@ -9303,10 +9303,10 @@ plv8.subtransaction(function(){
 
         itemSectionList = form.form_section.slice(1)
         .map((section) => {
-          const generalItemName = JSON.parse(section.section_field[0].field_response[0].request_response);
-          const componentCategory = JSON.parse(section.section_field[1].field_response[0].request_response);
-          const brand = JSON.parse(section.section_field[2].field_response[0].request_response);
-          const model = JSON.parse(section.section_field[3].field_response[0].request_response);
+          const generalItemName = JSON.parse(section.section_field[0].field_response[0].request_response).replace(/'/g, "*");
+          const componentCategory = JSON.parse(section.section_field[1].field_response[0].request_response).replace(/'/g, "*");
+          const brand = JSON.parse(section.section_field[2].field_response[0].request_response).replace(/'/g, "*");
+          const model = JSON.parse(section.section_field[3].field_response[0].request_response).replace(/'/g, "*");
 
           const componentCategories = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}" }')`)[0].get_item_section_choices;
           const componentCategoryOptions = componentCategories.map((componentCategory, index) => {
@@ -9429,10 +9429,10 @@ plv8.subtransaction(function(){
 
         itemSectionList = form.form_section.slice(1)
         .map((section) => {
-          const generalItemName = JSON.parse(section.section_field[0].field_response[0].request_response);
-          const componentCategory = JSON.parse(section.section_field[1].field_response[0].request_response);
-          const brand = JSON.parse(section.section_field[2].field_response[0].request_response);
-          const model = JSON.parse(section.section_field[3].field_response[0].request_response);
+          const generalItemName = JSON.parse(section.section_field[0].field_response[0].request_response).replace(/'/g, "*");
+          const componentCategory = JSON.parse(section.section_field[1].field_response[0].request_response).replace(/'/g, "*");
+          const brand = JSON.parse(section.section_field[2].field_response[0].request_response).replace(/'/g, "*");
+          const model = JSON.parse(section.section_field[3].field_response[0].request_response).replace(/'/g, "*");
 
           const componentCategories = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}" }')`)[0].get_item_section_choices;
           const componentCategoryOptions = componentCategories.map((componentCategory, index) => {
@@ -11346,11 +11346,16 @@ RETURNS JSON AS $$
   plv8.subtransaction(function(){
     const {
       equipmentId,
-      generalName,
-      componentCategory,
-      brand,
-      model
+      generalName: initialGeneralName,
+      componentCategory: initialComponentCategory,
+      brand: initialBrand,
+      model: initialModel
     } = input_data;
+
+    const generalName = initialGeneralName ? initialGeneralName.replace("*", "''") : undefined;
+    const componentCategory = initialComponentCategory ? initialComponentCategory.replace("*", "''") : undefined;
+    const brand = initialBrand ? initialBrand.replace("*", "''") : undefined;
+    const model = initialModel ? initialModel.replace("*", "''") : undefined;
 
     let order = "equipment_general_name";
 

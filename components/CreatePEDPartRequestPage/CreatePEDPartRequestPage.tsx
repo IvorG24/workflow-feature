@@ -123,24 +123,31 @@ const CreatePEDPartRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
-      const newData = {
-        sections: [
-          {
-            ...data.sections[0],
-            section_field: [
-              ...data.sections[0].section_field.slice(0, 4),
-              {
-                ...data.sections[0].section_field[4],
-                field_response: `${fetchNumberFromString(
-                  data.sections[0].section_field[4].field_response as string
-                )}`,
-              },
-              ...data.sections[0].section_field.slice(5),
-            ],
-          },
-          ...data.sections.slice(1),
-        ],
-      };
+      const isBulk =
+        data.sections[0].section_field[2].field_response === "Bulk";
+
+      let newData = data;
+
+      if (!isBulk) {
+        newData = {
+          sections: [
+            {
+              ...data.sections[0],
+              section_field: [
+                ...data.sections[0].section_field.slice(0, 4),
+                {
+                  ...data.sections[0].section_field[4],
+                  field_response: `${fetchNumberFromString(
+                    data.sections[0].section_field[4].field_response as string
+                  )}`,
+                },
+                ...data.sections[0].section_field.slice(5),
+              ],
+            },
+            ...data.sections.slice(1),
+          ],
+        };
+      }
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: newData,
@@ -529,7 +536,8 @@ const CreatePEDPartRequestPage = ({
           ...section.section_field.slice(0, 3),
           ...section.section_field.slice(8),
         ];
-        updateSection(0, {
+        removeSection(0);
+        addSection(0, {
           ...section,
           section_field: generalField,
         });
