@@ -71,6 +71,7 @@ export type EditRequestOnLoadProps = {
   categoryOptions?: OptionTableRow[];
   propertyNumberOptions?: OptionTableRow[];
   generalItemNameOptions?: OptionTableRow[];
+  equipmentId: string;
 };
 
 const Page = ({
@@ -88,6 +89,7 @@ const Page = ({
   categoryOptions = [],
   propertyNumberOptions = [],
   generalItemNameOptions = [],
+  equipmentId
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
 
@@ -153,6 +155,7 @@ const Page = ({
             categoryOptions={categoryOptions}
             referenceOnly={referenceOnly}
             generalItemNameOptions={generalItemNameOptions}
+            equipmentId={equipmentId}
           />
         );
       case "PED Consumable":

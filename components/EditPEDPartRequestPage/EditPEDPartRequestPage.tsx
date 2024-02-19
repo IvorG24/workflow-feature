@@ -55,6 +55,7 @@ type Props = {
   categoryOptions: OptionTableRow[];
   referenceOnly: boolean;
   generalItemNameOptions: OptionTableRow[];
+  equipmentId: string;
 };
 
 const EditPEDPartRequestPage = ({
@@ -63,6 +64,7 @@ const EditPEDPartRequestPage = ({
   categoryOptions,
   referenceOnly,
   generalItemNameOptions,
+  equipmentId: initialEquipmentId,
 }: Props) => {
   const router = useRouter();
   const formId = request.request_form_id;
@@ -93,7 +95,7 @@ const EditPEDPartRequestPage = ({
   const [generalItemNameChoices, setGeneralItemNameChoices] = useState<
     OptionTableRow[]
   >(generalItemNameOptions);
-  const [equipmentId, setEquipmentId] = useState("");
+  const [equipmentId, setEquipmentId] = useState(initialEquipmentId);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();

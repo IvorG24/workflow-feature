@@ -9219,6 +9219,7 @@ plv8.subtransaction(function(){
       let itemSectionList = [];
 
       let generalItemNameOptions = [];
+      let equipmentId = "";
 
       if (typeOfOrder === "Single"){
         const categoryResponse = JSON.parse(form.form_section[0].section_field[1].field_response[0].request_response);
@@ -9244,7 +9245,7 @@ plv8.subtransaction(function(){
           };
         });
 
-        const equipmentId = equipmentNameOptions.find(equipmentName => equipmentName.option_value === equipmentNameResponse).option_id;
+        equipmentId = equipmentNameOptions.find(equipmentName => equipmentName.option_value === equipmentNameResponse).option_id;
 
         const equipmentPropertyNumbers = plv8.execute(
           `
@@ -9521,7 +9522,8 @@ plv8.subtransaction(function(){
         request: formattedRequest,
         projectOptions,
         categoryOptions,
-        generalItemNameOptions
+        generalItemNameOptions,
+        equipmentId
       }
     } else if (form.form_name === "PED Consumable") {
       const equipmentPropertyNumbers = plv8.execute(
