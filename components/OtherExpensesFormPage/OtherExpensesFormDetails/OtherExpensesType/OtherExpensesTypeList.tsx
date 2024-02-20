@@ -162,7 +162,7 @@ const OtherExpensesTypeList = ({
           };
         })
       );
-      return;
+
       await toggleStatus(supabaseClient, {
         table: "other_expenses_type",
         id: typeId,
