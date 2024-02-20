@@ -213,7 +213,7 @@ const OnboardingPage = ({ user }: Props) => {
           </Center>
 
           <form onSubmit={handleSubmit(handleOnboardUser)}>
-            <Grid columns={2}>
+            <Grid columns={2} gutter="sm">
               <Grid.Col xs={2} sm={1}>
                 <TextInput
                   label="Email"
