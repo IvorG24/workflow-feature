@@ -20,6 +20,10 @@ type Props = {
   };
   requestItemOptionMethods?: {
     onItemNameChange: (sectionIndex: number, value: string | null) => void;
+    onItemDescriptionChange: (
+      sectionIndex: number,
+      value: string | null
+    ) => void;
   };
 };
 
@@ -122,6 +126,11 @@ const TicketFormFields = ({
                     );
                   else if (ticketField.ticket_field_name === "Item Name")
                     requestItemOptionMethods?.onItemNameChange(
+                      ticketSectionIdx,
+                      value
+                    );
+                  else if (ticketField.ticket_field_name === "Item Description")
+                    requestItemOptionMethods?.onItemDescriptionChange(
                       ticketSectionIdx,
                       value
                     );

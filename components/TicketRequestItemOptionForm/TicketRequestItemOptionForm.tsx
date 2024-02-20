@@ -60,7 +60,33 @@ const TicketRequestItemOptionForm = ({
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
+      const itemName = `${data.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`;
+      const itemDescription = `${data.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`;
 
+      const valueList: string[] = data.ticket_sections
+        .slice(1)
+        .map(
+          (section) =>
+            `${section.ticket_section_fields[0].ticket_field_response}`
+        );
+
+      const item = await getItem(supabaseClient, {
+        itemName,
+        teamId: activeTeam.team_id,
+      });
+
+      const valueDataList = item.item_description
+        .find(
+          (description) =>
+            description.item_description_label === itemDescription
+        )
+        ?.item_description_field.map(
+          (field) => field.item_description_field_value
+        );
+      console.log(valueList);
+      console.log(valueDataList);
+
+      return;
       const ticket = await createTicket(supabaseClient, {
         category,
         teamMemberId: memberId,
@@ -157,6 +183,70 @@ const TicketRequestItemOptionForm = ({
     }
   };
 
+  const handleItemDescriptionChange = async (
+    index: number,
+    value: string | null
+  ) => {
+    const firstSection = getValues(`ticket_sections.${index}`);
+    const itemName = `${firstSection.ticket_section_fields[0].ticket_field_response}`;
+    const itemDescription = `${firstSection.ticket_section_fields[1].ticket_field_response}`;
+    const allOptionSection = getValues(`ticket_sections`).slice(1);
+    if (value && itemName) {
+      const item = await getItem(supabaseClient, {
+        teamId: activeTeam.team_id,
+        itemName: `${itemName}`,
+      });
+
+      const itemDescriptionFieldUoM =
+        (item.item_description.find(
+          (description) =>
+            description.item_description_label === itemDescription
+        )?.item_description_field[0].item_description_field_uom[0]
+          ?.item_description_field_uom as string) || "";
+
+      if (itemDescriptionFieldUoM) {
+        allOptionSection.forEach((section, sectionIdx) => {
+          updateSection(sectionIdx + 1, {
+            ...section,
+            ticket_section_fields: [
+              section.ticket_section_fields[0],
+              {
+                ...section.ticket_section_fields[1],
+                ticket_field_response: itemDescriptionFieldUoM,
+              },
+            ],
+          });
+        });
+      } else {
+        allOptionSection.forEach((section, sectionIdx) => {
+          updateSection(sectionIdx + 1, {
+            ...section,
+            ticket_section_fields: [
+              section.ticket_section_fields[0],
+              {
+                ...section.ticket_section_fields[1],
+                ticket_field_response: "",
+              },
+            ],
+          });
+        });
+      }
+    } else {
+      allOptionSection.forEach((section, sectionIdx) => {
+        updateSection(sectionIdx + 1, {
+          ...section,
+          ticket_section_fields: [
+            section.ticket_section_fields[0],
+            {
+              ...section.ticket_section_fields[1],
+              ticket_field_response: "",
+            },
+          ],
+        });
+      });
+    }
+  };
+
   const handleDuplicateSection = (sectionId: string) => {
     const sectionLastIndex = ticketSections
       .map((sectionItem) => sectionItem.ticket_section_id)
@@ -167,9 +257,10 @@ const TicketRequestItemOptionForm = ({
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId =
-        sectionMatch.ticket_section_fields.map((field) => ({
+        sectionMatch.ticket_section_fields.map((field, fieldIdx) => ({
           ...field,
-          ticket_field_response: "",
+          ticket_field_response:
+            fieldIdx === 1 ? field.ticket_field_response : "",
           ticket_field_section_id: sectionDuplicatableId,
         }));
       const newSection = {
@@ -222,6 +313,7 @@ const TicketRequestItemOptionForm = ({
                   isEdit={isEdit}
                   requestItemOptionMethods={{
                     onItemNameChange: handleItemNameChange,
+                    onItemDescriptionChange: handleItemDescriptionChange,
                   }}
                   onRemoveSection={() =>
                     handleRemoveSection(

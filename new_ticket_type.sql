@@ -245,7 +245,7 @@ INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field
 ('418ee61a-e406-4e91-ae14-66e4d1c62ce6', 'Item Name', 'SELECT', true, false, 1, '6031d434-e930-445a-afc3-184cf1f7ab4d'),
 ('88d1a4f2-6905-4b40-877b-25432ed1adad', 'Item Description', 'SELECT', true, false, 2, '6031d434-e930-445a-afc3-184cf1f7ab4d'),
 ('bad0c5f1-c3e1-49f9-8a59-97d96eaaddc9', 'Value', 'TEXT', true, false, 3, 'a6b7c597-681f-4b2d-84c2-8bf267133fc4'),
-('b33631fb-9dcd-485b-a688-338c1f566b5a', 'Base Unit of Measurement', 'SELECT', false, false, 4, 'a6b7c597-681f-4b2d-84c2-8bf267133fc4'),
+('b33631fb-9dcd-485b-a688-338c1f566b5a', 'Base Unit of Measurement', 'SELECT', false, true, 4, 'a6b7c597-681f-4b2d-84c2-8bf267133fc4'),
 
 ('39c506f4-f58b-4fe9-8f40-64f48f75b8ce', 'Reportee', 'SELECT', true, false, 1, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
 ('7fbed2f3-e9b0-4149-9271-abea4a8fefc5', 'Description of Incident', 'TEXTAREA', true, false, 2, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),

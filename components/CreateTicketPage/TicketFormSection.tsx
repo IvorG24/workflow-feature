@@ -19,6 +19,10 @@ type Props = {
   };
   requestItemOptionMethods?: {
     onItemNameChange: (sectionIndex: number, value: string | null) => void;
+    onItemDescriptionChange: (
+      sectionIndex: number,
+      value: string | null
+    ) => void;
   };
 };
 
