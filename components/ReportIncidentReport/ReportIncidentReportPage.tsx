@@ -92,19 +92,30 @@ const ReportIncidentReportPage = ({ teamMemberList }: Props) => {
   };
 
   const fillMissingMonths = (data: DataItem[]): DataItem[] => {
-    const months: Record<number, DataItem> = {};
+    let filledData: DataItem[] = [];
     for (let i = 1; i <= 12; i++) {
       const monthName = new Date(2024, i - 1).toLocaleString(undefined, {
         month: "long",
       });
-      months[i] = { label: monthName, value: 0 };
+      filledData[i] = { label: monthName, value: 0 };
     }
 
     data.forEach((month) => {
-      months[month.value] = month;
+      const existingEntry: DataItem | undefined = data.find(
+        (entry) => entry.label === month.label
+      );
+      if (existingEntry) {
+        filledData = filledData.map((data) => {
+          if (data.label === existingEntry.label) {
+            return existingEntry;
+          } else {
+            return data;
+          }
+        });
+      }
     });
 
-    return Object.values(months);
+    return filledData.slice(1);
   };
 
   const fillMissingDates = (
@@ -123,7 +134,7 @@ const ReportIncidentReportPage = ({ teamMemberList }: Props) => {
       if (existingEntry) {
         filledData.push(existingEntry);
       } else {
-        filledData.push({ label: day.toString(), value: 0 }); // You can set any default value you want
+        filledData.push({ label: day.toString(), value: 0 });
       }
     }
     return filledData;
