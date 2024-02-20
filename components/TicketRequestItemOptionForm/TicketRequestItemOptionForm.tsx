@@ -62,38 +62,7 @@ const TicketRequestItemOptionForm = ({
     try {
       setIsLoading(true);
       // option check if exists
-      const itemName = `${data.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`;
-      const itemDescription = `${data.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`;
-
-      const item = await getItem(supabaseClient, {
-        itemName,
-        teamId: activeTeam.team_id,
-      });
-
-      const valueDataList = item.item_description
-        .find(
-          (description) =>
-            description.item_description_label === itemDescription
-        )
-        ?.item_description_field.map(
-          (field) => field.item_description_field_value
-        );
-
-      let optionExists = false;
-      data.ticket_sections.slice(1).map((section, sectionIdx) => {
-        const value = `${section.ticket_section_fields[0].ticket_field_response}`;
-        const valueExists = valueDataList?.includes(value);
-        if (valueExists) {
-          setError(
-            `ticket_sections.${
-              sectionIdx + 1
-            }.ticket_section_fields.${0}.ticket_field_response`,
-            { message: `${value} already exists` }
-          );
-          optionExists = true;
-        }
-      });
-
+      const optionExists = await itemDescriptionOptionsCheck(data);
       if (optionExists) return;
 
       const ticket = await createTicket(supabaseClient, {
@@ -125,8 +94,11 @@ const TicketRequestItemOptionForm = ({
   const handleEditTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
-      if (!category && !ticketId && user) return;
+      // option check if exists
+      const optionExists = await itemDescriptionOptionsCheck(data);
+      if (optionExists) return;
 
+      if (!category && !ticketId && user) return;
       const edited = await editTicket(supabaseClient, {
         ticketId: `${ticketId}`,
         ticketFormValues: data,
@@ -149,6 +121,39 @@ const TicketRequestItemOptionForm = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const itemDescriptionOptionsCheck = async (data: CreateTicketFormValues) => {
+    const itemName = `${data.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`;
+    const itemDescription = `${data.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`;
+
+    const item = await getItem(supabaseClient, {
+      itemName,
+      teamId: activeTeam.team_id,
+    });
+
+    const valueDataList = item.item_description
+      .find(
+        (description) => description.item_description_label === itemDescription
+      )
+      ?.item_description_field.map((field) =>
+        field.item_description_field_value.toLowerCase()
+      );
+    let optionExists = false;
+    data.ticket_sections.slice(1).map((section, sectionIdx) => {
+      const value = `${section.ticket_section_fields[0].ticket_field_response}`;
+      const valueExists = valueDataList?.includes(value.toLowerCase());
+      if (valueExists) {
+        setError(
+          `ticket_sections.${
+            sectionIdx + 1
+          }.ticket_section_fields.${0}.ticket_field_response`,
+          { message: `${value} already exists` }
+        );
+        optionExists = true;
+      }
+    });
+    return optionExists;
   };
 
   const handleItemNameChange = async (index: number, value: string | null) => {

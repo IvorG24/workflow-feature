@@ -6,6 +6,7 @@ import {
 } from "@/backend/api/get";
 import {
   createCustomCSI,
+  createItemDescriptionField,
   createItemDivision,
   createNotification,
   createTicketComment,
@@ -158,6 +159,8 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
         return handleCustomCSIClosing();
       case "Request Item CSI":
         return handleItemCSIClosing();
+      case "Request Item Option":
+        return handleItemOptionClosing();
       default:
         return;
     }
@@ -241,11 +244,72 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
 
       if (csiCodeItemExists) return false;
       // add custom csi
-      const newDiv = await createItemDivision(supabaseClient, {
+      await createItemDivision(supabaseClient, {
         itemId: item.item_id,
         divisionId,
       });
-      console.log(newDiv);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleItemOptionClosing = async () => {
+    try {
+      setIsLoading(true);
+
+      // check if csi exists
+      const itemName = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`
+      );
+      const itemDescription = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`
+      );
+      const uom = parseJSONIfValid(
+        `${ticketForm.ticket_sections[1].ticket_section_fields[1].ticket_field_response}`
+      );
+      const item = await getItem(supabaseClient, {
+        itemName,
+        teamId: activeTeam.team_id,
+      });
+
+      const itemDescriptionData = item.item_description.find(
+        (description) => description.item_description_label === itemDescription
+      );
+      const itemDescriptionId = itemDescriptionData?.item_description_id;
+      const valueExistsList = itemDescriptionData?.item_description_field.map(
+        (field) => field.item_description_field_value.toLowerCase()
+      );
+
+      const fieldValueList: string[] = [];
+      ticketForm.ticket_sections.slice(1).map((section) => {
+        const value = parseJSONIfValid(
+          `${section.ticket_section_fields[0].ticket_field_response}`
+        );
+        const valueExists = valueExistsList?.includes(value.toLowerCase());
+        if (!valueExists) fieldValueList.push(value);
+      });
+
+      if (fieldValueList.length <= 0) return;
+
+      await createItemDescriptionField(
+        supabaseClient,
+        fieldValueList.map((value) => {
+          return {
+            item_description_field_value: `${value}`,
+            item_description_field_is_available: true,
+            item_description_field_item_description_id: `${itemDescriptionId}`,
+            item_description_field_uom: uom,
+            item_description_field_encoder_team_member_id:
+              teamMember?.team_member_id,
+          };
+        })
+      );
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
