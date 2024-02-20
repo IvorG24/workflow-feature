@@ -51,6 +51,7 @@ const TicketRequestItemOptionForm = ({
     replace: replaceSection,
     remove: removeSection,
     insert: insertSection,
+    update: updateSection,
   } = useFieldArray({
     control,
     name: "ticket_sections",
@@ -128,8 +129,7 @@ const TicketRequestItemOptionForm = ({
         (description) => description.item_description_label
       );
 
-      removeSection(index);
-      insertSection(index, {
+      updateSection(index, {
         ...newSection,
         ticket_section_fields: [
           newSection.ticket_section_fields[0],
@@ -142,8 +142,7 @@ const TicketRequestItemOptionForm = ({
         ],
       });
     } else {
-      removeSection(index);
-      insertSection(index, {
+      updateSection(index, {
         ...newSection,
         ticket_section_fields: [
           newSection.ticket_section_fields[0],
@@ -215,7 +214,7 @@ const TicketRequestItemOptionForm = ({
               .lastIndexOf(sectionIdToFind);
 
             return (
-              <Flex direction="column" key={ticketSectionIdx}>
+              <Flex direction="column" key={ticketSection.id}>
                 <TicketFormSection
                   category={`${category}`}
                   ticketSection={ticketSection}

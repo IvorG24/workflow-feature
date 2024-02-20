@@ -72,7 +72,9 @@ const TicketFormSection = ({
               isEdit={isEdit}
               requestItemCSIMethods={requestItemCSIMethods}
               requestItemOptionMethods={requestItemOptionMethods}
-              key={ticketField.ticket_field_id}
+              key={
+                ticketField.ticket_field_id + ticketSection.ticket_section_id
+              }
             />
           );
         }

@@ -223,7 +223,7 @@ const TicketRequestItemCSIForm = ({
               requestItemCSIMethods={{
                 onCSICodeChange: handleCSICodeChange,
               }}
-              key={ticketSection.field_section_duplicatable_id}
+              key={ticketSection.id}
             />
           ))}
           <Button type="submit" mt="lg" fullWidth>

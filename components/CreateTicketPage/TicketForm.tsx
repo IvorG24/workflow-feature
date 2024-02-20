@@ -171,7 +171,7 @@ const TicketForm = ({
               .lastIndexOf(sectionIdToFind);
 
             return (
-              <Flex direction="column" key={ticketSectionIdx}>
+              <Flex direction="column" key={ticketSection.id}>
                 <TicketFormSection
                   category={`${category}`}
                   ticketSection={ticketSection}

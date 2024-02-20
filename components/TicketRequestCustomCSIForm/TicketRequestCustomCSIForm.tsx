@@ -184,7 +184,7 @@ const TicketRequestCustomCSIForm = ({
               category={category}
               ticketSection={ticketSection}
               ticketSectionIdx={ticketSectionIdx}
-              key={ticketSectionIdx}
+              key={ticketSection.id}
             />
           ))}
           <Button type="submit" mt="lg" fullWidth>
