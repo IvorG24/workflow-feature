@@ -717,12 +717,19 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       jiraAccountId: "712020:5f585f80-6478-4f71-9ed4-04d0d8cdf416",
       emailAddress: "edwin.probadora@staclara.com.ph",
     },
+    // {
+    //   items: ["MIN-15-077  MW SIGUIL HYDRO"],
+    //   fullName: "Joel E. Gucela",
+    //   jiraAccountId:
+    //     "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+    //   emailAddress: "gucelaje2231@gmail.com",
+    // },
     {
       items: ["MIN-15-077  MW SIGUIL HYDRO"],
-      fullName: "Joel E. Gucela",
+      fullName: "Leizyl Puerte",
       jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
-      emailAddress: "gucelaje2231@gmail.com",
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:07d9cfb9-325b-4a6f-bf18-7f55ef8ac5d6",
+      emailAddress: "leizyl.puerte.staclara@gmail.com",
     },
     {
       items: ["LUZ-22-009 SOLID LF MAIN BLDG"],
