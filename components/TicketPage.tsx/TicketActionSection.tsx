@@ -192,19 +192,11 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
 
       if (!csiCodeDescriptionExists && !csiCodeExists) {
         // add custom csi
-        const csiAdded = await createCustomCSI(supabaseClient, {
+        await createCustomCSI(supabaseClient, {
           csiCode,
           csiCodeDescription,
           itemName,
         });
-
-        if (csiAdded) {
-          notifications.show({
-            message: "Something went wrong. Please try again later.",
-            color: "red",
-          });
-          return false;
-        }
       }
     } catch {
       notifications.show({
