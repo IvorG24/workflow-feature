@@ -500,3 +500,62 @@ INSERT INTO form_sla_table (form_sla_hours, form_sla_form_id, form_sla_team_id) 
 -- (0,'391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 -- (0,'8e173d92-c346-4fb5-8ef2-490105e19263', 'a5a28977-6956-45c1-a624-b9e90911502e'),
 -- (0,'7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+
+INSERT INTO ticket_category_table (ticket_category_id, ticket_category) VALUES
+('1e9aef8b-cf84-4443-9e07-d9ad2461a301', 'General'),
+('a2cfde15-1b4a-41b2-8415-08221148ca2d', 'Feature Request'),
+('f57ced26-0b93-472f-8268-c41fbd7e010b', 'Item Request'),
+('f9d44ea0-4cdb-427f-8224-bc16fd92f1be', 'Request Custom CSI'),
+('ea67c627-6975-4e01-9c2d-445ae61fa144', 'Request Item CSI'),
+('f1759af2-2a07-460d-9a72-86faf8eccd85', 'Request Item Option'),
+('2df7ca37-444f-4e71-9c84-ad0d6f3e77b5', 'Incident Report for Employees'),
+('c9f373c8-09d6-46f0-92cb-5efeffd72758', 'Bug Report');
+
+INSERT INTO ticket_section_table (ticket_section_id, ticket_section_name, ticket_section_is_duplicatable, ticket_section_category_id) VALUES
+('0db787b2-092f-4499-ab82-2c42a459c8f0', 'Request Details', false, '1e9aef8b-cf84-4443-9e07-d9ad2461a301'),
+('caac5b9c-c233-4370-b45d-37f43c73cbdb', 'Request Details', false, 'a2cfde15-1b4a-41b2-8415-08221148ca2d'),
+('2b701e68-18e5-4bd6-a966-5809ea11e236', 'Request Details', false, 'f57ced26-0b93-472f-8268-c41fbd7e010b'),
+('5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e', 'Request Details', false, 'f9d44ea0-4cdb-427f-8224-bc16fd92f1be'),
+('8b05e5e1-f521-449d-8ec5-106acd7936f6', 'Request Details', false, 'ea67c627-6975-4e01-9c2d-445ae61fa144'),
+('6031d434-e930-445a-afc3-184cf1f7ab4d', 'Item', false, 'f1759af2-2a07-460d-9a72-86faf8eccd85'),
+('a6b7c597-681f-4b2d-84c2-8bf267133fc4', 'Request Option', true, 'f1759af2-2a07-460d-9a72-86faf8eccd85'),
+('ae0991e6-e3a4-452d-ac4b-d78908b99819', 'Request Details', false, '2df7ca37-444f-4e71-9c84-ad0d6f3e77b5'),
+('222576c2-ef0b-4714-ac10-2f57d310c9f0', 'Request Details', false, 'c9f373c8-09d6-46f0-92cb-5efeffd72758');
+
+INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field_type, ticket_field_is_required, ticket_field_is_read_only, ticket_field_order, ticket_field_section_id) VALUES 
+('849c0073-ec1e-4557-beed-6e930cd69c78', 'Title', 'TEXT', true, false, 1, '0db787b2-092f-4499-ab82-2c42a459c8f0'),
+('8b034462-a8d3-4649-8832-d248d94024c1', 'Description', 'TEXTAREA', true, false, 2, '0db787b2-092f-4499-ab82-2c42a459c8f0'),
+
+('2bcf2775-5a25-43fc-9422-3665e9585af0', 'Title', 'TEXT', true, false, 1, 'caac5b9c-c233-4370-b45d-37f43c73cbdb'),
+('b5ff3145-e454-40bf-a1f4-96516807c34a', 'Description', 'TEXTAREA', true, false, 2, 'caac5b9c-c233-4370-b45d-37f43c73cbdb'),
+
+('2fb7b796-2e56-48cb-b0c8-db43a6ed97c3', 'Title', 'TEXT', true, false, 1, '2b701e68-18e5-4bd6-a966-5809ea11e236'),
+('f22f1777-b776-4dbd-bd5f-a1baacd01d18', 'Description', 'TEXTAREA', true, false, 2, '2b701e68-18e5-4bd6-a966-5809ea11e236'),
+
+('c272d2d6-c652-4cb0-8aee-71cfac888b4b', 'Item Name', 'SELECT', true, false, 1, '5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e'),
+('072c4570-74ca-4629-9fd7-c7ecf5303621', 'CSI Code Description', 'TEXT', true, false, 2, '5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e'),
+('2bd89b57-6e78-4f9d-85eb-254a63929875', 'CSI Code', 'TEXT', true, false, 3, '5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e'),
+
+('d86cc7a1-4754-47fd-a010-4fd00f690b8c', 'Item Name', 'SELECT', true, false, 1, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('a9d21d82-423e-4b05-8a02-be6df5444b86', 'CSI Code Description', 'SELECT', true, false, 2, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('9adb2f64-6a87-4572-be6f-476af2a45b41', 'CSI Code', 'TEXT', true, true, 3, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('d6870b74-26b0-47f4-9ba6-93ea932aef3c', 'Division Description', 'TEXT', true, true, 4, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('1bddaf83-e973-4c94-b070-dbaa22cda2ff', 'Level 2 Major Group Description', 'TEXT', true, true, 5, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('f6f1fdbd-d833-40ab-aba9-178d66250117', 'Level 2 Minor Group Description', 'TEXT', true, true, 6, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+
+('418ee61a-e406-4e91-ae14-66e4d1c62ce6', 'Item Name', 'SELECT', true, false, 1, '6031d434-e930-445a-afc3-184cf1f7ab4d'),
+('88d1a4f2-6905-4b40-877b-25432ed1adad', 'Item Description', 'SELECT', true, false, 2, '6031d434-e930-445a-afc3-184cf1f7ab4d'),
+('bad0c5f1-c3e1-49f9-8a59-97d96eaaddc9', 'Value', 'TEXT', true, false, 3, 'a6b7c597-681f-4b2d-84c2-8bf267133fc4'),
+('b33631fb-9dcd-485b-a688-338c1f566b5a', 'Base Unit of Measurement', 'SELECT', false, false, 4, 'a6b7c597-681f-4b2d-84c2-8bf267133fc4'),
+
+('39c506f4-f58b-4fe9-8f40-64f48f75b8ce', 'Reportee', 'SELECT', true, false, 1, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
+('7fbed2f3-e9b0-4149-9271-abea4a8fefc5', 'Description of Incident', 'TEXTAREA', true, false, 2, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
+('4c1c1a20-8d8e-4058-be5b-51bf550ef9ad', 'Immediate Actions Taken', 'TEXTAREA', true, false, 3, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
+('78a2a55f-fab8-403c-bceb-e989342e1254', 'Evidence/Attachment', 'FILE', true, false, 4, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
+
+('e88d49ee-c4eb-4b48-b0e2-bfc061bd2a03', 'What feature is being impacted?', 'TEXT', true, false, 1, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+('1964674d-817c-43e1-b180-d451a308e250', 'What Space/List/View is impacted?', 'TEXT', true, false, 2, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+('445a0329-57a2-4beb-b066-1781798c2142', 'Steps to reproduce issue?', 'TEXTAREA', true, false, 3, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+('09f90c2f-d6e0-4ed2-b169-670cf9c5691b', 'Description', 'TEXTAREA', true, false, 4, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+('c422d499-ba4c-4ef1-a36d-f9ff6d55aa68', 'Attachment', 'FILE', true, false, 5, '222576c2-ef0b-4714-ac10-2f57d310c9f0');
