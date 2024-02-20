@@ -335,6 +335,35 @@ $$ LANGUAGE plv8;
 
 -- End: Incident report metrics
 
+
+-- Start: Get ticket list on load
+
+CREATE OR REPLACE FUNCTION get_ticket_list_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+    } = input_data;
+    
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+
+    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
+
+    const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
+
+    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Get ticket list on load
+
 -- Start: Create ticket on load
 
 CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
