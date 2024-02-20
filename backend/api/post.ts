@@ -1463,8 +1463,6 @@ export const createItemDivision = async (
   const { data, error } = await supabaseClient
     .from("item_division_table")
     .insert({ item_division_value: divisionId, item_division_item_id: itemId });
-  console.log(data);
-  console.log(error);
   if (error) throw error;
   return data;
 };

@@ -73,6 +73,12 @@ const TicketOverride = ({
         (section) => section.ticket_section_is_duplicatable
       );
 
+      const bothIncluded = newDuplicatableSections.filter((newSections) =>
+        oldDuplicatableSections
+          .map((oldSections) => oldSections.field_section_duplicatable_id)
+          .includes(newSections.field_section_duplicatable_id)
+      );
+
       const added = newDuplicatableSections.filter(
         (newSections) =>
           !oldDuplicatableSections
@@ -114,6 +120,44 @@ const TicketOverride = ({
         });
       });
 
+      bothIncluded.forEach((section) => {
+        const duplicatableSectionId = section.field_section_duplicatable_id;
+        const bothOldSection = oldDuplicatableSections.find(
+          (section) =>
+            section.field_section_duplicatable_id === duplicatableSectionId
+        );
+        const bothNewSection = newDuplicatableSections.find(
+          (section) =>
+            section.field_section_duplicatable_id === duplicatableSectionId
+        );
+        if (!bothOldSection) return;
+        if (!bothNewSection) return;
+        bothOldSection.ticket_section_fields.forEach(
+          (oldField, oldFieldIdx) => {
+            const newResponse =
+              bothNewSection.ticket_section_fields[oldFieldIdx]
+                .ticket_field_response;
+            const isFile = newResponse instanceof File;
+            if (oldField.ticket_field_response !== newResponse) {
+              if (isFile) {
+                const file = newResponse as File;
+                ticketChanges += `<p>The <strong>${oldField.ticket_field_name}</strong> file in <strong>${section.ticket_section_name}</strong> has been changed.
+              <br>
+              ${file.name}</p>`;
+              } else {
+                ticketChanges += `<p>The <strong>${oldField.ticket_field_name}</strong> in <strong>${section.ticket_section_name}</strong> has been changed.
+              <br>
+              <strong>From:</strong>
+              ${oldField.ticket_field_response}
+              <br>
+              <strong>To:</strong>
+              ${newResponse}</p>`;
+              }
+            }
+          }
+        );
+      });
+
       added.forEach((section) => {
         ticketChanges += `<p>The <strong>${
           section.ticket_section_name
@@ -142,8 +186,8 @@ const TicketOverride = ({
         </p>`;
       });
 
+      if (!ticketChanges) return;
       setOldTicketForm(newFormValues);
-
       const { error } = await createTicketComment(supabaseClient, {
         ticket_comment_id: newCommentId,
         ticket_comment_content: `<p>${user?.user_first_name} ${user?.user_last_name} has made the following changes on the ticket.</p>\n${ticketChanges}`,
