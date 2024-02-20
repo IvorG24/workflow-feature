@@ -158,16 +158,17 @@ const OtherExpensesTypeList = ({
           if (type.other_expenses_type_id !== typeId) return type;
           return {
             ...type,
-            status: value,
+            other_expenses_type_is_available: value,
           };
         })
       );
+
       await toggleStatus(supabaseClient, {
-        table: "other_expenses_type_table",
+        table: "other_expenses_type",
         id: typeId,
         status: value,
       });
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
