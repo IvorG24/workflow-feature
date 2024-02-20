@@ -44,7 +44,8 @@ const TicketRequestItemOptionForm = ({
   const user = useUserProfile();
 
   const createTicketFormMethods = useForm<CreateTicketFormValues>();
-  const { handleSubmit, getValues, control } = createTicketFormMethods;
+  const { handleSubmit, getValues, control, setError } =
+    createTicketFormMethods;
 
   const {
     fields: ticketSections,
@@ -60,15 +61,9 @@ const TicketRequestItemOptionForm = ({
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
       setIsLoading(true);
+      // option check if exists
       const itemName = `${data.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`;
       const itemDescription = `${data.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`;
-
-      const valueList: string[] = data.ticket_sections
-        .slice(1)
-        .map(
-          (section) =>
-            `${section.ticket_section_fields[0].ticket_field_response}`
-        );
 
       const item = await getItem(supabaseClient, {
         itemName,
@@ -83,10 +78,24 @@ const TicketRequestItemOptionForm = ({
         ?.item_description_field.map(
           (field) => field.item_description_field_value
         );
-      console.log(valueList);
-      console.log(valueDataList);
 
-      return;
+      let optionExists = false;
+      data.ticket_sections.slice(1).map((section, sectionIdx) => {
+        const value = `${section.ticket_section_fields[0].ticket_field_response}`;
+        const valueExists = valueDataList?.includes(value);
+        if (valueExists) {
+          setError(
+            `ticket_sections.${
+              sectionIdx + 1
+            }.ticket_section_fields.${0}.ticket_field_response`,
+            { message: `${value} already exists` }
+          );
+          optionExists = true;
+        }
+      });
+
+      if (optionExists) return;
+
       const ticket = await createTicket(supabaseClient, {
         category,
         teamMemberId: memberId,
