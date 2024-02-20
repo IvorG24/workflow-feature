@@ -60,7 +60,10 @@ const UpdateEquipmentLookup = ({
         supabaseClient,
         {
           equipmentLookupData: {
-            [lookupValue]: data.value.toUpperCase(),
+            [lookupValue]:
+              lookup.label === "Capacity Unif of Measurement"
+                ? data.value
+                : data.value.toUpperCase(),
             [isAvailable]: data.isAvailable,
             [team]: activeTeam.team_id,
           } as EquipmentLookupTableUpdate,
@@ -115,7 +118,10 @@ const UpdateEquipmentLookup = ({
                       supabaseClient,
                       {
                         lookupTableName: lookup.table,
-                        value: value.toUpperCase(),
+                        value:
+                          lookup.label === "Capacity Unif of Measurement"
+                            ? value
+                            : value.toUpperCase(),
                         teamId: activeTeam.team_id,
                       }
                     );
@@ -129,7 +135,10 @@ const UpdateEquipmentLookup = ({
               error={formState.errors.value?.message}
               sx={{
                 input: {
-                  textTransform: "uppercase",
+                  textTransform:
+                    lookup.label === "Capacity Unif of Measurement"
+                      ? "none"
+                      : "uppercase",
                 },
               }}
             />
