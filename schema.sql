@@ -6425,7 +6425,6 @@ $$ LANGUAGE plv8;
 
 -- Start: Get ticket form
 
-
 CREATE OR REPLACE FUNCTION get_ticket_form(
     input_data JSON
 )
@@ -6541,6 +6540,51 @@ RETURNS JSON AS $$
       })
       returnData = { ticket_sections }
 
+    } else if (category === "Request Item Option"){
+      const itemList = plv8.execute(`
+        SELECT * FROM item_table 
+        WHERE item_team_id='${teamId}'
+        AND item_is_disabled = false
+        AND item_is_available = true
+        ORDER BY item_general_name ASC;
+      `);
+      const itemOptions = itemList.map((option)=> option.item_general_name);
+
+      const uomList = plv8.execute(`
+        SELECT item_unit_of_measurement
+        FROM item_unit_of_measurement_table
+        WHERE 
+          item_unit_of_measurement_is_available=true
+          AND item_unit_of_measurement_is_disabled=false
+          AND item_unit_of_measurement_team_id='${teamId}'
+          ORDER BY item_unit_of_measurement ASC;
+      `);
+      const uomOptions = uomList.map((option)=> option.item_unit_of_measurement);
+
+
+      const ticket_sections = sectionList.map((section, sectionIdx) => {
+
+        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
+          let fieldOptions = []
+          if(sectionIdx===0 && fieldIdx === 0){
+            fieldOptions = itemOptions
+          }else if(sectionIdx===1 && fieldIdx === 1){
+            fieldOptions = uomOptions
+          }
+
+          return {
+            ...field,
+            ticket_field_option: fieldOptions,
+          };
+        });
+        
+        return {
+          ...section,
+          ticket_section_fields: fieldWithOption,
+        }
+      })
+      returnData = { ticket_sections }
+
     } else if (category === "Incident Report for Employees"){
         const memberList = plv8.execute(`
           SELECT 
@@ -6614,7 +6658,6 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
-
 -- End: Create ticket
 
 -- Start: Get ticket on load
@@ -6630,10 +6673,15 @@ RETURNS JSON as $$
       userId
     } = input_data;
 
-    const ticket = plv8.execute(`SELECT *  FROM ticket_table WHERE ticket_id='${ticketId}';`)[0];
+    const ticket = plv8.execute(`SELECT tt.*, tct.ticket_category
+      FROM ticket_table tt
+      INNER JOIN ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
+      WHERE ticket_id='${ticketId}';
+    `)[0];
 
     const requester = plv8.execute(`SELECT jsonb_build_object(
           'team_member_id', tm.team_member_id,
+          'team_member_team_id', tm.team_member_team_id,
           'team_member_role', tm.team_member_role,
           'team_member_user', jsonb_build_object(
               'user_id', u.user_id,
@@ -6646,6 +6694,97 @@ RETURNS JSON as $$
       FROM team_member_table tm
       JOIN user_table u ON tm.team_member_user_id = u.user_id
       WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}';`)[0]
+    
+    const ticketForm = plv8.execute(`SELECT get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
+
+    const responseData = plv8.execute(`SELECT * FROM ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
+
+    const originalTicketSections = ticketForm.ticket_sections.map(section=>({
+        ...section,
+        field_section_duplicatable_id: null,
+        ticket_section_fields: section.ticket_section_fields.map(field=>{
+          return {
+            ...field,
+            ticket_field_response: responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)
+          }
+        })
+      }))
+
+    
+    const sectionWithDuplicateList = [];
+    originalTicketSections.forEach((section) => {
+      const hasDuplicates = section.ticket_section_fields.some((field) =>
+        field.ticket_field_response.some(
+          (response) => response.ticket_response_duplicatable_section_id !== null
+        )
+      );
+      if (section.ticket_section_is_duplicatable && hasDuplicates) {
+        const fieldResponse = section.ticket_section_fields.flatMap((field) => field.ticket_field_response);
+
+        const uniqueIdList = fieldResponse.reduce((unique, item) => {
+          const { ticket_response_duplicatable_section_id } = item;
+          const isDuplicate = unique.some((uniqueItem) =>
+            uniqueItem.includes(`${ticket_response_duplicatable_section_id}`)
+          );
+          if (!isDuplicate) {
+            unique.push(`${ticket_response_duplicatable_section_id}`);
+          }
+          return unique;
+        }, []);
+
+        const duplicateSectionList = uniqueIdList.map((id) => ({
+          ...section,
+          field_section_duplicatable_id: id==="null" ? null : id,
+          ticket_section_fields: section.ticket_section_fields.map((field) => ({
+            ...field,
+            ticket_field_response: [
+
+              field.ticket_field_response.filter(
+                (response) =>
+                  `${response.ticket_response_duplicatable_section_id}` === id
+              )[0] || null,
+            ]
+          })),
+        }));
+
+        duplicateSectionList.forEach((duplicateSection) =>
+          sectionWithDuplicateList.push(duplicateSection)
+        );
+      } else {
+        sectionWithDuplicateList.push(section);
+      }
+    });
+
+    const ticketFormWithResponse = {
+      ticket_sections: sectionWithDuplicateList.map((section, sectionIdx)=>({
+        ...section,
+        ticket_section_fields: section.ticket_section_fields.map((field,fieldIdx)=>{
+          const responseArray = field.ticket_field_response
+          let response = ""
+          let responseId = ""
+          if(responseArray.length>0){
+            response = field.ticket_field_response[0]?.ticket_response_value || "" 
+            responseId = field.ticket_field_response[0]?.ticket_response_id || ""
+          }
+
+          let fieldOptions = field.ticket_field_option
+          if(ticket.ticket_category === "Request Item Option" && sectionIdx === 0 && fieldIdx === 1){
+            const itemName = JSON.parse(sectionWithDuplicateList[0].ticket_section_fields[0].ticket_field_response[0]?.ticket_response_value)
+            const item = plv8.execute(`SELECT * FROM item_table WHERE item_general_name = '${itemName}';`)[0];
+            const itemDescriptionList = plv8.execute(`SELECT item_description_label FROM item_description_table WHERE item_description_item_id = '${item.item_id}';`);
+            fieldOptions = itemDescriptionList.map((description)=>description.item_description_label)
+          }
+          
+          return {
+            ...field,
+            ticket_field_option: fieldOptions,
+            ticket_field_response: response,
+            ticket_field_response_referrence: response,
+            ticket_field_response_id: responseId
+          }
+        })
+      }))
+    }
 
     let approver = null
     if(ticket.ticket_approver_team_member_id !== null){
@@ -6743,13 +6882,14 @@ RETURNS JSON as $$
           }
         }
       )},
-    user: member
+    user: member,
+    ticketForm: ticketFormWithResponse,
     }
  });
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Create ticket
+-- End: Get ticket on load
 
 -- Start: Assign ticket
 
@@ -6773,8 +6913,14 @@ RETURNS JSON as $$
     const hasApprover = ticket.ticket_approver_team_member_id !== null
     if (hasApprover) throw new Error("Ticket already have approver");
     
-    const updatedTicket = plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+    plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
 
+    const updatedTicket = plv8.execute(`SELECT tt.*, tct.ticket_category
+          FROM ticket_table tt
+          INNER JOIN ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
+          WHERE ticket_id='${ticketId}';
+        `)[0];
+        
     const requester = plv8.execute(
       `
         SELECT tmt.team_member_id, 
@@ -6817,28 +6963,6 @@ RETURNS JSON as $$
 $$ LANGUAGE plv8;
 
 -- End: Assign ticket
-
--- Start: Edit ticket response
-
-CREATE OR REPLACE FUNCTION edit_ticket_response(
-  input_data JSON
-)
-RETURNS JSON as $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      ticketId,
-      title,
-      description
-    } = input_data;
-
-    returnData = plv8.execute(`UPDATE ticket_table SET ticket_title='${title}', ticket_description='${description}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
-
- });
- return returnData;
-$$ LANGUAGE plv8;
-
--- End: Edit ticket response
 
 -- Start: Update ticket status
 
@@ -10206,591 +10330,10 @@ $$ LANGUAGE plv8;
 -- End: Incident report metrics
 
 
--- Start: Get ticket list on load
 
-CREATE OR REPLACE FUNCTION get_ticket_list_on_load(
-    input_data JSON
-)
-RETURNS JSON AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      userId,
-    } = input_data;
-    
-    
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-    
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
 
-    const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
 
-    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
- });
- return returnData;
-$$ LANGUAGE plv8;
-
--- End: Get ticket list on load
-
--- Start: Create ticket on load
-
-CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
-    input_data JSON
-)
-RETURNS JSON AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      userId
-    } = input_data;
-    
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-
-    const member = plv8.execute(
-      `
-        SELECT tmt.team_member_id, 
-        tmt.team_member_role, 
-        json_build_object( 
-          'user_id', usert.user_id, 
-          'user_first_name', usert.user_first_name, 
-          'user_last_name', usert.user_last_name, 
-          'user_avatar', usert.user_avatar, 
-          'user_email', usert.user_email 
-        ) AS team_member_user  
-        FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
-        WHERE 
-          tmt.team_member_team_id='${teamId}' 
-          AND tmt.team_member_is_disabled=false 
-          AND usert.user_is_disabled=false
-          AND usert.user_id='${userId}';
-      `
-    )[0];
-
-    const categoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
-
-    returnData = { member, categoryList }
- });
- return returnData;
-$$ LANGUAGE plv8;
-
--- End: Create ticket on load
-
--- Start: Get ticket form
-
-CREATE OR REPLACE FUNCTION get_ticket_form(
-    input_data JSON
-)
-RETURNS JSON AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      category,
-      teamId,
-    } = input_data;
-
-    let ticketForm
-
-    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
-    
-    const sectionData = plv8.execute(`SELECT * FROM ticket_section_table WHERE ticket_section_category_id='${categoryData.ticket_category_id}'`);
-    
-    const sectionList = sectionData.map(section => {
-      const fieldData = plv8.execute(
-        `
-          SELECT *
-          FROM ticket_field_table
-          WHERE ticket_field_section_id = '${section.ticket_section_id}'
-          ORDER BY ticket_field_order ASC
-        `
-      );
-      const fieldWithOption = fieldData.map(field => {
-        const optionData = plv8.execute(
-          `
-            SELECT *
-            FROM ticket_option_table
-            WHERE ticket_option_field_id = '${field.ticket_field_id}'
-            ORDER BY ticket_option_order ASC
-          `
-        );
-        const optionList = optionData.map((option)=> option.ticket_option_value);
-
-        return {
-          ...field,
-          ticket_field_option: optionList,
-          ticket_field_response: ""
-        };
-      });
-
-      return {
-        ...section,
-        ticket_section_fields: fieldWithOption,
-      }
-    });
-
-    if(category === "Request Custom CSI"){
-      const itemList = plv8.execute(`
-        SELECT * FROM item_table 
-        WHERE item_team_id='${teamId}'
-        AND item_is_disabled = false
-        AND item_is_available = true
-        ORDER BY item_general_name ASC;
-      `);
-      const itemOptions = itemList.map((option)=> option.item_general_name);
-
-      const ticket_sections = sectionList.map(section => {
-
-        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          return {
-            ...field,
-            ticket_field_option: fieldIdx === 0 ? itemOptions : [],
-          };
-        });
-
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-
-    } else if (category === "Request Item CSI"){
-      const itemList = plv8.execute(`
-        SELECT * FROM item_table 
-        WHERE item_team_id='${teamId}'
-        AND item_is_disabled = false
-        AND item_is_available = true
-        ORDER BY item_general_name ASC;
-      `);
-      const itemOptions = itemList.map((option)=> option.item_general_name);
-
-      const csiCodeDescriptionList = plv8.execute(`
-        SELECT * FROM csi_code_table 
-        ORDER BY csi_code_level_three_description ASC;
-      `);
-      const csiCodeDescriptionOptions = csiCodeDescriptionList.map((option)=> option.csi_code_level_three_description);
-
-      const ticket_sections = sectionList.map(section => {
-
-        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          let fieldOptions = []
-          if(fieldIdx === 0){
-            fieldOptions = itemOptions
-          }else if(fieldIdx === 1){
-            fieldOptions = csiCodeDescriptionOptions
-          }
-
-          return {
-            ...field,
-            ticket_field_option: fieldOptions,
-          };
-        });
-        
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-
-    } else if (category === "Request Item Option"){
-      const itemList = plv8.execute(`
-        SELECT * FROM item_table 
-        WHERE item_team_id='${teamId}'
-        AND item_is_disabled = false
-        AND item_is_available = true
-        ORDER BY item_general_name ASC;
-      `);
-      const itemOptions = itemList.map((option)=> option.item_general_name);
-
-      const uomList = plv8.execute(`
-        SELECT item_unit_of_measurement
-        FROM item_unit_of_measurement_table
-        WHERE 
-          item_unit_of_measurement_is_available=true
-          AND item_unit_of_measurement_is_disabled=false
-          AND item_unit_of_measurement_team_id='${teamId}'
-          ORDER BY item_unit_of_measurement ASC;
-      `);
-      const uomOptions = uomList.map((option)=> option.item_unit_of_measurement);
-
-
-      const ticket_sections = sectionList.map((section, sectionIdx) => {
-
-        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          let fieldOptions = []
-          if(sectionIdx===0 && fieldIdx === 0){
-            fieldOptions = itemOptions
-          }else if(sectionIdx===1 && fieldIdx === 1){
-            fieldOptions = uomOptions
-          }
-
-          return {
-            ...field,
-            ticket_field_option: fieldOptions,
-          };
-        });
-        
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-
-    } else if (category === "Incident Report for Employees"){
-        const memberList = plv8.execute(`
-          SELECT 
-            tmt.team_member_id, 
-            tmt.team_member_role, 
-            json_build_object( 
-              'user_id', usert.user_id, 
-              'user_first_name', usert.user_first_name, 
-              'user_last_name', usert.user_last_name, 
-              'user_avatar', usert.user_avatar, 
-              'user_email', usert.user_email 
-            ) AS team_member_user  
-          FROM team_member_table tmt
-            JOIN user_table usert ON usert.user_id = tmt.team_member_user_id
-          WHERE 
-            tmt.team_member_team_id = '${teamId}'
-            AND tmt.team_member_is_disabled = false;
-        `);
-        const memberOptions = memberList.map((option)=> ({label: `${option.team_member_user.user_first_name} ${option.team_member_user.user_last_name}`, value:option.team_member_id}));
-
-        const ticket_sections = sectionList.map(section => {
-          const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
-          let fieldOptions = []
-          if(fieldIdx === 0){
-            fieldOptions = memberOptions
-          }
-
-          return {
-            ...field,
-            ticket_field_option: fieldOptions,
-          };
-        });
-
-        return {
-          ...section,
-          ticket_section_fields: fieldWithOption,
-        }
-      })
-      returnData = { ticket_sections }
-    } else {
-      returnData = { ticket_sections: sectionList }
-    }
- });
- return returnData;
-$$ LANGUAGE plv8;
-
--- End: Get ticket form
-
--- Start: Get ticket on load
-
-CREATE OR REPLACE FUNCTION get_ticket_on_load(
-  input_data JSON
-)
-RETURNS JSON as $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      ticketId,
-      userId
-    } = input_data;
-
-    const ticket = plv8.execute(`SELECT tt.*, tct.ticket_category
-      FROM ticket_table tt
-      INNER JOIN ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
-      WHERE ticket_id='${ticketId}';
-    `)[0];
-
-    const requester = plv8.execute(`SELECT jsonb_build_object(
-          'team_member_id', tm.team_member_id,
-          'team_member_team_id', tm.team_member_team_id,
-          'team_member_role', tm.team_member_role,
-          'team_member_user', jsonb_build_object(
-              'user_id', u.user_id,
-              'user_first_name', u.user_first_name,
-              'user_last_name', u.user_last_name,
-              'user_email', u.user_email,
-              'user_avatar', u.user_avatar
-          )
-      ) AS member
-      FROM team_member_table tm
-      JOIN user_table u ON tm.team_member_user_id = u.user_id
-      WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}';`)[0]
-    
-    const ticketForm = plv8.execute(`SELECT get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
-
-    const responseData = plv8.execute(`SELECT * FROM ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
-
-    const originalTicketSections = ticketForm.ticket_sections.map(section=>({
-        ...section,
-        field_section_duplicatable_id: null,
-        ticket_section_fields: section.ticket_section_fields.map(field=>{
-          return {
-            ...field,
-            ticket_field_response: responseData.filter(response=>response.ticket_response_field_id===field.ticket_field_id)
-          }
-        })
-      }))
-
-    
-    const sectionWithDuplicateList = [];
-    originalTicketSections.forEach((section) => {
-      const hasDuplicates = section.ticket_section_fields.some((field) =>
-        field.ticket_field_response.some(
-          (response) => response.ticket_response_duplicatable_section_id !== null
-        )
-      );
-      if (section.ticket_section_is_duplicatable && hasDuplicates) {
-        const fieldResponse = section.ticket_section_fields.flatMap((field) => field.ticket_field_response);
-
-        const uniqueIdList = fieldResponse.reduce((unique, item) => {
-          const { ticket_response_duplicatable_section_id } = item;
-          const isDuplicate = unique.some((uniqueItem) =>
-            uniqueItem.includes(`${ticket_response_duplicatable_section_id}`)
-          );
-          if (!isDuplicate) {
-            unique.push(`${ticket_response_duplicatable_section_id}`);
-          }
-          return unique;
-        }, []);
-
-        const duplicateSectionList = uniqueIdList.map((id) => ({
-          ...section,
-          field_section_duplicatable_id: id==="null" ? null : id,
-          ticket_section_fields: section.ticket_section_fields.map((field) => ({
-            ...field,
-            ticket_field_response: [
-
-              field.ticket_field_response.filter(
-                (response) =>
-                  `${response.ticket_response_duplicatable_section_id}` === id
-              )[0] || null,
-            ]
-          })),
-        }));
-
-        duplicateSectionList.forEach((duplicateSection) =>
-          sectionWithDuplicateList.push(duplicateSection)
-        );
-      } else {
-        sectionWithDuplicateList.push(section);
-      }
-    });
-
-    const ticketFormWithResponse = {
-      ticket_sections: sectionWithDuplicateList.map((section, sectionIdx)=>({
-        ...section,
-        ticket_section_fields: section.ticket_section_fields.map((field,fieldIdx)=>{
-          const responseArray = field.ticket_field_response
-          let response = ""
-          let responseId = ""
-          if(responseArray.length>0){
-            response = field.ticket_field_response[0]?.ticket_response_value || "" 
-            responseId = field.ticket_field_response[0]?.ticket_response_id || ""
-          }
-
-          let fieldOptions = field.ticket_field_option
-          if(ticket.ticket_category === "Request Item Option" && sectionIdx === 0 && fieldIdx === 1){
-            const itemName = JSON.parse(sectionWithDuplicateList[0].ticket_section_fields[0].ticket_field_response[0]?.ticket_response_value)
-            const item = plv8.execute(`SELECT * FROM item_table WHERE item_general_name = '${itemName}';`)[0];
-            const itemDescriptionList = plv8.execute(`SELECT item_description_label FROM item_description_table WHERE item_description_item_id = '${item.item_id}';`);
-            fieldOptions = itemDescriptionList.map((description)=>description.item_description_label)
-          }
-          
-          return {
-            ...field,
-            ticket_field_option: fieldOptions,
-            ticket_field_response: response,
-            ticket_field_response_referrence: response,
-            ticket_field_response_id: responseId
-          }
-        })
-      }))
-    }
-
-    let approver = null
-    if(ticket.ticket_approver_team_member_id !== null){
-      approver = plv8.execute(`SELECT jsonb_build_object(
-          'team_member_id', tm.team_member_id,
-          'team_member_role', tm.team_member_role,
-          'team_member_user', jsonb_build_object(
-              'user_id', u.user_id,
-              'user_first_name', u.user_first_name,
-              'user_last_name', u.user_last_name,
-              'user_email', u.user_email,
-              'user_avatar', u.user_avatar
-          )
-      ) AS member
-      FROM team_member_table tm
-      JOIN user_table u ON tm.team_member_user_id = u.user_id
-      WHERE tm.team_member_id = '${ticket.ticket_approver_team_member_id}';`)[0]
-    }
-
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
-
-    const member = plv8.execute(
-      `
-        SELECT tmt.team_member_id, 
-        tmt.team_member_role, 
-        json_build_object( 
-          'user_id', usert.user_id, 
-          'user_first_name', usert.user_first_name, 
-          'user_last_name', usert.user_last_name, 
-          'user_avatar', usert.user_avatar, 
-          'user_email', usert.user_email 
-        ) AS team_member_user  
-        FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
-        WHERE 
-          tmt.team_member_team_id='${teamId}' 
-          AND tmt.team_member_is_disabled=false 
-          AND usert.user_is_disabled=false
-          AND usert.user_id='${userId}';
-      `
-    )[0];
-
-    const ticketCommentData = plv8.execute(
-      `
-        SELECT
-          ticket_comment_id, 
-          ticket_comment_content, 
-          ticket_comment_is_disabled,
-          ticket_comment_is_edited,
-          ticket_comment_type,
-          ticket_comment_date_created,
-          ticket_comment_last_updated,
-          ticket_comment_ticket_id,
-          ticket_comment_team_member_id,
-          user_id, 
-          user_first_name, 
-          user_last_name, 
-          user_username, 
-          user_avatar
-        FROM ticket_comment_table 
-        INNER JOIN team_member_table ON team_member_id = ticket_comment_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
-        WHERE
-          ticket_comment_ticket_id = '${ticketId}'
-        ORDER BY ticket_comment_date_created DESC
-      `
-    );
-
-    returnData = {
-      ticket: {
-        ...ticket,
-        ticket_requester: requester.member,
-        ticket_approver: approver ? approver.member : null, 
-        ticket_comment: ticketCommentData.map(ticketComment => {
-          return {
-            ticket_comment_id: ticketComment.ticket_comment_id, 
-            ticket_comment_content: ticketComment.ticket_comment_content, 
-            ticket_comment_is_disabled: ticketComment.ticket_comment_is_disabled,
-            ticket_comment_is_edited: ticketComment.ticket_comment_is_edited,
-            ticket_comment_type: ticketComment.ticket_comment_type,
-            ticket_comment_date_created: ticketComment.ticket_comment_date_created,
-            ticket_comment_last_updated: ticketComment.ticket_comment_last_updated,
-            ticket_comment_ticket_id: ticketComment.ticket_comment_ticket_id,
-            ticket_comment_team_member_id: ticketComment.ticket_comment_team_member_id,
-            ticket_comment_attachment: [],
-            ticket_comment_team_member: {
-              team_member_user: {
-                user_id: ticketComment.user_id, 
-                user_first_name: ticketComment.user_first_name, 
-                user_last_name: ticketComment.user_last_name, 
-                user_username: ticketComment.user_username, 
-                user_avatar: ticketComment.user_avatar
-              }
-            }
-          }
-        }
-      )},
-    user: member,
-    ticketForm: ticketFormWithResponse,
-    }
- });
- return returnData;
-$$ LANGUAGE plv8;
-
--- End: Get ticket on load
-
--- Start: Assign ticket
-
-CREATE OR REPLACE FUNCTION assign_ticket(
-  input_data JSON
-)
-RETURNS JSON as $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      ticketId,
-      teamMemberId
-    } = input_data;
-
-    const ticket = plv8.execute(`SELECT ticket_approver_team_member_id FROM ticket_table WHERE ticket_id='${ticketId}'`)[0];
-    const member = plv8.execute(`SELECT *  FROM team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
-
-    const isApprover = member.team_member_role === 'OWNER' || member.team_member_role === 'ADMIN';
-    if (!isApprover) throw new Error("User is not an Approver");
-
-    const hasApprover = ticket.ticket_approver_team_member_id !== null
-    if (hasApprover) throw new Error("Ticket already have approver");
-    
-    plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
-
-    const updatedTicket = plv8.execute(`SELECT tt.*, tct.ticket_category
-          FROM ticket_table tt
-          INNER JOIN ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
-          WHERE ticket_id='${ticketId}';
-        `)[0];
-        
-    const requester = plv8.execute(
-      `
-        SELECT tmt.team_member_id, 
-        tmt.team_member_role, 
-        json_build_object( 
-          'user_id', usert.user_id, 
-          'user_first_name', usert.user_first_name, 
-          'user_last_name', usert.user_last_name, 
-          'user_avatar', usert.user_avatar, 
-          'user_email', usert.user_email 
-        ) AS team_member_user  
-        FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
-        WHERE 
-          tmt.team_member_id='${updatedTicket.ticket_requester_team_member_id}' 
-      `
-    )[0];
-
-    const approver = plv8.execute(
-      `
-        SELECT tmt.team_member_id, 
-        tmt.team_member_role, 
-        json_build_object( 
-          'user_id', usert.user_id, 
-          'user_first_name', usert.user_first_name, 
-          'user_last_name', usert.user_last_name, 
-          'user_avatar', usert.user_avatar, 
-          'user_email', usert.user_email 
-        ) AS team_member_user  
-        FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
-        WHERE 
-          tmt.team_member_id='${teamMemberId}' 
-      `
-    )[0];
-
-    returnData = {...updatedTicket, ticket_requester: requester, ticket_approver: approver}
- });
- return returnData;
-$$ LANGUAGE plv8;
-
--- End: Assign ticket
 
 
 -- Start: Create custom csi
@@ -10861,33 +10404,6 @@ $$ LANGUAGE plv8;
 
 -- End: Create custom csi
 
--- Start: Create ticket
-
-CREATE OR REPLACE FUNCTION create_ticket(
-    input_data JSON
-)
-RETURNS JSON AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      category,
-      ticketId,
-      teamMemberId,
-      responseValues,
-    } = input_data;
-
-    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
-
-    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_id,ticket_requester_team_member_id,ticket_category_id) VALUES ('${ticketId}','${teamMemberId}','${categoryData.ticket_category_id}') RETURNING *;`)[0];
-
-    plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
-    
- });
- return returnData;
-$$ LANGUAGE plv8;
-
--- End: Create ticket
-
 -- Start: Edit ticket
 
 CREATE OR REPLACE FUNCTION edit_ticket(
@@ -10909,6 +10425,71 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Create ticket
+
+-- Start: Check custom csi validity
+
+CREATE OR REPLACE FUNCTION check_custom_csi_validity(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      csiCode
+    } = input_data;
+    
+    const csiCodeArray = csiCode.split(" ");
+    const csi_code_division_id = csiCodeArray[0];
+    const csi_code_level_two_major_group_id = csiCodeArray[1][0];
+    const csi_code_level_two_minor_group_id = csiCodeArray[1][1];
+    const csi_code_level_three_id = csiCodeArray[2];
+
+    const csiCodeDivisionIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}';
+    `)[0];
+    
+    const csiCodeLevelTwoMajorGroupIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}';
+    `)[0];
+    
+    const csiCodeLevelTwoMinorGroupIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
+        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}';
+    `)[0];
+    
+    const csiCodeLevelThreeIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
+        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}'
+        AND csi_code_level_three_id = '${csi_code_level_three_id}';
+    `)[0];
+
+    returnData = {
+      csiCodeDivisionIdExists: Boolean(csiCodeDivisionIdExists),
+      csiCodeLevelTwoMajorGroupIdExists: Boolean(csiCodeLevelTwoMajorGroupIdExists),
+      csiCodeLevelTwoMinorGroupIdExists: Boolean(csiCodeLevelTwoMinorGroupIdExists),
+      csiCodeLevelThreeIdExists: Boolean(csiCodeLevelThreeIdExists),
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Check custom csi validity
+
 
 ---------- End: FUNCTIONS
 

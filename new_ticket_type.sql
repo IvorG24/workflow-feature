@@ -1209,7 +1209,7 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Create ticket
+-- End: Edit ticket
 
 CREATE OR REPLACE FUNCTION update_tickets()
 RETURNS JSON AS $$
