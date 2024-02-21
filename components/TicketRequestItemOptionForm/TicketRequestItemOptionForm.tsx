@@ -82,6 +82,7 @@ const TicketRequestItemOptionForm = ({
         }`
       );
     } catch (error) {
+      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -137,7 +138,7 @@ const TicketRequestItemOptionForm = ({
         (description) => description.item_description_label === itemDescription
       )
       ?.item_description_field.map((field) =>
-        `${field.item_description_field_value} ${field.item_description_field_uom[0].item_description_field_uom}`.toLowerCase()
+        `${field.item_description_field_value} ${field.item_description_field_uom[0]?.item_description_field_uom}`.toLowerCase()
       );
     let optionExists = false;
     data.ticket_sections.slice(1).map((section, sectionIdx) => {
