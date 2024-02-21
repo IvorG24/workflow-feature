@@ -11469,6 +11469,17 @@ ALTER TABLE memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE query_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_sla_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_brand_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_model_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_component_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_description_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_general_name_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_part_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_description_consumable_field_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -11706,6 +11717,61 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON query_table;
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON form_sla_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON form_sla_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON form_sla_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_category_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_category_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_category_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_brand_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_brand_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_brand_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_brand_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_model_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_model_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_model_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_model_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_component_category_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_component_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_component_category_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_component_category_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_description_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_description_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_description_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_description_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_unit_of_measurement_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_general_name_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_general_name_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_general_name_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_general_name_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_part_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_part_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_part_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_part_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON capacity_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_consumable_field_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -13688,6 +13754,520 @@ AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
+
+--- EQUIPMENT_CATEGORY_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_category_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_category_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_category_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_category_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_category_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_category_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_category_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- EQUIPMENT_BRAND_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_brand_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_brand_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_brand_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_brand_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_brand_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_brand_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_brand_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- EQUIPMENT_MODEL_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_model_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_model_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_model_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_model_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_model_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_model_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_model_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- EQUIPMENT_COMPONENT_CATEGORY_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_component_category_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_component_category_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_component_category_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_component_category_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_component_category_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_component_category_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_component_category_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- EQUIPMENT_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- EQUIPMENT_DESCRIPTION_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_description_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM equipment_table
+    INNER JOIN team_table ON team_id = equipment_team_id
+    INNER JOIN team_member_table ON team_member_team_id = team_id
+    WHERE equipment_id = equipment_description_equipment_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_description_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_description_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM equipment_table
+    INNER JOIN team_table ON team_id = equipment_team_id
+    INNER JOIN team_member_table ON team_member_team_id = team_id
+    WHERE equipment_id = equipment_description_equipment_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_description_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM equipment_table
+    INNER JOIN team_table ON team_id = equipment_team_id
+    INNER JOIN team_member_table ON team_member_team_id = team_id
+    WHERE equipment_id = equipment_description_equipment_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- EQUIPMENT_UNIT_OF_MEASUREMENT_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_unit_of_measurement_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_unit_of_measurement_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_unit_of_measurement_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_unit_of_measurement_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_unit_of_measurement_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_unit_of_measurement_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_unit_of_measurement_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- EQUIPMENT_GENERAL_NAME_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_general_name_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_general_name_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_general_name_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_general_name_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_general_name_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_general_name_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = equipment_general_name_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- EQUIPMENT_PART_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_part_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM equipment_table
+    INNER JOIN team_table ON team_id = equipment_team_id
+    INNER JOIN team_member_table ON team_member_team_id = team_id
+    WHERE equipment_id = equipment_part_equipment_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_part_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_part_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM equipment_table
+    INNER JOIN team_table ON team_id = equipment_team_id
+    INNER JOIN team_member_table ON team_member_team_id = team_id
+    WHERE equipment_id = equipment_part_equipment_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_part_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM equipment_table
+    INNER JOIN team_table ON team_id = equipment_team_id
+    INNER JOIN team_member_table ON team_member_team_id = team_id
+    WHERE equipment_id = equipment_part_equipment_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- CAPACITY_UNIT_OF_MEASUREMENT_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."capacity_unit_of_measurement_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = capacity_unit_of_measurement_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."capacity_unit_of_measurement_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."capacity_unit_of_measurement_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = capacity_unit_of_measurement_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."capacity_unit_of_measurement_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_team_id = capacity_unit_of_measurement_team_id
+    AND team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- ITEM_DESCRIPTION_CONSUMABLE_FIELD_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_consumable_field_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK ( 
+  (
+    SELECT team_member_team_id
+    FROM field_table
+    INNER JOIN section_table ON section_id = field_section_id
+    INNER JOIN form_table ON form_id = section_form_id
+    INNER JOIN team_member_table ON team_member_id = form_team_member_id
+    WHERE field_id = item_description_consumable_field_field_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_consumable_field_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_consumable_field_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING ( 
+  (
+    SELECT team_member_team_id
+    FROM field_table
+    INNER JOIN section_table ON section_id = field_section_id
+    INNER JOIN form_table ON form_id = section_form_id
+    INNER JOIN team_member_table ON team_member_id = form_team_member_id
+    WHERE field_id = item_description_consumable_field_field_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_consumable_field_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING ( 
+  (
+    SELECT team_member_team_id
+    FROM field_table
+    INNER JOIN section_table ON section_id = field_section_id
+    INNER JOIN form_table ON form_id = section_form_id
+    INNER JOIN team_member_table ON team_member_id = form_team_member_id
+    WHERE field_id = item_description_consumable_field_field_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 -------- End: POLICIES
 

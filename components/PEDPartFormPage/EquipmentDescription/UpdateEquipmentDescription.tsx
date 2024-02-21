@@ -1,5 +1,4 @@
 import {
-  checkPropertyNumber,
   checkSerialNumber,
   getEquipmentBrandAndModelOption,
 } from "@/backend/api/get";
@@ -110,8 +109,6 @@ const UpdateEquipmentDescription = ({
           equipmentDescriptionData: {
             equipment_description_id:
               editEquipmentDescription.equipment_description_id,
-            equipment_description_property_number:
-              data.propertyNumber.toUpperCase(),
             equipment_description_serial_number:
               data.serialNumber.toUpperCase(),
             equipment_description_brand_id: data.brand,
@@ -167,24 +164,6 @@ const UpdateEquipmentDescription = ({
                 required: {
                   message: "Property number is required",
                   value: true,
-                },
-                validate: {
-                  duplicate: async (value) => {
-                    if (
-                      value ===
-                      editEquipmentDescription.equipment_description_property_number
-                    )
-                      return true;
-
-                    const isExisting = await checkPropertyNumber(
-                      supabaseClient,
-                      {
-                        propertyNumber: value,
-                        teamId: activeTeam.team_id,
-                      }
-                    );
-                    return isExisting ? "Property number already exists" : true;
-                  },
                 },
               })}
               withAsterisk

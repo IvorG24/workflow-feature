@@ -4,9 +4,9 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   EquipmentLookupChoices,
-  LookupTable,
   EquipmentLookupTableUpdate,
   LookupForm,
+  LookupTable,
 } from "@/utils/types";
 import {
   Button,
@@ -56,16 +56,21 @@ const UpdateEquipmentLookup = ({
       const isAvailable = `${lookup.table}_is_available`;
       const team = `${lookup.table}_team_id`;
 
-      const newEquipmentLookup: LookupTable =
-        await updateEquipmentLookup(supabaseClient, {
+      const newEquipmentLookup: LookupTable = await updateEquipmentLookup(
+        supabaseClient,
+        {
           equipmentLookupData: {
-            [lookupValue]: data.value.toUpperCase(),
+            [lookupValue]:
+              lookup.label === "Unit of Measurement"
+                ? data.value
+                : data.value.toUpperCase(),
             [isAvailable]: data.isAvailable,
             [team]: activeTeam.team_id,
           } as EquipmentLookupTableUpdate,
           tableName: lookup.table,
           lookupId: editEquipmentLookup.id,
-        });
+        }
+      );
 
       setEquipmentLookupList((prev) => {
         return prev.map((equipment) => {
@@ -113,7 +118,10 @@ const UpdateEquipmentLookup = ({
                       supabaseClient,
                       {
                         lookupTableName: lookup.table,
-                        value: value.toUpperCase(),
+                        value:
+                          lookup.label === "Unit of Measurement"
+                            ? value
+                            : value.toUpperCase(),
                         teamId: activeTeam.team_id,
                       }
                     );
@@ -127,7 +135,10 @@ const UpdateEquipmentLookup = ({
               error={formState.errors.value?.message}
               sx={{
                 input: {
-                  textTransform: "uppercase",
+                  textTransform:
+                    lookup.label === "Unit of Measurement"
+                      ? "none"
+                      : "uppercase",
                 },
               }}
             />

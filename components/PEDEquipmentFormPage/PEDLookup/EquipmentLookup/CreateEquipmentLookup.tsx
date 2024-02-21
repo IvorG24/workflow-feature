@@ -57,7 +57,7 @@ const CreateEquipmentLookup = ({
       const newEquipmentLookup = await createRowInLookupTable(supabaseClient, {
         inputData: {
           [lookupValue]:
-            lookup.label === "Capacity Unif of Measurement"
+            lookup.label === "Capacity Unit of Measurement"
               ? data.value
               : data.value.toUpperCase(),
           [isAvaialble]: data.isAvailable,
@@ -109,7 +109,7 @@ const CreateEquipmentLookup = ({
                       {
                         lookupTableName: lookup.table,
                         value:
-                          lookup.label === "Capacity Unif of Measurement"
+                          lookup.label === "Capacity Unit of Measurement"
                             ? value
                             : value.toUpperCase(),
                         teamId: activeTeam.team_id,
@@ -126,7 +126,7 @@ const CreateEquipmentLookup = ({
               sx={{
                 input: {
                   textTransform:
-                    lookup.label === "Capacity Unif of Measurement"
+                    lookup.label === "Capacity Unit of Measurement"
                       ? "none"
                       : "uppercase",
                 },
