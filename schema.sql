@@ -7004,13 +7004,12 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ticket_form(
     input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
-     ticketId,
-     status,
-     rejectionMessage
+      category,
+      teamId,
     } = input_data;
 
     let ticketForm
@@ -7221,13 +7220,53 @@ RETURNS JSON AS $$
     const {
       csiCode
     } = input_data;
-
-    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
-
-    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_id,ticket_requester_team_member_id,ticket_category_id) VALUES ('${ticketId}','${teamMemberId}','${categoryData.ticket_category_id}') RETURNING *;`)[0];
-
-    plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
     
+    const csiCodeArray = csiCode.split(" ");
+    const csi_code_division_id = csiCodeArray[0];
+    const csi_code_level_two_major_group_id = csiCodeArray[1][0];
+    const csi_code_level_two_minor_group_id = csiCodeArray[1][1];
+    const csi_code_level_three_id = csiCodeArray[2];
+
+    const csiCodeDivisionIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}';
+    `)[0];
+    
+    const csiCodeLevelTwoMajorGroupIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}';
+    `)[0];
+    
+    const csiCodeLevelTwoMinorGroupIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
+        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}';
+    `)[0];
+    
+    const csiCodeLevelThreeIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
+        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}'
+        AND csi_code_level_three_id = '${csi_code_level_three_id}';
+    `)[0];
+
+    returnData = {
+      csiCodeDivisionIdExists: Boolean(csiCodeDivisionIdExists),
+      csiCodeLevelTwoMajorGroupIdExists: Boolean(csiCodeLevelTwoMajorGroupIdExists),
+      csiCodeLevelTwoMinorGroupIdExists: Boolean(csiCodeLevelTwoMinorGroupIdExists),
+      csiCodeLevelThreeIdExists: Boolean(csiCodeLevelThreeIdExists),
+    }
  });
  return returnData;
 $$ LANGUAGE plv8;
@@ -11642,12 +11681,77 @@ $$ LANGUAGE plv8;
 
 -- End: Incident report metrics
 
+-- Start: Get ticket list on load
 
+CREATE OR REPLACE FUNCTION get_ticket_list_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+    } = input_data;
+    
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
+    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
 
+    const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
 
+    returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
+ });
+ return returnData;
+$$ LANGUAGE plv8;
 
+-- End: Get ticket list on load
 
+-- Start: Create ticket on load
+
+CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId
+    } = input_data;
+    
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+
+    const member = plv8.execute(
+      `
+        SELECT tmt.team_member_id, 
+        tmt.team_member_role, 
+        json_build_object( 
+          'user_id', usert.user_id, 
+          'user_first_name', usert.user_first_name, 
+          'user_last_name', usert.user_last_name, 
+          'user_avatar', usert.user_avatar, 
+          'user_email', usert.user_email 
+        ) AS team_member_user  
+        FROM team_member_table tmt 
+        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        WHERE 
+          tmt.team_member_team_id='${teamId}' 
+          AND tmt.team_member_is_disabled=false 
+          AND usert.user_is_disabled=false
+          AND usert.user_id='${userId}';
+      `
+    )[0];
+
+    const categoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
+
+    returnData = { member, categoryList }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create ticket on load
 
 -- Start: Create custom csi
 
@@ -11716,6 +11820,33 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Create custom csi
+
+-- Start: Create ticket
+
+CREATE OR REPLACE FUNCTION create_ticket(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      category,
+      ticketId,
+      teamMemberId,
+      responseValues,
+    } = input_data;
+
+    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
+
+    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_id,ticket_requester_team_member_id,ticket_category_id) VALUES ('${ticketId}','${teamMemberId}','${categoryData.ticket_category_id}') RETURNING *;`)[0];
+
+    plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
+    
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create ticket
 
 -- Start: Edit ticket
 
