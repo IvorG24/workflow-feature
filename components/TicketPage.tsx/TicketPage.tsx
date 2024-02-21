@@ -2,6 +2,7 @@ import { getTicketOnLoad } from "@/backend/api/get";
 import { createNotification, createTicketComment } from "@/backend/api/post";
 import { assignTicket } from "@/backend/api/update";
 import useRealtimeTicketCommentList from "@/hooks/useRealtimeTicketCommentList";
+import useRealtimeTicketStatus from "@/hooks/useRealtimeTicketStatus";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { READ_ONLY_TICKET_CATEGORY_LIST } from "@/utils/constant";
@@ -48,8 +49,14 @@ const TicketPage = ({
   const [isEditingResponse, setIsEditingResponse] = useState(false);
   const [ticketForm, setTicketForm] =
     useState<CreateTicketFormValues>(initialTicketForm);
-  const requestCommentList = useRealtimeTicketCommentList(supabaseClient, {
+
+  const ticketStatus = useRealtimeTicketStatus(supabaseClient, {
     ticketId: ticket.ticket_id,
+    initialTicketStatus: ticket.ticket_status,
+  });
+
+  const requestCommentList = useRealtimeTicketCommentList(supabaseClient, {
+    ticketId: initialTicket.ticket_id,
     initialCommentList: ticket.ticket_comment,
   });
 
@@ -121,7 +128,7 @@ const TicketPage = ({
     <Container>
       <Paper p="md" withBorder>
         <Stack>
-          {ticket.ticket_status === "PENDING" &&
+          {ticketStatus === "PENDING" &&
             ticket.ticket_approver_team_member_id === null &&
             ticket.ticket_requester_team_member_id !== user.team_member_id &&
             ["ADMIN", "OWNER"].includes(user.team_member_role) && (
@@ -131,11 +138,12 @@ const TicketPage = ({
                 </Button>
               </Tooltip>
             )}
-          <TicketDetailSection ticket={ticket} />
+          <TicketDetailSection ticket={ticket} ticketStatus={ticketStatus} />
 
           <Divider mt="md" />
           <TicketResponseSection
             ticket={ticket}
+            ticketStatus={ticketStatus}
             ticketForm={ticketForm}
             category={ticket.ticket_category}
             canUserEditResponse={canUserEditResponse}
@@ -154,7 +162,7 @@ const TicketPage = ({
             />
           )}
 
-          {ticket.ticket_status === "UNDER REVIEW" &&
+          {ticketStatus === "UNDER REVIEW" &&
             !isEditingResponse &&
             ticket.ticket_requester_team_member_id !== user.team_member_id && (
               <>

@@ -263,6 +263,7 @@ INSERT INTO storage.buckets (id, name) VALUES ('TICKET_ATTACHMENTS', 'TICKET_ATT
 
 UPDATE storage.buckets SET public = true;
 
+ALTER PUBLICATION supabase_realtime ADD TABLE ticket_table;
 
 -- Start: Check custom csi validity
 

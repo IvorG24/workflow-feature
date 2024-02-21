@@ -5,6 +5,7 @@ import TicketResponseValue from "./TicketResponseValue";
 
 type Props = {
   ticket: TicketType;
+  ticketStatus: string;
   ticketForm: CreateTicketFormValues;
   category: string;
   canUserEditResponse: boolean;
@@ -13,7 +14,7 @@ type Props = {
 };
 
 const TicketResponseSection = ({
-  ticket,
+  ticketStatus,
   ticketForm,
   category,
   canUserEditResponse,
@@ -32,7 +33,7 @@ const TicketResponseSection = ({
           )}
         </Group>
         {canUserEditResponse &&
-          ticket.ticket_status === "UNDER REVIEW" &&
+          ticketStatus === "UNDER REVIEW" &&
           (isEditingResponse ? (
             <Button
               sx={{ alignSelf: "flex-end" }}
