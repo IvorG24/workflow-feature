@@ -140,6 +140,11 @@ const TicketFormFields = ({
                 nothingFound={<Text>Nothing found!</Text>}
                 withAsterisk={field.ticket_field_is_required}
                 {...inputProps}
+                sx={{
+                  display: Boolean(ticketField.ticket_field_hidden)
+                    ? "none"
+                    : "inline",
+                }}
                 clearable
                 error={fieldError}
                 searchable

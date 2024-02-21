@@ -1413,6 +1413,7 @@ export type TicketSection = TicketSectionTableRow & {
     ticket_field_response?: unknown;
     ticket_field_response_referrence?: unknown;
     ticket_field_response_id?: string;
+    ticket_field_hidden?: boolean;
   })[];
 };
 

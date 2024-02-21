@@ -227,6 +227,7 @@ const TicketRequestItemOptionForm = ({
               {
                 ...section.ticket_section_fields[1],
                 ticket_field_response: itemDescriptionFieldUoM,
+                ticket_field_hidden: false,
               },
             ],
           });
@@ -240,6 +241,7 @@ const TicketRequestItemOptionForm = ({
               {
                 ...section.ticket_section_fields[1],
                 ticket_field_response: "",
+                ticket_field_hidden: true,
               },
             ],
           });
@@ -300,10 +302,30 @@ const TicketRequestItemOptionForm = ({
 
   useEffect(() => {
     if (ticketForm) {
-      replaceSection(ticketForm.ticket_sections);
+      if (isEdit) {
+        const newTicketFormSections = ticketForm.ticket_sections
+          .slice(1)
+          .map((section) => ({
+            ...section,
+            ticket_section_fields: section.ticket_section_fields.map(
+              (field) => ({
+                ...field,
+                ticket_field_hidden: Boolean(
+                  `${section.ticket_section_fields[0].ticket_field_response}`
+                ),
+              })
+            ),
+          }));
+
+        replaceSection([
+          ticketForm.ticket_sections[0],
+          ...newTicketFormSections,
+        ]);
+      } else {
+        replaceSection(ticketForm.ticket_sections);
+      }
     }
   }, []);
-
   return (
     <>
       <FormProvider {...createTicketFormMethods}>
