@@ -42,6 +42,7 @@ const UpdateEquipmentPart = ({
   editEquipmentPart,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const [isFetchingOptions, setIsFetchingOptions] = useState(true);
 
   const [nameOption, setNameOption] = useState<
     { label: string; value: string }[]
@@ -62,15 +63,26 @@ const UpdateEquipmentPart = ({
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const { nameList } = await getEquipmentNameOption(supabaseClient);
+        setIsFetchingOptions(true);
+        const allNameList = [];
+        let index = 0;
+        while (1) {
+          const { nameList } = await getEquipmentNameOption(supabaseClient, {
+            index,
+          });
+          if (nameList.length === 0) break;
+          allNameList.push(...nameList);
+          if (nameList.length < 1000) break;
+          index += 1000;
+        }
         const { brandList, modelList } = await getEquipmentBrandAndModelOption(
           supabaseClient
         );
         const { uomList, categoryList } =
           await getEquipmentUOMAndCategoryOption(supabaseClient);
-        nameList &&
+        allNameList &&
           setNameOption(
-            nameList.map((name) => {
+            allNameList.map((name) => {
               return {
                 label: `${name.equipment_general_name}`,
                 value: `${name.equipment_general_name_id}`,
@@ -191,7 +203,7 @@ const UpdateEquipmentPart = ({
 
   return (
     <Container p={0} fluid sx={{ position: "relative" }}>
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={formState.isSubmitting || isFetchingOptions} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
           Update Equipment Part Part
