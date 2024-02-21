@@ -137,11 +137,11 @@ const TicketRequestItemOptionForm = ({
         (description) => description.item_description_label === itemDescription
       )
       ?.item_description_field.map((field) =>
-        field.item_description_field_value.toLowerCase()
+        `${field.item_description_field_value} ${field.item_description_field_uom[0].item_description_field_uom}`.toLowerCase()
       );
     let optionExists = false;
     data.ticket_sections.slice(1).map((section, sectionIdx) => {
-      const value = `${section.ticket_section_fields[0].ticket_field_response}`;
+      const value = `${section.ticket_section_fields[0].ticket_field_response} ${section.ticket_section_fields[1].ticket_field_response}`;
       const valueExists = valueDataList?.includes(value.toLowerCase());
       if (valueExists) {
         setError(
