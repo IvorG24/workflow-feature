@@ -447,7 +447,8 @@ INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) V
 ('2b3806c6-c61c-46d4-a56e-eb563e2fc78c', '8e173d92-c346-4fb5-8ef2-490105e19263', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('5aa860bf-95d3-463e-901b-a552ec2ae171', '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
 ('a0bb76ab-3aaf-4b40-998f-3316a28584b5', 'c95dc9cd-d84a-474c-b438-9507245765c5', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
-('adc43a8f-f581-4f09-8d7c-dd3ee0171fc4', '44525763-2de2-43b4-9b95-137a0721cdb2', '9f7de2eb-4073-43e6-b662-d688ccba4b26');
+('adc43a8f-f581-4f09-8d7c-dd3ee0171fc4', '44525763-2de2-43b4-9b95-137a0721cdb2', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('488404c0-048f-462c-bc8e-85e6fbe2f7e5', '3bbb41d9-ada7-41a0-9937-4af198481c1a', '9f7de2eb-4073-43e6-b662-d688ccba4b26');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
