@@ -1,6 +1,6 @@
 import {
   checkCSICodeDescriptionExists,
-  checkCSICodeExists,
+  checkCustomCSICodeValidity,
 } from "@/backend/api/get";
 import { createTicket, editTicket } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -63,12 +63,12 @@ const TicketRequestCustomCSIForm = ({
       const csiCode =
         data.ticket_sections[0].ticket_section_fields[2].ticket_field_response;
 
-      const csiExists = await checkIfCSIExists(
+      const csiValid = await checkIfCSIValid(
         `${csiCode}`,
         `${csiCodeDescription}`
       );
 
-      if (csiExists) return;
+      if (!csiValid) return;
 
       const ticket = await createTicket(supabaseClient, {
         category,
@@ -106,11 +106,11 @@ const TicketRequestCustomCSIForm = ({
       const csiCode =
         data.ticket_sections[0].ticket_section_fields[2].ticket_field_response;
 
-      const csiExists = await checkIfCSIExists(
+      const csiValid = await checkIfCSIValid(
         `${csiCode}`,
         `${csiCodeDescription}`
       );
-      if (csiExists) return;
+      if (!csiValid) return;
 
       if (!category && !ticketId && user) return;
 
@@ -137,7 +137,7 @@ const TicketRequestCustomCSIForm = ({
     }
   };
 
-  const checkIfCSIExists = async (
+  const checkIfCSIValid = async (
     csiCode: string,
     csiCodeDescription: string
   ) => {
@@ -153,16 +153,31 @@ const TicketRequestCustomCSIForm = ({
         { message: "CSI Code Description already exists" }
       );
 
-    const csiCodeExists = await checkCSICodeExists(supabaseClient, {
+    const {
+      csiCodeLevelThreeIdExists,
+      csiCodeLevelTwoMinorGroupIdExists,
+      csiCodeLevelTwoMajorGroupIdExists,
+      csiCodeDivisionIdExists,
+    } = await checkCustomCSICodeValidity(supabaseClient, {
       csiCode: `${csiCode}`,
     });
-    if (csiCodeExists)
+    let error = "";
+    if (csiCodeLevelThreeIdExists) error = "CSI Code already exists";
+    else if (!csiCodeLevelTwoMinorGroupIdExists)
+      error = "CSI Code Invalid, level two minor group id doesn't exists";
+    else if (!csiCodeLevelTwoMajorGroupIdExists)
+      error = "CSI Code Invalid, level two major group id doesn't exists";
+    else if (!csiCodeDivisionIdExists)
+      error = "CSI Code Invalid, division id doesn't exists";
+
+    if (error) {
       setError(
         `ticket_sections.0.ticket_section_fields.2.ticket_field_response`,
-        { message: "CSI Code already exists" }
+        { message: error }
       );
+    }
 
-    return csiCodeExists || csiCodeDescriptionExists;
+    return !Boolean(error);
   };
 
   useEffect(() => {

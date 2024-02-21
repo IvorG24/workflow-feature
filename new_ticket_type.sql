@@ -263,6 +263,71 @@ INSERT INTO storage.buckets (id, name) VALUES ('TICKET_ATTACHMENTS', 'TICKET_ATT
 
 UPDATE storage.buckets SET public = true;
 
+
+-- Start: Check custom csi validity
+
+CREATE OR REPLACE FUNCTION check_custom_csi_validity(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      csiCode
+    } = input_data;
+    
+    const csiCodeArray = csiCode.split(" ");
+    const csi_code_division_id = csiCodeArray[0];
+    const csi_code_level_two_major_group_id = csiCodeArray[1][0];
+    const csi_code_level_two_minor_group_id = csiCodeArray[1][1];
+    const csi_code_level_three_id = csiCodeArray[2];
+
+    const csiCodeDivisionIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}';
+    `)[0];
+    
+    const csiCodeLevelTwoMajorGroupIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}';
+    `)[0];
+    
+    const csiCodeLevelTwoMinorGroupIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
+        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}';
+    `)[0];
+    
+    const csiCodeLevelThreeIdExists = plv8.execute(`
+      SELECT *
+      FROM csi_code_table
+      WHERE 
+        csi_code_division_id = '${csi_code_division_id}'
+        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
+        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}'
+        AND csi_code_level_three_id = '${csi_code_level_three_id}';
+    `)[0];
+
+    returnData = {
+      csiCodeDivisionIdExists: Boolean(csiCodeDivisionIdExists),
+      csiCodeLevelTwoMajorGroupIdExists: Boolean(csiCodeLevelTwoMajorGroupIdExists),
+      csiCodeLevelTwoMinorGroupIdExists: Boolean(csiCodeLevelTwoMinorGroupIdExists),
+      csiCodeLevelThreeIdExists: Boolean(csiCodeLevelThreeIdExists),
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Check custom csi validity
+
 -- Start: Fetch ticket list
 
 CREATE OR REPLACE FUNCTION fetch_ticket_list(

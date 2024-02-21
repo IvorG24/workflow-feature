@@ -2610,6 +2610,12 @@ export type Database = {
         }
         Returns: Json
       }
+      check_custom_csi_validity: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       check_item_form_status: {
         Args: {
           team_id: string

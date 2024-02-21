@@ -5058,23 +5058,6 @@ export const getTicketForm = async (
   return data as unknown as CreateTicketFormValues;
 };
 
-// Check CSI Code if it already exists
-export const checkCSICodeExists = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    csiCode: string;
-  }
-) => {
-  const { csiCode } = params;
-  const { data, error } = await supabaseClient
-    .from("csi_code_table")
-    .select("csi_code_section")
-    .ilike("csi_code_section", csiCode)
-    .maybeSingle();
-  if (error) throw error;
-  return Boolean(data);
-};
-
 // Check CSI Code Description if it already exists
 export const checkCSICodeDescriptionExists = async (
   supabaseClient: SupabaseClient<Database>,
@@ -5166,5 +5149,25 @@ export const getIncidentReport = async (
       date: string;
       report_count: number;
     }[],
+  };
+};
+
+// Check Custom CSI Code if valid
+export const checkCustomCSICodeValidity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    csiCode: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_custom_csi_validity", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as {
+    csiCodeDivisionIdExists: boolean;
+    csiCodeLevelTwoMajorGroupIdExists: boolean;
+    csiCodeLevelTwoMinorGroupIdExists: boolean;
+    csiCodeLevelThreeIdExists: boolean;
   };
 };

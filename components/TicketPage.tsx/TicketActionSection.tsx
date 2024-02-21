@@ -1,7 +1,7 @@
 import {
   checkCSICodeDescriptionExists,
-  checkCSICodeExists,
   checkCSICodeItemExists,
+  checkCustomCSICodeValidity,
   getItem,
 } from "@/backend/api/get";
 import {
@@ -186,16 +186,32 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
         { csiCodeDescription }
       );
 
-      const csiCodeExists = await checkCSICodeExists(supabaseClient, {
-        csiCode,
+      const {
+        csiCodeLevelThreeIdExists,
+        csiCodeLevelTwoMinorGroupIdExists,
+        csiCodeLevelTwoMajorGroupIdExists,
+        csiCodeDivisionIdExists,
+      } = await checkCustomCSICodeValidity(supabaseClient, {
+        csiCode: `${csiCode}`,
       });
 
-      if (!csiCodeDescriptionExists && !csiCodeExists) {
+      if (
+        !csiCodeDescriptionExists &&
+        !csiCodeLevelThreeIdExists &&
+        csiCodeLevelTwoMinorGroupIdExists &&
+        csiCodeLevelTwoMajorGroupIdExists &&
+        csiCodeDivisionIdExists
+      ) {
         // add custom csi
         await createCustomCSI(supabaseClient, {
           csiCode,
           csiCodeDescription,
           itemName,
+        });
+      } else {
+        notifications.show({
+          message: "Create custom CSI Code failed. Please try again later.",
+          color: "red",
         });
       }
     } catch {
@@ -203,10 +219,6 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      return {
-        canClose: false,
-        message: "",
-      };
     } finally {
       setIsLoading(false);
     }
