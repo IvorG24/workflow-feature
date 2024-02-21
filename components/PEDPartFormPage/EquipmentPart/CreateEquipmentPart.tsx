@@ -43,6 +43,7 @@ const CreateEquipmentPart = ({
   setEquipmentPartCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const [isFetchingOptions, setIsFetchingOptions] = useState(true);
 
   const teamMember = useUserTeamMember();
   const [nameOption, setNameOption] = useState<
@@ -64,7 +65,19 @@ const CreateEquipmentPart = ({
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const { nameList } = await getEquipmentNameOption(supabaseClient);
+        setIsFetchingOptions(true);
+        const allNameList = [];
+        let index = 0;
+        while (1) {
+          const { nameList } = await getEquipmentNameOption(supabaseClient, {
+            index,
+          });
+          if (nameList.length === 0) break;
+          allNameList.push(...nameList);
+          if (nameList.length < 1000) break;
+          index += 1000;
+        }
+
         const { brandList, modelList } = await getEquipmentBrandAndModelOption(
           supabaseClient
         );
@@ -79,9 +92,9 @@ const CreateEquipmentPart = ({
               };
             })
           );
-        nameList &&
+        allNameList &&
           setNameOption(
-            nameList.map((name) => {
+            allNameList.map((name) => {
               return {
                 label: `${name.equipment_general_name}`,
                 value: `${name.equipment_general_name_id}`,
@@ -120,6 +133,8 @@ const CreateEquipmentPart = ({
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
+      } finally {
+        setIsFetchingOptions(false);
       }
     };
     fetchOptions();
@@ -193,7 +208,7 @@ const CreateEquipmentPart = ({
 
   return (
     <Container p={0} fluid sx={{ position: "relative" }}>
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={formState.isSubmitting || isFetchingOptions} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
           Add Equipment Part
@@ -215,6 +230,7 @@ const CreateEquipmentPart = ({
                   searchable
                   clearable
                   label="Name"
+                  limit={1000}
                 />
               )}
               rules={{

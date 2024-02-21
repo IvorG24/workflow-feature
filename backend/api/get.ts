@@ -4414,11 +4414,16 @@ export const getEquipmentBrandAndModelOption = async (
 
 // Fetch all equipment name option
 export const getEquipmentNameOption = async (
-  supabaseClient: SupabaseClient<Database>
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+  }
 ) => {
+  const { index } = params;
   const { data: nameList, error: nameError } = await supabaseClient
     .from("equipment_general_name_table")
-    .select("*")
+    .select("*", { count: "exact" })
+    .range(index, index + 1000)
     .order("equipment_general_name", { ascending: true });
   if (nameError) throw nameError;
 
