@@ -414,25 +414,6 @@ export const assignTicket = async (
   return data as TicketType;
 };
 
-// Edit ticket response
-export const editTicketResponse = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    ticketId: string;
-    title: string;
-    description: string;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("edit_ticket_response", {
-      input_data: params,
-    })
-    .select()
-    .single();
-  if (error) throw error;
-  return data as TicketTableRow;
-};
-
 // update ticket status
 export const updateTicketStatus = async (
   supabaseClient: SupabaseClient<Database>,
