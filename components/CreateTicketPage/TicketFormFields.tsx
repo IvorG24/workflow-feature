@@ -5,7 +5,7 @@ import {
 } from "@/utils/constant";
 import { formatCSICode } from "@/utils/string";
 import { CreateTicketFormValues, TicketSection } from "@/utils/types";
-import { FileInput, Select, TextInput, Textarea } from "@mantine/core";
+import { FileInput, Select, Text, TextInput, Textarea } from "@mantine/core";
 import { IconFile } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form";
 
@@ -136,6 +136,8 @@ const TicketFormFields = ({
                     );
                 }}
                 data={ticketField.ticket_field_option}
+                limit={250}
+                nothingFound={<Text>Nothing found!</Text>}
                 withAsterisk={field.ticket_field_is_required}
                 {...inputProps}
                 clearable
