@@ -492,10 +492,11 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "LUZ-21-006 UPPER WAWA DAM",
         "LUZ-19-002 SRE 40MLD MAGDIWANG",
         "PILILIA YARD",
-        "ALAMINOS YARD",
         "LUZ-22-004 MERALCO HDD 3",
         "LUZ-23-005 MRT 7 NORTH AVE",
         "LUZ-22-002 500KV BACKBONE S2",
+        "LUZ-19-021 MERALCO HDD PROJECT",
+        "LUZ-18-033 SFEXWIDENING",
       ],
       fullName: "Rey Berlon",
       jiraAccountId:
@@ -512,7 +513,11 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "LUZ-22-009 SOLID LF MAIN BLDG",
         "LUZ-22-010 PHILIP MORRIS",
         "LUZ-23-002 EAST BAY 200MLD WTP",
-        " LUZ-23-009 KALAYAAN 2 WIND", // added on 2024-02-01 16:14 info from Bry Paras
+        " LUZ-23-009 KALAYAAN 2 WIND",
+        "ALAMINOS YARD",
+        "LUZ-23-006 LAND DEV LEMERY P1",
+        "SANTISIMO YARD",
+        "LUZ-12-051 CATUIRAN",
       ],
       fullName: "Vincent Andallo- Luzon C Area Lead (Active)",
       jiraAccountId:
@@ -532,24 +537,11 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "VIZ-22-003 LOBOC 2",
         "MIN-15-077  MW SIGUIL HYDRO",
         "VIZ-23-008 SAN ISIDRO SOLAR",
+        "MIN-14-026B MANOLO",
       ],
       fullName: "Christopher Waga",
       jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
       emailAddress: "christopher.waga@staclara.com.ph",
-    },
-    {
-      items: ["LUZ-12-051 CATUIRAN"],
-      fullName: "Jay Quiroz",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d8344027-3578-4f50-8b8a-11fe72244208",
-      emailAddress: "jayquiroz.santaclara@gmail.com",
-    },
-    {
-      items: ["LUZ-19-021 MERALCO HDD PROJECT"],
-      fullName: "amernito villanueva",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:7df296bc-1270-49b3-9690-f19250338d98",
-      emailAddress: "amernito.villanueva@staclara.com.ph",
     },
   ];
 
@@ -620,12 +612,19 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:cb6d0086-aa76-4f24-a65e-33fb4e5a88ec",
       emailAddress: "michaeljohnventura6@gmail.com",
     },
+    // {
+    //   items: ["LUZ-21-002 KIANGAN"],
+    //   fullName: "Jumar Cernechez",
+    //   jiraAccountId:
+    //     "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d2cffd15-9d2f-4ce8-bdf3-95209e8e0013",
+    //   emailAddress: "jcernechez07@gmail.com",
+    // },
     {
       items: ["LUZ-21-002 KIANGAN"],
-      fullName: "Jumar Cernechez",
+      fullName: "Reyshel Tobias",
       jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d2cffd15-9d2f-4ce8-bdf3-95209e8e0013",
-      emailAddress: "jcernechez07@gmail.com",
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:cfd9f478-136a-4dbb-9471-ab353b88bb43",
+      emailAddress: "reysheltobias@gmail.com",
     },
     {
       items: [
@@ -718,12 +717,19 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       jiraAccountId: "712020:5f585f80-6478-4f71-9ed4-04d0d8cdf416",
       emailAddress: "edwin.probadora@staclara.com.ph",
     },
+    // {
+    //   items: ["MIN-15-077  MW SIGUIL HYDRO"],
+    //   fullName: "Joel E. Gucela",
+    //   jiraAccountId:
+    //     "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+    //   emailAddress: "gucelaje2231@gmail.com",
+    // },
     {
       items: ["MIN-15-077  MW SIGUIL HYDRO"],
-      fullName: "Joel E. Gucela",
+      fullName: "Leizyl Puerte",
       jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
-      emailAddress: "gucelaje2231@gmail.com",
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:07d9cfb9-325b-4a6f-bf18-7f55ef8ac5d6",
+      emailAddress: "leizyl.puerte.staclara@gmail.com",
     },
     {
       items: ["LUZ-22-009 SOLID LF MAIN BLDG"],
@@ -784,7 +790,9 @@ export const generateJiraTicketPayload = ({
   itemCategory: string[];
   primaryApproverJiraAccountId: string | null;
 }) => {
-  const requestingProjectSite = getJiraRequestingProjectSite(projectName);
+  const requestingProjectSite = getJiraRequestingProjectSite(
+    projectName.includes("CENTRAL OFFICE") ? "CENTRAL OFFICE" : projectName
+  );
   const sourcingItemCategory = getJiraSourcingItemCategory(
     JSON.parse(itemCategory[0])
   );
@@ -829,10 +837,10 @@ export const generateJiraTicketPayload = ({
   const jiraTicketPayload = {
     form: {
       answers: {
-        "1": {
+        "21": {
           choices: [requestingProjectSite.id], // Requesting Project Site
         },
-        "2": {
+        "23": {
           choices: [sourcingItemCategory.id], // Item Category
         },
         "3": {
@@ -841,7 +849,7 @@ export const generateJiraTicketPayload = ({
         "4": {
           text: requestId, // Formsly ID
         },
-        "5": {
+        "20": {
           text: requestUrl, // Formsly URL
         },
         "6": {

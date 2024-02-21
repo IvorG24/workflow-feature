@@ -712,7 +712,7 @@ Props) => {
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             handleUpdateRequest={handleUpdateRequest}
-            isRf
+            isItemForm
             isCashPurchase={isCashPurchase}
             isUserPrimarySigner={
               isUserSigner
