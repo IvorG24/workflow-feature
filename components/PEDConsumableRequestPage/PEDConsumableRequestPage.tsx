@@ -597,7 +597,6 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             handleUpdateRequest={handleUpdateRequest}
-            isRf
             isCashPurchase={isCashPurchase}
             isUserPrimarySigner={
               isUserSigner
@@ -610,6 +609,7 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
             isUserRequester={isUserRequester}
             requestId={request.request_id}
             onCreateJiraTicket={handleCreateJiraTicket}
+            isItemForm
           />
         )}
 
