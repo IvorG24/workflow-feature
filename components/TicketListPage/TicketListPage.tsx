@@ -11,6 +11,7 @@ import {
 import {
   Alert,
   Box,
+  Button,
   Container,
   Divider,
   Flex,
@@ -26,7 +27,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import TicketListFilter from "./TicketListFilter";
@@ -188,6 +189,13 @@ const TicketListPage = ({
           <Title order={4}>Ticket List Page</Title>
           <Text> Manage your team requests here.</Text>
         </Box>
+        <Button
+          variant="light"
+          leftIcon={<IconReload size={16} />}
+          onClick={() => handleFilterTicketList()}
+        >
+          Refresh
+        </Button>
       </Flex>
       <Box my="sm">
         <FormProvider {...filterFormMethods}>
