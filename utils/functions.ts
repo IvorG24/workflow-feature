@@ -543,6 +543,13 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
       jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
       emailAddress: "christopher.waga@staclara.com.ph",
     },
+    {
+      items: ["MIN-19-027 MALITBOG MINI HYDRO"],
+      fullName: "Joel E. Gucela",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+      emailAddress: "gucelaje2231@gmail.com",
+    },
   ];
 
   const matchedUser = matcher.find((matcherItem) =>
