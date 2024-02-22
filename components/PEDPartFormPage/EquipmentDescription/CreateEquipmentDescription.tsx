@@ -57,9 +57,13 @@ const CreateEquipmentDescription = ({
 
   useEffect(() => {
     const fetchBrandAndModelOption = async () => {
+      if (!teamMember?.team_member_team_id) return;
       try {
         const { brandList, modelList } = await getEquipmentBrandAndModelOption(
-          supabaseClient
+          supabaseClient,
+          {
+            teamId: teamMember.team_member_team_id,
+          }
         );
         brandList &&
           setBrandOption(
@@ -87,7 +91,7 @@ const CreateEquipmentDescription = ({
       }
     };
     fetchBrandAndModelOption();
-  }, []);
+  }, [teamMember?.team_member_team_id]);
 
   const { register, formState, handleSubmit, control } =
     useForm<EquipmentDescriptionForm>({

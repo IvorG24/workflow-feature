@@ -64,6 +64,7 @@ const CreateEquipmentPart = ({
 
   useEffect(() => {
     const fetchOptions = async () => {
+      if (!teamMember?.team_member_team_id) return;
       try {
         setIsFetchingOptions(true);
         const allNameList = [];
@@ -71,6 +72,7 @@ const CreateEquipmentPart = ({
         while (1) {
           const { nameList } = await getEquipmentNameOption(supabaseClient, {
             index,
+            teamId: teamMember.team_member_team_id,
           });
           if (nameList.length === 0) break;
           allNameList.push(...nameList);
@@ -79,10 +81,15 @@ const CreateEquipmentPart = ({
         }
 
         const { brandList, modelList } = await getEquipmentBrandAndModelOption(
-          supabaseClient
+          supabaseClient,
+          {
+            teamId: teamMember.team_member_team_id,
+          }
         );
         const { uomList, categoryList } =
-          await getEquipmentUOMAndCategoryOption(supabaseClient);
+          await getEquipmentUOMAndCategoryOption(supabaseClient, {
+            teamId: teamMember.team_member_team_id,
+          });
         brandList &&
           setBrandOption(
             brandList.map((brand) => {
@@ -138,7 +145,7 @@ const CreateEquipmentPart = ({
       }
     };
     fetchOptions();
-  }, []);
+  }, [teamMember?.team_member_team_id]);
 
   const { register, formState, handleSubmit, control } =
     useForm<EquipmentPartForm>({

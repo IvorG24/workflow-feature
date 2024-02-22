@@ -4392,17 +4392,23 @@ export const getEquipmentDescriptionList = async (
 
 // Fetch all equipment description brand and model option
 export const getEquipmentBrandAndModelOption = async (
-  supabaseClient: SupabaseClient<Database>
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
 ) => {
+  const { teamId } = params;
   const { data: brandList, error: brandError } = await supabaseClient
     .from("equipment_brand_table")
     .select("*")
+    .eq("equipment_brand_team_id", teamId)
     .order("equipment_brand", { ascending: true });
   if (brandError) throw brandError;
 
   const { data: modelList, error: modelError } = await supabaseClient
     .from("equipment_model_table")
     .select("*")
+    .eq("equipment_model_team_id", teamId)
     .order("equipment_model", { ascending: true });
   if (modelError) throw modelError;
 
@@ -4417,12 +4423,14 @@ export const getEquipmentNameOption = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     index: number;
+    teamId: string;
   }
 ) => {
-  const { index } = params;
+  const { index, teamId } = params;
   const { data: nameList, error: nameError } = await supabaseClient
     .from("equipment_general_name_table")
-    .select("*", { count: "exact" })
+    .select("*")
+    .eq("equipment_general_name_team_id", teamId)
     .range(index, index + 1000)
     .order("equipment_general_name", { ascending: true });
   if (nameError) throw nameError;
@@ -4497,11 +4505,16 @@ export const getEquipmentPartList = async (
 
 // Fetch all equipment uom option
 export const getEquipmentUOMAndCategoryOption = async (
-  supabaseClient: SupabaseClient<Database>
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
 ) => {
+  const { teamId } = params;
   const { data: uomList, error: uomListError } = await supabaseClient
     .from("equipment_unit_of_measurement_table")
     .select("*")
+    .eq("equipment_unit_of_measurement_team_id", teamId)
     .eq("equipment_unit_of_measurement_is_available", true)
     .eq("equipment_unit_of_measurement_is_disabled", false)
     .order("equipment_unit_of_measurement", { ascending: true });
@@ -4510,6 +4523,7 @@ export const getEquipmentUOMAndCategoryOption = async (
   const { data: categoryList, error: categoryError } = await supabaseClient
     .from("equipment_component_category_table")
     .select("*")
+    .eq("equipment_component_category_team_id", teamId)
     .eq("equipment_component_category_is_available", true)
     .eq("equipment_component_category_is_disabled", false)
     .order("equipment_component_category", { ascending: true });

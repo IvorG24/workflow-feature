@@ -5,6 +5,7 @@ import {
 import { updateEquipmentDescription } from "@/backend/api/update";
 
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   EquipmentDescriptionForm,
@@ -47,6 +48,7 @@ const UpdateEquipmentDescription = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
+  const teamMember = useUserTeamMember();
 
   const [brandOption, setBrandOption] = useState<
     { label: string; value: string }[]
@@ -57,9 +59,13 @@ const UpdateEquipmentDescription = ({
 
   useEffect(() => {
     const fetchBrandAndModelOption = async () => {
+      if (!teamMember?.team_member_team_id) return;
       try {
         const { brandList, modelList } = await getEquipmentBrandAndModelOption(
-          supabaseClient
+          supabaseClient,
+          {
+            teamId: teamMember.team_member_team_id,
+          }
         );
         brandList &&
           setBrandOption(
@@ -87,7 +93,7 @@ const UpdateEquipmentDescription = ({
       }
     };
     fetchBrandAndModelOption();
-  }, []);
+  }, [teamMember?.team_member_team_id]);
 
   const { register, formState, handleSubmit, control } =
     useForm<EquipmentDescriptionForm>({

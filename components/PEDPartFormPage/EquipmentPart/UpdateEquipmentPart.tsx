@@ -4,6 +4,7 @@ import {
   getEquipmentUOMAndCategoryOption,
 } from "@/backend/api/get";
 import { updateEquipmentPart } from "@/backend/api/update";
+import { useUserTeamMember } from "@/stores/useUserStore";
 
 import { Database } from "@/utils/database";
 import {
@@ -42,6 +43,8 @@ const UpdateEquipmentPart = ({
   editEquipmentPart,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const teamMember = useUserTeamMember();
+
   const [isFetchingOptions, setIsFetchingOptions] = useState(true);
 
   const [nameOption, setNameOption] = useState<
@@ -63,12 +66,14 @@ const UpdateEquipmentPart = ({
   useEffect(() => {
     const fetchOptions = async () => {
       try {
+        if (!teamMember?.team_member_team_id) return;
         setIsFetchingOptions(true);
         const allNameList = [];
         let index = 0;
         while (1) {
           const { nameList } = await getEquipmentNameOption(supabaseClient, {
             index,
+            teamId: teamMember.team_member_team_id,
           });
           if (nameList.length === 0) break;
           allNameList.push(...nameList);
@@ -76,10 +81,13 @@ const UpdateEquipmentPart = ({
           index += 1000;
         }
         const { brandList, modelList } = await getEquipmentBrandAndModelOption(
-          supabaseClient
+          supabaseClient,
+          { teamId: teamMember.team_member_team_id }
         );
         const { uomList, categoryList } =
-          await getEquipmentUOMAndCategoryOption(supabaseClient);
+          await getEquipmentUOMAndCategoryOption(supabaseClient, {
+            teamId: teamMember.team_member_team_id,
+          });
         allNameList &&
           setNameOption(
             allNameList.map((name) => {
@@ -130,10 +138,12 @@ const UpdateEquipmentPart = ({
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
+      } finally {
+        setIsFetchingOptions(false);
       }
     };
     fetchOptions();
-  }, []);
+  }, [teamMember?.team_member_team_id]);
 
   const { register, formState, handleSubmit, control } =
     useForm<EquipmentPartForm>({
@@ -206,7 +216,7 @@ const UpdateEquipmentPart = ({
       <LoadingOverlay visible={formState.isSubmitting || isFetchingOptions} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
-          Update Equipment Part Part
+          Update Equipment Part
         </Title>
         <Divider mb="xl" />
 
@@ -236,6 +246,7 @@ const UpdateEquipmentPart = ({
                   searchable
                   clearable
                   label="Name"
+                  limit={1000}
                 />
               )}
               rules={{
