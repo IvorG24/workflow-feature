@@ -527,7 +527,6 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
     {
       items: [
         "MIN-18-036 LAKEMAINIT",
-        "MIN-19-027 MALITBOG MINI HYDRO",
         "MIN-21-015 MATI-1",
         "MIN-21-016 CLARIN",
         "MIN-21-005 12MW MANGIMA HPP",
