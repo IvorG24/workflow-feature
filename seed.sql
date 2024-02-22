@@ -595,7 +595,8 @@ INSERT INTO ticket_category_table (ticket_category_id, ticket_category) VALUES
 ('ea67c627-6975-4e01-9c2d-445ae61fa144', 'Request Item CSI'),
 ('f1759af2-2a07-460d-9a72-86faf8eccd85', 'Request Item Option'),
 ('2df7ca37-444f-4e71-9c84-ad0d6f3e77b5', 'Incident Report for Employees'),
-('c9f373c8-09d6-46f0-92cb-5efeffd72758', 'Bug Report');
+('c9f373c8-09d6-46f0-92cb-5efeffd72758', 'Bug Report'),
+('3858113d-8a26-4d36-8c9a-a0e80ac657cc', 'Request PED Equipment Part');
 
 INSERT INTO ticket_section_table (ticket_section_id, ticket_section_name, ticket_section_is_duplicatable, ticket_section_category_id) VALUES
 ('0db787b2-092f-4499-ab82-2c42a459c8f0', 'Request Details', false, '1e9aef8b-cf84-4443-9e07-d9ad2461a301'),
@@ -606,7 +607,8 @@ INSERT INTO ticket_section_table (ticket_section_id, ticket_section_name, ticket
 ('6031d434-e930-445a-afc3-184cf1f7ab4d', 'Item', false, 'f1759af2-2a07-460d-9a72-86faf8eccd85'),
 ('a6b7c597-681f-4b2d-84c2-8bf267133fc4', 'Request Option', true, 'f1759af2-2a07-460d-9a72-86faf8eccd85'),
 ('ae0991e6-e3a4-452d-ac4b-d78908b99819', 'Request Details', false, '2df7ca37-444f-4e71-9c84-ad0d6f3e77b5'),
-('222576c2-ef0b-4714-ac10-2f57d310c9f0', 'Request Details', false, 'c9f373c8-09d6-46f0-92cb-5efeffd72758');
+('222576c2-ef0b-4714-ac10-2f57d310c9f0', 'Request Details', false, 'c9f373c8-09d6-46f0-92cb-5efeffd72758'),
+('7052205e-a118-4825-993c-bb5004154051', 'Request Details', false, '3858113d-8a26-4d36-8c9a-a0e80ac657cc');
 
 INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field_type, ticket_field_is_required, ticket_field_is_read_only, ticket_field_order, ticket_field_section_id) VALUES 
 ('849c0073-ec1e-4557-beed-6e930cd69c78', 'Title', 'TEXT', true, false, 1, '0db787b2-092f-4499-ab82-2c42a459c8f0'),
@@ -643,8 +645,15 @@ INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field
 ('1964674d-817c-43e1-b180-d451a308e250', 'What Space/List/View is impacted?', 'TEXT', true, false, 2, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
 ('445a0329-57a2-4beb-b066-1781798c2142', 'Steps to reproduce issue?', 'TEXTAREA', true, false, 3, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
 ('09f90c2f-d6e0-4ed2-b169-670cf9c5691b', 'Description', 'TEXTAREA', true, false, 4, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
-('c422d499-ba4c-4ef1-a36d-f9ff6d55aa68', 'Attachment', 'FILE', true, false, 5, '222576c2-ef0b-4714-ac10-2f57d310c9f0');
+('c422d499-ba4c-4ef1-a36d-f9ff6d55aa68', 'Attachment', 'FILE', true, false, 5, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
 
+('880d783f-1e85-4235-b735-2f68f5761ab2', 'Equipment Name', 'SELECT', true, false, 1, '7052205e-a118-4825-993c-bb5004154051'),
+('8303a6fb-36b6-4b86-a30f-28e36f96f1ed', 'Part Name', 'SELECT', true, false, 2, '7052205e-a118-4825-993c-bb5004154051'),
+('69588c19-b150-444f-8d32-72728004f4b2', 'Part Number', 'TEXT', true, false, 3, '7052205e-a118-4825-993c-bb5004154051'),
+('e91491d0-1355-4ab4-b357-d2a76b089f9d', 'Brand', 'SELECT', true, false, 4, '7052205e-a118-4825-993c-bb5004154051'),
+('fd835fde-0b63-4a26-aa58-289e7c6c87f1', 'Model', 'SELECT', true, false, 5, '7052205e-a118-4825-993c-bb5004154051'),
+('e6d5cfba-3da0-4fad-aa74-e6ff1ff8c56c', 'Unit of Measure', 'SELECT', true, false, 6, '7052205e-a118-4825-993c-bb5004154051'),
+('82bc2aed-a7a1-470f-b81b-688b5d621cdd', 'Category', 'SELECT', true, false, 7, '7052205e-a118-4825-993c-bb5004154051');
 
 CREATE OR REPLACE FUNCTION seed_uom()
 RETURNS JSON AS $$

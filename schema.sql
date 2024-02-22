@@ -7200,7 +7200,134 @@ RETURNS JSON AS $$
         }
       })
       returnData = { ticket_sections }
-    } else {
+
+    } else if (category === "Request PED Equipment Part"){
+      const equipmentNameList = plv8.execute(
+        `
+          SELECT equipment_name
+          FROM equipment_table
+          WHERE
+            equipment_is_disabled = false
+            AND equipment_is_available = true
+            AND equipment_team_id = '${teamId}'
+          ORDER BY equipment_name
+        `
+      );
+      const equipmentNameOptions = equipmentNameList.map((option)=> option.equipment_name);
+
+      const allEquipmentPartNameList = [];
+      const equipmentGeneralNameCount = plv8.execute(
+        `
+          SELECT COUNT(*)
+          FROM equipment_general_name_table 
+          WHERE equipment_general_name_team_id = '${teamId}'
+        `
+      )[0].count;
+      let index = 0;
+      while (index < equipmentGeneralNameCount) {
+        const nameList = plv8.execute(
+          `
+            SELECT equipment_general_name 
+            FROM equipment_general_name_table 
+            WHERE 
+              equipment_general_name_team_id = '${teamId}'
+              AND equipment_general_name_is_disabled = false
+              AND equipment_general_name_is_available = true
+            ORDER BY equipment_general_name
+            LIMIT 1000 
+            OFFSET ${index}
+          `
+        );
+        allEquipmentPartNameList.push(...nameList);
+        index += 1000;
+      }
+      const equipmentPartNameOptions = allEquipmentPartNameList.map((option)=> option.equipment_general_name);
+
+      const brandList = plv8.execute(
+        `
+          SELECT equipment_brand
+          FROM equipment_brand_table
+          WHERE
+            equipment_brand_is_disabled = false
+            AND equipment_brand_is_available = true
+            AND equipment_brand_team_id = '${teamId}'
+          ORDER BY equipment_brand
+        `
+      );
+      const brandOptions = brandList.map((option)=> option.equipment_brand);
+
+      const modelList = plv8.execute(
+        `
+          SELECT equipment_model
+          FROM equipment_model_table
+          WHERE
+            equipment_model_is_disabled = false
+            AND equipment_model_is_available = true
+            AND equipment_model_team_id = '${teamId}'
+          ORDER BY equipment_model
+        `
+      );
+      const modelOptions = modelList.map((option)=> option.equipment_model);
+
+      const uomList = plv8.execute(
+        `
+          SELECT equipment_unit_of_measurement
+          FROM equipment_unit_of_measurement_table
+          WHERE
+            equipment_unit_of_measurement_is_disabled = false
+            AND equipment_unit_of_measurement_is_available = true
+            AND equipment_unit_of_measurement_team_id = '${teamId}'
+          ORDER BY equipment_unit_of_measurement
+        `
+      );
+      const uomOptions = uomList.map((option)=> option.equipment_unit_of_measurement);
+      
+      const categoryList = plv8.execute(
+        `
+          SELECT equipment_component_category
+          FROM equipment_component_category_table
+          WHERE
+            equipment_component_category_is_disabled = false
+            AND equipment_component_category_is_available = true
+            AND equipment_component_category_team_id = '${teamId}'
+          ORDER BY equipment_component_category
+        `
+      );
+      const categoryOptions = categoryList.map((option)=> option.equipment_component_category);
+
+      const ticket_sections = sectionList.map(section => {
+
+        const fieldWithOption = section.ticket_section_fields.map((field, fieldIdx) => {
+          let fieldOptions = []
+          if(fieldIdx === 0){
+            fieldOptions = equipmentNameOptions
+          }else if(fieldIdx === 1){
+            fieldOptions = equipmentPartNameOptions
+          }else if(fieldIdx === 3){
+            fieldOptions = brandOptions
+          }else if(fieldIdx === 4){
+            fieldOptions = modelOptions
+          }else if(fieldIdx === 5){
+            fieldOptions = uomOptions
+          }else if(fieldIdx === 6){
+            fieldOptions = categoryOptions
+          }
+
+          return {
+            ...field,
+            ticket_field_option: fieldOptions,
+          };
+        });
+        
+        return {
+          ...section,
+          ticket_section_fields: fieldWithOption,
+        }
+      })
+      returnData = { ticket_sections }
+    }
+    
+    else {
       returnData = { ticket_sections: sectionList }
     }
  });
@@ -11934,6 +12061,107 @@ $$ LANGUAGE plv8;
 
 -- End: Check custom csi validity
 
+-- Start: Check if ped part already exists
+
+CREATE OR REPLACE FUNCTION ped_part_check(
+  input_data JSON
+)
+RETURNS BOOLEAN AS $$
+  let returnData = false;
+  plv8.subtransaction(function(){
+    const {
+      equipmentName,
+      partName,
+      partNumber,
+      brand,
+      model,
+      unitOfMeasure,
+      category
+    } = input_data;
+    
+    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}'`)[0].equipment_id;
+    const generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`)[0].equipment_general_name_id;
+    const brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`)[0].equipment_brand_id;
+    const modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`)[0].equipment_model_id;
+    const uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`)[0].equipment_unit_of_measurement_id;
+    const categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`)[0].equipment_component_category_id;
+
+    const partData = plv8.execute(
+      `
+        SELECT * FROM equipment_part_table
+        WHERE
+          equipment_part_is_disabled = false
+          AND equipment_part_equipment_id = '${equipmentId}'
+          AND equipment_part_general_name_id = '${generalNameId}'
+          AND equipment_part_number = '${partNumber}'
+          AND equipment_part_brand_id = '${brandId}'
+          AND equipment_part_model_id = '${modelId}'
+          AND equipment_part_unit_of_measurement_id = '${uomId}'
+          AND equipment_part_component_category_id = '${categoryId}'
+      `
+    );
+    
+    returnData = Boolean(partData.length);
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Check if ped part already exists
+
+-- Start: Create PED Part from ticket request
+
+CREATE OR REPLACE FUNCTION create_ped_part_from_ticket_request(
+  input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      equipmentName,
+      partName,
+      partNumber,
+      brand,
+      model,
+      unitOfMeasure,
+      category,
+      teamMemberId
+    } = input_data;
+    
+    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}'`)[0].equipment_id;
+    const generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`)[0].equipment_general_name_id;
+    const brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`)[0].equipment_brand_id;
+    const modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`)[0].equipment_model_id;
+    const uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`)[0].equipment_unit_of_measurement_id;
+    const categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`)[0].equipment_component_category_id;
+
+    const partData = plv8.execute(
+      `
+        SELECT * FROM equipment_part_table
+        WHERE
+          equipment_part_is_disabled = false
+          AND equipment_part_equipment_id = '${equipmentId}'
+          AND equipment_part_general_name_id = '${generalNameId}'
+          AND equipment_part_number = '${partNumber}'
+          AND equipment_part_brand_id = '${brandId}'
+          AND equipment_part_model_id = '${modelId}'
+          AND equipment_part_unit_of_measurement_id = '${uomId}'
+          AND equipment_part_component_category_id = '${categoryId}'
+      `
+    );
+    
+    if(partData.length !== 0) return;
+
+    plv8.execute(
+      `
+        INSERT INTO equipment_part_table
+          (equipment_part_number, equipment_part_general_name_id, equipment_part_brand_id, equipment_part_model_id, equipment_part_unit_of_measurement_id, equipment_part_component_category_id, equipment_part_equipment_id, equipment_part_encoder_team_member_id)
+        VALUES
+          ('${partNumber}', '${generalNameId}', '${brandId}', '${modelId}', '${uomId}', '${categoryId}', '${equipmentId}', '${teamMemberId}')
+      `
+    );
+ });
+$$ LANGUAGE plv8;
+
+-- End: Create PED Part from ticket request
 
 ---------- End: FUNCTIONS
 

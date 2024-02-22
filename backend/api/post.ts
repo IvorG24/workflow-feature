@@ -1546,3 +1546,27 @@ export const createEquipmentPart = async (
     equipment_part_component_category: category,
   };
 };
+
+// create ped part from ticket request
+export const createPedPartFromTicketRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentName: string;
+    partName: string;
+    partNumber: string;
+    brand: string;
+    model: string;
+    unitOfMeasure: string;
+    category: string;
+    teamMemberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "create_ped_part_from_ticket_request",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data;
+};

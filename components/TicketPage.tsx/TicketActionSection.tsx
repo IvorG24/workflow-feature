@@ -9,6 +9,7 @@ import {
   createItemDescriptionField,
   createItemDivision,
   createNotification,
+  createPedPartFromTicketRequest,
   createTicketComment,
 } from "@/backend/api/post";
 import { updateTicketStatus } from "@/backend/api/update";
@@ -161,7 +162,10 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
         return handleItemCSIClosing();
       case "Request Item Option":
         return handleItemOptionClosing();
+      case "Request PED Equipment Part":
+        return handleRequestPedEquipmentPartClosing();
       default:
+        handleUpdateTicketStatus("CLOSED", null);
         return;
     }
   };
@@ -208,6 +212,8 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
           csiCodeDescription,
           itemName,
         });
+
+        handleUpdateTicketStatus("CLOSED", null);
       } else {
         notifications.show({
           message: "Create custom CSI Code failed. Please try again later.",
@@ -252,6 +258,8 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
         itemId: item.item_id,
         divisionId,
       });
+
+      handleUpdateTicketStatus("CLOSED", null);
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -314,7 +322,58 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
           };
         })
       );
+
+      handleUpdateTicketStatus("CLOSED", null);
     } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRequestPedEquipmentPartClosing = async () => {
+    try {
+      setIsLoading(true);
+      if (!teamMember) throw new Error();
+
+      await createPedPartFromTicketRequest(supabaseClient, {
+        equipmentName: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[0]
+            .ticket_field_response as string
+        ),
+        partName: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[1]
+            .ticket_field_response as string
+        ),
+        partNumber: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[2]
+            .ticket_field_response as string
+        ),
+        brand: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[3]
+            .ticket_field_response as string
+        ),
+        model: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[4]
+            .ticket_field_response as string
+        ),
+        unitOfMeasure: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[5]
+            .ticket_field_response as string
+        ),
+        category: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[6]
+            .ticket_field_response as string
+        ),
+        teamMemberId: teamMember.team_member_id,
+      });
+
+      handleUpdateTicketStatus("CLOSED", null);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -345,7 +404,6 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
           loading={isLoading}
           onClick={async () => {
             await handleTicketClosing();
-            handleUpdateTicketStatus("CLOSED", null);
           }}
         >
           Close
