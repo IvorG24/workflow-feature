@@ -4402,6 +4402,8 @@ export const getEquipmentBrandAndModelOption = async (
     .from("equipment_brand_table")
     .select("*")
     .eq("equipment_brand_team_id", teamId)
+    .eq("equipment_brand_is_disabled", false)
+    .eq("equipment_brand_is_available", true)
     .order("equipment_brand", { ascending: true });
   if (brandError) throw brandError;
 
@@ -4409,6 +4411,8 @@ export const getEquipmentBrandAndModelOption = async (
     .from("equipment_model_table")
     .select("*")
     .eq("equipment_model_team_id", teamId)
+    .eq("equipment_model_is_disabled", false)
+    .eq("equipment_model_is_available", true)
     .order("equipment_model", { ascending: true });
   if (modelError) throw modelError;
 
@@ -4431,6 +4435,8 @@ export const getEquipmentNameOption = async (
     .from("equipment_general_name_table")
     .select("*")
     .eq("equipment_general_name_team_id", teamId)
+    .eq("equipment_general_name_is_disabled", false)
+    .eq("equipment_general_name_is_available", true)
     .range(index, index + 1000)
     .order("equipment_general_name", { ascending: true });
   if (nameError) throw nameError;
