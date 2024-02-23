@@ -6,6 +6,14 @@ import { escapeQuotes } from "@/utils/string";
 import {
   AppType,
   EditMemoType,
+  EquipmentDescriptionTableUpdate,
+  EquipmentLookupChoices,
+  EquipmentLookupTableUpdate,
+  EquipmentPartTableUpdate,
+  EquipmentTableUpdate,
+  ItemDescriptionTableUpdate,
+  ItemForm,
+  ItemTableInsert,
   MemberRoleType,
   MemoAgreementTableRow,
   MemoFormatAttachmentTableInsert,
@@ -406,25 +414,6 @@ export const assignTicket = async (
   return data as TicketType;
 };
 
-// Edit ticket response
-export const editTicketResponse = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    ticketId: string;
-    title: string;
-    description: string;
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("edit_ticket_response", {
-      input_data: params,
-    })
-    .select()
-    .single();
-  if (error) throw error;
-  return data as TicketTableRow;
-};
-
 // update ticket status
 export const updateTicketStatus = async (
   supabaseClient: SupabaseClient<Database>,
@@ -482,6 +471,160 @@ export const leaveTeam = async (
   });
 
   if (error) throw error;
+};
+
+export const cancelTeamInvitation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    invitation_id: string;
+  }
+) => {
+  const { invitation_id } = params;
+  const { error } = await supabaseClient
+    .from("invitation_table")
+    .update({ invitation_is_disabled: true })
+    .eq("invitation_id", invitation_id)
+    .select();
+
+  if (error) throw Error;
+};
+
+// Update item
+export const updateItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    toAdd: ItemForm["descriptions"];
+    toUpdate: ItemDescriptionTableUpdate[];
+    toRemove: { fieldId: string; descriptionId: string }[];
+    formId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("update_item", { input_data: params })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+// Update equipment
+export const updateEquipment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentData: EquipmentTableUpdate;
+    category: string;
+  }
+) => {
+  const { equipmentData, category } = params;
+
+  const { data, error } = await supabaseClient
+    .from("equipment_table")
+    .update(equipmentData)
+    .eq("equipment_id", equipmentData.equipment_id)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_category: category,
+  };
+};
+
+// Update equipment description
+export const updateEquipmentDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentDescriptionData: EquipmentDescriptionTableUpdate;
+    brand: string;
+    model: string;
+  }
+) => {
+  const { equipmentDescriptionData, brand, model } = params;
+
+  const { data, error } = await supabaseClient
+    .from("equipment_description_table")
+    .update(equipmentDescriptionData)
+    .eq(
+      "equipment_description_id",
+      equipmentDescriptionData.equipment_description_id
+    )
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_description_brand: brand,
+    equipment_description_model: model,
+  };
+};
+
+// Update equipment part
+export const updateEquipmentPart = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentPartData: EquipmentPartTableUpdate;
+    name: string;
+    brand: string;
+    model: string;
+    uom: string;
+    category: string;
+  }
+) => {
+  const { equipmentPartData, name, brand, model, uom, category } = params;
+
+  const { data, error } = await supabaseClient
+    .from("equipment_part_table")
+    .update(equipmentPartData)
+    .eq("equipment_part_id", equipmentPartData.equipment_part_id)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_part_general_name: name,
+    equipment_part_brand: brand,
+    equipment_part_model: model,
+    equipment_part_unit_of_measurement: uom,
+    equipment_part_component_category: category,
+  };
+};
+
+// Update equipment lookup
+export const updateEquipmentLookup = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentLookupData: EquipmentLookupTableUpdate;
+    tableName: EquipmentLookupChoices;
+    lookupId: string;
+  }
+) => {
+  const { equipmentLookupData, tableName, lookupId } = params;
+
+  const { data, error } = await supabaseClient
+    .from(`${tableName}_table`)
+    .update(equipmentLookupData)
+    .eq(`${tableName}_id`, lookupId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  const id = `${tableName}_id`;
+  const value = tableName;
+  const status = `${tableName}_is_available`;
+
+  const formattedData = data as unknown as {
+    [key: string]: string;
+  };
+
+  return {
+    id: formattedData[id],
+    status: Boolean(formattedData[status]),
+    value: formattedData[value],
+  };
 };
 
 // Update lookup

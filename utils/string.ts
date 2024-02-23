@@ -158,3 +158,9 @@ export const formatTimeString = (inputString: string): string => {
   const formattedTime = `${hours}h:${minutes}m:${Math.round(Number(seconds))}s`;
   return formattedTime;
 };
+
+export const formatCSICode = (inputString: string) => {
+  let numericString = inputString.replace(/[^\d ]/g, "");
+  numericString = numericString.substring(0, 8);
+  return numericString.replace(/(\d{2})(?=\d)/g, "$1 ");
+};

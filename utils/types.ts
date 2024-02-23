@@ -199,6 +199,62 @@ export type ServiceCategoryTableInsert =
 export type ServiceCategoryTableUpdate =
   Database["public"]["Tables"]["service_category_table"]["Update"];
 
+export type EquipmentTableRow =
+  Database["public"]["Tables"]["equipment_table"]["Row"];
+export type EquipmentTableInsert =
+  Database["public"]["Tables"]["equipment_table"]["Insert"];
+export type EquipmentTableUpdate =
+  Database["public"]["Tables"]["equipment_table"]["Update"];
+
+export type EquipmentDescriptionTableRow =
+  Database["public"]["Tables"]["equipment_description_table"]["Row"];
+export type EquipmentDescriptionTableInsert =
+  Database["public"]["Tables"]["equipment_description_table"]["Insert"];
+export type EquipmentDescriptionTableUpdate =
+  Database["public"]["Tables"]["equipment_description_table"]["Update"];
+
+export type EquipmentPartTableRow =
+  Database["public"]["Tables"]["equipment_part_table"]["Row"];
+export type EquipmentPartTableInsert =
+  Database["public"]["Tables"]["equipment_part_table"]["Insert"];
+export type EquipmentPartTableUpdate =
+  Database["public"]["Tables"]["equipment_part_table"]["Update"];
+
+export type EquipmentCategoryTableRow =
+  Database["public"]["Tables"]["equipment_category_table"]["Row"];
+export type EquipmentCategoryTableInsert =
+  Database["public"]["Tables"]["equipment_category_table"]["Insert"];
+export type EquipmentCategoryTableUpdate =
+  Database["public"]["Tables"]["equipment_category_table"]["Update"];
+
+export type EquipmentBrandTableRow =
+  Database["public"]["Tables"]["equipment_brand_table"]["Row"];
+export type EquipmentBrandTableInsert =
+  Database["public"]["Tables"]["equipment_brand_table"]["Insert"];
+export type EquipmentBrandTableUpdate =
+  Database["public"]["Tables"]["equipment_brand_table"]["Update"];
+
+export type EquipmentModelTableRow =
+  Database["public"]["Tables"]["equipment_model_table"]["Row"];
+export type EquipmentModelTableInsert =
+  Database["public"]["Tables"]["equipment_model_table"]["Insert"];
+export type EquipmentModelTableUpdate =
+  Database["public"]["Tables"]["equipment_model_table"]["Update"];
+
+export type EquipmentUnitOfMeasurementTableRow =
+  Database["public"]["Tables"]["equipment_unit_of_measurement_table"]["Row"];
+export type EquipmentUnitOfMeasurementTableInsert =
+  Database["public"]["Tables"]["equipment_brand_table"]["Insert"];
+export type EquipmentUnitOfMeasurementTableUpdate =
+  Database["public"]["Tables"]["equipment_unit_of_measurement_table"]["Update"];
+
+export type EquipmentComponentCategoryTableRow =
+  Database["public"]["Tables"]["equipment_component_category_table"]["Row"];
+export type EquipmentComponentCategoryTableInsert =
+  Database["public"]["Tables"]["equipment_component_category_table"]["Insert"];
+export type EquipmentComponentCategoryTableUpdate =
+  Database["public"]["Tables"]["equipment_component_category_table"]["Update"];
+
 export type MemoTableRow = Database["public"]["Tables"]["memo_table"]["Row"];
 export type MemoTableInsert =
   Database["public"]["Tables"]["memo_table"]["Insert"];
@@ -285,6 +341,41 @@ export type FormSLATableInsert =
 export type FormSLATableUpdate =
   Database["public"]["Tables"]["form_sla_table"]["Update"];
 
+export type TicketCategoryTableRow =
+  Database["public"]["Tables"]["ticket_category_table"]["Row"];
+export type TicketCategoryTableInsert =
+  Database["public"]["Tables"]["ticket_category_table"]["Insert"];
+export type TicketCategoryTableUpdate =
+  Database["public"]["Tables"]["ticket_category_table"]["Update"];
+
+export type TicketSectionTableRow =
+  Database["public"]["Tables"]["ticket_section_table"]["Row"];
+export type TicketSectionTableInsert =
+  Database["public"]["Tables"]["ticket_section_table"]["Insert"];
+export type TicketSectionTableUpdate =
+  Database["public"]["Tables"]["ticket_section_table"]["Update"];
+
+export type TicketFieldTableRow =
+  Database["public"]["Tables"]["ticket_field_table"]["Row"];
+export type TicketFieldTableInsert =
+  Database["public"]["Tables"]["ticket_field_table"]["Insert"];
+export type TicketFieldTableUpdate =
+  Database["public"]["Tables"]["ticket_field_table"]["Update"];
+
+export type TicketOptionTableRow =
+  Database["public"]["Tables"]["ticket_option_table"]["Row"];
+export type TicketOptionTableInsert =
+  Database["public"]["Tables"]["ticket_option_table"]["Insert"];
+export type TicketOptionTableUpdate =
+  Database["public"]["Tables"]["ticket_option_table"]["Update"];
+
+export type TicketResponseTableRow =
+  Database["public"]["Tables"]["ticket_response_table"]["Row"];
+export type TicketResponseTableInsert =
+  Database["public"]["Tables"]["ticket_response_table"]["Insert"];
+export type TicketResponseTableUpdate =
+  Database["public"]["Tables"]["ticket_response_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -298,7 +389,8 @@ export type AttachmentBucketType =
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS"
   | "MEMO_ATTACHMENTS"
-  | "TEAM_PROJECT_ATTACHMENTS";
+  | "TEAM_PROJECT_ATTACHMENTS"
+  | "TICKET_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
@@ -1093,30 +1185,30 @@ export type CreateTicketPageOnLoad = {
       user_email: string;
     };
   };
+  categoryList: TicketCategoryTableRow[];
 };
 
-export type TicketListType = [
-  {
-    ticket_requester: {
-      team_member_id: string;
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string | null;
-      user_email: string;
-    };
-    ticket_approver: {
-      team_member_id: string;
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string | null;
-      user_email: string;
-    };
-  } & TicketTableRow
-];
+export type TicketListType = ({
+  ticket_requester: {
+    team_member_id: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    user_email: string;
+  };
+  ticket_approver: {
+    team_member_id: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    user_email: string;
+  };
+} & TicketTableRow & { ticket_category: string })[];
 
 export type TicketType = {
+  ticket_category: string;
   ticket_requester: CreateTicketPageOnLoad["member"];
   ticket_approver: CreateTicketPageOnLoad["member"] | null;
   ticket_comment: {
@@ -1145,6 +1237,7 @@ export type TicketType = {
 export type TicketPageOnLoad = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
+  ticketForm: CreateTicketFormValues;
 };
 
 export type TicketCommentType =
@@ -1156,6 +1249,7 @@ export type TicketListOnLoad = {
   ticketList: TicketListType[];
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  ticketCategoryList: TicketCategoryTableRow[];
 };
 
 export type ApproverUnresolvedRequestListType = {
@@ -1170,18 +1264,74 @@ export type ApproverUnresolvedRequestListType = {
   };
 };
 
-export type LookupTable = {
-  id: string;
-  status: boolean;
-  value: string;
+export type EquipmentWithCategoryType = EquipmentTableRow & {
+  equipment_category: string;
 };
+
+export type EquipmentForm = {
+  name: string;
+  category: string;
+  isAvailable: boolean;
+  shorthand: string;
+};
+
+export type EquipmentDescriptionType = EquipmentDescriptionTableRow & {
+  equipment_description_brand: string;
+  equipment_description_model: string;
+};
+
+export type EquipmentDescriptionForm = {
+  propertyNumber: string;
+  serialNumber: string;
+  brand: string;
+  model: string;
+  isAvailable: boolean;
+};
+
+export type EquipmentPartType = EquipmentPartTableRow & {
+  equipment_part_general_name: string;
+  equipment_part_brand: string;
+  equipment_part_model: string;
+  equipment_part_unit_of_measurement: string;
+  equipment_part_component_category: string;
+};
+
+export type EquipmentPartForm = {
+  name: string;
+  partNumber: string;
+  brand: string;
+  model: string;
+  uom: string;
+  category: string;
+  isAvailable: boolean;
+};
+
+export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";
 
 export type LookupForm = {
   value: string;
   isAvailable: boolean;
 };
 
-export type FormSegmentType = "Form Preview" | "Form Details" | "Form Lookup";
+export type EquipmentLookupChoices =
+  | "equipment_category"
+  | "equipment_brand"
+  | "equipment_model"
+  | "equipment_unit_of_measurement"
+  | "equipment_component_category";
+
+export type LookupTable = {
+  id: string;
+  status: boolean;
+  value: string;
+};
+
+export type EquipmentLookupTableUpdate =
+  | EquipmentCategoryTableUpdate
+  | EquipmentBrandTableUpdate
+  | EquipmentModelTableUpdate
+  | EquipmentUnitOfMeasurementTableUpdate
+  | EquipmentComponentCategoryTableUpdate;
 
 export type UserIssuedItem = {
   itemName: string;
@@ -1367,3 +1517,27 @@ export type SignerWithProfile = SignerTableRow & {
 export type FormSLAWithForm = {
   form_table: FormTableRow;
 } & FormSLATableRow;
+
+export type TicketSection = TicketSectionTableRow & {
+  field_section_duplicatable_id?: string;
+  ticket_section_fields: (TicketFieldTableRow & {
+    ticket_field_option: string[] | { label: string; value: string }[];
+    ticket_field_response?: unknown;
+    ticket_field_response_referrence?: unknown;
+    ticket_field_response_id?: string;
+    ticket_field_hidden?: boolean;
+  })[];
+};
+
+export type CreateTicketFormValues = {
+  ticket_sections: TicketSection[];
+};
+
+export type TeamMemberWithUser = TeamMemberTableRow & {
+  team_member_user: UserTableRow;
+};
+
+export type IncidentReport = {
+  interval: string;
+  data: { date: string; report_count: number }[];
+};

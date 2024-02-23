@@ -553,11 +553,6 @@ Props) => {
         }
       );
 
-      if (jiraTicketCommentResponse.ok) {
-        console.log("Comment added successfully");
-      } else {
-        console.error("Failed to add comment");
-      }
       return jiraTicketCommentResponse;
     } catch (error) {
       console.error("Error:", error);
@@ -717,7 +712,7 @@ Props) => {
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             handleUpdateRequest={handleUpdateRequest}
-            isRf
+            isItemForm
             isCashPurchase={isCashPurchase}
             isUserPrimarySigner={
               isUserSigner

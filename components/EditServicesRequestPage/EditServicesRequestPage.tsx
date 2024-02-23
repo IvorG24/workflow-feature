@@ -524,7 +524,7 @@ const EditServicesRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     isSectionRemovable={isRemovable}
-                    serviceFormMethods={{
+                    servicesFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onCSIDivisionChange: handleCSIDivisionChange,
                       onCSICodeChange: handleCSICodeChange,

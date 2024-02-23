@@ -400,7 +400,7 @@ const ItemFormPage = ({
           <FormSection
             section={{
               ...form.form_section[1],
-              section_field: form.form_section[1].section_field.slice(0, 9),
+              section_field: form.form_section[1].section_field.slice(0, 7),
             }}
           />
         </Stack>

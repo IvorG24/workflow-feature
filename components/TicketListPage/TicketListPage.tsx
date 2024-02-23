@@ -4,12 +4,14 @@ import { DEFAULT_TICKET_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   TeamMemberWithUserType,
+  TicketCategoryTableRow,
   TicketListType,
   TicketStatusType,
 } from "@/utils/types";
 import {
   Alert,
   Box,
+  Button,
   Container,
   Divider,
   Flex,
@@ -25,7 +27,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle, IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import TicketListFilter from "./TicketListFilter";
@@ -44,19 +46,14 @@ type Props = {
   ticketList: TicketListType;
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  ticketCategoryList: TicketCategoryTableRow[];
 };
-
-const TEMP_DEFAULT_TICKET_LIST_LIMIT = 13;
-export const TEMP_DEFAULT_TICKET_CATEGORY_LIST = [
-  "Item Request",
-  "General",
-  "Feature Request",
-];
 
 const TicketListPage = ({
   ticketList: inititalTicketList,
   ticketListCount: inititalTicketListCount,
   teamMemberList,
+  ticketCategoryList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -186,18 +183,25 @@ const TicketListPage = ({
   }, [activePage]);
 
   return (
-    <Container maw={1300} h="100%">
+    <Container maw={3840} h="100%">
       <Flex align="center" gap="xl" wrap="wrap">
         <Box>
           <Title order={4}>Ticket List Page</Title>
           <Text> Manage your team requests here.</Text>
         </Box>
+        <Button
+          variant="light"
+          leftIcon={<IconReload size={16} />}
+          onClick={() => handleFilterTicketList()}
+        >
+          Refresh
+        </Button>
       </Flex>
       <Box my="sm">
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterTicketList)}>
             <TicketListFilter
-              categoryList={TEMP_DEFAULT_TICKET_CATEGORY_LIST}
+              ticketCategoryList={ticketCategoryList}
               handleFilterTicketList={handleFilterTicketList}
               teamMemberList={teamMemberList}
             />
@@ -228,12 +232,9 @@ const TicketListPage = ({
                       <Text weight={600}>Ticket ID</Text>
                     </Grid.Col>
                     <Grid.Col span={2}>
-                      <Text weight={600}>Title</Text>
+                      <Text weight={600}>Ticket Category</Text>
                     </Grid.Col>
-                    <Grid.Col span="auto">
-                      <Text weight={600}>Category</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
+                    <Grid.Col span={2}>
                       <Text weight={600}>Status</Text>
                     </Grid.Col>
 
@@ -242,13 +243,13 @@ const TicketListPage = ({
                         Requester
                       </Text>
                     </Grid.Col>
-                    <Grid.Col span={1}>
+                    <Grid.Col span="auto">
                       <Text weight={600}>Approver</Text>
                     </Grid.Col>
-                    <Grid.Col span="content">
+                    <Grid.Col span={1}>
                       <Text weight={600}>Date Created</Text>
                     </Grid.Col>
-                    <Grid.Col span="content">
+                    <Grid.Col span={1} sx={{ textAlign: "center" }}>
                       <Text weight={600}>View</Text>
                     </Grid.Col>
                   </Grid>
@@ -257,9 +258,7 @@ const TicketListPage = ({
                 {ticketList.map((ticket, idx) => (
                   <Box key={ticket.ticket_id}>
                     <TicketListItem ticket={ticket} />
-                    {idx + 1 < TEMP_DEFAULT_TICKET_LIST_LIMIT ? (
-                      <Divider />
-                    ) : null}
+                    {idx + 1 < DEFAULT_TICKET_LIST_LIMIT ? <Divider /> : null}
                   </Box>
                 ))}
               </Stack>
@@ -282,7 +281,7 @@ const TicketListPage = ({
         <Pagination
           value={activePage}
           onChange={setActivePage}
-          total={Math.ceil(ticketListCount / TEMP_DEFAULT_TICKET_LIST_LIMIT)}
+          total={Math.ceil(ticketListCount / DEFAULT_TICKET_LIST_LIMIT)}
           mt="xl"
         />
       </Flex>

@@ -17,6 +17,11 @@ export const DEFAULT_NUMBER_SSOT_ROWS = 10;
 export const DEFAULT_ITEM_ANALYTICS_ROWS = 20;
 export const DEFAULT_ON_SCROLL_LIMIT = 10;
 
+export const READ_ONLY_TICKET_CATEGORY_LIST = [
+  "Incident Report for Employees",
+  "Bug Report",
+];
+
 export const UNHIDEABLE_FORMLY_FORMS = [
   "Quotation",
   "Receiving Inspecting Report",
@@ -32,6 +37,14 @@ export const SLA_LIST = [
     description:
       "Approver SLA track, analyze, and optimize approver response times.",
     href: "/sla/approver",
+  },
+];
+
+export const REPORT_LIST = [
+  {
+    title: "Incident Report for Employees",
+    description: "Track and analyze report for a user.",
+    href: "/report/incident-report",
   },
 ];
 
@@ -1238,3 +1251,31 @@ export const ID_OPTIONS = [
     label: "Unified Multi-Purpose Identification (UMID) Card",
   },
 ];
+
+export const createTicketFilePlaceholder = (url: string) => {
+  const urlArray = `${url}`.split("___");
+  const fileName = urlArray[urlArray.length - 2].replace("%20", " ");
+  const fileContent = "temporary";
+  return new File([fileContent], fileName);
+};
+
+export const generateYearList = (
+  startYear = 2000,
+  endYear = 2050
+): string[] => {
+  const years: string[] = [];
+  for (let year = startYear; year <= endYear; year++) {
+    years.push(year.toString());
+  }
+  return years;
+};
+
+export const generateMonthList = (): string[] => {
+  const months: string[] = [];
+  const date = new Date();
+  for (let i = 0; i < 12; i++) {
+    date.setMonth(i);
+    months.push(date.toLocaleString(undefined, { month: "long" }));
+  }
+  return months;
+};

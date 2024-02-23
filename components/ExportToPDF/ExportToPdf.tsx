@@ -11,6 +11,10 @@ import { useEffect } from "react";
 import { ApproverDetailsType } from "../ItemRequestPage/ItemRequestPage";
 import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
+import PEDConsumableBulkPdfDocumentTableVersion from "./PEDConsumableBulkPdfDocumentTableVersion";
+import PEDConsumableSinglePdfDocumentTableVersion from "./PEDConsumableSinglePdfDocumentTableVersion";
+import PEDEquipmentPdfDocumentTableVersion from "./PEDEquipmentPdfDocumentTableVersion";
+import PEDPartPdfDocumentTableVersion from "./PEDPartPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
 import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
 
@@ -117,19 +121,29 @@ const ExportToPdf = ({
   const requestItems = sectionWithDuplicateList.map((section) => {
     const title = section.section_name;
 
-    const fields = section.section_field.map((field) => {
-      let response = "";
-      if (field.field_response?.request_response) {
-        response = safeParse(field.field_response?.request_response);
-      }
-      const responseValue =
-        field.field_type !== "DATE" ? response : getReadableDate(response);
+    const fields = section.section_field
+      .filter((field) => field.field_response)
+      .map((field) => {
+        let response = "";
+        if (field.field_response?.request_response) {
+          response = safeParse(field.field_response?.request_response);
+        }
 
-      return {
-        label: field.field_name,
-        value: `${responseValue}`,
-      };
-    });
+        switch (field.field_type) {
+          case "DATE":
+            response = getReadableDate(response);
+            break;
+          case "FILE":
+            response = "File";
+          default:
+            response;
+        }
+
+        return {
+          label: field.field_name,
+          value: `${response}`,
+        };
+      });
 
     const newSection = { title, fields: fields.filter((f) => f !== undefined) };
 
@@ -180,6 +194,48 @@ const ExportToPdf = ({
             approverDetails={approverDetails}
           />
         );
+      case "PED Equipment":
+        return (
+          <PEDEquipmentPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+      case "PED Part":
+        return (
+          <PEDPartPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+      case "PED Consumable":
+        if (requestItems[0].fields[2].value === "Single") {
+          return (
+            <PEDConsumableSinglePdfDocumentTableVersion
+              requestDetails={requestDetails}
+              requestorDetails={requestorDetails}
+              requestIDs={requestIDs}
+              requestItems={requestItems}
+              approverDetails={approverDetails}
+            />
+          );
+        } else if (requestItems[0].fields[2].value === "Bulk") {
+          return (
+            <PEDConsumableBulkPdfDocumentTableVersion
+              requestDetails={requestDetails}
+              requestorDetails={requestorDetails}
+              requestIDs={requestIDs}
+              requestItems={requestItems}
+              approverDetails={approverDetails}
+            />
+          );
+        }
     }
   };
 
