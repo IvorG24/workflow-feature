@@ -99,7 +99,7 @@ const TicketComment = ({ comment }: Props) => {
   }, [comment, supabaseClient]);
 
   return (
-    <Card p={0} w="100%" sx={{ cursor: "pointer" }}>
+    <Card p={0} bg="transparent" w="100%" sx={{ cursor: "pointer" }}>
       {hasCommentActionType ? (
         <Flex align="top" gap="sm" mt="lg">
           <Avatar

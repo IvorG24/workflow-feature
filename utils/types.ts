@@ -285,6 +285,41 @@ export type FormSLATableInsert =
 export type FormSLATableUpdate =
   Database["public"]["Tables"]["form_sla_table"]["Update"];
 
+export type TicketCategoryTableRow =
+  Database["public"]["Tables"]["ticket_category_table"]["Row"];
+export type TicketCategoryTableInsert =
+  Database["public"]["Tables"]["ticket_category_table"]["Insert"];
+export type TicketCategoryTableUpdate =
+  Database["public"]["Tables"]["ticket_category_table"]["Update"];
+
+export type TicketSectionTableRow =
+  Database["public"]["Tables"]["ticket_section_table"]["Row"];
+export type TicketSectionTableInsert =
+  Database["public"]["Tables"]["ticket_section_table"]["Insert"];
+export type TicketSectionTableUpdate =
+  Database["public"]["Tables"]["ticket_section_table"]["Update"];
+
+export type TicketFieldTableRow =
+  Database["public"]["Tables"]["ticket_field_table"]["Row"];
+export type TicketFieldTableInsert =
+  Database["public"]["Tables"]["ticket_field_table"]["Insert"];
+export type TicketFieldTableUpdate =
+  Database["public"]["Tables"]["ticket_field_table"]["Update"];
+
+export type TicketOptionTableRow =
+  Database["public"]["Tables"]["ticket_option_table"]["Row"];
+export type TicketOptionTableInsert =
+  Database["public"]["Tables"]["ticket_option_table"]["Insert"];
+export type TicketOptionTableUpdate =
+  Database["public"]["Tables"]["ticket_option_table"]["Update"];
+
+export type TicketResponseTableRow =
+  Database["public"]["Tables"]["ticket_response_table"]["Row"];
+export type TicketResponseTableInsert =
+  Database["public"]["Tables"]["ticket_response_table"]["Insert"];
+export type TicketResponseTableUpdate =
+  Database["public"]["Tables"]["ticket_response_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -298,7 +333,8 @@ export type AttachmentBucketType =
   | "COMMENT_ATTACHMENTS"
   | "REQUEST_ATTACHMENTS"
   | "MEMO_ATTACHMENTS"
-  | "TEAM_PROJECT_ATTACHMENTS";
+  | "TEAM_PROJECT_ATTACHMENTS"
+  | "TICKET_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
@@ -1093,30 +1129,30 @@ export type CreateTicketPageOnLoad = {
       user_email: string;
     };
   };
+  categoryList: TicketCategoryTableRow[];
 };
 
-export type TicketListType = [
-  {
-    ticket_requester: {
-      team_member_id: string;
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string | null;
-      user_email: string;
-    };
-    ticket_approver: {
-      team_member_id: string;
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string | null;
-      user_email: string;
-    };
-  } & TicketTableRow
-];
+export type TicketListType = ({
+  ticket_requester: {
+    team_member_id: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    user_email: string;
+  };
+  ticket_approver: {
+    team_member_id: string;
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+    user_avatar: string | null;
+    user_email: string;
+  };
+} & TicketTableRow & { ticket_category: string })[];
 
 export type TicketType = {
+  ticket_category: string;
   ticket_requester: CreateTicketPageOnLoad["member"];
   ticket_approver: CreateTicketPageOnLoad["member"] | null;
   ticket_comment: {
@@ -1145,6 +1181,7 @@ export type TicketType = {
 export type TicketPageOnLoad = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
+  ticketForm: CreateTicketFormValues;
 };
 
 export type TicketCommentType =
@@ -1156,6 +1193,7 @@ export type TicketListOnLoad = {
   ticketList: TicketListType[];
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
+  ticketCategoryList: TicketCategoryTableRow[];
 };
 
 export type ApproverUnresolvedRequestListType = {
@@ -1367,3 +1405,27 @@ export type SignerWithProfile = SignerTableRow & {
 export type FormSLAWithForm = {
   form_table: FormTableRow;
 } & FormSLATableRow;
+
+export type TicketSection = TicketSectionTableRow & {
+  field_section_duplicatable_id?: string;
+  ticket_section_fields: (TicketFieldTableRow & {
+    ticket_field_option: string[] | { label: string; value: string }[];
+    ticket_field_response?: unknown;
+    ticket_field_response_referrence?: unknown;
+    ticket_field_response_id?: string;
+    ticket_field_hidden?: boolean;
+  })[];
+};
+
+export type CreateTicketFormValues = {
+  ticket_sections: TicketSection[];
+};
+
+export type TeamMemberWithUser = TeamMemberTableRow & {
+  team_member_user: UserTableRow;
+};
+
+export type IncidentReport = {
+  interval: string;
+  data: { date: string; report_count: number }[];
+};

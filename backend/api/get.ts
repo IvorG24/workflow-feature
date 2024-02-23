@@ -4,7 +4,12 @@ import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { addAmpersandBetweenWords, regExp, startCase } from "@/utils/string";
+import {
+  addAmpersandBetweenWords,
+  parseJSONIfValid,
+  regExp,
+  startCase,
+} from "@/utils/string";
 import {
   AppType,
   ApproverUnresolvedRequestListType,
@@ -15,6 +20,7 @@ import {
   CanvassLowestPriceType,
   CanvassType,
   ConnectedRequestItemType,
+  CreateTicketFormValues,
   CreateTicketPageOnLoad,
   FieldTableRow,
   FormStatusType,
@@ -42,6 +48,7 @@ import {
   SignerWithProfile,
   TeamMemberOnLoad,
   TeamMemberType,
+  TeamMemberWithUser,
   TeamMemberWithUserDetails,
   TeamOnLoad,
   TeamProjectTableRow,
@@ -4113,7 +4120,7 @@ export const getTicketList = async (
     ?.map((value) => `ticket_table.ticket_status = '${value}'`)
     .join(" OR ");
   const categoryCondition = category
-    ?.map((value) => `ticket_table.ticket_category = '${value}'`)
+    ?.map((value) => `ticket_table.ticket_category_id = '${value}'`)
     .join(" OR ");
 
   const searchCondition =
@@ -4155,7 +4162,6 @@ export const getTicketListOnLoad = async (
     .rpc("get_ticket_list_on_load", { input_data: params })
     .select("*");
   if (error) throw error;
-
   return data as unknown as TicketListOnLoad;
 };
 
@@ -5022,4 +5028,146 @@ export const getSignerWithProfile = async (
   if (error) throw error;
 
   return data as SignerWithProfile[];
+};
+
+// Get ticket category list
+export const getTicketCategoryList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .from("ticket_category_table")
+    .select("*");
+  if (error) throw error;
+
+  return data;
+};
+
+// Get ticket form
+export const getTicketForm = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    category: string;
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_ticket_form", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as CreateTicketFormValues;
+};
+
+// Check CSI Code Description if it already exists
+export const checkCSICodeDescriptionExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    csiCodeDescription: string;
+  }
+) => {
+  const { csiCodeDescription } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_level_three_description")
+    .ilike("csi_code_level_three_description", csiCodeDescription)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+};
+
+// Check CSI Code if it already exists for item
+export const checkCSICodeItemExists = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    divisionId: string;
+    itemId: string;
+  }
+) => {
+  const { divisionId, itemId } = params;
+  const { data, error } = await supabaseClient
+    .from("item_division_table")
+    .select("*")
+    .eq("item_division_value", divisionId)
+    .eq("item_division_item_id", itemId)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+};
+
+// Get team member with user
+export const getMemberUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { data } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+      *,
+      team_member_user: team_member_user_id!inner(
+        user_id, 
+        user_first_name, 
+        user_last_name, 
+        user_username, 
+        user_avatar
+      )`
+    )
+    .eq("team_member_id", params.teamMemberId)
+    .single();
+
+  return data as unknown as TeamMemberWithUser;
+};
+
+// Get incident report
+export const getIncidentReport = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    reporteeId: string;
+    interval: string;
+    year: string;
+    month: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_incident_report", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  const returnData = data as unknown as {
+    interval: string;
+    year: string;
+    month: string;
+    data: string;
+  };
+
+  return {
+    interval: returnData.interval,
+    month: returnData.month,
+    year: returnData.year,
+    data: parseJSONIfValid(returnData.data) as {
+      date: string;
+      report_count: number;
+    }[],
+  };
+};
+
+// Check Custom CSI Code if valid
+export const checkCustomCSICodeValidity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    csiCode: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_custom_csi_validity", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data as unknown as {
+    csiCodeDivisionIdExists: boolean;
+    csiCodeLevelTwoMajorGroupIdExists: boolean;
+    csiCodeLevelTwoMinorGroupIdExists: boolean;
+    csiCodeLevelThreeIdExists: boolean;
+  };
 };

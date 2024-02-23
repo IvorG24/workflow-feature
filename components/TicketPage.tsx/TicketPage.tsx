@@ -1,11 +1,18 @@
+import { getTicketOnLoad } from "@/backend/api/get";
 import { createNotification, createTicketComment } from "@/backend/api/post";
 import { assignTicket } from "@/backend/api/update";
 import useRealtimeTicketCommentList from "@/hooks/useRealtimeTicketCommentList";
+import useRealtimeTicketStatus from "@/hooks/useRealtimeTicketStatus";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { READ_ONLY_TICKET_CATEGORY_LIST } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
+import {
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  TicketType,
+} from "@/utils/types";
 import {
   Button,
   Container,
@@ -21,24 +28,57 @@ import { v4 as uuidv4 } from "uuid";
 import TicketActionSection from "./TicketActionSection";
 import TicketCommentSection from "./TicketCommentSection";
 import TicketDetailSection from "./TicketDetailSection";
+import TicketOverride from "./TicketOverride";
 import TicketResponseSection from "./TicketResponseSection";
 
 type Props = {
   ticket: TicketType;
   user: CreateTicketPageOnLoad["member"];
+  ticketForm: CreateTicketFormValues;
 };
 
-const TicketPage = ({ ticket: initialTicket, user }: Props) => {
+const TicketPage = ({
+  ticket: initialTicket,
+  ticketForm: initialTicketForm,
+  user,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
   const [ticket, setTicket] = useState(initialTicket);
   const [isEditingResponse, setIsEditingResponse] = useState(false);
+  const [ticketForm, setTicketForm] =
+    useState<CreateTicketFormValues>(initialTicketForm);
+
+  const ticketStatus = useRealtimeTicketStatus(supabaseClient, {
+    ticketId: ticket.ticket_id,
+    initialTicketStatus: ticket.ticket_status,
+  });
 
   const requestCommentList = useRealtimeTicketCommentList(supabaseClient, {
-    ticketId: ticket.ticket_id,
+    ticketId: initialTicket.ticket_id,
     initialCommentList: ticket.ticket_comment,
   });
+
+  const canUserEditResponse =
+    ticket.ticket_approver_team_member_id === user.team_member_id &&
+    !READ_ONLY_TICKET_CATEGORY_LIST.includes(ticket.ticket_category);
+
+  const handleOverrideTicket = async () => {
+    try {
+      const newTicket = await getTicketOnLoad(supabaseClient, {
+        ticketId: ticket.ticket_id,
+        userId: user.team_member_user.user_id,
+      });
+
+      setTicketForm(newTicket.ticketForm);
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
 
   const handleAssignTicketToUser = async () => {
     if (!teamMember) return;
@@ -88,7 +128,7 @@ const TicketPage = ({ ticket: initialTicket, user }: Props) => {
     <Container>
       <Paper p="md" withBorder>
         <Stack>
-          {ticket.ticket_status === "PENDING" &&
+          {ticketStatus === "PENDING" &&
             ticket.ticket_approver_team_member_id === null &&
             ticket.ticket_requester_team_member_id !== user.team_member_id &&
             ["ADMIN", "OWNER"].includes(user.team_member_role) && (
@@ -98,26 +138,38 @@ const TicketPage = ({ ticket: initialTicket, user }: Props) => {
                 </Button>
               </Tooltip>
             )}
-          <TicketDetailSection ticket={ticket} />
+          <TicketDetailSection ticket={ticket} ticketStatus={ticketStatus} />
 
           <Divider mt="md" />
           <TicketResponseSection
             ticket={ticket}
-            user={user}
-            isApprover={
-              ticket.ticket_approver_team_member_id === user.team_member_id
-            }
-            setTicket={setTicket}
+            ticketStatus={ticketStatus}
+            ticketForm={ticketForm}
+            category={ticket.ticket_category}
+            canUserEditResponse={canUserEditResponse}
             isEditingResponse={isEditingResponse}
             setIsEditingResponse={setIsEditingResponse}
           />
-          {ticket.ticket_status === "UNDER REVIEW" &&
+
+          {isEditingResponse && (
+            <TicketOverride
+              ticket={ticket}
+              category={ticket.ticket_category}
+              ticketForm={ticketForm}
+              onOverrideTicket={() => handleOverrideTicket()}
+              memberId={`${ticket.ticket_approver_team_member_id}`}
+              onClose={() => setIsEditingResponse(false)}
+            />
+          )}
+
+          {ticketStatus === "UNDER REVIEW" &&
             !isEditingResponse &&
             ticket.ticket_requester_team_member_id !== user.team_member_id && (
               <>
                 <Divider mt="md" />
                 <TicketActionSection
                   ticket={ticket}
+                  ticketForm={ticketForm}
                   setTicket={setTicket}
                   user={user}
                 />
