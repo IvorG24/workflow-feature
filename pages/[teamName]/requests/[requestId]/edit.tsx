@@ -1,6 +1,9 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
+import EditPEDConsumableRequestPage from "@/components/EditPEDConsumableRequestPage/EditPEDConsumableRequestPage";
+import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
+import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
@@ -63,6 +66,10 @@ export type EditRequestOnLoadProps = {
   referenceOnly: boolean;
   supplierOptions?: OptionTableRow[];
   preferredSupplierField?: FieldTableRow;
+  categoryOptions?: OptionTableRow[];
+  propertyNumberOptions?: OptionTableRow[];
+  generalItemNameOptions?: OptionTableRow[];
+  equipmentId: string;
 };
 
 const Page = ({
@@ -77,6 +84,10 @@ const Page = ({
   referenceOnly,
   supplierOptions = [],
   preferredSupplierField,
+  categoryOptions = [],
+  propertyNumberOptions = [],
+  generalItemNameOptions = [],
+  equipmentId,
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
 
@@ -107,6 +118,36 @@ const Page = ({
           <EditOtherExpensesRequestPage
             request={request}
             projectOptions={projectOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "PED Equipment":
+        return (
+          <EditPEDEquipmentRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "PED Part":
+        return (
+          <EditPEDPartRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+            referenceOnly={referenceOnly}
+            generalItemNameOptions={generalItemNameOptions}
+            equipmentId={equipmentId}
+          />
+        );
+      case "PED Consumable":
+        return (
+          <EditPEDConsumableRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            itemOptions={itemOptions}
+            propertyNumberOptions={propertyNumberOptions}
             referenceOnly={referenceOnly}
           />
         );

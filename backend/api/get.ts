@@ -22,9 +22,16 @@ import {
   ConnectedRequestItemType,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
+  EquipmentDescriptionTableRow,
+  EquipmentLookupChoices,
+  EquipmentPartTableInsert,
+  EquipmentPartType,
+  EquipmentTableRow,
   FieldTableRow,
   FormStatusType,
   FormType,
+  ItemDescriptionTableRow,
+  ItemTableRow,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
   MemoListItemType,
@@ -4243,6 +4250,461 @@ export const checkIfTeamNameExists = async (
   return Boolean(count);
 };
 
+// Get equipment list
+export const getEquipmentList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; limit: number; page: number; search?: string }
+) => {
+  const { teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("equipment_table")
+    .select(
+      "*, equipment_category: equipment_equipment_category_id(equipment_category)",
+      {
+        count: "exact",
+      }
+    )
+    .eq("equipment_team_id", teamId)
+    .eq("equipment_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("equipment_name", `%${search}%`);
+  }
+
+  query.order("equipment_name", { ascending: true });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const formattedData = data as unknown as EquipmentTableRow &
+    { equipment_category: { equipment_category: string } }[];
+
+  return {
+    data: formattedData.map((equipment) => {
+      return {
+        ...equipment,
+        equipment_category: equipment.equipment_category.equipment_category,
+      };
+    }),
+    count,
+  };
+};
+
+// check if equipment name already exists
+export const checkEquipmentName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { equipmentName: string; teamId: string }
+) => {
+  const { equipmentName, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("equipment_table")
+    .select("*", { count: "exact", head: true })
+    .eq("equipment_name", equipmentName)
+    .eq("equipment_is_disabled", false)
+    .eq("equipment_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Fetch all equipment category option
+export const getEquipmentCategoryOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_category_table")
+    .select("*")
+    .eq("equipment_category_team_id", teamId)
+    .eq("equipment_category_is_available", true)
+    .eq("equipment_category_is_disabled", false)
+    .order("equipment_category", { ascending: true });
+  if (error) throw error;
+
+  return data;
+};
+
+// Get equipment description list
+export const getEquipmentDescriptionList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { equipmentId: string; limit: number; page: number; search?: string }
+) => {
+  const { equipmentId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("equipment_description_table")
+    .select(
+      `
+        *,
+        equipment_description_brand: equipment_description_brand_id(equipment_brand),
+        equipment_description_model: equipment_description_model_id(equipment_model)
+      `,
+      {
+        count: "exact",
+      }
+    )
+    .eq("equipment_description_equipment_id", equipmentId)
+    .eq("equipment_description_is_disabled", false);
+
+  if (search) {
+    query = query.or(
+      `equipment_description_property_number.ilike.%${search}%, equipment_description_serial_number.ilike.%${search}%`
+    );
+  }
+
+  query.order("equipment_description_property_number", { ascending: true });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+
+  if (error) throw error;
+
+  const formattedData = data as unknown as (ItemDescriptionTableRow & {
+    equipment_description_brand: { equipment_brand: string };
+    equipment_description_model: { equipment_model: string };
+  })[];
+
+  return {
+    data: formattedData.map((description) => {
+      return {
+        ...description,
+        equipment_description_brand:
+          description.equipment_description_brand.equipment_brand,
+        equipment_description_model:
+          description.equipment_description_model.equipment_model,
+      };
+    }),
+    count,
+  };
+};
+
+// Fetch all equipment description brand and model option
+export const getEquipmentBrandAndModelOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data: brandList, error: brandError } = await supabaseClient
+    .from("equipment_brand_table")
+    .select("*")
+    .eq("equipment_brand_team_id", teamId)
+    .eq("equipment_brand_is_disabled", false)
+    .eq("equipment_brand_is_available", true)
+    .order("equipment_brand", { ascending: true });
+  if (brandError) throw brandError;
+
+  const { data: modelList, error: modelError } = await supabaseClient
+    .from("equipment_model_table")
+    .select("*")
+    .eq("equipment_model_team_id", teamId)
+    .eq("equipment_model_is_disabled", false)
+    .eq("equipment_model_is_available", true)
+    .order("equipment_model", { ascending: true });
+  if (modelError) throw modelError;
+
+  return {
+    brandList,
+    modelList,
+  };
+};
+
+// Fetch all equipment name option
+export const getEquipmentNameOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    teamId: string;
+  }
+) => {
+  const { index, teamId } = params;
+  const { data: nameList, error: nameError } = await supabaseClient
+    .from("equipment_general_name_table")
+    .select("*")
+    .eq("equipment_general_name_team_id", teamId)
+    .eq("equipment_general_name_is_disabled", false)
+    .eq("equipment_general_name_is_available", true)
+    .range(index, index + 1000)
+    .order("equipment_general_name", { ascending: true });
+  if (nameError) throw nameError;
+
+  return {
+    nameList,
+  };
+};
+
+// check if propert number already exists
+export const checkPropertyNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { propertyNumber: string; teamId: string }
+) => {
+  const { propertyNumber, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("equipment_description_view")
+    .select(
+      "*, equipment_description_equipment: equipment_description_equipment_id(*)",
+      { count: "exact", head: true }
+    )
+    .eq("equipment_description_property_number_with_prefix", propertyNumber)
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_equipment.equipment_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// check if serial number already exists
+export const checkSerialNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { serialNumber: string; teamId: string }
+) => {
+  const { serialNumber, teamId } = params;
+
+  const { count, error } = await supabaseClient
+    .from("equipment_description_table")
+    .select(
+      "*, equipment_description_equipment: equipment_description_equipment_id(*)",
+      { count: "exact", head: true }
+    )
+    .eq("equipment_description_serial_number", serialNumber)
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_equipment.equipment_team_id", teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get equipment part list
+export const getEquipmentPartList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { equipmentId: string; limit: number; page: number; search?: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_equipment_part_list", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  const formattedData = data as {
+    data: EquipmentPartType[];
+    count: number;
+  };
+  return {
+    data: formattedData.data,
+    count: formattedData.count,
+  };
+};
+
+// Fetch all equipment uom option
+export const getEquipmentUOMAndCategoryOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data: uomList, error: uomListError } = await supabaseClient
+    .from("equipment_unit_of_measurement_table")
+    .select("*")
+    .eq("equipment_unit_of_measurement_team_id", teamId)
+    .eq("equipment_unit_of_measurement_is_available", true)
+    .eq("equipment_unit_of_measurement_is_disabled", false)
+    .order("equipment_unit_of_measurement", { ascending: true });
+  if (uomListError) throw uomListError;
+
+  const { data: categoryList, error: categoryError } = await supabaseClient
+    .from("equipment_component_category_table")
+    .select("*")
+    .eq("equipment_component_category_team_id", teamId)
+    .eq("equipment_component_category_is_available", true)
+    .eq("equipment_component_category_is_disabled", false)
+    .order("equipment_component_category", { ascending: true });
+  if (categoryError) throw categoryError;
+
+  return {
+    uomList,
+    categoryList,
+  };
+};
+
+// Check PED part if already exists
+export const checkPEDPart = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentPartData: EquipmentPartTableInsert;
+  }
+) => {
+  const { equipmentPartData } = params;
+  const { count, error } = await supabaseClient
+    .from("equipment_part_table")
+    .select("*", { count: "exact", head: true })
+    .eq(
+      "equipment_part_general_name_id",
+      equipmentPartData.equipment_part_general_name_id
+    )
+    .eq("equipment_part_number", equipmentPartData.equipment_part_number)
+    .eq("equipment_part_brand_id", equipmentPartData.equipment_part_brand_id)
+    .eq("equipment_part_model_id", equipmentPartData.equipment_part_model_id)
+    .eq(
+      "equipment_part_unit_of_measurement_id",
+      equipmentPartData.equipment_part_unit_of_measurement_id
+    )
+    .eq(
+      "equipment_part_component_category_id",
+      equipmentPartData.equipment_part_component_category_id
+    )
+    .eq(
+      "equipment_part_equipment_id",
+      equipmentPartData.equipment_part_equipment_id
+    )
+    .eq("equipment_part_is_disabled", false);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get equipment category list
+export const getEquipmentCategoryList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; limit: number; page: number; search?: string }
+) => {
+  const { teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("equipment_category_table")
+    .select("*", { count: "exact" })
+    .eq("equipment_category_team_id", teamId)
+    .eq("equipment_category_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("equipment_category", `%${search}%`);
+  }
+
+  query.order("equipment_category", { ascending: true });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
+};
+
+// check if equipment lookup table value already exists
+export const checkEquipmentLookupTable = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { lookupTableName: string; value: string; teamId: string }
+) => {
+  const { lookupTableName, value, teamId } = params;
+  const { count, error } = await supabaseClient
+    .from(`${lookupTableName}_table`)
+    .select("*", { count: "exact", head: true })
+    .eq(`${lookupTableName}`, value)
+    .eq(`${lookupTableName}_is_disabled`, false)
+    .eq(`${lookupTableName}_team_id`, teamId);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get equipment lookup list
+export const getEquipmentLookupList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    lookup: EquipmentLookupChoices;
+    teamId: string;
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { lookup, teamId, search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from(`${lookup}_table`)
+    .select("*", { count: "exact" })
+    .eq(`${lookup}_team_id`, teamId)
+    .eq(`${lookup}_is_disabled`, false);
+
+  if (search) {
+    query = query.ilike(`${lookup}`, `%${search}%`);
+  }
+
+  query.order(`${lookup}`, { ascending: true, foreignTable: "" });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const id = `${lookup}_id`;
+  const value = lookup;
+  const status = `${lookup}_is_available`;
+
+  const formattedData = data as unknown as {
+    [key: string]: string;
+  }[];
+
+  return {
+    data: formattedData.map((lookupData) => {
+      return {
+        id: lookupData[id],
+        status: Boolean(lookupData[status]),
+        value: lookupData[value],
+      };
+    }),
+    count,
+  };
+};
+
+// Get onboard list
+export const getOnboardList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    onboardName?: string;
+  }
+) => {
+  const { userId, onboardName } = params;
+
+  const query = supabaseClient
+    .from("user_onboard_table")
+    .select("*")
+    .eq("user_onboard_user_id", userId)
+
+    .order("user_onboard_date_created", { ascending: false });
+
+  if (onboardName) query.eq("user_onboard_name", onboardName);
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data;
+};
+
 // check if email list are onboarded
 export const checkIfEmailsOnboarded = async (
   supabaseClient: SupabaseClient<Database>,
@@ -5170,4 +5632,325 @@ export const checkCustomCSICodeValidity = async (
     csiCodeLevelTwoMinorGroupIdExists: boolean;
     csiCodeLevelThreeIdExists: boolean;
   };
+};
+
+// Fetch equipment name based on equipment category
+export const getEquipmentName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    category: string;
+  }
+) => {
+  const { category } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_table")
+    .select("*")
+    .eq("equipment_is_disabled", false)
+    .eq("equipment_is_available", true)
+    .eq("equipment_equipment_category_id", category);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch equipment property number based on equipment id
+export const getEquipmentPropertyNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentId: string;
+  }
+) => {
+  const { equipmentId } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_view")
+    .select("*")
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_is_available", true)
+    .eq("equipment_description_equipment_id", equipmentId);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch equipment description based on property number
+export const getEquipmentDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    propertyNumber: string;
+  }
+) => {
+  const { propertyNumber } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_view")
+    .select(
+      "*, equipment_description_brand: equipment_description_brand_id(equipment_brand), equipment_description_model: equipment_description_model_id(equipment_model)"
+    )
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_is_available", true)
+    .eq("equipment_description_property_number_with_prefix", propertyNumber)
+    .single();
+  if (error) throw error;
+
+  return data as EquipmentDescriptionTableRow & {
+    equipment_description_brand: { equipment_brand: string };
+  } & {
+    equipment_description_model: { equipment_model: string };
+  };
+};
+
+// Fetch item section choices based on given parameters
+export const getItemSectionChoices = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentId?: string;
+    generalName?: string;
+    componentCategory?: string;
+    brand?: string;
+    model?: string;
+  }
+) => {
+  const { equipmentId, generalName, componentCategory, brand, model } = params;
+  const { data, error } = await supabaseClient.rpc("get_item_section_choices", {
+    input_data: {
+      equipmentId: equipmentId ? equipmentId.replace(/'/g, "''") : undefined,
+      generalName: generalName ? generalName.replace(/'/g, "''") : undefined,
+      componentCategory: componentCategory
+        ? componentCategory.replace(/'/g, "''")
+        : undefined,
+      brand: brand ? brand.replace(/'/g, "''") : undefined,
+      model: model ? model.replace(/'/g, "''") : undefined,
+    },
+  });
+  if (error) throw error;
+  return data;
+};
+
+// Fetch item unit of measurement based on given parameters
+export const getItemUnitOfMeasurement = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    generalName: string;
+    componentCategory: string;
+    brand: string;
+    model: string;
+    partNumber: string;
+  }
+) => {
+  const { generalName, componentCategory, brand, model, partNumber } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_part_table")
+    .select(
+      `
+        equipment_part_id,
+        equipment_part_general_name: equipment_part_general_name_id!inner(equipment_general_name),
+        equipment_part_component_category: equipment_part_component_category_id!inner(equipment_component_category),
+        equipment_part_brand: equipment_part_brand_id!inner(equipment_brand),
+        equipment_part_model: equipment_part_model_id!inner(equipment_model),
+        equipment_part_number,
+        equipment_part_unit_of_measurement: equipment_part_unit_of_measurement_id(equipment_unit_of_measurement)
+      `
+    )
+    .eq("equipment_part_is_disabled", false)
+    .eq("equipment_part_is_available", true)
+    .eq("equipment_part_general_name.equipment_general_name_is_disabled", false)
+    .eq("equipment_part_general_name.equipment_general_name_is_available", true)
+    .eq("equipment_part_general_name.equipment_general_name", generalName)
+    .eq(
+      "equipment_part_component_category.equipment_component_category_is_disabled",
+      false
+    )
+    .eq(
+      "equipment_part_component_category.equipment_component_category_is_available",
+      true
+    )
+    .eq(
+      "equipment_part_component_category.equipment_component_category",
+      componentCategory
+    )
+    .eq("equipment_part_brand.equipment_brand_is_disabled", false)
+    .eq("equipment_part_brand.equipment_brand_is_available", true)
+    .eq("equipment_part_brand.equipment_brand", brand)
+    .eq("equipment_part_model.equipment_model_is_disabled", false)
+    .eq("equipment_part_model.equipment_model_is_available", true)
+    .eq("equipment_part_model.equipment_model", model)
+    .eq("equipment_part_number", partNumber)
+    .eq(
+      "equipment_part_unit_of_measurement.equipment_unit_of_measurement_is_disabled",
+      false
+    )
+    .eq(
+      "equipment_part_unit_of_measurement.equipment_unit_of_measurement_is_available",
+      true
+    )
+    .single();
+  if (error) throw error;
+
+  const formattedData = data as unknown as {
+    equipment_part_unit_of_measurement: {
+      equipment_unit_of_measurement: string;
+    };
+  };
+
+  return formattedData.equipment_part_unit_of_measurement
+    .equipment_unit_of_measurement;
+};
+
+// Fetch equipment section choices based on given parameters
+export const getEquipmentSectionChoices = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    category: string;
+    equipmentName: string;
+    brand?: string;
+  }
+) => {
+  const { category, equipmentName, brand } = params;
+  let query = supabaseClient
+    .from("equipment_table")
+    .select(
+      `
+        equipment_id,
+        equipment_equipment_category: equipment_equipment_category_id!inner(equipment_category),
+        equipment_name,
+        equipment_description: 
+          equipment_description_table!inner(
+            equipment_description_brand: equipment_description_brand_id(
+              equipment_brand
+            )
+            ${
+              brand
+                ? `, equipment_description_model: equipment_description_model_id(
+                equipment_model
+              )`
+                : ""
+            }
+          )
+      `
+    )
+    .eq("equipment_is_disabled", false)
+    .eq("equipment_is_available", true)
+    .eq("equipment_equipment_category.equipment_category", category)
+    .eq("equipment_name", equipmentName);
+
+  if (brand) {
+    query = query.eq(
+      "equipment_description.equipment_description_brand.equipment_brand_is_disabled",
+      false
+    );
+    query = query.eq(
+      "equipment_description.equipment_description_brand.equipment_brand_is_available",
+      true
+    );
+    query = query.eq(
+      "equipment_description.equipment_description_brand.equipment_brand",
+      brand
+    );
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const tempList: string[] = [];
+  if (!brand) {
+    const formattedData = data[0] as unknown as {
+      equipment_id: string;
+      equipment_description?: {
+        equipment_description_brand: {
+          equipment_brand: string;
+        };
+      }[];
+      equipment_name: string;
+    };
+    if (!formattedData?.equipment_description) return [];
+
+    return formattedData.equipment_description.filter((value) => {
+      if (
+        !tempList.includes(value.equipment_description_brand.equipment_brand)
+      ) {
+        tempList.push(value.equipment_description_brand.equipment_brand);
+        return value;
+      }
+    });
+  } else {
+    const formattedData = data[0] as unknown as {
+      equipment_id: string;
+      equipment_description?: {
+        equipment_description_model: {
+          equipment_model: string;
+        };
+      }[];
+      equipment_name: string;
+    };
+    if (!formattedData?.equipment_description) return [];
+
+    return formattedData.equipment_description.filter((value) => {
+      if (
+        !tempList.includes(value.equipment_description_model.equipment_model)
+      ) {
+        tempList.push(value.equipment_description_model.equipment_model);
+        return value;
+      }
+    });
+  }
+};
+
+export const getConsumableItem = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string; itemName: string }
+) => {
+  const { teamId, itemName } = params;
+
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .select(
+      `
+        *, 
+        item_description: item_description_table(
+          *, 
+          item_description_field: item_description_field_table(
+            *, 
+            item_description_field_uom: item_description_field_uom_table(
+              item_description_field_uom
+            )
+          ),
+          item_field: item_description_consumable_field_table(
+            item_description_consumable_field: item_description_consumable_field_field_id(*)
+          )
+        )
+      `
+    )
+    .eq("item_team_id", teamId)
+    .eq("item_general_name", itemName)
+    .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
+    .eq("item_description.item_description_is_disabled", false)
+    .eq("item_description.item_description_is_available", true)
+    .eq(
+      "item_description.item_description_field.item_description_field_is_disabled",
+      false
+    )
+    .eq(
+      "item_description.item_description_field.item_description_field_is_available",
+      true
+    )
+    .single();
+  if (error) throw error;
+
+  const formattedData = data as unknown as ItemTableRow & {
+    item_description: {
+      item_field: { item_description_consumable_field: FieldTableRow }[];
+    }[];
+  };
+
+  return {
+    ...formattedData,
+    item_description: formattedData.item_description.map((description) => {
+      const itemField =
+        description.item_field[0].item_description_consumable_field;
+      return {
+        ...description,
+        item_field: itemField,
+      };
+    }),
+  } as unknown as ItemWithDescriptionAndField;
 };

@@ -46,7 +46,7 @@ type RequestFormSectionProps = {
   sourcedItemFormMethods?: {
     onProjectSiteChange: () => void;
   };
-  servicesMethods?: {
+  servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
@@ -60,6 +60,36 @@ type RequestFormSectionProps = {
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
   };
+  pedEquipmentFormMethods?: {
+    onCategoryChange: (value: string | null, index: number) => void;
+    onProjectNameChange: (value: string | null) => void;
+    onEquipmentNameChange: (value: string | null, index: number) => void;
+    onBrandChange: (value: string | null, index: number) => void;
+  };
+  pedPartFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCategoryChange: (value: string | null) => void;
+    onEquipmentNameChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null) => void;
+    onTypeOfOrderChange: (
+      prevValue: string | null,
+      value: string | null
+    ) => void;
+    onGeneralItemNameChange: (value: string | null, index: number) => void;
+    onComponentCategoryChange: (value: string | null, index: number) => void;
+    onBrandChange: (value: string | null, index: number) => void;
+    onModelChange: (value: string | null, index: number) => void;
+    onPartNumberChange: (value: string | null, index: number) => void;
+  };
+  pedConsumableFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null, index: number) => void;
+    onRequestTypeChange: (
+      prevValue: string | null,
+      value: string | null
+    ) => void;
+    onGeneralNameChange: (value: string | null, index: number) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -72,8 +102,11 @@ const RequestFormSection = ({
   rirFormMethods,
   formslyFormName = "",
   sourcedItemFormMethods,
-  servicesMethods,
+  servicesFormMethods,
+  pedEquipmentFormMethods,
+  pedPartFormMethods,
   otherExpensesMethods,
+  pedConsumableFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -115,8 +148,11 @@ const RequestFormSection = ({
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
             sourcedItemFormMethods={sourcedItemFormMethods}
-            servicesMethods={servicesMethods}
+            servicesFormMethods={servicesFormMethods}
+            pedEquipmentFormMethods={pedEquipmentFormMethods}
+            pedPartFormMethods={pedPartFormMethods}
             otherExpensesMethods={otherExpensesMethods}
+            pedConsumableFormMethods={pedConsumableFormMethods}
           />
         ))}
       </Stack>

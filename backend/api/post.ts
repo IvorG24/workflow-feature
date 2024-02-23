@@ -10,6 +10,9 @@ import {
   AttachmentTableInsert,
   CommentTableInsert,
   CreateTicketFormValues,
+  EquipmentDescriptionTableInsert,
+  EquipmentPartTableInsert,
+  EquipmentTableInsert,
   FormTableRow,
   FormType,
   InvitationTableRow,
@@ -470,6 +473,7 @@ export const createRequest = async (
       ) {
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
+
           const uploadId = `${field.field_id}${
             field.field_section_duplicatable_id
               ? `_${field.field_section_duplicatable_id}`
@@ -1465,4 +1469,80 @@ export const createItemDivision = async (
     .insert({ item_division_value: divisionId, item_division_item_id: itemId });
   if (error) throw error;
   return data;
+};
+
+// Create equipment
+export const createEquipment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentData: EquipmentTableInsert;
+    category: string;
+  }
+) => {
+  const { equipmentData, category } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_table")
+    .insert(equipmentData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_category: category,
+  };
+};
+
+// Create equipment description
+export const createEquipmentDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentDescriptionData: EquipmentDescriptionTableInsert;
+    brand: string;
+    model: string;
+  }
+) => {
+  const { equipmentDescriptionData, brand, model } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_table")
+    .insert(equipmentDescriptionData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_description_brand: brand,
+    equipment_description_model: model,
+  };
+};
+
+// Create equipment part
+export const createEquipmentPart = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentPartData: EquipmentPartTableInsert;
+    name: string;
+    brand: string;
+    model: string;
+    uom: string;
+    category: string;
+  }
+) => {
+  const { equipmentPartData, name, brand, model, uom, category } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_part_table")
+    .insert(equipmentPartData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_part_general_name: name,
+    equipment_part_brand: brand,
+    equipment_part_model: model,
+    equipment_part_unit_of_measurement: uom,
+    equipment_part_component_category: category,
+  };
 };

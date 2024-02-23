@@ -117,18 +117,20 @@ const ReviewAppNavLink = () => {
 
           <Portal>
             <Menu.Dropdown>
-              {unhiddenForms.map((form) => (
-                <Menu.Item
-                  key={form.form_id}
-                  onClick={() =>
-                    router.push(
-                      `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
-                    )
-                  }
-                >
-                  {form.form_name}
-                </Menu.Item>
-              ))}
+              {unhiddenForms
+                .sort((a, b) => a.form_name.localeCompare(b.form_name))
+                .map((form) => (
+                  <Menu.Item
+                    key={form.form_id}
+                    onClick={() =>
+                      router.push(
+                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                      )
+                    }
+                  >
+                    {form.form_name}
+                  </Menu.Item>
+                ))}
             </Menu.Dropdown>
           </Portal>
         </Menu>
