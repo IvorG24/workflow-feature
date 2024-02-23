@@ -13,6 +13,7 @@ import TicketForm from "../CreateTicketPage/TicketForm";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
 import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
 import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
+import TicketRequestPEDEquipmentPartForm from "../TicketRequestPEDEquipmentPartForm/TicketRequestPEDEquipmentPartForm";
 
 type Props = {
   category: string;
@@ -253,6 +254,19 @@ const TicketOverride = ({
       case "Request Item Option":
         return (
           <TicketRequestItemOptionForm
+            category={category}
+            memberId={memberId}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+            isEdit={true}
+            onOverrideTicket={onOverrideTicket}
+            onClose={onClose}
+            onOverrideResponseComment={handleOverrideResponseComment}
+          />
+        );
+      case "Request PED Equipment Part":
+        return (
+          <TicketRequestPEDEquipmentPartForm
             category={category}
             memberId={memberId}
             ticketForm={ticketForm}

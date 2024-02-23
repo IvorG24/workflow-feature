@@ -24,6 +24,7 @@ import { useState } from "react";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
 import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
 import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
+import TicketRequestPEDEquipmentPartForm from "../TicketRequestPEDEquipmentPartForm/TicketRequestPEDEquipmentPartForm";
 import TicketForm from "./TicketForm";
 
 type Props = {
@@ -87,6 +88,15 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
       case "Request Item Option":
         return (
           <TicketRequestItemOptionForm
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+      case "Request PED Equipment Part":
+        return (
+          <TicketRequestPEDEquipmentPartForm
             category={category}
             memberId={member.team_member_id}
             ticketForm={ticketForm}

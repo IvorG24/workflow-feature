@@ -5954,3 +5954,23 @@ export const getConsumableItem = async (
     }),
   } as unknown as ItemWithDescriptionAndField;
 };
+
+// Check if ped part already exists
+export const pedPartCheck = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentName: string;
+    partName: string;
+    partNumber: string;
+    brand: string;
+    model: string;
+    unitOfMeasure: string;
+    category: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("ped_part_check", {
+    input_data: params,
+  });
+  if (error) throw error;
+  return data;
+};
