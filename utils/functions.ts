@@ -537,6 +537,7 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "MIN-15-077  MW SIGUIL HYDRO",
         "VIZ-23-008 SAN ISIDRO SOLAR",
         "MIN-14-026B MANOLO",
+        "MIN-22-007 ZAMBOANGA RADAR",
       ],
       fullName: "Christopher Waga",
       jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
@@ -657,7 +658,11 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       emailAddress: "maryarances27@gmail.com",
     },
     {
-      items: ["MIN-19-027 MALITBOG MINI HYDRO", "MIN-21-015 MATI-1"],
+      items: [
+        "MIN-19-027 MALITBOG MINI HYDRO",
+        "MIN-21-015 MATI-1",
+        "MIN-22-007 ZAMBOANGA RADAR",
+      ],
       fullName: "Ceilo Dann Oppus",
       jiraAccountId: "712020:d9f9431e-c022-41e2-8963-356ad5448bc4",
       emailAddress: "ceilo.opus@staclara.com.ph",
