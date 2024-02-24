@@ -19,6 +19,7 @@ type Props = {
   isUserPrimarySigner?: boolean;
   requestId: string;
   isEditable: boolean;
+  isCancelable: boolean;
   canSignerTakeAction?: boolean;
   isDeletable: boolean;
   isUserRequester?: boolean;
@@ -33,6 +34,7 @@ const RequestActionSection = ({
   isCashPurchase,
   isUserPrimarySigner,
   isEditable,
+  isCancelable,
   canSignerTakeAction,
   isDeletable,
   isUserRequester,
@@ -278,28 +280,28 @@ const RequestActionSection = ({
         )}
 
         {isEditable && (
-          <>
-            <Button
-              variant="outline"
-              fullWidth
-              onClick={() =>
-                router.push(
-                  `/${formatTeamNameToUrlKey(
-                    activeTeam.team_name ?? ""
-                  )}/requests/${router.query.requestId}/edit`
-                )
-              }
-            >
-              Edit Request
-            </Button>
-            <Button
-              variant="default"
-              fullWidth
-              onClick={() => handleAction("cancel", "blue")}
-            >
-              Cancel Request
-            </Button>
-          </>
+          <Button
+            variant="outline"
+            fullWidth
+            onClick={() =>
+              router.push(
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name ?? ""
+                )}/requests/${router.query.requestId}/edit`
+              )
+            }
+          >
+            Edit Request
+          </Button>
+        )}
+        {isCancelable && (
+          <Button
+            variant="default"
+            fullWidth
+            onClick={() => handleAction("cancel", "blue")}
+          >
+            Cancel Request
+          </Button>
         )}
         {isDeletable && (
           <Button color="red" fullWidth onClick={openPromptDeleteModal}>

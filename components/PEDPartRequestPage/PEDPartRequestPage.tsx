@@ -341,6 +341,7 @@ const PEDPartRequestPage = ({ request }: Props) => {
       .filter((status) => status !== "PENDING").length === 0 &&
     isUserOwner &&
     requestStatus === "PENDING";
+  const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
 
@@ -439,6 +440,7 @@ const PEDPartRequestPage = ({ request }: Props) => {
                 : false
             }
             isEditable={isEditable}
+            isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
             isUserRequester={isUserRequester}
