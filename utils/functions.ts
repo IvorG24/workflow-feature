@@ -328,7 +328,7 @@ export const getJiraRequestingProjectSite = (formslyItemCategory: string) => {
       id: "10205",
       label: "MIN-22-006 DAVAO HYDRO & BW",
     },
-    "MIN-22-007 ZAMBOANGA RADAR": {
+    "ZAMBOANGA RADAR FACILITIES": {
       id: "10333",
       label: "MIN-22-007 ZAMBOANGA RADAR",
     },
