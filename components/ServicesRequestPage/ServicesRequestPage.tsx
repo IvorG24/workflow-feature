@@ -327,6 +327,7 @@ const ServicesRequestPage = ({ request }: Props) => {
       .filter((status) => status !== "PENDING").length === 0 &&
     isUserOwner &&
     requestStatus === "PENDING";
+  const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
 
@@ -403,6 +404,7 @@ const ServicesRequestPage = ({ request }: Props) => {
                 : false
             }
             isEditable={isEditable}
+            isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
             isUserRequester={isUserRequester}

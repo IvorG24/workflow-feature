@@ -647,6 +647,7 @@ const RequestPage = ({
       .filter((status) => status !== "PENDING").length === 0 &&
     isUserOwner &&
     requestStatus === "PENDING";
+  const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
 
   const isRequestActionSectionVisible =
@@ -876,6 +877,7 @@ const RequestPage = ({
             handleUpdateRequest={handleUpdateRequest}
             requestId={request.request_id}
             isEditable={isEditable}
+            isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
             onCreateJiraTicket={async () => {
