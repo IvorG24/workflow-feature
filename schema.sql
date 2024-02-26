@@ -1312,7 +1312,7 @@ $$ LANGUAGE plv8;
 -- Start: Create request
 
 CREATE OR REPLACE FUNCTION create_request(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let request_data;
@@ -10401,6 +10401,161 @@ RETURNS JSON as $$
 $$ LANGUAGE plv8;
 
 -- End: Fetch Top Requestor
+
+-- Start: Fetch equipment part list
+
+CREATE OR REPLACE FUNCTION get_equipment_part_list(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      equipmentId,
+      limit,
+      page,
+      search
+    } = input_data;
+
+    const start = (page - 1) * limit;
+
+    const data = plv8.execute(
+      `
+        SELECT 
+          equipment_part_table.*,
+          equipment_general_name AS equipment_part_general_name,
+          equipment_brand AS equipment_part_brand,
+          equipment_model AS equipment_part_model,
+          equipment_unit_of_measurement AS equipment_part_unit_of_measurement,
+          equipment_component_category AS equipment_part_component_category
+        FROM equipment_part_table
+        INNER JOIN equipment_general_name_table ON equipment_part_general_name_id = equipment_general_name_id
+        INNER JOIN equipment_brand_table ON equipment_part_brand_id = equipment_brand_id
+        INNER JOIN equipment_model_table ON equipment_part_model_id = equipment_model_id
+        INNER JOIN equipment_unit_of_measurement_table ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
+        INNER JOIN equipment_component_category_table ON equipment_part_component_category_id = equipment_component_category_id
+        WHERE
+          equipment_part_equipment_id = '${equipmentId}'
+          AND equipment_part_is_disabled = false
+          ${
+            search && 
+            `
+              AND equipment_general_name ILIKE '%${search}%'
+              OR equipment_part_number ILIKE '%${search}%'
+            `
+          }
+        ORDER BY equipment_general_name
+        LIMIT ${limit}
+        OFFSET '${start}'
+      `
+    );
+
+    const count = plv8.execute(
+      `
+        SELECT COUNT(equipment_part_id) FROM equipment_part_table
+        INNER JOIN equipment_general_name_table ON equipment_part_general_name_id = equipment_general_name_id
+        INNER JOIN equipment_brand_table ON equipment_part_brand_id = equipment_brand_id
+        INNER JOIN equipment_model_table ON equipment_part_model_id = equipment_model_id
+        INNER JOIN equipment_unit_of_measurement_table ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
+        INNER JOIN equipment_component_category_table ON equipment_part_component_category_id = equipment_component_category_id
+        WHERE
+          equipment_part_equipment_id = '${equipmentId}'
+          AND equipment_part_is_disabled = false
+          ${
+            search && 
+            `
+              AND equipment_general_name ILIKE '%${search}%'
+              OR equipment_part_number ILIKE '%${search}%'
+            `
+          }
+      `
+    )[0].count;
+ 
+    returnData = {
+      data,
+      count: Number(count)
+    };
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetch equipment part list
+
+-- Start: Fetch item section choices
+
+CREATE OR REPLACE FUNCTION get_item_section_choices(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      equipmentId,
+      generalName: initialGeneralName,
+      componentCategory: initialComponentCategory,
+      brand: initialBrand,
+      model: initialModel
+    } = input_data;
+
+    const generalName = initialGeneralName ? initialGeneralName.replace("*", "''") : undefined;
+    const componentCategory = initialComponentCategory ? initialComponentCategory.replace("*", "''") : undefined;
+    const brand = initialBrand ? initialBrand.replace("*", "''") : undefined;
+    const model = initialModel ? initialModel.replace("*", "''") : undefined;
+
+    let order = "equipment_general_name";
+
+    if (model) {
+      order = `equipment_part_number`;
+    } else if (brand){
+      order = `equipment_model`;
+    } else if (componentCategory){
+      order = `equipment_brand`;
+    } else if (generalName){
+      order = `equipment_component_category`;
+    }
+
+    const data = plv8.execute(
+      `
+        SELECT * FROM (
+          SELECT 
+            equipment_part_id,
+            equipment_general_name,
+            ${generalName ? "equipment_component_category, " : ""}
+            ${componentCategory ? "equipment_brand, " : ""}
+            ${brand ? "equipment_model, " : ""}
+            ${model ? "equipment_part_number, " : ""}
+            ROW_NUMBER() OVER (PARTITION BY equipment_general_name) AS row_number 
+          FROM equipment_part_table
+          INNER JOIN equipment_general_name_table ON equipment_general_name_id = equipment_part_general_name_id
+          ${equipmentId ? "INNER JOIN equipment_table ON equipment_id = equipment_part_equipment_id" : ""}
+          ${generalName ? "INNER JOIN equipment_component_category_table ON equipment_component_category_id = equipment_part_component_category_id" : ""}
+          ${componentCategory ? "INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_part_brand_id" : ""}
+          ${brand ? "INNER JOIN equipment_model_table ON equipment_model_id = equipment_part_model_id" : ""}
+          WHERE
+            equipment_part_is_disabled = false
+            AND equipment_part_is_available = true
+            AND equipment_general_name_is_disabled = false
+            AND equipment_general_name_is_available = true
+            ${equipmentId ? `AND equipment_part_equipment_id = '${equipmentId}' AND equipment_is_disabled = false AND equipment_is_available = true` : ""}
+            ${generalName ? `AND equipment_general_name = '${generalName}'` : ""}
+            ${componentCategory ? `AND equipment_component_category = '${componentCategory}' AND equipment_component_category_is_disabled = false AND equipment_component_category_is_available = true` : ""}
+            ${brand ? `AND equipment_brand = '${brand}' AND equipment_brand_is_disabled = false AND equipment_brand_is_available = true` : ""}
+            ${model ? `AND equipment_model = '${model}' AND equipment_model_is_disabled = false AND equipment_model_is_available = true` : ""}
+          ORDER BY ${order}
+        ) AS subquery
+        WHERE row_number = 1
+      `
+    );
+
+    returnData = data.map(value => {
+      const { row_number, ...returnValue } = value;
+      return returnValue;
+    })
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetch item section choices
 
 -- Start: Fetch Top Signer
 
