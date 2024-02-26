@@ -1,5 +1,6 @@
 import { checkIfOtpIdIsUnique } from "@/backend/api/get";
 import { updateOtpId } from "@/backend/api/update";
+import { formatDate, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   getAvatarColor,
@@ -61,9 +62,11 @@ const RequestDetailsSection = ({
   const [isAddingOtpID, setIsAddingOtpID] = useState(false);
   const [otpID, setOtpID] = useState(request.request_otp_id);
 
-  const isFormslyRequisitionRequest =
+  const isFormslyItemRequest =
     request.request_form.form_is_formsly_form &&
-    ["Requisition", "Services"].includes(request.request_form.form_name);
+    ["Item", "Services", "PED Equipment", "PED Part"].includes(
+      request.request_form.form_name
+    );
 
   const handleUpdateOtpID = async ({ otpID }: { otpID: string }) => {
     try {
@@ -144,10 +147,11 @@ const RequestDetailsSection = ({
             primarySigner.request_signer_status_date_updated &&
             ["APPROVED", "REJECTED"].includes(request.request_status) && (
               <Text color="dimmed">
-                on{" "}
-                {new Date(
-                  primarySigner.request_signer_status_date_updated
-                ).toISOString()}
+                {`on ${formatDate(
+                  new Date(primarySigner.request_signer_status_date_updated)
+                )} ${formatTime(
+                  new Date(primarySigner.request_signer_status_date_updated)
+                )}`}
               </Text>
             )}
         </Group>
@@ -193,7 +197,7 @@ const RequestDetailsSection = ({
           )}
         </Group>
       )}
-      {isFormslyRequisitionRequest &&
+      {isFormslyItemRequest &&
         !isAddingOtpID &&
         requestStatus === "APPROVED" &&
         !`${router.pathname}`.includes("public-request") &&

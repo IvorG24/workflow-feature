@@ -1,4 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { MemoListItemType } from "@/utils/types";
@@ -14,7 +15,6 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { IconCopy } from "@tabler/icons-react";
-import moment from "moment";
 import MemoItemListSignerList from "./MemoListItemSignerList";
 
 type Props = {
@@ -91,7 +91,7 @@ const MemoListItemRow = ({ memo }: Props) => {
       </Grid.Col>
 
       <Grid.Col span={1}>
-        <Text>{moment(memo.memo_date_created).format("YYYY-MM-DD")}</Text>
+        <Text>{formatDate(new Date(memo.memo_date_created))}</Text>
       </Grid.Col>
     </Grid>
   );

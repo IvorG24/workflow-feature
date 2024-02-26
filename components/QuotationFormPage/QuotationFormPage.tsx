@@ -1,5 +1,5 @@
 import {
-  checkRequisitionFormStatus,
+  checkItemFormStatus,
   getProjectSigner,
   getTeamProjectList,
 } from "@/backend/api/get";
@@ -233,7 +233,7 @@ const QuotationFormPage = ({
 
   const handleFormVisibilityRestriction = async () => {
     try {
-      const result = await checkRequisitionFormStatus(supabaseClient, {
+      const result = await checkItemFormStatus(supabaseClient, {
         teamId: team.team_id,
         formId: `${formId}`,
       });

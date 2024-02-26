@@ -3,6 +3,7 @@ import {
   updateFormVisibility,
 } from "@/backend/api/update";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
+import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 import { FormType } from "@/utils/types";
@@ -24,7 +25,6 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCalendar } from "@tabler/icons-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -205,9 +205,7 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
       </Flex>
       <Group spacing="md" mt="xl">
         <IconCalendar />
-        <Text weight={600}>
-          {moment(form.form_date_created).format("YYYY-MM-DD")}
-        </Text>
+        <Text weight={600}>{formatDate(new Date(form.form_date_created))}</Text>
       </Group>
       <Group spacing="md" mt="xl">
         <Switch

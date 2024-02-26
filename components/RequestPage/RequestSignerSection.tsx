@@ -1,3 +1,4 @@
+import { formatDate, formatTime } from "@/utils/constant";
 import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
 import {
   Chip,
@@ -52,11 +53,14 @@ const RequestSignerSection = ({ signerList }: Props) => {
   const signerStatusMessage = (
     status: ReceiverStatusType,
     action: string,
-    fullname: string
+    fullname: string,
+    dateUpdated: string
   ) => {
     switch (status) {
       case "APPROVED":
-        return `Signed as ${action} by ${fullname}`;
+        return `Signed as ${action} by ${fullname}${
+          dateUpdated ? ` (${dateUpdated})` : ""
+        }`;
       case "PENDING":
         return `Will be signed as ${action} by ${fullname}`;
       case "REJECTED":
@@ -78,7 +82,14 @@ const RequestSignerSection = ({ signerList }: Props) => {
                 {signerStatusMessage(
                   signer.request_signer_status,
                   signer.signer_action.toLowerCase(),
-                  `${signer.signer_team_member.team_member_user.user_first_name} ${signer.signer_team_member.team_member_user.user_last_name}`
+                  `${signer.signer_team_member.team_member_user.user_first_name} ${signer.signer_team_member.team_member_user.user_last_name}`,
+                  signer.request_signer_status_date_updated
+                    ? `${formatDate(
+                        new Date(signer.request_signer_status_date_updated)
+                      )} ${formatTime(
+                        new Date(signer.request_signer_status_date_updated)
+                      )}`
+                    : ""
                 )}
               </Text>
               {signer.signer_is_primary_signer ? (

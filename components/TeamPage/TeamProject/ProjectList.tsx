@@ -121,8 +121,8 @@ const ProjectList = ({
       });
       setProjectList(data as TeamProjectWithAddressType[]);
       setProjectCount(Number(count));
-      setSearchResult(data as TeamProjectWithAddressType[]);
-    } catch {
+      setSearchResult(data as TeamProjectTableRow[]);
+    } catch (e) {
       notifications.show({
         message: "Error on fetching project list",
         color: "red",

@@ -1,9 +1,9 @@
 import { useUserIntials, useUserProfile } from "@/stores/useUserStore";
+import { formatDate } from "@/utils/constant";
 import { getAvatarColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import { Avatar, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
 import { IconCalendar } from "@tabler/icons-react";
-import moment from "moment";
 
 type Props = {
   formDetails: {
@@ -29,7 +29,7 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
     form_sub_type,
   } = formDetails;
 
-  const formDateCreated = moment(form_date_created).format("YYYY-MM-DD");
+  const formDateCreated = formatDate(new Date(form_date_created));
 
   return (
     <Paper p="xl" shadow="xs">

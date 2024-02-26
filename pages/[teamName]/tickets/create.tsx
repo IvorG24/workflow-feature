@@ -9,12 +9,15 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user }) => {
     try {
-      const { member } = await getCreateTicketOnLoad(supabaseClient, {
-        userId: `${user.id}`,
-      });
+      const { member, categoryList } = await getCreateTicketOnLoad(
+        supabaseClient,
+        {
+          userId: `${user.id}`,
+        }
+      );
 
       return {
-        props: { member },
+        props: { member, categoryList },
       };
     } catch (error) {
       console.error(error);
@@ -28,12 +31,12 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   }
 );
 
-const Page = ({ member }: CreateTicketPageOnLoad) => {
+const Page = ({ member, categoryList }: CreateTicketPageOnLoad) => {
   return (
     <>
       <Meta description="Create Ticket Page" url="/<teamName>/tickets/create" />
 
-      <CreateTicketPage member={member} />
+      <CreateTicketPage member={member} categorylist={categoryList} />
     </>
   );
 };

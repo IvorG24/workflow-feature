@@ -77,25 +77,6 @@ export const isUUID = (str: string | string[] | undefined) => {
   return uuidPattern.test(str);
 };
 
-export const convertTimestampToDateTime = (
-  timestamptz: string
-): { date: string; time: string } | null => {
-  try {
-    const timestamp = new Date(timestamptz);
-    const date = timestamp.toISOString().split("T")[0];
-    const hours = timestamp.getHours() % 12 || 12;
-    const minutes = timestamp.getMinutes().toString().padStart(2, "0");
-    const time = `${hours}:${minutes} ${
-      timestamp.getHours() < 12 ? "AM" : "PM"
-    }`;
-
-    return { date, time };
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
 export const getInitials = (fullname: string) => {
   const words = fullname.trim().split(" ");
   const initials = words.map((word) => word[0].toUpperCase()).join("");
@@ -139,4 +120,47 @@ export const trimObjectProperties = (obj: { [x: string]: string }) => {
     }
   }
   return trimmedObject;
+};
+
+export const escapeQuotes = (input: string): string => {
+  const escapedString = input.replace(/'/g, "''");
+
+  return escapedString;
+};
+
+type AnyObject = {
+  [key: string]: unknown;
+};
+
+export const jsonToCsv = (jsonString: string): string => {
+  try {
+    const jsonArray: AnyObject[] = JSON.parse(jsonString);
+
+    if (!jsonArray.length) {
+      throw new Error("Invalid JSON array");
+    }
+
+    const keys = Object.keys(jsonArray[0]);
+
+    const csvContent = `${keys.join(", ")}\n${jsonArray
+      .map((obj) => keys.map((key) => obj[key]).join(", "))
+      .join("\n")}`;
+
+    return csvContent;
+  } catch (error) {
+    console.error("Error converting JSON to CSV");
+    return "";
+  }
+};
+
+export const formatTimeString = (inputString: string): string => {
+  const [hours, minutes, seconds] = inputString.split(":");
+  const formattedTime = `${hours}h:${minutes}m:${Math.round(Number(seconds))}s`;
+  return formattedTime;
+};
+
+export const formatCSICode = (inputString: string) => {
+  let numericString = inputString.replace(/[^\d ]/g, "");
+  numericString = numericString.substring(0, 8);
+  return numericString.replace(/(\d{2})(?=\d)/g, "$1 ");
 };

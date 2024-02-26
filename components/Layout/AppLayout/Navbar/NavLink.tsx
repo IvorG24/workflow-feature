@@ -30,10 +30,12 @@ import {
   IconFile,
   IconFileDescription,
   IconFilePlus,
+  IconFileReport,
   IconFileStack,
   IconFileText,
   IconFiles,
   IconListDetails,
+  IconReportAnalytics,
   IconTicket,
   IconUsersGroup,
 } from "@tabler/icons-react";
@@ -66,10 +68,9 @@ const ReviewAppNavLink = () => {
 
   const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
 
-  const rfForm = forms.filter(
-    (form) => form.form_is_formsly_form && form.form_name === "Requisition"
-  )[0];
-  const requisitionForm = rfForm as unknown as FormTableRow & {
+  const itemForm = forms.filter(
+    (form) => form.form_is_formsly_form && form.form_name === "Item"
+  )[0] as unknown as FormTableRow & {
     form_team_group: string[];
   };
 
@@ -116,18 +117,20 @@ const ReviewAppNavLink = () => {
 
           <Portal>
             <Menu.Dropdown>
-              {unhiddenForms.map((form) => (
-                <Menu.Item
-                  key={form.form_id}
-                  onClick={() =>
-                    router.push(
-                      `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
-                    )
-                  }
-                >
-                  {form.form_name}
-                </Menu.Item>
-              ))}
+              {unhiddenForms
+                .sort((a, b) => a.form_name.localeCompare(b.form_name))
+                .map((form) => (
+                  <Menu.Item
+                    key={form.form_id}
+                    onClick={() =>
+                      router.push(
+                        `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
+                      )
+                    }
+                  >
+                    {form.form_name}
+                  </Menu.Item>
+                ))}
             </Menu.Dropdown>
           </Portal>
         </Menu>
@@ -194,7 +197,7 @@ const ReviewAppNavLink = () => {
     );
   };
 
-  const analyticsSection = [
+  const metricsSection = [
     {
       label: `Dashboard`,
       icon: (
@@ -203,6 +206,24 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/dashboard`,
+    },
+    {
+      label: `SLA`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileReport {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/sla`,
+    },
+    {
+      label: `Report`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconReportAnalytics {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/report`,
     },
   ];
 
@@ -214,8 +235,8 @@ const ReviewAppNavLink = () => {
           <IconFile {...defaultIconProps} />
         </Box>
       ),
-      href: requisitionForm
-        ? `/${activeTeamNameToUrl}/forms/${requisitionForm.form_id}/create`
+      href: itemForm
+        ? `/${activeTeamNameToUrl}/forms/${itemForm.form_id}/create`
         : "",
     },
     {
@@ -225,7 +246,7 @@ const ReviewAppNavLink = () => {
           <IconTicket {...defaultIconProps} />
         </Box>
       ),
-      href: requisitionForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
+      href: itemForm ? `/${activeTeamNameToUrl}/tickets/create` : "",
     },
     {
       label: "Create Memo",
@@ -337,15 +358,15 @@ const ReviewAppNavLink = () => {
     <>
       {!isEmpty(activeTeam) && hasTeam ? (
         <NavLinkSection
-          label={"Analytics"}
-          links={analyticsSection}
+          label={"Metrics"}
+          links={metricsSection}
           {...defaultNavLinkProps}
         />
       ) : null}
 
-      {requisitionForm &&
-      requisitionForm.form_is_hidden === false &&
-      requisitionForm.form_team_group.length &&
+      {itemForm &&
+      itemForm.form_is_hidden === false &&
+      itemForm.form_team_group.length &&
       hasTeam ? (
         unhiddenForms.length > 1 ? (
           renderCreateRequestMenu()

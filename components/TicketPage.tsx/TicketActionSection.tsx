@@ -1,10 +1,27 @@
-import { createNotification, createTicketComment } from "@/backend/api/post";
+import {
+  checkCSICodeDescriptionExists,
+  checkCSICodeItemExists,
+  checkCustomCSICodeValidity,
+  getItem,
+} from "@/backend/api/get";
+import {
+  createCustomCSI,
+  createItemDescriptionField,
+  createItemDivision,
+  createNotification,
+  createPedPartFromTicketRequest,
+  createTicketComment,
+} from "@/backend/api/post";
 import { updateTicketStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
-import { CreateTicketPageOnLoad, TicketType } from "@/utils/types";
+import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
+import {
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  TicketType,
+} from "@/utils/types";
 import { Button, Flex, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -15,11 +32,12 @@ import { v4 as uuidv4 } from "uuid";
 
 type Props = {
   ticket: TicketType;
+  ticketForm: CreateTicketFormValues;
   setTicket: Dispatch<SetStateAction<TicketType>>;
   user: CreateTicketPageOnLoad["member"];
 };
 
-const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
+const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
@@ -136,6 +154,236 @@ const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
       ),
     });
 
+  const handleTicketClosing = async () => {
+    switch (ticket.ticket_category) {
+      case "Request Custom CSI":
+        return handleCustomCSIClosing();
+      case "Request Item CSI":
+        return handleItemCSIClosing();
+      case "Request Item Option":
+        return handleItemOptionClosing();
+      case "Request PED Equipment Part":
+        return handleRequestPedEquipmentPartClosing();
+      default:
+        handleUpdateTicketStatus("CLOSED", null);
+        return;
+    }
+  };
+
+  const handleCustomCSIClosing = async () => {
+    try {
+      setIsLoading(true);
+
+      // check if csi exists
+      const itemName = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`
+      );
+      const csiCodeDescription = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`
+      );
+      const csiCode = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
+      );
+
+      const csiCodeDescriptionExists = await checkCSICodeDescriptionExists(
+        supabaseClient,
+        { csiCodeDescription }
+      );
+
+      const {
+        csiCodeLevelThreeIdExists,
+        csiCodeLevelTwoMinorGroupIdExists,
+        csiCodeLevelTwoMajorGroupIdExists,
+        csiCodeDivisionIdExists,
+      } = await checkCustomCSICodeValidity(supabaseClient, {
+        csiCode: `${csiCode}`,
+      });
+
+      if (
+        !csiCodeDescriptionExists &&
+        !csiCodeLevelThreeIdExists &&
+        csiCodeLevelTwoMinorGroupIdExists &&
+        csiCodeLevelTwoMajorGroupIdExists &&
+        csiCodeDivisionIdExists
+      ) {
+        // add custom csi
+        await createCustomCSI(supabaseClient, {
+          csiCode,
+          csiCodeDescription,
+          itemName,
+        });
+
+        handleUpdateTicketStatus("CLOSED", null);
+      } else {
+        notifications.show({
+          message: "Create custom CSI Code failed. Please try again later.",
+          color: "red",
+        });
+      }
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleItemCSIClosing = async () => {
+    try {
+      setIsLoading(true);
+
+      // check if csi exists
+      const itemName = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`
+      );
+      const csiCode = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
+      );
+      const divisionId = `${csiCode}`.split(" ")[0];
+      const item = await getItem(supabaseClient, {
+        itemName,
+        teamId: activeTeam.team_id,
+      });
+      if (!item) return;
+      const csiCodeItemExists = await checkCSICodeItemExists(supabaseClient, {
+        divisionId,
+        itemId: item.item_id,
+      });
+
+      if (csiCodeItemExists) return false;
+      // add custom csi
+      await createItemDivision(supabaseClient, {
+        itemId: item.item_id,
+        divisionId,
+      });
+
+      handleUpdateTicketStatus("CLOSED", null);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleItemOptionClosing = async () => {
+    try {
+      setIsLoading(true);
+
+      // check if csi exists
+      const itemName = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[0].ticket_field_response}`
+      );
+      const itemDescription = parseJSONIfValid(
+        `${ticketForm.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`
+      );
+      const uom = parseJSONIfValid(
+        `${ticketForm.ticket_sections[1].ticket_section_fields[1].ticket_field_response}`
+      );
+      const item = await getItem(supabaseClient, {
+        itemName,
+        teamId: activeTeam.team_id,
+      });
+
+      const itemDescriptionData = item.item_description.find(
+        (description) => description.item_description_label === itemDescription
+      );
+      const itemDescriptionId = itemDescriptionData?.item_description_id;
+      const valueExistsList = itemDescriptionData?.item_description_field.map(
+        (field) => field.item_description_field_value.toLowerCase()
+      );
+
+      const fieldValueList: string[] = [];
+      ticketForm.ticket_sections.slice(1).map((section) => {
+        const value = parseJSONIfValid(
+          `${section.ticket_section_fields[0].ticket_field_response}`
+        );
+        const valueExists = valueExistsList?.includes(value.toLowerCase());
+        if (!valueExists) fieldValueList.push(value);
+      });
+
+      if (fieldValueList.length <= 0) return;
+
+      await createItemDescriptionField(
+        supabaseClient,
+        fieldValueList.map((value) => {
+          return {
+            item_description_field_value: `${value}`,
+            item_description_field_is_available: true,
+            item_description_field_item_description_id: `${itemDescriptionId}`,
+            item_description_field_uom: uom,
+            item_description_field_encoder_team_member_id:
+              teamMember?.team_member_id,
+          };
+        })
+      );
+
+      handleUpdateTicketStatus("CLOSED", null);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRequestPedEquipmentPartClosing = async () => {
+    try {
+      setIsLoading(true);
+      if (!teamMember) throw new Error();
+
+      await createPedPartFromTicketRequest(supabaseClient, {
+        equipmentName: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[0]
+            .ticket_field_response as string
+        ),
+        partName: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[1]
+            .ticket_field_response as string
+        ),
+        partNumber: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[2]
+            .ticket_field_response as string
+        ),
+        brand: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[3]
+            .ticket_field_response as string
+        ),
+        model: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[4]
+            .ticket_field_response as string
+        ),
+        unitOfMeasure: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[5]
+            .ticket_field_response as string
+        ),
+        category: JSON.parse(
+          ticketForm.ticket_sections[0].ticket_section_fields[6]
+            .ticket_field_response as string
+        ),
+        teamMemberId: teamMember.team_member_id,
+      });
+
+      handleUpdateTicketStatus("CLOSED", null);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <Text weight={600}>Ticket Action</Text>
@@ -154,7 +402,9 @@ const TicketStatusAction = ({ ticket, setTicket, user }: Props) => {
           size="md"
           color="green"
           loading={isLoading}
-          onClick={() => handleUpdateTicketStatus("CLOSED", null)}
+          onClick={async () => {
+            await handleTicketClosing();
+          }}
         >
           Close
         </Button>

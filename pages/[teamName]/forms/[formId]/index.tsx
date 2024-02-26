@@ -1,14 +1,18 @@
 import { getForm } from "@/backend/api/get";
+import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
+import PEDConsumableFormPage from "@/components/PEDConsumableFormPage/PEDConsumableFormPage";
+import PEDEquipmentFormPage from "@/components/PEDEquipmentFormPage/PEDEquipmentFormPage";
+import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
-import RequisitionFormPage from "@/components/RequisitionFormPage/RequisitionFormPage";
 import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import SubconFormPage from "@/components/SubconFormPage/SubconFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
+  EquipmentWithCategoryType,
   FormType,
   ItemWithDescriptionType,
   OtherExpensesTypeWithCategoryType,
@@ -65,6 +69,8 @@ type Props = {
   serviceListCount?: number;
   otherExpensesTypes?: OtherExpensesTypeWithCategoryType[];
   otherExpensesTypeCount?: number;
+  equipments?: EquipmentWithCategoryType[];
+  equipmentListCount?: number;
 };
 
 const Page = ({
@@ -81,12 +87,50 @@ const Page = ({
   serviceListCount = 0,
   otherExpensesTypes = [],
   otherExpensesTypeCount = 0,
+  equipments = [],
+  equipmentListCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <RequisitionFormPage
+          <ItemFormPage
+            items={items}
+            itemListCount={itemListCount}
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "PED Part":
+        return (
+          <PEDPartFormPage
+            equipments={equipments}
+            equipmentListCount={equipmentListCount}
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "PED Equipment":
+        return (
+          <PEDEquipmentFormPage
+            equipments={equipments}
+            equipmentListCount={equipmentListCount}
+            teamMemberList={teamMemberList}
+            form={form}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "PED Consumable":
+        return (
+          <PEDConsumableFormPage
             items={items}
             itemListCount={itemListCount}
             teamMemberList={teamMemberList}

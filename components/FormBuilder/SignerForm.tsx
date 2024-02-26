@@ -15,7 +15,7 @@ import {
   Paper,
   Select,
 } from "@mantine/core";
-import { IconArrowsExchange, IconTrash } from "@tabler/icons-react";
+import { IconTrash } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FormBuilderData } from "./FormBuilder";
@@ -58,8 +58,6 @@ type Props = {
   onNotActiveSigner: () => void;
   signerList: string[];
   onSetSignerList: Dispatch<SetStateAction<string[]>>;
-  handleMakePrimarySigner: (index: number) => void;
-  isTransferVisible: boolean;
 };
 
 const SignerForm = ({
@@ -72,8 +70,6 @@ const SignerForm = ({
   onNotActiveSigner,
   signerList,
   onSetSignerList,
-  handleMakePrimarySigner,
-  isTransferVisible,
 }: Props) => {
   const {
     register,
@@ -164,18 +160,6 @@ const SignerForm = ({
               Primary
             </Chip>
           )}
-          {!isPrimarySigner && isTransferVisible ? (
-            <ActionIcon
-              onClick={() => {
-                handleMakePrimarySigner(signerIndex);
-              }}
-              variant="light"
-              color="blue"
-              size="sm"
-            >
-              <IconArrowsExchange size={14} stroke={1.5} />
-            </ActionIcon>
-          ) : null}
         </Group>
       </Box>
     );

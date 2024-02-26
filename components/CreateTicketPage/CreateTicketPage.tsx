@@ -1,79 +1,117 @@
-import { createTicket } from "@/backend/api/post";
+import { getTicketForm } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
-import { CreateTicketPageOnLoad } from "@/utils/types";
+import { CreateTicketFormValues, CreateTicketPageOnLoad } from "@/utils/types";
 import {
   Avatar,
-  Button,
+  Box,
   Container,
   Divider,
   Group,
+  LoadingOverlay,
   Paper,
   Select,
+  Skeleton,
   Stack,
   Text,
-  TextInput,
-  Textarea,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import moment from "moment";
-import { useRouter } from "next/router";
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { TEMP_DEFAULT_TICKET_CATEGORY_LIST } from "../TicketListPage/TicketListPage";
-
-type CreateTicketFormValues = {
-  title: string;
-  category: string;
-  description: string;
-};
+import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
+import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
+import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
+import TicketRequestPEDEquipmentPartForm from "../TicketRequestPEDEquipmentPartForm/TicketRequestPEDEquipmentPartForm";
+import TicketForm from "./TicketForm";
 
 type Props = {
   member: CreateTicketPageOnLoad["member"];
+  categorylist: CreateTicketPageOnLoad["categoryList"];
 };
 
-const CreateTicketPage = ({ member }: Props) => {
+const CreateTicketPage = ({ member, categorylist }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
   const activeTeam = useActiveTeam();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingForm, setIsFetchingForm] = useState(false);
+  const [category, setCategory] = useState<string | null>(null);
+  const [ticketForm, setTicketForm] = useState<CreateTicketFormValues | null>(
+    null
+  );
 
-  const {
-    handleSubmit,
-    register,
-    formState: { errors },
-    control,
-  } = useForm<CreateTicketFormValues>();
+  const categoryOptions = categorylist.map(
+    ({ ticket_category }) => ticket_category
+  );
 
-  const handleCreateTicket = async (data: CreateTicketFormValues) => {
+  const handleCategoryChange = async (category: string | null) => {
     try {
-      setIsLoading(true);
-
-      const ticket = await createTicket(supabaseClient, {
-        ...data,
-        requester: `${member?.team_member_id}`,
+      setIsFetchingForm(true);
+      if (!category) return;
+      const ticketFormData = await getTicketForm(supabaseClient, {
+        category,
+        teamId: activeTeam.team_id,
       });
-
-      notifications.show({
-        message: "Ticket created.",
-        color: "green",
-      });
-      router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
-          ticket.ticket_id
-        }`
-      );
+      setTicketForm(ticketFormData);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
-      setIsLoading(false);
+      setIsFetchingForm(false);
+    }
+  };
+
+  const renderTicketForm = () => {
+    switch (category) {
+      case "Request Custom CSI":
+        return (
+          <TicketRequestCustomCSIForm
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+      case "Request Item CSI":
+        return (
+          <TicketRequestItemCSIForm
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+      case "Request Item Option":
+        return (
+          <TicketRequestItemOptionForm
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+      case "Request PED Equipment Part":
+        return (
+          <TicketRequestPEDEquipmentPartForm
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+      default:
+        return (
+          <TicketForm
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
     }
   };
 
@@ -108,53 +146,38 @@ const CreateTicketPage = ({ member }: Props) => {
             </Stack>
             <Stack spacing={4}>
               <Title order={5}>Date</Title>
-              <Text>{moment().format("YYYY-MM-DD")}</Text>
+              <Text>{formatDate(new Date())}</Text>
             </Stack>
           </Group>
           <Divider />
-          <form onSubmit={handleSubmit(handleCreateTicket)}>
-            <Stack>
-              <Controller
-                control={control}
-                name={"category"}
-                render={({
-                  field: { value, onChange },
-                  fieldState: { error },
-                }) => (
-                  <Select
-                    value={value as string}
-                    onChange={(value) => onChange(value as string)}
-                    data={TEMP_DEFAULT_TICKET_CATEGORY_LIST}
-                    clearable
-                    error={error?.message}
-                    readOnly={isLoading}
-                  />
-                )}
-                rules={{ required: "This field is required" }}
-              />
-              <TextInput
-                label="Title"
-                {...register("title", {
-                  required: "This field is required",
-                })}
-                error={errors.title?.message}
-                readOnly={isLoading}
-              />
-              <Textarea
-                label="Description"
-                minRows={6}
-                autosize={true}
-                {...register("description", {
-                  required: "This field is required",
-                })}
-                error={errors.description?.message}
-                readOnly={isLoading}
-              />
-              <Button type="submit" size="md" loading={isLoading}>
-                Submit
-              </Button>
-            </Stack>
-          </form>
+          <Box pos="relative">
+            <LoadingOverlay visible={isLoading} overlayBlur={2} />
+
+            <Select
+              placeholder="Select a ticket category"
+              value={category}
+              onChange={(value) => {
+                setCategory(value);
+                if (value) handleCategoryChange(value);
+              }}
+              data={categoryOptions}
+              required={true}
+              readOnly={isLoading}
+            />
+
+            {!isFetchingForm ? (
+              renderTicketForm()
+            ) : (
+              <Box>
+                <Skeleton height={14} mt="md" w="40%" radius="xs" />
+                <Skeleton height={32} mt={6} radius="xs" />
+                <Skeleton height={14} mt="md" w="40%" radius="xs" />
+                <Skeleton height={200} mt={6} radius="xs" />
+
+                <Skeleton height={32} mt="md" radius="xs" />
+              </Box>
+            )}
+          </Box>
         </Stack>
       </Paper>
     </Container>

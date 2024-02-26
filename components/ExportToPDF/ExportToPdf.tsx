@@ -1,16 +1,21 @@
 "use client";
 
+import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
-import { Button, Menu } from "@mantine/core";
+import { Flex, Loader } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
-import { IconList, IconTable } from "@tabler/icons-react";
-import moment from "moment";
-import { ApproverDetailsType } from "../RequisitionRequestPage/RequisitionRequestPage";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+import { ApproverDetailsType } from "../ItemRequestPage/ItemRequestPage";
+import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
+import PEDConsumableBulkPdfDocumentTableVersion from "./PEDConsumableBulkPdfDocumentTableVersion";
+import PEDConsumableSinglePdfDocumentTableVersion from "./PEDConsumableSinglePdfDocumentTableVersion";
+import PEDEquipmentPdfDocumentTableVersion from "./PEDEquipmentPdfDocumentTableVersion";
+import PEDPartPdfDocumentTableVersion from "./PEDPartPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
-import RequisitionPdfDocumentTableVersion from "./RequisitionPdfDocumentTableVersion";
 import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
 
 type Props = {
@@ -32,14 +37,14 @@ Font.register({
   ],
 });
 
-const getReadableDate = (date: string) =>
-  moment(new Date(date)).format("YYYY-MM-DD");
+const getReadableDate = (date: string) => formatDate(new Date(date));
 
 const ExportToPdf = ({
   request,
   sectionWithDuplicateList,
   approverDetails,
 }: Props) => {
+  const router = useRouter();
   const requestor = request.request_team_member.team_member_user;
   const requestDateCreated = getReadableDate(request.request_date_created);
 
@@ -116,19 +121,29 @@ const ExportToPdf = ({
   const requestItems = sectionWithDuplicateList.map((section) => {
     const title = section.section_name;
 
-    const fields = section.section_field.map((field) => {
-      let response = "";
-      if (field.field_response?.request_response) {
-        response = safeParse(field.field_response?.request_response);
-      }
-      const responseValue =
-        field.field_type !== "DATE" ? response : getReadableDate(response);
+    const fields = section.section_field
+      .filter((field) => field.field_response)
+      .map((field) => {
+        let response = "";
+        if (field.field_response?.request_response) {
+          response = safeParse(field.field_response?.request_response);
+        }
 
-      return {
-        label: field.field_name,
-        value: `${responseValue}`,
-      };
-    });
+        switch (field.field_type) {
+          case "DATE":
+            response = getReadableDate(response);
+            break;
+          case "FILE":
+            response = "File";
+          default:
+            response;
+        }
+
+        return {
+          label: field.field_name,
+          value: `${response}`,
+        };
+      });
 
     const newSection = { title, fields: fields.filter((f) => f !== undefined) };
 
@@ -141,17 +156,17 @@ const ExportToPdf = ({
       ""
     );
 
-  const pdfFileName = `${moment(request.request_date_created).format(
-    "YYYY-MM-DD"
+  const pdfFileName = `${formatDate(
+    new Date(request.request_date_created)
   )}-${request.request_form.form_name
     .split(" ")
     .join("-")}-${requestorFullName}`;
 
   const getDocument = () => {
     switch (request.request_form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <RequisitionPdfDocumentTableVersion
+          <ItemPdfDocumentTableVersion
             requestDetails={requestDetails}
             requestorDetails={requestorDetails}
             requestIDs={requestIDs}
@@ -179,6 +194,48 @@ const ExportToPdf = ({
             approverDetails={approverDetails}
           />
         );
+      case "PED Equipment":
+        return (
+          <PEDEquipmentPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+      case "PED Part":
+        return (
+          <PEDPartPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
+      case "PED Consumable":
+        if (requestItems[0].fields[2].value === "Single") {
+          return (
+            <PEDConsumableSinglePdfDocumentTableVersion
+              requestDetails={requestDetails}
+              requestorDetails={requestorDetails}
+              requestIDs={requestIDs}
+              requestItems={requestItems}
+              approverDetails={approverDetails}
+            />
+          );
+        } else if (requestItems[0].fields[2].value === "Bulk") {
+          return (
+            <PEDConsumableBulkPdfDocumentTableVersion
+              requestDetails={requestDetails}
+              requestorDetails={requestorDetails}
+              requestIDs={requestIDs}
+              requestItems={requestItems}
+              approverDetails={approverDetails}
+            />
+          );
+        }
     }
   };
 
@@ -198,43 +255,27 @@ const ExportToPdf = ({
     document: getDocument(),
   });
 
+  useEffect(() => {
+    if (!instance.loading && instanceTable.url && pdfFileName) {
+      const link = document.createElement("a");
+      link.href = instanceTable.url;
+      link.download = `${pdfFileName}-${router.query.type}`;
+      document.body.appendChild(link);
+      link.click();
+      window.close();
+    }
+  }, [instance.loading, instanceTable.url, pdfFileName, router]);
+
   return (
-    <>
-      {!instance.loading && approverDetails.length !== 0 ? (
-        <Menu width={200} shadow="md">
-          <Menu.Target>
-            <Button variant="light">Export to PDF</Button>
-          </Menu.Target>
-
-          <Menu.Dropdown>
-            {!request.request_form.form_is_formsly_form && (
-              <Menu.Item
-                component="a"
-                href={instance.url ? instance.url : "#"}
-                download={`${pdfFileName}-list-view`}
-                icon={<IconList size={16} />}
-              >
-                List View
-              </Menu.Item>
-            )}
-
-            {request.request_form.form_is_formsly_form &&
-              ["Requisition", "Services", "Other Expenses"].includes(
-                request.request_form.form_name
-              ) && (
-                <Menu.Item
-                  component="a"
-                  href={instanceTable.url ? instanceTable.url : "#"}
-                  download={`${pdfFileName}-table-view`}
-                  icon={<IconTable size={16} />}
-                >
-                  Table View
-                </Menu.Item>
-              )}
-          </Menu.Dropdown>
-        </Menu>
-      ) : null}
-    </>
+    <Flex
+      sx={{
+        height: "100vh",
+      }}
+      align="center"
+      justify="center"
+    >
+      <Loader />
+    </Flex>
   );
 };
 

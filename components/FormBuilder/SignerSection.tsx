@@ -165,8 +165,6 @@ const SignerSection = ({
                     onNotActiveSigner={() => handleChangeActiveSigner(null)}
                     signerList={signerList}
                     onSetSignerList={setSignerList}
-                    handleMakePrimarySigner={handleMakePrimarySigner}
-                    isTransferVisible={activeSigner === null}
                   />
                 </Box>
                 {activeSigner === null && (

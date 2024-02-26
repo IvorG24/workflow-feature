@@ -1,10 +1,13 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
+import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
+import EditPEDConsumableRequestPage from "@/components/EditPEDConsumableRequestPage/EditPEDConsumableRequestPage";
+import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
+import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
-import EditRequisitionRequestPage from "@/components/EditRequisitionRequestPage/EditRequisitionRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
 import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubconRequestPage";
@@ -12,6 +15,7 @@ import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTr
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
+  FieldTableRow,
   FormType,
   OptionTableRow,
   RequestWithResponseType,
@@ -60,6 +64,12 @@ export type EditRequestOnLoadProps = {
     special_approver_signer: FormType["form_signer"][0];
   }[];
   referenceOnly: boolean;
+  supplierOptions?: OptionTableRow[];
+  preferredSupplierField?: FieldTableRow;
+  categoryOptions?: OptionTableRow[];
+  propertyNumberOptions?: OptionTableRow[];
+  generalItemNameOptions?: OptionTableRow[];
+  equipmentId: string;
 };
 
 const Page = ({
@@ -72,19 +82,27 @@ const Page = ({
   sourceProjectList = {},
   specialApprover = [],
   referenceOnly,
+  supplierOptions = [],
+  preferredSupplierField,
+  categoryOptions = [],
+  propertyNumberOptions = [],
+  generalItemNameOptions = [],
+  equipmentId,
 }: EditRequestOnLoadProps) => {
   const { request_form: form } = request;
 
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <EditRequisitionRequestPage
+          <EditItemRequestPage
             request={request}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
             specialApprover={specialApprover}
             referenceOnly={referenceOnly}
+            supplierOptions={supplierOptions}
+            preferredSupplierField={preferredSupplierField}
           />
         );
       case "Services":
@@ -100,6 +118,36 @@ const Page = ({
           <EditOtherExpensesRequestPage
             request={request}
             projectOptions={projectOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "PED Equipment":
+        return (
+          <EditPEDEquipmentRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+            referenceOnly={referenceOnly}
+          />
+        );
+      case "PED Part":
+        return (
+          <EditPEDPartRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+            referenceOnly={referenceOnly}
+            generalItemNameOptions={generalItemNameOptions}
+            equipmentId={equipmentId}
+          />
+        );
+      case "PED Consumable":
+        return (
+          <EditPEDConsumableRequestPage
+            request={request}
+            projectOptions={projectOptions}
+            itemOptions={itemOptions}
+            propertyNumberOptions={propertyNumberOptions}
             referenceOnly={referenceOnly}
           />
         );

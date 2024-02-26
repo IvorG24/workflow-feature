@@ -41,12 +41,14 @@ type RequestFormFieldsProps = {
   };
   sectionIndex: number;
   fieldIndex: number;
-  requisitionFormMethods?: {
+  itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
+    isSearchingSupplier?: boolean;
+    csiSearch?: (value: string, index: number) => void;
+    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -73,7 +75,7 @@ type RequestFormFieldsProps = {
     onProjectSiteChange: () => void;
   };
   referenceOnly?: boolean;
-  serviceFormMethods?: {
+  servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
@@ -87,21 +89,54 @@ type RequestFormFieldsProps = {
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
   };
+  pedEquipmentFormMethods?: {
+    onCategoryChange: (value: string | null, index: number) => void;
+    onProjectNameChange: (value: string | null) => void;
+    onEquipmentNameChange: (value: string | null, index: number) => void;
+    onBrandChange: (value: string | null, index: number) => void;
+  };
+  pedPartFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCategoryChange: (value: string | null) => void;
+    onEquipmentNameChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null) => void;
+    onTypeOfOrderChange: (
+      prevValue: string | null,
+      value: string | null
+    ) => void;
+    onGeneralItemNameChange: (value: string | null, index: number) => void;
+    onComponentCategoryChange: (value: string | null, index: number) => void;
+    onBrandChange: (value: string | null, index: number) => void;
+    onModelChange: (value: string | null, index: number) => void;
+    onPartNumberChange: (value: string | null, index: number) => void;
+  };
+  pedConsumableFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null, index: number) => void;
+    onRequestTypeChange: (
+      prevValue: string | null,
+      value: string | null
+    ) => void;
+    onGeneralNameChange: (value: string | null, index: number) => void;
+  };
 };
 
 const RequestFormFields = ({
   field,
   sectionIndex,
   fieldIndex,
-  requisitionFormMethods,
+  itemFormMethods,
   subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
   sourcedItemFormMethods,
   referenceOnly,
-  serviceFormMethods,
+  servicesFormMethods,
+  pedPartFormMethods,
+  pedEquipmentFormMethods,
   otherExpensesMethods,
+  pedConsumableFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     control,
@@ -131,7 +166,7 @@ const RequestFormFields = ({
   const readOnly =
     field.field_name === "Requesting Project" &&
     !referenceOnly &&
-    ["Requisition", "Subcon"].includes(formslyFormName)
+    ["Item", "Subcon", "PED Equipment", "PED Part"].includes(formslyFormName)
       ? true
       : field.field_is_read_only;
 
@@ -311,7 +346,7 @@ const RequestFormFields = ({
               ...fieldRules,
               validate: {
                 checkIfZero: (value) =>
-                  (requisitionFormMethods || quotationFormMethods) &&
+                  (itemFormMethods || quotationFormMethods) &&
                   field.field_name === "Quantity" &&
                   value === 0
                     ? "Quantity value is required"
@@ -388,51 +423,126 @@ const RequestFormFields = ({
                       `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`
                     );
                     onChange(value);
-                    if (field.field_name === "General Name") {
-                      requisitionFormMethods?.onGeneralNameChange(
-                        sectionIndex,
-                        value
-                      );
-                    } else if (field.field_name === "Item") {
-                      quotationFormMethods?.onItemChange(
-                        sectionIndex,
-                        value,
-                        prevValue === null ? null : `${prevValue}`
-                      );
-                    } else if (field.field_name === "CSI Code Description") {
-                      requisitionFormMethods &&
-                        requisitionFormMethods.onCSICodeChange(
+                    switch (field.field_name) {
+                      case "General Name":
+                        itemFormMethods?.onGeneralNameChange(
                           sectionIndex,
                           value
                         );
-                      serviceFormMethods &&
-                        serviceFormMethods.onCSICodeChange(sectionIndex, value);
-                      otherExpensesMethods &&
-                        otherExpensesMethods.onCSICodeChange(
+                        pedConsumableFormMethods?.onGeneralNameChange(
+                          value,
+                          sectionIndex
+                        );
+                        break;
+                      case "Item":
+                        quotationFormMethods?.onItemChange(
+                          sectionIndex,
+                          value,
+                          prevValue === null ? null : `${prevValue}`
+                        );
+                        break;
+                      case "CSI Code Description":
+                        itemFormMethods &&
+                          itemFormMethods.onCSICodeChange(sectionIndex, value);
+                        servicesFormMethods &&
+                          servicesFormMethods.onCSICodeChange(
+                            sectionIndex,
+                            value
+                          );
+                        otherExpensesMethods &&
+                          otherExpensesMethods.onCSICodeChange(
+                            sectionIndex,
+                            value
+                          );
+                        break;
+                      case "Source Project":
+                        sourcedItemFormMethods?.onProjectSiteChange();
+                        break;
+                      case "Requesting Project":
+                        itemFormMethods?.onProjectNameChange(value);
+                        subconFormMethods?.onProjectNameChange(value);
+                        otherExpensesMethods?.onProjectNameChange(value);
+                        pedPartFormMethods?.onProjectNameChange(value);
+                        pedEquipmentFormMethods?.onProjectNameChange(value);
+                        pedConsumableFormMethods?.onProjectNameChange(value);
+                        break;
+                      case "Service Name":
+                        subconFormMethods?.onServiceNameChange(
                           sectionIndex,
                           value
                         );
-                    } else if (field.field_name === "Source Project") {
-                      sourcedItemFormMethods?.onProjectSiteChange();
-                    } else if (field.field_name === "Requesting Project") {
-                      requisitionFormMethods?.onProjectNameChange(value);
-                      subconFormMethods?.onProjectNameChange(value);
-                      otherExpensesMethods?.onProjectNameChange(value);
-                    } else if (field.field_name === "Service Name") {
-                      subconFormMethods?.onServiceNameChange(
-                        sectionIndex,
-                        value
-                      );
-                    } else if (field.field_name === "CSI Division") {
-                      serviceFormMethods?.onCSIDivisionChange(
-                        sectionIndex,
-                        value
-                      );
-                    } else if (field.field_name === "Category") {
-                      otherExpensesMethods?.onCategoryChange(
-                        sectionIndex,
-                        value
-                      );
+                        break;
+                      case "CSI Division":
+                        servicesFormMethods?.onCSIDivisionChange(
+                          sectionIndex,
+                          value
+                        );
+                        break;
+                      case "Category":
+                        otherExpensesMethods?.onCategoryChange(
+                          sectionIndex,
+                          value
+                        );
+                        pedEquipmentFormMethods?.onCategoryChange(
+                          value,
+                          sectionIndex
+                        );
+                        pedPartFormMethods?.onCategoryChange(value);
+                        break;
+                      case "Type of Order":
+                        pedPartFormMethods?.onTypeOfOrderChange(
+                          prevValue as string | null,
+                          value
+                        );
+                        break;
+                      case "Equipment Property Number":
+                        pedPartFormMethods?.onPropertyNumberChange(value);
+                        pedConsumableFormMethods?.onPropertyNumberChange(
+                          value,
+                          sectionIndex
+                        );
+                        break;
+                      case "Equipment Name":
+                        pedPartFormMethods?.onEquipmentNameChange(value);
+                        pedEquipmentFormMethods?.onEquipmentNameChange(
+                          value,
+                          sectionIndex
+                        );
+                        break;
+                      case "General Item Name":
+                        pedPartFormMethods?.onGeneralItemNameChange(
+                          value,
+                          sectionIndex
+                        );
+                        break;
+                      case "Component Category":
+                        pedPartFormMethods?.onComponentCategoryChange(
+                          value,
+                          sectionIndex
+                        );
+                        break;
+                      case "Brand":
+                        pedPartFormMethods?.onBrandChange(value, sectionIndex);
+                        pedEquipmentFormMethods?.onBrandChange(
+                          value,
+                          sectionIndex
+                        );
+                        break;
+                      case "Model":
+                        pedPartFormMethods?.onModelChange(value, sectionIndex);
+                        break;
+                      case "Part Number":
+                        pedPartFormMethods?.onPartNumberChange(
+                          value,
+                          sectionIndex
+                        );
+                        break;
+                      case "Request Type":
+                        pedConsumableFormMethods?.onRequestTypeChange(
+                          prevValue as string | null,
+                          value
+                        );
+                        break;
                     }
                   }}
                   data={dropdownOption}
@@ -459,16 +569,25 @@ const RequestFormFields = ({
                         clearTimeout(timeoutRef.current);
                       }
                       timeoutRef.current = setTimeout(() => {
-                        requisitionFormMethods?.supplierSearch &&
-                          requisitionFormMethods.supplierSearch(
-                            value,
-                            sectionIndex
-                          );
+                        itemFormMethods?.supplierSearch &&
+                          itemFormMethods.supplierSearch(value, sectionIndex);
                         otherExpensesMethods?.supplierSearch &&
                           otherExpensesMethods.supplierSearch(
                             value,
                             sectionIndex
                           );
+                      }, 500);
+                    } else if (
+                      itemFormMethods &&
+                      field.field_name === "CSI Code Description"
+                    ) {
+                      if (timeoutRef.current) {
+                        clearTimeout(timeoutRef.current);
+                      }
+
+                      timeoutRef.current = setTimeout(() => {
+                        itemFormMethods.csiSearch &&
+                          itemFormMethods.csiSearch(value, sectionIndex);
                       }, 500);
                     }
                   }}
@@ -476,9 +595,12 @@ const RequestFormFields = ({
                     (quotationFormMethods &&
                       quotationFormMethods.isSearching &&
                       field.field_name === "Supplier") ||
-                    (requisitionFormMethods &&
-                      requisitionFormMethods.isSearching &&
+                    (itemFormMethods &&
+                      itemFormMethods.isSearchingSupplier &&
                       field.field_name === "Preferred Supplier") ||
+                    (itemFormMethods &&
+                      itemFormMethods.isSearchingCSI &&
+                      field.field_name === "CSI Code Description") ||
                     (otherExpensesMethods &&
                       otherExpensesMethods.isSearching &&
                       field.field_name === "Preferred Supplier") ? (

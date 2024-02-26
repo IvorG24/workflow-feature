@@ -4,12 +4,16 @@ import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/Tea
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { parseJSONIfValid } from "@/utils/string";
+import { escapeQuotes, parseJSONIfValid } from "@/utils/string";
 import {
   AddressTableInsert,
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
+  CreateTicketFormValues,
+  EquipmentDescriptionTableInsert,
+  EquipmentPartTableInsert,
+  EquipmentTableInsert,
   FormTableRow,
   FormType,
   InvitationTableRow,
@@ -37,6 +41,7 @@ import {
   TeamProjectWithAddressType,
   TeamTableInsert,
   TicketCommentTableInsert,
+  TicketResponseTableInsert,
   TicketTableRow,
   UserTableInsert,
   UserTableRow,
@@ -315,7 +320,10 @@ export const createComment = async (
 export const createItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    itemData: ItemTableInsert & {
+      item_division_id_list: string[];
+      item_level_three_description?: string;
+    };
     itemDescription: {
       description: string;
       withUoM: boolean;
@@ -337,7 +345,10 @@ export const createItem = async (
 export const updateItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    itemData: ItemTableInsert & { item_division_id_list: string[] };
+    itemData: ItemTableInsert & {
+      item_division_id_list: string[];
+      item_level_three_description?: string;
+    };
     toAdd: ItemForm["descriptions"];
     toUpdate: ItemDescriptionTableUpdate[];
     toRemove: { fieldId: string; descriptionId: string }[];
@@ -463,6 +474,7 @@ export const createRequest = async (
       ) {
         if (field.field_type === "FILE") {
           const fileResponse = responseValue as File;
+
           const uploadId = `${field.field_id}${
             field.field_section_duplicatable_id
               ? `_${field.field_section_duplicatable_id}`
@@ -944,34 +956,6 @@ export const createServiceScopeChoice = async (
   return data;
 };
 
-// Create ticket
-export const createTicket = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requester: string;
-    category: string;
-    title: string;
-    description: string;
-  }
-) => {
-  const { requester, category, title, description } = params;
-
-  const { data, error } = await supabaseClient
-    .rpc("create_ticket", {
-      input_data: {
-        requester,
-        category: category.toUpperCase(),
-        title,
-        description,
-      },
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data as TicketTableRow;
-};
-
 // Create ticket comment
 export const createTicketComment = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1055,7 +1039,6 @@ export const createTeamMemo = async (
   const { data, error } = await supabaseClient.rpc("create_memo", {
     input_data,
   });
-
   if (error) throw Error;
 
   return data as MemoTableRow;
@@ -1068,6 +1051,12 @@ const processAllMemoLineItems = async (
   const processedLineItems = await Promise.all(
     lineItemData.map(async (lineItem) => {
       const memo_line_item_id = uuidv4();
+
+      if (lineItem.memo_line_item_attachment_caption) {
+        lineItem.memo_line_item_attachment_caption = escapeQuotes(
+          lineItem.memo_line_item_attachment_caption
+        );
+      }
 
       if (lineItem.memo_line_item_attachment) {
         const bucket = "MEMO_ATTACHMENTS";
@@ -1085,7 +1074,11 @@ const processAllMemoLineItems = async (
         };
       }
 
-      return { ...lineItem, memo_line_item_id };
+      return {
+        ...lineItem,
+        memo_line_item_content: escapeQuotes(lineItem.memo_line_item_content),
+        memo_line_item_id,
+      };
     })
   );
 
@@ -1143,7 +1136,6 @@ export const agreeToMemo = async (
 };
 
 // create reference memo
-// update memo
 export const createReferenceMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: ReferenceMemoType
@@ -1166,7 +1158,9 @@ export const createReferenceMemo = async (
   const memoLineItemTableValues = updatedLineItemData
     .map(
       (lineItem, lineItemIndex) =>
-        `('${lineItem.memo_line_item_id}', '${lineItem.memo_line_item_content}', '${lineItemIndex}', '${memoId}')`
+        `('${lineItem.memo_line_item_id}', '${escapeQuotes(
+          lineItem.memo_line_item_content
+        )}', '${lineItemIndex}', '${memoId}')`
     )
     .join(",");
 
@@ -1178,7 +1172,9 @@ export const createReferenceMemo = async (
     .map(
       ({ memo_line_item_id, memo_line_item_attachment: lineItemAttachment }) =>
         `('${lineItemAttachment?.memo_line_item_attachment_name}', '${
-          lineItemAttachment?.memo_line_item_attachment_caption ?? ""
+          escapeQuotes(
+            `${lineItemAttachment?.memo_line_item_attachment_caption}`
+          ) ?? ""
         }', '${
           lineItemAttachment?.memo_line_item_attachment_storage_bucket
         }', '${
@@ -1278,6 +1274,304 @@ export const createValidID = async (
   const { data, error } = await supabaseClient.rpc("create_user_valid_id", {
     input_data: params,
   });
+  if (error) throw error;
+  return data;
+};
+
+// Create ticket
+export const createTicket = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    category: string;
+    ticketFormValues: CreateTicketFormValues;
+  }
+) => {
+  const { category, teamMemberId, ticketFormValues } = params;
+
+  const ticketId = uuidv4();
+
+  // get request response
+  const requestResponseInput: TicketResponseTableInsert[] = [];
+  for (const section of ticketFormValues.ticket_sections) {
+    for (const field of section.ticket_section_fields) {
+      let responseValue = field.ticket_field_response;
+      if (responseValue) {
+        if (field.ticket_field_type === "FILE") {
+          const fileResponse = responseValue as File;
+          const uploadId = `${field.ticket_field_id}${
+            section.ticket_section_id
+              ? `_${field.ticket_field_section_id}___${fileResponse.name}___`
+              : ""
+          }`;
+          if (fileResponse["type"].split("/")[0] === "image") {
+            responseValue = await uploadImage(supabaseClient, {
+              id: uploadId,
+              image: fileResponse,
+              bucket: "TICKET_ATTACHMENTS",
+            });
+          } else {
+            responseValue = await uploadFile(supabaseClient, {
+              id: uploadId,
+              file: fileResponse,
+              bucket: "TICKET_ATTACHMENTS",
+            });
+          }
+        }
+        const response = {
+          ticket_response_value: JSON.stringify(responseValue),
+          ticket_response_duplicatable_section_id:
+            section.field_section_duplicatable_id ?? null,
+          ticket_response_field_id: field.ticket_field_id,
+          ticket_response_ticket_id: ticketId,
+        };
+        requestResponseInput.push(response);
+      }
+    }
+  }
+
+  const responseValues = requestResponseInput
+    .map((response) => {
+      const escapedResponse = response.ticket_response_value.replace(
+        /'/g,
+        "''"
+      );
+      return `('${escapedResponse}',${
+        response.ticket_response_duplicatable_section_id
+          ? `'${response.ticket_response_duplicatable_section_id}'`
+          : "NULL"
+      },'${response.ticket_response_field_id}','${
+        response.ticket_response_ticket_id
+      }')`;
+    })
+    .join(",");
+
+  // create ticket
+  const { data, error } = await supabaseClient
+    .rpc("create_ticket", {
+      input_data: {
+        category,
+        ticketId,
+        teamMemberId,
+        responseValues,
+      },
+    })
+    .select()
+    .single();
+  if (error) throw error;
+
+  return data as TicketTableRow;
+};
+
+// Edit ticket
+export const editTicket = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketId: string;
+    ticketFormValues: CreateTicketFormValues;
+  }
+) => {
+  const { ticketId, ticketFormValues } = params;
+
+  // get request response
+  const requestResponseInput: TicketResponseTableInsert[] = [];
+  for (const section of ticketFormValues.ticket_sections) {
+    for (const field of section.ticket_section_fields) {
+      let responseValue = field.ticket_field_response;
+      if (responseValue) {
+        if (
+          field.ticket_field_type === "FILE" &&
+          typeof responseValue !== "string"
+        ) {
+          const fileResponse = responseValue as File;
+          const uploadId = `${field.ticket_field_id}${
+            section.ticket_section_id
+              ? `_${field.ticket_field_section_id}___${fileResponse.name}___`
+              : ""
+          }`;
+          if (fileResponse["type"].split("/")[0] === "image") {
+            responseValue = await uploadImage(supabaseClient, {
+              id: uploadId,
+              image: fileResponse,
+              bucket: "TICKET_ATTACHMENTS",
+            });
+          } else {
+            responseValue = await uploadFile(supabaseClient, {
+              id: uploadId,
+              file: fileResponse,
+              bucket: "TICKET_ATTACHMENTS",
+            });
+          }
+        }
+        const response = {
+          ticket_response_value: JSON.stringify(responseValue),
+          ticket_response_duplicatable_section_id:
+            section.field_section_duplicatable_id ?? null,
+          ticket_response_field_id: field.ticket_field_id,
+          ticket_response_ticket_id: ticketId,
+        };
+        requestResponseInput.push(response);
+      }
+    }
+  }
+
+  const responseValues = requestResponseInput
+    .map((response) => {
+      const escapedResponse = response.ticket_response_value.replace(
+        /'/g,
+        "''"
+      );
+      return `('${escapedResponse}',${
+        response.ticket_response_duplicatable_section_id
+          ? `'${response.ticket_response_duplicatable_section_id}'`
+          : "NULL"
+      },'${response.ticket_response_field_id}','${
+        response.ticket_response_ticket_id
+      }')`;
+    })
+    .join(",");
+
+  // edit ticket
+  const { error } = await supabaseClient.rpc("edit_ticket", {
+    input_data: {
+      ticketId,
+      responseValues,
+    },
+  });
+  if (error) throw error;
+  else return true;
+};
+
+// Create custom CSI
+export const createCustomCSI = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemName: string;
+    csiCodeDescription: string;
+    csiCode: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("create_custom_csi", {
+    input_data: {
+      ...params,
+    },
+  });
+  if (error) throw error;
+  return Boolean(data);
+};
+
+// Create item division
+export const createItemDivision = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    itemId: string;
+    divisionId: string;
+  }
+) => {
+  const { divisionId, itemId } = params;
+  const { data, error } = await supabaseClient
+    .from("item_division_table")
+    .insert({ item_division_value: divisionId, item_division_item_id: itemId });
+  if (error) throw error;
+  return data;
+};
+
+// Create equipment
+export const createEquipment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentData: EquipmentTableInsert;
+    category: string;
+  }
+) => {
+  const { equipmentData, category } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_table")
+    .insert(equipmentData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_category: category,
+  };
+};
+
+// Create equipment description
+export const createEquipmentDescription = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentDescriptionData: EquipmentDescriptionTableInsert;
+    brand: string;
+    model: string;
+  }
+) => {
+  const { equipmentDescriptionData, brand, model } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_table")
+    .insert(equipmentDescriptionData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_description_brand: brand,
+    equipment_description_model: model,
+  };
+};
+
+// Create equipment part
+export const createEquipmentPart = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentPartData: EquipmentPartTableInsert;
+    name: string;
+    brand: string;
+    model: string;
+    uom: string;
+    category: string;
+  }
+) => {
+  const { equipmentPartData, name, brand, model, uom, category } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_part_table")
+    .insert(equipmentPartData)
+    .select()
+    .single();
+  if (error) throw error;
+
+  return {
+    ...data,
+    equipment_part_general_name: name,
+    equipment_part_brand: brand,
+    equipment_part_model: model,
+    equipment_part_unit_of_measurement: uom,
+    equipment_part_component_category: category,
+  };
+};
+
+// create ped part from ticket request
+export const createPedPartFromTicketRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    equipmentName: string;
+    partName: string;
+    partNumber: string;
+    brand: string;
+    model: string;
+    unitOfMeasure: string;
+    category: string;
+    teamMemberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "create_ped_part_from_ticket_request",
+    {
+      input_data: params,
+    }
+  );
   if (error) throw error;
   return data;
 };

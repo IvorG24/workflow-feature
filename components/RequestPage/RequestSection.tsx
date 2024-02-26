@@ -7,6 +7,7 @@ type RequestSectionProps = {
   isFormslyForm?: boolean;
   isOnlyWithResponse?: boolean;
   isAnon?: boolean;
+  index?: number;
 };
 
 const RequestSection = ({
@@ -14,11 +15,12 @@ const RequestSection = ({
   isFormslyForm = false,
   isOnlyWithResponse = false,
   isAnon = false,
+  index = 0,
 }: RequestSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
-        {section.section_name}
+        {section.section_name} {section.section_is_duplicatable && index ? index : ""}
       </Title>
       <Space h="xl" />
       <Stack spacing="sm">

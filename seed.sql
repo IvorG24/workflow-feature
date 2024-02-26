@@ -60,7 +60,7 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('aa165aa0-c210-4486-b075-c8eb4c2e2233', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'e45676a5-361e-4d6f-a773-d69f9815fea1');
 
 INSERT INTO team_group_table (team_group_id, team_group_name, team_group_team_id) VALUES
-('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'REQUESTER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Requisition 
+('9f7de2eb-4073-43e6-b662-d688ccba4b26', 'REQUESTER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Item 
 ('51277fb9-7f1f-4c80-a122-c3fea3cf3ed7', 'PURCHASER', 'a5a28977-6956-45c1-a624-b9e90911502e'), -- Quotation
 ('72ef0fd8-72ef-487d-9b88-ee61ddc3f275', 'WAREHOUSE', 'a5a28977-6956-45c1-a624-b9e90911502e'); -- Sourced Item , Release Order , Transfer Receipt, Receiving Inspecting Report
 
@@ -94,7 +94,10 @@ INSERT INTO team_project_member_table (team_member_id, team_project_id) VALUES
 INSERT INTO form_table (form_id, form_name, form_description, form_app, form_team_member_id, form_is_formsly_form, form_is_hidden, form_is_for_every_member, form_is_disabled, form_type, form_sub_type) VALUES
 ('b8408545-4354-47d0-a648-928c6755a94b', 'All Fields', 'test all types of fields', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, false, NULL, NULL),
 ('337658f1-0777-45f2-853f-b6f20551712e', 'Duplicatable Sections', 'test field duplicatable sections', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', false, false, true, false, NULL, NULL),
-('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Requisition', 'formsly premade Requisition form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, 'Purchase', 'Material'),
+('d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'Item', 'formsly premade Item form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, 'Purchase', 'Material'),
+('c95dc9cd-d84a-474c-b438-9507245765c5', 'PED Part', 'formsly premade PED Part form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
+('44525763-2de2-43b4-9b95-137a0721cdb2', 'PED Equipment', 'formsly premade PED Equipment form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
+('3bbb41d9-ada7-41a0-9937-4af198481c1a', 'PED Consumable', 'formsly premade PED Consumable form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
 ('e5062660-9026-4629-bc2c-633826fdaa24', 'Sourced Item', 'formsly premade Sourced Item form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
 ('a732196f-9779-45e2-85fa-7320397e5b0a', 'Quotation', 'formsly premade Quotation form', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
 ('5782d70a-5f6b-486c-a77f-401066afd005', 'Receiving Inspecting Report', 'These items were not available during this Requsitions sourcing step.', 'REQUEST', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', true, false, false, false, NULL, NULL),
@@ -112,9 +115,21 @@ INSERT INTO section_table (section_id, section_name, section_order, section_is_d
 ('8ef2c6a0-797d-4e36-8246-cfa0f783afb5', 'Normal Section 2', 2, false, '337658f1-0777-45f2-853f-b6f20551712e'),
 ('d8465119-a0ef-43e8-9feb-0373b7d46b29', 'Duplicatable Section 3', 3, true, '337658f1-0777-45f2-853f-b6f20551712e'),
 
--- Requisition
+-- Item
 ('ee34bb67-fffa-4690-aaf2-7ae371b21e88', 'Main', 1, false, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
 ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'Item', 2, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'),
+
+-- PED Part
+('88012978-96a6-45dd-a0c4-d94603612f12', 'Header', 1, false, 'c95dc9cd-d84a-474c-b438-9507245765c5'),
+('7d9a0c47-540f-415d-885b-e9c5adb2b2a8', 'Item', 2, true, 'c95dc9cd-d84a-474c-b438-9507245765c5'),
+
+-- PED Equipment
+('ad44c2b7-0056-4341-8caf-35d8a6b5efe5', 'Header', 1, false, '44525763-2de2-43b4-9b95-137a0721cdb2'),
+('0235bd54-7417-420a-b486-a1c4ac0763c0', 'Equipment', 2, true, '44525763-2de2-43b4-9b95-137a0721cdb2'),
+
+-- PED Consumable
+('7cc28baf-ec0f-4611-aa8a-4b57010d68fb', 'Header', 1, false, '3bbb41d9-ada7-41a0-9937-4af198481c1a'),
+('b232d5a5-6212-405e-8d35-5f9127dca1aa', 'Item', 2, true, '3bbb41d9-ada7-41a0-9937-4af198481c1a'),
 
 -- Sourced Item
 ('65d2d36a-7e69-4044-9f74-157bc753bd59', 'ID', 1, false, 'e5062660-9026-4629-bc2c-633826fdaa24'),
@@ -180,7 +195,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('0b4a3e53-629a-49d8-80e6-bfe1f31c0510', 'Time field', 'TIME', 10, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false, false),
 -- ('5ed0f5c1-a97d-465b-ade4-758a5ae351a2', 'Slider field', 'SLIDER', 11, 'd8465119-a0ef-43e8-9feb-0373b7d46b29', false, false),
 
--- Requisition 
+-- Item 
 ('51b6da24-3e28-49c4-9e19-5988b9ad3909', 'Requesting Project', 'DROPDOWN', 1, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('6882287e-57c7-42ae-a672-b0d6c8979b01', 'Type', 'DROPDOWN', 2, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
 ('46dc154d-1c35-4a3c-9809-698b56d17faa', 'Date Needed', 'DATE', 3, 'ee34bb67-fffa-4690-aaf2-7ae371b21e88', true, false),
@@ -197,15 +212,64 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('b69182a9-dc96-472b-aa31-b1f2f92ec78b', 'Level 2 Minor Group Description', 'TEXT', 13, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', true, true),
 ('159c86c3-dda6-4c8a-919f-50e1674659bd', 'Preferred Supplier', 'DROPDOWN', 14, '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', false, false),
 
+-- PED Part 
+('b051ce7e-980e-4bbc-ad78-3b2c058e49cc', 'Requesting Project', 'DROPDOWN', 1, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('c3f18480-353d-4677-94e5-ca2a9d065f03', 'Category', 'DROPDOWN', 2, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('fec1de43-c4bc-4c0d-9f6d-41f8146b14a5', 'Type of Order', 'DROPDOWN', 3, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('972caae1-49fa-404f-b518-6b0e9bbe312d', 'Equipment Name', 'DROPDOWN', 4, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('e35835b4-c107-4710-86d5-11b6059e221c', 'Equipment Property Number', 'DROPDOWN', 5, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('1e0dd682-452d-4a0a-b82d-4f34ae5385a1', 'Equipment Brand', 'TEXT', 6, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
+('0c47fc2e-b326-4b22-9add-5c03c3c5d2f3', 'Equipment Model', 'TEXT', 7, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
+('eff5d1ab-c0bc-4b97-814d-d1a900dc6fc2', 'Equipment Serial No.', 'TEXT', 8, '88012978-96a6-45dd-a0c4-d94603612f12', true, true),
+('124fce5f-e848-422a-a502-df71f3f14e8a', 'Purpose Type', 'DROPDOWN', 9, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('a9928556-1a99-4d5f-b4b6-93eafb675a50', 'Purpose Description', 'TEXT', 10, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+('95708a5f-655e-4b8e-af2c-7eb577a5168c', 'Jira ID', 'TEXT', 11, '88012978-96a6-45dd-a0c4-d94603612f12', true, false),
+
+('7f3593fe-926a-485a-a2ee-fe0a7a7dfbc4', 'General Item Name', 'DROPDOWN', 12, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('193fffe8-7489-41f4-8b3c-67dac285d9b4', 'Component Category', 'DROPDOWN', 13, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('50e90c96-d157-4dc3-86b0-6650fff910a1', 'Brand', 'DROPDOWN', 14, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('88bd7505-6211-4052-acf9-a37b358e2440', 'Model', 'DROPDOWN', 15, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('65b88de2-f6bd-4e6d-8d33-b5a4bd69555c', 'Part Number', 'DROPDOWN', 16, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('346cee79-f6f4-406e-8633-812ead35d2ed', 'Quantity', 'NUMBER', 17, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, false),
+('545eafd4-3e97-4b2f-9a40-add2617cfefc', 'Unit of Measure', 'TEXT', 18, '7d9a0c47-540f-415d-885b-e9c5adb2b2a8', true, true),
+
+-- PED Equipment
+('197f0e69-39f2-4f51-b49a-8c383a1a325e', 'Requesting Project', 'DROPDOWN', 1, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
+('289cea0b-f295-476d-a6f6-83469deffa0c', 'Request Type', 'DROPDOWN', 2, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
+('6de3b943-470a-474f-87e5-35c01f9cf8c4', 'Equipment Loading Form', 'FILE', 3, 'ad44c2b7-0056-4341-8caf-35d8a6b5efe5', true, false),
+
+('662b6f69-a534-4837-b64a-4599a9df4405', 'Category', 'DROPDOWN', 4, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('2c715814-fecf-448e-9b78-460d8a536714', 'Equipment Name', 'DROPDOWN', 5, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('ce9d94a2-bfef-48ea-977a-b3e1918ac90e', 'Brand', 'DROPDOWN', 6, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('6bd08eb7-f872-4475-8323-4eca2abf4264', 'Model', 'DROPDOWN', 7, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('c62daaad-909d-45a7-8c1e-6aed470043fa', 'Capacity', 'NUMBER', 8, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('23532c68-1115-4a6f-a167-dfdec1863543', 'Capacity Unit of Measure', 'DROPDOWN', 9, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('ecd5f3c3-75a4-475e-941d-ae294f3e512d', 'Date Needed', 'DATE', 10, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('93b5fd9c-f9c1-4a99-b10b-253d36eedc2a', 'Purpose', 'TEXT', 11, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+
+-- PED Consumable
+('b93e3160-4f07-4b70-98bc-f84a372bd54c', 'Requesting Project', 'DROPDOWN', 1, '7cc28baf-ec0f-4611-aa8a-4b57010d68fb', true, false),
+('cf80d363-be97-4fb3-a91f-4fb9a0616b67', 'Date Needed', 'DATE', 2, '7cc28baf-ec0f-4611-aa8a-4b57010d68fb', true, false),
+('20d9159a-c410-4e4b-8c21-c02e44d8f1e9', 'Request Type', 'DROPDOWN', 3, '7cc28baf-ec0f-4611-aa8a-4b57010d68fb', true, false),
+('218b70f8-7a3b-49a4-91c8-04567500812f', 'Purpose', 'TEXT', 4, '7cc28baf-ec0f-4611-aa8a-4b57010d68fb', true, false),
+
+('53df2b33-9d35-4a15-b13d-431940738c68', 'Equipment Property Number', 'DROPDOWN', 5, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, false),
+('5f8d6c56-cac1-4756-8419-8aa8998bf8ed', 'Equipment Brand', 'TEXT', 6, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, true),
+('5eed4963-e011-4a1e-a03c-a901636d0dfa', 'Equipment Model', 'TEXT', 7, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, true),
+('9638fdb6-4f8a-41cf-bf26-68b94f479a51', 'Equipment Serial No.', 'TEXT', 8, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, true),
+('7971912e-bdea-4820-9e1d-ff501296a62c', 'General Name', 'DROPDOWN', 9, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, false),
+('c81706d5-bebf-4ffd-813b-71f57b219de5', 'Unit of Measure', 'TEXT', 10, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, true),
+('137bbd25-2f65-4b65-86e7-7f5726857084', 'Quantity', 'NUMBER', 11, 'b232d5a5-6212-405e-8d35-5f9127dca1aa', true, false),
+
 -- Sourced Item 
-('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Requisition ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),
+('e01d6fc1-48c3-4abb-b605-841f73f83f9a', 'Item ID', 'LINK', 1, '65d2d36a-7e69-4044-9f74-157bc753bd59', true, true),
 
 ('bdaa7b68-8ca3-443c-999c-3adec9339709', 'Item', 'DROPDOWN', 2, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 ('8c15e0f0-f360-4826-a684-5ab4ecb52009', 'Quantity', 'NUMBER', 3, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 ('4982e986-865c-4574-9767-4951b4f6c155', 'Source Project', 'DROPDOWN', 4, '2e7e0b5f-cbf4-4340-af1a-18a16fd3a028', true, false),
 
 -- Quotation 
-('df0cb109-e34d-498f-ac51-af2139628ac0', 'Requisition ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
+('df0cb109-e34d-498f-ac51-af2139628ac0', 'Item ID', 'LINK', 1, '7d6649c2-316b-4895-86eb-120def2e2f33', true, true),
 
 ('2a43aedd-017c-4675-ad4c-00debbac7050', 'Supplier', 'DROPDOWN', 2, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
 ('39ea4ce9-7c78-4470-b3ff-cfd13429d6c5', 'Supplier Quotation', 'FILE', 3, '991d9830-ae1b-4c14-bdba-6167b64f50f7', true, false),
@@ -229,7 +293,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('5dfbc04b-6f2d-4b55-818c-8f7031cdcdc2', 'Quantity', 'NUMBER', 19, 'ee8a3bc7-4253-44f7-bd7c-53b0e8871601', true, false),
 
 -- Receiving Inspecting Report 
-('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Requisition ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
+('1df80eb4-b171-4bbf-925c-ae09b7d09bad', 'Item ID', 'LINK', 1, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('9d69d6fe-8019-416b-b4e6-41ec71792cb4', 'Quotation ID', 'LINK', 2, 'b79c9a66-f112-4bfa-8d5c-88267be24fd8', true, true),
 ('18975198-02d3-49b4-af40-232c2c915ba7', 'DR', 'FILE', 3, '39831fe4-00f3-4b5e-b840-aae8f1469841', true, false),
 ('6317b506-816f-4ce4-a083-b9a94c900446', 'SI', 'FILE', 4, '39831fe4-00f3-4b5e-b840-aae8f1469841', false, false),
@@ -239,7 +303,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('d440c116-830b-4339-bcf8-ca49aba9c395', 'Receiving Status', 'TEXT', 8, '00341355-1ece-47e6-88a2-060fbab8b11a', true, true), 
 
 -- Release Order 
-('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Requisition ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
+('2075f549-bcbf-4719-ae44-ec38b2fab79f', 'Item ID', 'LINK', 1, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
 ('9fe04f40-a250-4a16-9e6a-b6c8a0b5a4c1', 'Sourced Item ID', 'LINK', 2, '1416e947-3491-436f-9b20-f0cd705607d0', true, true),
 ('3a8b66dc-2853-467a-a82b-72dd9bc29b40', 'Item', 'DROPDOWN', 3, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
 ('4050bfbe-0cbe-443b-a4c7-3851dba2d7c8', 'Quantity', 'NUMBER', 4, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, false),
@@ -247,7 +311,7 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('2ea7acb6-37a4-4ced-b5d2-b944c3a1de37', 'Source Project', 'TEXT', 6, '0d630b15-3c88-49e0-b588-1e60dd839bcb', true, true), 
 
 -- Transfer Receipt 
-('c336e79e-4a89-49f7-92c3-6de1dddc977b', 'Requisition ID', 'LINK', 1, '47b11674-d641-4680-834e-7fd48f43696b', true, true),
+('c336e79e-4a89-49f7-92c3-6de1dddc977b', 'Item ID', 'LINK', 1, '47b11674-d641-4680-834e-7fd48f43696b', true, true),
 ('0778f0ba-bb0f-4110-b19f-38d999d8e8f1', 'Sourced Item ID', 'LINK', 2, '47b11674-d641-4680-834e-7fd48f43696b', true, true),
 ('a4004713-7b1d-436f-a765-a8da3912f83f', 'Release Order ID', 'LINK', 3, '47b11674-d641-4680-834e-7fd48f43696b', true, true),
 ('b4e8eda9-a83b-4e56-8455-ab2e32db93f6', 'Transfer Shipment', 'FILE', 4, 'c3d7f001-32ce-4e44-8677-7d2dd16c45dd', true, false),
@@ -318,11 +382,27 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 ('52da4c49-c855-4130-bb6f-c70f47bf21e4', 'Multiselect 3', 3, '5ef54cb5-f694-4f4e-aee5-ec228dec1da4'),
 -- ('bab0a354-4a06-4bb2-a8a2-dcdbb7f68fde', '[1,10]', 1, '5ed0f5c1-a97d-465b-ade4-758a5ae351a2');
 
--- Requisition 
+-- Item 
 ('f97eb24f-53b2-452b-966e-9a2f1dfd812d', 'Cash Purchase - Advance Payment', 1, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('6ce7fa3a-9e85-4ab1-9f3b-de931071fa26', 'Cash Purchase - Local Purchase', 2, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('a73672df-03ea-4bc8-b904-366044819188', 'Order to Purchase', 3, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
 ('6703be59-09bb-4ffa-b2f9-aee10ebae64d', 'Rental', 4, '6882287e-57c7-42ae-a672-b0d6c8979b01'),
+
+-- PED Part 
+('0c3eede2-b93a-4e3c-b216-d0a2b790d4d0', 'Spare Part', 1, '124fce5f-e848-422a-a502-df71f3f14e8a'),
+('eb71b0ca-c3c5-41c2-baa0-a24231681e42', 'Tire', 2, '124fce5f-e848-422a-a502-df71f3f14e8a'),
+('bd789447-9650-42c0-b83e-35885386f862', 'Battery', 3, '124fce5f-e848-422a-a502-df71f3f14e8a'),
+
+('e75bff75-070d-4b96-afe7-181a9739d4b6', 'Single', 1, 'fec1de43-c4bc-4c0d-9f6d-41f8146b14a5'),
+('731a9bf4-1359-4616-9cf1-6b663317b331', 'Bulk', 2, 'fec1de43-c4bc-4c0d-9f6d-41f8146b14a5'),
+
+-- PED Equipment 
+('5bc48119-b2c2-4041-a6ec-59879a508bc9', 'In-house', 1, '289cea0b-f295-476d-a6f6-83469deffa0c'),
+('aa1bf11f-3858-48e2-bb20-319aed587b6b', 'Rental', 2, '289cea0b-f295-476d-a6f6-83469deffa0c'),
+
+-- PED Consumable 
+('78c30d2c-6704-4031-b79b-69829915a384', 'Single', 1, '20d9159a-c410-4e4b-8c21-c02e44d8f1e9'),
+('aee19eaf-619a-4d1c-b7fa-40346b26ba17', 'Bulk', 2, '20d9159a-c410-4e4b-8c21-c02e44d8f1e9'),
 
 -- Quotation 
 ('345214ae-9523-4f81-b3c1-d118f7735999', 'Email', 1, '039f5c31-6e9c-42ae-aa27-21c0cba12560'),
@@ -365,7 +445,10 @@ INSERT INTO form_team_group_table (form_team_group_id, form_id, team_group_id) V
 ('8fa70223-807d-41eb-898b-31f16a34fb4f', '5782d70a-5f6b-486c-a77f-401066afd005', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('a21fd316-1227-46fa-858f-d1ce8173f962', '391c1b8c-db12-42ff-ad4a-4ea7680243d7', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
 ('2b3806c6-c61c-46d4-a56e-eb563e2fc78c', '8e173d92-c346-4fb5-8ef2-490105e19263', '72ef0fd8-72ef-487d-9b88-ee61ddc3f275'),
-('5aa860bf-95d3-463e-901b-a552ec2ae171', '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', '9f7de2eb-4073-43e6-b662-d688ccba4b26');
+('5aa860bf-95d3-463e-901b-a552ec2ae171', '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('a0bb76ab-3aaf-4b40-998f-3316a28584b5', 'c95dc9cd-d84a-474c-b438-9507245765c5', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('adc43a8f-f581-4f09-8d7c-dd3ee0171fc4', '44525763-2de2-43b4-9b95-137a0721cdb2', '9f7de2eb-4073-43e6-b662-d688ccba4b26'),
+('488404c0-048f-462c-bc8e-85e6fbe2f7e5', '3bbb41d9-ada7-41a0-9937-4af198481c1a', '9f7de2eb-4073-43e6-b662-d688ccba4b26');
 
 INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, signer_order, signer_form_id, signer_team_member_id) VALUES
 ('dd0149ad-9a49-4480-b7fa-62b55df3134e', TRUE, 'Approved', 1, 'b8408545-4354-47d0-a648-928c6755a94b', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
@@ -377,7 +460,10 @@ INSERT INTO signer_table (signer_id, signer_is_primary_signer, signer_action, si
 ('37f8b92c-9e9e-4e97-a6f4-f2f55a7f1a87', TRUE, 'Approved', 1, '5782d70a-5f6b-486c-a77f-401066afd005', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('2c4504a3-6b38-42bb-af23-d489967205e3', TRUE, 'Approved', 1, '391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
 ('594abee5-01f1-4d18-ab56-8b763b3d7a5a', TRUE, 'Approved', 1, '8e173d92-c346-4fb5-8ef2-490105e19263', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
-('defd8879-a9e5-42dc-b558-bb36871e1cbb', TRUE, 'Approved', 1, '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'd9c6c738-8a60-43de-965f-f1f666da1639');
+('defd8879-a9e5-42dc-b558-bb36871e1cbb', TRUE, 'Approved', 1, '7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
+('7f7dc9fc-b3f6-4d68-8c05-6c973a9dab2d', TRUE, 'Approved', 1, 'c95dc9cd-d84a-474c-b438-9507245765c5', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
+('8e216b3a-8994-42a5-b253-210cade821a8', TRUE, 'Approved', 1, '44525763-2de2-43b4-9b95-137a0721cdb2', 'd9c6c738-8a60-43de-965f-f1f666da1639'),
+('20f298f7-4bb8-4e65-9d30-2ceb5d21b45c', TRUE, 'Approved', 1, '3bbb41d9-ada7-41a0-9937-4af198481c1a', 'd9c6c738-8a60-43de-965f-f1f666da1639');
 
 INSERT INTO request_table (request_id, request_team_member_id, request_form_id) VALUES
 ('45820673-8b88-4d15-a4bf-12d67f140929', 'eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'b8408545-4354-47d0-a648-928c6755a94b'),
@@ -470,7 +556,266 @@ INSERT INTO notification_table (notification_id, notification_content, notificat
 ('84b561a3-2a15-4c2d-b681-dc70e0695b50', 'Test notification reject', TRUE, '/', 'REJECT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 ('fd0a8148-59b2-49e1-8cb7-fd9210433040', 'Test notification comment', TRUE, '/', 'COMMENT', 'REQUEST', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40');
 
-INSERT INTO memo_format_table (memo_format_header_margin_top, memo_format_header_margin_right, memo_format_header_margin_bottom, memo_format_header_margin_left, memo_format_header_logo_position,
-    memo_format_body_margin_top, memo_format_body_margin_right, memo_format_body_margin_bottom, memo_format_body_margin_left,
-    memo_format_footer_margin_top, memo_format_footer_margin_right, memo_format_footer_margin_bottom, memo_format_footer_margin_left) 
-VALUES ('12', '12', '16', '12', 'Right','2', '12', '2', '12','16', '12', '8', '12');
+INSERT INTO memo_format_section_table(memo_format_section_id, memo_format_section_margin_top, memo_format_section_margin_right, memo_format_section_margin_bottom, memo_format_section_margin_left, memo_format_section_name) VALUES
+('69291b3f-dae2-4c67-b217-0b4ed17dd083','12', '12', '24', '12', 'header'),
+('59c71083-f06a-4ce1-aa4b-12526186da7e', '0', '12', '0', '12', 'body'),
+('16435f18-7ad7-4a44-af87-a6a290787fdc', '24', '12', '12', '12', 'footer');
+
+INSERT INTO memo_format_subsection_table(memo_format_subsection_name, memo_format_subsection_section_id, memo_format_subsection_text_font_size) VALUES
+('left', '69291b3f-dae2-4c67-b217-0b4ed17dd083', '16'),
+('center', '69291b3f-dae2-4c67-b217-0b4ed17dd083', '16'),
+('right', '69291b3f-dae2-4c67-b217-0b4ed17dd083', '16'),
+('left', '16435f18-7ad7-4a44-af87-a6a290787fdc', '16'),
+('center', '16435f18-7ad7-4a44-af87-a6a290787fdc', '16'),
+('right', '16435f18-7ad7-4a44-af87-a6a290787fdc', '16');
+
+INSERT INTO query_table (query_name, query_sql) VALUES
+('Request average time from creation to resolved', 'SELECT team_project_name, AVG(request_status_date_updated-request_date_created) AS average_time_to_update FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NOT NULL GROUP BY team_project_name;'),
+('Stale requests by project', 'SELECT team_project_name, COUNT(*) AS number_of_stale_requests FROM request_table AS rt JOIN team_project_table AS tpt ON rt.request_project_id = tpt.team_project_id WHERE request_status_date_updated IS NULL GROUP BY team_project_name;');
+
+INSERT INTO form_sla_table (form_sla_hours, form_sla_form_id, form_sla_team_id) VALUES
+(0,'7368a23b-601a-4ce8-adea-30b0cb483ab2', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'800723d3-a164-4063-9e18-5fff651a96f8', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'337658f1-0777-45f2-853f-b6f20551712e', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'d13b3b0f-14df-4277-b6c1-7c80f7e7a829', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+(0,'b8408545-4354-47d0-a648-928c6755a94b', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+-- (0,'e5062660-9026-4629-bc2c-633826fdaa24', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'a732196f-9779-45e2-85fa-7320397e5b0a', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'5782d70a-5f6b-486c-a77f-401066afd005', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'391c1b8c-db12-42ff-ad4a-4ea7680243d7', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'8e173d92-c346-4fb5-8ef2-490105e19263', 'a5a28977-6956-45c1-a624-b9e90911502e'),
+-- (0,'7b529f0a-5dc5-46e4-a648-2a7c1c3615f8', 'a5a28977-6956-45c1-a624-b9e90911502e');
+
+INSERT INTO ticket_category_table (ticket_category_id, ticket_category) VALUES
+('1e9aef8b-cf84-4443-9e07-d9ad2461a301', 'General'),
+('a2cfde15-1b4a-41b2-8415-08221148ca2d', 'Feature Request'),
+('f57ced26-0b93-472f-8268-c41fbd7e010b', 'Item Request'),
+('f9d44ea0-4cdb-427f-8224-bc16fd92f1be', 'Request Custom CSI'),
+('ea67c627-6975-4e01-9c2d-445ae61fa144', 'Request Item CSI'),
+('f1759af2-2a07-460d-9a72-86faf8eccd85', 'Request Item Option'),
+('2df7ca37-444f-4e71-9c84-ad0d6f3e77b5', 'Incident Report for Employees'),
+('c9f373c8-09d6-46f0-92cb-5efeffd72758', 'Bug Report'),
+('3858113d-8a26-4d36-8c9a-a0e80ac657cc', 'Request PED Equipment Part');
+
+INSERT INTO ticket_section_table (ticket_section_id, ticket_section_name, ticket_section_is_duplicatable, ticket_section_category_id) VALUES
+('0db787b2-092f-4499-ab82-2c42a459c8f0', 'Request Details', false, '1e9aef8b-cf84-4443-9e07-d9ad2461a301'),
+('caac5b9c-c233-4370-b45d-37f43c73cbdb', 'Request Details', false, 'a2cfde15-1b4a-41b2-8415-08221148ca2d'),
+('2b701e68-18e5-4bd6-a966-5809ea11e236', 'Request Details', false, 'f57ced26-0b93-472f-8268-c41fbd7e010b'),
+('5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e', 'Request Details', false, 'f9d44ea0-4cdb-427f-8224-bc16fd92f1be'),
+('8b05e5e1-f521-449d-8ec5-106acd7936f6', 'Request Details', false, 'ea67c627-6975-4e01-9c2d-445ae61fa144'),
+('6031d434-e930-445a-afc3-184cf1f7ab4d', 'Item', false, 'f1759af2-2a07-460d-9a72-86faf8eccd85'),
+('a6b7c597-681f-4b2d-84c2-8bf267133fc4', 'Request Option', true, 'f1759af2-2a07-460d-9a72-86faf8eccd85'),
+('ae0991e6-e3a4-452d-ac4b-d78908b99819', 'Request Details', false, '2df7ca37-444f-4e71-9c84-ad0d6f3e77b5'),
+('222576c2-ef0b-4714-ac10-2f57d310c9f0', 'Request Details', false, 'c9f373c8-09d6-46f0-92cb-5efeffd72758'),
+('7052205e-a118-4825-993c-bb5004154051', 'Request Details', false, '3858113d-8a26-4d36-8c9a-a0e80ac657cc');
+
+INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field_type, ticket_field_is_required, ticket_field_is_read_only, ticket_field_order, ticket_field_section_id) VALUES 
+('849c0073-ec1e-4557-beed-6e930cd69c78', 'Title', 'TEXT', true, false, 1, '0db787b2-092f-4499-ab82-2c42a459c8f0'),
+('8b034462-a8d3-4649-8832-d248d94024c1', 'Description', 'TEXTAREA', true, false, 2, '0db787b2-092f-4499-ab82-2c42a459c8f0'),
+
+('2bcf2775-5a25-43fc-9422-3665e9585af0', 'Title', 'TEXT', true, false, 1, 'caac5b9c-c233-4370-b45d-37f43c73cbdb'),
+('b5ff3145-e454-40bf-a1f4-96516807c34a', 'Description', 'TEXTAREA', true, false, 2, 'caac5b9c-c233-4370-b45d-37f43c73cbdb'),
+
+('2fb7b796-2e56-48cb-b0c8-db43a6ed97c3', 'Title', 'TEXT', true, false, 1, '2b701e68-18e5-4bd6-a966-5809ea11e236'),
+('f22f1777-b776-4dbd-bd5f-a1baacd01d18', 'Description', 'TEXTAREA', true, false, 2, '2b701e68-18e5-4bd6-a966-5809ea11e236'),
+
+('c272d2d6-c652-4cb0-8aee-71cfac888b4b', 'Item Name', 'SELECT', true, false, 1, '5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e'),
+('072c4570-74ca-4629-9fd7-c7ecf5303621', 'CSI Code Description', 'TEXT', true, false, 2, '5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e'),
+('2bd89b57-6e78-4f9d-85eb-254a63929875', 'CSI Code', 'TEXT', true, false, 3, '5f3aeb4a-c5e9-4d4f-9e9b-d241d52ebe1e'),
+
+('d86cc7a1-4754-47fd-a010-4fd00f690b8c', 'Item Name', 'SELECT', true, false, 1, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('a9d21d82-423e-4b05-8a02-be6df5444b86', 'CSI Code Description', 'SELECT', true, false, 2, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('9adb2f64-6a87-4572-be6f-476af2a45b41', 'CSI Code', 'TEXT', true, true, 3, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('d6870b74-26b0-47f4-9ba6-93ea932aef3c', 'Division Description', 'TEXT', true, true, 4, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('1bddaf83-e973-4c94-b070-dbaa22cda2ff', 'Level 2 Major Group Description', 'TEXT', true, true, 5, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+('f6f1fdbd-d833-40ab-aba9-178d66250117', 'Level 2 Minor Group Description', 'TEXT', true, true, 6, '8b05e5e1-f521-449d-8ec5-106acd7936f6'),
+
+('418ee61a-e406-4e91-ae14-66e4d1c62ce6', 'Item Name', 'SELECT', true, false, 1, '6031d434-e930-445a-afc3-184cf1f7ab4d'),
+('88d1a4f2-6905-4b40-877b-25432ed1adad', 'Item Description', 'SELECT', true, false, 2, '6031d434-e930-445a-afc3-184cf1f7ab4d'),
+('bad0c5f1-c3e1-49f9-8a59-97d96eaaddc9', 'Value', 'TEXT', true, false, 3, 'a6b7c597-681f-4b2d-84c2-8bf267133fc4'),
+('b33631fb-9dcd-485b-a688-338c1f566b5a', 'Base Unit of Measurement', 'SELECT', false, false, 4, 'a6b7c597-681f-4b2d-84c2-8bf267133fc4'),
+
+('39c506f4-f58b-4fe9-8f40-64f48f75b8ce', 'Reportee', 'SELECT', true, false, 1, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
+('7fbed2f3-e9b0-4149-9271-abea4a8fefc5', 'Description of Incident', 'TEXTAREA', true, false, 2, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
+('4c1c1a20-8d8e-4058-be5b-51bf550ef9ad', 'Immediate Actions Taken', 'TEXTAREA', true, false, 3, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
+('78a2a55f-fab8-403c-bceb-e989342e1254', 'Evidence/Attachment', 'FILE', true, false, 4, 'ae0991e6-e3a4-452d-ac4b-d78908b99819'),
+
+('e88d49ee-c4eb-4b48-b0e2-bfc061bd2a03', 'What feature is being impacted?', 'TEXT', true, false, 1, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+('1964674d-817c-43e1-b180-d451a308e250', 'What Space/List/View is impacted?', 'TEXT', true, false, 2, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+('445a0329-57a2-4beb-b066-1781798c2142', 'Steps to reproduce issue?', 'TEXTAREA', true, false, 3, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+('09f90c2f-d6e0-4ed2-b169-670cf9c5691b', 'Description', 'TEXTAREA', true, false, 4, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+('c422d499-ba4c-4ef1-a36d-f9ff6d55aa68', 'Attachment', 'FILE', true, false, 5, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
+
+('880d783f-1e85-4235-b735-2f68f5761ab2', 'Equipment Name', 'SELECT', true, false, 1, '7052205e-a118-4825-993c-bb5004154051'),
+('8303a6fb-36b6-4b86-a30f-28e36f96f1ed', 'Part Name', 'SELECT', true, false, 2, '7052205e-a118-4825-993c-bb5004154051'),
+('69588c19-b150-444f-8d32-72728004f4b2', 'Part Number', 'TEXT', true, false, 3, '7052205e-a118-4825-993c-bb5004154051'),
+('e91491d0-1355-4ab4-b357-d2a76b089f9d', 'Brand', 'SELECT', true, false, 4, '7052205e-a118-4825-993c-bb5004154051'),
+('fd835fde-0b63-4a26-aa58-289e7c6c87f1', 'Model', 'SELECT', true, false, 5, '7052205e-a118-4825-993c-bb5004154051'),
+('e6d5cfba-3da0-4fad-aa74-e6ff1ff8c56c', 'Unit of Measure', 'SELECT', true, false, 6, '7052205e-a118-4825-993c-bb5004154051'),
+('82bc2aed-a7a1-470f-b81b-688b5d621cdd', 'Category', 'SELECT', true, false, 7, '7052205e-a118-4825-993c-bb5004154051');
+
+CREATE OR REPLACE FUNCTION seed_uom()
+RETURNS JSON AS $$
+  plv8.subtransaction(function(){
+    
+    const ITEM_UNIT_CHOICES = [
+      "Meter",
+      "Inch",
+      "Second",
+      "Kilogram",
+      "Ampere",
+      "Kelvin",
+      "Mole",
+      "Candela",
+      "Foot/Feet",
+      "Kilometer",
+      "Centimeter",
+      "Millimetre",
+      "Micrometer",
+      "Nanometer",
+      "Bank Cubic Meter",
+      "Square Foot/Feet",
+      "Square Kilometer",
+      "Square Meter",
+      "Square Centimeter",
+      "Hectare",
+      "Are",
+      "Cubic Centimeter",
+      "Cubic Meter",
+      "Cubic Foot/feet",
+      "Board Foot/Feet",
+      "Gallon",
+      "Quart",
+      "Teraliter",
+      "Kiloliter",
+      "Liter",
+      "Centiliter",
+      "Milliliter",
+      "Microliter",
+      "Milliampere hours",
+      "Ton",
+      "Gram",
+      "Centigram",
+      "Milligram",
+      "Microgram",
+      "Pounds",
+      "Ounce",
+      "Hertz",
+      "Kilo Hertz",
+      "Mega Hertz",
+      "Newton",
+      "Joule",
+      "MegaPascal",
+      "Pascal",
+      "Watt",
+      "Coulomb",
+      "Volt",
+      "Farad",
+      "Ohm",
+      "Siemens",
+      "Weber",
+      "Tesla",
+      "Henry",
+      "Lumen",
+      "Lux",
+      "Horsepower",
+      "kiloNewton",
+      "Bit",
+      "Byte",
+      "Kilobyte",
+      "Megabyte",
+      "Gigabyte",
+      "Terabyte",
+      "Petabyte",
+      "Exabyte",
+      "Zettabyte",
+      "Yottabyte",
+      "Rotation Per Minute",
+      "Mega Pixel",
+      "Assembly",
+      "Bag",
+      "Batch",
+      "Box",
+      "Bottle",
+      "Bucket",
+      "Bundle",
+      "Can",
+      "Cart",
+      "Carton",
+      "Cartridge",
+      "Case",
+      "Cycle",
+      "Hour",
+      "Day",
+      "Dozen",
+      "Drum",
+      "Each",
+      "Elf",
+      "Kit",
+      "Linear Foot/feet",
+      "LM/S",
+      "Month",
+      "Week",
+      "Year",
+      "Pack",
+      "Pad",
+      "Pail",
+      "Pair",
+      "Panel",
+      "Piece",
+      "Pint",
+      "Ream",
+      "Roll",
+      "Sack",
+      "Set",
+      "Sheet",
+      "Trip",
+      "Tube",
+      "Unipack",
+      "Unit",
+      "Yard",
+      "Diameter Nominal",
+      "Mega Bit Per Second",
+      "Pound Per Square Inch",
+      "Square Millimeter",
+      "Cylinder",
+      "Mil/Thou",
+      "Pixel",
+      "Kilovolt",
+      "Degree",
+      "Centipoise",
+      "Kilovolt Ampere",
+      "Kilowatt",
+      "Decibel",
+      "Cubic Feet Per Minute",
+      "Blows Per Minute",
+      "Gram Per Hour",
+      "Kilocalorie",
+      "British Thermal Unit",
+      "Celsius",
+      "Percent",
+      "Parts Per Million",
+      "Meter Per Second",
+      "Cubic Meter Per Second",
+      "Microfarad",
+      "Nanofarad",
+      "Picofarad",
+      "Frames Per Second",
+      "Millimeter Of Mercury",
+      "Grams Per Square Meter",
+      "Cubic Meter Per Hour",
+      "Kiloampere",
+      "Beats Per Minute",
+      "Micron",
+      "Millimetre Per Minute",
+    ];
+
+    ITEM_UNIT_CHOICES.forEach(uom => {
+      plv8.execute(`INSERT INTO item_unit_of_measurement_table (item_unit_of_measurement, item_unit_of_measurement_team_id) VALUES ('${uom}', 'a5a28977-6956-45c1-a624-b9e90911502e')`);
+    });
+    
+ });
+$$ LANGUAGE plv8;
+SELECT seed_uom();
+DROP FUNCTION IF EXISTS seed_uom;

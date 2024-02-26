@@ -17,12 +17,14 @@ type RequestFormSectionProps = {
   sectionIndex: number;
   onRemoveSection?: (index: number) => void;
   isSectionRemovable?: boolean;
-  requisitionFormMethods?: {
+  itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
+    isSearchingSupplier?: boolean;
+    csiSearch?: (value: string, index: number) => void;
+    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -49,7 +51,7 @@ type RequestFormSectionProps = {
     onProjectSiteChange: () => void;
   };
   referenceOnly?: boolean;
-  serviceFormMethods?: {
+  servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
@@ -63,6 +65,36 @@ type RequestFormSectionProps = {
     supplierSearch?: (value: string, index: number) => void;
     isSearching?: boolean;
   };
+  pedEquipmentFormMethods?: {
+    onCategoryChange: (value: string | null, index: number) => void;
+    onProjectNameChange: (value: string | null) => void;
+    onEquipmentNameChange: (value: string | null, index: number) => void;
+    onBrandChange: (value: string | null, index: number) => void;
+  };
+  pedPartFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCategoryChange: (value: string | null) => void;
+    onEquipmentNameChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null) => void;
+    onTypeOfOrderChange: (
+      prevValue: string | null,
+      value: string | null
+    ) => void;
+    onGeneralItemNameChange: (value: string | null, index: number) => void;
+    onComponentCategoryChange: (value: string | null, index: number) => void;
+    onBrandChange: (value: string | null, index: number) => void;
+    onModelChange: (value: string | null, index: number) => void;
+    onPartNumberChange: (value: string | null, index: number) => void;
+  };
+  pedConsumableFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null, index: number) => void;
+    onRequestTypeChange: (
+      prevValue: string | null,
+      value: string | null
+    ) => void;
+    onGeneralNameChange: (value: string | null, index: number) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -70,15 +102,18 @@ const RequestFormSection = ({
   sectionIndex,
   onRemoveSection,
   isSectionRemovable,
-  requisitionFormMethods,
+  itemFormMethods,
   subconFormMethods,
   quotationFormMethods,
   rirFormMethods,
   formslyFormName = "",
   sourcedItemFormMethods,
   referenceOnly,
-  serviceFormMethods,
+  servicesFormMethods,
+  pedEquipmentFormMethods,
+  pedPartFormMethods,
   otherExpensesMethods,
+  pedConsumableFormMethods,
 }: RequestFormSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -109,15 +144,18 @@ const RequestFormSection = ({
             }}
             sectionIndex={sectionIndex}
             fieldIndex={idx}
-            requisitionFormMethods={requisitionFormMethods}
+            itemFormMethods={itemFormMethods}
             subconFormMethods={subconFormMethods}
             quotationFormMethods={quotationFormMethods}
-            serviceFormMethods={serviceFormMethods}
+            servicesFormMethods={servicesFormMethods}
             rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
             sourcedItemFormMethods={sourcedItemFormMethods}
             referenceOnly={referenceOnly}
             otherExpensesMethods={otherExpensesMethods}
+            pedEquipmentFormMethods={pedEquipmentFormMethods}
+            pedPartFormMethods={pedPartFormMethods}
+            pedConsumableFormMethods={pedConsumableFormMethods}
           />
         ))}
       </Stack>

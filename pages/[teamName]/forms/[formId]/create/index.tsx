@@ -1,9 +1,12 @@
+import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
+import CreatePEDConsumableRequestPage from "@/components/CreatePEDConsumableRequestPage/CreatePEDConsumableRequestPage";
+import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
+import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
-import CreateRequisitionRequestPage from "@/components/CreateRequisitionRequestPage/CreateRequisitionRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
 import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
 import CreateSubconRequestPage from "@/components/CreateSubconRequestPage/CreateSubconRequestPage";
@@ -23,7 +26,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           input_data: {
             formId: context.query.formId,
             userId: user.id,
-            requisitionId: context.query.requisitionId,
+            itemId: context.query.itemId,
             quotationId: context.query.quotationId,
             sourcedItemId: context.query.sourcedItemId,
             releaseOrderId: context.query.releaseOrderId,
@@ -49,7 +52,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   form: FormWithResponseType;
-  itemOptions: OptionTableRow[];
+  itemOptions?: OptionTableRow[];
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
@@ -60,23 +63,27 @@ type Props = {
     special_approver_item_list: string[];
     special_approver_signer: FormType["form_signer"][0];
   }[];
+  categoryOptions?: OptionTableRow[];
+  propertyNumberOptions?: OptionTableRow[];
 };
 
 const Page = ({
   form,
-  itemOptions,
+  itemOptions = [],
   sourceProjectList = {},
   requestProjectId = "",
   projectOptions = [],
   requestingProject = "",
   serviceOptions = [],
   specialApprover = [],
+  categoryOptions = [],
+  propertyNumberOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "Requisition":
+      case "Item":
         return (
-          <CreateRequisitionRequestPage
+          <CreateItemRequestPage
             form={form}
             itemOptions={itemOptions}
             projectOptions={projectOptions}
@@ -103,6 +110,31 @@ const Page = ({
           <CreateOtherExpensesRequestPage
             form={form}
             projectOptions={projectOptions}
+          />
+        );
+      case "PED Equipment":
+        return (
+          <CreatePEDEquipmentRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+          />
+        );
+      case "PED Part":
+        return (
+          <CreatePEDPartRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+          />
+        );
+      case "PED Consumable":
+        return (
+          <CreatePEDConsumableRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            itemOptions={itemOptions}
+            propertyNumberOptions={propertyNumberOptions}
           />
         );
       case "Sourced Item":
