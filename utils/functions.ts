@@ -416,8 +416,8 @@ export const getJiraSourcingItemCategory = (formslyItemCategory: string) => {
       label: "Construction Items",
     },
     "Minor Equipment, Furniture and Tools <50k": {
-      id: "10394",
-      label: "Construction Items",
+      id: "10396",
+      label: "Fixed Asset",
     },
     "Computer Software": {
       id: "10394",
@@ -786,6 +786,22 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
   return matchedUser ? matchedUser.jiraAccountId : null;
 };
 
+export const mostOccurringElement = (arr: string[]) => {
+  const frequencyMap: Record<string, number> = {};
+  let maxFrequency = 0;
+  let mostOccurringElement = arr[0];
+
+  arr.forEach((element) => {
+    frequencyMap[element] = (frequencyMap[element] || 0) + 1;
+    if (frequencyMap[element] > maxFrequency) {
+      maxFrequency = frequencyMap[element];
+      mostOccurringElement = element;
+    }
+  });
+
+  return mostOccurringElement;
+};
+
 export const generateJiraTicketPayload = ({
   requestId,
   requestUrl,
@@ -805,7 +821,7 @@ export const generateJiraTicketPayload = ({
     projectName.includes("CENTRAL OFFICE") ? "CENTRAL OFFICE" : projectName
   );
   const sourcingItemCategory = getJiraSourcingItemCategory(
-    JSON.parse(itemCategory[0])
+    JSON.parse(mostOccurringElement(itemCategory))
   );
 
   if (!requestingProjectSite) {
