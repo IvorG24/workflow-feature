@@ -15,7 +15,6 @@ type Props = {
     jiraLink?: string
   ) => void;
   isItemForm?: boolean;
-  isCashPurchase?: boolean;
   isUserPrimarySigner?: boolean;
   requestId: string;
   isEditable: boolean;
@@ -31,7 +30,6 @@ const RequestActionSection = ({
   openPromptDeleteModal,
   handleUpdateRequest,
   isItemForm,
-  isCashPurchase,
   isUserPrimarySigner,
   isEditable,
   isCancelable,
@@ -74,12 +72,7 @@ const RequestActionSection = ({
   };
 
   const handleAction = (action: string, color: string) => {
-    if (
-      isItemForm &&
-      action === "approve" &&
-      isUserPrimarySigner &&
-      !isCashPurchase
-    ) {
+    if (isItemForm && action === "approve" && isUserPrimarySigner) {
       modals.open({
         modalId: "approveRf",
         title: <Text>Please confirm your action.</Text>,

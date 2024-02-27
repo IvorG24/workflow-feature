@@ -64,8 +64,6 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
     []
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
-  const [isCashPurchase, setIsCashPurchase] = useState(false);
-
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
@@ -169,11 +167,6 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
       };
       if (request) {
         fetchApproverDetails();
-
-        setIsCashPurchase(
-          `${request.request_form.form_section[0].section_field[1].field_response[0].request_response}` ===
-            `"Cash Purchase - Local Purchase"`
-        );
       }
     } catch (e) {
       console.error(e);
@@ -598,7 +591,6 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
             handleCancelRequest={handleCancelRequest}
             openPromptDeleteModal={openPromptDeleteModal}
             handleUpdateRequest={handleUpdateRequest}
-            isCashPurchase={isCashPurchase}
             isUserPrimarySigner={
               isUserSigner
                 ? Boolean(isUserSigner.signer_is_primary_signer)
