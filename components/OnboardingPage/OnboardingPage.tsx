@@ -1,4 +1,11 @@
-import { checkUsername, getUserPendingInvitation } from "@/backend/api/get";
+import {
+  checkUsername,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+  getUserPendingInvitation,
+} from "@/backend/api/get";
 import {
   createTeamMemberReturnTeamName,
   createUser,
@@ -36,12 +43,6 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import {
-  barangays,
-  cities,
-  provinces,
-  regions,
-} from "select-philippines-address";
 import UploadAvatar from "../UploadAvatar/UploadAvatar";
 
 type OnboardUserParams = {
@@ -86,6 +87,7 @@ const OnboardingPage = ({ user }: Props) => {
   const [provinceOptions, setProvinceOptions] = useState<OptionType[]>([]);
   const [cityOptions, setCityOptions] = useState<OptionType[]>([]);
   const [barangayOptions, setBarangayOptions] = useState<OptionType[]>([]);
+  const [zipCodeOptions, setZipCodeOptions] = useState<OptionType[]>([]);
 
   useEffect(() => {
     try {
@@ -193,7 +195,7 @@ const OnboardingPage = ({ user }: Props) => {
         address_city: city.replace(/'/g, "''"),
         address_barangay: barangay.replace(/'/g, "''"),
         address_street: data.user_id_street.replace(/'/g, "''"),
-        address_zip_code: "0000",
+        address_zip_code: data.user_id_zip_code,
       });
 
       const pendingInvitation = await getUserPendingInvitation(supabaseClient, {
@@ -236,15 +238,13 @@ const OnboardingPage = ({ user }: Props) => {
   const idLabel = idType === "Company ID" ? "Employee Number" : "ID Number";
 
   const handleFetchRegionOptions = async () => {
-    const data: {
-      region_code: string;
-      region_name: string;
-    }[] = await regions();
+    const data = await getRegion(supabaseClient);
+
     setRegionOptions(
       data.map((region) => {
         return {
-          label: region.region_name,
-          value: region.region_code,
+          label: region.region,
+          value: region.region_id,
         };
       })
     );
@@ -259,37 +259,21 @@ const OnboardingPage = ({ user }: Props) => {
       setValue("user_id_city", "");
       setValue("user_id_barangay", "");
       setValue("user_id_street", "");
+      setValue("user_id_zip_code", "");
       if (!value) {
         return;
-      } else if (Number(value) === 13) {
-        const data: {
-          province_code: string;
-          province_name: string;
-        }[] = await provinces(value);
-        setProvinceOptions(
-          data
-            .filter((province) => province.province_name !== "City Of Manila")
-            .map((province) => {
-              return {
-                label: province.province_name,
-                value: province.province_code,
-              };
-            })
-        );
-      } else {
-        const data: {
-          province_code: string;
-          province_name: string;
-        }[] = await provinces(value);
-        setProvinceOptions(
-          data.map((province) => {
-            return {
-              label: province.province_name,
-              value: province.province_code,
-            };
-          })
-        );
       }
+
+      const data = await getProvince(supabaseClient, { regionId: value });
+
+      setProvinceOptions(
+        data.map((province) => {
+          return {
+            label: province.province,
+            value: province.province_id,
+          };
+        })
+      );
     } catch (e) {
       setValue("user_id_region", "");
       notifications.show({
@@ -306,17 +290,15 @@ const OnboardingPage = ({ user }: Props) => {
       setValue("user_id_city", "");
       setValue("user_id_barangay", "");
       setValue("user_id_street", "");
+      setValue("user_id_zip_code", "");
       if (!value) return;
 
-      const data: {
-        city_code: string;
-        city_name: string;
-      }[] = await cities(value);
+      const data = await getCity(supabaseClient, { provinceId: value });
       setCityOptions(
         data.map((city) => {
           return {
-            label: city.city_name,
-            value: city.city_code,
+            label: city.city,
+            value: city.city_id,
           };
         })
       );
@@ -334,22 +316,51 @@ const OnboardingPage = ({ user }: Props) => {
       setBarangayOptions([]);
       setValue("user_id_barangay", "");
       setValue("user_id_street", "");
+      setValue("user_id_zip_code", "");
       if (!value) return;
 
-      const data: {
-        brgy_code: string;
-        brgy_name: string;
-      }[] = await barangays(value);
+      const data = await getBarangay(supabaseClient, { cityId: value });
       setBarangayOptions(
         data.map((barangay) => {
           return {
-            label: barangay.brgy_name,
-            value: barangay.brgy_code,
+            label: barangay.barangay,
+            value: barangay.barangay_id,
+          };
+        })
+      );
+      setZipCodeOptions(
+        data.map((barangay) => {
+          return {
+            label: barangay.barangay_zip_code,
+            value: barangay.barangay_id,
           };
         })
       );
     } catch (e) {
       setValue("user_id_city", "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleFetchZipCode = async (value: string | null) => {
+    try {
+      if (!value) {
+        setValue("user_id_zip_code", "");
+        return;
+      }
+
+      const zipCode = zipCodeOptions.find((zipCode) => zipCode.value === value);
+      if (!zipCode) {
+        setValue("user_id_zip_code", "");
+        return;
+      }
+
+      setValue("user_id_zip_code", zipCode.label);
+    } catch (e) {
+      setValue("user_id_zip_code", "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -809,14 +820,6 @@ const OnboardingPage = ({ user }: Props) => {
                       mt="sm"
                     />
                   )}
-                  rules={{
-                    required: {
-                      value: true,
-                      message: "City is required",
-                    },
-                  })}
-                  error={errors.user_id_barangay?.message}
-                  mt="sm"
                 />
               </Grid.Col>
 
@@ -833,6 +836,7 @@ const OnboardingPage = ({ user }: Props) => {
                       searchable
                       onChange={(value) => {
                         setValue("user_id_street", "");
+                        handleFetchZipCode(value);
                         onChange(value);
                       }}
                       value={value}
@@ -871,6 +875,23 @@ const OnboardingPage = ({ user }: Props) => {
                   label="Street"
                   error={errors.user_id_street?.message}
                   disabled={!watchBarangay}
+                  mt="sm"
+                />
+              </Grid.Col>
+
+              <Grid.Col xs={2} sm={1}>
+                <TextInput
+                  {...register("user_id_zip_code", {
+                    validate: {
+                      required: (value) =>
+                        value.trim() ? true : "Zip Code is required",
+                    },
+                  })}
+                  withAsterisk
+                  w="100%"
+                  label="Zip Code"
+                  error={errors.user_id_zip_code?.message}
+                  variant="filled"
                   mt="sm"
                 />
               </Grid.Col>

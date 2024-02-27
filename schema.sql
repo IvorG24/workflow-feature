@@ -930,6 +930,57 @@ CREATE TABLE item_description_consumable_field_table (
 
 -- End: Item description consumable field table
 
+-- Start: Region table
+
+CREATE TABLE region_table(
+  region_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  region VARCHAR(4000) NOT NULL,
+  region_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  region_is_available BOOLEAN DEFAULT true NOT NULL
+);
+
+-- End: Region table
+
+-- Start: Province table
+
+CREATE TABLE province_table(
+  province_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  province VARCHAR(4000) NOT NULL,
+  province_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  province_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  province_region_id UUID REFERENCES region_table(region_id) NOT NULL
+);
+
+-- End: Province table
+
+-- Start: City table
+
+CREATE TABLE city_table(
+  city_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  city VARCHAR(4000) NOT NULL,
+  city_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  city_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  city_province_id UUID REFERENCES province_table(province_id) NOT NULL
+);
+
+-- End: City table
+
+-- Start: Barangay table
+
+CREATE TABLE barangay_table(
+  barangay_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  barangay VARCHAR(4000) NOT NULL,
+  barangay_zip_code VARCHAR(4000) NOT NULL,
+  barangay_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  barangay_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  barangay_city_id UUID REFERENCES city_table(city_id) NOT NULL
+);
+
+-- End: Barangay table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS

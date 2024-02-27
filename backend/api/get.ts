@@ -5976,3 +5976,68 @@ export const pedPartCheck = async (
   if (error) throw error;
   return data;
 };
+
+// Get region
+export const getRegion = async (supabaseClient: SupabaseClient<Database>) => {
+  const { data, error } = await supabaseClient
+    .from("region_table")
+    .select("*")
+    .eq("region_is_available", true)
+    .eq("region_is_disabled", false);
+  if (error) throw error;
+  return data;
+};
+
+// Get province
+export const getProvince = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    regionId: string;
+  }
+) => {
+  const { regionId } = params;
+  const { data, error } = await supabaseClient
+    .from("province_table")
+    .select("*")
+    .eq("province_region_id", regionId)
+    .eq("province_is_available", true)
+    .eq("province_is_disabled", false);
+  if (error) throw error;
+  return data;
+};
+
+// Get city
+export const getCity = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    provinceId: string;
+  }
+) => {
+  const { provinceId } = params;
+  const { data, error } = await supabaseClient
+    .from("city_table")
+    .select("*")
+    .eq("city_province_id", provinceId)
+    .eq("city_is_available", true)
+    .eq("city_is_disabled", false);
+  if (error) throw error;
+  return data;
+};
+
+// Get barangay
+export const getBarangay = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    cityId: string;
+  }
+) => {
+  const { cityId } = params;
+  const { data, error } = await supabaseClient
+    .from("barangay_table")
+    .select("*")
+    .eq("barangay_city_id", cityId)
+    .eq("barangay_is_available", true)
+    .eq("barangay_is_disabled", false);
+  if (error) throw error;
+  return data;
+};

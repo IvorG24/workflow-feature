@@ -119,9 +119,9 @@ const ProjectList = ({
         limit: ROW_PER_PAGE,
         page: page,
       });
-      setProjectList(data as TeamProjectWithAddressType[]);
+      setProjectList(data as unknown as TeamProjectWithAddressType[]);
       setProjectCount(Number(count));
-      setSearchResult(data as TeamProjectTableRow[]);
+      setSearchResult(data as unknown as TeamProjectWithAddressType[]);
     } catch (e) {
       notifications.show({
         message: "Error on fetching project list",

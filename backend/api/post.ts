@@ -1269,7 +1269,8 @@ export const createRowInOtherExpensesTypeTable = async (
 // Create Valid ID
 export const createValidID = async (
   supabaseClient: SupabaseClient<Database>,
-  params: UserValidIDTableInsert & AddressTableInsert
+  params: Omit<UserValidIDTableInsert, "user_valid_id_address_id"> &
+    AddressTableInsert
 ) => {
   const { data, error } = await supabaseClient.rpc("create_user_valid_id", {
     input_data: params,

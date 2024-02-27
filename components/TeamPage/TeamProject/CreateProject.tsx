@@ -1,4 +1,10 @@
-import { checkIfTeamProjectExists } from "@/backend/api/get";
+import {
+  checkIfTeamProjectExists,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+} from "@/backend/api/get";
 import { createAttachment, createTeamProject } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
@@ -20,12 +26,6 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFile } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import {
-  barangays,
-  cities,
-  provinces,
-  regions,
-} from "select-philippines-address";
 import { v4 as uuidv4 } from "uuid";
 
 type ProjectForm = {
@@ -37,6 +37,7 @@ type ProjectForm = {
   city: string;
   barangay: string;
   street: string;
+  zipCode: string;
 };
 
 type Props = {
@@ -58,6 +59,7 @@ const CreateProject = ({
   const [provinceOptions, setProvinceOptions] = useState<OptionType[]>([]);
   const [cityOptions, setCityOptions] = useState<OptionType[]>([]);
   const [barangayOptions, setBarangayOptions] = useState<OptionType[]>([]);
+  const [zipCodeOptions, setZipCodeOptions] = useState<OptionType[]>([]);
 
   const { register, formState, handleSubmit, control, setValue, watch } =
     useForm<ProjectForm>({
@@ -143,12 +145,12 @@ const CreateProject = ({
         teamProjectTeamId: activeTeam.team_id,
         siteMapId: siteMapData.attachment_id,
         boqId: boqData.attachment_id,
-        region,
-        province,
-        city,
-        barangay,
-        street: data.street,
-        zipCode: "0000",
+        region: region.replace(/'/g, "''"),
+        province: province.replace(/'/g, "''"),
+        city: city.replace(/'/g, "''"),
+        barangay: barangay.replace(/'/g, "''"),
+        street: data.street.replace(/'/g, "''"),
+        zipCode: data.zipCode,
       });
 
       setProjectList((prev) => {
@@ -166,6 +168,7 @@ const CreateProject = ({
       });
       setIsCreatingProject(false);
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -191,15 +194,13 @@ const CreateProject = ({
   }, [setIsCreatingProject]);
 
   const handleFetchRegionOptions = async () => {
-    const data: {
-      region_code: string;
-      region_name: string;
-    }[] = await regions();
+    const data = await getRegion(supabaseClient);
+
     setRegionOptions(
       data.map((region) => {
         return {
-          label: region.region_name,
-          value: region.region_code,
+          label: region.region,
+          value: region.region_id,
         };
       })
     );
@@ -214,37 +215,21 @@ const CreateProject = ({
       setValue("city", "");
       setValue("barangay", "");
       setValue("street", "");
+      setValue("zipCode", "");
       if (!value) {
         return;
-      } else if (Number(value) === 13) {
-        const data: {
-          province_code: string;
-          province_name: string;
-        }[] = await provinces(value);
-        setProvinceOptions(
-          data
-            .filter((province) => province.province_name !== "City Of Manila")
-            .map((province) => {
-              return {
-                label: province.province_name,
-                value: province.province_code,
-              };
-            })
-        );
-      } else {
-        const data: {
-          province_code: string;
-          province_name: string;
-        }[] = await provinces(value);
-        setProvinceOptions(
-          data.map((province) => {
-            return {
-              label: province.province_name,
-              value: province.province_code,
-            };
-          })
-        );
       }
+
+      const data = await getProvince(supabaseClient, { regionId: value });
+
+      setProvinceOptions(
+        data.map((province) => {
+          return {
+            label: province.province,
+            value: province.province_id,
+          };
+        })
+      );
     } catch (e) {
       setValue("region", "");
       notifications.show({
@@ -261,17 +246,15 @@ const CreateProject = ({
       setValue("city", "");
       setValue("barangay", "");
       setValue("street", "");
+      setValue("zipCode", "");
       if (!value) return;
 
-      const data: {
-        city_code: string;
-        city_name: string;
-      }[] = await cities(value);
+      const data = await getCity(supabaseClient, { provinceId: value });
       setCityOptions(
         data.map((city) => {
           return {
-            label: city.city_name,
-            value: city.city_code,
+            label: city.city,
+            value: city.city_id,
           };
         })
       );
@@ -289,22 +272,51 @@ const CreateProject = ({
       setBarangayOptions([]);
       setValue("barangay", "");
       setValue("street", "");
+      setValue("zipCode", "");
       if (!value) return;
 
-      const data: {
-        brgy_code: string;
-        brgy_name: string;
-      }[] = await barangays(value);
+      const data = await getBarangay(supabaseClient, { cityId: value });
       setBarangayOptions(
         data.map((barangay) => {
           return {
-            label: barangay.brgy_name,
-            value: barangay.brgy_code,
+            label: barangay.barangay,
+            value: barangay.barangay_id,
+          };
+        })
+      );
+      setZipCodeOptions(
+        data.map((barangay) => {
+          return {
+            label: barangay.barangay_zip_code,
+            value: barangay.barangay_id,
           };
         })
       );
     } catch (e) {
       setValue("city", "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleFetchZipCode = async (value: string | null) => {
+    try {
+      if (!value) {
+        setValue("zipCode", "");
+        return;
+      }
+
+      const zipCode = zipCodeOptions.find((zipCode) => zipCode.value === value);
+      if (!zipCode) {
+        setValue("zipCode", "");
+        return;
+      }
+
+      setValue("zipCode", zipCode.label);
+    } catch (e) {
+      setValue("zipCode", "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -502,6 +514,7 @@ const CreateProject = ({
                     searchable
                     onChange={(value) => {
                       setValue("street", "");
+                      handleFetchZipCode(value);
                       onChange(value);
                     }}
                     value={value}
@@ -536,6 +549,19 @@ const CreateProject = ({
                 label="Street"
                 error={formState.errors.street?.message}
                 disabled={!watchBarangay}
+              />
+              <TextInput
+                {...register("zipCode", {
+                  validate: {
+                    required: (value) =>
+                      value.trim() ? true : "Zip Code is required",
+                  },
+                })}
+                withAsterisk
+                w="100%"
+                label="Zip Code"
+                error={formState.errors.zipCode?.message}
+                variant="filled"
               />
             </Stack>
           </Stack>
