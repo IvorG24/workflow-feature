@@ -245,7 +245,9 @@ INSERT INTO field_table (field_id, field_name, field_type, field_order, field_se
 ('c62daaad-909d-45a7-8c1e-6aed470043fa', 'Capacity', 'NUMBER', 8, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 ('23532c68-1115-4a6f-a167-dfdec1863543', 'Capacity Unit of Measure', 'DROPDOWN', 9, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 ('ecd5f3c3-75a4-475e-941d-ae294f3e512d', 'Date Needed', 'DATE', 10, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
-('93b5fd9c-f9c1-4a99-b10b-253d36eedc2a', 'Purpose', 'TEXT', 11, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('48cb67d2-5915-4fd6-94e3-e7a4f636fcd0', 'Duration', 'NUMBER', 11, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('7aae6466-7f43-4600-b319-6c2dc4cf408b', 'Duration Unit of Measure', 'DROPDOWN', 12, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
+('93b5fd9c-f9c1-4a99-b10b-253d36eedc2a', 'Purpose', 'TEXT', 13, '0235bd54-7417-420a-b486-a1c4ac0763c0', true, false),
 
 -- PED Consumable
 ('b93e3160-4f07-4b70-98bc-f84a372bd54c', 'Requesting Project', 'DROPDOWN', 1, '7cc28baf-ec0f-4611-aa8a-4b57010d68fb', true, false),
@@ -399,6 +401,11 @@ INSERT INTO option_table (option_id, option_value, option_order, option_field_id
 -- PED Equipment 
 ('5bc48119-b2c2-4041-a6ec-59879a508bc9', 'In-house', 1, '289cea0b-f295-476d-a6f6-83469deffa0c'),
 ('aa1bf11f-3858-48e2-bb20-319aed587b6b', 'Rental', 2, '289cea0b-f295-476d-a6f6-83469deffa0c'),
+
+('ba077c5c-96a8-4bfd-a9ff-e242ab1f1eff', 'Hour/s', 1, '7aae6466-7f43-4600-b319-6c2dc4cf408b'),
+('cf4b5724-6899-4a74-b16e-7f73b24ec4cb', 'Day/s', 2, '7aae6466-7f43-4600-b319-6c2dc4cf408b'),
+('eaa4aabb-5809-4f18-a385-b9df7fe9c5a2', 'Week/s', 3, '7aae6466-7f43-4600-b319-6c2dc4cf408b'),
+('5e8eb4b2-593a-48fc-9c19-33787ef38768', 'Month/s', 4, '7aae6466-7f43-4600-b319-6c2dc4cf408b'),
 
 -- PED Consumable 
 ('78c30d2c-6704-4031-b79b-69829915a384', 'Single', 1, '20d9159a-c410-4e4b-8c21-c02e44d8f1e9'),
