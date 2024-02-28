@@ -12596,6 +12596,11 @@ ALTER TABLE equipment_general_name_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_part_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_consumable_field_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE region_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE province_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE city_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE barangay_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -12911,6 +12916,16 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_consumable_field_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON region_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON province_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON city_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON barangay_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON address_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON address_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON address_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON address_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -15509,6 +15524,52 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
+
+--- region_table
+CREATE POLICY "Allow READ for authenticated users" ON "public"."region_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+-- province_table
+CREATE POLICY "Allow READ for authenticated users" ON "public"."province_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+-- city_table
+CREATE POLICY "Allow READ for authenticated users" ON "public"."city_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+-- barangay_table
+CREATE POLICY "Allow READ for authenticated users" ON "public"."barangay_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+-- address_table
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."address_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Allow READ for authenticated users" ON "public"."address_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."address_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Allow DELETE for authenticated users" ON "public"."address_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
 
 -------- End: POLICIES
 
