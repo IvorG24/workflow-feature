@@ -15551,9 +15551,9 @@ USING (true);
 
 -- address_table
 CREATE POLICY "Allow CREATE for authenticated users" ON "public"."address_table"
-AS PERMISSIVE FOR SELECT
+AS PERMISSIVE FOR INSERT
 TO authenticated
-USING (true);
+WITH CHECK (true);
 
 CREATE POLICY "Allow READ for authenticated users" ON "public"."address_table"
 AS PERMISSIVE FOR SELECT
@@ -15561,12 +15561,12 @@ TO authenticated
 USING (true);
 
 CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."address_table"
-AS PERMISSIVE FOR SELECT
+AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (true);
 
 CREATE POLICY "Allow DELETE for authenticated users" ON "public"."address_table"
-AS PERMISSIVE FOR SELECT
+AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (true);
 
