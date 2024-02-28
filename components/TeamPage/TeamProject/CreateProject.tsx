@@ -1,16 +1,22 @@
-import { checkIfTeamProjectExists } from "@/backend/api/get";
+import {
+  checkIfTeamProjectExists,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+} from "@/backend/api/get";
 import { createAttachment, createTeamProject } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { TeamProjectTableRow } from "@/utils/types";
+import { OptionType, TeamProjectWithAddressType } from "@/utils/types";
 import {
   Button,
   Container,
   Divider,
   FileInput,
-  Flex,
   LoadingOverlay,
+  Select,
   Stack,
   TextInput,
   Title,
@@ -18,7 +24,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFile } from "@tabler/icons-react";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 
@@ -26,11 +32,17 @@ type ProjectForm = {
   projectName: string;
   site_map: File;
   boq: File;
+  region: string;
+  province: string;
+  city: string;
+  barangay: string;
+  street: string;
+  zipCode: string;
 };
 
 type Props = {
   setIsCreatingProject: Dispatch<SetStateAction<boolean>>;
-  setProjectList: Dispatch<SetStateAction<TeamProjectTableRow[]>>;
+  setProjectList: Dispatch<SetStateAction<TeamProjectWithAddressType[]>>;
   setProjectCount: Dispatch<SetStateAction<number>>;
 };
 
@@ -40,14 +52,21 @@ const CreateProject = ({
   setProjectCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-
   const activeTeam = useActiveTeam();
 
-  const { register, formState, handleSubmit, control } = useForm<ProjectForm>({
-    defaultValues: {
-      projectName: "",
-    },
-  });
+  const [isFetchingOptions, setIsFetchingOptions] = useState(true);
+  const [regionOptions, setRegionOptions] = useState<OptionType[]>([]);
+  const [provinceOptions, setProvinceOptions] = useState<OptionType[]>([]);
+  const [cityOptions, setCityOptions] = useState<OptionType[]>([]);
+  const [barangayOptions, setBarangayOptions] = useState<OptionType[]>([]);
+  const [zipCodeOptions, setZipCodeOptions] = useState<OptionType[]>([]);
+
+  const { register, formState, handleSubmit, control, setValue, watch } =
+    useForm<ProjectForm>({
+      defaultValues: {
+        projectName: "",
+      },
+    });
 
   const generateProjectInitials = (projectName: string) => {
     const words = projectName.split(" ");
@@ -105,12 +124,33 @@ const CreateProject = ({
         },
       });
 
+      const region = regionOptions.find(
+        (options) => options.value === data.region
+      )?.label;
+      const province = provinceOptions.find(
+        (options) => options.value === data.province
+      )?.label;
+      const city = cityOptions.find(
+        (options) => options.value === data.city
+      )?.label;
+      const barangay = barangayOptions.find(
+        (options) => options.value === data.barangay
+      )?.label;
+
+      if (!region || !province || !city || !barangay) throw new Error();
+
       const newProject = await createTeamProject(supabaseClient, {
         teamProjectName: projectName,
         teamProjectInitials: projectInitials,
         teamProjectTeamId: activeTeam.team_id,
         siteMapId: siteMapData.attachment_id,
         boqId: boqData.attachment_id,
+        region: region.replace(/'/g, "''"),
+        province: province.replace(/'/g, "''"),
+        city: city.replace(/'/g, "''"),
+        barangay: barangay.replace(/'/g, "''"),
+        street: data.street.replace(/'/g, "''"),
+        zipCode: data.zipCode,
       });
 
       setProjectList((prev) => {
@@ -136,9 +176,156 @@ const CreateProject = ({
     return;
   };
 
+  const watchBarangay = watch("barangay");
+
+  useEffect(() => {
+    try {
+      setIsFetchingOptions(true);
+      handleFetchRegionOptions();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingOptions(false);
+    }
+  }, [setIsCreatingProject]);
+
+  const handleFetchRegionOptions = async () => {
+    const data = await getRegion(supabaseClient);
+
+    setRegionOptions(
+      data.map((region) => {
+        return {
+          label: region.region,
+          value: region.region_id,
+        };
+      })
+    );
+  };
+
+  const handleFetchProvinceOptions = async (value: string | null) => {
+    try {
+      setProvinceOptions([]);
+      setCityOptions([]);
+      setBarangayOptions([]);
+      setValue("province", "");
+      setValue("city", "");
+      setValue("barangay", "");
+      setValue("street", "");
+      setValue("zipCode", "");
+      if (!value) {
+        return;
+      }
+
+      const data = await getProvince(supabaseClient, { regionId: value });
+
+      setProvinceOptions(
+        data.map((province) => {
+          return {
+            label: province.province,
+            value: province.province_id,
+          };
+        })
+      );
+    } catch (e) {
+      setValue("region", "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleFetchCityOptions = async (value: string | null) => {
+    try {
+      setCityOptions([]);
+      setBarangayOptions([]);
+      setValue("city", "");
+      setValue("barangay", "");
+      setValue("street", "");
+      setValue("zipCode", "");
+      if (!value) return;
+
+      const data = await getCity(supabaseClient, { provinceId: value });
+      setCityOptions(
+        data.map((city) => {
+          return {
+            label: city.city,
+            value: city.city_id,
+          };
+        })
+      );
+    } catch (e) {
+      setValue("province", "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleFetchBarangayOptions = async (value: string | null) => {
+    try {
+      setBarangayOptions([]);
+      setValue("barangay", "");
+      setValue("street", "");
+      setValue("zipCode", "");
+      if (!value) return;
+
+      const data = await getBarangay(supabaseClient, { cityId: value });
+      setBarangayOptions(
+        data.map((barangay) => {
+          return {
+            label: barangay.barangay,
+            value: barangay.barangay_id,
+          };
+        })
+      );
+      setZipCodeOptions(
+        data.map((barangay) => {
+          return {
+            label: barangay.barangay_zip_code,
+            value: barangay.barangay_id,
+          };
+        })
+      );
+    } catch (e) {
+      setValue("city", "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleFetchZipCode = async (value: string | null) => {
+    try {
+      if (!value) {
+        setValue("zipCode", "");
+        return;
+      }
+
+      const zipCode = zipCodeOptions.find((zipCode) => zipCode.value === value);
+      if (!zipCode) {
+        setValue("zipCode", "");
+        return;
+      }
+
+      setValue("zipCode", zipCode.label);
+    } catch (e) {
+      setValue("zipCode", "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <Container p={0} fluid sx={{ position: "relative" }}>
-      <LoadingOverlay visible={formState.isSubmitting} />
+      <LoadingOverlay visible={formState.isSubmitting || isFetchingOptions} />
       <Stack spacing={16}>
         <Title m={0} p={0} order={3}>
           Add Project
@@ -146,95 +333,237 @@ const CreateProject = ({
         <Divider mb="xl" />
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Flex direction="column" gap={16}>
-            <TextInput
-              {...register("projectName", {
-                validate: {
-                  required: (value) =>
-                    value.trim() ? true : "Project Name is required",
-                  minLength: (value) =>
-                    value.trim().length > 2
-                      ? true
-                      : "Project Name must have atleast 3 characters",
-                  maxLength: (value) =>
-                    value.trim().length < 500
-                      ? true
-                      : "Project Name must be shorter than 500 characters",
-                },
-              })}
-              withAsterisk
-              w="100%"
-              label="Project Name"
-              sx={{
-                input: {
-                  textTransform: "uppercase",
-                },
-              }}
-              error={formState.errors.projectName?.message}
-            />
-
-            <Controller
-              control={control}
-              name="site_map"
-              render={({ field }) => (
-                <FileInput
-                  label="Site Map"
-                  required
-                  icon={<IconFile size={16} />}
-                  clearable
-                  multiple={false}
-                  onChange={field.onChange}
-                  error={formState.errors.site_map?.message}
-                />
-              )}
-              rules={{
-                required: {
-                  value: true,
-                  message: "Site map is required",
-                },
-                validate: {
-                  fileSize: (value) => {
-                    if (!value) return true;
-                    const formattedValue = value as File;
-                    return formattedValue.size <= MAX_FILE_SIZE
-                      ? true
-                      : `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`;
+          <Stack spacing="xl">
+            <Stack>
+              <TextInput
+                {...register("projectName", {
+                  validate: {
+                    required: (value) =>
+                      value.trim() ? true : "Project Name is required",
+                    minLength: (value) =>
+                      value.trim().length > 2
+                        ? true
+                        : "Project Name must have atleast 3 characters",
+                    maxLength: (value) =>
+                      value.trim().length < 500
+                        ? true
+                        : "Project Name must be shorter than 500 characters",
                   },
-                },
-              }}
-            />
-
-            <Controller
-              control={control}
-              name="boq"
-              render={({ field }) => (
-                <FileInput
-                  label="BOQ"
-                  required
-                  icon={<IconFile size={16} />}
-                  clearable
-                  multiple={false}
-                  onChange={field.onChange}
-                  error={formState.errors.boq?.message}
-                />
-              )}
-              rules={{
-                required: {
-                  value: true,
-                  message: "BOQ is required",
-                },
-                validate: {
-                  fileSize: (value) => {
-                    if (!value) return true;
-                    const formattedValue = value as File;
-                    return formattedValue.size <= MAX_FILE_SIZE
-                      ? true
-                      : `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`;
+                })}
+                withAsterisk
+                w="100%"
+                label="Project Name"
+                sx={{
+                  input: {
+                    textTransform: "uppercase",
                   },
-                },
-              }}
-            />
-          </Flex>
+                }}
+                error={formState.errors.projectName?.message}
+              />
+              <Controller
+                control={control}
+                name="site_map"
+                render={({ field }) => (
+                  <FileInput
+                    label="Site Map"
+                    required
+                    icon={<IconFile size={16} />}
+                    clearable
+                    multiple={false}
+                    onChange={field.onChange}
+                    error={formState.errors.site_map?.message}
+                  />
+                )}
+                rules={{
+                  required: {
+                    value: true,
+                    message: "Site map is required",
+                  },
+                  validate: {
+                    fileSize: (value) => {
+                      if (!value) return true;
+                      const formattedValue = value as File;
+                      return formattedValue.size <= MAX_FILE_SIZE
+                        ? true
+                        : `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`;
+                    },
+                  },
+                }}
+              />
+              <Controller
+                control={control}
+                name="boq"
+                render={({ field }) => (
+                  <FileInput
+                    label="BOQ"
+                    required
+                    icon={<IconFile size={16} />}
+                    clearable
+                    multiple={false}
+                    onChange={field.onChange}
+                    error={formState.errors.boq?.message}
+                  />
+                )}
+                rules={{
+                  required: {
+                    value: true,
+                    message: "BOQ is required",
+                  },
+                  validate: {
+                    fileSize: (value) => {
+                      if (!value) return true;
+                      const formattedValue = value as File;
+                      return formattedValue.size <= MAX_FILE_SIZE
+                        ? true
+                        : `File exceeds ${MAX_FILE_SIZE_IN_MB}mb`;
+                    },
+                  },
+                }}
+              />
+            </Stack>
+
+            <Stack>
+              <Title order={4}>Address</Title>
+              <Controller
+                control={control}
+                name="region"
+                render={({ field: { onChange, value } }) => (
+                  <Select
+                    label="Region"
+                    data={regionOptions}
+                    required
+                    clearable
+                    searchable
+                    onChange={async (value) => {
+                      await handleFetchProvinceOptions(value);
+                      onChange(value);
+                    }}
+                    value={value}
+                    error={formState.errors.region?.message}
+                  />
+                )}
+                rules={{
+                  required: {
+                    value: true,
+                    message: "Region is required",
+                  },
+                }}
+              />
+              <Controller
+                control={control}
+                name="province"
+                render={({ field: { onChange, value } }) => (
+                  <Select
+                    label="Province"
+                    data={provinceOptions}
+                    required
+                    clearable
+                    searchable
+                    onChange={async (value) => {
+                      await handleFetchCityOptions(value);
+                      onChange(value);
+                    }}
+                    value={value}
+                    error={formState.errors.province?.message}
+                    disabled={provinceOptions.length === 0}
+                  />
+                )}
+                rules={{
+                  required: {
+                    value: true,
+                    message: "Province is required",
+                  },
+                }}
+              />
+              <Controller
+                control={control}
+                name="city"
+                render={({ field: { onChange, value } }) => (
+                  <Select
+                    label="City"
+                    data={cityOptions}
+                    required
+                    clearable
+                    searchable
+                    onChange={async (value) => {
+                      await handleFetchBarangayOptions(value);
+                      onChange(value);
+                    }}
+                    value={value}
+                    error={formState.errors.city?.message}
+                    disabled={cityOptions.length === 0}
+                  />
+                )}
+                rules={{
+                  required: {
+                    value: true,
+                    message: "City is required",
+                  },
+                }}
+              />
+              <Controller
+                control={control}
+                name="barangay"
+                render={({ field: { onChange, value } }) => (
+                  <Select
+                    label="Barangay"
+                    data={barangayOptions}
+                    required
+                    clearable
+                    searchable
+                    onChange={(value) => {
+                      setValue("street", "");
+                      handleFetchZipCode(value);
+                      onChange(value);
+                    }}
+                    value={value}
+                    error={formState.errors.barangay?.message}
+                    disabled={barangayOptions.length === 0}
+                  />
+                )}
+                rules={{
+                  required: {
+                    value: true,
+                    message: "Barangay is required",
+                  },
+                }}
+              />
+              <TextInput
+                {...register("street", {
+                  validate: {
+                    required: (value) =>
+                      value.trim() ? true : "Street is required",
+                    minLength: (value) =>
+                      value.trim().length > 2
+                        ? true
+                        : "Street must have atleast 3 characters",
+                    maxLength: (value) =>
+                      value.trim().length < 500
+                        ? true
+                        : "Street must be shorter than 500 characters",
+                  },
+                })}
+                withAsterisk
+                w="100%"
+                label="Street"
+                error={formState.errors.street?.message}
+                disabled={!watchBarangay}
+              />
+              <TextInput
+                {...register("zipCode", {
+                  validate: {
+                    required: (value) =>
+                      value.trim() ? true : "Zip Code is required",
+                  },
+                })}
+                withAsterisk
+                w="100%"
+                label="Zip Code"
+                error={formState.errors.zipCode?.message}
+                variant="filled"
+              />
+            </Stack>
+          </Stack>
 
           <Button type="submit" miw={100} mt={30} mr={14}>
             Save

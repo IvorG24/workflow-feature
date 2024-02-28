@@ -29,6 +29,19 @@ UPDATE storage.buckets SET public = true;
 
 ---------- Start: TABLES
 
+-- Start: address_table
+CREATE TABLE address_table (
+  address_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  address_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  address_region VARCHAR(4000) NOT NULL,
+  address_province VARCHAR(4000) NOT NULL,
+  address_city VARCHAR(4000) NOT NULL,
+  address_barangay VARCHAR(4000) NOT NULL,
+  address_street VARCHAR(4000) NOT NULL,
+  address_zip_code VARCHAR(4000) NOT NULL
+);
+-- End: address_table
+
 -- Start: Attachments
 CREATE TABLE attachment_table (
     attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -95,7 +108,8 @@ CREATE TABLE team_project_table(
 
   team_project_site_map_attachment_id UUID REFERENCES attachment_table(attachment_id),
   team_project_boq_attachment_id UUID REFERENCES attachment_table(attachment_id),
-  team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  team_project_address_id UUID REFERENCES address_table(address_id)
 );
 CREATE TABLE team_group_member_table(
   team_group_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
@@ -849,17 +863,13 @@ CREATE TABLE user_valid_id_table (
   user_valid_id_last_name VARCHAR(4000) NOT NULL,
   user_valid_id_gender VARCHAR(4000) NOT NULL,
   user_valid_id_nationality VARCHAR(4000) NOT NULL,
-  user_valid_id_province VARCHAR(4000) NOT NULL,
-  user_valid_id_city VARCHAR(4000) NOT NULL,
-  user_valid_id_barangay VARCHAR(4000) NOT NULL,
-  user_valid_id_zip_code VARCHAR(4000) NOT NULL,
-  user_valid_id_house_and_street VARCHAR(4000) NOT NULL,
   user_valid_id_front_image_url VARCHAR(4000) NOT NULL,
   user_valid_id_back_image_url VARCHAR(4000),
   user_valid_id_status VARCHAR(4000) NOT NULL,
 
-  user_valid_id_approver UUID REFERENCES user_table(user_id),
-  user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL
+  user_valid_id_approver_user_id UUID REFERENCES user_table(user_id),
+  user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL,
+  user_valid_id_address_id UUID REFERENCES address_table(address_id) NOT NULL
 );
 -- End: Valid ID
 
@@ -919,6 +929,57 @@ CREATE TABLE item_description_consumable_field_table (
 );
 
 -- End: Item description consumable field table
+
+-- Start: Region table
+
+CREATE TABLE region_table(
+  region_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  region VARCHAR(4000) NOT NULL,
+  region_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  region_is_available BOOLEAN DEFAULT true NOT NULL
+);
+
+-- End: Region table
+
+-- Start: Province table
+
+CREATE TABLE province_table(
+  province_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  province VARCHAR(4000) NOT NULL,
+  province_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  province_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  province_region_id UUID REFERENCES region_table(region_id) NOT NULL
+);
+
+-- End: Province table
+
+-- Start: City table
+
+CREATE TABLE city_table(
+  city_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  city VARCHAR(4000) NOT NULL,
+  city_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  city_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  city_province_id UUID REFERENCES province_table(province_id) NOT NULL
+);
+
+-- End: City table
+
+-- Start: Barangay table
+
+CREATE TABLE barangay_table(
+  barangay_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  barangay VARCHAR(4000) NOT NULL,
+  barangay_zip_code VARCHAR(4000) NOT NULL,
+  barangay_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  barangay_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  barangay_city_id UUID REFERENCES city_table(city_id) NOT NULL
+);
+
+-- End: Barangay table
 
 ---------- End: TABLES
 
@@ -3020,11 +3081,17 @@ RETURNS JSON AS $$
       teamProjectInitials,
       teamProjectTeamId,
       siteMapId,
-      boqId
+      boqId,
+      region,
+      province,
+      city,
+      barangay,
+      street,
+      zipCode
     } = input_data;
 
     
-   const projectInitialCount = plv8.execute(`
+    const projectInitialCount = plv8.execute(`
       SELECT COUNT(*) FROM team_project_table 
       WHERE team_project_team_id = $1 
       AND team_project_code ILIKE '%' || $2 || '%';
@@ -3032,16 +3099,31 @@ RETURNS JSON AS $$
 
     const teamProjectCode = teamProjectInitials + projectInitialCount.toString(16).toUpperCase();
 
-    team_project_data = plv8.execute(
+    const addressData = plv8.execute(
+      `
+        INSERT INTO address_table 
+          (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
+        VALUES 
+          ('${region}', '${province}', '${city}', '${barangay}', '${street}', '${zipCode}') RETURNING *
+      `
+    )[0];
+
+    teamData = plv8.execute(
       `
         INSERT INTO team_project_table 
-          (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id) 
+          (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id, team_project_address_id) 
         VALUES 
-          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', '${siteMapId}', '${boqId}')
+          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', '${siteMapId}', '${boqId}', '${addressData.address_id}')
         RETURNING *
       `
     )[0];
 
+    team_project_data = {
+      ...teamData,
+      team_project_address: {
+        ...addressData
+      }
+    }
  });
  return team_project_data;
 $$ LANGUAGE plv8;
@@ -3947,7 +4029,8 @@ RETURNS JSON AS $$
         SELECT 
           team_project_table.*,
           boq.attachment_value AS team_project_boq_attachment_id,
-          site_map.attachment_value AS team_project_site_map_attachment_id
+          site_map.attachment_value AS team_project_site_map_attachment_id,
+          address_table.*
         FROM team_project_table 
         LEFT JOIN attachment_table boq ON (
           team_project_boq_attachment_id = boq.attachment_id
@@ -3956,6 +4039,9 @@ RETURNS JSON AS $$
         LEFT JOIN attachment_table site_map ON (
           team_project_site_map_attachment_id = site_map.attachment_id
           AND site_map.attachment_is_disabled = false
+        )
+        LEFT JOIN address_table ON (
+          team_project_address_id = address_id
         )
         WHERE 
           team_project_team_id='${teamId}' 
@@ -3969,7 +4055,42 @@ RETURNS JSON AS $$
 
     const pendingValidIDList = plv8.execute(`SELECT * FROM user_valid_id_table WHERE user_valid_id_status='PENDING';`);
 
-    team_data = { team, teamMembers, teamGroups, teamGroupsCount:`${teamGroupsCount}`, teamProjects, teamProjectsCount:`${teamProjectsCount}`, teamMembersCount: Number(teamMembersCount), pendingValidIDList}
+    team_data = { 
+      team, 
+      teamMembers, 
+      teamGroups, 
+      teamGroupsCount: `${teamGroupsCount}`, 
+      teamProjects: teamProjects.map(project => {
+        if(!project.address_id){
+          return project;
+        }
+
+        return {
+          team_project_id: project.team_project_id,
+          team_project_date_created: project.team_project_date_created,
+          team_project_name: project.team_project_name,
+          team_project_code: project.team_project_code,
+          team_project_is_disabled: project.team_project_is_disabled,
+          team_project_team_id: project.team_project_team_id,
+          team_project_site_map_attachment_id: project.team_project_site_map_attachment_id,
+          team_project_boq_attachment_id: project.team_project_boq_attachment_id,
+          team_project_address_id: project.team_project_address_id,
+          team_project_address: {
+            address_id: project.address_id,
+            address_date_created: project.address_date_created,
+            address_region: project.address_region,
+            address_province: project.address_province,
+            address_city: project.address_city,
+            address_barangay: project.address_barangay,
+            address_street: project.address_street,
+            address_zip_code: project.address_zip_code
+          }
+        }
+      }), 
+      teamProjectsCount: `${teamProjectsCount}`, 
+      teamMembersCount: Number(teamMembersCount), 
+      pendingValidIDList
+    }
  });
  return team_data;
 $$ LANGUAGE plv8;
@@ -12318,6 +12439,90 @@ $$ LANGUAGE plv8;
 
 -- End: Create PED Part from ticket request
 
+-- Start: Create user valid id
+
+CREATE OR REPLACE FUNCTION create_user_valid_id(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      user_valid_id_user_id,
+      user_valid_id_type,
+      user_valid_id_number,
+      user_valid_id_first_name,
+      user_valid_id_middle_name,
+      user_valid_id_last_name,
+      user_valid_id_gender,
+      user_valid_id_nationality,
+      user_valid_id_status,
+      user_valid_id_front_image_url,
+      user_valid_id_back_image_url,
+      address_region,
+      address_province,
+      address_city,
+      address_barangay,
+      address_street,
+      address_zip_code,
+    } = input_data;
+
+    const addressData = plv8.execute(
+      `
+        INSERT INTO address_table 
+          (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
+        VALUES
+          ('${address_region}', '${address_province}', '${address_city}', '${address_barangay}', '${address_street}', '${address_zip_code}')
+        RETURNING *
+      `
+    )[0];
+
+    const userValidIdData = plv8.execute(
+      `
+        INSERT INTO user_valid_id_table
+          (
+            user_valid_id_number, 
+            user_valid_id_type, 
+            user_valid_id_first_name, 
+            user_valid_id_middle_name, 
+            user_valid_id_last_name, 
+            user_valid_id_gender, 
+            user_valid_id_nationality, 
+            user_valid_id_front_image_url, 
+            user_valid_id_back_image_url, 
+            user_valid_id_status, 
+            user_valid_id_user_id, 
+            user_valid_id_address_id
+          )
+        VALUES
+          (
+            '${user_valid_id_number}',
+            '${user_valid_id_type}',
+            '${user_valid_id_first_name}',
+            '${user_valid_id_middle_name}',
+            '${user_valid_id_last_name}',
+            '${user_valid_id_gender}',
+            '${user_valid_id_nationality}',
+            '${user_valid_id_front_image_url}',
+            '${user_valid_id_back_image_url}',
+            '${user_valid_id_status}',
+            '${user_valid_id_user_id}',
+            '${addressData.address_id}'
+          )
+        RETURNING *
+      `
+    )[0];
+
+    returnData = {
+      ...addressData,
+      ...userValidIdData
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Create user valid id
+
 ---------- End: FUNCTIONS
 
 
@@ -12391,6 +12596,11 @@ ALTER TABLE equipment_general_name_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_part_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_consumable_field_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE region_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE province_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE city_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE barangay_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -12706,6 +12916,16 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_consumable_field_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON region_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON province_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON city_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON barangay_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON address_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON address_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON address_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON address_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -15304,6 +15524,52 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
+
+--- region_table
+CREATE POLICY "Allow READ for authenticated users" ON "public"."region_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+-- province_table
+CREATE POLICY "Allow READ for authenticated users" ON "public"."province_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+-- city_table
+CREATE POLICY "Allow READ for authenticated users" ON "public"."city_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+-- barangay_table
+CREATE POLICY "Allow READ for authenticated users" ON "public"."barangay_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+-- address_table
+CREATE POLICY "Allow CREATE for authenticated users" ON "public"."address_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (true);
+
+CREATE POLICY "Allow READ for authenticated users" ON "public"."address_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."address_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (true);
+
+CREATE POLICY "Allow DELETE for authenticated users" ON "public"."address_table"
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (true);
+
 
 -------- End: POLICIES
 

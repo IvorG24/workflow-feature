@@ -3,7 +3,7 @@ import { getFileUrl, getTeamProjectList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import { TeamProjectTableRow } from "@/utils/types";
+import { AddressTableRow, TeamProjectWithAddressType } from "@/utils/types";
 import {
   ActionIcon,
   Badge,
@@ -45,14 +45,16 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  projectList: TeamProjectTableRow[];
-  setProjectList: Dispatch<SetStateAction<TeamProjectTableRow[]>>;
+  projectList: TeamProjectWithAddressType[];
+  setProjectList: Dispatch<SetStateAction<TeamProjectWithAddressType[]>>;
   projectCount: number;
   setProjectCount: Dispatch<SetStateAction<number>>;
   setIsCreatingProject: Dispatch<SetStateAction<boolean>>;
-  setSelectedProject: Dispatch<SetStateAction<TeamProjectTableRow | null>>;
+  setSelectedProject: Dispatch<
+    SetStateAction<TeamProjectWithAddressType | null>
+  >;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
-  selectedProject: TeamProjectTableRow | null;
+  selectedProject: TeamProjectWithAddressType | null;
   isOwnerOrAdmin: boolean;
 };
 
@@ -78,7 +80,7 @@ const ProjectList = ({
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [searchResult, setSearchResult] =
-    useState<TeamProjectTableRow[]>(projectList);
+    useState<TeamProjectWithAddressType[]>(projectList);
 
   const headerCheckboxKey = generateRandomId();
 
@@ -117,9 +119,9 @@ const ProjectList = ({
         limit: ROW_PER_PAGE,
         page: page,
       });
-      setProjectList(data as TeamProjectTableRow[]);
+      setProjectList(data as unknown as TeamProjectWithAddressType[]);
       setProjectCount(Number(count));
-      setSearchResult(data as TeamProjectTableRow[]);
+      setSearchResult(data as unknown as TeamProjectWithAddressType[]);
     } catch (e) {
       notifications.show({
         message: "Error on fetching project list",
@@ -193,7 +195,7 @@ const ProjectList = ({
     }
   };
 
-  const columnData: DataTableColumn<TeamProjectTableRow>[] = [
+  const columnData: DataTableColumn<TeamProjectWithAddressType>[] = [
     {
       accessor: "checkbox",
       title: (
@@ -235,7 +237,7 @@ const ProjectList = ({
     },
     {
       accessor: "project_initials",
-      title: "Project Initials",
+      title: "Code",
       render: ({ team_project_code, team_project_id }) => (
         <Text
           className={classes.clickableColumn}
@@ -283,7 +285,27 @@ const ProjectList = ({
           </Badge>
         ),
     },
+    {
+      accessor: "team_project_address",
+      title: "Address",
+      render: ({ team_project_id, team_project_address }) =>
+        team_project_address && (
+          <Text
+            className={classes.clickableColumn}
+            onClick={() => {
+              handleColumnClick(team_project_id);
+            }}
+          >
+            {formatAddress(team_project_address)}
+          </Text>
+        ),
+    },
   ];
+
+  const formatAddress = (address: AddressTableRow | null) => {
+    if (!address) return "";
+    return `${address.address_street}, ${address.address_barangay}, ${address.address_city}, ${address.address_province}, ${address.address_region}, ${address.address_zip_code}`;
+  };
 
   useEffect(() => {
     const channel = supabaseClient
@@ -318,7 +340,7 @@ const ProjectList = ({
 
           if (payload.eventType === "INSERT") {
             const updatedProjectList = [payload.new, ...projectList];
-            setProjectList(updatedProjectList as TeamProjectTableRow[]);
+            setProjectList(updatedProjectList as TeamProjectWithAddressType[]);
             setProjectCount(updatedProjectList.length);
 
             const searchIncludesNewProject = payload.new.team_project_name
@@ -326,7 +348,9 @@ const ProjectList = ({
               .includes(search.toLowerCase());
 
             if (searchIncludesNewProject) {
-              setSearchResult(updatedProjectList as TeamProjectTableRow[]);
+              setSearchResult(
+                updatedProjectList as TeamProjectWithAddressType[]
+              );
             }
           }
         }

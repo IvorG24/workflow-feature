@@ -6,6 +6,7 @@ import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { escapeQuotes, parseJSONIfValid } from "@/utils/string";
 import {
+  AddressTableInsert,
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
@@ -37,7 +38,7 @@ import {
   SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
-  TeamProjectTableRow,
+  TeamProjectWithAddressType,
   TeamTableInsert,
   TicketCommentTableInsert,
   TicketResponseTableInsert,
@@ -835,6 +836,12 @@ export const createTeamProject = async (
     teamProjectTeamId: string;
     siteMapId: string;
     boqId: string;
+    region: string;
+    province: string;
+    city: string;
+    barangay: string;
+    street: string;
+    zipCode: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -847,7 +854,7 @@ export const createTeamProject = async (
     .single();
   if (error) throw error;
 
-  return data as TeamProjectTableRow;
+  return data as TeamProjectWithAddressType;
 };
 
 // Insert team member to group
@@ -1262,13 +1269,12 @@ export const createRowInOtherExpensesTypeTable = async (
 // Create Valid ID
 export const createValidID = async (
   supabaseClient: SupabaseClient<Database>,
-  params: UserValidIDTableInsert
+  params: Omit<UserValidIDTableInsert, "user_valid_id_address_id"> &
+    AddressTableInsert
 ) => {
-  const { data, error } = await supabaseClient
-    .from("user_valid_id_table")
-    .insert(params)
-    .select()
-    .single();
+  const { data, error } = await supabaseClient.rpc("create_user_valid_id", {
+    input_data: params,
+  });
   if (error) throw error;
   return data;
 };

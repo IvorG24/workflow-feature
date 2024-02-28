@@ -632,7 +632,7 @@ CREATE TABLE user_valid_id_table (
     user_valid_id_back_image_url VARCHAR(4000),
     user_valid_id_status VARCHAR(4000) NOT NULL,
 
-    user_valid_id_approver UUID REFERENCES user_table(user_id),
+    user_valid_id_approver_user_id UUID REFERENCES user_table(user_id),
     user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
 -- End: Valid ID

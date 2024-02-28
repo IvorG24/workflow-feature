@@ -376,6 +376,13 @@ export type TicketResponseTableInsert =
 export type TicketResponseTableUpdate =
   Database["public"]["Tables"]["ticket_response_table"]["Update"];
 
+export type AddressTableRow =
+  Database["public"]["Tables"]["address_table"]["Row"];
+export type AddressTableInsert =
+  Database["public"]["Tables"]["address_table"]["Insert"];
+export type AddressTableUpdate =
+  Database["public"]["Tables"]["address_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1493,10 +1500,20 @@ export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
 
 export type UserValidIdWithUser = Omit<
   UserValidIDTableRow,
-  "user_valid_id_user_id" | "user_valid_id_approver"
+  "user_valid_id_user_id" | "user_valid_id_approver_user_id" | "user_valid_id_address_id"
 > & {
-  user_valid_id_user_id: UserTableRow;
-  user_valid_id_approver: UserTableRow;
+  user_valid_id_user: UserTableRow;
+  user_valid_id_approver_user: UserTableRow;
+  user_valid_id_address: AddressTableRow;
+};
+
+export type TeamProjectWithAddressType = TeamProjectTableRow & {
+  team_project_address: AddressTableRow;
+};
+
+export type OptionType = {
+  label: string;
+  value: string;
 };
 
 export type SignerRequestSLA = {

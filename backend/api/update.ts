@@ -975,7 +975,7 @@ export const approveOrRejectValidId = async (
     .from("user_valid_id_table")
     .update({
       user_valid_id_status: params.status,
-      user_valid_id_approver: params.approverUserId,
+      user_valid_id_approver_user_id: params.approverUserId,
       user_valid_id_date_updated: `${currentDate}`,
     })
     .eq("user_valid_id_id", params.validIdId);
