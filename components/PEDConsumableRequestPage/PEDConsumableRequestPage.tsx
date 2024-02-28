@@ -337,11 +337,7 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
         return null;
       }
       const projectName = request.request_project.team_project_name;
-      const itemCategory = sectionWithDuplicateList
-        .slice(1)
-        .map(
-          (section) => section.section_field[3].field_response?.request_response
-        ) as string[];
+      const itemCategory = [`"Fuel, Oil, Lubricants"`];
 
       const primaryApproverJiraUserResponse = await fetch(
         `/api/get-jira-user?approverEmail=${user?.user_email}`
@@ -602,8 +598,8 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
             isDeletable={isDeletable}
             isUserRequester={isUserRequester}
             requestId={request.request_id}
-            onCreateJiraTicket={handleCreateJiraTicket}
             isItemForm
+            onCreateJiraTicket={handleCreateJiraTicket}
           />
         )}
 

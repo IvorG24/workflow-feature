@@ -593,8 +593,8 @@ const OnboardingPage = ({ user }: Props) => {
                   {...register("user_id_number", {
                     required: `${idLabel} is required`,
                     minLength: {
-                      value: 6,
-                      message: `${idLabel} must have at least 8 characters`,
+                      value: 3,
+                      message: `${idLabel} must have at least 3 characters`,
                     },
                     maxLength: {
                       value: 16,
