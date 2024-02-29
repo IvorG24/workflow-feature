@@ -8,12 +8,15 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { RequestCommentType } from "@/utils/types";
+import {
+  CommentAttachmentWithPublicUrl,
+  RequestCommentType,
+} from "@/utils/types";
 import { Divider, Group, Paper, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import RequestComment from "./RequestComment";
@@ -28,9 +31,14 @@ type Props = {
     requestJiraId?: string | null;
   };
   requestCommentList: RequestCommentType[];
+  setRequestCommentList: Dispatch<SetStateAction<RequestCommentType[]>>;
 };
 
-const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
+const RequestCommentList = ({
+  requestData,
+  requestCommentList,
+  setRequestCommentList,
+}: Props) => {
   const userProfile = useUserProfile();
   const router = useRouter();
   const teamMember = useUserTeamMember();
@@ -73,7 +81,7 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
       setIsLoading(true);
       const newCommentId = uuidv4();
       // upload attachments
-      const commentAttachmentList = [];
+      const commentAttachmentList: CommentAttachmentWithPublicUrl = [];
       if (commentAttachment.length > 0) {
         for (const attachment of commentAttachment) {
           const { data, url } = await createAttachment(supabaseClient, {
@@ -138,6 +146,22 @@ const RequestCommentList = ({ requestData, requestCommentList }: Props) => {
           color: "green",
         });
         // reset comment form
+        setRequestCommentList((prev) => [
+          {
+            ...newComment,
+            comment_attachment: commentAttachmentList,
+            comment_team_member: {
+              team_member_user: {
+                user_id: teamMember.team_member_user_id,
+                user_first_name: userProfile.user_first_name,
+                user_last_name: userProfile.user_last_name,
+                user_username: userProfile.user_username,
+                user_avatar: userProfile.user_avatar,
+              },
+            },
+          } as RequestCommentType,
+          ...prev,
+        ]);
         addCommentFormMethods.reset();
         return;
       }

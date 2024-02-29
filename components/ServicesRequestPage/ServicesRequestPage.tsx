@@ -16,13 +16,18 @@ import {
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
+import {
+  CommentType,
+  ReceiverStatusType,
+  RequestWithResponseType,
+} from "@/utils/types";
 import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import ServicesSummary from "../SummarySection/ServicesSummary";
 
@@ -42,11 +47,30 @@ const ServicesRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
+  const initialRequestSignerList = request.request_signer.map((signer) => {
+    return {
+      ...signer.request_signer_signer,
+      request_signer_status: signer.request_signer_status as ReceiverStatusType,
+      request_signer_status_date_updated:
+        signer.request_signer_status_date_updated,
+      request_signer_id: signer.request_signer_id,
+    };
+  });
+
   const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
     []
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
+  const [requestStatus, setRequestStatus] = useState(request.request_status);
+  const [signerList, setSignerList] = useState(initialRequestSignerList);
+  const [requestCommentList, setRequestCommentList] = useState(
+    request.request_comment
+  );
+  const requestJira = {
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  };
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -130,28 +154,7 @@ const ServicesRequestPage = ({ request }: Props) => {
 
   const requestor = request.request_team_member.team_member_user;
 
-  const initialRequestSignerList = request.request_signer.map((signer) => {
-    return {
-      ...signer.request_signer_signer,
-      request_signer_status: signer.request_signer_status as ReceiverStatusType,
-      request_signer_status_date_updated:
-        signer.request_signer_status_date_updated,
-      request_signer_id: signer.request_signer_id,
-    };
-  });
-
-  const requestJira = {
-    id: request.request_jira_id,
-    link: request.request_jira_link,
-  };
-
-  const requestStatus = request.request_status;
-
-  const signerList = initialRequestSignerList;
-
-  const requestCommentList = request.request_comment;
-
-  const requestDateCreated = formatDate(new Date());
+  const requestDateCreated = formatDate(new Date(request.request_date_created));
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
@@ -205,6 +208,40 @@ const ServicesRequestPage = ({ request }: Props) => {
         message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
+      setRequestStatus(status);
+      setSignerList((prev) =>
+        prev.map((thisSigner) => {
+          if (signer.signer_id === thisSigner.signer_id) {
+            return {
+              ...signer,
+              request_signer_status: status,
+              request_signer_status_date_updated: new Date().toISOString(),
+            };
+          }
+          return thisSigner;
+        })
+      );
+      setRequestCommentList((prev) => [
+        {
+          comment_id: uuidv4(),
+          comment_date_created: new Date().toISOString(),
+          comment_content: `${signerFullName} ${status.toLowerCase()} this request`,
+          comment_is_edited: false,
+          comment_last_updated: "",
+          comment_type: `ACTION_${status.toUpperCase()}` as CommentType,
+          comment_team_member_id: signer.signer_team_member.team_member_id,
+          comment_team_member: {
+            team_member_user: {
+              ...signer.signer_team_member.team_member_user,
+              user_id: uuidv4(),
+              user_username: "",
+              user_avatar: "",
+            },
+          },
+          comment_attachment: [],
+        },
+        ...prev,
+      ]);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -407,6 +444,7 @@ const ServicesRequestPage = ({ request }: Props) => {
           teamId: request.request_team_member.team_member_team_id,
         }}
         requestCommentList={requestCommentList}
+        setRequestCommentList={setRequestCommentList}
       />
     </Container>
   );

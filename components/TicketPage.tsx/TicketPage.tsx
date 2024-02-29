@@ -47,10 +47,11 @@ const TicketPage = ({
   const [isEditingResponse, setIsEditingResponse] = useState(false);
   const [ticketForm, setTicketForm] =
     useState<CreateTicketFormValues>(initialTicketForm);
+  const [requestCommentList, setRequestCommentList] = useState(
+    ticket.ticket_comment
+  );
 
   const ticketStatus = ticket.ticket_status;
-
-  const requestCommentList = ticket.ticket_comment;
 
   const canUserEditResponse =
     ticket.ticket_approver_team_member_id === user.team_member_id &&
@@ -172,6 +173,7 @@ const TicketPage = ({
           <TicketCommentSection
             ticket={ticket}
             commentList={requestCommentList}
+            setRequestCommentList={setRequestCommentList}
           />
         </Stack>
       </Paper>
