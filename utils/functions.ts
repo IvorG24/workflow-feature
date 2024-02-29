@@ -538,18 +538,19 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "VIZ-23-008 SAN ISIDRO SOLAR",
         "MIN-14-026B MANOLO",
         "MIN-22-007 ZAMBOANGA RADAR",
+        "MIN-19-027 MALITBOG MINI HYDRO",
       ],
       fullName: "Christopher Waga",
       jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
       emailAddress: "christopher.waga@staclara.com.ph",
     },
-    {
-      items: ["MIN-19-027 MALITBOG MINI HYDRO"],
-      fullName: "Joel E. Gucela",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
-      emailAddress: "gucelaje2231@gmail.com",
-    },
+    // {
+    //   items: [""],
+    //   fullName: "Joel E. Gucela",
+    //   jiraAccountId:
+    //     "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+    //   emailAddress: "gucelaje2231@gmail.com",
+    // },
   ];
 
   const matchedUser = matcher.find((matcherItem) =>
@@ -658,11 +659,7 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       emailAddress: "maryarances27@gmail.com",
     },
     {
-      items: [
-        "MIN-19-027 MALITBOG MINI HYDRO",
-        "MIN-21-015 MATI-1",
-        "MIN-22-007 ZAMBOANGA RADAR",
-      ],
+      items: ["MIN-22-007 ZAMBOANGA RADAR"],
       fullName: "Ceilo Dann Oppus",
       jiraAccountId: "712020:d9f9431e-c022-41e2-8963-356ad5448bc4",
       emailAddress: "ceilo.opus@staclara.com.ph",
@@ -728,13 +725,13 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       jiraAccountId: "712020:5f585f80-6478-4f71-9ed4-04d0d8cdf416",
       emailAddress: "edwin.probadora@staclara.com.ph",
     },
-    // {
-    //   items: ["MIN-15-077  MW SIGUIL HYDRO"],
-    //   fullName: "Joel E. Gucela",
-    //   jiraAccountId:
-    //     "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
-    //   emailAddress: "gucelaje2231@gmail.com",
-    // },
+    {
+      items: ["MIN-19-027 MALITBOG MINI HYDRO", "MIN-21-015 MATI-1"],
+      fullName: "Joel E. Gucela",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+      emailAddress: "gucelaje2231@gmail.com",
+    },
     {
       items: ["MIN-15-077  MW SIGUIL HYDRO"],
       fullName: "Leizyl Puerte",
