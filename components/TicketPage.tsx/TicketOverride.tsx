@@ -7,7 +7,7 @@ import { CreateTicketFormValues, TicketType } from "@/utils/types";
 import { Box, LoadingOverlay } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import TicketForm from "../CreateTicketPage/TicketForm";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
@@ -22,6 +22,7 @@ type Props = {
   ticket: TicketType;
   onOverrideTicket: () => void;
   onClose?: () => void;
+  setRequestCommentList: Dispatch<SetStateAction<TicketType["ticket_comment"]>>;
 };
 
 const TicketOverride = ({
@@ -31,11 +32,13 @@ const TicketOverride = ({
   memberId,
   onOverrideTicket,
   onClose,
+  setRequestCommentList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const user = useUserProfile();
   const userMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
+  const currentUser = useUserProfile();
 
   const [isLoading, setIsLoading] = useState(false);
   const ticketForm: CreateTicketFormValues = {
@@ -189,7 +192,7 @@ const TicketOverride = ({
 
       if (!ticketChanges) return;
       setOldTicketForm(newFormValues);
-      const { error } = await createTicketComment(supabaseClient, {
+      const { data, error } = await createTicketComment(supabaseClient, {
         ticket_comment_id: newCommentId,
         ticket_comment_content: `<p>${user?.user_first_name} ${user?.user_last_name} has made the following changes on the ticket.</p>\n${ticketChanges}`,
         ticket_comment_type: "ACTION_OVERRIDE",
@@ -197,23 +200,36 @@ const TicketOverride = ({
         ticket_comment_ticket_id: ticket.ticket_id,
       });
       if (error) throw error;
-
-      if (!error) {
-        if (
-          ticket.ticket_requester_team_member_id !== userMember?.team_member_id
-        ) {
-          await createNotification(supabaseClient, {
-            notification_app: "REQUEST",
-            notification_type: "COMMENT",
-            notification_content: `${`${user?.user_first_name} ${user?.user_last_name}`} overrode your ticket`,
-            notification_redirect_url: `/${formatTeamNameToUrlKey(
-              activeTeam.team_name ?? ""
-            )}/tickets/${ticket.ticket_id}`,
-            notification_user_id:
-              ticket.ticket_requester.team_member_user.user_id,
-            notification_team_id: userMember?.team_member_team_id,
-          });
-        }
+      setRequestCommentList((prev) => [
+        {
+          ...data,
+          ticket_comment_attachment: [],
+          ticket_comment_team_member: {
+            team_member_user: {
+              user_id: `${currentUser?.user_id}`,
+              user_first_name: currentUser ? currentUser.user_first_name : "",
+              user_last_name: currentUser ? currentUser.user_last_name : "",
+              user_username: currentUser ? currentUser.user_username : "",
+              user_avatar: currentUser ? currentUser.user_avatar : "",
+            },
+          },
+        },
+        ...prev,
+      ]);
+      if (
+        ticket.ticket_requester_team_member_id !== userMember?.team_member_id
+      ) {
+        await createNotification(supabaseClient, {
+          notification_app: "REQUEST",
+          notification_type: "COMMENT",
+          notification_content: `${`${user?.user_first_name} ${user?.user_last_name}`} overrode your ticket`,
+          notification_redirect_url: `/${formatTeamNameToUrlKey(
+            activeTeam.team_name ?? ""
+          )}/tickets/${ticket.ticket_id}`,
+          notification_user_id:
+            ticket.ticket_requester.team_member_user.user_id,
+          notification_team_id: userMember?.team_member_team_id,
+        });
       }
     } catch (error) {
       notifications.show({

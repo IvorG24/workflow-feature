@@ -14,8 +14,10 @@ export const isValidTeamName = (name: string): boolean => {
   return true;
 };
 
-export const requestPath = (requestId: string) => {
-  return `http://${window.location.host}/team-requests/requests/${requestId}`;
+export const requestPath = (requestId: string, teamName: string) => {
+  return `http://${window.location.host}/${formatTeamNameToUrlKey(
+    teamName ?? ""
+  )}/requests/${requestId}`;
 };
 
 export const regExp = /\(([^)]+)\)/;

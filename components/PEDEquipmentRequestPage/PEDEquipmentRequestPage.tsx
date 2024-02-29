@@ -6,10 +6,6 @@ import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
-import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
-import useRealtimeRequestJira from "@/hooks/useRealtimeRequestJira";
-import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
-import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -18,12 +14,17 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { formatDate } from "@/utils/constant";
 import {
   generateJiraCommentPayload,
   generateJiraTicketPayload,
 } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { ReceiverStatusType, RequestWithResponseType } from "@/utils/types";
+import {
+  CommentType,
+  ReceiverStatusType,
+  RequestWithResponseType,
+} from "@/utils/types";
 import {
   Accordion,
   Container,
@@ -40,6 +41,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import PEDEquipmentSummary from "../SummarySection/PEDEquipmentSummary";
 
@@ -59,11 +61,30 @@ const PEDEquipmentRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
+  const initialRequestSignerList = request.request_signer.map((signer) => {
+    return {
+      ...signer.request_signer_signer,
+      request_signer_status: signer.request_signer_status as ReceiverStatusType,
+      request_signer_status_date_updated:
+        signer.request_signer_status_date_updated,
+      request_signer_id: signer.request_signer_id,
+    };
+  });
+
   const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
     []
   );
   const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
+  const [requestStatus, setRequestStatus] = useState(request.request_status);
+  const [signerList, setSignerList] = useState(initialRequestSignerList);
+  const [requestCommentList, setRequestCommentList] = useState(
+    request.request_comment
+  );
+  const [requestJira, setRequestJira] = useState({
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  });
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -147,46 +168,7 @@ const PEDEquipmentRequestPage = ({ request }: Props) => {
 
   const requestor = request.request_team_member.team_member_user;
 
-  const initialRequestSignerList = request.request_signer.map((signer) => {
-    return {
-      ...signer.request_signer_signer,
-      request_signer_status: signer.request_signer_status as ReceiverStatusType,
-      request_signer_status_date_updated:
-        signer.request_signer_status_date_updated,
-      request_signer_id: signer.request_signer_id,
-    };
-  });
-
-  const requestJira = useRealtimeRequestJira(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestJira: {
-      id: request.request_jira_id,
-      link: request.request_jira_link,
-    },
-  });
-
-  const requestStatus = useRealtimeRequestStatus(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestStatus: request.request_status,
-  });
-
-  const signerList = useRealtimeRequestSignerList(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestSignerList,
-  });
-
-  const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
-    requestId: request.request_id,
-    initialCommentList: request.request_comment,
-  });
-
-  const requestDateCreated = new Date(
-    request.request_date_created
-  ).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const requestDateCreated = formatDate(new Date(request.request_date_created));
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
@@ -240,6 +222,40 @@ const PEDEquipmentRequestPage = ({ request }: Props) => {
         message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
+      setRequestStatus(status);
+      setSignerList((prev) =>
+        prev.map((thisSigner) => {
+          if (signer.signer_id === thisSigner.signer_id) {
+            return {
+              ...signer,
+              request_signer_status: status,
+              request_signer_status_date_updated: new Date().toISOString(),
+            };
+          }
+          return thisSigner;
+        })
+      );
+      setRequestCommentList((prev) => [
+        {
+          comment_id: uuidv4(),
+          comment_date_created: new Date().toISOString(),
+          comment_content: `${signerFullName} ${status.toLowerCase()} this request`,
+          comment_is_edited: false,
+          comment_last_updated: "",
+          comment_type: `ACTION_${status.toUpperCase()}` as CommentType,
+          comment_team_member_id: signer.signer_team_member.team_member_id,
+          comment_team_member: {
+            team_member_user: {
+              ...signer.signer_team_member.team_member_user,
+              user_id: uuidv4(),
+              user_username: "",
+              user_avatar: "",
+            },
+          },
+          comment_attachment: [],
+        },
+        ...prev,
+      ]);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -258,7 +274,28 @@ const PEDEquipmentRequestPage = ({ request }: Props) => {
         requestId: request.request_id,
         memberId: teamMember.team_member_id,
       });
-
+      setRequestStatus("CANCELED");
+      setRequestCommentList((prev) => [
+        {
+          comment_id: uuidv4(),
+          comment_date_created: new Date().toISOString(),
+          comment_content: `Request canceled`,
+          comment_is_edited: false,
+          comment_last_updated: "",
+          comment_type: `ACTION_CANCELED` as CommentType,
+          comment_team_member_id: request.request_team_member_id ?? "",
+          comment_team_member: {
+            team_member_user: {
+              ...request.request_team_member.team_member_user,
+              user_id: uuidv4(),
+              user_username: "",
+              user_avatar: "",
+            },
+          },
+          comment_attachment: [],
+        },
+        ...prev,
+      ]);
       notifications.show({
         message: `Request cancelled.`,
         color: "green",
@@ -361,7 +398,10 @@ const PEDEquipmentRequestPage = ({ request }: Props) => {
       if (requestCommentList.length > 0) {
         await handleAddCommentToJiraTicket(jiraTicketData.issueKey);
       }
-
+      setRequestJira({
+        id: jiraTicketData.issueKey,
+        link: jiraTicketData._links.web,
+      });
       return JSON.stringify(jiraTicketData);
     } catch (error) {
       console.error("Failed to create jira ticket", error);
@@ -595,6 +635,7 @@ const PEDEquipmentRequestPage = ({ request }: Props) => {
           teamId: request.request_team_member.team_member_team_id,
         }}
         requestCommentList={requestCommentList}
+        setRequestCommentList={setRequestCommentList}
       />
     </Container>
   );

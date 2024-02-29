@@ -6,9 +6,9 @@ import {
   readAllNotification,
   updateNotificationStatus,
 } from "@/backend/api/update";
-import useRealtimeNotificationList from "@/hooks/useRealtimeNotificationList";
 import {
   useNotificationActions,
+  useNotificationStore,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
 import { useUserStore, useUserTeamMember } from "@/stores/useUserStore";
@@ -61,7 +61,7 @@ const NotificationPage = ({
   const teamId = userProfile?.user_active_team_id || "";
   const userTeamMemberData = useUserTeamMember();
 
-  const storeNotificationList = useRealtimeNotificationList();
+  const { notificationList: storeNotificationList } = useNotificationStore();
   const unreadNotificationCount = useUnreadNotificationCount();
   const [pageNotificationList, setPageNotificationList] = useState(
     initialNotificationList
@@ -250,13 +250,7 @@ const NotificationPage = ({
           defaultValue={tab}
           onTabChange={(value) =>
             router
-              .replace(
-                `/team-${
-                  app === "REQUEST"
-                    ? `${app.toLowerCase()}s`
-                    : app.toLowerCase()
-                }/notification?tab=${value}`
-              )
+              .replace(`/user/notification?tab=${value}`)
               .then(() => handleGetNotificationList(1, value as string))
           }
         >

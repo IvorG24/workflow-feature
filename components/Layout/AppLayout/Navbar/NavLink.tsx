@@ -1,16 +1,12 @@
 import { getUnresolvedRequestListPerApprover } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
-import {
-  useActiveApp,
-  useActiveTeam,
-  useTeamList,
-} from "@/stores/useTeamStore";
+import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
-import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import { FormTableRow } from "@/utils/types";
 import {
   Box,
@@ -51,7 +47,6 @@ const ReviewAppNavLink = () => {
   const [userNotificationCount, setUserNotificationCount] = useState(0);
 
   const supabaseClient = createPagesBrowserClient<Database>();
-  const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
   const teamList = useTeamList();
   const hasTeam = teamList.length > 0;
@@ -261,7 +256,7 @@ const ReviewAppNavLink = () => {
 
   const listSection = [
     {
-      label: `${startCase(activeApp)} List`,
+      label: `Request List`,
       icon: (
         <Box ml="sm" {...defaultNavLinkContainerProps}>
           <IconFiles {...defaultIconProps} />

@@ -9,7 +9,6 @@ import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useNotificationActions } from "@/stores/useNotificationStore";
 import {
-  useActiveApp,
   useActiveTeam,
   useTeamActions,
   useTeamList,
@@ -20,7 +19,7 @@ import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
-import { AppType, TeamTableRow } from "@/utils/types";
+import { TeamTableRow } from "@/utils/types";
 import { Avatar, Group, Loader, Select, Text } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
@@ -57,7 +56,6 @@ const SelectTeam = () => {
   const router = useRouter();
 
   const teamList = useTeamList();
-  const activeApp = useActiveApp();
   const activeTeam = useActiveTeam();
   const user = useUserProfile();
 
@@ -113,7 +111,7 @@ const SelectTeam = () => {
         // fetch form list
         const formList = await getFormList(supabaseClient, {
           teamId: `${value}`,
-          app: activeApp,
+          app: "REQUEST",
           memberId: teamMember.team_member_id,
         });
 
@@ -125,7 +123,7 @@ const SelectTeam = () => {
       const { data: notificationList, count: unreadNotificationCount } =
         await getAllNotification(supabaseClient, {
           userId: user.user_id,
-          app: activeApp as AppType,
+          app: "REQUEST",
           page: 1,
           limit: NOTIFICATION_LIST_LIMIT,
           teamId: newActiveTeam.team_id,

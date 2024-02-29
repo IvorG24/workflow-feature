@@ -6,10 +6,6 @@ import {
   checkTransferReceiptItemQuantity,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
-import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
-import useRealtimeProjectRequestSignerList from "@/hooks/useRealtimeRequestProjectSignerList";
-import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
-import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -17,10 +13,10 @@ import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFu
 import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
+  CommentType,
   ConnectedRequestIdList,
   FormStatusType,
   ReceiverStatusType,
-  RequestCommentType,
   RequestProjectSignerStatusType,
   RequestResponseTableRow,
   RequestWithResponseType,
@@ -42,7 +38,8 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import ItemSummary from "../SummarySection/ItemSummary";
 import QuotationSummary from "../SummarySection/QuotationSummary";
@@ -84,15 +81,6 @@ const RequestPage = ({
   const supabaseClient = useSupabaseClient();
   // const [currentServerDate, setCurrentServerDate] = useState("");
 
-  const user = useUserProfile();
-  const teamMember = useUserTeamMember();
-  const activeTeam = useActiveTeam();
-
-  const { setIsLoading } = useLoadingActions();
-  const pageContentRef = useRef<HTMLDivElement>(null);
-
-  const requestor = request.request_team_member.team_member_user;
-
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
       ...signer.request_signer_signer,
@@ -103,36 +91,24 @@ const RequestPage = ({
     };
   });
 
-  const requestStatus = useRealtimeRequestStatus(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestStatus: request.request_status,
-  });
+  const user = useUserProfile();
+  const teamMember = useUserTeamMember();
+  const activeTeam = useActiveTeam();
 
-  const signerList = useRealtimeRequestSignerList(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestSignerList,
-  });
+  const { setIsLoading } = useLoadingActions();
+  const pageContentRef = useRef<HTMLDivElement>(null);
 
-  const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
-    requestId: request.request_id,
-    initialCommentList: request.request_comment as RequestCommentType[],
-  });
-
-  const isSourcedItemForm =
-    request.request_form.form_name === "Sourced Item" &&
-    request.request_form.form_is_formsly_form;
-
-  const projectSignerStatus = useRealtimeProjectRequestSignerList(
-    supabaseClient,
-    {
-      requestId: request.request_id,
-      initialRequestProjectSignerList: initialProjectSignerStatus || [],
-      requestSignerList: signerList,
-      isSourcedItemForm,
-    }
+  const [requestStatus, setRequestStatus] = useState(request.request_status);
+  const [signerList, setSignerList] = useState(initialRequestSignerList);
+  const [requestCommentList, setRequestCommentList] = useState(
+    request.request_comment
   );
 
-  const requestDateCreated = formatDate(new Date());
+  const requestor = request.request_team_member.team_member_user;
+
+  const projectSignerStatus = initialProjectSignerStatus || [];
+
+  const requestDateCreated = formatDate(new Date(request.request_date_created));
 
   const originalSectionList = request.request_form.form_section;
 
@@ -467,6 +443,40 @@ const RequestPage = ({
         message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
+      setRequestStatus(status);
+      setSignerList((prev) =>
+        prev.map((thisSigner) => {
+          if (signer.signer_id === thisSigner.signer_id) {
+            return {
+              ...signer,
+              request_signer_status: status,
+              request_signer_status_date_updated: new Date().toISOString(),
+            };
+          }
+          return thisSigner;
+        })
+      );
+      setRequestCommentList((prev) => [
+        {
+          comment_id: uuidv4(),
+          comment_date_created: new Date().toISOString(),
+          comment_content: `${signerFullName} ${status.toLowerCase()} this request`,
+          comment_is_edited: false,
+          comment_last_updated: "",
+          comment_type: `ACTION_${status.toUpperCase()}` as CommentType,
+          comment_team_member_id: signer.signer_team_member.team_member_id,
+          comment_team_member: {
+            team_member_user: {
+              ...signer.signer_team_member.team_member_user,
+              user_id: uuidv4(),
+              user_username: "",
+              user_avatar: "",
+            },
+          },
+          comment_attachment: [],
+        },
+        ...prev,
+      ]);
     } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -485,6 +495,28 @@ const RequestPage = ({
         requestId: request.request_id,
         memberId: teamMember.team_member_id,
       });
+      setRequestStatus("CANCELED");
+      setRequestCommentList((prev) => [
+        {
+          comment_id: uuidv4(),
+          comment_date_created: new Date().toISOString(),
+          comment_content: `Request canceled`,
+          comment_is_edited: false,
+          comment_last_updated: "",
+          comment_type: `ACTION_CANCELED` as CommentType,
+          comment_team_member_id: request.request_team_member_id ?? "",
+          comment_team_member: {
+            team_member_user: {
+              ...request.request_team_member.team_member_user,
+              user_id: uuidv4(),
+              user_username: "",
+              user_avatar: "",
+            },
+          },
+          comment_attachment: [],
+        },
+        ...prev,
+      ]);
       notifications.show({
         message: "Request canceled",
         color: "green",
@@ -905,6 +937,7 @@ const RequestPage = ({
           teamId: request.request_team_member.team_member_team_id,
         }}
         requestCommentList={requestCommentList}
+        setRequestCommentList={setRequestCommentList}
       />
     </Container>
   );

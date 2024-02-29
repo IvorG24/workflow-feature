@@ -366,7 +366,7 @@ const ItemFormPage = ({
             <Button
               onClick={() =>
                 router.push(
-                  `//${formatTeamNameToUrlKey(
+                  `/${formatTeamNameToUrlKey(
                     team.team_name
                   )}/forms/${formId}/create`
                 )
