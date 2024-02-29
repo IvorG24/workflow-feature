@@ -319,6 +319,7 @@ Props) => {
         requestId: request.request_id,
         memberId: teamMember.team_member_id,
       });
+      setRequestStatus("CANCELED");
       setRequestCommentList((prev) => [
         {
           comment_id: uuidv4(),
