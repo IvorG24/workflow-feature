@@ -260,7 +260,28 @@ const ServicesRequestPage = ({ request }: Props) => {
         requestId: request.request_id,
         memberId: teamMember.team_member_id,
       });
-
+      setRequestStatus("CANCELED");
+      setRequestCommentList((prev) => [
+        {
+          comment_id: uuidv4(),
+          comment_date_created: new Date().toISOString(),
+          comment_content: `Request canceled`,
+          comment_is_edited: false,
+          comment_last_updated: "",
+          comment_type: `ACTION_CANCELED` as CommentType,
+          comment_team_member_id: request.request_team_member_id ?? "",
+          comment_team_member: {
+            team_member_user: {
+              ...request.request_team_member.team_member_user,
+              user_id: uuidv4(),
+              user_username: "",
+              user_avatar: "",
+            },
+          },
+          comment_attachment: [],
+        },
+        ...prev,
+      ]);
       notifications.show({
         message: `Request cancelled.`,
         color: "green",
