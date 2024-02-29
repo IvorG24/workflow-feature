@@ -1,4 +1,5 @@
 import { getRequestFormslyId } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { addDays } from "@/utils/functions";
 import { addCommaToNumber, regExp, requestPath } from "@/utils/string";
@@ -133,6 +134,7 @@ const RequestFormFields = ({
     formState: { errors },
     getValues,
   } = useFormContext<RequestFormValues>();
+  const team = useActiveTeam();
 
   const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
@@ -211,7 +213,10 @@ const RequestFormFields = ({
                     variant="light"
                     color="blue"
                     onClick={() =>
-                      window.open(requestPath(`${value}`), "_blank")
+                      window.open(
+                        requestPath(`${value}`, team.team_name),
+                        "_blank"
+                      )
                     }
                   >
                     <IconExternalLink />

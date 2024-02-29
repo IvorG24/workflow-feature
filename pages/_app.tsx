@@ -1,7 +1,6 @@
 import { Layouts, PageWithLayoutProps } from "@/components/Layout/LayoutList";
 import { RouterTransition } from "@/components/RouterTransition/RouterTransition";
 import { useIsLoading } from "@/stores/useLoadingStore";
-import { useActiveApp } from "@/stores/useTeamStore";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import {
@@ -22,8 +21,6 @@ export default function App(
   props: PageWithLayoutProps & { colorScheme: ColorScheme }
 ) {
   const { Component, pageProps } = props;
-
-  const activeApp = useActiveApp();
   const isLoading = useIsLoading();
 
   const [supabaseClient] = useState(() => createPagesBrowserClient());
@@ -53,7 +50,7 @@ export default function App(
         withNormalizeCSS
         theme={{
           colorScheme,
-          primaryColor: activeApp === "REVIEW" ? "green" : "blue",
+          primaryColor: "blue",
         }}
       >
         <ModalsProvider>

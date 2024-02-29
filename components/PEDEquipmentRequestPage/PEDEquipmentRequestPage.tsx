@@ -6,10 +6,6 @@ import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
-import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
-import useRealtimeRequestJira from "@/hooks/useRealtimeRequestJira";
-import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
-import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -157,28 +153,16 @@ const PEDEquipmentRequestPage = ({ request }: Props) => {
     };
   });
 
-  const requestJira = useRealtimeRequestJira(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestJira: {
-      id: request.request_jira_id,
-      link: request.request_jira_link,
-    },
-  });
+  const requestJira = {
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  };
 
-  const requestStatus = useRealtimeRequestStatus(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestStatus: request.request_status,
-  });
+  const requestStatus = request.request_status;
 
-  const signerList = useRealtimeRequestSignerList(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestSignerList,
-  });
+  const signerList = initialRequestSignerList;
 
-  const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
-    requestId: request.request_id,
-    initialCommentList: request.request_comment,
-  });
+  const requestCommentList = request.request_comment;
 
   const requestDateCreated = new Date(
     request.request_date_created

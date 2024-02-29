@@ -24,6 +24,8 @@ import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import FormBuilder, { FormBuilderData } from "../FormBuilder/FormBuilder";
+import { formatTeamNameToUrlKey } from "@/utils/string";
+import { useActiveTeam } from "@/stores/useTeamStore";
 
 const useStyles = createStyles((theme) => ({
   formNameInput: {
@@ -56,6 +58,7 @@ const BuildFormPage = ({ teamMemberList, formId, groupList }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const formType: AppType = "REQUEST";
+  const team = useActiveTeam();
   const { classes } = useStyles();
 
   const { addForm } = useFormActions();
@@ -168,7 +171,7 @@ const BuildFormPage = ({ teamMemberList, formId, groupList }: Props) => {
         color: "green",
       });
 
-      await router.push(`/team-requests/forms/${createdForm.form_id}`);
+      await router.push(`/${formatTeamNameToUrlKey(team.team_name ?? "")}/forms/${createdForm.form_id}`);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

@@ -1,4 +1,5 @@
 import { getRequestFormslyId } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { addDays } from "@/utils/functions";
 import {
@@ -148,6 +149,7 @@ const RequestFormFields = ({
   const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const team = useActiveTeam();
   const [linkToDisplay, setLinkToDisplay] = useState<string | null>(null);
   const [prevFileLink, setPrevFileLink] = useState<string | null>(null);
 
@@ -272,7 +274,10 @@ const RequestFormFields = ({
                     color="blue"
                     onClick={() =>
                       window.open(
-                        requestPath(`${parseJSONIfValid(value)}`),
+                        requestPath(
+                          `${(parseJSONIfValid(value), team.team_name)}`,
+                          team.team_name
+                        ),
                         "_blank"
                       )
                     }

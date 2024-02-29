@@ -1,3 +1,4 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { addCommaToNumber, requestPath } from "@/utils/string";
 import {
   CanvassAdditionalDetailsType,
@@ -52,6 +53,7 @@ const ItemCanvassPage = ({
   lowestAdditionalCharge,
 }: Props) => {
   const router = useRouter();
+  const team = useActiveTeam();
   const { classes } = useStyles();
   return (
     <Container>
@@ -89,7 +91,10 @@ const ItemCanvassPage = ({
             <Button
               variant="light"
               onClick={() =>
-                window.open(requestPath(lowestQuotation.request_id), "_blank")
+                window.open(
+                  requestPath(lowestQuotation.request_id, team.team_name),
+                  "_blank"
+                )
               }
             >
               View Quotation
@@ -132,7 +137,10 @@ const ItemCanvassPage = ({
                         color="blue"
                         onClick={() =>
                           window.open(
-                            requestPath(`${quotation?.quotation_id}`),
+                            requestPath(
+                              `${quotation?.quotation_id}`,
+                              team.team_name
+                            ),
                             "_blank"
                           )
                         }

@@ -1,3 +1,4 @@
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { isEmpty } from "@/utils/functions";
 import { requestPath } from "@/utils/string";
 import { ConnectedRequestItemType } from "@/utils/types";
@@ -17,7 +18,7 @@ type Props = {
   connectedRequestIDList: { [key: string]: ConnectedRequestItemType[] };
 };
 
-const renderLink = (request: ConnectedRequestItemType) => {
+const renderLink = (request: ConnectedRequestItemType, teamName: string) => {
   const inputProps = {
     variant: "filled",
     readOnly: true,
@@ -35,7 +36,9 @@ const renderLink = (request: ConnectedRequestItemType) => {
         p={4}
         variant="light"
         color="blue"
-        onClick={() => window.open(requestPath(request.request_id), "_blank")}
+        onClick={() =>
+          window.open(requestPath(request.request_id, teamName), "_blank")
+        }
       >
         <IconExternalLink />
       </ActionIcon>
@@ -45,6 +48,7 @@ const renderLink = (request: ConnectedRequestItemType) => {
 
 const ConnectedRequestSection = ({ connectedRequestIDList }: Props) => {
   const formTypeList = Object.keys(connectedRequestIDList);
+  const team = useActiveTeam();
 
   const connectedRequestSection = formTypeList.map((key) => {
     return connectedRequestIDList[key].length !== 0 ? (
@@ -52,7 +56,7 @@ const ConnectedRequestSection = ({ connectedRequestIDList }: Props) => {
         <Title order={5}>{key}</Title>
         {connectedRequestIDList[key].map((request) => (
           <Box key={request.request_id} mt={5}>
-            {renderLink(request)}
+            {renderLink(request, team.team_name)}
           </Box>
         ))}
       </Box>

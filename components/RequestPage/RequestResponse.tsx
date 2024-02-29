@@ -1,4 +1,5 @@
 import { getRequestFormslyId } from "@/backend/api/get";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { requestPath } from "@/utils/string";
 import { FieldType, OptionTableRow } from "@/utils/types";
 import {
@@ -44,6 +45,7 @@ const RequestResponse = ({
     readOnly: true,
   };
   const supabaseClient = useSupabaseClient();
+  const team = useActiveTeam();
   const [linkDisplayValue, setLinkDisplayValue] = useState(
     response.value === "" ? "" : JSON.parse(response.value)
   );
@@ -93,7 +95,9 @@ const RequestResponse = ({
               p={4}
               variant="light"
               color="blue"
-              onClick={() => window.open(requestPath(parsedValue), "_blank")}
+              onClick={() =>
+                window.open(requestPath(parsedValue, team.team_name), "_blank")
+              }
             >
               <IconExternalLink />
             </ActionIcon>

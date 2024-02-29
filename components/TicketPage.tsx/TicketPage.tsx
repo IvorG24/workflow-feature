@@ -1,8 +1,6 @@
 import { getTicketOnLoad } from "@/backend/api/get";
 import { createNotification, createTicketComment } from "@/backend/api/post";
 import { assignTicket } from "@/backend/api/update";
-import useRealtimeTicketCommentList from "@/hooks/useRealtimeTicketCommentList";
-import useRealtimeTicketStatus from "@/hooks/useRealtimeTicketStatus";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { READ_ONLY_TICKET_CATEGORY_LIST } from "@/utils/constant";
@@ -50,15 +48,9 @@ const TicketPage = ({
   const [ticketForm, setTicketForm] =
     useState<CreateTicketFormValues>(initialTicketForm);
 
-  const ticketStatus = useRealtimeTicketStatus(supabaseClient, {
-    ticketId: ticket.ticket_id,
-    initialTicketStatus: ticket.ticket_status,
-  });
+  const ticketStatus = ticket.ticket_status;
 
-  const requestCommentList = useRealtimeTicketCommentList(supabaseClient, {
-    ticketId: initialTicket.ticket_id,
-    initialCommentList: ticket.ticket_comment,
-  });
+  const requestCommentList = ticket.ticket_comment;
 
   const canUserEditResponse =
     ticket.ticket_approver_team_member_id === user.team_member_id &&

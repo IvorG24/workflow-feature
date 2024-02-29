@@ -6,10 +6,6 @@ import {
   checkTransferReceiptItemQuantity,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
-import useRealtimeRequestCommentList from "@/hooks/useRealtimeRequestCommentList";
-import useRealtimeProjectRequestSignerList from "@/hooks/useRealtimeRequestProjectSignerList";
-import useRealtimeRequestSignerList from "@/hooks/useRealtimeRequestSignerList";
-import useRealtimeRequestStatus from "@/hooks/useRealtimeRequestStatus";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -103,34 +99,17 @@ const RequestPage = ({
     };
   });
 
-  const requestStatus = useRealtimeRequestStatus(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestStatus: request.request_status,
-  });
+  const requestStatus = request.request_status;
 
-  const signerList = useRealtimeRequestSignerList(supabaseClient, {
-    requestId: request.request_id,
-    initialRequestSignerList,
-  });
+  const signerList = initialRequestSignerList;
 
-  const requestCommentList = useRealtimeRequestCommentList(supabaseClient, {
-    requestId: request.request_id,
-    initialCommentList: request.request_comment as RequestCommentType[],
-  });
+  const requestCommentList = request.request_comment as RequestCommentType[];
 
-  const isSourcedItemForm =
-    request.request_form.form_name === "Sourced Item" &&
-    request.request_form.form_is_formsly_form;
+  // const isSourcedItemForm =
+  //   request.request_form.form_name === "Sourced Item" &&
+  //   request.request_form.form_is_formsly_form;
 
-  const projectSignerStatus = useRealtimeProjectRequestSignerList(
-    supabaseClient,
-    {
-      requestId: request.request_id,
-      initialRequestProjectSignerList: initialProjectSignerStatus || [],
-      requestSignerList: signerList,
-      isSourcedItemForm,
-    }
-  );
+  const projectSignerStatus = initialProjectSignerStatus || [];
 
   const requestDateCreated = formatDate(new Date());
 

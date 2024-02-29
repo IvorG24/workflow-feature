@@ -1,15 +1,14 @@
-import useRealtimeNotificationList from "@/hooks/useRealtimeNotificationList";
 import {
   useNotificationActions,
+  useNotificationStore,
   useUnreadNotificationCount,
 } from "@/stores/useNotificationStore";
-import { useActiveApp, useActiveTeam } from "@/stores/useTeamStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   Box,
   Burger,
   Header as MantineHeader,
   MediaQuery,
-  Skeleton,
   UnstyledButton,
   useMantineTheme,
 } from "@mantine/core";
@@ -27,11 +26,10 @@ type HeaderProps = {
 
 const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
   const theme = useMantineTheme();
-  const activeApp = useActiveApp();
   const router = useRouter();
   const activeTeam = useActiveTeam();
 
-  const notificationList = useRealtimeNotificationList();
+  const { notificationList } = useNotificationStore();
   const unreadNotificationCount = useUnreadNotificationCount();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
@@ -61,23 +59,21 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
           />
         </MediaQuery>
 
-        {!activeApp ? <Skeleton width={127} height={45} /> : null}
-        {activeApp ? (
-          <UnstyledButton
-            onClick={() =>
-              router.push(
-                `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`
-              )
-            }
-          >
-            <Image
-              src={`/logo-${activeApp.toLowerCase()}-${theme.colorScheme.toLowerCase()}.svg`}
-              width={127}
-              height={45}
-              alt="Formsly Logo"
-            />
-          </UnstyledButton>
-        ) : null}
+        <UnstyledButton
+          onClick={() =>
+            router.push(
+              `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`
+            )
+          }
+        >
+          <Image
+            src={`/logo-request-${theme.colorScheme.toLowerCase()}.svg`}
+            width={127}
+            height={45}
+            alt="Formsly Logo"
+          />
+        </UnstyledButton>
+
         <HeaderMenu />
       </Box>
     </MantineHeader>

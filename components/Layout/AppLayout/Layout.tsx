@@ -6,21 +6,19 @@ import {
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
-import { updateUserActiveApp } from "@/backend/api/update";
 import { useFormActions } from "@/stores/useFormStore";
 import { useNotificationActions } from "@/stores/useNotificationStore";
-import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
+import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
 import { NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { AppType, TeamTableRow } from "@/utils/types";
+import { TeamTableRow } from "@/utils/types";
 import { AppShell, useMantineTheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { useBeforeunload } from "react-beforeunload";
 import Header from "./Header/Header";
 import Navbar from "./Navbar/Navbar";
 type LayoutProps = {
@@ -35,8 +33,7 @@ const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
 
-  const activeApp = useActiveApp();
-  const { setTeamList, setActiveTeam, setActiveApp } = useTeamActions();
+  const { setTeamList, setActiveTeam } = useTeamActions();
   const { setFormList } = useFormActions();
   const {
     setUserAvatar,
@@ -72,18 +69,6 @@ const Layout = ({ children }: LayoutProps) => {
         //set user profile
         setUserProfile(user);
 
-        // set the user's active app
-        let activeApp = "";
-        if (router.pathname.includes("team-requests")) {
-          activeApp = "REQUEST";
-        } else if (router.pathname.includes("team-reviews")) {
-          activeApp = "REVIEW";
-        } else {
-          activeApp = user.user_active_app;
-        }
-
-        setActiveApp(activeApp);
-
         let activeTeamId = "";
         if (teamList.length !== 0) {
           setTeamList(teamList);
@@ -112,7 +97,7 @@ const Layout = ({ children }: LayoutProps) => {
               supabaseClient,
               { teamMemberId: teamMember.team_member_id }
             );
-  
+
             setUserTeamMember(teamMember);
             setUserTeamMemberGroupList(teamMemberGroupList);
 
@@ -138,7 +123,7 @@ const Layout = ({ children }: LayoutProps) => {
         const { data: notificationList, count: unreadNotificationCount } =
           await getAllNotification(supabaseClient, {
             userId: user.user_id,
-            app: activeApp as AppType,
+            app: "REQUEST",
             page: 1,
             limit: NOTIFICATION_LIST_LIMIT,
             teamId: activeTeamId,
@@ -148,7 +133,6 @@ const Layout = ({ children }: LayoutProps) => {
         setNotificationList(notificationList);
         setUnreadNotification(unreadNotificationCount || 0);
       } catch (e) {
-
         console.error(e);
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -160,15 +144,6 @@ const Layout = ({ children }: LayoutProps) => {
 
     fetchInitialData();
   }, [userId]);
-
-  useBeforeunload(async () => {
-    if (activeApp && userId) {
-      await updateUserActiveApp(supabaseClient, {
-        app: activeApp,
-        userId: userId,
-      });
-    }
-  });
 
   return (
     <AppShell

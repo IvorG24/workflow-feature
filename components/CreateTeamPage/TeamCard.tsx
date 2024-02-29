@@ -1,7 +1,7 @@
 import { useFormActions } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useNotificationActions } from "@/stores/useNotificationStore";
-import { useActiveApp, useTeamActions } from "@/stores/useTeamStore";
+import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions, useUserProfile } from "@/stores/useUserStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { TeamTableRow } from "@/utils/types";
@@ -17,8 +17,6 @@ type TeamCardProps = {
 const TeamCard = ({ team }: TeamCardProps) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient();
-
-  const activeApp = useActiveApp();
   const user = useUserProfile();
 
   const { setActiveTeam } = useTeamActions();
@@ -37,7 +35,7 @@ const TeamCard = ({ team }: TeamCardProps) => {
         input_data: {
           userId: user.user_id,
           teamId: team.team_id,
-          app: activeApp,
+          app: "REQUEST",
         },
       });
       if (error) throw error;

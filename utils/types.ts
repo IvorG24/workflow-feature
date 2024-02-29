@@ -1500,7 +1500,9 @@ export type OtherExpensesTypeWithCategoryType = OtherExpensesTypeTableRow & {
 
 export type UserValidIdWithUser = Omit<
   UserValidIDTableRow,
-  "user_valid_id_user_id" | "user_valid_id_approver_user_id" | "user_valid_id_address_id"
+  | "user_valid_id_user_id"
+  | "user_valid_id_approver_user_id"
+  | "user_valid_id_address_id"
 > & {
   user_valid_id_user: UserTableRow;
   user_valid_id_approver_user: UserTableRow;
