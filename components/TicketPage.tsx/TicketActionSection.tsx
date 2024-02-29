@@ -14,7 +14,7 @@ import {
 } from "@/backend/api/post";
 import { updateTicketStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
 import {
@@ -35,12 +35,20 @@ type Props = {
   ticketForm: CreateTicketFormValues;
   setTicket: Dispatch<SetStateAction<TicketType>>;
   user: CreateTicketPageOnLoad["member"];
+  setRequestCommentList: Dispatch<SetStateAction<TicketType["ticket_comment"]>>;
 };
 
-const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
+const TicketStatusAction = ({
+  ticket,
+  ticketForm,
+  setTicket,
+  user,
+  setRequestCommentList,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const currentUser = useUserProfile();
   const rejectTicketFormMethods = useForm<{ rejectionMessage: string }>({
     defaultValues: { rejectionMessage: "" },
   });
@@ -75,15 +83,33 @@ const TicketStatusAction = ({ ticket, ticketForm, setTicket, user }: Props) => {
         notificationType = "APPROVE";
       }
 
-      const { error } = await createTicketComment(supabaseClient, {
-        ticket_comment_id: newCommentId,
-        ticket_comment_content: `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} ${commentContent}`,
-        ticket_comment_type: `ACTION_${status}`,
-        ticket_comment_team_member_id: user.team_member_id,
-        ticket_comment_ticket_id: ticket.ticket_id,
-      });
+      const { data: commentData, error } = await createTicketComment(
+        supabaseClient,
+        {
+          ticket_comment_id: newCommentId,
+          ticket_comment_content: `${user.team_member_user.user_first_name} ${user.team_member_user.user_last_name} ${commentContent}`,
+          ticket_comment_type: `ACTION_${status}`,
+          ticket_comment_team_member_id: user.team_member_id,
+          ticket_comment_ticket_id: ticket.ticket_id,
+        }
+      );
       if (error) throw error;
-
+      setRequestCommentList((prev) => [
+        {
+          ...commentData,
+          ticket_comment_attachment: [],
+          ticket_comment_team_member: {
+            team_member_user: {
+              user_id: `${currentUser?.user_id}`,
+              user_first_name: currentUser ? currentUser.user_first_name : "",
+              user_last_name: currentUser ? currentUser.user_last_name : "",
+              user_username: currentUser ? currentUser.user_username : "",
+              user_avatar: currentUser ? currentUser.user_avatar : "",
+            },
+          },
+        },
+        ...prev,
+      ]);
       if (!error) {
         if (ticket.ticket_requester_team_member_id !== user.team_member_id) {
           // create notification
