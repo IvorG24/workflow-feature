@@ -10575,7 +10575,7 @@ RETURNS JSON AS $$
             ${componentCategory ? "equipment_brand, " : ""}
             ${brand ? "equipment_model, " : ""}
             ${model ? "equipment_part_number, " : ""}
-            ROW_NUMBER() OVER (PARTITION BY equipment_general_name) AS row_number 
+            ROW_NUMBER() OVER (PARTITION BY ${order}) AS row_number 
           FROM equipment_part_table
           INNER JOIN equipment_general_name_table ON equipment_general_name_id = equipment_part_general_name_id
           ${equipmentId ? "INNER JOIN equipment_table ON equipment_id = equipment_part_equipment_id" : ""}
