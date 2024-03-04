@@ -1,10 +1,6 @@
-import {
-  checkSerialNumber,
-  getEquipmentBrandAndModelOption,
-} from "@/backend/api/get";
+import { getEquipmentBrandAndModelOption } from "@/backend/api/get";
 import { updateEquipmentDescription } from "@/backend/api/update";
 
-import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
@@ -47,7 +43,6 @@ const UpdateEquipmentDescription = ({
   editEquipmentDescription,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
 
   const [brandOption, setBrandOption] = useState<

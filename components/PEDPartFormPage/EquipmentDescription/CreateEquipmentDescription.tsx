@@ -1,6 +1,5 @@
 import {
   checkPropertyNumber,
-  checkSerialNumber,
   getEquipmentBrandAndModelOption,
 } from "@/backend/api/get";
 import { createEquipmentDescription } from "@/backend/api/post";
