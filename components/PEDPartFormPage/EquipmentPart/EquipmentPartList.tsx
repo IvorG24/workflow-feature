@@ -303,14 +303,14 @@ const EquipmentPartList = ({
           },
           {
             accessor: "equipment_part_brand",
-            title: "Brand",
+            title: "Equipment Brand",
             render: ({ equipment_part_brand }) => (
               <Text>{equipment_part_brand}</Text>
             ),
           },
           {
             accessor: "equipment_part_model",
-            title: "Model",
+            title: "Equipment Model",
             render: ({ equipment_part_model }) => (
               <Text>{equipment_part_model}</Text>
             ),
