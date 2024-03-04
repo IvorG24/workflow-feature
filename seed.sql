@@ -34,7 +34,7 @@ INSERT INTO team_member_table (team_member_id, team_member_role, team_member_tea
 ('eb4d3419-b70f-44ba-b88f-c3d983cbcf3b', 'OWNER', 'a5a28977-6956-45c1-a624-b9e90911502e', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 ('d9c6c738-8a60-43de-965f-f1f666da1639', 'APPROVER', 'a5a28977-6956-45c1-a624-b9e90911502e', '84a8ede4-6d92-4a78-8c5b-a28a81cf1023'),
 ('1e9bb9c7-e4e6-42e4-9377-a33f9b645343', 'APPROVER', 'a5a28977-6956-45c1-a624-b9e90911502e', '0edb0b35-481b-439c-8af6-863caf0680f7'),
-('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'MEMBER', 'a5a28977-6956-45c1-a624-b9e90911502e', 'abc84276-1ca3-4b34-91f3-2aed10d557bf'),
+('390dbc5f-c3ba-4f86-81ca-7cc9746b6e31', 'ADMIN', 'a5a28977-6956-45c1-a624-b9e90911502e', 'abc84276-1ca3-4b34-91f3-2aed10d557bf'),
 ('cb06905e-e64b-4bfe-9f03-ee36dba0c809', 'OWNER', '285cf257-07fb-40bb-befe-aecff5eb0ea6', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 ('a77b9169-705a-4e3c-a3f3-fef15f18423f', 'OWNER', '7d653b33-d60f-4d39-a559-c56711eeb44c', '48ae7bbd-1510-4615-bdcb-973b3863fe40'),
 
@@ -657,8 +657,8 @@ INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field
 ('880d783f-1e85-4235-b735-2f68f5761ab2', 'Equipment Name', 'SELECT', true, false, 1, '7052205e-a118-4825-993c-bb5004154051'),
 ('8303a6fb-36b6-4b86-a30f-28e36f96f1ed', 'Part Name', 'SELECT', true, false, 2, '7052205e-a118-4825-993c-bb5004154051'),
 ('69588c19-b150-444f-8d32-72728004f4b2', 'Part Number', 'TEXT', true, false, 3, '7052205e-a118-4825-993c-bb5004154051'),
-('e91491d0-1355-4ab4-b357-d2a76b089f9d', 'Brand', 'SELECT', true, false, 4, '7052205e-a118-4825-993c-bb5004154051'),
-('fd835fde-0b63-4a26-aa58-289e7c6c87f1', 'Model', 'SELECT', true, false, 5, '7052205e-a118-4825-993c-bb5004154051'),
+('e91491d0-1355-4ab4-b357-d2a76b089f9d', 'Part Brand', 'SELECT', true, false, 4, '7052205e-a118-4825-993c-bb5004154051'),
+('fd835fde-0b63-4a26-aa58-289e7c6c87f1', 'Part Model', 'SELECT', true, false, 5, '7052205e-a118-4825-993c-bb5004154051'),
 ('e6d5cfba-3da0-4fad-aa74-e6ff1ff8c56c', 'Unit of Measure', 'SELECT', true, false, 6, '7052205e-a118-4825-993c-bb5004154051'),
 ('82bc2aed-a7a1-470f-b81b-688b5d621cdd', 'Category', 'SELECT', true, false, 7, '7052205e-a118-4825-993c-bb5004154051');
 
