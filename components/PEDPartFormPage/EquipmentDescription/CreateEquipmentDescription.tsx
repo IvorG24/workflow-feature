@@ -231,15 +231,6 @@ const CreateEquipmentDescription = ({
                   message: "Serial number is required",
                   value: true,
                 },
-                validate: {
-                  duplicate: async (value) => {
-                    const isExisting = await checkSerialNumber(supabaseClient, {
-                      serialNumber: value.toUpperCase(),
-                      teamId: activeTeam.team_id,
-                    });
-                    return isExisting ? "Serial number already exists" : true;
-                  },
-                },
               })}
               withAsterisk
               w="100%"
