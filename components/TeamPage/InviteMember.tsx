@@ -5,6 +5,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { JWT_SECRET_KEY } from "@/utils/constant";
 import { TeamMemberType } from "@/utils/types";
 import {
+  Accordion,
   Box,
   Button,
   Container,
@@ -20,7 +21,7 @@ import {
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconMailPlus, IconUsersPlus } from "@tabler/icons-react";
+import { IconMail, IconMailPlus, IconUsersPlus } from "@tabler/icons-react";
 import jwt from "jsonwebtoken";
 import moment from "moment";
 import { useEffect, useState } from "react";
@@ -356,63 +357,76 @@ const InviteMember = ({
         </Stack>
 
         <Box mt="lg">
-          <Text
-            weight={600}
-          >{`Pending Invites (${pendingInviteList.length})`}</Text>
-          {pendingInviteList.length > 0 && (
-            <Stack mt="sm" fz={14} spacing="xs" pos="relative">
-              <LoadingOverlay visible={isResendingInvite} />
-              {pendingInviteList.map((invite) => {
-                const resendDateCreated =
-                  resendInviteTimeoutList.find(
-                    (resendInvite) =>
-                      resendInvite.invitation_email ===
-                      invite.invitation_to_email
-                  )?.invitation_resend_date_created || null;
+          <Accordion>
+            <Accordion.Item value="invites">
+              <Accordion.Control icon={<IconMail size={16} />}>
+                <Text
+                  weight={600}
+                >{`Pending Invites (${pendingInviteList.length})`}</Text>
+              </Accordion.Control>
+              <Accordion.Panel>
+                {pendingInviteList.length > 0 && (
+                  <Stack mt="sm" fz={14} spacing="xs" pos="relative">
+                    <LoadingOverlay visible={isResendingInvite} />
+                    {pendingInviteList.map((invite) => {
+                      const resendDateCreated =
+                        resendInviteTimeoutList.find(
+                          (resendInvite) =>
+                            resendInvite.invitation_email ===
+                            invite.invitation_to_email
+                        )?.invitation_resend_date_created || null;
 
-                const dateNow = new Date();
-                const isResendDisabled = resendDateCreated
-                  ? !(moment(dateNow).diff(resendDateCreated, "minutes") > 1)
-                  : false;
+                      const dateNow = new Date();
+                      const isResendDisabled = resendDateCreated
+                        ? !(
+                            moment(dateNow).diff(resendDateCreated, "minutes") >
+                            1
+                          )
+                        : false;
 
-                return (
-                  <Box key={invite.invitation_id}>
-                    <Divider />
-                    <Flex
-                      px="sm"
-                      mt="sm"
-                      justify="space-between"
-                      align="center"
-                    >
-                      <Text>{invite.invitation_to_email}</Text>
-
-                      {isOwnerOrAdmin && (
-                        <Group position="right">
-                          <Button
-                            variant="subtle"
-                            onClick={() =>
-                              handleCancelInvite(invite.invitation_id)
-                            }
+                      return (
+                        <Box key={invite.invitation_id}>
+                          <Divider />
+                          <Flex
+                            px="sm"
+                            mt="sm"
+                            justify="space-between"
+                            align="center"
                           >
-                            Cancel
-                          </Button>
-                          <Button
-                            miw={84}
-                            onClick={() =>
-                              handleResendInvite(invite.invitation_to_email)
-                            }
-                            disabled={isResendDisabled}
-                          >
-                            {isResendDisabled ? "Sent" : "Resend"}
-                          </Button>
-                        </Group>
-                      )}
-                    </Flex>
-                  </Box>
-                );
-              })}
-            </Stack>
-          )}
+                            <Text>{invite.invitation_to_email}</Text>
+
+                            {isOwnerOrAdmin && (
+                              <Group position="right">
+                                <Button
+                                  variant="subtle"
+                                  onClick={() =>
+                                    handleCancelInvite(invite.invitation_id)
+                                  }
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  miw={84}
+                                  onClick={() =>
+                                    handleResendInvite(
+                                      invite.invitation_to_email
+                                    )
+                                  }
+                                  disabled={isResendDisabled}
+                                >
+                                  {isResendDisabled ? "Sent" : "Resend"}
+                                </Button>
+                              </Group>
+                            )}
+                          </Flex>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                )}
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
         </Box>
       </Paper>
     </Container>
