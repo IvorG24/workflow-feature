@@ -38,7 +38,7 @@ type Props = {
   setRequestCommentList: Dispatch<SetStateAction<TicketType["ticket_comment"]>>;
 };
 
-const TicketStatusAction = ({
+const TicketActionSection = ({
   ticket,
   ticketForm,
   setTicket,
@@ -439,4 +439,4 @@ const TicketStatusAction = ({
   );
 };
 
-export default TicketStatusAction;
+export default TicketActionSection;

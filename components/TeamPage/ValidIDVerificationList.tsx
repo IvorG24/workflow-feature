@@ -1,5 +1,6 @@
 import { UserValidIDTableRow } from "@/utils/types";
 import {
+  Accordion,
   Alert,
   Box,
   Button,
@@ -10,7 +11,7 @@ import {
   Space,
   Text,
 } from "@mantine/core";
-import { IconAlertCircle } from "@tabler/icons-react";
+import { IconAlertCircle, IconId } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 
 type Props = {
@@ -23,42 +24,52 @@ const ValidIDVerificationList = ({ pendingValidIDList }: Props) => {
   return (
     <Container p={0} mt="xl" pos="relative" fluid>
       <Paper p="lg" shadow="xs">
-        <Text weight={600}>Valid ID Verification</Text>
+        <Accordion>
+          <Accordion.Item value="id">
+            <Accordion.Control icon={<IconId size={16} />}>
+              <Text weight={600}>Valid ID Verification</Text>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Text size={14} mt={12} color="dimmed">
+                List of valid IDs that need verification
+              </Text>
+              <Space h={8} />
+              {pendingValidIDList.length > 0 ? (
+                pendingValidIDList.map((userValidID, index) => (
+                  <Box key={userValidID.user_valid_id_id}>
+                    {index !== 0 && <Divider mt={8} />}
+                    <Flex justify="space-between" align="center" mt={8}>
+                      <Text size={14}>
+                        {`${userValidID.user_valid_id_first_name} ${userValidID.user_valid_id_middle_name} ${userValidID.user_valid_id_last_name}`}
+                      </Text>
 
-        <Divider />
-
-        <Text size={14} mt={12} color="dimmed">
-          List of valid IDs that need verification
-        </Text>
-        <Space h={8} />
-        {pendingValidIDList.length > 0 ? (
-          pendingValidIDList.map((userValidID, index) => (
-            <Box key={userValidID.user_valid_id_id}>
-              {index !== 0 && <Divider mt={8} />}
-              <Flex justify="space-between" align="center" mt={8}>
-                <Text size={14}>
-                  {`${userValidID.user_valid_id_first_name} ${userValidID.user_valid_id_middle_name} ${userValidID.user_valid_id_last_name}`}
+                      <Button
+                        onClick={() =>
+                          router.push(
+                            `/user/valid-id-verification/${userValidID.user_valid_id_id}`
+                          )
+                        }
+                      >
+                        Verify
+                      </Button>
+                    </Flex>
+                  </Box>
+                ))
+              ) : (
+                <Text align="center" size={24} weight="bolder" color="dimmed">
+                  <Alert
+                    icon={<IconAlertCircle size="1rem" />}
+                    color="blue"
+                    mt="xs"
+                  >
+                    All IDs are verified; no pending verifications at the
+                    moment.
+                  </Alert>
                 </Text>
-
-                <Button
-                  onClick={() =>
-                    router.push(
-                      `/user/valid-id-verification/${userValidID.user_valid_id_id}`
-                    )
-                  }
-                >
-                  Verify
-                </Button>
-              </Flex>
-            </Box>
-          ))
-        ) : (
-          <Text align="center" size={24} weight="bolder" color="dimmed">
-            <Alert icon={<IconAlertCircle size="1rem" />} color="blue" mt="xs">
-              All IDs are verified; no pending verifications at the moment.
-            </Alert>
-          </Text>
-        )}
+              )}
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
       </Paper>
     </Container>
   );
