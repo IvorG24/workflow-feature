@@ -3,6 +3,7 @@ import {
   checkCSICodeItemExists,
   checkCustomCSICodeValidity,
   getItem,
+  pedPartCheck,
 } from "@/backend/api/get";
 import {
   createCustomCSI,
@@ -379,7 +380,7 @@ const TicketActionSection = ({
       setIsLoading(true);
       if (!teamMember) throw new Error();
 
-      await createPedPartFromTicketRequest(supabaseClient, {
+      const pedPartExists = await pedPartCheck(supabaseClient, {
         equipmentName: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[0]
             .ticket_field_response as string
@@ -389,8 +390,10 @@ const TicketActionSection = ({
             .ticket_field_response as string
         ),
         partNumber: JSON.parse(
-          ticketForm.ticket_sections[0].ticket_section_fields[2]
-            .ticket_field_response as string
+          `${ticketForm.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
+            .trim()
+            .toUpperCase()
+            .replace(/[^a-zA-Z0-9]/g, "") as string
         ),
         brand: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[3]
@@ -408,8 +411,41 @@ const TicketActionSection = ({
           ticketForm.ticket_sections[0].ticket_section_fields[6]
             .ticket_field_response as string
         ),
-        teamMemberId: teamMember.team_member_id,
       });
+
+      if (!pedPartExists) {
+        await createPedPartFromTicketRequest(supabaseClient, {
+          equipmentName: JSON.parse(
+            ticketForm.ticket_sections[0].ticket_section_fields[0]
+              .ticket_field_response as string
+          ),
+          partName: JSON.parse(
+            ticketForm.ticket_sections[0].ticket_section_fields[1]
+              .ticket_field_response as string
+          ),
+          partNumber: JSON.parse(
+            ticketForm.ticket_sections[0].ticket_section_fields[2]
+              .ticket_field_response as string
+          ),
+          brand: JSON.parse(
+            ticketForm.ticket_sections[0].ticket_section_fields[3]
+              .ticket_field_response as string
+          ),
+          model: JSON.parse(
+            ticketForm.ticket_sections[0].ticket_section_fields[4]
+              .ticket_field_response as string
+          ),
+          unitOfMeasure: JSON.parse(
+            ticketForm.ticket_sections[0].ticket_section_fields[5]
+              .ticket_field_response as string
+          ),
+          category: JSON.parse(
+            ticketForm.ticket_sections[0].ticket_section_fields[6]
+              .ticket_field_response as string
+          ),
+          teamMemberId: teamMember.team_member_id,
+        });
+      }
 
       handleUpdateTicketStatus("CLOSED", null);
     } catch (e) {

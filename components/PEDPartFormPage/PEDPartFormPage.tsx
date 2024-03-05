@@ -356,7 +356,7 @@ const PEDPartFormPage = ({
             onClick={() =>
               router.push({
                 pathname: `/${formatTeamNameToUrlKey(
-                  team.team_name 
+                  team.team_name
                 )}/dashboard/`,
                 query: { ...router.query, formId },
               })
@@ -371,7 +371,7 @@ const PEDPartFormPage = ({
               onClick={() =>
                 router.push(
                   `/${formatTeamNameToUrlKey(
-                    team.team_name 
+                    team.team_name
                   )}/forms/${formId}/create`
                 )
               }
