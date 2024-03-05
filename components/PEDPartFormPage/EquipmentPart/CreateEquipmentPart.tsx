@@ -164,7 +164,10 @@ const CreateEquipmentPart = ({
     try {
       const params = {
         equipment_part_general_name_id: data.name,
-        equipment_part_number: data.partNumber.toUpperCase(),
+        equipment_part_number: data.partNumber
+          .trim()
+          .toUpperCase()
+          .replace(/[^a-zA-Z0-9]/g, ""),
         equipment_part_brand_id: data.brand,
         equipment_part_model_id: data.model,
         equipment_part_unit_of_measurement_id: data.uom,
@@ -174,7 +177,11 @@ const CreateEquipmentPart = ({
         equipment_part_is_available: data.isAvailable,
       };
 
-      if (await checkPEDPart(supabaseClient, { equipmentPartData: params })) {
+      if (
+        await checkPEDPart(supabaseClient, {
+          equipmentPartData: params,
+        })
+      ) {
         notifications.show({
           message: "Equipment Part already exists.",
           color: "orange",
@@ -183,7 +190,10 @@ const CreateEquipmentPart = ({
       }
 
       const newEquipmentPart = await createEquipmentPart(supabaseClient, {
-        equipmentPartData: params,
+        equipmentPartData: {
+          ...params,
+          equipment_part_number: data.partNumber.trim().toUpperCase(),
+        },
         name: nameOption.find((name) => name.value === data.name)
           ?.label as string,
         brand: brandOption.find((brand) => brand.value === data.brand)

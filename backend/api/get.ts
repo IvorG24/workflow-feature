@@ -4549,32 +4549,11 @@ export const checkPEDPart = async (
   }
 ) => {
   const { equipmentPartData } = params;
-  const { count, error } = await supabaseClient
-    .from("equipment_part_table")
-    .select("*", { count: "exact", head: true })
-    .eq(
-      "equipment_part_general_name_id",
-      equipmentPartData.equipment_part_general_name_id
-    )
-    .eq("equipment_part_number", equipmentPartData.equipment_part_number)
-    .eq("equipment_part_brand_id", equipmentPartData.equipment_part_brand_id)
-    .eq("equipment_part_model_id", equipmentPartData.equipment_part_model_id)
-    .eq(
-      "equipment_part_unit_of_measurement_id",
-      equipmentPartData.equipment_part_unit_of_measurement_id
-    )
-    .eq(
-      "equipment_part_component_category_id",
-      equipmentPartData.equipment_part_component_category_id
-    )
-    .eq(
-      "equipment_part_equipment_id",
-      equipmentPartData.equipment_part_equipment_id
-    )
-    .eq("equipment_part_is_disabled", false);
+  const { data, error } = await supabaseClient
+    .rpc("check_ped_part", { input_data: equipmentPartData })
+    .select("*");
   if (error) throw error;
-
-  return Boolean(count);
+  return data;
 };
 
 // Get equipment category list

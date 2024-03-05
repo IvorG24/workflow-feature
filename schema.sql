@@ -12369,7 +12369,7 @@ RETURNS BOOLEAN AS $$
           equipment_part_is_disabled = false
           AND equipment_part_equipment_id = '${equipmentId}'
           AND equipment_part_general_name_id = '${generalNameId}'
-          AND equipment_part_number = '${partNumber}'
+          AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${partNumber}'
           AND equipment_part_brand_id = '${brandId}'
           AND equipment_part_model_id = '${modelId}'
           AND equipment_part_unit_of_measurement_id = '${uomId}'
@@ -12522,6 +12522,48 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Create user valid id
+
+-- Start: Check if ped part already exists
+
+CREATE OR REPLACE FUNCTION check_ped_part(
+  input_data JSON
+)
+RETURNS BOOLEAN AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      equipment_part_id,
+      equipment_part_general_name_id,
+      equipment_part_number,
+      equipment_part_brand_id,
+      equipment_part_model_id,
+      equipment_part_component_category_id,
+      equipment_part_equipment_id
+    } = input_data;
+
+    const partData = plv8.execute(
+      `
+        SELECT 
+          *
+        FROM equipment_part_table 
+        WHERE
+          equipment_part_general_name_id = '${equipment_part_general_name_id}'
+          AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${equipment_part_number}'
+          AND equipment_part_brand_id = '${equipment_part_brand_id}'
+          AND equipment_part_model_id = '${equipment_part_model_id}'
+          AND equipment_part_component_category_id = '${equipment_part_component_category_id}'
+          AND equipment_part_equipment_id = '${equipment_part_equipment_id}'
+          AND equipment_part_is_disabled = false
+          ${equipment_part_id ? `AND equipment_part_id != '${equipment_part_id}'` : ""}
+      `
+    );
+
+    returnData = Boolean(partData.length);
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Check if ped part already exists
 
 ---------- End: FUNCTIONS
 
