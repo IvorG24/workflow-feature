@@ -308,9 +308,6 @@ const TicketActionSection = ({
       const itemDescription = parseJSONIfValid(
         `${ticketForm.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`
       );
-      const uom = parseJSONIfValid(
-        `${ticketForm.ticket_sections[1].ticket_section_fields[1].ticket_field_response}`
-      );
       const item = await getItem(supabaseClient, {
         itemName,
         teamId: activeTeam.team_id,
@@ -321,23 +318,29 @@ const TicketActionSection = ({
       );
       const itemDescriptionId = itemDescriptionData?.item_description_id;
       const valueExistsList = itemDescriptionData?.item_description_field.map(
-        (field) => field.item_description_field_value.toLowerCase()
+        (field) =>
+          `${field.item_description_field_value} ${field.item_description_field_uom[0].item_description_field_uom}`.toLowerCase()
       );
 
-      const fieldValueList: string[] = [];
+      const fieldValueList: { value: string; uom: string }[] = [];
       ticketForm.ticket_sections.slice(1).map((section) => {
         const value = parseJSONIfValid(
           `${section.ticket_section_fields[0].ticket_field_response}`
         );
-        const valueExists = valueExistsList?.includes(value.toLowerCase());
-        if (!valueExists) fieldValueList.push(value);
+        const valueUom = parseJSONIfValid(
+          `${section.ticket_section_fields[1].ticket_field_response}`
+        );
+        const valueExists = valueExistsList?.includes(
+          `${value} ${valueUom}`.toLowerCase()
+        );
+        if (!valueExists) fieldValueList.push({ value: value, uom: valueUom });
       });
 
       if (fieldValueList.length <= 0) return;
 
       await createItemDescriptionField(
         supabaseClient,
-        fieldValueList.map((value) => {
+        fieldValueList.map(({ value, uom }) => {
           return {
             item_description_field_value: `${value}`,
             item_description_field_is_available: true,
