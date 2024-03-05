@@ -132,16 +132,27 @@ const TicketRequestItemOptionForm = ({
       teamId: activeTeam.team_id,
     });
 
-    const valueDataList = item.item_description
-      .find(
-        (description) => description.item_description_label === itemDescription
-      )
-      ?.item_description_field.map((field) =>
-        `${field.item_description_field_value} ${field.item_description_field_uom[0]?.item_description_field_uom}`.toLowerCase()
-      );
-    let optionExists = false;
+    const itemDescriptionData = item.item_description.find(
+      (description) => description.item_description_label === itemDescription
+    );
+
+    if (!itemDescriptionData) return;
+    const isWithUom =
+      itemDescriptionData.item_description_field[0].item_description_field_uom
+        .length > 0;
+    const valueDataList = itemDescriptionData.item_description_field.map(
+      (field) => {
+        if (isWithUom)
+          return `${field.item_description_field_value} ${field.item_description_field_uom[0]?.item_description_field_uom}`.toLowerCase();
+        else return field.item_description_field_value.toLowerCase();
+      }
+    );
+
+    const optionExists: boolean[] = [];
     data.ticket_sections.slice(1).map((section, sectionIdx) => {
-      const value = `${section.ticket_section_fields[0].ticket_field_response} ${section.ticket_section_fields[1].ticket_field_response}`;
+      const value = isWithUom
+        ? `${section.ticket_section_fields[0].ticket_field_response} ${section.ticket_section_fields[1].ticket_field_response}`
+        : `${section.ticket_section_fields[0].ticket_field_response}`;
       const valueExists = valueDataList?.includes(value.toLowerCase());
       if (valueExists) {
         setError(
@@ -150,10 +161,12 @@ const TicketRequestItemOptionForm = ({
           }.ticket_section_fields.${0}.ticket_field_response`,
           { message: `${value} already exists` }
         );
-        optionExists = true;
+        optionExists.push(true);
+      } else {
+        optionExists.push(false);
       }
     });
-    return optionExists;
+    return optionExists.includes(true);
   };
 
   const handleItemNameChange = async (index: number, value: string | null) => {
@@ -310,8 +323,8 @@ const TicketRequestItemOptionForm = ({
             ticket_section_fields: section.ticket_section_fields.map(
               (field) => ({
                 ...field,
-                ticket_field_hidden: Boolean(
-                  `${section.ticket_section_fields[0].ticket_field_response}`
+                ticket_field_hidden: !Boolean(
+                  `${section.ticket_section_fields[1].ticket_field_response}`
                 ),
               })
             ),
