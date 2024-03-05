@@ -655,12 +655,12 @@ INSERT INTO ticket_field_table (ticket_field_id, ticket_field_name, ticket_field
 ('c422d499-ba4c-4ef1-a36d-f9ff6d55aa68', 'Attachment', 'FILE', true, false, 5, '222576c2-ef0b-4714-ac10-2f57d310c9f0'),
 
 ('880d783f-1e85-4235-b735-2f68f5761ab2', 'Equipment Name', 'SELECT', true, false, 1, '7052205e-a118-4825-993c-bb5004154051'),
-('8303a6fb-36b6-4b86-a30f-28e36f96f1ed', 'Part Name', 'SELECT', true, false, 2, '7052205e-a118-4825-993c-bb5004154051'),
+('8303a6fb-36b6-4b86-a30f-28e36f96f1ed', 'Part Name', 'AUTOCOMPLETE', true, false, 2, '7052205e-a118-4825-993c-bb5004154051'),
 ('69588c19-b150-444f-8d32-72728004f4b2', 'Part Number', 'TEXT', true, false, 3, '7052205e-a118-4825-993c-bb5004154051'),
-('e91491d0-1355-4ab4-b357-d2a76b089f9d', 'Equipment Brand', 'SELECT', true, false, 4, '7052205e-a118-4825-993c-bb5004154051'),
-('fd835fde-0b63-4a26-aa58-289e7c6c87f1', 'Equipment Model', 'SELECT', true, false, 5, '7052205e-a118-4825-993c-bb5004154051'),
-('e6d5cfba-3da0-4fad-aa74-e6ff1ff8c56c', 'Unit of Measure', 'SELECT', true, false, 6, '7052205e-a118-4825-993c-bb5004154051'),
-('82bc2aed-a7a1-470f-b81b-688b5d621cdd', 'Category', 'SELECT', true, false, 7, '7052205e-a118-4825-993c-bb5004154051');
+('e91491d0-1355-4ab4-b357-d2a76b089f9d', 'Equipment Brand', 'AUTOCOMPLETE', true, false, 4, '7052205e-a118-4825-993c-bb5004154051'),
+('fd835fde-0b63-4a26-aa58-289e7c6c87f1', 'Equipment Model', 'AUTOCOMPLETE', true, false, 5, '7052205e-a118-4825-993c-bb5004154051'),
+('e6d5cfba-3da0-4fad-aa74-e6ff1ff8c56c', 'Unit of Measure', 'AUTOCOMPLETE', true, false, 6, '7052205e-a118-4825-993c-bb5004154051'),
+('82bc2aed-a7a1-470f-b81b-688b5d621cdd', 'Category', 'AUTOCOMPLETE', true, false, 7, '7052205e-a118-4825-993c-bb5004154051');
 
 CREATE OR REPLACE FUNCTION seed_uom()
 RETURNS JSON AS $$
