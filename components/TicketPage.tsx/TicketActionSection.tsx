@@ -391,10 +391,10 @@ const TicketActionSection = ({
         ),
         partNumber: JSON.parse(
           `${ticketForm.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
-            .trim()
-            .toUpperCase()
-            .replace(/[^a-zA-Z0-9]/g, "") as string
-        ),
+        )
+          .trim()
+          .toUpperCase()
+          .replace(/[^a-zA-Z0-9]/g, "") as string,
         brand: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[3]
             .ticket_field_response as string
@@ -449,6 +449,7 @@ const TicketActionSection = ({
 
       handleUpdateTicketStatus("CLOSED", null);
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
