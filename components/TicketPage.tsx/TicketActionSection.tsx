@@ -316,10 +316,18 @@ const TicketActionSection = ({
       const itemDescriptionData = item.item_description.find(
         (description) => description.item_description_label === itemDescription
       );
+
+      if (!itemDescriptionData) return;
+      const isWithUom =
+        itemDescriptionData.item_description_field[0].item_description_field_uom
+          .length > 0;
       const itemDescriptionId = itemDescriptionData?.item_description_id;
       const valueExistsList = itemDescriptionData?.item_description_field.map(
-        (field) =>
-          `${field.item_description_field_value} ${field.item_description_field_uom[0].item_description_field_uom}`.toLowerCase()
+        (field) => {
+          if (isWithUom)
+            return `${field.item_description_field_value} ${field.item_description_field_uom[0]?.item_description_field_uom}`.toLowerCase();
+          else return field.item_description_field_value.toLowerCase();
+        }
       );
 
       const fieldValueList: { value: string; uom: string }[] = [];
@@ -330,30 +338,32 @@ const TicketActionSection = ({
         const valueUom = parseJSONIfValid(
           `${section.ticket_section_fields[1].ticket_field_response}`
         );
-        const valueExists = valueExistsList?.includes(
-          `${value} ${valueUom}`.toLowerCase()
-        );
+        const fullValue = isWithUom
+          ? `${section.ticket_section_fields[0].ticket_field_response} ${section.ticket_section_fields[1].ticket_field_response}`
+          : `${section.ticket_section_fields[0].ticket_field_response}`;
+
+        const valueExists = valueExistsList?.includes(fullValue.toLowerCase());
         if (!valueExists) fieldValueList.push({ value: value, uom: valueUom });
       });
 
-      if (fieldValueList.length <= 0) return;
-
-      await createItemDescriptionField(
-        supabaseClient,
-        fieldValueList.map(({ value, uom }) => {
-          return {
-            item_description_field_value: `${value}`,
-            item_description_field_is_available: true,
-            item_description_field_item_description_id: `${itemDescriptionId}`,
-            item_description_field_uom: uom,
-            item_description_field_encoder_team_member_id:
-              teamMember?.team_member_id,
-          };
-        })
-      );
+      if (fieldValueList.length > 0) {
+        await createItemDescriptionField(
+          supabaseClient,
+          fieldValueList.map(({ value, uom }) => {
+            return {
+              item_description_field_value: `${value}`,
+              item_description_field_is_available: true,
+              item_description_field_item_description_id: `${itemDescriptionId}`,
+              item_description_field_uom: uom,
+              item_description_field_encoder_team_member_id:
+                teamMember?.team_member_id,
+            };
+          })
+        );
+      }
 
       handleUpdateTicketStatus("CLOSED", null);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
