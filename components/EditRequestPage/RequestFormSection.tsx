@@ -95,6 +95,9 @@ type RequestFormSectionProps = {
     ) => void;
     onGeneralNameChange: (value: string | null, index: number) => void;
   };
+  requestForPaymentFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -114,6 +117,7 @@ const RequestFormSection = ({
   pedPartFormMethods,
   otherExpensesMethods,
   pedConsumableFormMethods,
+  requestForPaymentFormMethods,
 }: RequestFormSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -156,6 +160,7 @@ const RequestFormSection = ({
             pedEquipmentFormMethods={pedEquipmentFormMethods}
             pedPartFormMethods={pedPartFormMethods}
             pedConsumableFormMethods={pedConsumableFormMethods}
+            requestForPaymentFormMethods={requestForPaymentFormMethods}
           />
         ))}
       </Stack>

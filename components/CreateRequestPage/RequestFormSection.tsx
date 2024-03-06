@@ -90,6 +90,9 @@ type RequestFormSectionProps = {
     ) => void;
     onGeneralNameChange: (value: string | null, index: number) => void;
   };
+  requestForPaymentFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -107,6 +110,7 @@ const RequestFormSection = ({
   pedPartFormMethods,
   otherExpensesMethods,
   pedConsumableFormMethods,
+  requestForPaymentFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -153,6 +157,7 @@ const RequestFormSection = ({
             pedPartFormMethods={pedPartFormMethods}
             otherExpensesMethods={otherExpensesMethods}
             pedConsumableFormMethods={pedConsumableFormMethods}
+            requestForPaymentFormMethods={requestForPaymentFormMethods}
           />
         ))}
       </Stack>

@@ -6,6 +6,7 @@ import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/Crea
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
+import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
 import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
@@ -182,6 +183,14 @@ const Page = ({
             sourceProjectList={sourceProjectList}
             requestProjectId={requestProjectId}
             requestingProject={requestingProject}
+          />
+        );
+
+      case "Request For Payment":
+        return (
+          <CreateRequestForPaymentPage
+            form={form}
+            projectOptions={projectOptions}
           />
         );
     }

@@ -4,6 +4,7 @@ import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/Othe
 import PEDConsumableRequestPage from "@/components/PEDConsumableRequestPage/PEDConsumableRequestPage";
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
+import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestPage/RequestForPaymentRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
@@ -91,6 +92,8 @@ const Page = ({
       return <PEDPartRequestPage request={request} />;
     } else if (request.request_form.form_name === "PED Consumable") {
       return <PEDConsumableRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Request For Payment") {
+      return <RequestForPaymentRequestPage request={request} />;
     } else {
       return (
         <RequestPage
