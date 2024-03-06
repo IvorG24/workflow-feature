@@ -1418,6 +1418,8 @@ RETURNS JSON AS $$
         endId = `RO`;
       } else if(formName==='Transfer Receipt') {
         endId = `TR`;
+      } else if(formName==='Request For Payment') {
+        endId = `RFP`;
       } else {
         endId = ``;
       }
@@ -5940,6 +5942,53 @@ RETURNS JSON as $$
           propertyNumberOptions
         }
         return;
+      } else if (form.form_name === "Request For Payment") {
+
+
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.*
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1]
+              }
+            ],
+          },
+
+          projectOptions,
+        }
+        return;
       }
 
       const project = plv8.execute(
@@ -10343,6 +10392,38 @@ plv8.subtransaction(function(){
         projectOptions,
         itemOptions,
         propertyNumberOptions,
+      }
+    } else if (form.form_name === "Request For Payment") {
+    
+      const formattedRequest = {
+        ...request,
+        request_form: {
+          ...form,
+          form_section: [
+            {
+              ...form.form_section[0],
+              section_field: [
+                {
+                  ...form.form_section[0].section_field[0],
+                  field_option: projectOptions
+                },
+                ...form.form_section[0].section_field.slice(1)
+              ]
+            },
+            {
+                ...form.form_section[1],
+            }
+          ],
+        },
+        request_signer:
+          projectSignerList.length !== 0
+            ? projectSignerList
+            : request.request_signer,
+      };
+
+      returnData = {
+        request: formattedRequest,
+        projectOptions,
       }
     } else {
       returnData = { request };
