@@ -791,6 +791,24 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
   return matchedUser ? matchedUser.jiraAccountId : null;
 };
 
+const getRequestParticipant = (formslyProjectSite: string) => {
+  const matcher = [
+    {
+      categories: ["MIN-22-008 MALADUGAO HEPP"],
+      fullName: "Ivandrae Angeles",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:a5f4c80b-0ae8-40a3-90b5-aee73b9708f7",
+      emailAddress: "angelesivandrae7@gmail.com",
+    },
+  ];
+
+  const matchedUser = matcher.find((matcherItem) =>
+    matcherItem.categories.includes(formslyProjectSite)
+  );
+
+  return matchedUser ? matchedUser.jiraAccountId : null;
+};
+
 export const mostOccurringElement = (arr: string[]) => {
   const frequencyMap: Record<string, number> = {};
   let maxFrequency = 0;
@@ -855,6 +873,7 @@ export const generateJiraTicketPayload = ({
   const warehouseRepresentative = getWarehouseRepresentative(
     requestingProjectSite.label
   );
+  const requestParticipant = getRequestParticipant(requestingProjectSite.label);
 
   if (typeof warehouseCorporateLead !== "string") {
     console.error("Warehouse Corporate Lead is not found.");
@@ -905,7 +924,7 @@ export const generateJiraTicketPayload = ({
     },
     isAdfRequest: false,
     requestFieldValues: {},
-    requestParticipants: [] as string[],
+    requestParticipants: requestParticipant ? [requestParticipant] : [],
     requestTypeId: requestTypeId,
     serviceDeskId: "17",
     raiseOnBehalfOf: warehouseRepresentative,
