@@ -63,8 +63,11 @@ const TicketRequestPEDEquipmentPartForm = ({
           .ticket_field_response as string,
         partName: data.ticket_sections[0].ticket_section_fields[1]
           .ticket_field_response as string,
-        partNumber: data.ticket_sections[0].ticket_section_fields[2]
-          .ticket_field_response as string,
+        partNumber:
+          `${data.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
+            .trim()
+            .toUpperCase()
+            .replace(/[^a-zA-Z0-9]/g, "") as string,
         brand: data.ticket_sections[0].ticket_section_fields[3]
           .ticket_field_response as string,
         model: data.ticket_sections[0].ticket_section_fields[4]
@@ -118,8 +121,11 @@ const TicketRequestPEDEquipmentPartForm = ({
           .ticket_field_response as string,
         partName: data.ticket_sections[0].ticket_section_fields[1]
           .ticket_field_response as string,
-        partNumber: data.ticket_sections[0].ticket_section_fields[2]
-          .ticket_field_response as string,
+        partNumber:
+          `${data.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
+            .trim()
+            .toUpperCase()
+            .replace(/[^a-zA-Z0-9]/g, "") as string,
         brand: data.ticket_sections[0].ticket_section_fields[3]
           .ticket_field_response as string,
         model: data.ticket_sections[0].ticket_section_fields[4]

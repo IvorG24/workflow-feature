@@ -1,4 +1,5 @@
 import {
+  checkPEDPart,
   getEquipmentBrandAndModelOption,
   getEquipmentNameOption,
   getEquipmentUOMAndCategoryOption,
@@ -160,20 +161,37 @@ const UpdateEquipmentPart = ({
 
   const onSubmit = async (data: EquipmentPartForm) => {
     try {
+      const params = {
+        equipment_part_id: editEquipmentPart.equipment_part_id,
+        equipment_part_general_name_id: data.name,
+        equipment_part_number: data.partNumber
+          .trim()
+          .toUpperCase()
+          .replace(/[^a-zA-Z0-9]/g, ""),
+        equipment_part_brand_id: data.brand,
+        equipment_part_model_id: data.model,
+        equipment_part_unit_of_measurement_id: data.uom,
+        equipment_part_component_category_id: data.category,
+        equipment_part_equipment_id: selectedEquipment.equipment_id,
+        equipment_part_is_available: data.isAvailable,
+      };
+
+      if (
+        await checkPEDPart(supabaseClient, {
+          equipmentPartData: params,
+        })
+      ) {
+        notifications.show({
+          message: "Equipment Part already exists.",
+          color: "orange",
+        });
+        return;
+      }
+
       const newEquipmentPart: EquipmentPartType = await updateEquipmentPart(
         supabaseClient,
         {
-          equipmentPartData: {
-            equipment_part_id: editEquipmentPart.equipment_part_id,
-            equipment_part_general_name_id: data.name,
-            equipment_part_number: data.partNumber,
-            equipment_part_brand_id: data.brand,
-            equipment_part_model_id: data.model,
-            equipment_part_unit_of_measurement_id: data.uom,
-            equipment_part_component_category_id: data.category,
-            equipment_part_equipment_id: selectedEquipment.equipment_id,
-            equipment_part_is_available: data.isAvailable,
-          },
+          equipmentPartData: params,
           name: nameOption.find((name) => name.value === data.name)
             ?.label as string,
           brand: brandOption.find((brand) => brand.value === data.brand)
