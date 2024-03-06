@@ -431,6 +431,14 @@ export const getJiraSourcingItemCategory = (formslyItemCategory: string) => {
       id: "10394",
       label: "Construction Items",
     },
+    Services: {
+      id: "11143",
+      label: "Services",
+    },
+    "Other Expenses": {
+      id: "11143",
+      label: "Services",
+    },
   };
 
   return categoryMappings[formslyItemCategory];
@@ -853,26 +861,31 @@ export const generateJiraTicketPayload = ({
     throw Error("Item Category is not found on Jira Item Category");
   }
 
-  const warehouseCorporateLead = getWarehouseCorporateLead(
-    sourcingItemCategory.label
-  );
-  const warehouseAreaLead = getWarehouseAreaLead(requestingProjectSite.label);
+  const warehouseCorporateLead =
+    sourcingItemCategory.label === "Services"
+      ? ""
+      : getWarehouseCorporateLead(sourcingItemCategory.label);
+
+  const warehouseAreaLead =
+    sourcingItemCategory.label === "Services"
+      ? ""
+      : getWarehouseAreaLead(requestingProjectSite.label);
   const warehouseRepresentative = getWarehouseRepresentative(
     requestingProjectSite.label
   );
   const requestParticipant = getRequestParticipant(requestingProjectSite.label);
 
-  if (!warehouseCorporateLead) {
+  if (typeof warehouseCorporateLead !== "string") {
     console.error("Warehouse Corporate Lead is not found.");
     throw Error("Warehouse Corporate Lead is not found.");
   }
 
-  if (!warehouseAreaLead) {
+  if (typeof warehouseCorporateLead !== "string") {
     console.error("Warehouse Area Lead is not found.");
     throw Error("Warehouse Area Lead is not found.");
   }
 
-  if (!warehouseRepresentative) {
+  if (typeof warehouseCorporateLead !== "string") {
     console.error("Warehouse Representative is not found.");
     throw Error("Warehouse Representative is not found.");
   }
