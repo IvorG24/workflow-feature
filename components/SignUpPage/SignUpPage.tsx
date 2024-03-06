@@ -54,17 +54,27 @@ const SignUpPage = () => {
       });
       if (isEmailExists) {
         notifications.show({
-          message: "Email already registered.",
+          message: "Email already registered and onboarded.",
           color: "orange",
+          autoClose: false,
         });
         return;
       }
 
-      const signUp = await signUpUser(supabaseClient, {
+      const { error } = await signUpUser(supabaseClient, {
         email: data.email,
         password: data.password,
       });
-      if (!signUp.user && !signUp.session) throw Error;
+
+      if (error) {
+        notifications.show({
+          message: error,
+          color: "orange",
+          autoClose: false,
+        });
+        return;
+      }
+
       notifications.show({
         message:
           "Confirmation email sent. Please check your email inbox to proceed.",
