@@ -89,6 +89,8 @@ const TicketFormFields = ({
                     ticketField.ticket_field_name === "CSI Code"
                   ) {
                     value = formatCSICode(value);
+                  } else if (ticketField.ticket_field_name === "Part Number") {
+                    value = value.toUpperCase();
                   }
                   onChange(value);
                 }}
