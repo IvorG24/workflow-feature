@@ -756,10 +756,10 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
     },
     {
       items: ["LUZ-18-007A STE TR4 PACKAGE C"],
-      fullName: "Jovenyle Battalao",
+      fullName: "Edwin Probadora",
       jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d0caa6e9-94c2-4427-bddf-6b4fef814da5",
-      emailAddress: "battalaojovenyle25@gmail.com",
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:41b4ed4f-b660-4354-b031-0d221b54655b",
+      emailAddress: "edwinprobadora@gmail.com",
     },
     {
       items: ["LUZ-21-009 TUMAUINI HEPPP"],
@@ -794,16 +794,23 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
 const getRequestParticipant = (formslyProjectSite: string) => {
   const matcher = [
     {
-      categories: ["MIN-22-008 MALADUGAO HEPP"],
+      items: ["MIN-22-008 MALADUGAO HEPP"],
       fullName: "Ivandrae Angeles",
       jiraAccountId:
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:a5f4c80b-0ae8-40a3-90b5-aee73b9708f7",
       emailAddress: "angelesivandrae7@gmail.com",
     },
+    {
+      items: ["LUZ-18-007A STE TR4 PACKAGE C"],
+      fullName: "Jenny Cabutaje",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:eebd19ad-6ff0-49e9-8720-85c9f8a82ac3",
+      emailAddress: "jennysorianocabutaje@gmail.com",
+    },
   ];
 
   const matchedUser = matcher.find((matcherItem) =>
-    matcherItem.categories.includes(formslyProjectSite)
+    matcherItem.items.includes(formslyProjectSite)
   );
 
   return matchedUser ? matchedUser.jiraAccountId : null;
