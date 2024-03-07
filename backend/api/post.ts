@@ -1565,6 +1565,7 @@ export const createPedPartFromTicketRequest = async (
     unitOfMeasure: string;
     category: string;
     teamMemberId: string;
+    teamId: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(

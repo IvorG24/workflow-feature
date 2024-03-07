@@ -12356,11 +12356,16 @@ RETURNS BOOLEAN AS $$
     } = input_data;
     
     const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}'`)[0].equipment_id;
-    const generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`)[0].equipment_general_name_id;
-    const brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`)[0].equipment_brand_id;
-    const modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`)[0].equipment_model_id;
-    const uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`)[0].equipment_unit_of_measurement_id;
-    const categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`)[0].equipment_component_category_id;
+    const generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`);
+    const brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`);
+    const modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`);
+    const uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`);
+    const categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`);
+
+    if(generalNameId.length === 0 || brandId.length === 0 || modelId.length === 0 || uomId.length === 0 || categoryId.length === 0) {
+      returnData = false;
+      return;
+    }
 
     const partData = plv8.execute(
       `
@@ -12368,12 +12373,12 @@ RETURNS BOOLEAN AS $$
         WHERE
           equipment_part_is_disabled = false
           AND equipment_part_equipment_id = '${equipmentId}'
-          AND equipment_part_general_name_id = '${generalNameId}'
+          AND equipment_part_general_name_id = '${generalNameId[0].equipment_general_name_id}'
           AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${partNumber}'
-          AND equipment_part_brand_id = '${brandId}'
-          AND equipment_part_model_id = '${modelId}'
-          AND equipment_part_unit_of_measurement_id = '${uomId}'
-          AND equipment_part_component_category_id = '${categoryId}'
+          AND equipment_part_brand_id = '${brandId[0].equipment_brand_id}'
+          AND equipment_part_model_id = '${modelId[0].equipment_model_id}'
+          AND equipment_part_unit_of_measurement_id = '${uomId[0].equipment_unit_of_measurement_id}'
+          AND equipment_part_component_category_id = '${categoryId[0].equipment_component_category_id}'
       `
     );
     
@@ -12399,15 +12404,72 @@ RETURNS VOID AS $$
       model,
       unitOfMeasure,
       category,
-      teamMemberId
+      teamMemberId,
+      teamId
     } = input_data;
     
     const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}'`)[0].equipment_id;
-    const generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`)[0].equipment_general_name_id;
-    const brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`)[0].equipment_brand_id;
-    const modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`)[0].equipment_model_id;
-    const uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`)[0].equipment_unit_of_measurement_id;
-    const categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`)[0].equipment_component_category_id;
+    let generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`);
+    let brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`);
+    let modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`);
+    let uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`);
+    let categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`);
+
+    if(generalNameId.length === 0){
+      generalNameId = plv8.execute(
+        `
+          INSERT INTO equipment_general_name_table 
+          (equipment_general_name, equipment_general_name_team_id, equipment_general_name_encoder_team_member_id) 
+          VALUES 
+          ('${partName}', '${teamId}', '${teamMemberId}')
+          RETURNING *
+        `
+      );
+    }
+    if(brandId.length === 0){
+      brandId = plv8.execute(
+        `
+          INSERT INTO equipment_brand_table 
+          (equipment_brand, equipment_brand_team_id, equipment_brand_encoder_team_member_id) 
+          VALUES 
+          ('${brand}', '${teamId}', '${teamMemberId}')
+          RETURNING *
+        `
+      );
+    }
+    if(modelId.length === 0){
+      modelId = plv8.execute(
+        `
+          INSERT INTO equipment_model_table 
+          (equipment_model, equipment_model_team_id, equipment_model_encoder_team_member_id) 
+          VALUES 
+          ('${model}', '${teamId}', '${teamMemberId}')
+          RETURNING *
+        `
+      );
+    }
+    if(uomId.length === 0){
+      uomId = plv8.execute(
+        `
+          INSERT INTO equipment_unit_of_measurement_table 
+          (equipment_unit_of_measurement, equipment_unit_of_measurement_team_id, equipment_unit_of_measurement_encoder_team_member_id) 
+          VALUES 
+          ('${unitOfMeasure}', '${teamId}', '${teamMemberId}')
+          RETURNING *
+        `
+      );
+    }
+    if(categoryId.length === 0){
+      categoryId = plv8.execute(
+        `
+          INSERT INTO equipment_component_category_table 
+          (equipment_component_category, equipment_component_category_team_id, equipment_component_category_encoder_team_member_id) 
+          VALUES 
+          ('${category}', '${teamId}', '${teamMemberId}')
+          RETURNING *
+        `
+      );
+    }
 
     const partData = plv8.execute(
       `
@@ -12415,12 +12477,12 @@ RETURNS VOID AS $$
         WHERE
           equipment_part_is_disabled = false
           AND equipment_part_equipment_id = '${equipmentId}'
-          AND equipment_part_general_name_id = '${generalNameId}'
-          AND equipment_part_number = '${partNumber}'
-          AND equipment_part_brand_id = '${brandId}'
-          AND equipment_part_model_id = '${modelId}'
-          AND equipment_part_unit_of_measurement_id = '${uomId}'
-          AND equipment_part_component_category_id = '${categoryId}'
+          AND equipment_part_general_name_id = '${generalNameId[0].equipment_general_name_id}'
+          AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${partNumber}'
+          AND equipment_part_brand_id = '${brandId[0].equipment_brand_id}'
+          AND equipment_part_model_id = '${modelId[0].equipment_model_id}'
+          AND equipment_part_unit_of_measurement_id = '${uomId[0].equipment_unit_of_measurement_id}'
+          AND equipment_part_component_category_id = '${categoryId[0].equipment_component_category_id}'
       `
     );
     
@@ -12431,7 +12493,7 @@ RETURNS VOID AS $$
         INSERT INTO equipment_part_table
           (equipment_part_number, equipment_part_general_name_id, equipment_part_brand_id, equipment_part_model_id, equipment_part_unit_of_measurement_id, equipment_part_component_category_id, equipment_part_equipment_id, equipment_part_encoder_team_member_id)
         VALUES
-          ('${partNumber}', '${generalNameId}', '${brandId}', '${modelId}', '${uomId}', '${categoryId}', '${equipmentId}', '${teamMemberId}')
+          ('${partNumber}', '${generalNameId[0].equipment_general_name_id}', '${brandId[0].equipment_brand_id}', '${modelId[0].equipment_model_id}', '${uomId[0].equipment_unit_of_measurement_id}', '${categoryId[0].equipment_component_category_id}', '${equipmentId}', '${teamMemberId}')
       `
     );
  });
