@@ -431,6 +431,14 @@ export const getJiraSourcingItemCategory = (formslyItemCategory: string) => {
       id: "10394",
       label: "Construction Items",
     },
+    Services: {
+      id: "11143",
+      label: "Services",
+    },
+    "Other Expenses": {
+      id: "11143",
+      label: "Services",
+    },
   };
 
   return categoryMappings[formslyItemCategory];
@@ -748,10 +756,10 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
     },
     {
       items: ["LUZ-18-007A STE TR4 PACKAGE C"],
-      fullName: "Jovenyle Battalao",
+      fullName: "Edwin Probadora",
       jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d0caa6e9-94c2-4427-bddf-6b4fef814da5",
-      emailAddress: "battalaojovenyle25@gmail.com",
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:41b4ed4f-b660-4354-b031-0d221b54655b",
+      emailAddress: "edwinprobadora@gmail.com",
     },
     {
       items: ["LUZ-21-009 TUMAUINI HEPPP"],
@@ -773,6 +781,31 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       jiraAccountId:
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d8344027-3578-4f50-8b8a-11fe72244208",
       emailAddress: "jayquiroz.santaclara@gmail.com",
+    },
+  ];
+
+  const matchedUser = matcher.find((matcherItem) =>
+    matcherItem.items.includes(formslyProjectSite)
+  );
+
+  return matchedUser ? matchedUser.jiraAccountId : null;
+};
+
+const getRequestParticipant = (formslyProjectSite: string) => {
+  const matcher = [
+    {
+      items: ["MIN-22-008 MALADUGAO HEPP"],
+      fullName: "Ivandrae Angeles",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:a5f4c80b-0ae8-40a3-90b5-aee73b9708f7",
+      emailAddress: "angelesivandrae7@gmail.com",
+    },
+    {
+      items: ["LUZ-18-007A STE TR4 PACKAGE C"],
+      fullName: "Jenny Cabutaje",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:eebd19ad-6ff0-49e9-8720-85c9f8a82ac3",
+      emailAddress: "jennysorianocabutaje@gmail.com",
     },
   ];
 
@@ -835,25 +868,31 @@ export const generateJiraTicketPayload = ({
     throw Error("Item Category is not found on Jira Item Category");
   }
 
-  const warehouseCorporateLead = getWarehouseCorporateLead(
-    sourcingItemCategory.label
-  );
-  const warehouseAreaLead = getWarehouseAreaLead(requestingProjectSite.label);
+  const warehouseCorporateLead =
+    sourcingItemCategory.label === "Services"
+      ? ""
+      : getWarehouseCorporateLead(sourcingItemCategory.label);
+
+  const warehouseAreaLead =
+    sourcingItemCategory.label === "Services"
+      ? ""
+      : getWarehouseAreaLead(requestingProjectSite.label);
   const warehouseRepresentative = getWarehouseRepresentative(
     requestingProjectSite.label
   );
+  const requestParticipant = getRequestParticipant(requestingProjectSite.label);
 
-  if (!warehouseCorporateLead) {
+  if (typeof warehouseCorporateLead !== "string") {
     console.error("Warehouse Corporate Lead is not found.");
     throw Error("Warehouse Corporate Lead is not found.");
   }
 
-  if (!warehouseAreaLead) {
+  if (typeof warehouseCorporateLead !== "string") {
     console.error("Warehouse Area Lead is not found.");
     throw Error("Warehouse Area Lead is not found.");
   }
 
-  if (!warehouseRepresentative) {
+  if (typeof warehouseCorporateLead !== "string") {
     console.error("Warehouse Representative is not found.");
     throw Error("Warehouse Representative is not found.");
   }
@@ -892,7 +931,7 @@ export const generateJiraTicketPayload = ({
     },
     isAdfRequest: false,
     requestFieldValues: {},
-    requestParticipants: [] as string[],
+    requestParticipants: requestParticipant ? [requestParticipant] : [],
     requestTypeId: requestTypeId,
     serviceDeskId: "17",
     raiseOnBehalfOf: warehouseRepresentative,
