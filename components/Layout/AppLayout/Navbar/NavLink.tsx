@@ -61,8 +61,6 @@ const ReviewAppNavLink = () => {
     (form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)
   );
 
-  const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
-
   const itemForm = forms.filter(
     (form) => form.form_is_formsly_form && form.form_name === "Item"
   )[0] as unknown as FormTableRow & {
