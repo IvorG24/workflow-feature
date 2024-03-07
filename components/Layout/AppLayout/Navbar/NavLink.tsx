@@ -148,10 +148,7 @@ const ReviewAppNavLink = () => {
                 leftIcon={<IconFileText {...defaultIconProps} />}
                 variant="transparent"
               >
-                Manage Form{unhiddenForms.length > 1 ? "s" : ""} (
-                {isFormslyTeam
-                  ? forms.length - UNHIDEABLE_FORMLY_FORMS.length
-                  : forms.length}
+                Manage Form{unhiddenForms.length > 1 ? "s" : ""} ({forms.length}
                 )
               </Button>
             </Menu.Target>

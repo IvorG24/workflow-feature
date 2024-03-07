@@ -246,7 +246,7 @@ const TicketActionSection = ({
           color: "red",
         });
       }
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -272,21 +272,21 @@ const TicketActionSection = ({
         itemName,
         teamId: activeTeam.team_id,
       });
+
       if (!item) return;
       const csiCodeItemExists = await checkCSICodeItemExists(supabaseClient, {
         divisionId,
         itemId: item.item_id,
       });
-
-      if (csiCodeItemExists) return false;
-      // add custom csi
-      await createItemDivision(supabaseClient, {
-        itemId: item.item_id,
-        divisionId,
-      });
-
+      if (!csiCodeItemExists) {
+        // add custom csi
+        await createItemDivision(supabaseClient, {
+          itemId: item.item_id,
+          divisionId,
+        });
+      }
       handleUpdateTicketStatus("CLOSED", null);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
