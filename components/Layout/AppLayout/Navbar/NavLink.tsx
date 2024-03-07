@@ -61,8 +61,6 @@ const ReviewAppNavLink = () => {
     (form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)
   );
 
-  const isFormslyTeam = forms.some((form) => form.form_is_formsly_form);
-
   const itemForm = forms.filter(
     (form) => form.form_is_formsly_form && form.form_name === "Item"
   )[0] as unknown as FormTableRow & {
@@ -148,10 +146,7 @@ const ReviewAppNavLink = () => {
                 leftIcon={<IconFileText {...defaultIconProps} />}
                 variant="transparent"
               >
-                Manage Form{unhiddenForms.length > 1 ? "s" : ""} (
-                {isFormslyTeam
-                  ? forms.length - UNHIDEABLE_FORMLY_FORMS.length
-                  : forms.length}
+                Manage Form{unhiddenForms.length > 1 ? "s" : ""} ({forms.length}
                 )
               </Button>
             </Menu.Target>
