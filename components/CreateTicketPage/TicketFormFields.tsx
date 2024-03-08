@@ -5,7 +5,14 @@ import {
 } from "@/utils/constant";
 import { formatCSICode } from "@/utils/string";
 import { CreateTicketFormValues, TicketSection } from "@/utils/types";
-import { FileInput, Select, Text, TextInput, Textarea } from "@mantine/core";
+import {
+  Autocomplete,
+  FileInput,
+  Select,
+  Text,
+  TextInput,
+  Textarea,
+} from "@mantine/core";
 import { IconFile } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form";
 
@@ -82,6 +89,8 @@ const TicketFormFields = ({
                     ticketField.ticket_field_name === "CSI Code"
                   ) {
                     value = formatCSICode(value);
+                  } else if (ticketField.ticket_field_name === "Part Number") {
+                    value = value.toUpperCase();
                   }
                   onChange(value);
                 }}
@@ -187,6 +196,33 @@ const TicketFormFields = ({
                 },
               },
             }}
+          />
+        );
+
+      case "AUTOCOMPLETE":
+        return (
+          <Controller
+            control={control}
+            name={`ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Autocomplete
+                data={ticketField.ticket_field_option}
+                value={value as string}
+                onChange={(value) => {
+                  if (ticketField.ticket_field_name === "Unit of Measure") {
+                    onChange(value);
+                  } else {
+                    onChange(value.toUpperCase());
+                  }
+                }}
+                withAsterisk={field.ticket_field_is_required}
+                limit={250}
+                maxDropdownHeight={200}
+                sx={{ style: "upperCase" }}
+                {...inputProps}
+              />
+            )}
+            rules={{ ...fieldRules }}
           />
         );
     }

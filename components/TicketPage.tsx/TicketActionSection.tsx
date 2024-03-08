@@ -3,7 +3,6 @@ import {
   checkCSICodeItemExists,
   checkCustomCSICodeValidity,
   getItem,
-  pedPartCheck,
 } from "@/backend/api/get";
 import {
   createCustomCSI,
@@ -247,7 +246,7 @@ const TicketActionSection = ({
           color: "red",
         });
       }
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -273,21 +272,21 @@ const TicketActionSection = ({
         itemName,
         teamId: activeTeam.team_id,
       });
+
       if (!item) return;
       const csiCodeItemExists = await checkCSICodeItemExists(supabaseClient, {
         divisionId,
         itemId: item.item_id,
       });
-
-      if (csiCodeItemExists) return false;
-      // add custom csi
-      await createItemDivision(supabaseClient, {
-        itemId: item.item_id,
-        divisionId,
-      });
-
+      if (!csiCodeItemExists) {
+        // add custom csi
+        await createItemDivision(supabaseClient, {
+          itemId: item.item_id,
+          divisionId,
+        });
+      }
       handleUpdateTicketStatus("CLOSED", null);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -380,7 +379,7 @@ const TicketActionSection = ({
       setIsLoading(true);
       if (!teamMember) throw new Error();
 
-      const pedPartExists = await pedPartCheck(supabaseClient, {
+      await createPedPartFromTicketRequest(supabaseClient, {
         equipmentName: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[0]
             .ticket_field_response as string
@@ -390,11 +389,9 @@ const TicketActionSection = ({
             .ticket_field_response as string
         ),
         partNumber: JSON.parse(
-          `${ticketForm.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
-        )
-          .trim()
-          .toUpperCase()
-          .replace(/[^a-zA-Z0-9]/g, "") as string,
+          ticketForm.ticket_sections[0].ticket_section_fields[2]
+            .ticket_field_response as string
+        ),
         brand: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[3]
             .ticket_field_response as string
@@ -411,45 +408,12 @@ const TicketActionSection = ({
           ticketForm.ticket_sections[0].ticket_section_fields[6]
             .ticket_field_response as string
         ),
+        teamMemberId: teamMember.team_member_id,
+        teamId: activeTeam.team_id,
       });
-
-      if (!pedPartExists) {
-        await createPedPartFromTicketRequest(supabaseClient, {
-          equipmentName: JSON.parse(
-            ticketForm.ticket_sections[0].ticket_section_fields[0]
-              .ticket_field_response as string
-          ),
-          partName: JSON.parse(
-            ticketForm.ticket_sections[0].ticket_section_fields[1]
-              .ticket_field_response as string
-          ),
-          partNumber: JSON.parse(
-            ticketForm.ticket_sections[0].ticket_section_fields[2]
-              .ticket_field_response as string
-          ),
-          brand: JSON.parse(
-            ticketForm.ticket_sections[0].ticket_section_fields[3]
-              .ticket_field_response as string
-          ),
-          model: JSON.parse(
-            ticketForm.ticket_sections[0].ticket_section_fields[4]
-              .ticket_field_response as string
-          ),
-          unitOfMeasure: JSON.parse(
-            ticketForm.ticket_sections[0].ticket_section_fields[5]
-              .ticket_field_response as string
-          ),
-          category: JSON.parse(
-            ticketForm.ticket_sections[0].ticket_section_fields[6]
-              .ticket_field_response as string
-          ),
-          teamMemberId: teamMember.team_member_id,
-        });
-      }
 
       handleUpdateTicketStatus("CLOSED", null);
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
