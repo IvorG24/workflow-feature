@@ -202,7 +202,12 @@ export const signUpUser = async (
     ...params,
   });
   if (error) throw error;
-  return data;
+
+  if (data.user && data.user.identities && data.user.identities?.length > 0) {
+    return { data, error: null };
+  } else {
+    return { data, error: "Email already registered." };
+  }
 };
 
 // Sign In User
