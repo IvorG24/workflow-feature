@@ -120,8 +120,9 @@ type RequestFormFieldsProps = {
     ) => void;
     onGeneralNameChange: (value: string | null, index: number) => void;
   };
-  requestForPaymentFormMethods?: {
+  paymentRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
+    onRequestTypeChange: (value: string | null, index: number) => void;
   };
 };
 
@@ -141,7 +142,7 @@ const RequestFormFields = ({
   pedEquipmentFormMethods,
   otherExpensesMethods,
   pedConsumableFormMethods,
-  requestForPaymentFormMethods,
+  paymentRequestFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     control,
@@ -172,13 +173,9 @@ const RequestFormFields = ({
   const readOnly =
     field.field_name === "Requesting Project" &&
     !referenceOnly &&
-    [
-      "Item",
-      "Subcon",
-      "PED Equipment",
-      "PED Part",
-      "Request For Payment",
-    ].includes(formslyFormName)
+    ["Item", "Subcon", "PED Equipment", "PED Part", "Payment Request"].includes(
+      formslyFormName
+    )
       ? true
       : field.field_is_read_only;
 
@@ -480,9 +477,7 @@ const RequestFormFields = ({
                         pedPartFormMethods?.onProjectNameChange(value);
                         pedEquipmentFormMethods?.onProjectNameChange(value);
                         pedConsumableFormMethods?.onProjectNameChange(value);
-                        requestForPaymentFormMethods?.onProjectNameChange(
-                          value
-                        );
+                        paymentRequestFormMethods?.onProjectNameChange(value);
                         break;
                       case "Service Name":
                         subconFormMethods?.onServiceNameChange(
@@ -559,6 +554,10 @@ const RequestFormFields = ({
                         pedConsumableFormMethods?.onRequestTypeChange(
                           prevValue as string | null,
                           value
+                        );
+                        paymentRequestFormMethods?.onRequestTypeChange(
+                          value,
+                          sectionIndex
                         );
                         break;
                     }

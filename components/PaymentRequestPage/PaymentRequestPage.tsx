@@ -40,7 +40,7 @@ export type ApproverDetailsType = {
   signature: string | null;
 };
 
-const RequestForPaymentRequestPage = ({ request }: Props) => {
+const PaymentRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
@@ -347,4 +347,4 @@ const RequestForPaymentRequestPage = ({ request }: Props) => {
   );
 };
 
-export default RequestForPaymentRequestPage;
+export default PaymentRequestPage;

@@ -47,7 +47,7 @@ type Props = {
   requestingProject: string;
 };
 
-const EditRequestForPaymentPage = ({
+const PaymentRequestPage = ({
   request,
   projectOptions,
   referenceOnly,
@@ -90,15 +90,15 @@ const EditRequestForPaymentPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control } = requestFormMethods;
-  const { fields: formSections, replace: replaceSection } = useFieldArray({
+  const { handleSubmit, control, getValues } = requestFormMethods;
+  const {
+    fields: formSections,
+    replace: replaceSection,
+    update: updateSection,
+  } = useFieldArray({
     control,
     name: "sections",
   });
-
-  useEffect(() => {
-    replaceSection(request_form.form_section);
-  }, [replaceSection, requestFormMethods, request_form.form_section]);
 
   const handleEditRequest = async (data: RequestFormValues) => {
     try {
@@ -255,6 +255,54 @@ const EditRequestForPaymentPage = ({
     }
   };
 
+  const handleRequestTypeChange = async (
+    value: string | null,
+    index: number
+  ) => {
+    if (value === "With PO") {
+      const POField = request_form.form_section[0].section_field.filter(
+        (field) => field.field_name === "PO Number"
+      )[0];
+
+      getValues(`sections.${0}`).section_field.splice(3, 0, POField);
+
+      updateSection(index, {
+        ...getValues(`sections.${0}`),
+      });
+    } else if (value === "Without PO") {
+      updateSection(index, {
+        ...getValues(`sections.${0}`),
+        section_field: [
+          ...getValues(`sections.${0}`).section_field.filter(
+            (field) => field.field_name !== "PO Number"
+          ),
+        ],
+      });
+    }
+  };
+
+  useEffect(() => {
+    const requestType = request_form.form_section[0].section_field.filter(
+      (field) => field.field_name === "Request Type"
+    )[0];
+    const requestTypeResponse = JSON.parse(
+      requestType.field_response[0].request_response
+    );
+    const removePOField = request_form.form_section[0].section_field.filter(
+      (field) => field.field_name !== "PO Number"
+    );
+
+    updateSection(0, {
+      ...request_form.form_section[0],
+      section_field:
+        requestTypeResponse === "With PO"
+          ? request_form.form_section[0].section_field
+          : removePOField,
+    });
+
+    updateSection(1, request_form.form_section[1]);
+  }, [getValues, requestFormMethods, request_form.form_section, updateSection]);
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -278,8 +326,9 @@ const EditRequestForPaymentPage = ({
                     sectionIndex={idx}
                     formslyFormName={request.request_form.form_name}
                     referenceOnly={referenceOnly}
-                    requestForPaymentFormMethods={{
+                    paymentRequestFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
+                      onRequestTypeChange: handleRequestTypeChange,
                     }}
                   />
                 </Box>
@@ -306,4 +355,4 @@ const EditRequestForPaymentPage = ({
   );
 };
 
-export default EditRequestForPaymentPage;
+export default PaymentRequestPage;

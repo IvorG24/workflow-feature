@@ -110,8 +110,9 @@ type RequestFormFieldsProps = {
     ) => void;
     onGeneralNameChange: (value: string | null, index: number) => void;
   };
-  requestForPaymentFormMethods?: {
+  paymentRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
+    onRequestTypeChange: (value: string | null, index: number) => void;
   };
 };
 
@@ -130,7 +131,7 @@ const RequestFormFields = ({
   pedPartFormMethods,
   otherExpensesMethods,
   pedConsumableFormMethods,
-  requestForPaymentFormMethods,
+  paymentRequestFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -396,7 +397,7 @@ const RequestFormFields = ({
                       pedPartFormMethods?.onProjectNameChange(value);
                       pedEquipmentFormMethods?.onProjectNameChange(value);
                       pedConsumableFormMethods?.onProjectNameChange(value);
-                      requestForPaymentFormMethods?.onProjectNameChange(value);
+                      paymentRequestFormMethods?.onProjectNameChange(value);
                       break;
                     case "Service Name":
                       subconFormMethods?.onServiceNameChange(
@@ -473,6 +474,10 @@ const RequestFormFields = ({
                       pedConsumableFormMethods?.onRequestTypeChange(
                         prevValue as string | null,
                         value
+                      );
+                      paymentRequestFormMethods?.onRequestTypeChange(
+                        value,
+                        sectionIndex
                       );
                       break;
                   }

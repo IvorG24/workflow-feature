@@ -37,7 +37,7 @@ type Props = {
   projectOptions: OptionTableRow[];
 };
 
-const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
+const PaymentRequestPage = ({ form, projectOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -55,8 +55,12 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
     form_team_member: form.form_team_member,
   };
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, setValue } = requestFormMethods;
-  const { fields: formSections, replace: replaceSection } = useFieldArray({
+  const { handleSubmit, control, setValue, getValues } = requestFormMethods;
+  const {
+    fields: formSections,
+    replace: replaceSection,
+    update: updateSection,
+  } = useFieldArray({
     control,
     name: "sections",
   });
@@ -165,9 +169,42 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
     }
   };
 
+  const handleRequestTypeChange = async (
+    value: string | null,
+    index: number
+  ) => {
+    if (value === "With PO") {
+      const POField = form.form_section[0].section_field.filter(
+        (field) => field.field_name === "PO Number"
+      )[0];
+
+      getValues(`sections.${0}`).section_field.splice(3, 0, POField);
+
+      updateSection(index, {
+        ...getValues(`sections.${0}`),
+      });
+    } else if (value === "Without PO") {
+      updateSection(index, {
+        ...getValues(`sections.${0}`),
+        section_field: [
+          ...getValues(`sections.${0}`).section_field.filter(
+            (field) => field.field_name !== "PO Number"
+          ),
+        ],
+      });
+    }
+  };
+
   useEffect(() => {
+    const removePOField = form.form_section[0].section_field.filter(
+      (field) => field.field_name !== "PO Number"
+    );
+
     replaceSection([
-      form.form_section[0],
+      {
+        ...form.form_section[0],
+        section_field: removePOField,
+      },
       {
         ...form.form_section[1],
         section_field: form.form_section[1].section_field,
@@ -193,8 +230,9 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
                     section={section}
                     sectionIndex={idx}
                     formslyFormName={form.form_name}
-                    requestForPaymentFormMethods={{
+                    paymentRequestFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
+                      onRequestTypeChange: handleRequestTypeChange,
                     }}
                   />
                 </Box>
@@ -209,4 +247,4 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
   );
 };
 
-export default CreateRequestForPaymentPage;
+export default PaymentRequestPage;
