@@ -15692,17 +15692,6 @@ CREATE VIEW equipment_description_view AS SELECT equipment_description_table.*, 
 
 -------- End: VIEWS
 
--------- Start: SUBSCRIPTION
-
-DROP PUBLICATION if exists supabase_realtime;
-
-CREATE PUBLICATION supabase_realtime;
-COMMIT;
-
-ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table, ticket_table;
-
--------- End: SUBSCRIPTION
-
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
