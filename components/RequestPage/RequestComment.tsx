@@ -248,9 +248,6 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                     <Text size={14}>
                       {`${commenter.user_first_name} ${commenter.user_last_name}`}
                     </Text>
-                    <Text color="dimmed" size={12}>
-                      {commenter.user_username}
-                    </Text>
                   </Stack>
                   <Text color="dimmed" size={12} ml="xs">
                     ({moment(comment.comment_date_created).fromNow()})

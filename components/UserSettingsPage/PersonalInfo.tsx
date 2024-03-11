@@ -1,4 +1,3 @@
-import { checkUsername } from "@/backend/api/get";
 import { useUserIntials, useUserProfile } from "@/stores/useUserStore";
 import { removeMultipleSpaces, toTitleCase } from "@/utils/string";
 import { mobileNumberFormatter } from "@/utils/styling";
@@ -47,8 +46,8 @@ const PersonalInfo = ({
     control,
     getValues,
     setError,
-    formState: { errors, isDirty, defaultValues, },
-    setValue
+    formState: { errors, isDirty, defaultValues },
+    setValue,
   } = useFormContext<PersonalInfoForm>();
 
   const prevAvatarFile = usePrevious(avatarFile);
@@ -86,38 +85,6 @@ const PersonalInfo = ({
             <Flex direction={{ base: "column", md: "row" }} gap={16}>
               <TextInput
                 w="100%"
-                label="Username"
-                {...register("user_username", {
-                  required: "Username is required",
-                  minLength: {
-                    value: 2,
-                    message: "Username must have at least 2 characters",
-                  },
-                  maxLength: {
-                    value: 100,
-                    message: "Username must be shorter than 100 characters",
-                  },
-                  validate: {
-                    validCharacters: (value) =>
-                      /^[a-zA-Z0-9_.]+$/.test(value) ||
-                      "Username can only contain letters, numbers, underscore, and period",
-                    alreadyUsed: async (value) => {
-                      if (defaultValues?.user_username === value) return true;
-                      const isAlreadyUsed = await checkUsername(
-                        supabaseClient,
-                        {
-                          username: value,
-                        }
-                      );
-                      return isAlreadyUsed ? "Username is already used" : true;
-                    },
-                  },
-                })}
-                error={errors.user_username?.message}
-              />
-
-              <TextInput
-                w="100%"
                 label="Email"
                 {...register("user_email", {
                   required: true,
@@ -129,6 +96,12 @@ const PersonalInfo = ({
                 error={errors.user_email?.message}
                 disabled
               />
+              <TextInput
+                w="100%"
+                label="Employee Number"
+                disabled={true}
+                value={employeeNumber ?? "---"}
+              />
             </Flex>
 
             <Flex direction={{ base: "column", md: "row" }} gap={16}>
@@ -136,8 +109,10 @@ const PersonalInfo = ({
                 w="100%"
                 label="First Name"
                 {...register("user_first_name", {
-                  onChange: (e) =>  {
-                    const format = toTitleCase(removeMultipleSpaces(e.currentTarget.value));
+                  onChange: (e) => {
+                    const format = toTitleCase(
+                      removeMultipleSpaces(e.currentTarget.value)
+                    );
                     setValue("user_first_name", format);
                   },
                   required: "First name is required",
@@ -157,8 +132,10 @@ const PersonalInfo = ({
                 w="100%"
                 label="Last Name"
                 {...register("user_last_name", {
-                  onChange: (e) =>  {
-                    const format = toTitleCase(removeMultipleSpaces(e.currentTarget.value));
+                  onChange: (e) => {
+                    const format = toTitleCase(
+                      removeMultipleSpaces(e.currentTarget.value)
+                    );
                     setValue("user_last_name", format);
                   },
                   required: "Last name is required",
@@ -217,7 +194,7 @@ const PersonalInfo = ({
                 w="100%"
                 label="Job Title"
                 {...register("user_job_title", {
-                  onChange: (e) =>  {
+                  onChange: (e) => {
                     const format = removeMultipleSpaces(e.currentTarget.value);
                     setValue("user_job_title", format);
                   },
@@ -231,15 +208,6 @@ const PersonalInfo = ({
                   },
                 })}
                 error={errors.user_job_title?.message}
-              />
-            </Flex>
-
-            <Flex direction={{ base: "column", md: "row" }} gap={16}>
-              <TextInput
-                w="100%"
-                label="Employee Number"
-                disabled={true}
-                value={employeeNumber ?? "---"}
               />
             </Flex>
 

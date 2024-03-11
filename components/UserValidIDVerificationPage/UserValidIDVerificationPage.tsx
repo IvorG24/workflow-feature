@@ -138,7 +138,6 @@ const UserValidIDVerificationPage = ({ userValidId, approverId }: Props) => {
                   {user.user_first_name} {user.user_last_name}
                 </Text>
                 <Text>{user.user_email}</Text>
-                <Text color="dimmed">{user.user_username}</Text>
               </Flex>
             </Flex>
 
