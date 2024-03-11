@@ -7,9 +7,8 @@ import {
   updateTeamOwner,
 } from "@/backend/api/update";
 import { useTeamActions, useTeamList } from "@/stores/useTeamStore";
-import { useUserActions, useUserTeamMember } from "@/stores/useUserStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 
-import { getTeamMember } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
@@ -84,12 +83,10 @@ const TeamPage = ({
   const router = useRouter();
   const teamList = useTeamList();
   const teamMember = useUserTeamMember();
-  const { setUserTeamMember } = useUserActions();
 
   const [team, setTeam] = useState<TeamTableRow>(initialTeam);
   const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
 
-  const [initialTeamMemberList, setInitialMemberList] = useState(teamMembers);
   const [teamMemberCount, setTeamMemberCount] = useState(teamMembersCount);
   const [teamMemberList, setTeamMemberList] = useState(teamMembers);
   const [isUpdatingTeamMembers, setIsUpdatingTeamMembers] = useState(false);
@@ -353,91 +350,6 @@ const TeamPage = ({
   };
 
   useEffect(() => {
-    const channel = supabaseClient
-      .channel("realtime team-member-list")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "team_member_table",
-          filter: `team_member_team_id=eq.${team.team_id}`,
-        },
-        async (payload) => {
-          if (payload.eventType === "UPDATE") {
-            const updatedMemberRole = payload.new.team_member_role;
-            // if update is removing a member
-            if (payload.new.team_member_is_disabled) {
-              const removeMemberFromList = teamMemberList.filter(
-                (member) => member.team_member_id !== payload.new.team_member_id
-              );
-
-              setTeamMemberList(removeMemberFromList);
-            }
-
-            // update auth user role
-            if (
-              teamMember &&
-              payload.new.team_member_id === teamMember?.team_member_id
-            ) {
-              const updatedTeamMember = {
-                ...teamMember,
-                team_member_role: updatedMemberRole,
-              };
-              setUserTeamMember(updatedTeamMember);
-              setUserRole(updatedMemberRole);
-            }
-
-            setInitialMemberList((prev) =>
-              prev.map((member) => {
-                if (member.team_member_id === payload.new.team_member_id) {
-                  return {
-                    ...member,
-                    team_member_role: updatedMemberRole,
-                  };
-                }
-
-                return member;
-              })
-            );
-
-            setTeamMemberList((prev) =>
-              prev.map((member) => {
-                if (member.team_member_id === payload.new.team_member_id) {
-                  return {
-                    ...member,
-                    team_member_role: updatedMemberRole,
-                  };
-                }
-
-                return member;
-              })
-            );
-          } else if (payload.eventType === "INSERT") {
-            const newMemberData = await getTeamMember(supabaseClient, {
-              teamMemberId: payload.new.team_member_id,
-            });
-
-            setInitialMemberList((prev) => [
-              ...prev,
-              newMemberData as unknown as TeamMemberType,
-            ]);
-
-            setTeamMemberList((prev) => [
-              ...prev,
-              newMemberData as unknown as TeamMemberType,
-            ]);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabaseClient.removeChannel(channel);
-    };
-  }, [supabaseClient, team.team_id, teamMemberList, teamMember]);
-
-  useEffect(() => {
     if (teamMember) {
       setUserRole(teamMember.team_member_role);
     }
@@ -477,7 +389,7 @@ const TeamPage = ({
           <Paper p="xl" shadow="xs">
             <AdminGroup
               teamId={initialTeam.team_id}
-              teamMemberList={initialTeamMemberList}
+              teamMemberList={teamMembers}
             />
           </Paper>
         </Box>
@@ -488,7 +400,7 @@ const TeamPage = ({
           <Paper p="xl" shadow="xs">
             <ApproverGroup
               teamId={initialTeam.team_id}
-              teamMemberList={initialTeamMemberList}
+              teamMemberList={teamMembers}
             />
           </Paper>
         </Box>
@@ -585,7 +497,7 @@ const TeamPage = ({
           <InviteMember
             isOwnerOrAdmin={isOwnerOrAdmin}
             memberEmailList={memberEmailList}
-            teamMemberList={initialTeamMemberList}
+            teamMemberList={teamMembers}
           />
           <QuickOnboarding memberEmailList={memberEmailList} />
           <ValidIDVerificationList pendingValidIDList={pendingValidIDList} />
