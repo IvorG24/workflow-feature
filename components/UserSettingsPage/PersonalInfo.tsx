@@ -14,7 +14,6 @@ import {
   TextInput,
 } from "@mantine/core";
 import { usePrevious } from "@mantine/hooks";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import validator from "validator";
@@ -36,7 +35,6 @@ const PersonalInfo = ({
   isUpdatingPersonalInfo,
   employeeNumber,
 }: Props) => {
-  const supabaseClient = useSupabaseClient();
   const user = useUserProfile();
   const userInitials = useUserIntials();
 
@@ -46,7 +44,7 @@ const PersonalInfo = ({
     control,
     getValues,
     setError,
-    formState: { errors, isDirty, defaultValues },
+    formState: { errors, isDirty },
     setValue,
   } = useFormContext<PersonalInfoForm>();
 
