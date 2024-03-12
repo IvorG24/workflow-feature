@@ -6000,7 +6000,7 @@ RETURNS JSON as $$
         }
         return;
       }
-      
+
       const project = plv8.execute(
         `
           SELECT team_project_table.*
@@ -15833,4 +15833,4 @@ GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
 
 GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO public;DROP SCHEMA IF EXISTS public CASCADE;
+GRANT ALL ON SCHEMA public TO public;
