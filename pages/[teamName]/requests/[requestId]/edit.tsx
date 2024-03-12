@@ -7,6 +7,7 @@ import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDP
 import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
 import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
 import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
+import EditRequestForPaymentPage from "@/components/EditRequestForPaymentPage/EditRequestForPaymentPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
@@ -31,7 +32,6 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         requestId: `${context.query.requestId}`,
         referenceOnly,
       });
-
       return {
         props: {
           ...editRequestOnLoad,
@@ -202,6 +202,15 @@ const Page = ({
             request={request}
             itemOptions={itemOptions}
             originalItemOptions={originalItemOptions}
+            requestingProject={requestingProject}
+          />
+        );
+      case "Request For Payment":
+        return (
+          <EditRequestForPaymentPage
+            request={request}
+            projectOptions={projectOptions}
+            referenceOnly={referenceOnly}
             requestingProject={requestingProject}
           />
         );

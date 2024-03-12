@@ -12,6 +12,7 @@ import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestP
 import CreateSubconRequestPage from "@/components/CreateSubconRequestPage/CreateSubconRequestPage";
 import CreateTransferReceiptPage from "@/components/CreateTransferReceiptPage/CreateTransferReceiptPage";
 
+import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -182,6 +183,14 @@ const Page = ({
             sourceProjectList={sourceProjectList}
             requestProjectId={requestProjectId}
             requestingProject={requestingProject}
+          />
+        );
+
+      case "Request For Payment":
+        return (
+          <CreateRequestForPaymentPage
+            form={form}
+            projectOptions={projectOptions}
           />
         );
     }
