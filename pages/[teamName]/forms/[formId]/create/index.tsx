@@ -3,7 +3,6 @@ import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequ
 import CreatePEDConsumableRequestPage from "@/components/CreatePEDConsumableRequestPage/CreatePEDConsumableRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
-import CreatePaymentRequestPage from "@/components/CreatePaymentRequestPage/CreatePaymentRequestPage";
 import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
 import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
 import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
@@ -13,6 +12,7 @@ import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestP
 import CreateSubconRequestPage from "@/components/CreateSubconRequestPage/CreateSubconRequestPage";
 import CreateTransferReceiptPage from "@/components/CreateTransferReceiptPage/CreateTransferReceiptPage";
 
+import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -186,9 +186,9 @@ const Page = ({
           />
         );
 
-      case "Payment Request":
+      case "Request For Payment":
         return (
-          <CreatePaymentRequestPage
+          <CreateRequestForPaymentPage
             form={form}
             projectOptions={projectOptions}
           />

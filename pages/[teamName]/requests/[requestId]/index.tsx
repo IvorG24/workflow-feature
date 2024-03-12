@@ -92,7 +92,7 @@ const Page = ({
       return <PEDPartRequestPage request={request} />;
     } else if (request.request_form.form_name === "PED Consumable") {
       return <PEDConsumableRequestPage request={request} />;
-    } else if (request.request_form.form_name === "Payment Request") {
+    } else if (request.request_form.form_name === "Request For Payment") {
       return <PaymentRequestPage request={request} />;
     } else {
       return (

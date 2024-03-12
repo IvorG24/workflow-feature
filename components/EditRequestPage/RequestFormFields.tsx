@@ -173,9 +173,13 @@ const RequestFormFields = ({
   const readOnly =
     field.field_name === "Requesting Project" &&
     !referenceOnly &&
-    ["Item", "Subcon", "PED Equipment", "PED Part", "Payment Request"].includes(
-      formslyFormName
-    )
+    [
+      "Item",
+      "Subcon",
+      "PED Equipment",
+      "PED Part",
+      "Request For Payment",
+    ].includes(formslyFormName)
       ? true
       : field.field_is_read_only;
 

@@ -47,7 +47,7 @@ type Props = {
   requestingProject: string;
 };
 
-const PaymentRequestPage = ({
+const EditRequestForPaymentPage = ({
   request,
   projectOptions,
   referenceOnly,
@@ -265,7 +265,6 @@ const PaymentRequestPage = ({
       )[0];
 
       getValues(`sections.${0}`).section_field.splice(3, 0, POField);
-
       updateSection(index, {
         ...getValues(`sections.${0}`),
       });
@@ -301,7 +300,7 @@ const PaymentRequestPage = ({
     });
 
     updateSection(1, request_form.form_section[1]);
-  }, [getValues, requestFormMethods, request_form.form_section, updateSection]);
+  }, []);
 
   return (
     <Container>
@@ -355,4 +354,4 @@ const PaymentRequestPage = ({
   );
 };
 
-export default PaymentRequestPage;
+export default EditRequestForPaymentPage;

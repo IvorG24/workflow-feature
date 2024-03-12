@@ -5943,8 +5943,6 @@ RETURNS JSON as $$
         }
         return;
       } else if (form.form_name === "Request For Payment") {
-
-
         const projects = plv8.execute(
           `
             SELECT 

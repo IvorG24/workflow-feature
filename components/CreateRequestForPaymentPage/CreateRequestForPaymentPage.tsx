@@ -37,7 +37,7 @@ type Props = {
   projectOptions: OptionTableRow[];
 };
 
-const PaymentRequestPage = ({ form, projectOptions }: Props) => {
+const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -247,4 +247,4 @@ const PaymentRequestPage = ({ form, projectOptions }: Props) => {
   );
 };
 
-export default PaymentRequestPage;
+export default CreateRequestForPaymentPage;
