@@ -109,17 +109,17 @@ const TeamMemberPage = ({
           <Flex direction={{ base: "column", md: "row" }} gap={16}>
             <TextInput
               w="100%"
-              label="Username"
-              variant="filled"
-              readOnly
-              value={member.team_member_user.user_username}
-            />
-            <TextInput
-              w="100%"
               label="Email"
               variant="filled"
               readOnly
               value={member.team_member_user.user_email}
+            />
+            <TextInput
+              w="100%"
+              label="Employee Number"
+              variant="filled"
+              readOnly
+              value={`${member.team_member_user.user_employee_number ?? "---"}`}
             />
           </Flex>
 
@@ -159,16 +159,6 @@ const TeamMemberPage = ({
               variant="filled"
               readOnly
               value={`${member.team_member_user.user_job_title}`}
-            />
-          </Flex>
-
-          <Flex direction={{ base: "column", md: "row" }} gap={16}>
-            <TextInput
-              w="100%"
-              label="Employee Number"
-              variant="filled"
-              readOnly
-              value={`${member.team_member_user.user_employee_number ?? "---"}`}
             />
           </Flex>
         </Stack>

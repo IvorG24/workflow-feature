@@ -1560,3 +1560,7 @@ export type IncidentReport = {
   interval: string;
   data: { date: string; report_count: number }[];
 };
+
+export type ItemDescriptionFieldWithUoM = {
+  item_description_field_uom: { item_description_field_uom: string }[];
+} & ItemDescriptionFieldTableRow;

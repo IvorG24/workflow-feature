@@ -11,6 +11,7 @@ export const DEFAULT_TEAM_GROUP_LIST_LIMIT = 10;
 export const NOTIFICATION_LIST_LIMIT = 10;
 export const DEFAULT_NOTIFICATION_LIST_LIMIT = 10;
 export const ROW_PER_PAGE = 10;
+export const DIALOG_ROW_PER_PAGE = 7;
 export const MAX_FILE_SIZE_IN_MB = 5;
 export const MAX_FILE_SIZE = MAX_FILE_SIZE_IN_MB * 1024 * 1024;
 export const DEFAULT_NUMBER_SSOT_ROWS = 10;

@@ -30,6 +30,7 @@ import {
   FieldTableRow,
   FormStatusType,
   FormType,
+  ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
   ItemTableRow,
   ItemWithDescriptionAndField,
@@ -986,7 +987,7 @@ export const getItemDescriptionFieldList = async (
   if (error) throw error;
 
   return {
-    data,
+    data: data as ItemDescriptionFieldWithUoM[],
     count,
   };
 };

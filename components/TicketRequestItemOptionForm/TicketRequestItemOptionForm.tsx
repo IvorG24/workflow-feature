@@ -4,15 +4,20 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { CreateTicketFormValues } from "@/utils/types";
+import {
+  CreateTicketFormValues,
+  ItemWithDescriptionAndField,
+} from "@/utils/types";
 import { Button, Flex } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import TicketFormSection from "../CreateTicketPage/TicketFormSection";
+import ExistingOptionsDialog from "./ExistingOptionsDialog";
 
 type Props = {
   category: string;
@@ -42,6 +47,7 @@ const TicketRequestItemOptionForm = ({
   const activeTeam = useActiveTeam();
   const { ticketId } = router.query;
   const user = useUserProfile();
+  const [item, setItem] = useState<ItemWithDescriptionAndField | null>(null);
 
   const createTicketFormMethods = useForm<CreateTicketFormValues>();
   const { handleSubmit, getValues, control, setError } =
@@ -57,6 +63,11 @@ const TicketRequestItemOptionForm = ({
     control,
     name: "ticket_sections",
   });
+
+  const [
+    opened,
+    { toggle: toggleExistingOptions, close: closeExistingOptions },
+  ] = useDisclosure(false);
 
   const handleCreateTicket = async (data: CreateTicketFormValues) => {
     try {
@@ -194,6 +205,7 @@ const TicketRequestItemOptionForm = ({
           ...newSection.ticket_section_fields.slice(2),
         ],
       });
+      closeExistingOptions();
     } else {
       updateSection(index, {
         ...newSection,
@@ -207,6 +219,8 @@ const TicketRequestItemOptionForm = ({
           ...newSection.ticket_section_fields.slice(2),
         ],
       });
+      setItem(null);
+      closeExistingOptions();
     }
   };
 
@@ -216,7 +230,7 @@ const TicketRequestItemOptionForm = ({
   ) => {
     const firstSection = getValues(`ticket_sections.${index}`);
     const itemName = `${firstSection.ticket_section_fields[0].ticket_field_response}`;
-    const itemDescription = `${firstSection.ticket_section_fields[1].ticket_field_response}`;
+    const itemDescriptionResponse = `${firstSection.ticket_section_fields[1].ticket_field_response}`;
     const allOptionSection = getValues(`ticket_sections`).slice(1);
     if (value && itemName) {
       const item = await getItem(supabaseClient, {
@@ -224,11 +238,19 @@ const TicketRequestItemOptionForm = ({
         itemName: `${itemName}`,
       });
 
+      const itemDescription = item.item_description.find(
+        (description) =>
+          description.item_description_label === itemDescriptionResponse
+      );
+
+      if (!itemDescription) return;
+      const filteredItem: ItemWithDescriptionAndField = {
+        ...item,
+        item_description: [itemDescription],
+      };
+      setItem(filteredItem);
       const itemDescriptionFieldUoM =
-        (item.item_description.find(
-          (description) =>
-            description.item_description_label === itemDescription
-        )?.item_description_field[0].item_description_field_uom[0]
+        (itemDescription.item_description_field[0].item_description_field_uom[0]
           ?.item_description_field_uom as string) || "";
 
       if (itemDescriptionFieldUoM) {
@@ -273,6 +295,8 @@ const TicketRequestItemOptionForm = ({
           ],
         });
       });
+      setItem(null);
+      closeExistingOptions();
     }
   };
 
@@ -386,11 +410,36 @@ const TicketRequestItemOptionForm = ({
               </Flex>
             );
           })}
+
+          <Button
+            onClick={() => {
+              if (item) toggleExistingOptions();
+              else {
+                notifications.show({
+                  message: "Please select an item name and description",
+                  color: "yellow",
+                });
+              }
+            }}
+            variant="outline"
+            mt="lg"
+            fullWidth
+          >
+            View Existing Options
+          </Button>
+
           <Button type="submit" mt="lg" fullWidth>
             {isEdit ? "Save Changes" : "Submit"}
           </Button>
         </form>
       </FormProvider>
+      {item && (
+        <ExistingOptionsDialog
+          item={item}
+          opened={opened}
+          close={closeExistingOptions}
+        />
+      )}
     </>
   );
 };
