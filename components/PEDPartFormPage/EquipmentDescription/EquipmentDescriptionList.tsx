@@ -155,7 +155,7 @@ const EquipmentDescriptionList = ({
         message: "Equipment Description/s deleted.",
         color: "green",
       });
-    } catch {
+    } catch (e) {
       setEquipmentDescriptionList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
@@ -189,7 +189,7 @@ const EquipmentDescriptionList = ({
         id: equipmentDescriptionId,
         status: value,
       });
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

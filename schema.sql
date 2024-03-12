@@ -5127,7 +5127,7 @@ RETURNS JSON as $$
               item_team_id = '${teamId}'
               AND item_is_disabled = false
               AND item_is_available = true
-              ORDER BY item_general_name ASC
+            ORDER BY item_general_name ASC
           `
         );
 
@@ -5138,6 +5138,8 @@ RETURNS JSON as $$
               FROM item_description_table
               WHERE
                 item_description_item_id = '${item.item_id}'
+                AND item_description_is_disabled = false
+                AND item_description_is_available = true
             `
           );
           return {
@@ -5163,6 +5165,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
             ORDER BY team_project_name
           `
         );
@@ -5290,7 +5293,7 @@ RETURNS JSON as $$
               service_team_id = '${teamId}'
               AND service_is_disabled = false
               AND service_is_available = true
-              ORDER BY service_name ASC
+            ORDER BY service_name ASC
           `
         );
 
@@ -5301,6 +5304,8 @@ RETURNS JSON as $$
               FROM service_scope_table
               WHERE
                 service_scope_service_id = '${service.service_id}'
+                AND service_scope_is_available = tue
+                AND service_scope_is_disabled = false
               ORDER BY service_scope_name
             `
           );
@@ -5327,6 +5332,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+              AND team_project_disabled = false
             ORDER BY team_project_name
           `
         );
@@ -5375,6 +5381,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
             ORDER BY team_project_name
           `
         );
@@ -5519,6 +5526,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
             ORDER BY team_project_name
           `
         );
@@ -5665,6 +5673,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
             ORDER BY team_project_name
           `
         );
@@ -5764,6 +5773,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
             ORDER BY team_project_name
           `
         );
@@ -5834,6 +5844,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
             ORDER BY team_project_name
           `
         );
@@ -5889,6 +5900,7 @@ RETURNS JSON as $$
               FROM item_description_table
               WHERE
                 item_description_item_id = '${item.item_id}'
+                AND item_description_is_disabled = false
             `
           );
           return {
@@ -5994,7 +6006,9 @@ RETURNS JSON as $$
           SELECT team_project_table.*
           FROM request_table
           INNER JOIN  team_project_table ON team_project_id = request_project_id
-          WHERE request_id = '${itemId}'
+          WHERE 
+            request_id = '${itemId}'
+            AND team_project_is_disabled = false
         `
       )[0];
 
@@ -6136,8 +6150,9 @@ RETURNS JSON as $$
           `
             SELECT *
             FROM team_project_table
-            WHERE team_project_team_id = '${teamId}'
-            AND team_project_is_disabled = false
+            WHERE 
+              team_project_team_id = '${teamId}'
+              AND team_project_is_disabled = false
             ORDER BY team_project_name
           `
         );
@@ -10559,11 +10574,21 @@ RETURNS JSON AS $$
           equipment_unit_of_measurement AS equipment_part_unit_of_measurement,
           equipment_component_category AS equipment_part_component_category
         FROM equipment_part_table
-        INNER JOIN equipment_general_name_table ON equipment_part_general_name_id = equipment_general_name_id
-        INNER JOIN equipment_brand_table ON equipment_part_brand_id = equipment_brand_id
-        INNER JOIN equipment_model_table ON equipment_part_model_id = equipment_model_id
-        INNER JOIN equipment_unit_of_measurement_table ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
-        INNER JOIN equipment_component_category_table ON equipment_part_component_category_id = equipment_component_category_id
+        LEFT JOIN equipment_general_name_table 
+          ON equipment_part_general_name_id = equipment_general_name_id
+          AND equipment_general_name_is_disabled = false
+        LEFT JOIN equipment_brand_table 
+          ON equipment_part_brand_id = equipment_brand_id
+          AND equipment_brand_is_disabled = false
+        LEFT JOIN equipment_model_table 
+          ON equipment_part_model_id = equipment_model_id
+          AND equipment_model_is_disabled = false
+        LEFT JOIN equipment_unit_of_measurement_table 
+          ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
+          AND equipment_unit_of_measurement_is_disabled = false
+        LEFT JOIN equipment_component_category_table 
+          ON equipment_part_component_category_id = equipment_component_category_id
+          AND equipment_component_category_is_disabled = false
         WHERE
           equipment_part_equipment_id = '${equipmentId}'
           AND equipment_part_is_disabled = false
@@ -10583,11 +10608,21 @@ RETURNS JSON AS $$
     const count = plv8.execute(
       `
         SELECT COUNT(equipment_part_id) FROM equipment_part_table
-        INNER JOIN equipment_general_name_table ON equipment_part_general_name_id = equipment_general_name_id
-        INNER JOIN equipment_brand_table ON equipment_part_brand_id = equipment_brand_id
-        INNER JOIN equipment_model_table ON equipment_part_model_id = equipment_model_id
-        INNER JOIN equipment_unit_of_measurement_table ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
-        INNER JOIN equipment_component_category_table ON equipment_part_component_category_id = equipment_component_category_id
+        LEFT JOIN equipment_general_name_table 
+          ON equipment_part_general_name_id = equipment_general_name_id
+          AND equipment_general_name_is_disabled = false
+        LEFT JOIN equipment_brand_table 
+          ON equipment_part_brand_id = equipment_brand_id
+          AND equipment_brand_is_disabled = false
+        LEFT JOIN equipment_model_table 
+          ON equipment_part_model_id = equipment_model_id
+          AND equipment_model_is_disabled = false
+        LEFT JOIN equipment_unit_of_measurement_table 
+          ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
+          AND equipment_unit_of_measurement_is_disabled = false
+        LEFT JOIN equipment_component_category_table 
+          ON equipment_part_component_category_id = equipment_component_category_id
+          AND equipment_component_category_is_disabled = false
         WHERE
           equipment_part_equipment_id = '${equipmentId}'
           AND equipment_part_is_disabled = false
@@ -10657,20 +10692,31 @@ RETURNS JSON AS $$
             ROW_NUMBER() OVER (PARTITION BY ${order}) AS row_number 
           FROM equipment_part_table
           INNER JOIN equipment_general_name_table ON equipment_general_name_id = equipment_part_general_name_id
-          ${equipmentId ? "INNER JOIN equipment_table ON equipment_id = equipment_part_equipment_id" : ""}
-          ${generalName ? "INNER JOIN equipment_component_category_table ON equipment_component_category_id = equipment_part_component_category_id" : ""}
-          ${componentCategory ? "INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_part_brand_id" : ""}
-          ${brand ? "INNER JOIN equipment_model_table ON equipment_model_id = equipment_part_model_id" : ""}
+          INNER JOIN equipment_table ON equipment_id = equipment_part_equipment_id
+          INNER JOIN equipment_component_category_table ON equipment_component_category_id = equipment_part_component_category_id
+          INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_part_brand_id
+          INNER JOIN equipment_model_table ON equipment_model_id = equipment_part_model_id
+          INNER JOIN equipment_unit_of_measurement_table ON equipment_unit_of_measurement_id = equipment_part_unit_of_measurement_id
           WHERE
             equipment_part_is_disabled = false
             AND equipment_part_is_available = true
             AND equipment_general_name_is_disabled = false
             AND equipment_general_name_is_available = true
-            ${equipmentId ? `AND equipment_part_equipment_id = '${equipmentId}' AND equipment_is_disabled = false AND equipment_is_available = true` : ""}
+            ${equipmentId ? `AND equipment_part_equipment_id = '${equipmentId}'` : ""}
+            AND equipment_is_disabled = false 
+            AND equipment_is_available = true
             ${generalName ? `AND equipment_general_name = '${generalName}'` : ""}
-            ${componentCategory ? `AND equipment_component_category = '${componentCategory}' AND equipment_component_category_is_disabled = false AND equipment_component_category_is_available = true` : ""}
-            ${brand ? `AND equipment_brand = '${brand}' AND equipment_brand_is_disabled = false AND equipment_brand_is_available = true` : ""}
-            ${model ? `AND equipment_model = '${model}' AND equipment_model_is_disabled = false AND equipment_model_is_available = true` : ""}
+            AND equipment_component_category_is_disabled = false 
+            AND equipment_component_category_is_available = true
+            ${componentCategory ? `AND equipment_component_category = '${componentCategory}'` : ""}
+            AND equipment_brand_is_disabled = false 
+            AND equipment_brand_is_available = true
+            ${brand ? `AND equipment_brand = '${brand}'` : ""}
+            AND equipment_model_is_disabled = false 
+            AND equipment_model_is_available = true
+            ${model ? `AND equipment_model = '${model}'` : ""}
+            AND equipment_unit_of_measurement_is_disabled = false
+            AND equipment_unit_of_measurement_is_available = true
           ORDER BY ${order}
         ) AS subquery
         WHERE row_number = 1
