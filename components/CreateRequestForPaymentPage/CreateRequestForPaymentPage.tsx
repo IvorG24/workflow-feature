@@ -210,7 +210,7 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
         section_field: form.form_section[1].section_field,
       },
     ]);
-  }, [form, replaceSection, requestFormMethods]);
+  }, []);
 
   return (
     <Container>
