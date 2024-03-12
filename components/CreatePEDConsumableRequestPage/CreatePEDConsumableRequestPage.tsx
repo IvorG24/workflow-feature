@@ -295,12 +295,14 @@ const CreatePEDConsumableRequestPage = ({
           {
             ...newSection.section_field[1],
             field_response:
-              equipmentDescription.equipment_description_brand.equipment_brand,
+              equipmentDescription.equipment_description_brand
+                .equipment_brand ?? "",
           },
           {
             ...newSection.section_field[2],
             field_response:
-              equipmentDescription.equipment_description_model.equipment_model,
+              equipmentDescription.equipment_description_model
+                .equipment_model ?? "",
           },
           {
             ...newSection.section_field[3],

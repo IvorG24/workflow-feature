@@ -4355,7 +4355,9 @@ export const getEquipmentDescriptionList = async (
       }
     )
     .eq("equipment_description_equipment_id", equipmentId)
-    .eq("equipment_description_is_disabled", false);
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_brand.equipment_brand_is_disabled", false)
+    .eq("equipment_description_model.equipment_model_is_disabled", false);
 
   if (search) {
     query = query.or(
@@ -4381,10 +4383,12 @@ export const getEquipmentDescriptionList = async (
     data: formattedData.map((description) => {
       return {
         ...description,
-        equipment_description_brand:
-          description.equipment_description_brand.equipment_brand,
-        equipment_description_model:
-          description.equipment_description_model.equipment_model,
+        equipment_description_brand: description.equipment_description_brand
+          ? description.equipment_description_brand.equipment_brand
+          : "",
+        equipment_description_model: description.equipment_description_model
+          ? description.equipment_description_model.equipment_model
+          : "",
       };
     }),
     count,
@@ -5669,14 +5673,30 @@ export const getEquipmentDescription = async (
     )
     .eq("equipment_description_is_disabled", false)
     .eq("equipment_description_is_available", true)
+    .eq("equipment_description_brand.equipment_brand_is_disabled", false)
+    .eq("equipment_description_model.equipment_model_is_disabled", false)
     .eq("equipment_description_property_number_with_prefix", propertyNumber)
     .single();
   if (error) throw error;
 
-  return data as EquipmentDescriptionTableRow & {
+  const formattedData = data as EquipmentDescriptionTableRow & {
     equipment_description_brand: { equipment_brand: string };
   } & {
     equipment_description_model: { equipment_model: string };
+  };
+
+  return {
+    ...data,
+    equipment_description_brand: {
+      equipment_brand: formattedData.equipment_description_brand
+        ? formattedData.equipment_description_brand.equipment_brand
+        : "",
+    },
+    equipment_description_model: {
+      equipment_model: formattedData.equipment_description_model
+        ? formattedData.equipment_description_model.equipment_model
+        : "",
+    },
   };
 };
 
@@ -5703,7 +5723,9 @@ export const getItemSectionChoices = async (
       model: model ? model.replace(/'/g, "''") : undefined,
     },
   });
+
   if (error) throw error;
+
   return data;
 };
 
