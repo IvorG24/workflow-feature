@@ -5679,11 +5679,13 @@ export const getEquipmentDescription = async (
     .single();
   if (error) throw error;
 
-  const formattedData = data as EquipmentDescriptionTableRow & {
+  type ReturnDataType = EquipmentDescriptionTableRow & {
     equipment_description_brand: { equipment_brand: string };
   } & {
     equipment_description_model: { equipment_model: string };
   };
+
+  const formattedData = data as ReturnDataType;
 
   return {
     ...data,
@@ -5697,7 +5699,7 @@ export const getEquipmentDescription = async (
         ? formattedData.equipment_description_model.equipment_model
         : "",
     },
-  };
+  } as ReturnDataType;
 };
 
 // Fetch item section choices based on given parameters
