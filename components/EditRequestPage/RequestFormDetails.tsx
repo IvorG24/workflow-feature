@@ -67,9 +67,6 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
           <Text>
             {`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}
           </Text>
-          <Text color="dimmed" size={14}>
-            {userProfile?.user_username}
-          </Text>
         </Stack>
       </Flex>
       <Group spacing="md" mt="xl">

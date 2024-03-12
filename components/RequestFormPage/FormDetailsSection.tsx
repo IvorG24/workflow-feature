@@ -200,7 +200,6 @@ const FormDetailsSection = ({ form, formVisibilityRestriction }: Props) => {
         </Avatar>
         <Stack spacing={0}>
           <Text>{`${creator.user_first_name} ${creator.user_last_name}`}</Text>
-          <Text size={14} color="dimmed">{`${creator.user_username}`}</Text>
         </Stack>
       </Flex>
       <Group spacing="md" mt="xl">

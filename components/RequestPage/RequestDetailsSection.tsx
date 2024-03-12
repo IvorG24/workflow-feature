@@ -128,9 +128,6 @@ const RequestDetailsSection = ({
           <Text>
             {`${requestor.user_first_name} ${requestor.user_last_name}`}
           </Text>
-          <Text color="dimmed" size={14}>
-            {requestor.user_username}
-          </Text>
         </Stack>
       </Flex>
       <Group spacing="md" mt="xl">
