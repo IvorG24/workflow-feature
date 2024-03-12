@@ -22,7 +22,7 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconFile, IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -306,61 +306,6 @@ const ProjectList = ({
     if (!address) return "";
     return `${address.address_street}, ${address.address_barangay}, ${address.address_city}, ${address.address_province}, ${address.address_region}, ${address.address_zip_code}`;
   };
-
-  useEffect(() => {
-    const channel = supabaseClient
-      .channel("realtime-team-project")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "team_project_table",
-          filter: `team_project_team_id=eq.${activeTeam.team_id}`,
-        },
-        async (payload) => {
-          if (payload.eventType === "UPDATE") {
-            const isProjectDisabled = payload.new.team_project_is_disabled;
-            if (isProjectDisabled) {
-              const updatedProjectList = projectList.filter(
-                (project) =>
-                  project.team_project_id !== payload.new.team_project_id
-              );
-              setProjectList(updatedProjectList);
-
-              setSearchResult(
-                updatedProjectList.filter((project) =>
-                  project.team_project_name
-                    .toLowerCase()
-                    .includes(search.toLowerCase())
-                )
-              );
-            }
-          }
-
-          if (payload.eventType === "INSERT") {
-            const updatedProjectList = [payload.new, ...projectList];
-            setProjectList(updatedProjectList as TeamProjectWithAddressType[]);
-            setProjectCount(updatedProjectList.length);
-
-            const searchIncludesNewProject = payload.new.team_project_name
-              .toLowerCase()
-              .includes(search.toLowerCase());
-
-            if (searchIncludesNewProject) {
-              setSearchResult(
-                updatedProjectList as TeamProjectWithAddressType[]
-              );
-            }
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabaseClient.removeChannel(channel);
-    };
-  }, [supabaseClient, activeTeam.team_id, projectList]);
 
   return (
     <Box>
