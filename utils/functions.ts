@@ -654,12 +654,6 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       emailAddress: "andrew.castillo.staclara@gmail.com",
     },
     {
-      items: ["LUZ-23-006 LAND DEV LEMERY P1"],
-      fullName: "Edwin Probadora",
-      jiraAccountId: "712020:5f585f80-6478-4f71-9ed4-04d0d8cdf416",
-      emailAddress: "edwin.probadora@staclara.com.ph",
-    },
-    {
       items: ["MIN-22-008 MALADUGAO HEPP"],
       fullName: "Mary Ann Arances",
       jiraAccountId:
@@ -728,10 +722,15 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       emailAddress: "darrylcanoza12@gmail.com",
     },
     {
-      items: ["SANTISIMO YARD"],
+      items: [
+        "SANTISIMO YARD",
+        "LUZ-23-006 LAND DEV LEMERY P1",
+        "LUZ-18-007A STE TR4 PACKAGE C",
+      ],
       fullName: "Edwin Probadora",
-      jiraAccountId: "712020:5f585f80-6478-4f71-9ed4-04d0d8cdf416",
-      emailAddress: "edwin.probadora@staclara.com.ph",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:41b4ed4f-b660-4354-b031-0d221b54655b",
+      emailAddress: "edwinprobadora@gmail.com",
     },
     {
       items: ["MIN-19-027 MALITBOG MINI HYDRO", "MIN-21-015 MATI-1"],
@@ -753,13 +752,6 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       jiraAccountId:
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:737946a6-5539-4cba-a877-2573e31b813d",
       emailAddress: "levisaturinas.scic@gmail.com",
-    },
-    {
-      items: ["LUZ-18-007A STE TR4 PACKAGE C"],
-      fullName: "Edwin Probadora",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:41b4ed4f-b660-4354-b031-0d221b54655b",
-      emailAddress: "edwinprobadora@gmail.com",
     },
     {
       items: ["LUZ-21-009 TUMAUINI HEPPP"],
