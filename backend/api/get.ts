@@ -237,7 +237,6 @@ export const getRequestList = async (
         `request_view.request_formsly_id_prefix ILIKE '${value}' || '%'`
     )
     .join(" OR ");
-
   const idFilterCondition = idFilter
     ?.map((value) => `request_view.request_${value}_id IS NULL`)
     .join(" AND ");
@@ -247,7 +246,7 @@ export const getRequestList = async (
       ? `request_view.request_id = '${search}'`
       : `request_view.request_formsly_id ILIKE '%' || '${search}' || '%'`;
 
-  const { data, error } = await supabaseClient.rpc("fetch_request_list", {
+  const { data: data, error } = await supabaseClient.rpc("fetch_request_list", {
     input_data: {
       teamId: teamId,
       page: page,
@@ -265,7 +264,7 @@ export const getRequestList = async (
     },
   });
 
-  if (error) throw error;
+  if (error || !data) throw error;
   const dataFormat = data as unknown as {
     data: RequestListItemType[];
     count: number;

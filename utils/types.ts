@@ -383,6 +383,9 @@ export type AddressTableInsert =
 export type AddressTableUpdate =
   Database["public"]["Tables"]["address_table"]["Update"];
 
+export type RequestViewTableRow =
+  Database["public"]["Views"]["request_view"]["Row"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1050,34 +1053,14 @@ export type RequestListItemType = {
   request_jira_id?: string;
   request_jira_link?: string;
   request_otp_id?: string;
-  request_team_member: {
-    team_member_id: string;
-    team_member_user: {
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-      user_avatar: string | null;
-    };
-  };
-  request_form: {
-    form_id: string;
-    form_name: string;
-    form_description: string;
-  };
+  request_form_id: string;
+  request_team_member_id: string;
   request_signer: {
     request_signer_id: string;
     request_signer_status: string;
     request_signer: {
+      signer_team_member_id: string;
       signer_is_primary_signer: boolean;
-      signer_team_member: {
-        signer_team_member_id: string;
-        team_member_user: {
-          user_id: string;
-          user_first_name: string;
-          user_last_name: string;
-          user_avatar: string | null;
-        };
-      };
     };
   }[];
 };
@@ -1564,3 +1547,17 @@ export type IncidentReport = {
 export type ItemDescriptionFieldWithUoM = {
   item_description_field_uom: { item_description_field_uom: string }[];
 } & ItemDescriptionFieldTableRow;
+
+export type RequestListItemSignerType = {
+  request_signer_id: string;
+  request_signer_status: string;
+  request_signer: {
+    signer_team_member_id: string;
+    signer_is_primary_signer: boolean;
+  };
+  signer_team_member_user: {
+    user_id: string;
+    user_first_name: string;
+    user_last_name: string;
+  };
+};
