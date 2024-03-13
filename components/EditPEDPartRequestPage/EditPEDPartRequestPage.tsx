@@ -1138,7 +1138,6 @@ const EditPEDPartRequestPage = ({
         });
       }
     } catch (e) {
-      console.log(e);
       setValue(`sections.${index}.section_field.${4}.field_response`, []);
       notifications.show({
         message: "Something went wrong. Please try again later.",
