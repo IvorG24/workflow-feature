@@ -327,7 +327,9 @@ const EditOtherExpensesRequestPage = ({
         ...newSection.section_field.slice(6, 9).map((field) => {
           return {
             ...field,
-            field_response: [],
+            field_response: [
+              { ...field.field_response[0], request_response: "" },
+            ],
           };
         }),
         ...newSection.section_field.slice(9),

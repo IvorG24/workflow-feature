@@ -344,12 +344,22 @@ const EditPEDEquipmentRequestPage = ({
         const generalField = [
           {
             ...newSection.section_field[0],
-            field_response: [],
+            field_response: [
+              {
+                ...newSection.section_field[0].field_response[0],
+                request_response: "",
+              },
+            ],
           },
           ...newSection.section_field.slice(1, 4).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),
@@ -459,7 +469,12 @@ const EditPEDEquipmentRequestPage = ({
           ...newSection.section_field.slice(2, 4).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),

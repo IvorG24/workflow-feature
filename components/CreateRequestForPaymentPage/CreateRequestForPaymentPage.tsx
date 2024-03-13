@@ -158,7 +158,6 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
         resetSigner();
       }
     } catch (e) {
-      console.log(e);
       setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
