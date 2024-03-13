@@ -62,8 +62,6 @@ export type RequestListLocalFilter = {
 };
 
 type Props = {
-  requestList: RequestListItemType[];
-  requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
