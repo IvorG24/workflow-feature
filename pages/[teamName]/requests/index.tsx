@@ -4,11 +4,7 @@ import Meta from "@/components/Meta/Meta";
 import RequestListPage from "@/components/RequestListPage/RequestListPage";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import {
-  RequestListItemType,
-  TeamMemberWithUserType,
-  TeamProjectTableRow,
-} from "@/utils/types";
+import { TeamMemberWithUserType, TeamProjectTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -34,8 +30,6 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 );
 
 type Props = {
-  requestList: RequestListItemType[];
-  requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
@@ -43,8 +37,6 @@ type Props = {
 };
 
 const Page = ({
-  requestList,
-  requestListCount,
   teamMemberList,
   formList,
   isFormslyTeam,
@@ -59,8 +51,6 @@ const Page = ({
           (form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.label)
         )}
         isFormslyTeam={isFormslyTeam}
-        requestList={requestList}
-        requestListCount={requestListCount}
         projectList={projectList}
       />
     </>

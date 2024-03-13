@@ -62,8 +62,6 @@ export type RequestListLocalFilter = {
 };
 
 type Props = {
-  requestList: RequestListItemType[];
-  requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
@@ -71,8 +69,6 @@ type Props = {
 };
 
 const RequestListPage = ({
-  requestList: initialRequestList,
-  requestListCount: initialRequestListCount,
   teamMemberList,
   formList,
   isFormslyTeam,
@@ -84,8 +80,7 @@ const RequestListPage = ({
   const teamMember = useUserTeamMember();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
-  const [requestList, setRequestList] =
-    useState<RequestListItemType[]>(initialRequestList);
+  const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
   const [localFilter, setLocalFilter] = useLocalStorage<RequestListLocalFilter>(
     {
       key: "formsly-request-list-filter",
@@ -103,9 +98,7 @@ const RequestListPage = ({
     }
   );
 
-  const [requestListCount, setRequestListCount] = useState(
-    initialRequestListCount
-  );
+  const [requestListCount, setRequestListCount] = useState(0);
 
   const filterFormMethods = useForm<FilterFormValues>({
     defaultValues: localFilter,
