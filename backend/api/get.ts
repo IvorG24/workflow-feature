@@ -4,6 +4,7 @@ import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import {
   addAmpersandBetweenWords,
   parseJSONIfValid,
@@ -5714,15 +5715,20 @@ export const getItemSectionChoices = async (
   }
 ) => {
   const { equipmentId, generalName, componentCategory, brand, model } = params;
+
   const { data, error } = await supabaseClient.rpc("get_item_section_choices", {
     input_data: {
-      equipmentId: equipmentId ? equipmentId.replace(/'/g, "''") : undefined,
-      generalName: generalName ? generalName.replace(/'/g, "''") : undefined,
-      componentCategory: componentCategory
-        ? componentCategory.replace(/'/g, "''")
+      equipmentId: equipmentId
+        ? safeParse(equipmentId.replace(/'/g, "''"))
         : undefined,
-      brand: brand ? brand.replace(/'/g, "''") : undefined,
-      model: model ? model.replace(/'/g, "''") : undefined,
+      generalName: generalName
+        ? safeParse(generalName.replace(/'/g, "''"))
+        : undefined,
+      componentCategory: componentCategory
+        ? safeParse(componentCategory.replace(/'/g, "''"))
+        : undefined,
+      brand: brand ? safeParse(brand.replace(/'/g, "''")) : undefined,
+      model: model ? safeParse(model.replace(/'/g, "''")) : undefined,
     },
   });
 
@@ -5789,6 +5795,7 @@ export const getItemUnitOfMeasurement = async (
       true
     )
     .single();
+
   if (error) throw error;
 
   const formattedData = data as unknown as {

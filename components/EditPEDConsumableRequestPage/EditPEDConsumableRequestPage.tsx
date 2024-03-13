@@ -503,7 +503,9 @@ const EditPEDConsumableRequestPage = ({
           ...newSection.section_field.slice(1, 4).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                { ...field.field_response[0], request_response: "" },
+              ],
             };
           }),
           ...newSection.section_field.slice(4),
@@ -688,7 +690,12 @@ const EditPEDConsumableRequestPage = ({
             ...newSection.section_field.slice(0, 5),
             {
               ...newSection.section_field[5],
-              field_response: [],
+              field_response: [
+                {
+                  ...newSection.section_field[5].field_response[0],
+                  request_response: "",
+                },
+              ],
             },
             newSection.section_field[6],
           ];
