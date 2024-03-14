@@ -377,10 +377,6 @@ const ServicesRequestPage = ({ request }: Props) => {
 
       if (!jiraTicketResponse.ok) {
         console.error(jiraTicketData.error);
-        notifications.show({
-          message: jiraTicketData.error,
-          color: "red",
-        });
         return null;
       }
 
