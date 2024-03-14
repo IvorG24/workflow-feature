@@ -380,7 +380,12 @@ const EditPEDPartRequestPage = ({
           ...newSection.section_field.slice(3, 8).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),
@@ -514,7 +519,12 @@ const EditPEDPartRequestPage = ({
           ...newSection.section_field.slice(4, 8).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),
@@ -610,7 +620,12 @@ const EditPEDPartRequestPage = ({
           ...newSection.section_field.slice(5, 8).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
             };
           }),
           ...newSection.section_field.slice(8),
@@ -757,6 +772,12 @@ const EditPEDPartRequestPage = ({
           {
             ...newSection.section_field[1],
             field_option: componentCategoryOption,
+            field_response: [
+              {
+                ...newSection.section_field[1].field_response[0],
+                request_response: "",
+              },
+            ],
           },
           ...newSection.section_field.slice(2).map((field) => {
             return {
@@ -776,7 +797,12 @@ const EditPEDPartRequestPage = ({
           ...newSection.section_field.slice(1).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),
@@ -828,6 +854,12 @@ const EditPEDPartRequestPage = ({
           {
             ...newSection.section_field[2],
             field_option: brandOption,
+            field_response: [
+              {
+                ...newSection.section_field[2].field_response[0],
+                request_response: "",
+              },
+            ],
           },
           ...newSection.section_field.slice(3).map((field) => {
             return {
@@ -847,7 +879,12 @@ const EditPEDPartRequestPage = ({
           ...newSection.section_field.slice(2).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),
@@ -898,6 +935,12 @@ const EditPEDPartRequestPage = ({
           {
             ...newSection.section_field[3],
             field_option: modelOption,
+            field_response: [
+              {
+                ...newSection.section_field[3].field_response[0],
+                request_response: "",
+              },
+            ],
           },
           ...newSection.section_field.slice(4).map((field) => {
             return {
@@ -917,7 +960,12 @@ const EditPEDPartRequestPage = ({
           ...newSection.section_field.slice(3).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),
@@ -972,6 +1020,12 @@ const EditPEDPartRequestPage = ({
           {
             ...newSection.section_field[4],
             field_option: partNumberOption,
+            field_response: [
+              {
+                ...newSection.section_field[4].field_response[0],
+                request_response: "",
+              },
+            ],
           },
           ...newSection.section_field.slice(5).map((field) => {
             return {
@@ -991,7 +1045,12 @@ const EditPEDPartRequestPage = ({
           ...newSection.section_field.slice(4).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),
@@ -1020,14 +1079,18 @@ const EditPEDPartRequestPage = ({
         const equipmentPartUoM = await getItemUnitOfMeasurement(
           supabaseClient,
           {
-            generalName: newSection.section_field[0].field_response[0]
-              .request_response as string,
-            componentCategory: newSection.section_field[1].field_response[0]
-              .request_response as string,
-            brand: newSection.section_field[2].field_response[0]
-              .request_response as string,
-            model: newSection.section_field[3].field_response[0]
-              .request_response as string,
+            generalName: safeParse(
+              newSection.section_field[0].field_response[0].request_response
+            ),
+            componentCategory: safeParse(
+              newSection.section_field[1].field_response[0].request_response
+            ),
+            brand: safeParse(
+              newSection.section_field[2].field_response[0].request_response
+            ),
+            model: safeParse(
+              newSection.section_field[3].field_response[0].request_response
+            ),
             partNumber: value,
           }
         );
@@ -1059,7 +1122,12 @@ const EditPEDPartRequestPage = ({
           ...newSection.section_field.slice(5).map((field) => {
             return {
               ...field,
-              field_response: [],
+              field_response: [
+                {
+                  ...field.field_response[0],
+                  request_response: "",
+                },
+              ],
               field_option: [],
             };
           }),

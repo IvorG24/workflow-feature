@@ -737,7 +737,20 @@ const EditItemRequestPage = ({
             newSection.section_field[0],
             {
               ...newSection.section_field[1],
-              field_response: [],
+              field_response: [
+                {
+                  request_response: "",
+                  request_response_duplicatable_section_id:
+                    newSection.section_field[1].field_section_duplicatable_id ||
+                    null,
+                  request_response_field_id:
+                    newSection.section_field[1].field_id,
+                  request_response_id:
+                    newSection.section_field[1].field_response[0]
+                      .request_response_id,
+                  request_response_request_id: request.request_id,
+                },
+              ],
             },
             newSection.section_field[2],
             ...newSection.section_field.slice(3, 9).map((field) => {

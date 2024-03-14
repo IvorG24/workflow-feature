@@ -614,6 +614,7 @@ const CreatePEDPartRequestPage = ({
           {
             ...newSection.section_field[1],
             field_option: componentCategoryOption,
+            field_response: "",
           },
           ...newSection.section_field.slice(2).map((field) => {
             return {
@@ -683,6 +684,7 @@ const CreatePEDPartRequestPage = ({
           {
             ...newSection.section_field[2],
             field_option: brandOption,
+            field_response: "",
           },
           ...newSection.section_field.slice(3).map((field) => {
             return {
@@ -751,6 +753,7 @@ const CreatePEDPartRequestPage = ({
           {
             ...newSection.section_field[3],
             field_option: modelOption,
+            field_response: "",
           },
           ...newSection.section_field.slice(4).map((field) => {
             return {
@@ -822,6 +825,7 @@ const CreatePEDPartRequestPage = ({
           {
             ...newSection.section_field[4],
             field_option: partNumberOption,
+            field_response: "",
           },
           ...newSection.section_field.slice(5).map((field) => {
             return {
