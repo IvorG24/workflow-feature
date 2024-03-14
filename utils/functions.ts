@@ -788,8 +788,7 @@ const getRequestParticipant = (formslyProjectSite: string) => {
     {
       items: ["MIN-22-008 MALADUGAO HEPP"],
       fullName: "Ivandrae Angeles",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:a5f4c80b-0ae8-40a3-90b5-aee73b9708f7",
+      jiraAccountId: "5fadfcedc2e5390077e8ae6f",
       emailAddress: "angelesivandrae7@gmail.com",
     },
     {
