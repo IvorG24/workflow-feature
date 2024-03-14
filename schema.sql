@@ -4273,13 +4273,9 @@ RETURNS JSON AS $$
 
     const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_table formt JOIN team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
 
-    const formListData = plv8.execute(`SELECT formt.form_name, formt.form_id FROM form_table formt JOIN team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_disabled=false AND formt.form_app='REQUEST';`);
-
-    const formList = formListData.map(form=>({ label: form.form_name, value: form.form_id }));
-
     const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
-    request_data = {teamMemberId,teamMemberList,isFormslyTeam,formList,projectList}
+    request_data = {teamMemberId,teamMemberList,isFormslyTeam,projectList}
  });
  return request_data;
 $$ LANGUAGE plv8;
