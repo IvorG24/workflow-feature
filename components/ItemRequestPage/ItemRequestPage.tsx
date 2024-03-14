@@ -1,8 +1,11 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getCommentAttachment, getUserSignatureList } from "@/backend/api/get";
+import {
+  getCommentAttachment,
+  getRequestComment,
+  getSectionInItemRequestPage,
+} from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
-import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
@@ -22,8 +25,8 @@ import {
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
-  ConnectedRequestIdList,
   ReceiverStatusType,
+  RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
@@ -44,37 +47,18 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
+import RequestCommentList from "../RequestPage/RequestCommentList";
 import ItemSummary from "../SummarySection/ItemSummary";
 
 type Props = {
   request: RequestWithResponseType;
-  connectedForm: {
-    form_name: string;
-    form_id: string;
-    form_is_for_every_member: boolean;
-    form_is_member: boolean;
-    form_is_hidden: boolean;
-  }[];
-  connectedRequestIDList: ConnectedRequestIdList;
-  canvassRequest: string[];
+  duplicatableSectionIdList: string[];
 };
 
-export type ApproverDetailsType = {
-  name: string;
-  jobDescription: string | null;
-  status: string;
-  date: string | null;
-  signature: string | null;
-};
-
-const ItemRequestPage = ({
-  request,
-}: // connectedForm,
-// connectedRequestIDList,
-// canvassRequest,
-Props) => {
+const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+  const { setIsLoading } = useLoadingActions();
 
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
@@ -86,134 +70,99 @@ Props) => {
     };
   });
 
-  const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
-    []
-  );
-  const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
-  const [requestCommentList, setRequestCommentList] = useState(
-    request.request_comment
-  );
+  const [requestCommentList, setRequestCommentList] = useState<
+    RequestCommentType[]
+  >([]);
   const [requestJira, setRequestJira] = useState({
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
+  const [formSection, setFormSection] = useState(
+    generateSectionWithDuplicateList(request.request_form.form_section)
+  );
 
-  const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
 
   useEffect(() => {
+    if (!activeTeam.team_id) return;
     try {
-      setIsFetchingApprover(true);
+      const fetchSections = async () => {
+        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        let index = 0;
+        while (1) {
+          setIsLoading(true);
+          const duplicatableSectionIdCondition = duplicatableSectionIdList
+            .slice(index, index + 5)
+            .map((dupId) => `'${dupId}'`)
+            .join(",");
 
-      const fetchApproverDetails = async () => {
-        const primarySigner = request.request_signer.find(
-          (signer) => signer.request_signer_signer.signer_is_primary_signer
-        );
-        if (!primarySigner) return;
-        const signerWithDateUpdated = request.request_signer
-          .filter(
-            (signer) =>
-              !signer.request_signer_signer.signer_is_primary_signer &&
-              signer.request_signer_status_date_updated
-          )
-          .sort(
-            (a, b) =>
-              Date.parse(`${a.request_signer_status_date_updated}`) -
-              Date.parse(`${b.request_signer_status_date_updated}`)
-          );
-        const signerWithoutDateUpdated = request.request_signer
-          .filter(
-            (signer) =>
-              !signer.request_signer_signer.signer_is_primary_signer &&
-              !signer.request_signer_status_date_updated
-          )
-          .sort((a, b) => {
-            const fullNameA = `${a.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${a.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
-            const fullNameB = `${b.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${b.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
-            return fullNameA.localeCompare(fullNameB);
+          const data = await getSectionInItemRequestPage(supabaseClient, {
+            index,
+            requestId: request.request_id,
+            teamId: activeTeam.team_id,
+            formId: request.request_form_id,
+            sectionId: request.request_form.form_section[1].section_id,
+            duplicatableSectionIdCondition:
+              duplicatableSectionIdCondition.length !== 0
+                ? duplicatableSectionIdCondition
+                : `'${uuidv4()}'`,
           });
+          newFields.push(...data);
+          index += 5;
 
-        const data = await Promise.all(
-          [
-            primarySigner,
-            ...signerWithDateUpdated,
-            ...signerWithoutDateUpdated,
-          ].map(async (signer) => {
-            let signatureUrl: string | null = null;
-            if (
-              signer.request_signer_status === "APPROVED" &&
-              signer.request_signer_signer.signer_team_member.team_member_user
-                .user_signature_attachment_id
-            ) {
-              const signatureList = await getUserSignatureList(supabaseClient, {
-                userId:
-                  signer.request_signer_signer.signer_team_member
-                    .team_member_user.user_id,
-              });
+          if (index > duplicatableSectionIdList.length) break;
+        }
 
-              const defaultSignature = signatureList[signatureList.length - 1];
+        const uniqueFieldIdList: string[] = [];
+        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        newFields.map((field) => {
+          if (uniqueFieldIdList.includes(field.field_id)) {
+            const currentFieldIndex = combinedFieldList.findIndex(
+              (combinedField) => combinedField.field_id === field.field_id
+            );
+            combinedFieldList[currentFieldIndex].field_response.push(
+              ...field.field_response
+            );
+          } else {
+            uniqueFieldIdList.push(field.field_id);
+            combinedFieldList.push(field);
+          }
+        });
 
-              const signedDate = new Date(
-                `${signer.request_signer_status_date_updated}`
-              ).getTime();
+        const newSection = generateSectionWithDuplicateList([
+          {
+            ...request.request_form.form_section[1],
+            section_field: combinedFieldList,
+          },
+        ]);
+        const newFormSection = [...formSection, ...newSection];
 
-              const signatureMatch = signatureList.find((signature, index) => {
-                if (!signature) {
-                  return false;
-                }
-
-                const nextSignatureDateCreatedTime =
-                  index < signatureList.length - 1
-                    ? new Date(
-                        signatureList[index + 1].signature_history_date_created
-                      ).getTime()
-                    : 0;
-
-                return signedDate < nextSignatureDateCreatedTime;
-              });
-
-              if (signatureMatch) {
-                signatureUrl = signatureMatch.signature_history_value;
-              } else {
-                signatureUrl = defaultSignature
-                  ? defaultSignature.signature_history_value
-                  : "";
-              }
-            }
-
-            return {
-              name: `${signer.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${signer.request_signer_signer.signer_team_member.team_member_user.user_last_name}`,
-              jobDescription:
-                signer.request_signer_signer.signer_team_member.team_member_user
-                  .user_job_title,
-              status: signer.request_signer_status,
-              date: signer.request_signer_status_date_updated,
-              signature: signatureUrl,
-            };
-          })
-        );
-        setApproverDetails(data);
-
-        // const serverDate = (
-        //   await getCurrentDate(supabaseClient)
-        // ).toLocaleString();
-        // setCurrentServerDate(serverDate);
+        setFormSection(newFormSection);
+        setIsLoading(false);
       };
-      if (request) {
-        fetchApproverDetails();
-      }
+      const fetchComments = async () => {
+        const data = await getRequestComment(supabaseClient, {
+          request_id: request.request_id,
+        });
+        setRequestCommentList(data);
+      };
+      fetchSections();
+      fetchComments();
     } catch (e) {
-      console.error(e);
-    } finally {
-      setIsFetchingApprover(false);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
     }
-  }, [request]);
+  }, [activeTeam.team_id]);
 
   const requestor = request.request_team_member.team_member_user;
 
@@ -400,7 +349,7 @@ Props) => {
         return null;
       }
       const projectName = request.request_project.team_project_name;
-      const itemCategory = sectionWithDuplicateList
+      const itemCategory = formSection
         .slice(1)
         .map(
           (section) => section.section_field[3].field_response?.request_response
@@ -482,7 +431,6 @@ Props) => {
 
   const handleAddCommentToJiraTicket = async (jiraTicketKey: string) => {
     try {
-      // fetch comments with attachment
       const rfCommentList = await fetchCommentAttachmentList();
       const rfCommentListForJira = generateJiraCommentPayload(rfCommentList);
 
@@ -549,10 +497,6 @@ Props) => {
     }
   }, [requestJira.id]);
 
-  const originalSectionList = request.request_form.form_section;
-  const sectionWithDuplicateList =
-    generateSectionWithDuplicateList(originalSectionList);
-
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
@@ -581,40 +525,15 @@ Props) => {
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {!isFetchingApprover && approverDetails.length !== 0 && (
-          <Group>
-            <ExportToPdfMenu
-              isFormslyForm={request.request_form.form_is_formsly_form}
-              formName={request.request_form.form_name}
-              requestId={request.request_formsly_id ?? request.request_id}
-            />
-            {/* {requestStatus === "APPROVED" ? (
-            <Group>
-              {connectedForm.map((form) => {
-                if (
-                  (form.form_is_for_every_member || form.form_is_member) &&
-                  form.form_is_hidden === false
-                ) {
-                  return (
-                    <Button
-                      key={form.form_id}
-                      onClick={() =>
-                        router.push(
-                          `/${formatTeamNameToUrlKey(team.team_name ?? "")}/forms/${form.form_id}/create?itemId=${request.request_id}`
-                        )
-                      }
-                      sx={{ flex: 1 }}
-                    >
-                      Create {form.form_name}
-                    </Button>
-                  );
-                }
-              })}
-            </Group>
-          ) : null} */}
-          </Group>
-        )}
+        <Group>
+          <ExportToPdfMenu
+            isFormslyForm={request.request_form.form_is_formsly_form}
+            formName={request.request_form.form_name}
+            requestId={request.request_formsly_id ?? request.request_id}
+          />
+        </Group>
       </Flex>
+
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
           request={request}
@@ -626,16 +545,8 @@ Props) => {
           jiraTicketStatus={jiraTicketStatus}
         />
 
-        {/* {canvassRequest.length !== 0 ? (
-          <ItemCanvassSection canvassRequest={canvassRequest} />
-        ) : null} */}
-
-        {/* <ConnectedRequestSection
-          connectedRequestIDList={connectedRequestIDList}
-        /> */}
-
         <RequestSection
-          section={sectionWithDuplicateList[0]}
+          section={formSection[0]}
           isFormslyForm={true}
           isOnlyWithResponse
         />
@@ -651,14 +562,7 @@ Props) => {
             </Paper>
             <Accordion.Panel>
               <Stack spacing="xl" mt="lg">
-                {sectionWithDuplicateList.slice(1).map((section, idx) => {
-                  if (
-                    idx === 0 &&
-                    section.section_field[0].field_response
-                      ?.request_response === '"null"'
-                  )
-                    return;
-
+                {formSection.slice(2).map((section, idx) => {
                   return (
                     <RequestSection
                       key={section.section_id + idx}
@@ -674,7 +578,9 @@ Props) => {
           </Accordion.Item>
         </Accordion>
 
-        <ItemSummary summaryData={sectionWithDuplicateList.slice(1)} />
+        {formSection.length > 2 && (
+          <ItemSummary summaryData={formSection.slice(2)} />
+        )}
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
@@ -696,12 +602,6 @@ Props) => {
             onCreateJiraTicket={handleCreateJiraTicket}
           />
         )}
-
-        {/* {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
-          <RequestReverseActionSection
-            handleReverseApproval={handleReverseApproval}
-          />
-        ) : null} */}
 
         <RequestSignerSection signerList={signerList} />
       </Stack>

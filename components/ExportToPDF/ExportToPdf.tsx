@@ -3,12 +3,15 @@
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { startCase } from "@/utils/string";
-import { DuplicateSectionType, RequestWithResponseType } from "@/utils/types";
+import {
+  ApproverDetailsType,
+  DuplicateSectionType,
+  RequestWithResponseType,
+} from "@/utils/types";
 import { Flex, Loader } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { ApproverDetailsType } from "../ItemRequestPage/ItemRequestPage";
 import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
 import PEDConsumableBulkPdfDocumentTableVersion from "./PEDConsumableBulkPdfDocumentTableVersion";

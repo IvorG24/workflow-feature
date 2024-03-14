@@ -1564,3 +1564,11 @@ export type IncidentReport = {
 export type ItemDescriptionFieldWithUoM = {
   item_description_field_uom: { item_description_field_uom: string }[];
 } & ItemDescriptionFieldTableRow;
+
+export type ApproverDetailsType = {
+  name: string;
+  jobDescription: string | null;
+  status: string;
+  date: string | null;
+  signature: string | null;
+};
