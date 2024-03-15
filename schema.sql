@@ -1624,7 +1624,7 @@ RETURNS JSON AS $$
     }
     const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
-    const section_id = '0672ef7d-849d-4bc7-81b1-7a5eefcc1451';
+    const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
     const itemDescriptionInput = [];
     const fieldInput= [];
     const consumableDescriptionFieldInput = [];
@@ -1731,7 +1731,7 @@ RETURNS JSON AS $$
       `
     )[0];
 
-    const section_id = '0672ef7d-849d-4bc7-81b1-7a5eefcc1451';
+    const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
     const itemDescriptionInput = [];
     const fieldInput = [];
     const consumableDescriptionFieldInput = [];
