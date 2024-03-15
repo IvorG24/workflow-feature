@@ -12616,6 +12616,8 @@ RETURNS JSON AS $$
       isPedConsumableAndSingle
     } = input_data;
 
+    const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa'];
+
     if (!fieldData) {
       const fieldList = plv8.execute(
         `
@@ -12623,7 +12625,11 @@ RETURNS JSON AS $$
           FROM field_table
           INNER JOIN request_response_table ON request_response_field_id = field_id
           WHERE 
-            field_section_id = '${sectionId}'
+            ${
+              specialSection.includes(sectionId) ?
+              `field_section_id IN ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa')` :
+              `field_section_id = '${sectionId}'`
+            }
             AND request_response_request_id = '${requestId}'
             AND (
               request_response_duplicatable_section_id IN (${duplicatableSectionIdCondition})
