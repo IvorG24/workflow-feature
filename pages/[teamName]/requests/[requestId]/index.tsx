@@ -8,11 +8,7 @@ import PaymentRequestPage from "@/components/PaymentRequestPage/PaymentRequestPa
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
-import {
-  ConnectedRequestIdList,
-  RequestProjectSignerStatusType,
-  RequestWithResponseType,
-} from "@/utils/types";
+import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps =
@@ -45,67 +41,60 @@ export const getServerSideProps: GetServerSideProps =
 
 type Props = {
   request: RequestWithResponseType;
-  connectedFormIdAndGroup: {
-    formId: string;
-    formIsForEveryone: boolean;
-    formIsMember: boolean;
-    formName: string;
-    formIsHidden: boolean;
-  };
-  connectedRequestIDList: ConnectedRequestIdList;
-  connectedForm: {
-    form_name: string;
-    form_id: string;
-    form_is_for_every_member: boolean;
-    form_is_member: boolean;
-    form_is_hidden: boolean;
-  }[];
-  canvassRequest?: string[];
-  projectSignerStatus?: RequestProjectSignerStatusType;
+  duplicatableSectionIdList: string[];
 };
 
-const Page = ({
-  request,
-  connectedFormIdAndGroup,
-  connectedRequestIDList,
-  connectedForm = [],
-  canvassRequest = [],
-  projectSignerStatus,
-}: Props) => {
+const Page = ({ request, duplicatableSectionIdList }: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Item") {
       return (
         <ItemRequestPage
           request={request}
-          connectedForm={connectedForm}
-          connectedRequestIDList={connectedRequestIDList}
-          canvassRequest={canvassRequest}
+          duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
     } else if (request.request_form.form_name === "Services") {
-      return <ServicesRequestPage request={request} />;
+      return (
+        <ServicesRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
     } else if (request.request_form.form_name === "Other Expenses") {
-      return <OtherExpensesRequestPage request={request} />;
+      return (
+        <OtherExpensesRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
     } else if (request.request_form.form_name === "PED Equipment") {
-      return <PEDEquipmentRequestPage request={request} />;
+      return (
+        <PEDEquipmentRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
     } else if (request.request_form.form_name === "PED Part") {
-      return <PEDPartRequestPage request={request} />;
+      return (
+        <PEDPartRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
     } else if (request.request_form.form_name === "PED Consumable") {
-      return <PEDConsumableRequestPage request={request} />;
+      return (
+        <PEDConsumableRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
     } else if (request.request_form.form_name === "Request For Payment") {
       return <PaymentRequestPage request={request} />;
     } else {
-      return (
-        <RequestPage
-          request={request}
-          isFormslyForm
-          connectedFormIdAndGroup={connectedFormIdAndGroup}
-          connectedRequestIDList={connectedRequestIDList}
-          projectSignerStatus={projectSignerStatus}
-        />
-      );
+      return <RequestPage request={request} isFormslyForm />;
     }
   };
+
   return (
     <>
       <Meta description="Request Page" url="/teamName/requests/[requestId]" />

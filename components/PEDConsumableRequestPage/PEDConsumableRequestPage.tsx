@@ -1,5 +1,9 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getCommentAttachment, getUserSignatureList } from "@/backend/api/get";
+import {
+  getCommentAttachment,
+  getRequestComment,
+  getSectionInItemRequestPage,
+} from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -23,6 +27,7 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
   ReceiverStatusType,
+  RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
@@ -47,19 +52,16 @@ import PEDConsumableSummary from "../SummarySection/PEDConsumableSummary";
 
 type Props = {
   request: RequestWithResponseType;
+  duplicatableSectionIdList: string[];
 };
 
-export type ApproverDetailsType = {
-  name: string;
-  jobDescription: string | null;
-  status: string;
-  date: string | null;
-  signature: string | null;
-};
-
-const PEDConsumableRequestPage = ({ request }: Props) => {
+const PEDConsumableRequestPage = ({
+  request,
+  duplicatableSectionIdList,
+}: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+  const { setIsLoading } = useLoadingActions();
 
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
@@ -71,129 +73,101 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
     };
   });
 
-  const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
-    []
-  );
-  const [isFetchingApprover, setIsFetchingApprover] = useState(true);
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
-  const [requestCommentList, setRequestCommentList] = useState(
-    request.request_comment
-  );
+  const [requestCommentList, setRequestCommentList] = useState<
+    RequestCommentType[]
+  >([]);
   const [requestJira, setRequestJira] = useState({
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
+  const [formSection, setFormSection] = useState(
+    generateSectionWithDuplicateList(request.request_form.form_section)
+  );
 
-  const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
 
   useEffect(() => {
+    if (!activeTeam.team_id) return;
     try {
-      setIsFetchingApprover(true);
-
-      const fetchApproverDetails = async () => {
-        const primarySigner = request.request_signer.find(
-          (signer) => signer.request_signer_signer.signer_is_primary_signer
-        );
-        if (!primarySigner) return;
-        const signerWithDateUpdated = request.request_signer
-          .filter(
-            (signer) =>
-              !signer.request_signer_signer.signer_is_primary_signer &&
-              signer.request_signer_status_date_updated
-          )
-          .sort(
-            (a, b) =>
-              Date.parse(`${a.request_signer_status_date_updated}`) -
-              Date.parse(`${b.request_signer_status_date_updated}`)
-          );
-        const signerWithoutDateUpdated = request.request_signer
-          .filter(
-            (signer) =>
-              !signer.request_signer_signer.signer_is_primary_signer &&
-              !signer.request_signer_status_date_updated
-          )
-          .sort((a, b) => {
-            const fullNameA = `${a.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${a.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
-            const fullNameB = `${b.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${b.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
-            return fullNameA.localeCompare(fullNameB);
+      const fetchSections = async () => {
+        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        let index = 0;
+        while (1) {
+          setIsLoading(true);
+          const duplicatableSectionIdCondition = duplicatableSectionIdList
+            .slice(index, index + 5)
+            .map((dupId) => `'${dupId}'`)
+            .join(",");
+          const data = await getSectionInItemRequestPage(supabaseClient, {
+            index,
+            requestId: request.request_id,
+            teamId: activeTeam.team_id,
+            formId: request.request_form_id,
+            sectionId: request.request_form.form_section[1].section_id,
+            duplicatableSectionIdCondition:
+              duplicatableSectionIdCondition.length !== 0
+                ? duplicatableSectionIdCondition
+                : `'${uuidv4()}'`,
+            isPedConsumableAndSingle:
+              request.request_form.form_section[0].section_field[2]
+                .field_response[0].request_response === `"Single"`,
           });
+          newFields.push(...data);
+          index += 5;
+          if (index > duplicatableSectionIdList.length) break;
+        }
 
-        const data = await Promise.all(
-          [
-            primarySigner,
-            ...signerWithDateUpdated,
-            ...signerWithoutDateUpdated,
-          ].map(async (signer) => {
-            let signatureUrl: string | null = null;
-            if (
-              signer.request_signer_status === "APPROVED" &&
-              signer.request_signer_signer.signer_team_member.team_member_user
-                .user_signature_attachment_id
-            ) {
-              const signatureList = await getUserSignatureList(supabaseClient, {
-                userId:
-                  signer.request_signer_signer.signer_team_member
-                    .team_member_user.user_id,
-              });
+        const uniqueFieldIdList: string[] = [];
+        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        newFields.map((field) => {
+          if (uniqueFieldIdList.includes(field.field_id)) {
+            const currentFieldIndex = combinedFieldList.findIndex(
+              (combinedField) => combinedField.field_id === field.field_id
+            );
+            combinedFieldList[currentFieldIndex].field_response.push(
+              ...field.field_response
+            );
+          } else {
+            uniqueFieldIdList.push(field.field_id);
+            combinedFieldList.push(field);
+          }
+        });
 
-              const defaultSignature = signatureList[signatureList.length - 1];
+        const newSection = generateSectionWithDuplicateList([
+          {
+            ...request.request_form.form_section[1],
+            section_field: combinedFieldList,
+          },
+        ]);
+        const newFormSection = [...formSection, ...newSection];
 
-              const signedDate = new Date(
-                `${signer.request_signer_status_date_updated}`
-              ).getTime();
-
-              const signatureMatch = signatureList.find((signature, index) => {
-                if (!signature) {
-                  return false;
-                }
-
-                const nextSignatureDateCreatedTime =
-                  index < signatureList.length - 1
-                    ? new Date(
-                        signatureList[index + 1].signature_history_date_created
-                      ).getTime()
-                    : 0;
-
-                return signedDate < nextSignatureDateCreatedTime;
-              });
-
-              if (signatureMatch) {
-                signatureUrl = signatureMatch.signature_history_value;
-              } else {
-                signatureUrl = defaultSignature
-                  ? defaultSignature.signature_history_value
-                  : "";
-              }
-            }
-
-            return {
-              name: `${signer.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${signer.request_signer_signer.signer_team_member.team_member_user.user_last_name}`,
-              jobDescription:
-                signer.request_signer_signer.signer_team_member.team_member_user
-                  .user_job_title,
-              status: signer.request_signer_status,
-              date: signer.request_signer_status_date_updated,
-              signature: signatureUrl,
-            };
-          })
-        );
-        setApproverDetails(data);
+        setFormSection(newFormSection);
+        setIsLoading(false);
       };
-      if (request) {
-        fetchApproverDetails();
-      }
+      const fetchComments = async () => {
+        const data = await getRequestComment(supabaseClient, {
+          request_id: request.request_id,
+        });
+        setRequestCommentList(data);
+      };
+      fetchSections();
+      fetchComments();
     } catch (e) {
-      console.error(e);
-    } finally {
-      setIsFetchingApprover(false);
+      console.log(e);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
     }
-  }, [request]);
+  }, [activeTeam.team_id]);
 
   const requestor = request.request_team_member.team_member_user;
 
@@ -411,10 +385,6 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
 
       if (!jiraTicketResponse.ok) {
         console.error(jiraTicketData.error);
-        notifications.show({
-          message: jiraTicketData.error,
-          color: "red",
-        });
         return null;
       }
 
@@ -457,7 +427,6 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
 
   const handleAddCommentToJiraTicket = async (jiraTicketKey: string) => {
     try {
-      // fetch comments with attachment
       const rfCommentList = await fetchCommentAttachmentList();
       const rfCommentListForJira = generateJiraCommentPayload(rfCommentList);
 
@@ -524,10 +493,6 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
     }
   }, [requestJira.id]);
 
-  const originalSectionList = request.request_form.form_section;
-  const sectionWithDuplicateList =
-    generateSectionWithDuplicateList(originalSectionList);
-
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
@@ -556,15 +521,13 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {!isFetchingApprover && approverDetails.length !== 0 && (
-          <Group>
-            <ExportToPdfMenu
-              isFormslyForm={request.request_form.form_is_formsly_form}
-              formName={request.request_form.form_name}
-              requestId={request.request_formsly_id ?? request.request_id}
-            />
-          </Group>
-        )}
+        <Group>
+          <ExportToPdfMenu
+            isFormslyForm={request.request_form.form_is_formsly_form}
+            formName={request.request_form.form_name}
+            requestId={request.request_formsly_id ?? request.request_id}
+          />
+        </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -578,7 +541,7 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
         />
 
         <RequestSection
-          section={sectionWithDuplicateList[0]}
+          section={formSection[0]}
           isFormslyForm={true}
           isOnlyWithResponse
         />
@@ -594,14 +557,7 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
             </Paper>
             <Accordion.Panel>
               <Stack spacing="xl" mt="lg">
-                {sectionWithDuplicateList.slice(1).map((section, idx) => {
-                  if (
-                    idx === 0 &&
-                    section.section_field[0].field_response
-                      ?.request_response === '"null"'
-                  )
-                    return;
-
+                {formSection.slice(2).map((section, idx) => {
                   return (
                     <RequestSection
                       key={section.section_id + idx}
@@ -617,15 +573,17 @@ const PEDConsumableRequestPage = ({ request }: Props) => {
           </Accordion.Item>
         </Accordion>
 
-        <PEDConsumableSummary
-          summaryData={sectionWithDuplicateList.slice(1)}
-          isSingle={
-            JSON.parse(
-              request.request_form.form_section[0].section_field[2]
-                .field_response[0].request_response
-            ) === "Single"
-          }
-        />
+        {formSection.length > 2 && (
+          <PEDConsumableSummary
+            summaryData={formSection.slice(2)}
+            isSingle={
+              JSON.parse(
+                request.request_form.form_section[0].section_field[2]
+                  .field_response[0].request_response
+              ) === "Single"
+            }
+          />
+        )}
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
