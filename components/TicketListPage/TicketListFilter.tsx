@@ -12,26 +12,33 @@ import {
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { FilterFormValues } from "./TicketListPage";
+import { FilterFormValues, TicketListLocalFilter } from "./TicketListPage";
 
 type Props = {
   // requestList: RequestType[];
   ticketCategoryList: TicketCategoryTableRow[];
   teamMemberList: TeamMemberWithUserType[];
   handleFilterTicketList: () => void;
+  localFilter: TicketListLocalFilter;
+  setLocalFilter: (
+    val:
+      | TicketListLocalFilter
+      | ((prevState: TicketListLocalFilter) => TicketListLocalFilter)
+  ) => void;
 };
 
 type FilterSelectedValuesType = {
-  categoryFilter: string[];
-  statusFilter: string[];
-  requesterFilter: string[];
-  approverFilter: string[];
+  requesterList: string[];
+  approverList: string[];
+  categoryList: string[];
+  status?: string[];
 };
 
 const TicketListFilter = ({
-  // requestList,
+  localFilter,
+  setLocalFilter,
   ticketCategoryList,
   teamMemberList,
   handleFilterTicketList,
@@ -49,12 +56,7 @@ const TicketListFilter = ({
   const { ref: categoryRef, focused: categoryRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   const [filterSelectedValues, setFilterSelectedValues] =
-    useState<FilterSelectedValuesType>({
-      categoryFilter: [],
-      statusFilter: [],
-      requesterFilter: [],
-      approverFilter: [],
-    });
+    useState<FilterSelectedValuesType>(localFilter);
 
   const memberList = teamMemberList.map((member) => ({
     value: member.team_member_id,
@@ -78,16 +80,25 @@ const TicketListFilter = ({
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
-    value: string[] = []
+    value: string[] | boolean = []
   ) => {
     const filterMatch = filterSelectedValues[`${key}`];
 
     if (value !== filterMatch) {
       // if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterTicketList();
+      setLocalFilter({ ...localFilter, [key]: value });
+      setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
     }
-    setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
   };
+
+  useEffect(() => {
+    // assign values to filter form localstorage
+    Object.entries(localFilter).forEach(([key, value]) => {
+      setValue(key as keyof FilterFormValues, value);
+    });
+    setFilterSelectedValues(localFilter as unknown as FilterSelectedValuesType);
+  }, [localFilter, setValue]);
 
   return (
     <Flex gap="sm" wrap="wrap">
@@ -144,9 +155,9 @@ const TicketListFilter = ({
             onChange={(value) => {
               onChange(value);
               if (!categoryRefFocused)
-                handleFilterChange("categoryFilter", value);
+                handleFilterChange("categoryList", value);
             }}
-            onDropdownClose={() => handleFilterChange("categoryFilter", value)}
+            onDropdownClose={() => handleFilterChange("categoryList", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
@@ -165,10 +176,10 @@ const TicketListFilter = ({
             value={value}
             onChange={(value) => {
               onChange(value);
-              if (!statusRefFocused) handleFilterChange("statusFilter", value);
+              if (!statusRefFocused) handleFilterChange("status", value);
             }}
             onDropdownClose={() =>
-              handleFilterChange("statusFilter", value as string[])
+              handleFilterChange("status", value as string[])
             }
             {...inputFilterProps}
             sx={{ flex: 1 }}
@@ -190,9 +201,9 @@ const TicketListFilter = ({
             onChange={(value) => {
               onChange(value);
               if (!requestorRefFocused)
-                handleFilterChange("requesterFilter", value);
+                handleFilterChange("requesterList", value);
             }}
-            onDropdownClose={() => handleFilterChange("requesterFilter", value)}
+            onDropdownClose={() => handleFilterChange("requesterList", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}
@@ -213,9 +224,9 @@ const TicketListFilter = ({
             onChange={(value) => {
               onChange(value);
               if (!approverRefFocused)
-                handleFilterChange("approverFilter", value);
+                handleFilterChange("approverList", value);
             }}
-            onDropdownClose={() => handleFilterChange("approverFilter", value)}
+            onDropdownClose={() => handleFilterChange("approverList", value)}
             {...inputFilterProps}
             sx={{ flex: 1 }}
             miw={250}

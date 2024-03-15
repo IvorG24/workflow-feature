@@ -5,6 +5,7 @@ import { getAvatarColor } from "@/utils/styling";
 import { TicketListType } from "@/utils/types";
 import {
   ActionIcon,
+  Anchor,
   Avatar,
   Badge,
   CopyButton,
@@ -62,22 +63,13 @@ const TicketListItem = ({ ticket }: Props) => {
     <Grid m={0} px="sm" py={0} justify="space-between">
       <Grid.Col span={2}>
         <Flex justify="space-between">
-          <Text
-            truncate
-            component="a"
-            sx={{
-              ":hover": {
-                cursor: "pointer",
-                textDecoration: "underline",
-              },
-            }}
-            onClick={() =>
-              router.push(
-                `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
-              )
-            }
-          >
-            {ticket.ticket_id}
+          <Text truncate maw={150}>
+            <Anchor
+              href={`/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`}
+              target="_blank"
+            >
+              {ticket.ticket_id}
+            </Anchor>
           </Text>
           <CopyButton
             value={`${process.env.NEXT_PUBLIC_SITE_URL}/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`}
