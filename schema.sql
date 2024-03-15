@@ -3528,39 +3528,42 @@ RETURNS JSON AS $$
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     
-    const team = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
+    const team = plv8.execute(`SELECT team_id, team_name, team_logo FROM team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
 
     const teamMembers = plv8.execute(
       `
-        SELECT tmt.team_member_id, 
-        tmt.team_member_role, 
-        json_build_object( 
-          'user_id', usert.user_id, 
-          'user_first_name', usert.user_first_name, 
-          'user_last_name', usert.user_last_name, 
-          'user_avatar', usert.user_avatar, 
-          'user_email', usert.user_email,
-          'user_employee_number', uent.user_employee_number
-        ) AS team_member_user  
-        FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id
-        LEFT JOIN user_employee_number_table uent 
-          ON uent.user_employee_number_user_id = usert.user_id
-          AND uent.user_employee_number_is_disabled=false
+        SELECT 
+            tmt.team_member_id, 
+            tmt.team_member_role, 
+            json_build_object( 
+                'user_id', usert.user_id, 
+                'user_first_name', usert.user_first_name, 
+                'user_last_name', usert.user_last_name, 
+                'user_avatar', usert.user_avatar, 
+                'user_email', usert.user_email,
+                'user_employee_number', uent.user_employee_number
+            ) AS team_member_user  
+        FROM 
+            team_member_table tmt 
+        JOIN 
+            user_table usert ON tmt.team_member_user_id = usert.user_id
+        LEFT JOIN 
+            user_employee_number_table uent ON uent.user_employee_number_user_id = usert.user_id
+                AND uent.user_employee_number_is_disabled = false
         WHERE 
-          tmt.team_member_team_id='${teamId}' 
-          AND tmt.team_member_is_disabled=false 
-          AND usert.user_is_disabled=false
+            tmt.team_member_team_id = '${teamId}'
+            AND tmt.team_member_is_disabled = false 
+            AND usert.user_is_disabled = false
         ORDER BY
-          CASE tmt.team_member_role
-              WHEN 'OWNER' THEN 1
-              WHEN 'ADMIN' THEN 2
-              WHEN 'APPROVER' THEN 3
-              WHEN 'MEMBER' THEN 4
-          END ASC,
-          usert.user_first_name ASC,
-          usert.user_last_name ASC
-        LIMIT ${teamMemberLimit}
+            CASE tmt.team_member_role
+                WHEN 'OWNER' THEN 1
+                WHEN 'ADMIN' THEN 2
+                WHEN 'APPROVER' THEN 3
+                WHEN 'MEMBER' THEN 4
+            END ASC,
+            usert.user_first_name ASC,
+            usert.user_last_name ASC
+        LIMIT '${teamMemberLimit}'
       `
     );
 
@@ -3576,7 +3579,7 @@ RETURNS JSON AS $$
       `
     )[0].count;
 
-    const teamGroups = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false ORDER BY team_group_date_created DESC LIMIT 10;`);
+    const teamGroups = plv8.execute(`SELECT team_group_id, team_group_name, team_group_team_id FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false ORDER BY team_group_date_created DESC LIMIT 10;`);
 
     const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
 
