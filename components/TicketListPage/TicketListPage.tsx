@@ -1,5 +1,6 @@
 import { getTicketList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_TICKET_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
@@ -25,6 +26,7 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconAlertCircle, IconReload } from "@tabler/icons-react";
@@ -38,7 +40,16 @@ export type FilterFormValues = {
   requesterList: string[];
   approverList: string[];
   categoryList: string[];
-  status: string[];
+  status?: string[];
+  isAscendingSort: boolean;
+};
+
+export type TicketListLocalFilter = {
+  search: string;
+  requesterList: string[];
+  approverList: string[];
+  categoryList: string[];
+  status: string[] | undefined;
   isAscendingSort: boolean;
 };
 
@@ -57,6 +68,7 @@ const TicketListPage = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
+  const teamMember = useUserTeamMember();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingTicketList, setIsFetchingTicketList] = useState(false);
   const [ticketList, setTicketList] =
@@ -64,15 +76,20 @@ const TicketListPage = ({
   const [ticketListCount, setTicketListCount] = useState(
     inititalTicketListCount
   );
-  const filterFormMethods = useForm<FilterFormValues>({
-    defaultValues: {
+  const [localFilter, setLocalFilter] = useLocalStorage<TicketListLocalFilter>({
+    key: "formsly-ticket-list-filter",
+    defaultValue: {
       search: "",
-      requesterList: [],
-      approverList: [],
       categoryList: [],
-      status: [],
+      requesterList: [],
+      status: undefined,
+      approverList: [],
       isAscendingSort: false,
     },
+  });
+
+  const filterFormMethods = useForm<FilterFormValues>({
+    defaultValues: localFilter,
     mode: "onChange",
   });
 
@@ -180,7 +197,16 @@ const TicketListPage = ({
 
   useEffect(() => {
     handlePagination();
-  }, [activePage]);
+  }, [activePage, localFilter]);
+
+  useEffect(() => {
+    const localStorageFilter = localStorage.getItem(
+      "formsly-ticket-list-filter"
+    );
+    if (localStorageFilter) {
+      handleFilterTicketList(localFilter);
+    }
+  }, [activeTeam.team_id, teamMember, localFilter]);
 
   return (
     <Container maw={3840} h="100%">
@@ -204,6 +230,8 @@ const TicketListPage = ({
               ticketCategoryList={ticketCategoryList}
               handleFilterTicketList={handleFilterTicketList}
               teamMemberList={teamMemberList}
+              localFilter={localFilter}
+              setLocalFilter={setLocalFilter}
             />
           </form>
         </FormProvider>
