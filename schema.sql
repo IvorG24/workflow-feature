@@ -7862,7 +7862,7 @@ plv8.subtransaction(function(){
   );
 
   const formSection = [];
-  if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Consumable")) {
+  if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon")) {
     sectionData.slice(0, 1).forEach(section => {
       const fieldData = plv8.execute(
         `
