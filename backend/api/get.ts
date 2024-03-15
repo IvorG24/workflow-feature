@@ -6052,3 +6052,38 @@ export const getBarangay = async (
   if (error) throw error;
   return data;
 };
+
+// Fetch section in request page
+export const getSectionInItemRequestPage = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    requestId: string;
+    teamId: string;
+    formId: string;
+    sectionId: string;
+    fieldData?: RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
+    duplicatableSectionIdCondition: string;
+    isPedConsumableAndSingle?: boolean;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_request_page_section", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data as RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
+};
+
+// Fetch request comment
+export const getRequestComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    request_id: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_request_comment", { request_id: params.request_id })
+    .select("*");
+  if (error) throw error;
+  return data;
+};

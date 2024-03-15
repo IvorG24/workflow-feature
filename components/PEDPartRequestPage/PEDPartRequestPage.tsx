@@ -1,5 +1,9 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getCommentAttachment, getFileUrl } from "@/backend/api/get";
+import {
+  getCommentAttachment,
+  getRequestComment,
+  getSectionInItemRequestPage,
+} from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -23,6 +27,7 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
   ReceiverStatusType,
+  RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
@@ -47,17 +52,10 @@ import PEDPartSummary from "../SummarySection/PEDPartSummary";
 
 type Props = {
   request: RequestWithResponseType;
+  duplicatableSectionIdList: string[];
 };
 
-export type ApproverDetailsType = {
-  name: string;
-  jobDescription: string | null;
-  status: string;
-  date: string | null;
-  signature: string | null;
-};
-
-const PEDPartRequestPage = ({ request }: Props) => {
+const PEDPartRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
@@ -70,20 +68,20 @@ const PEDPartRequestPage = ({ request }: Props) => {
       request_signer_id: signer.request_signer_id,
     };
   });
-  const [approverDetails, setApproverDetails] = useState<ApproverDetailsType[]>(
-    []
-  );
-  const [isFetchingApprover, setIsFetchingApprover] = useState(true);
+
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
-  const [requestCommentList, setRequestCommentList] = useState(
-    request.request_comment
-  );
+  const [requestCommentList, setRequestCommentList] = useState<
+    RequestCommentType[]
+  >([]);
   const [requestJira, setRequestJira] = useState({
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
+  const [formSection, setFormSection] = useState(
+    generateSectionWithDuplicateList([request.request_form.form_section[0]])
+  );
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -92,86 +90,83 @@ const PEDPartRequestPage = ({ request }: Props) => {
   const activeTeam = useActiveTeam();
 
   useEffect(() => {
+    if (!activeTeam.team_id) return;
     try {
-      setIsFetchingApprover(true);
-
-      const fetchApproverDetails = async () => {
-        const primarySigner = request.request_signer.find(
-          (signer) => signer.request_signer_signer.signer_is_primary_signer
-        );
-        if (!primarySigner) return;
-        const signerWithDateUpdated = request.request_signer
-          .filter(
-            (signer) =>
-              !signer.request_signer_signer.signer_is_primary_signer &&
-              signer.request_signer_status_date_updated
-          )
-          .sort(
-            (a, b) =>
-              Date.parse(`${a.request_signer_status_date_updated}`) -
-              Date.parse(`${b.request_signer_status_date_updated}`)
-          );
-        const signerWithoutDateUpdated = request.request_signer
-          .filter(
-            (signer) =>
-              !signer.request_signer_signer.signer_is_primary_signer &&
-              !signer.request_signer_status_date_updated
-          )
-          .sort((a, b) => {
-            const fullNameA = `${a.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${a.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
-            const fullNameB = `${b.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${b.request_signer_signer.signer_team_member.team_member_user.user_last_name}`;
-            return fullNameA.localeCompare(fullNameB);
+      const fetchSections = async () => {
+        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        let index = 0;
+        while (1) {
+          setIsLoading(true);
+          const duplicatableSectionIdCondition = duplicatableSectionIdList
+            .slice(index, index + 5)
+            .map((dupId) => `'${dupId}'`)
+            .join(",");
+          const data = await getSectionInItemRequestPage(supabaseClient, {
+            index,
+            requestId: request.request_id,
+            teamId: activeTeam.team_id,
+            formId: request.request_form_id,
+            sectionId: request.request_form.form_section[1].section_id,
+            duplicatableSectionIdCondition:
+              duplicatableSectionIdCondition.length !== 0
+                ? duplicatableSectionIdCondition
+                : `'${uuidv4()}'`,
+            fieldData: request.request_form.form_section[1].section_field,
           });
+          newFields.push(...data);
+          index += 5;
 
-        const data = await Promise.all(
-          [
-            primarySigner,
-            ...signerWithDateUpdated,
-            ...signerWithoutDateUpdated,
-          ].map(async (signer) => {
-            let signatureUrl: string | null = null;
-            if (
-              signer.request_signer_status === "APPROVED" &&
-              signer.request_signer_signer.signer_team_member.team_member_user
-                .user_signature_attachment_id
-            ) {
-              signatureUrl = await getFileUrl(supabaseClient, {
-                path: signer.request_signer_signer.signer_team_member
-                  .team_member_user.user_signature_attachment_id,
-                bucket: "USER_SIGNATURES",
-              });
-            }
+          if (index > duplicatableSectionIdList.length) break;
+        }
 
-            return {
-              name: `${signer.request_signer_signer.signer_team_member.team_member_user.user_first_name} ${signer.request_signer_signer.signer_team_member.team_member_user.user_last_name}`,
-              jobDescription:
-                signer.request_signer_signer.signer_team_member.team_member_user
-                  .user_job_title,
-              status: signer.request_signer_status,
-              date: signer.request_signer_status_date_updated,
-              signature: signatureUrl,
-            };
-          })
-        );
-        setApproverDetails(data);
+        const uniqueFieldIdList: string[] = [];
+        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        newFields.map((field) => {
+          if (uniqueFieldIdList.includes(field.field_id)) {
+            const currentFieldIndex = combinedFieldList.findIndex(
+              (combinedField) => combinedField.field_id === field.field_id
+            );
+            combinedFieldList[currentFieldIndex].field_response.push(
+              ...field.field_response
+            );
+          } else {
+            uniqueFieldIdList.push(field.field_id);
+            combinedFieldList.push(field);
+          }
+        });
+
+        const newSection = generateSectionWithDuplicateList([
+          {
+            ...request.request_form.form_section[1],
+            section_field: combinedFieldList,
+          },
+        ]);
+        const newFormSection = [...formSection, ...newSection];
+
+        setFormSection(newFormSection);
+        setIsLoading(false);
       };
-      if (request) {
-        fetchApproverDetails();
-      }
+      const fetchComments = async () => {
+        const data = await getRequestComment(supabaseClient, {
+          request_id: request.request_id,
+        });
+        setRequestCommentList(data);
+      };
+      fetchSections();
+      fetchComments();
     } catch (e) {
-      console.error(e);
-    } finally {
-      setIsFetchingApprover(false);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
     }
-  }, [request]);
+  }, [activeTeam.team_id]);
 
   const requestor = request.request_team_member.team_member_user;
 
   const requestDateCreated = formatDate(new Date(request.request_date_created));
-
-  const originalSectionList = request.request_form.form_section;
-  const sectionWithDuplicateList =
-    generateSectionWithDuplicateList(originalSectionList);
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -385,10 +380,6 @@ const PEDPartRequestPage = ({ request }: Props) => {
 
       if (!jiraTicketResponse.ok) {
         console.error(jiraTicketData.error);
-        notifications.show({
-          message: jiraTicketData.error,
-          color: "red",
-        });
         return null;
       }
 
@@ -526,15 +517,13 @@ const PEDPartRequestPage = ({ request }: Props) => {
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {!isFetchingApprover && approverDetails.length !== 0 && (
-          <Group>
-            <ExportToPdfMenu
-              isFormslyForm={request.request_form.form_is_formsly_form}
-              formName={request.request_form.form_name}
-              requestId={request.request_formsly_id ?? request.request_id}
-            />
-          </Group>
-        )}
+        <Group>
+          <ExportToPdfMenu
+            isFormslyForm={request.request_form.form_is_formsly_form}
+            formName={request.request_form.form_name}
+            requestId={request.request_formsly_id ?? request.request_id}
+          />
+        </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -548,7 +537,7 @@ const PEDPartRequestPage = ({ request }: Props) => {
         />
 
         <RequestSection
-          section={sectionWithDuplicateList[0]}
+          section={formSection[0]}
           isFormslyForm={true}
           isOnlyWithResponse
         />
@@ -564,7 +553,7 @@ const PEDPartRequestPage = ({ request }: Props) => {
             </Paper>
             <Accordion.Panel>
               <Stack spacing="xl" mt="lg">
-                {sectionWithDuplicateList.slice(1).map((section, idx) => {
+                {formSection.slice(1).map((section, idx) => {
                   if (
                     idx === 0 &&
                     section.section_field[0].field_response
@@ -588,7 +577,7 @@ const PEDPartRequestPage = ({ request }: Props) => {
         </Accordion>
 
         <PEDPartSummary
-          summaryData={sectionWithDuplicateList
+          summaryData={formSection
             .slice(1)
             .sort((a, b) =>
               `${a.section_field[0].field_response?.request_response}` >
