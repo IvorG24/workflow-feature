@@ -1,5 +1,5 @@
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { ReceiverStatusType, RequestListItemType } from "@/utils/types";
+import { ReceiverStatusType, RequestListItemSignerType } from "@/utils/types";
 import {
   Anchor,
   Avatar,
@@ -30,7 +30,7 @@ const useStyles = createStyles(() => ({
 }));
 
 type RequestSignerListProps = {
-  signerList: RequestListItemType["request_signer"];
+  signerList: RequestListItemSignerType[];
 };
 
 const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
@@ -44,56 +44,56 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
       <Modal opened={opened} onClose={close} title="Approver" centered>
         <Stack>
           {signerList.map((signer) => {
-            const user =
-              signer.request_signer.signer_team_member.team_member_user;
+            const user = signer.signer_team_member_user;
             return (
-              <Flex key={signer.request_signer_id} justify="space-between">
-                <Group>
-                  <Avatar
-                    {...defaultAvatarProps}
-                    color={getAvatarColor(
-                      Number(`${user.user_id.charCodeAt(0)}`)
-                    )}
-                    src={user.user_avatar}
-                    sx={{ cursor: "pointer" }}
-                    onClick={() =>
-                      window.open(
-                        `/member/${signer.request_signer.signer_team_member.signer_team_member_id}`
-                      )
-                    }
-                  >
-                    {(
-                      user.user_first_name[0] + user.user_last_name[0]
-                    ).toUpperCase()}
-                  </Avatar>
-                  <Text>
-                    <Anchor
-                      href={`/member/${signer.request_signer.signer_team_member.signer_team_member_id}`}
-                      target="_blank"
+              signer && (
+                <Flex key={signer.request_signer_id} justify="space-between">
+                  <Group>
+                    <Avatar
+                      {...defaultAvatarProps}
+                      color={getAvatarColor(
+                        Number(`${user.user_id.charCodeAt(0)}`)
+                      )}
+                      // src={user.user_avatar}
+                      sx={{ cursor: "pointer" }}
+                      onClick={() =>
+                        window.open(
+                          `/member/${signer.request_signer.signer_team_member_id}`
+                        )
+                      }
                     >
-                      <Text>
-                        {user.user_first_name} {user.user_last_name}
-                      </Text>
-                    </Anchor>
-                  </Text>
-                </Group>
-                <Badge
-                  variant="filled"
-                  color={getStatusToColor(signer.request_signer_status)}
-                >
-                  {signer.request_signer_status}
-                </Badge>
-              </Flex>
+                      {(
+                        user.user_first_name[0] + user.user_last_name[0]
+                      ).toUpperCase()}
+                    </Avatar>
+                    <Text>
+                      <Anchor
+                        href={`/member/${signer.request_signer.signer_team_member_id}`}
+                        target="_blank"
+                      >
+                        <Text>
+                          {user.user_first_name} {user.user_last_name}
+                        </Text>
+                      </Anchor>
+                    </Text>
+                  </Group>
+                  <Badge
+                    variant="filled"
+                    color={getStatusToColor(signer.request_signer_status)}
+                  >
+                    {signer.request_signer_status}
+                  </Badge>
+                </Flex>
+              )
             );
           })}
         </Stack>
       </Modal>
       <Avatar.Group spacing="sm">
         {signerList.map((signer, idx) => {
-          const user =
-            signer.request_signer.signer_team_member.team_member_user;
+          const user = signer.signer_team_member_user;
 
-          if (idx < 3) {
+          if (signer && idx < 3) {
             return (
               <Tooltip
                 key={signer.request_signer_id}
@@ -105,7 +105,7 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
                   color={getAvatarColor(
                     Number(`${user.user_id.charCodeAt(0)}`)
                   )}
-                  src={user.user_avatar}
+                  // src={user.user_avatar}
                   className={
                     signer.request_signer_status
                       ? classes[
@@ -115,7 +115,7 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
                   }
                   onClick={() =>
                     window.open(
-                      `/member/${signer.request_signer.signer_team_member.signer_team_member_id}`
+                      `/member/${signer.request_signer.signer_team_member_id}`
                     )
                   }
                 >
@@ -131,12 +131,13 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
           <Tooltip
             withArrow
             label={otherSigners.map((signer) => {
-              const user =
-                signer.request_signer.signer_team_member.team_member_user;
+              const user = signer.signer_team_member_user;
               return (
-                <div
-                  key={signer.request_signer_id}
-                >{`${user.user_first_name} ${user.user_last_name} - ${signer.request_signer_status}`}</div>
+                signer && (
+                  <div
+                    key={signer.request_signer_id}
+                  >{`${user.user_first_name} ${user.user_last_name} - ${signer.request_signer_status}`}</div>
+                )
               );
             })}
           >

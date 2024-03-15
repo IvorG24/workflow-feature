@@ -346,7 +346,10 @@ const RequestListPage = ({
                 </Box>
                 {requestList.map((request, idx) => (
                   <Box key={request.request_id}>
-                    <RequestItemRow request={request} />
+                    <RequestItemRow
+                      request={request}
+                      teamMemberList={teamMemberList}
+                    />
                     {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? <Divider /> : null}
                   </Box>
                 ))}
