@@ -4,6 +4,7 @@ import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import {
   addAmpersandBetweenWords,
   parseJSONIfValid,
@@ -5713,15 +5714,20 @@ export const getItemSectionChoices = async (
   }
 ) => {
   const { equipmentId, generalName, componentCategory, brand, model } = params;
+
   const { data, error } = await supabaseClient.rpc("get_item_section_choices", {
     input_data: {
-      equipmentId: equipmentId ? equipmentId.replace(/'/g, "''") : undefined,
-      generalName: generalName ? generalName.replace(/'/g, "''") : undefined,
-      componentCategory: componentCategory
-        ? componentCategory.replace(/'/g, "''")
+      equipmentId: equipmentId
+        ? safeParse(equipmentId.replace(/'/g, "''"))
         : undefined,
-      brand: brand ? brand.replace(/'/g, "''") : undefined,
-      model: model ? model.replace(/'/g, "''") : undefined,
+      generalName: generalName
+        ? safeParse(generalName.replace(/'/g, "''"))
+        : undefined,
+      componentCategory: componentCategory
+        ? safeParse(componentCategory.replace(/'/g, "''"))
+        : undefined,
+      brand: brand ? safeParse(brand.replace(/'/g, "''")) : undefined,
+      model: model ? safeParse(model.replace(/'/g, "''")) : undefined,
     },
   });
 
@@ -5788,6 +5794,7 @@ export const getItemUnitOfMeasurement = async (
       true
     )
     .single();
+
   if (error) throw error;
 
   const formattedData = data as unknown as {
@@ -6041,6 +6048,41 @@ export const getBarangay = async (
     .eq("barangay_city_id", cityId)
     .eq("barangay_is_available", true)
     .eq("barangay_is_disabled", false);
+  if (error) throw error;
+  return data;
+};
+
+// Fetch section in request page
+export const getSectionInItemRequestPage = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    requestId: string;
+    teamId: string;
+    formId: string;
+    sectionId: string;
+    fieldData?: RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
+    duplicatableSectionIdCondition: string;
+    isPedConsumableAndSingle?: boolean;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_request_page_section", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data as RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
+};
+
+// Fetch request comment
+export const getRequestComment = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    request_id: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_request_comment", { request_id: params.request_id })
+    .select("*");
   if (error) throw error;
   return data;
 };

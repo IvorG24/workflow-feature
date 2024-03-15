@@ -2,10 +2,9 @@
 
 import { getUserSignatureList } from "@/backend/api/get";
 import ExportToPdf from "@/components/ExportToPDF/ExportToPdf";
-import { ApproverDetailsType } from "@/components/ItemRequestPage/ItemRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { RequestWithResponseType } from "@/utils/types";
+import { ApproverDetailsType, RequestWithResponseType } from "@/utils/types";
 import { notifications } from "@mantine/notifications";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";

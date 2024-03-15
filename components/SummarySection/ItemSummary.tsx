@@ -10,11 +10,12 @@ const ItemSummary = ({ summaryData }: Props) => {
   const isWithPreferredSupplier = summaryData
     .map((data) => {
       return data.section_field.findIndex(
-        (data) => data.field_name === "Preferred Supplier"
+        (data) =>
+          data.field_name === "Preferred Supplier" &&
+          data.field_response?.request_response.length
       );
     })
     .some((index) => index !== -1);
-
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">

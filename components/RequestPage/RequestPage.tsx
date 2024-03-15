@@ -14,10 +14,8 @@ import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
-  ConnectedRequestIdList,
   FormStatusType,
   ReceiverStatusType,
-  RequestProjectSignerStatusType,
   RequestResponseTableRow,
   RequestWithResponseType,
 } from "@/utils/types";
@@ -42,12 +40,6 @@ import { useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import ItemSummary from "../SummarySection/ItemSummary";
-import QuotationSummary from "../SummarySection/QuotationSummary";
-import ReceivingInspectingReportSummary from "../SummarySection/ReceivingInspectingReportSummary";
-import ReleaseOrderSummary from "../SummarySection/ReleaseOrderSummary";
-import SourcedItemSummary from "../SummarySection/SourcedItemSummary";
-import SubconSummary from "../SummarySection/SubconSummary";
-import TransferReceiptSummary from "../SummarySection/TransferReceiptSummary";
 import RequestActionSection from "./RequestActionSection";
 import RequestCommentList from "./RequestCommentList";
 import RequestDetailsSection from "./RequestDetailsSection";
@@ -57,29 +49,16 @@ import RequestSignerSection from "./RequestSignerSection";
 type Props = {
   request: RequestWithResponseType;
   isFormslyForm?: boolean;
-  connectedFormIdAndGroup?: {
-    formId: string;
-    formIsForEveryone: boolean;
-    formIsMember: boolean;
-    formName: string;
-    formIsHidden: boolean;
-  };
-  connectedRequestIDList?: ConnectedRequestIdList;
-  projectSignerStatus?: RequestProjectSignerStatusType;
   isAnon?: boolean;
 };
 
 const RequestPage = ({
   request,
   isFormslyForm = false,
-  connectedFormIdAndGroup,
-  // connectedRequestIDList,
-  projectSignerStatus: initialProjectSignerStatus,
   isAnon = false,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = useSupabaseClient();
-  // const [currentServerDate, setCurrentServerDate] = useState("");
 
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
@@ -105,8 +84,6 @@ const RequestPage = ({
   );
 
   const requestor = request.request_team_member.team_member_user;
-
-  const projectSignerStatus = initialProjectSignerStatus || [];
 
   const requestDateCreated = formatDate(new Date(request.request_date_created));
 
@@ -567,103 +544,6 @@ const RequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const getDirectory = (formId: string, formName: string) => {
-    let directory = `/${formatTeamNameToUrlKey(
-      activeTeam.team_name
-    )}/forms/${formId}`;
-    if (["Quotation", "Sourced Item"].includes(formName)) {
-      directory += `/create?itemId=${request.request_id}`;
-    } else if (formName === "Release Order") {
-      directory += `/create?itemId=${JSON.parse(
-        request.request_form.form_section[0].section_field[0].field_response[0]
-          .request_response
-      )}&sourcedItemId=${request.request_id}`;
-    } else if (formName === "Receiving Inspecting Report") {
-      directory += `/create?itemId=${JSON.parse(
-        request.request_form.form_section[0].section_field[0].field_response[0]
-          .request_response
-      )}&quotationId=${request.request_id}`;
-    } else if (formName === "Transfer Receipt") {
-      directory += `/create?itemId=${JSON.parse(
-        request.request_form.form_section[0].section_field[0].field_response[0]
-          .request_response
-      )}&sourcedItemId=${JSON.parse(
-        request.request_form.form_section[0].section_field[1].field_response[0]
-          .request_response
-      )}&releaseOrderId=${request.request_id}`;
-    }
-
-    return directory;
-  };
-
-  // const handleReverseApproval = async () => {
-  //   try {
-  //     if (!isUserSigner || !teamMember) {
-  //       console.error("Signer or team member is undefined");
-  //       return;
-  //     }
-  //     setIsLoading(true);
-
-  //     const serverDate = (
-  //       await getCurrentDate(supabaseClient)
-  //     ).toLocaleString();
-
-  //     const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-  //       `${isUserSigner.request_signer_status_date_updated}`,
-  //       serverDate
-  //     );
-
-  //     if (!actionIsWithinFiveMinutes) {
-  //       return notifications.show({
-  //         message: "Reversal is beyond the time limit.",
-  //         color: "orange",
-  //       });
-  //     }
-
-  //     const signerFullName = `${isUserSigner.signer_team_member.team_member_user.user_first_name} ${isUserSigner.signer_team_member.team_member_user.user_last_name}`;
-
-  //     await reverseRequestApproval(supabaseClient, {
-  //       requestAction: "REVERSED",
-  //       requestId: request.request_id,
-  //       isPrimarySigner: isUserSigner.signer_is_primary_signer,
-  //       requestSignerId: isUserSigner.request_signer_id,
-  //       requestOwnerId: request.request_team_member.team_member_user.user_id,
-  //       signerFullName: signerFullName,
-  //       formName: request.request_form.form_name,
-  //       memberId: teamMember.team_member_id,
-  //       teamId: request.request_team_member.team_member_team_id,
-  //     });
-  //   } catch (error) {
-  //     notifications.show({
-  //       message: "Something went wrong. Please try again later",
-  //       color: "red",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
-  // const checkIfSignerCanReverseAction = (isUserSigner: RequestSignerType) => {
-  //   if (!isUserSigner) return false;
-  //   if (currentServerDate === "") return false;
-
-  //   const actionIsWithinFiveMinutes = checkIfTimeIsWithinFiveMinutes(
-  //     `${isUserSigner.request_signer_status_date_updated}`,
-  //     currentServerDate
-  //   );
-  //   const primarySignerStatusIsPending = signerList.find(
-  //     (signer) => signer.signer_is_primary_signer
-  //   )?.request_signer_status;
-  //   const signerStatusIsPending =
-  //     isUserSigner.request_signer_status !== "PENDING";
-
-  //   return (
-  //     actionIsWithinFiveMinutes &&
-  //     primarySignerStatusIsPending &&
-  //     signerStatusIsPending
-  //   );
-  // };
-
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
@@ -697,27 +577,6 @@ const RequestPage = ({
             formName={request.request_form.form_name}
             requestId={request.request_formsly_id ?? request.request_id}
           />
-
-          {connectedFormIdAndGroup &&
-          connectedFormIdAndGroup.formId &&
-          (connectedFormIdAndGroup.formIsForEveryone ||
-            connectedFormIdAndGroup.formIsMember) &&
-          requestStatus === "APPROVED" &&
-          connectedFormIdAndGroup.formIsHidden === false ? (
-            <Button
-              onClick={() => {
-                router.push(
-                  getDirectory(
-                    connectedFormIdAndGroup.formId,
-                    connectedFormIdAndGroup.formName
-                  )
-                );
-              }}
-              sx={{ flex: 1 }}
-            >
-              Create {connectedFormIdAndGroup.formName}
-            </Button>
-          ) : null}
         </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
@@ -796,112 +655,6 @@ const RequestPage = ({
           <ItemSummary summaryData={sectionWithDuplicateList.slice(1)} />
         ) : null}
 
-        {request.request_form.form_name === "Subcon" &&
-        request.request_form.form_is_formsly_form ? (
-          <SubconSummary
-            summaryData={sectionWithDuplicateList
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        ) : null}
-
-        {request.request_form.form_name === "Quotation" &&
-        request.request_form.form_is_formsly_form ? (
-          <QuotationSummary
-            summaryData={sectionWithDuplicateList
-              .slice(3)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-            additionalChargeData={request.request_form.form_section[2].section_field.filter(
-              (field) => field.field_response.length !== 0
-            )}
-          />
-        ) : null}
-
-        {request.request_form.form_name === "Sourced Item" &&
-        request.request_form.form_is_formsly_form ? (
-          <SourcedItemSummary
-            summaryData={sectionWithDuplicateList
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-            projectSignerStatus={projectSignerStatus}
-          />
-        ) : null}
-
-        {request.request_form.form_name === "Receiving Inspecting Report" &&
-        request.request_form.form_is_formsly_form ? (
-          <ReceivingInspectingReportSummary
-            summaryData={sectionWithDuplicateList
-              .slice(2)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        ) : null}
-
-        {request.request_form.form_name === "Release Order" &&
-        request.request_form.form_is_formsly_form ? (
-          <ReleaseOrderSummary
-            summaryData={sectionWithDuplicateList
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        ) : null}
-
-        {request.request_form.form_name === "Transfer Receipt" &&
-        request.request_form.form_is_formsly_form ? (
-          <TransferReceiptSummary
-            summaryData={sectionWithDuplicateList
-              .slice(2)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        ) : null}
-
         {isRequestActionSectionVisible && (
           <RequestActionSection
             handleCancelRequest={handleCancelRequest}
@@ -920,12 +673,6 @@ const RequestPage = ({
             }}
           />
         )}
-
-        {/* {isUserSigner && checkIfSignerCanReverseAction(isUserSigner) ? (
-          <RequestReverseActionSection
-            handleReverseApproval={handleReverseApproval}
-          />
-        ) : null} */}
 
         <RequestSignerSection signerList={signerList} />
       </Stack>

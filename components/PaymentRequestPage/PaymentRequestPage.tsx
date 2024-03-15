@@ -32,13 +32,7 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-export type ApproverDetailsType = {
-  name: string;
-  jobDescription: string | null;
-  status: string;
-  date: string | null;
-  signature: string | null;
-};
+
 
 const PaymentRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();

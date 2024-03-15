@@ -1561,3 +1561,11 @@ export type RequestListItemSignerType = {
     user_last_name: string;
   };
 };
+
+export type ApproverDetailsType = {
+  name: string;
+  jobDescription: string | null;
+  status: string;
+  date: string | null;
+  signature: string | null;
+};
