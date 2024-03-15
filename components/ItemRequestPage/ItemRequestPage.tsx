@@ -351,9 +351,11 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       const projectName = request.request_project.team_project_name;
       const itemCategory = formSection
         .slice(1)
-        .map(
-          (section) => section.section_field[3].field_response?.request_response
-        ) as string[];
+        .flatMap(({ section_field }) =>
+          section_field
+            .filter(({ field_name }) => field_name === "GL Account")
+            .map(({ field_response }) => field_response?.request_response)
+        );
 
       const primaryApproverJiraUserResponse = await fetch(
         `/api/get-jira-user?approverEmail=${user?.user_email}`
@@ -367,7 +369,7 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "189",
         projectName,
-        itemCategory,
+        itemCategory: itemCategory as string[],
         primaryApproverJiraAccountId: primaryApproverJiraUserData[0]
           ? primaryApproverJiraUserData[0].accountId
           : null,
