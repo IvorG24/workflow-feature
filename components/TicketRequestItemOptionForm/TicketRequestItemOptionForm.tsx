@@ -164,7 +164,7 @@ const TicketRequestItemOptionForm = ({
       const value = isWithUom
         ? `${section.ticket_section_fields[0].ticket_field_response} ${section.ticket_section_fields[1].ticket_field_response}`
         : `${section.ticket_section_fields[0].ticket_field_response}`;
-      const valueExists = valueDataList?.includes(value.toLowerCase());
+      const valueExists = valueDataList?.includes(value.toLowerCase().trim());
       if (valueExists) {
         setError(
           `ticket_sections.${
@@ -338,26 +338,49 @@ const TicketRequestItemOptionForm = ({
   };
 
   useEffect(() => {
+    const fetchEditData = async () => {
+      if (!ticketForm) return;
+
+      const itemName =
+        ticketForm.ticket_sections[0].ticket_section_fields[0]
+          .ticket_field_response;
+      const itemDescriptionResponse =
+        ticketForm.ticket_sections[0].ticket_section_fields[1]
+          .ticket_field_response;
+      const newTicketFormSections = ticketForm.ticket_sections
+        .slice(1)
+        .map((section) => ({
+          ...section,
+          ticket_section_fields: section.ticket_section_fields.map((field) => ({
+            ...field,
+            ticket_field_hidden: !Boolean(
+              `${section.ticket_section_fields[1].ticket_field_response}`
+            ),
+          })),
+        }));
+
+      replaceSection([ticketForm.ticket_sections[0], ...newTicketFormSections]);
+
+      const item = await getItem(supabaseClient, {
+        teamId: activeTeam.team_id,
+        itemName: `${itemName}`,
+      });
+
+      const itemDescription = item.item_description.find(
+        (description) =>
+          description.item_description_label === itemDescriptionResponse
+      );
+
+      if (!itemDescription) return;
+      const filteredItem: ItemWithDescriptionAndField = {
+        ...item,
+        item_description: [itemDescription],
+      };
+      setItem(filteredItem);
+    };
     if (ticketForm) {
       if (isEdit) {
-        const newTicketFormSections = ticketForm.ticket_sections
-          .slice(1)
-          .map((section) => ({
-            ...section,
-            ticket_section_fields: section.ticket_section_fields.map(
-              (field) => ({
-                ...field,
-                ticket_field_hidden: !Boolean(
-                  `${section.ticket_section_fields[1].ticket_field_response}`
-                ),
-              })
-            ),
-          }));
-
-        replaceSection([
-          ticketForm.ticket_sections[0],
-          ...newTicketFormSections,
-        ]);
+        fetchEditData();
       } else {
         replaceSection(ticketForm.ticket_sections);
       }

@@ -1325,7 +1325,7 @@ export const createTicket = async (
           }
         }
         const response = {
-          ticket_response_value: JSON.stringify(responseValue),
+          ticket_response_value: JSON.stringify(`${responseValue}`.trim()),
           ticket_response_duplicatable_section_id:
             section.field_section_duplicatable_id ?? null,
           ticket_response_field_id: field.ticket_field_id,
@@ -1410,7 +1410,7 @@ export const editTicket = async (
           }
         }
         const response = {
-          ticket_response_value: JSON.stringify(responseValue),
+          ticket_response_value: JSON.stringify(`${responseValue}`.trim()),
           ticket_response_duplicatable_section_id:
             section.field_section_duplicatable_id ?? null,
           ticket_response_field_id: field.ticket_field_id,
