@@ -823,6 +823,11 @@ export const mostOccurringElement = (arr: string[]) => {
   return mostOccurringElement;
 };
 
+const throwErrorAndLog = (message: string) => {
+  console.error(`${message} is not found.`);
+  throw new Error(`${message} is not found.`);
+};
+
 export const generateJiraTicketPayload = ({
   requestId,
   requestUrl,
@@ -846,17 +851,11 @@ export const generateJiraTicketPayload = ({
   );
 
   if (!requestingProjectSite) {
-    console.error(
-      "Requesting Project Site is not found on Jira Requesting Project Site"
-    );
-    throw Error(
-      "Requesting Project Site is not found on Jira Requesting Project Site"
-    );
+    return throwErrorAndLog("Project Site");
   }
 
   if (!sourcingItemCategory) {
-    console.error("Item Category is not found on Jira Item Category");
-    throw Error("Item Category is not found on Jira Item Category");
+    return throwErrorAndLog("Item Category");
   }
 
   const warehouseCorporateLead =
@@ -874,18 +873,15 @@ export const generateJiraTicketPayload = ({
   const requestParticipant = getRequestParticipant(requestingProjectSite.label);
 
   if (typeof warehouseCorporateLead !== "string") {
-    console.error("Warehouse Corporate Lead is not found.");
-    throw Error("Warehouse Corporate Lead is not found.");
+    return throwErrorAndLog("Warehouse Corporate Lead");
   }
 
   if (typeof warehouseCorporateLead !== "string") {
-    console.error("Warehouse Area Lead is not found.");
-    throw Error("Warehouse Area Lead is not found.");
+    return throwErrorAndLog("Warehouse Area Lead");
   }
 
   if (typeof warehouseCorporateLead !== "string") {
-    console.error("Warehouse Representative is not found.");
-    throw Error("Warehouse Representative is not found.");
+    return throwErrorAndLog("Warehouse Representative");
   }
 
   const jiraTicketPayload = {

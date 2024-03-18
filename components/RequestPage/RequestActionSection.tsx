@@ -1,4 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { JiraTicketData } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { Button, Flex, Paper, Space, Stack, Text, Title } from "@mantine/core";
 // import { useRouter } from "next/router";
@@ -22,7 +23,7 @@ type Props = {
   canSignerTakeAction?: boolean;
   isDeletable: boolean;
   isUserRequester?: boolean;
-  onCreateJiraTicket?: () => Promise<string | null | undefined>;
+  onCreateJiraTicket?: () => Promise<JiraTicketData>;
 };
 
 const RequestActionSection = ({
@@ -42,12 +43,12 @@ const RequestActionSection = ({
   const activeTeam = useActiveTeam();
 
   const handleApproveItemRequest = async (
-    onCreateJiraTicket: () => Promise<string | null | undefined>
+    onCreateJiraTicket: () => Promise<JiraTicketData>
   ) => {
     try {
       if (process.env.NODE_ENV === "production") {
         const jiraTicketResponse = await onCreateJiraTicket();
-        if (!jiraTicketResponse) {
+        if (!jiraTicketResponse.data) {
           notifications.show({
             message: "Failed to create jira ticket",
             color: "red",
@@ -55,11 +56,11 @@ const RequestActionSection = ({
           return;
         }
 
-        const jiraTicket = JSON.parse(jiraTicketResponse);
+        const {
+          data: { jiraTicketKey, jiraTicketWebLink },
+        } = jiraTicketResponse;
 
-        const jiraTicketWebLink = jiraTicket._links.web;
-
-        handleUpdateRequest("APPROVED", jiraTicket.issueKey, jiraTicketWebLink);
+        handleUpdateRequest("APPROVED", jiraTicketKey, jiraTicketWebLink);
       } else if (process.env.NODE_ENV === "development") {
         handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
       }
