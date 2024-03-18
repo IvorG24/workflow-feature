@@ -4990,8 +4990,8 @@ RETURNS JSON as $$
         const csiDivisions = plv8.execute(
           `
             SELECT 
-                csi_code_division_id
-                csi_code_division_description
+              csi_code_division_id,
+              csi_code_division_description
             FROM distinct_division_view;
           `
         );
@@ -4999,7 +4999,7 @@ RETURNS JSON as $$
         const csiDivisionOption = csiDivisions.map((division, index) => {
           return {
             option_field_id: form.form_section[1].section_field[4].field_id,
-            option_id: division.csi_code_division_id,
+            option_id: division.csi_code_division_description,
             option_order: index,
             option_value: division.csi_code_division_description,
           };
@@ -12341,12 +12341,12 @@ RETURNS VOID AS $$
       teamId
     } = input_data;
     
-    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}'`)[0].equipment_id;
-    let generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`);
-    let brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`);
-    let modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`);
-    let uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`);
-    let categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`);
+    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}' AND equipment_is_disabled = false`)[0].equipment_id;
+    let generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}' AND equipment_general_name_is_disabled = false`);
+    let brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}' AND equipment_brand_is_disabled = false`);
+    let modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}' AND equipment_model_is_disabled = false`);
+    let uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}' AND equipment_unit_of_measurement_is_disabled = false`);
+    let categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}' AND equipment_component_category_is_disabled = false`);
 
     if(generalNameId.length === 0){
       generalNameId = plv8.execute(
@@ -12404,6 +12404,7 @@ RETURNS VOID AS $$
       );
     }
 
+    const formattedPartNumber = partNumber.replace('/[^a-zA-Z0-9]/g', '');
     const partData = plv8.execute(
       `
         SELECT * FROM equipment_part_table
@@ -12411,7 +12412,7 @@ RETURNS VOID AS $$
           equipment_part_is_disabled = false
           AND equipment_part_equipment_id = '${equipmentId}'
           AND equipment_part_general_name_id = '${generalNameId[0].equipment_general_name_id}'
-          AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${partNumber}'
+          AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${formattedPartNumber}'
           AND equipment_part_brand_id = '${brandId[0].equipment_brand_id}'
           AND equipment_part_model_id = '${modelId[0].equipment_model_id}'
           AND equipment_part_unit_of_measurement_id = '${uomId[0].equipment_unit_of_measurement_id}'
