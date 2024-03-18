@@ -110,8 +110,9 @@ const UpdateEquipmentDescription = ({
           equipmentDescriptionData: {
             equipment_description_id:
               editEquipmentDescription.equipment_description_id,
-            equipment_description_serial_number:
-              data.serialNumber.toUpperCase(),
+            equipment_description_serial_number: data.serialNumber
+              .toUpperCase()
+              .trim(),
             equipment_description_brand_id: data.brand,
             equipment_description_model_id: data.model,
             equipment_description_equipment_id: selectedEquipment.equipment_id,

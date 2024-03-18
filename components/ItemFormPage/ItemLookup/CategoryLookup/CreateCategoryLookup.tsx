@@ -59,8 +59,8 @@ const CreateCategoryLookup = ({
         inputData: {
           [lookupValue]:
             lookup.label === "Unit of Measurement"
-              ? data.value
-              : data.value.toUpperCase(),
+              ? data.value.trim()
+              : data.value.toUpperCase().trim(),
           [isAvaialble]: data.isAvailable,
           [encoder]: teamMember?.team_member_id,
           [team]: activeTeam.team_id,
@@ -105,12 +105,13 @@ const CreateCategoryLookup = ({
                 },
                 validate: {
                   duplicate: async (value) => {
+                    const trimmedValue = value.trim();
                     const isExisting = await checkLookupTable(supabaseClient, {
                       lookupTableName: lookup.table,
                       value:
                         lookup.label === "Unit of Measurement"
-                          ? value
-                          : value.toUpperCase(),
+                          ? trimmedValue
+                          : trimmedValue.toUpperCase(),
                       teamId: activeTeam.team_id,
                     });
                     return isExisting ? `${lookup.label} already exists` : true;

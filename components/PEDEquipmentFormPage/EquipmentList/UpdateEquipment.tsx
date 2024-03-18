@@ -85,12 +85,12 @@ const UpdateEquipment = ({
         supabaseClient,
         {
           equipmentData: {
-            equipment_name: data.name.toUpperCase(),
+            equipment_name: data.name.toUpperCase().trim(),
             equipment_is_available: data.isAvailable,
             equipment_equipment_category_id: data.category,
             equipment_team_id: activeTeam.team_id,
             equipment_id: editEquipment.equipment_id,
-            equipment_name_shorthand: data.shorthand.toUpperCase(),
+            equipment_name_shorthand: data.shorthand.toUpperCase().trim(),
           },
           category: categoryOption.find(
             (value) => value.value === data.category
@@ -145,12 +145,14 @@ const UpdateEquipment = ({
                 },
                 validate: {
                   duplicate: async (value) => {
-                    if (value === editEquipment.equipment_name) return true;
+                    const trimmedValue = value.trim();
+                    if (trimmedValue === editEquipment.equipment_name)
+                      return true;
 
                     const isExisting = await checkEquipmentName(
                       supabaseClient,
                       {
-                        equipmentName: value.toUpperCase(),
+                        equipmentName: trimmedValue.toUpperCase(),
                         teamId: activeTeam.team_id,
                       }
                     );
