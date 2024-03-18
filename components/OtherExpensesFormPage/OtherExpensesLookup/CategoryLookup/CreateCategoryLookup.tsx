@@ -59,8 +59,8 @@ const CreateCategoryLookup = ({
         inputData: {
           [lookupValue]:
             lookup.label === "Unit of Measurement"
-              ? data.value
-              : data.value.toUpperCase(),
+              ? data.value.trim()
+              : data.value.toUpperCase().trim(),
           [isAvaialble]: data.isAvailable,
           [encoder]: teamMember?.team_member_id,
           [team]: activeTeam.team_id,
@@ -109,8 +109,8 @@ const CreateCategoryLookup = ({
                       lookupTableName: lookup.table,
                       value:
                         lookup.label === "Unit of Measurement"
-                          ? value
-                          : value.toUpperCase(),
+                          ? value.trim()
+                          : value.toUpperCase().trim(),
                       teamId: activeTeam.team_id,
                     });
                     return isExisting ? `${lookup.label} already exists` : true;

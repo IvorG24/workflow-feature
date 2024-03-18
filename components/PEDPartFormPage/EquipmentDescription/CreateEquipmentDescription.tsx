@@ -109,9 +109,10 @@ const CreateEquipmentDescription = ({
         supabaseClient,
         {
           equipmentDescriptionData: {
-            equipment_description_property_number: data.propertyNumber,
-            equipment_description_serial_number:
-              data.serialNumber.toLocaleUpperCase(),
+            equipment_description_property_number: data.propertyNumber.trim(),
+            equipment_description_serial_number: data.serialNumber
+              .toLocaleUpperCase()
+              .trim(),
             equipment_description_brand_id: data.brand,
             equipment_description_model_id: data.model,
             equipment_description_equipment_id: selectedEquipment.equipment_id,
@@ -166,7 +167,9 @@ const CreateEquipmentDescription = ({
                     const isExisting = await checkPropertyNumber(
                       supabaseClient,
                       {
-                        propertyNumber: `${selectedEquipment.equipment_name_shorthand}-${value}`,
+                        propertyNumber: `${
+                          selectedEquipment.equipment_name_shorthand
+                        }-${value.trim()}`,
                         teamId: activeTeam.team_id,
                       }
                     );

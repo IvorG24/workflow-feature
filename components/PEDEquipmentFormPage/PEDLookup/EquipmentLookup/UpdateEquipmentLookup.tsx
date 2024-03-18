@@ -62,8 +62,8 @@ const UpdateEquipmentLookup = ({
           equipmentLookupData: {
             [lookupValue]:
               lookup.label === "Capacity Unit of Measurement"
-                ? data.value
-                : data.value.toUpperCase(),
+                ? data.value.trim()
+                : data.value.toUpperCase().trim(),
             [isAvailable]: data.isAvailable,
             [team]: activeTeam.team_id,
           } as EquipmentLookupTableUpdate,
@@ -120,8 +120,8 @@ const UpdateEquipmentLookup = ({
                         lookupTableName: lookup.table,
                         value:
                           lookup.label === "Capacity Unit of Measurement"
-                            ? value
-                            : value.toUpperCase(),
+                            ? value.trim()
+                            : value.toUpperCase().trim(),
                         teamId: activeTeam.team_id,
                       }
                     );

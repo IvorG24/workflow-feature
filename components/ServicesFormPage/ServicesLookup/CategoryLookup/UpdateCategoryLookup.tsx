@@ -58,8 +58,8 @@ const UpdateCategoryLookup = ({
           lookupData: {
             [lookupValue]:
               lookup.label === "Unit of Measurement"
-                ? data.value
-                : data.value.toUpperCase(),
+                ? data.value.trim()
+                : data.value.toUpperCase().trim(),
             [isAvailable]: data.isAvailable,
             [team]: activeTeam.team_id,
           } as unknown as JSON,
@@ -116,8 +116,8 @@ const UpdateCategoryLookup = ({
                       lookupTableName: lookup.table,
                       value:
                         lookup.label === "Unit of Measurement"
-                          ? value
-                          : value.toUpperCase(),
+                          ? value.trim()
+                          : value.toUpperCase().trim(),
                       teamId: activeTeam.team_id,
                     });
                     return isExisting ? `${lookup.label} already exists` : true;

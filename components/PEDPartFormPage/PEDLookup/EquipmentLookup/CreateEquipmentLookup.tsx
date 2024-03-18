@@ -58,8 +58,8 @@ const CreateEquipmentLookup = ({
         inputData: {
           [lookupValue]:
             lookup.label === "Unit of Measurement"
-              ? data.value
-              : data.value.toUpperCase(),
+              ? data.value.trim()
+              : data.value.toUpperCase().trim(),
           [isAvaialble]: data.isAvailable,
           [encoder]: teamMember?.team_member_id,
           [team]: activeTeam.team_id,
@@ -110,8 +110,8 @@ const CreateEquipmentLookup = ({
                         lookupTableName: lookup.table,
                         value:
                           lookup.label === "Unit of Measurement"
-                            ? value
-                            : value.toUpperCase(),
+                            ? value.trim()
+                            : value.toUpperCase().trim(),
                         teamId: activeTeam.team_id,
                       }
                     );

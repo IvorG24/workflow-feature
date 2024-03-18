@@ -159,13 +159,15 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
           toUpdate.push({
             item_description_id: description.descriptionId,
             item_description_is_with_uom: description.withUoM,
-            item_description_label: description.description.toUpperCase(),
+            item_description_label: description.description
+              .toUpperCase()
+              .trim(),
             item_description_field_id: description.fieldId,
             item_description_order: index + 1,
           });
         } else {
           toAdd.push({
-            description: description.description.toUpperCase(),
+            description: description.description.toUpperCase().trim(),
             withUoM: description.withUoM,
             order: index + 1,
           });
@@ -180,7 +182,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
           toRemove: toRemoveDescription,
           itemData: {
             item_id: editItem.item_id,
-            item_general_name: data.generalName.toUpperCase(),
+            item_general_name: data.generalName.toUpperCase().trim(),
             item_is_available: data.isAvailable,
             item_unit: data.unit,
             item_gl_account: data.glAccount,
@@ -272,10 +274,12 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                 },
                 validate: {
                   duplicate: async (value) => {
-                    if (value === editItem.item_general_name) return true;
+                    const trimmedValue = value.trim();
+                    if (trimmedValue === editItem.item_general_name)
+                      return true;
 
                     const isExisting = await checkItemName(supabaseClient, {
-                      itemName: value.toUpperCase(),
+                      itemName: trimmedValue.toUpperCase(),
                       teamId: activeTeam.team_id,
                     });
                     return isExisting ? "Item already exists" : true;
