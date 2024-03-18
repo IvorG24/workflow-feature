@@ -4320,7 +4320,7 @@ RETURNS JSON as $$
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
 
         itemData.forEach(value => {
-          const itemDescription = plv8.execute(`SELECT item_description_label FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
+          const itemDescription = plv8.execute(`SELECT item_description_id, item_description_label, item_description_is_with_uom FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
           const itemDivision = plv8.execute(`SELECT item_division_value FROM item_division_table WHERE item_division_item_id = '${value.item_id}' ORDER BY item_division_value ASC;`);
           const itemDivisionDescription = plv8.execute(`SELECT item_level_three_description FROM item_level_three_description_table WHERE item_level_three_description_item_id = '${value.item_id}' LIMIT 1;`);
           
