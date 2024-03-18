@@ -1,8 +1,13 @@
+import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
-import { RequestListItemType } from "@/utils/types";
+import {
+  RequestListItemSignerType,
+  RequestListItemType,
+  TeamMemberWithUserType,
+} from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
@@ -22,6 +27,7 @@ import RequestSignerList from "./RequestSignerList";
 
 type Props = {
   request: RequestListItemType;
+  teamMemberList: TeamMemberWithUserType[];
 };
 
 const useStyles = createStyles(() => ({
@@ -34,20 +40,37 @@ const useStyles = createStyles(() => ({
   },
 }));
 
-const RequestItemRow = ({ request }: Props) => {
+const RequestItemRow = ({ request, teamMemberList }: Props) => {
   const { classes } = useStyles();
   const router = useRouter();
   const activeTeam = useActiveTeam();
+  const teamForms = useFormList();
+  const matchForm = teamForms.find(
+    (form) => form.form_id === request.request_form_id
+  );
   const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
-  const {
-    request_team_member: { team_member_user: requestor },
-    request_signer,
-  } = request;
+
+  const requestor = teamMemberList.find(
+    (member) => member.team_member_id === request.request_team_member_id
+  );
+  const requestorUserData = requestor ? requestor.team_member_user : null;
 
   const requestId =
     request.request_formsly_id === "-"
       ? request.request_id
       : request.request_formsly_id;
+
+  const request_signer = request.request_signer.map((signer) => {
+    const signerTeamMemberData = teamMemberList.find(
+      (member) =>
+        member.team_member_id === signer.request_signer.signer_team_member_id
+    );
+
+    return {
+      ...signer,
+      signer_team_member_user: signerTeamMemberData?.team_member_user,
+    };
+  });
 
   return (
     <Grid m={0} px="sm" py={0} justify="space-between">
@@ -134,8 +157,8 @@ const RequestItemRow = ({ request }: Props) => {
       </Grid.Col>
 
       <Grid.Col span={2}>
-        <Tooltip label={request.request_form.form_name} openDelay={2000}>
-          <Text truncate>{request.request_form.form_name}</Text>
+        <Tooltip label={matchForm?.form_name} openDelay={2000}>
+          <Text truncate>{matchForm?.form_name}</Text>
         </Tooltip>
       </Grid.Col>
       <Grid.Col span={1}>
@@ -148,30 +171,37 @@ const RequestItemRow = ({ request }: Props) => {
       </Grid.Col>
 
       <Grid.Col span="auto" offset={0.5}>
-        <Flex px={0} gap={8} wrap="wrap">
-          <Avatar
-            src={requestor.user_avatar}
-            {...defaultAvatarProps}
-            color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
-            className={classes.requestor}
-            onClick={() =>
-              window.open(
-                `/member/${request.request_team_member.team_member_id}`
-              )
-            }
-          >
-            {requestor.user_first_name[0] + requestor.user_last_name[0]}
-          </Avatar>
-          <Anchor
-            href={`/member/${request.request_team_member.team_member_id}`}
-            target="_blank"
-          >
-            <Text>{`${requestor.user_first_name} ${requestor.user_last_name}`}</Text>
-          </Anchor>
-        </Flex>
+        {requestorUserData ? (
+          <Flex px={0} gap={8} wrap="wrap">
+            <Avatar
+              // src={requestor.user_avatar}
+              {...defaultAvatarProps}
+              color={getAvatarColor(
+                Number(`${requestorUserData?.user_id.charCodeAt(0)}`)
+              )}
+              className={classes.requestor}
+              onClick={() =>
+                window.open(`/member/${request.request_team_member_id}`)
+              }
+            >
+              {requestorUserData.user_first_name[0] +
+                requestorUserData.user_last_name[0]}
+            </Avatar>
+            <Anchor
+              href={`/member/${request.request_team_member_id}`}
+              target="_blank"
+            >
+              <Text>{`${requestorUserData?.user_first_name} ${requestorUserData?.user_last_name}`}</Text>
+            </Anchor>
+          </Flex>
+        ) : (
+          <></>
+        )}
       </Grid.Col>
       <Grid.Col span={1}>
-        <RequestSignerList signerList={request_signer} />
+        <RequestSignerList
+          signerList={request_signer as RequestListItemSignerType[]}
+        />
       </Grid.Col>
       <Grid.Col span="content">
         <Text miw={105}>

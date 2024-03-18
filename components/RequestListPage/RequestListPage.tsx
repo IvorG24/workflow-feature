@@ -1,7 +1,11 @@
 import { getRequestList } from "@/backend/api/get";
+import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
+import {
+  DEFAULT_REQUEST_LIST_LIMIT,
+  UNHIDEABLE_FORMLY_FORMS,
+} from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormStatusType,
@@ -62,30 +66,24 @@ export type RequestListLocalFilter = {
 };
 
 type Props = {
-  requestList: RequestListItemType[];
-  requestListCount: number;
   teamMemberList: TeamMemberWithUserType[];
-  formList: { label: string; value: string }[];
   isFormslyTeam: boolean;
   projectList: TeamProjectTableRow[];
 };
 
 const RequestListPage = ({
-  requestList: initialRequestList,
-  requestListCount: initialRequestListCount,
   teamMemberList,
-  formList,
   isFormslyTeam,
   projectList,
 }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const formList = useFormList();
   const teamMember = useUserTeamMember();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
-  const [requestList, setRequestList] =
-    useState<RequestListItemType[]>(initialRequestList);
+  const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
   const [localFilter, setLocalFilter] = useLocalStorage<RequestListLocalFilter>(
     {
       key: "formsly-request-list-filter",
@@ -103,9 +101,7 @@ const RequestListPage = ({
     }
   );
 
-  const [requestListCount, setRequestListCount] = useState(
-    initialRequestListCount
-  );
+  const [requestListCount, setRequestListCount] = useState(0);
 
   const filterFormMethods = useForm<FilterFormValues>({
     defaultValues: localFilter,
@@ -113,6 +109,10 @@ const RequestListPage = ({
   });
 
   const { handleSubmit, getValues } = filterFormMethods;
+
+  const filteredFormList = formList
+    .filter(({ form_name }) => !UNHIDEABLE_FORMLY_FORMS.includes(form_name))
+    .map(({ form_name: label, form_id: value }) => ({ label, value }));
 
   const handleFilterForms = async (
     {
@@ -282,7 +282,7 @@ const RequestListPage = ({
           <RequestListFilter
             teamMemberList={teamMemberList}
             handleFilterForms={handleFilterForms}
-            formList={formList}
+            formList={filteredFormList}
             localFilter={localFilter}
             setLocalFilter={setLocalFilter}
             projectList={projectList}
@@ -346,7 +346,10 @@ const RequestListPage = ({
                 </Box>
                 {requestList.map((request, idx) => (
                   <Box key={request.request_id}>
-                    <RequestItemRow request={request} />
+                    <RequestItemRow
+                      request={request}
+                      teamMemberList={teamMemberList}
+                    />
                     {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? <Divider /> : null}
                   </Box>
                 ))}
