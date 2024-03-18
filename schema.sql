@@ -2842,6 +2842,8 @@ RETURNS JSON AS $$
             FROM request_view
             INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
             INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE team_member_table.team_member_team_id = '${teamId}'
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false`;
@@ -2854,6 +2856,8 @@ RETURNS JSON AS $$
             FROM request_view
             INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
             INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE team_member_table.team_member_team_id = '${teamId}'
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false`;
@@ -2900,7 +2904,7 @@ RETURNS JSON AS $$
             request_signer_status: signer.request_signer_status,
             request_signer: {
                 signer_team_member_id: signer.signer_team_member_id,
-              signer_is_primary_signer: signer.signer_is_primary_signer
+                signer_is_primary_signer: signer.signer_is_primary_signer
             }
           }
         });
