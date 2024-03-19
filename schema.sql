@@ -4095,8 +4095,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
-
-
 -- End: Canvass page on load
 
 -- Start: Form list page on load
@@ -11148,7 +11146,6 @@ RETURNS JSON AS $$
   return memo_data_on_load;
 $$ LANGUAGE plv8;
 
-
 CREATE OR REPLACE FUNCTION get_memo_list(
     input_data JSON
 )
@@ -11242,7 +11239,6 @@ RETURNS JSON AS $$
  });
  return return_value;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION edit_memo(
     input_data JSON
@@ -12729,18 +12725,9 @@ RETURNS JSON AS $$
           ORDER BY field_order ASC
         `
       );
-      let fieldWithOptionAndResponse = []
+      let fieldWithResponse = []
       
-      fieldWithOptionAndResponse = fieldList.map(field => {
-        const optionData = plv8.execute(
-          `
-            SELECT *
-            FROM option_table
-            WHERE option_field_id = '${field.field_id}'
-            ORDER BY option_order ASC
-          `
-        );
-
+      fieldWithResponse = fieldList.map(field => {
         const requestResponseData = plv8.execute(
           `
             SELECT *
@@ -12756,13 +12743,12 @@ RETURNS JSON AS $$
 
         return {
           ...field,
-          field_response: requestResponseData,
-          field_option: optionData
+          field_response: requestResponseData
         };
       });
 
-      if (isPedConsumableAndSingle && fieldWithOptionAndResponse.length !== 0) {
-        fieldWithOptionAndResponse[0].field_response = fieldWithOptionAndResponse[0].field_response.map(fieldResponse => {
+      if (isPedConsumableAndSingle && fieldWithResponse.length !== 0) {
+        fieldWithResponse[0].field_response = fieldWithResponse[0].field_response.map(fieldResponse => {
           const categoryData = plv8.execute(
             `
               SELECT equipment_description_property_number_with_prefix FROM equipment_description_view 
@@ -12777,20 +12763,11 @@ RETURNS JSON AS $$
         });
       }
 
-      returnData = fieldWithOptionAndResponse;
+      returnData = fieldWithResponse;
     } else {
-      let fieldWithOptionAndResponse = []
+      let fieldWithResponse = []
       
-      fieldWithOptionAndResponse = fieldData.map(field => {
-        const optionData = plv8.execute(
-          `
-            SELECT *
-            FROM option_table
-            WHERE option_field_id = '${field.field_id}'
-            ORDER BY option_order ASC
-          `
-        );
-
+      fieldWithResponse = fieldData.map(field => {
         const requestResponseData = plv8.execute(
           `
             SELECT *
@@ -12806,12 +12783,11 @@ RETURNS JSON AS $$
 
         return {
           ...field,
-          field_response: requestResponseData,
-          field_option: optionData
+          field_response: requestResponseData
         };
       });
 
-      returnData = fieldWithOptionAndResponse;
+      returnData = fieldWithResponse;
     }
  });
  return returnData;
@@ -15954,6 +15930,7 @@ USING (true);
 
 CREATE INDEX request_response_request_id_idx ON request_response_table (request_response, request_response_request_id);
 CREATE INDEX request_list_idx ON request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
+CREATE INDEX request_response_idx ON request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
 
 -------- End: INDEXES
 

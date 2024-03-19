@@ -20,7 +20,8 @@ const RequestSection = ({
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
-        {section.section_name} {section.section_is_duplicatable && index ? index : ""}
+        {section.section_name}{" "}
+        {section.section_is_duplicatable && index ? index : ""}
       </Title>
       <Space h="xl" />
       <Stack spacing="sm">
