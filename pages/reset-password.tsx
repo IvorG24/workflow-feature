@@ -5,4 +5,4 @@ const Page = () => {
 };
 
 export default Page;
-Page.Layout = "HOME";
+Page.Layout = "ONBOARDING";
