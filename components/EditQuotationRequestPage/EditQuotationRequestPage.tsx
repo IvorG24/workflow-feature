@@ -1,8 +1,4 @@
-import {
-  checkIfRequestIsEditable,
-  checkItemQuantity,
-  getSupplier,
-} from "@/backend/api/get";
+import { checkIfRequestIsEditable, checkItemQuantity } from "@/backend/api/get";
 import { editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
@@ -69,10 +65,6 @@ const EditQuotationRequestPage = ({
 
   const [availableItems, setAvailableItems] =
     useState<OptionTableRow[]>(itemOptions);
-  const [isSearching, setIsSearching] = useState(false);
-  const [supplierOption, setSupplierOption] = useState<OptionTableRow[]>(
-    request.request_form.form_section[1].section_field[0].field_option
-  );
 
   const signerList: FormType["form_signer"] = request.request_signer
     .map((signer) => signer.request_signer_signer)
@@ -322,101 +314,6 @@ const EditQuotationRequestPage = ({
     }
   };
 
-  const handleItemChange = async (
-    index: number,
-    value: string | null,
-    prevValue: string | null
-  ) => {
-    const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(3);
-
-    if (value) {
-      setAvailableItems((prev) =>
-        prev.filter((item) => item.option_value !== value)
-      );
-      itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 3;
-        if (sectionIndex !== index) {
-          updateSection(sectionIndex, {
-            ...section,
-            section_field: [
-              {
-                ...section.section_field[0],
-                field_option: [
-                  ...section.section_field[0].field_option.filter(
-                    (option) => option.option_value !== value
-                  ),
-                ],
-              },
-              ...section.section_field.slice(1),
-            ],
-          });
-        }
-      });
-    }
-
-    const newOption = itemOptions.find(
-      (option) => option.option_value === prevValue
-    );
-    if (newOption) {
-      setAvailableItems((prev) => {
-        return [...prev, newOption];
-      });
-      itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 3;
-        if (sectionIndex !== index) {
-          updateSection(sectionIndex, {
-            ...section,
-            section_field: [
-              {
-                ...section.section_field[0],
-                field_option: [
-                  ...section.section_field[0].field_option.filter(
-                    (option) => option.option_value !== value
-                  ),
-                  newOption,
-                ].sort((a, b) => {
-                  return a.option_order - b.option_order;
-                }),
-              },
-              ...section.section_field.slice(1),
-            ],
-          });
-        }
-      });
-    }
-  };
-
-  const supplierSearch = async (value: string) => {
-    if (
-      !value ||
-      value ===
-        parseJSONIfValid(
-          getValues(
-            "sections.1.section_field.0.field_response.0.request_response"
-          )
-        )
-    )
-      return;
-
-    try {
-      setIsSearching(true);
-      const supplierList = await getSupplier(supabaseClient, {
-        supplier: value,
-        teamId: `${teamMember?.team_member_team_id}`,
-        fieldId: form.form_section[1].section_field[0].field_id,
-      });
-      setSupplierOption(supplierList);
-    } catch {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -447,12 +344,6 @@ const EditQuotationRequestPage = ({
                     formslyFormName={form.form_name}
                     onRemoveSection={handleRemoveSection}
                     isSectionRemovable={isRemovable}
-                    quotationFormMethods={{
-                      onItemChange: handleItemChange,
-                      supplierSearch,
-                      supplierOption,
-                      isSearching,
-                    }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

@@ -96,7 +96,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
   });
 
   useEffect(() => {
-    const fetchItemOptions = async () => {
+    const fetchOptions = async () => {
       setIsLoading(true);
       try {
         if (!team.team_id) return;
@@ -144,7 +144,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
         setIsLoading(false);
       }
     };
-    fetchItemOptions();
+    fetchOptions();
   }, [team]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {

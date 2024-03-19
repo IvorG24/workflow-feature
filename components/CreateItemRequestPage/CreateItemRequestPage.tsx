@@ -110,7 +110,7 @@ const CreateItemRequestPage = ({
   });
 
   useEffect(() => {
-    const fetchItemOptions = async () => {
+    const fetchOptions = async () => {
       setIsLoading(true);
       try {
         if (!team.team_id) return;
@@ -184,7 +184,7 @@ const CreateItemRequestPage = ({
         setIsLoading(false);
       }
     };
-    fetchItemOptions();
+    fetchOptions();
   }, [team]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {

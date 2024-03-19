@@ -20,28 +20,7 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
   };
-  subconFormMethods?: {
-    onServiceNameChange: (index: number, value: string | null) => void;
-    onProjectNameChange: (value: string | null) => void;
-    subconSearch?: (value: string) => void;
-    isSearching?: boolean;
-  };
-  quotationFormMethods?: {
-    onItemChange: (
-      index: number,
-      value: string | null,
-      prevValue: string | null
-    ) => void;
-    supplierSearch?: (value: string) => void;
-    isSearching?: boolean;
-  };
-  rirFormMethods?: {
-    onQuantityChange: (index: number, value: number) => void;
-  };
   formslyFormName?: string;
-  sourcedItemFormMethods?: {
-    onProjectSiteChange: () => void;
-  };
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
@@ -51,8 +30,6 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     onCategoryChange: (index: number, value: string | null) => void;
-    supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
   };
   pedEquipmentFormMethods?: {
     onCategoryChange: (value: string | null, index: number) => void;
@@ -95,11 +72,7 @@ const RequestFormSection = ({
   sectionIndex,
   onRemoveSection,
   itemFormMethods,
-  subconFormMethods,
-  quotationFormMethods,
-  rirFormMethods,
   formslyFormName = "",
-  sourcedItemFormMethods,
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
@@ -142,11 +115,7 @@ const RequestFormSection = ({
             sectionIndex={sectionIndex}
             fieldIndex={idx}
             itemFormMethods={itemFormMethods}
-            subconFormMethods={subconFormMethods}
-            quotationFormMethods={quotationFormMethods}
-            rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
-            sourcedItemFormMethods={sourcedItemFormMethods}
             servicesFormMethods={servicesFormMethods}
             pedEquipmentFormMethods={pedEquipmentFormMethods}
             pedPartFormMethods={pedPartFormMethods}

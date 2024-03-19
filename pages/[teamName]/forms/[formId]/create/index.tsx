@@ -5,7 +5,6 @@ import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentReques
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
-import CreateSubconRequestPage from "@/components/CreateSubconRequestPage/CreateSubconRequestPage";
 
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import Meta from "@/components/Meta/Meta";
@@ -52,7 +51,6 @@ type Props = {
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
   requestingProject?: string;
-  serviceOptions?: OptionTableRow[];
   specialApprover?: {
     special_approver_id: string;
     special_approver_item_list: string[];
@@ -65,7 +63,6 @@ type Props = {
 const Page = ({
   form,
   projectOptions = [],
-  serviceOptions = [],
   specialApprover = [],
   categoryOptions = [],
   propertyNumberOptions = [],
@@ -78,14 +75,6 @@ const Page = ({
             form={form}
             projectOptions={projectOptions}
             specialApprover={specialApprover}
-          />
-        );
-      case "Subcon":
-        return (
-          <CreateSubconRequestPage
-            form={form}
-            serviceOptions={serviceOptions}
-            projectOptions={projectOptions}
           />
         );
       case "Services":

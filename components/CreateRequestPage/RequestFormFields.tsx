@@ -5,14 +5,12 @@ import {
   MAX_FILE_SIZE_IN_MB,
   SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
-import { addDays } from "@/utils/functions";
-import { addCommaToNumber, regExp, requestPath } from "@/utils/string";
+import { requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
   FileInput,
   Flex,
-  Loader,
   MultiSelect,
   NumberInput,
   Select,
@@ -44,28 +42,7 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
   };
-  subconFormMethods?: {
-    onServiceNameChange: (index: number, value: string | null) => void;
-    onProjectNameChange: (value: string | null) => void;
-    subconSearch?: (value: string) => void;
-    isSearching?: boolean;
-  };
-  quotationFormMethods?: {
-    onItemChange: (
-      index: number,
-      value: string | null,
-      prevValue: string | null
-    ) => void;
-    supplierSearch?: (value: string) => void;
-    isSearching?: boolean;
-  };
-  rirFormMethods?: {
-    onQuantityChange: (index: number, value: number) => void;
-  };
   formslyFormName?: string;
-  sourcedItemFormMethods?: {
-    onProjectSiteChange: () => void;
-  };
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
@@ -75,8 +52,6 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     onCategoryChange: (index: number, value: string | null) => void;
-    supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
   };
   pedEquipmentFormMethods?: {
     onCategoryChange: (value: string | null, index: number) => void;
@@ -119,11 +94,7 @@ const RequestFormFields = ({
   sectionIndex,
   fieldIndex,
   itemFormMethods,
-  subconFormMethods,
-  quotationFormMethods,
-  rirFormMethods,
   formslyFormName = "",
-  sourcedItemFormMethods,
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
@@ -268,15 +239,7 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => (
               <NumberInput
                 value={value as number}
-                onChange={(value) => {
-                  onChange(value);
-                  if (field.field_name === "Quantity" && rirFormMethods) {
-                    rirFormMethods.onQuantityChange(
-                      sectionIndex,
-                      Number(value)
-                    );
-                  }
-                }}
+                onChange={onChange}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
@@ -287,7 +250,7 @@ const RequestFormFields = ({
               ...fieldRules,
               validate: {
                 checkIfZero: (value) =>
-                  (itemFormMethods || quotationFormMethods) &&
+                  itemFormMethods &&
                   field.field_name === "Quantity" &&
                   value === 0
                     ? "Quantity value is required"
@@ -318,24 +281,6 @@ const RequestFormFields = ({
 
       case "DROPDOWN":
         const dropdownOption = field.options.map((option) => {
-          if (quotationFormMethods) {
-            const label = option.option_value;
-            const matches = regExp.exec(label);
-            if (matches) {
-              const quantityMatch = matches[1].match(/(\d+)/);
-              if (quantityMatch) {
-                const newLabel = label.replace(
-                  quantityMatch[0],
-                  addCommaToNumber(Number(quantityMatch[0]))
-                );
-                return {
-                  value: option.option_value,
-                  label: newLabel,
-                };
-              }
-            }
-          }
-
           return {
             value: option.option_value,
             label: option.option_value,
@@ -363,13 +308,7 @@ const RequestFormFields = ({
                         sectionIndex
                       );
                       break;
-                    case "Item":
-                      quotationFormMethods?.onItemChange(
-                        sectionIndex,
-                        value,
-                        prevValue === null ? null : `${prevValue}`
-                      );
-                      break;
+
                     case "CSI Code Description":
                       itemFormMethods &&
                         itemFormMethods.onCSICodeChange(sectionIndex, value);
@@ -384,24 +323,15 @@ const RequestFormFields = ({
                           value
                         );
                       break;
-                    case "Source Project":
-                      sourcedItemFormMethods?.onProjectSiteChange();
-                      break;
+
                     case "Requesting Project":
                       itemFormMethods?.onProjectNameChange(value);
-                      subconFormMethods?.onProjectNameChange(value);
                       servicesFormMethods?.onProjectNameChange(value);
                       otherExpensesMethods?.onProjectNameChange(value);
                       pedPartFormMethods?.onProjectNameChange(value);
                       pedEquipmentFormMethods?.onProjectNameChange(value);
                       pedConsumableFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
-                      break;
-                    case "Service Name":
-                      subconFormMethods?.onServiceNameChange(
-                        sectionIndex,
-                        value
-                      );
                       break;
                     case "CSI Division":
                       servicesFormMethods?.onCSIDivisionChange(
@@ -486,46 +416,6 @@ const RequestFormFields = ({
                 clearable
                 error={fieldError}
                 searchable={formslyFormName !== ""}
-                onSearchChange={(value) => {
-                  if (quotationFormMethods && field.field_name === "Supplier") {
-                    if (timeoutRef.current) {
-                      clearTimeout(timeoutRef.current);
-                    }
-
-                    timeoutRef.current = setTimeout(() => {
-                      quotationFormMethods.supplierSearch &&
-                        quotationFormMethods.supplierSearch(value);
-                    }, 500);
-                  } else if (field.field_name === "Preferred Supplier") {
-                    if (timeoutRef.current) {
-                      clearTimeout(timeoutRef.current);
-                    }
-                    timeoutRef.current = setTimeout(() => {
-                      otherExpensesMethods?.supplierSearch &&
-                        otherExpensesMethods?.supplierSearch(
-                          value,
-                          sectionIndex
-                        );
-                    }, 500);
-                  } else if (
-                    itemFormMethods &&
-                    field.field_name === "CSI Code Description"
-                  ) {
-                    if (timeoutRef.current) {
-                      clearTimeout(timeoutRef.current);
-                    }
-                  }
-                }}
-                rightSection={
-                  (quotationFormMethods &&
-                    quotationFormMethods.isSearching &&
-                    field.field_name === "Supplier") ||
-                  (otherExpensesMethods &&
-                    otherExpensesMethods.isSearching &&
-                    field.field_name === "Preferred Supplier") ? (
-                    <Loader size={16} />
-                  ) : null
-                }
                 nothingFound="Nothing found. Try a different keyword"
                 limit={SELECT_OPTION_LIMIT}
               />
@@ -551,32 +441,6 @@ const RequestFormFields = ({
                 withAsterisk={field.field_is_required}
                 {...inputProps}
                 error={fieldError}
-                onSearchChange={(value) => {
-                  if (
-                    subconFormMethods &&
-                    value &&
-                    field.field_name === "Nominated Subcon"
-                  ) {
-                    if (timeoutRef.current) {
-                      clearTimeout(timeoutRef.current);
-                    }
-
-                    timeoutRef.current = setTimeout(() => {
-                      subconFormMethods.subconSearch &&
-                        subconFormMethods.subconSearch(value);
-                    }, 500);
-                  }
-                }}
-                rightSection={
-                  subconFormMethods &&
-                  subconFormMethods.isSearching &&
-                  field.field_name === "Nominated Subcon" ? (
-                    <Loader size={16} />
-                  ) : null
-                }
-                searchable={
-                  subconFormMethods && field.field_name === "Nominated Subcon"
-                }
                 nothingFound="Nothing found. Try a different keyword"
               />
             )}
@@ -599,13 +463,7 @@ const RequestFormFields = ({
                   {...inputProps}
                   icon={<IconCalendar size={16} />}
                   error={fieldError}
-                  minDate={
-                    formslyFormName
-                      ? subconFormMethods
-                        ? addDays(new Date(), 14)
-                        : new Date()
-                      : undefined
-                  }
+                  minDate={formslyFormName ? new Date() : undefined}
                   valueFormat="YYYY-MM-DD"
                 />
               );
