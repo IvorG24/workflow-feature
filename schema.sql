@@ -4887,30 +4887,6 @@ RETURNS JSON as $$
           };
         });
 
-        const suppliers = plv8.execute(
-          `
-            SELECT 
-                supplier,
-                supplier_id
-            FROM supplier_table
-            WHERE
-              supplier_is_available = true
-              AND supplier_is_disabled = false
-              AND supplier_team_id = '${teamId}'
-            ORDER BY supplier ASC
-            LIMIT 100;
-          `
-        );
-
-        const supplierOptions = suppliers.map((suppliers, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[9].field_id,
-            option_id: suppliers.supplier_id,
-            option_order: index,
-            option_value: suppliers.supplier,
-          };
-        });
-
         const categories = plv8.execute(
           `
             SELECT 
@@ -5005,11 +4981,7 @@ RETURNS JSON as $$
                     ...form.form_section[1].section_field[4],
                     field_option: csiDivisionOption
                   },
-                  ...form.form_section[1].section_field.slice(5, 9),
-                  {
-                    ...form.form_section[1].section_field[9],
-                    field_option: supplierOptions
-                  }
+                  ...form.form_section[1].section_field.slice(5, 10),
                 ],
               },
             ],

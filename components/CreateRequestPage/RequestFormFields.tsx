@@ -70,8 +70,6 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
-    supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
   };
   otherExpensesMethods?: {
     onProjectNameChange: (value: string | null) => void;

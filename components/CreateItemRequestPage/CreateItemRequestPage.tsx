@@ -393,7 +393,6 @@ const CreateItemRequestPage = ({
               divisionIdList: item.item_division_id_list,
             });
             csiOptionList.push(...(csiData as CSICodeTableRow[]));
-            console.log(csiData);
             if (csiData.length < FETCH_OPTION_LIMIT) break;
             index += FETCH_OPTION_LIMIT;
           }
