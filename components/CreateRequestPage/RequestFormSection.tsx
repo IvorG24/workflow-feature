@@ -19,10 +19,6 @@ type RequestFormSectionProps = {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
-    supplierSearch?: (value: string, index: number) => void;
-    isSearchingSupplier?: boolean;
-    csiSearch?: (value: string, index: number) => void;
-    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;

@@ -4609,7 +4609,6 @@ RETURNS JSON as $$
             st.section_form_id
         ORDER BY 
             st.section_order ASC;
-
       `
     );
 
@@ -4690,29 +4689,6 @@ RETURNS JSON as $$
 
     if (form.form_is_formsly_form) {
       if (form.form_name === "Item") {
-        const items = plv8.execute(
-          `
-            SELECT 
-                item_id,
-                item_general_name
-            FROM item_table
-            WHERE
-              item_team_id = '${teamId}'
-              AND item_is_disabled = false
-              AND item_is_available = true
-            ORDER BY item_general_name ASC;
-          `
-        );
-
-        const itemOptions = items.map((item, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: item.item_id,
-            option_order: index,
-            option_value: item.item_general_name,
-          };
-        });
-
         const projects = plv8.execute(
           `
             SELECT 
@@ -4739,56 +4715,32 @@ RETURNS JSON as $$
         const specialApproverWithItem = plv8.execute(
           `
             SELECT 
-                special_approver_table.*,
-                signer_id, 
-                signer_is_primary_signer, 
-                signer_action, 
-                signer_order,
-                signer_is_disabled, 
-                signer_team_project_id,
-                team_member_id,
-                user_id, 
-                user_first_name, 
-                user_last_name, 
-                user_avatar,
-                (SELECT json_agg(special_approver_item_table.*)
-                FROM special_approver_item_table 
-                WHERE special_approver_item_special_approver_id = special_approver_table.special_approver_id
-                ) AS special_approver_item_list
+              special_approver_table.*,
+              signer_id, 
+              signer_is_primary_signer, 
+              signer_action, 
+              signer_order,
+              signer_is_disabled, 
+              signer_team_project_id,
+              team_member_id,
+              user_id, 
+              user_first_name, 
+              user_last_name, 
+              user_avatar,
+              (SELECT json_agg(special_approver_item_table.*)
+              FROM special_approver_item_table 
+              WHERE special_approver_item_special_approver_id = special_approver_table.special_approver_id
+              ) AS special_approver_item_list
             FROM 
-                special_approver_table
+              special_approver_table
             INNER JOIN 
-                signer_table ON signer_id = special_approver_signer_id
+              signer_table ON signer_id = special_approver_signer_id
             INNER JOIN 
-                team_member_table ON team_member_id = signer_team_member_id
+              team_member_table ON team_member_id = signer_team_member_id
             INNER JOIN 
-                user_table ON user_id = team_member_user_id;
-
-            
+              user_table ON user_id = team_member_user_id;
           `
         );
-
-        const suppliers = plv8.execute(
-          `
-            SELECT *
-            FROM supplier_table
-            WHERE
-              supplier_is_available = true
-              AND supplier_is_disabled = false
-              AND supplier_team_id = '${teamId}'
-            ORDER BY supplier ASC
-            LIMIT 100
-          `
-        );
-
-        const supplierOptions = suppliers.map((suppliers, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: suppliers.supplier_id,
-            option_order: index,
-            option_value: suppliers.supplier,
-          };
-        });
 
         returnData = {
           form: {
@@ -4807,16 +4759,11 @@ RETURNS JSON as $$
               {
                 ...form.form_section[1],
                 section_field: [
-                  ...form.form_section[1].section_field.slice(0, 9),
-                  {
-                    ...form.form_section[1].section_field[9],
-                    field_option: supplierOptions
-                  }
+                  ...form.form_section[1].section_field.slice(0, 10),
                 ],
               },
             ],
           },
-          itemOptions,
           projectOptions,
           specialApprover: specialApproverWithItem.map(specialApprover => {
             return {

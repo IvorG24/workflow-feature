@@ -3,14 +3,9 @@ import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequ
 import CreatePEDConsumableRequestPage from "@/components/CreatePEDConsumableRequestPage/CreatePEDConsumableRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
-import CreateQuotationRequestPage from "@/components/CreateQuotationRequestPage/CreateQuotationRequestPage";
-import CreateReceivingInspectingReportPage from "@/components/CreateReceivingInspectingReport/CreateReceivingInspectingReport";
-import CreateReleaseOrderPage from "@/components/CreateReleaseOrderPage/CreateReleaseOrderPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
-import CreateSourcedItemRequestPage from "@/components/CreateSourcedItemRequestPage/CreateSourcedItemRequestPage";
 import CreateSubconRequestPage from "@/components/CreateSubconRequestPage/CreateSubconRequestPage";
-import CreateTransferReceiptPage from "@/components/CreateTransferReceiptPage/CreateTransferReceiptPage";
 
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import Meta from "@/components/Meta/Meta";
@@ -53,7 +48,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   form: FormWithResponseType;
-  itemOptions?: OptionTableRow[];
   projectOptions?: OptionTableRow[];
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
@@ -70,11 +64,7 @@ type Props = {
 
 const Page = ({
   form,
-  itemOptions = [],
-  sourceProjectList = {},
-  requestProjectId = "",
   projectOptions = [],
-  requestingProject = "",
   serviceOptions = [],
   specialApprover = [],
   categoryOptions = [],
@@ -86,7 +76,6 @@ const Page = ({
         return (
           <CreateItemRequestPage
             form={form}
-            itemOptions={itemOptions}
             projectOptions={projectOptions}
             specialApprover={specialApprover}
           />
@@ -134,58 +123,10 @@ const Page = ({
           <CreatePEDConsumableRequestPage
             form={form}
             projectOptions={projectOptions}
-            itemOptions={itemOptions}
             propertyNumberOptions={propertyNumberOptions}
+            itemOptions={[]}
           />
         );
-      case "Sourced Item":
-        return (
-          <CreateSourcedItemRequestPage
-            form={form}
-            itemOptions={itemOptions}
-            requestProjectId={requestProjectId}
-            requestingProject={requestingProject}
-          />
-        );
-      case "Quotation":
-        return (
-          <CreateQuotationRequestPage
-            form={form}
-            itemOptions={itemOptions}
-            requestProjectId={requestProjectId}
-            requestingProject={requestingProject}
-          />
-        );
-      case "Receiving Inspecting Report":
-        return (
-          <CreateReceivingInspectingReportPage
-            form={form}
-            itemOptions={itemOptions}
-            requestProjectId={requestProjectId}
-            requestingProject={requestingProject}
-          />
-        );
-      case "Release Order":
-        return (
-          <CreateReleaseOrderPage
-            form={form}
-            itemOptions={itemOptions}
-            sourceProjectList={sourceProjectList}
-            requestProjectId={requestProjectId}
-            requestingProject={requestingProject}
-          />
-        );
-      case "Transfer Receipt":
-        return (
-          <CreateTransferReceiptPage
-            form={form}
-            itemOptions={itemOptions}
-            sourceProjectList={sourceProjectList}
-            requestProjectId={requestProjectId}
-            requestingProject={requestingProject}
-          />
-        );
-
       case "Request For Payment":
         return (
           <CreateRequestForPaymentPage

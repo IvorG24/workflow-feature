@@ -56,7 +56,7 @@ type Props = {
 const CreatePEDConsumableRequestPage = ({
   form,
   projectOptions,
-  itemOptions,
+  itemOptions = [],
   propertyNumberOptions,
 }: Props) => {
   const router = useRouter();

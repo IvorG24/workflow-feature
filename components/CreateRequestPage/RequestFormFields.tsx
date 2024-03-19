@@ -1,6 +1,10 @@
 import { getRequestFormslyId } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
+import {
+  MAX_FILE_SIZE,
+  MAX_FILE_SIZE_IN_MB,
+  SELECT_OPTION_LIMIT,
+} from "@/utils/constant";
 import { addDays } from "@/utils/functions";
 import { addCommaToNumber, regExp, requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
@@ -39,10 +43,6 @@ type RequestFormFieldsProps = {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
-    supplierSearch?: (value: string, index: number) => void;
-    isSearchingSupplier?: boolean;
-    csiSearch?: (value: string, index: number) => void;
-    isSearchingCSI?: boolean;
   };
   subconFormMethods?: {
     onServiceNameChange: (index: number, value: string | null) => void;
@@ -503,8 +503,6 @@ const RequestFormFields = ({
                       clearTimeout(timeoutRef.current);
                     }
                     timeoutRef.current = setTimeout(() => {
-                      itemFormMethods?.supplierSearch &&
-                        itemFormMethods.supplierSearch(value, sectionIndex);
                       otherExpensesMethods?.supplierSearch &&
                         otherExpensesMethods?.supplierSearch(
                           value,
@@ -518,23 +516,12 @@ const RequestFormFields = ({
                     if (timeoutRef.current) {
                       clearTimeout(timeoutRef.current);
                     }
-
-                    timeoutRef.current = setTimeout(() => {
-                      itemFormMethods.csiSearch &&
-                        itemFormMethods.csiSearch(value, sectionIndex);
-                    }, 500);
                   }
                 }}
                 rightSection={
                   (quotationFormMethods &&
                     quotationFormMethods.isSearching &&
                     field.field_name === "Supplier") ||
-                  (itemFormMethods &&
-                    itemFormMethods.isSearchingSupplier &&
-                    field.field_name === "Preferred Supplier") ||
-                  (itemFormMethods &&
-                    itemFormMethods.isSearchingCSI &&
-                    field.field_name === "CSI Code Description") ||
                   (otherExpensesMethods &&
                     otherExpensesMethods.isSearching &&
                     field.field_name === "Preferred Supplier") ? (
@@ -542,6 +529,7 @@ const RequestFormFields = ({
                   ) : null
                 }
                 nothingFound="Nothing found. Try a different keyword"
+                limit={SELECT_OPTION_LIMIT}
               />
             )}
             rules={{ ...fieldRules }}
@@ -653,45 +641,6 @@ const RequestFormFields = ({
             rules={{ ...fieldRules }}
           />
         );
-      // case "SLIDER":
-      //   const sliderOption = JSON.parse(
-      //     field.options.map((option) => option.option_value)[0]
-      //   );
-      //   const max = Number(sliderOption[1]);
-      //   const marks = Array.from({ length: max }, (_, index) => ({
-      //     value: index + 1,
-      //     label: index + 1,
-      //   }));
-      //   return (
-      //     <Box pb="xl">
-      //       <Text weight={600} size={14}>
-      //         {field.field_name}{" "}
-      //         {field.field_is_required ? (
-      //           <Text span c="red">
-      //             *
-      //           </Text>
-      //         ) : (
-      //           <></>
-      //         )}
-      //       </Text>
-      //       <Controller
-      //         control={control}
-      //         name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-      //         render={({ field: { value, onChange } }) => (
-      //           <Slider
-      //             value={value as number}
-      //             onChange={(value) => onChange(value)}
-      //             min={sliderOption[0]}
-      //             max={max}
-      //             step={1}
-      //             marks={marks}
-      //             {...inputProps}
-      //           />
-      //         )}
-      //         rules={{ ...fieldRules }}
-      //       />
-      //     </Box>
-      //   );
 
       case "FILE":
         return (
