@@ -1,7 +1,6 @@
 import {
   getEquipmentDescription,
   getEquipmentName,
-  getEquipmentPropertyNumber,
   getItemSectionChoices,
   getItemUnitOfMeasurement,
   getProjectSignerWithTeamMember,
