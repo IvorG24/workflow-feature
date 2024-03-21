@@ -5718,16 +5718,16 @@ export const getItemSectionChoices = async (
   const { data, error } = await supabaseClient.rpc("get_item_section_choices", {
     input_data: {
       equipmentId: equipmentId
-        ? safeParse(equipmentId.replace(/'/g, "''"))
+        ? `${safeParse(equipmentId.replace(/'/g, "''"))}`
         : undefined,
       generalName: generalName
-        ? safeParse(generalName.replace(/'/g, "''"))
+        ? `${safeParse(generalName.replace(/'/g, "''"))}`
         : undefined,
       componentCategory: componentCategory
-        ? safeParse(componentCategory.replace(/'/g, "''"))
+        ? `${safeParse(componentCategory.replace(/'/g, "''"))}`
         : undefined,
-      brand: brand ? safeParse(brand.replace(/'/g, "''")) : undefined,
-      model: model ? safeParse(model.replace(/'/g, "''")) : undefined,
+      brand: brand ? `${safeParse(brand.replace(/'/g, "''"))}` : undefined,
+      model: model ? `${safeParse(model.replace(/'/g, "''"))}` : undefined,
     },
   });
 
