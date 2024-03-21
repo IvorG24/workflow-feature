@@ -57,7 +57,6 @@ type Props = {
     special_approver_signer: FormType["form_signer"][0];
   }[];
   categoryOptions?: OptionTableRow[];
-  propertyNumberOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -65,7 +64,6 @@ const Page = ({
   projectOptions = [],
   specialApprover = [],
   categoryOptions = [],
-  propertyNumberOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -112,8 +110,6 @@ const Page = ({
           <CreatePEDConsumableRequestPage
             form={form}
             projectOptions={projectOptions}
-            propertyNumberOptions={propertyNumberOptions}
-            itemOptions={[]}
           />
         );
       case "Request For Payment":

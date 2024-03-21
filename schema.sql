@@ -5317,54 +5317,6 @@ RETURNS JSON as $$
             option_value: project.team_project_name,
           };
         });
-
-        const equipmentPropertyNumbers = plv8.execute(
-          `
-            SELECT 
-                equipment_description_view.equipment_description_id,
-                equipment_description_view.equipment_description_property_number_with_prefix
-            FROM equipment_description_view
-            INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id
-            WHERE 
-              equipment_team_id = '${teamMember.team_member_team_id}'
-              AND equipment_description_is_disabled = false
-              AND equipment_description_is_available = true
-            ORDER BY equipment_description_property_number_with_prefix;
-          `
-        );
-
-        const propertyNumberOptions = equipmentPropertyNumbers.map((propertyNumber, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: propertyNumber.equipment_description_id,
-            option_order: index,
-            option_value: propertyNumber.equipment_description_property_number_with_prefix,
-          };
-        });
-
-        const items = plv8.execute(
-          `
-            SELECT 
-                item_id,
-                item_general_name
-            FROM item_table
-            WHERE
-              item_team_id = '${teamId}'
-              AND item_is_disabled = false
-              AND item_is_available = true
-              AND item_gl_account = 'Fuel, Oil, Lubricants'
-              ORDER BY item_general_name ASC;
-          `
-        );
-
-        const itemOptions = items.map((item, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: item.item_id,
-            option_order: index,
-            option_value: item.item_general_name,
-          };
-        });
         
         returnData = {
           form: {
@@ -5383,23 +5335,12 @@ RETURNS JSON as $$
               {
                 ...form.form_section[1],
                 section_field: [
-                  {
-                    ...form.form_section[1].section_field[0],
-                    field_option: propertyNumberOptions,
-                  },
-                  ...form.form_section[1].section_field.slice(1, 4),
-                  {
-                    ...form.form_section[1].section_field[4],
-                    field_option: itemOptions,
-                  },
-                  ...form.form_section[1].section_field.slice(5, 7),
-                ],
-              },
+                  ...form.form_section[1].section_field.slice(0, 7)
+                ]
+              }
             ],
           },
-          projectOptions,
-          itemOptions,
-          propertyNumberOptions
+          projectOptions
         }
         return;
       } else if (form.form_name === "Request For Payment") {
@@ -6061,6 +6002,7 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
+
 
 -- End: Create request page on load
 

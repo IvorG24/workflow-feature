@@ -6154,3 +6154,63 @@ export const getCSICodeOptions = async (
 
   return data;
 };
+
+// Fetch item consumable options
+export const getItemConsumableOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .select("item_id, item_general_name")
+    .eq("item_team_id", teamId)
+    .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
+    .eq("item_gl_account", "Fuel, Oil, Lubricants")
+    .order("item_general_name")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch property number options
+export const getPropertyNumberOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_view")
+    .select(
+      `
+        equipment_description_id,
+        equipment_description_property_number_with_prefix,
+        equipment_description_equipment: equipment_description_equipment_id!inner(
+          equipment_team_id
+        )
+      `
+    )
+    .eq("equipment_description_equipment.equipment_team_id", teamId)
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_is_available", true)
+    .order("equipment_description_property_number_with_prefix")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data as unknown as {
+    equipment_description_id: string;
+    equipment_description_property_number_with_prefix: string;
+  }[];
+};
