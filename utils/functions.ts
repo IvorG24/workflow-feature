@@ -1414,7 +1414,7 @@ export const generateJiraTicketPayload = ({
     },
     isAdfRequest: false,
     requestFieldValues: {},
-    requestParticipants: requestParticipantList ? [requestParticipantList] : [],
+    requestParticipants: requestParticipantList ? requestParticipantList : [],
     requestTypeId: requestTypeId,
     serviceDeskId: "17",
     raiseOnBehalfOf: warehouseRepresentative,
