@@ -1,10 +1,10 @@
 import {
   getEquipmentDescription,
   getEquipmentName,
-  getEquipmentPropertyNumber,
   getItemSectionChoices,
   getItemUnitOfMeasurement,
   getProjectSignerWithTeamMember,
+  getPropertyNumberOptions,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -14,6 +14,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { createRange } from "@/utils/arrayFunctions/arrayFunctions";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -229,7 +230,11 @@ const CreatePEDPartRequestPage = ({
         });
 
         const generalField = [
-          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(0, 2),
+          {
+            ...newSection.section_field[2],
+            field_response: "",
+          },
           {
             ...newSection.section_field[3],
             field_response: "",
@@ -257,7 +262,11 @@ const CreatePEDPartRequestPage = ({
         });
       } else {
         const generalField = [
-          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(0, 2),
+          {
+            ...newSection.section_field[2],
+            field_response: "",
+          },
           ...newSection.section_field.slice(3, 8).map((field) => {
             return {
               ...field,
@@ -333,29 +342,41 @@ const CreatePEDPartRequestPage = ({
         );
         if (!equipmentId) return;
 
-        const equipmentPropertyNumber = await getEquipmentPropertyNumber(
-          supabaseClient,
-          {
-            equipmentId: equipmentId?.option_id,
-          }
-        );
+        const equipmentPropertyNumberOptions: OptionTableRow[] = [];
+        let index = 0;
+        while (1) {
+          const propertyNumberData = await getPropertyNumberOptions(
+            supabaseClient,
+            {
+              teamId: team.team_id,
+              index,
+              limit: FETCH_OPTION_LIMIT,
+              equipmentId: equipmentId?.option_id,
+            }
+          );
+          const propertyNumberOptions = propertyNumberData.map(
+            (propertyNumber, index) => {
+              return {
+                option_field_id: form.form_section[1].section_field[0].field_id,
+                option_id: propertyNumber.equipment_description_id,
+                option_order: index,
+                option_value:
+                  propertyNumber.equipment_description_property_number_with_prefix,
+              };
+            }
+          );
+          equipmentPropertyNumberOptions.push(...propertyNumberOptions);
+
+          if (propertyNumberData.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
 
         const generalField = [
           ...newSection.section_field.slice(0, 4),
           {
             ...newSection.section_field[4],
             field_response: "",
-            field_option: equipmentPropertyNumber.map(
-              (propertyNumber, index) => {
-                return {
-                  option_field_id:
-                    form.form_section[0].section_field[0].field_id,
-                  option_id: `${propertyNumber.equipment_description_id}`,
-                  option_order: index,
-                  option_value: `${propertyNumber.equipment_description_property_number_with_prefix}`,
-                };
-              }
-            ),
+            field_option: equipmentPropertyNumberOptions,
           },
           ...newSection.section_field.slice(5, 8).map((field) => {
             return {

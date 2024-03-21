@@ -10,11 +10,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import {
-  formatTeamNameToUrlKey,
-  parseJSONIfValid,
-  regExp,
-} from "@/utils/string";
+import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
 import {
   FormType,
   OptionTableRow,
@@ -101,11 +97,9 @@ const EditReceivingInspectingReportPage = ({
 
   const {
     handleSubmit,
-    setValue,
     control,
     getValues,
     reset,
-
     formState: { isDirty },
   } = requestFormMethods;
   const {
@@ -343,120 +337,6 @@ const EditReceivingInspectingReportPage = ({
     }
   };
 
-  const handleItemChange = async (
-    index: number,
-    value: string | null,
-    prevValue: string | null
-  ) => {
-    const sectionList = getValues(`sections`);
-    const itemSectionList = sectionList.slice(2);
-
-    if (value) {
-      setAvailableItems((prev) =>
-        prev.filter((item) => item.option_value !== value)
-      );
-      itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 2;
-        if (sectionIndex !== index) {
-          updateSection(sectionIndex, {
-            ...section,
-            section_field: [
-              {
-                ...section.section_field[0],
-                field_option: [
-                  ...section.section_field[0].field_option.filter(
-                    (option) => option.option_value !== value
-                  ),
-                ],
-              },
-              ...section.section_field.slice(1),
-            ],
-          });
-        } else {
-          const status = checkQuantity(
-            value,
-            Number(section.section_field[1].field_response[0].request_response)
-          );
-          setValue(
-            `sections.${index}.section_field.2.field_response.0.request_response`,
-            `${status}`
-          );
-        }
-      });
-    } else {
-      setValue(
-        `sections.${index}.section_field.2.field_response.0.request_response`,
-        " "
-      );
-    }
-
-    const newOption = originalItemOptions.find(
-      (option) =>
-        parseJSONIfValid(option.option_value) ===
-        parseJSONIfValid(prevValue || "")
-    );
-    if (newOption) {
-      setAvailableItems((prev) => {
-        return [...prev, newOption];
-      });
-      itemSectionList.forEach((section, sectionIndex) => {
-        sectionIndex += 2;
-        if (sectionIndex !== index) {
-          updateSection(sectionIndex, {
-            ...section,
-            section_field: [
-              {
-                ...section.section_field[0],
-                field_option: [
-                  ...section.section_field[0].field_option.filter(
-                    (option) => option.option_value !== value
-                  ),
-                  newOption,
-                ].sort((a, b) => {
-                  return a.option_order - b.option_order;
-                }),
-              },
-              ...section.section_field.slice(1),
-            ],
-          });
-        }
-      });
-    }
-  };
-
-  const handleQuantityChange = async (index: number, value: number) => {
-    const section = getValues(`sections.${index}`);
-    const status = checkQuantity(
-      `${section.section_field[0].field_response[0].request_response}`,
-      value
-    );
-    setValue(
-      `sections.${index}.section_field.2.field_response.0.request_response`,
-      `${status}`
-    );
-  };
-
-  const checkQuantity = (item: string, quantity: number) => {
-    if (isNaN(quantity)) return;
-
-    const matches = regExp.exec(item);
-    if (!matches) return;
-    const quantityMatch = matches[1].match(/(\d+)/);
-    if (!quantityMatch) return;
-
-    const maximumQuantity = Number(quantityMatch[1]);
-
-    if (maximumQuantity) {
-      if (quantity <= 0 || quantity > maximumQuantity) {
-        return "Invalid";
-      } else if (quantity < maximumQuantity) {
-        return "Partially Received";
-      } else {
-        return "Fully Received";
-      }
-    }
-  };
-
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -488,8 +368,6 @@ const EditReceivingInspectingReportPage = ({
                     formslyFormName={form.form_name}
                     onRemoveSection={handleRemoveSection}
                     isSectionRemovable={isRemovable}
-                    quotationFormMethods={{ onItemChange: handleItemChange }}
-                    rirFormMethods={{ onQuantityChange: handleQuantityChange }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
