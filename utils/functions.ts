@@ -783,28 +783,520 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
   return matchedUser ? matchedUser.jiraAccountId : null;
 };
 
-const getRequestParticipant = (formslyProjectSite: string) => {
+const getRequestParticipantList = (formslyProjectSite: string) => {
   const matcher = [
     {
-      items: ["MIN-22-008 MALADUGAO HEPP"],
-      fullName: "Ivandrae Angeles",
-      jiraAccountId: "5fadfcedc2e5390077e8ae6f",
-      emailAddress: "angelesivandrae7@gmail.com",
+      projectSiteList: ["ALAMINOS YARD"],
+      participantList: [
+        {
+          fullName: "Adrian Ingles",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:fa6354ae-36a4-44f7-b155-e74c520cb592",
+          emailAddress: "adrian.ingles.23@gmail.com",
+        },
+        {
+          fullName: "Alipio De Asis Jr.",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:52cb1487-0442-455c-99cc-9cb5a40dc4fd",
+          emailAddress: "alipiojrdeasis08@gmail.com",
+        },
+      ],
     },
     {
-      items: ["LUZ-18-007A STE TR4 PACKAGE C"],
-      fullName: "Jenny Cabutaje",
-      jiraAccountId:
-        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:eebd19ad-6ff0-49e9-8720-85c9f8a82ac3",
-      emailAddress: "jennysorianocabutaje@gmail.com",
+      projectSiteList: ["MIN-22-008 MALADUGAO HEPP"],
+      participantList: [
+        {
+          fullName: "Ivandrae Angeles",
+          jiraAccountId: "5fadfcedc2e5390077e8ae6f",
+          emailAddress: "angelesivandrae7@gmail.com",
+        },
+        {
+          fullName: "Mary Ann Arances",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:b829d9d4-f93a-4c83-b663-12847ac7b616",
+          emailAddress: "maryarances27@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["MIN-19-027 MALITBOG MINI HYDRO"],
+      participantList: [
+        {
+          fullName: "Joel E. Gucela",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+          emailAddress: "gucelaje2231@gmail.com",
+        },
+        {
+          fullName: "Ceilo Dann Oppus",
+          jiraAccountId: "712020:d9f9431e-c022-41e2-8963-356ad5448bc4",
+          emailAddress: "ceilo.opus@staclara.com.ph",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["MIN-21-005 12MW MANGIMA HPP", "MIN-14-026B MANOLO"],
+      participantList: [
+        {
+          fullName: "Andrew T. Castillo",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:81f9ade1-4161-41f3-964c-6389241c90eb",
+          emailAddress: "andrew.castillo.staclara@gmail.com",
+        },
+        {
+          fullName: "Gracel Ann Baring",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:3f156208-9c2e-4a6c-a213-163407ffb86a",
+          emailAddress: "gtbaring@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-20-001 500KVA MARILAO"],
+      participantList: [
+        {
+          fullName: "Jonalyn Cabrera",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:697bb839-4388-4f81-942a-522bd01ec1e1",
+          emailAddress: "jonalyn.cabrera@gmail.com",
+        },
+        {
+          fullName: "enjietelan2616@gmail.com",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:dbdab9ec-e483-470d-bba1-2f075f375c2b",
+          emailAddress: "enjietelan2616@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["MIN-21-015 MATI-1"],
+      participantList: [
+        {
+          fullName: "Joel E. Gucela",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+          emailAddress: "gucelaje2231@gmail.com",
+        },
+        {
+          fullName: "Ceilo Dann Oppus",
+          jiraAccountId: "712020:d9f9431e-c022-41e2-8963-356ad5448bc4",
+          emailAddress: "ceilo.opus@staclara.com.ph",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["SANTISIMO YARD", "LUZ-18-007A STE TR4 PACKAGE C"],
+      participantList: [
+        {
+          fullName: "Jenny Cabutaje",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:eebd19ad-6ff0-49e9-8720-85c9f8a82ac3",
+          emailAddress: "jennysorianocabutaje@gmail.com",
+        },
+        {
+          fullName: "Edwin Probadora",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:41b4ed4f-b660-4354-b031-0d221b54655b",
+          emailAddress: "edwinprobadora@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-21-007 ILIJAN CCPP"],
+      participantList: [
+        {
+          fullName: "Edwin Cardano",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:59dfdc78-441f-4d8c-b5e8-52f9965fa8ad",
+          emailAddress: "e.cardano24@gmail.com",
+        },
+        {
+          fullName: "Pathima Macaraig",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:477ca887-932d-4430-abab-701d3727ab0d",
+          emailAddress: "ronquillopathima@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: [
+        "LUZ-22-012A CAPARISPISAN",
+        " LUZ-23-009 KALAYAAN 2 WIND",
+      ],
+      participantList: [
+        {
+          fullName: "Ruslee Sanque",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:eb303e83-dae7-486c-8e3b-3ebc04daaaf1",
+          emailAddress: "rusleesanque1796@gmail.com",
+        },
+        // {
+        //   fullName: "Jessa Valera",
+        //   jiraAccountId:
+        //     "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:477ca887-932d-4430-abab-701d3727ab0d",
+        //   emailAddress: "jessa.valera@staclara.com.ph",
+        // },
+      ],
+    },
+    {
+      projectSiteList: ["MIN-21-016 CLARIN"],
+      participantList: [
+        {
+          fullName: "Regan Villanueva",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:db97d534-58b4-48ee-9066-af600f630cc1",
+          emailAddress: "clarin.whse@gmail.com",
+        },
+        {
+          fullName: "Russel Domingo",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:0cb97772-ae3f-46cf-a492-f266e706c4fa",
+          emailAddress: "princejohndomingo9@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: [
+        "CENTRAL OFFICE",
+        "LUZ-18-033 SFEXWIDENING",
+        "LUZ-14-041B VALENZUELA PLANT 2",
+      ],
+      participantList: [
+        {
+          fullName: "Christine Joy Gamay",
+          jiraAccountId: "712020:86bb273e-5485-4a8f-ab7a-a9e1f858defb",
+          emailAddress: "cjmgamay01@gmail.com",
+        },
+        {
+          fullName: "Ma. Carmella Corpuz",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:76493913-0757-4a23-8e9c-6e4ad38c5310",
+          emailAddress: "carmellacorpuzscic@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["MIN-22-006 DAVAO HYDRO & BW"],
+      participantList: [
+        {
+          fullName: "John Adrian Alvarez",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:4520b753-e94e-466c-8bfb-fe0592b3ec41",
+          emailAddress: "johnadrianalvarez8@gmail.com",
+        },
+        {
+          fullName: "Efren Sumilla -Fuel In Charge",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:27fb4525-91cb-459b-9b96-eb6ed99d0d5b",
+          emailAddress: "efren.scic@gmail.com",
+        },
+        {
+          fullName: "Rose Vallejo",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:78f3f7fd-b2ae-4b5e-8f48-fffcf3214c36",
+          emailAddress: "rosetagolimotvallejo@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-21-011 HERMOSA 500KV TL"],
+      participantList: [
+        {
+          fullName: "Rommelito Bautista",
+          jiraAccountId: "712020:d0ffb8e6-b409-400b-9b18-b91e9eae67d0",
+          emailAddress: "rommelito.bautista@staclara.com.ph",
+        },
+        {
+          fullName: "Nhelly Jarilla",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:686bb81e-da36-42a2-aa53-82cdc423dcda",
+          emailAddress: "nhellyjarilla@gmail.com",
+        },
+        {
+          fullName: "RONNELYAMBOT",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:a2540669-41c9-47a1-a67d-07929f2ff916",
+          emailAddress: "yambotronnel@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-22-005 HUDSON PACKAGE 1"],
+      participantList: [
+        {
+          fullName: "Michael Ventura",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:cb6d0086-aa76-4f24-a65e-33fb4e5a88ec",
+          emailAddress: "michaeljohnventura6@gmail.com",
+        },
+        {
+          fullName: "Jomari Herno",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:33a8dae5-a94a-4f89-ad3e-c360e9f3dc80",
+          emailAddress: "gollosojomari@gmail.com",
+        },
+        {
+          fullName: "17alrend@gmail.com",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:ec781dc0-1d6a-464c-96c3-e9260a625e51",
+          emailAddress: "17alrend@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-21-002 KIANGAN"],
+      participantList: [
+        {
+          fullName: "Reyshel Tobias",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:cfd9f478-136a-4dbb-9471-ab353b88bb43",
+          emailAddress: "reysheltobias@gmail.com",
+        },
+        {
+          fullName: "Jomari Herno",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:56405af4-d2d0-4b27-80dc-0e841b07de3b",
+          emailAddress: "gollosojomari@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["MIN-18-036 LAKEMAINIT"],
+      participantList: [
+        {
+          fullName: "Andrew T. Castillo",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:81f9ade1-4161-41f3-964c-6389241c90eb",
+          emailAddress: "andrew.castillo.staclara@gmail.com",
+        },
+        {
+          fullName: "Ma. Carmella Corpuz",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:76493913-0757-4a23-8e9c-6e4ad38c5310",
+          emailAddress: "carmellacorpuzscic@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-23-006 LAND DEV LEMERY P1"],
+      participantList: [
+        {
+          fullName: "Edwin Probadora",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:41b4ed4f-b660-4354-b031-0d221b54655b",
+          emailAddress: "edwinprobadora@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-19-021 MERALCO HDD PROJECT"],
+      participantList: [
+        {
+          fullName: "Ronald V. Sim",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:fa1eeb31-2e4c-44ec-bb6c-f55732861c0f",
+          emailAddress: "simronald11@gmail.com",
+        },
+        {
+          fullName: "Jennelyn Santos",
+          jiraAccountId: "712020:d3309327-4717-49ff-9db7-47f15e0e48f2",
+          emailAddress: "jennelyn.santos@staclara.com.ph",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-23-003 MORONG PARK"],
+      participantList: [
+        {
+          fullName: "Rogelio Bolo",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:b28fffc9-0c94-4808-a74e-15eeee5d2403",
+          emailAddress: "rbolo59@gmail.com",
+        },
+        {
+          fullName: "Eckon Calderon_IC_BCDA_(active) ",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e9639cfd-d3b9-4fb0-815f-c13d26708ea4",
+          emailAddress: "eckon.calderon.staclara@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-23-005 MRT 7 NORTH AVE"],
+      participantList: [
+        {
+          fullName: "Andres Abalayan",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:9fb99a39-2e66-460a-affc-7ee13731e3a2",
+          emailAddress: "andres.abalayan@staclara.com.ph",
+        },
+        {
+          fullName: "King Elword Eglip-active",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:3a934488-294d-443c-8bac-8f17a81cba0b",
+          emailAddress: "kingelwordeglip76@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-18-018 SUMITOMO NSCR"],
+      participantList: [
+        {
+          fullName: "Montano Bulalaque",
+          jiraAccountId: "712020:39d96cbd-511b-47db-846c-7a7097bb5989",
+          emailAddress: "montano.bulalaque@staclara.com.ph",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-22-010 PHILIP MORRIS"],
+      participantList: [
+        {
+          fullName: "Medardo Quiatchon",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e7e36b0d-3ff6-4d66-84e9-29b12beb10b0",
+          emailAddress: "medzkilen@gmail.com",
+        },
+        {
+          fullName: "Jenna Macarasig",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:52ab3285-5252-4f73-800c-d671b1218991",
+          emailAddress: "jennamacarasig.21@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["PILILIA YARD"],
+      participantList: [
+        {
+          fullName: "Benedick Tibay",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:71ca30a1-354f-4ed6-bb03-c41f50d6a056",
+          emailAddress: "jbstibay30@gmail.com",
+        },
+        {
+          fullName: "Christian Balatero - Fuel Mgmt. Lead (Active)",
+          jiraAccountId: "712020:0c9a62a0-05e4-44e8-9dca-bdce04bca64b",
+          emailAddress: "christian.balatero@staclara.com.ph",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["VIZ-23-008 SAN ISIDRO SOLAR"],
+      participantList: [
+        {
+          fullName: "Darryl M. Canoza",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:8467ef1e-f619-4ee5-accf-f155329e8122",
+          emailAddress: "darrylcanoza12@gmail.com",
+        },
+        {
+          fullName: "neillampitao@gmail.com",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:2936b4f9-b3d8-49c2-959d-3fcb3f1b4db3",
+          emailAddress: "neillampitao@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["MIN-15-077 MW SIGUIL HYDRO"],
+      participantList: [
+        {
+          fullName: "Joel E. Gucela",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:92570bb5-06fe-446b-a6db-8b5de57ac2d6",
+          emailAddress: "gucelaje2231@gmail.com",
+        },
+        {
+          fullName: "Christopher Waga",
+          jiraAccountId: "5f1e1c29c1b9f4001c6c7126",
+          emailAddress: "christopher.waga@staclara.com.ph",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-22-009 SOLID LF MAIN BLDG"],
+      participantList: [
+        {
+          fullName: "Levi Saturinas",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:737946a6-5539-4cba-a877-2573e31b813d",
+          emailAddress: "levisaturinas.scic@gmail.com",
+        },
+        {
+          fullName: "Nico Tengco (Active)",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:829a2d2f-dfef-4ce8-9cd3-715bf7fb2d8d",
+          emailAddress: "nicotengco19@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-21-009 TUMAUINI HEPPP"],
+      participantList: [
+        {
+          fullName: "Richard Aguinaldo",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:777da3c6-162b-4990-a534-5bcc6bbc9003",
+          emailAddress: "richardaguinaldo11@gmail.com",
+        },
+        {
+          fullName: "Maribel Galicia",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:3aea1741-c79e-492b-9d0c-efb25197fdb0",
+          emailAddress: "maribel.galicia.scic@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-22-002 500KV BACKBONE S2"],
+      participantList: [
+        {
+          fullName: "Romel Llarenas",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e409b14e-8ad9-4eb7-bf08-35d897452539",
+          emailAddress: "llarenasromelb@gmail.com",
+        },
+        {
+          fullName: "Alyssa Basilio",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:a4cfa3cb-90df-45a5-834f-702fd9d89378",
+          emailAddress: "basilioalyssa193@gmail.com",
+        },
+        {
+          fullName: "Richelle Mae Precioso",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:49d0b9e3-69a4-4813-bb1a-047bd6683cd0",
+          emailAddress: "rmcprecioso@gmail.com",
+        },
+      ],
+    },
+    {
+      projectSiteList: ["LUZ-12-051 CATUIRAN"],
+      participantList: [
+        {
+          fullName: "Jay Quiroz",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d8344027-3578-4f50-8b8a-11fe72244208",
+          emailAddress: "jayquiroz.santaclara@gmail.com",
+        },
+      ],
     },
   ];
 
-  const matchedUser = matcher.find((matcherItem) =>
-    matcherItem.items.includes(formslyProjectSite)
+  const match = matcher.find((matcherItem) =>
+    matcherItem.projectSiteList.includes(formslyProjectSite)
   );
 
-  return matchedUser ? matchedUser.jiraAccountId : null;
+  if (match) {
+    const requestParticipantList = match.participantList.map(
+      (participant) => participant.jiraAccountId
+    );
+
+    return requestParticipantList;
+  } else {
+    return null;
+  }
 };
 
 export const mostOccurringElement = (arr: string[]) => {
@@ -829,14 +1321,12 @@ export const generateJiraTicketPayload = ({
   requestTypeId,
   projectName,
   itemCategory,
-  primaryApproverJiraAccountId,
 }: {
   requestId: string;
   requestUrl: string;
   requestTypeId: string;
   projectName: string;
   itemCategory: string[];
-  primaryApproverJiraAccountId: string | null;
 }) => {
   const requestingProjectSite = getJiraRequestingProjectSite(
     projectName.includes("CENTRAL OFFICE") ? "CENTRAL OFFICE" : projectName
@@ -871,7 +1361,9 @@ export const generateJiraTicketPayload = ({
   const warehouseRepresentative = getWarehouseRepresentative(
     requestingProjectSite.label
   );
-  const requestParticipant = getRequestParticipant(requestingProjectSite.label);
+  const requestParticipantList = getRequestParticipantList(
+    requestingProjectSite.label
+  );
 
   if (typeof warehouseCorporateLead !== "string") {
     console.error("Warehouse Corporate Lead is not found.");
@@ -922,15 +1414,11 @@ export const generateJiraTicketPayload = ({
     },
     isAdfRequest: false,
     requestFieldValues: {},
-    requestParticipants: requestParticipant ? [requestParticipant] : [],
+    requestParticipants: requestParticipantList ? [requestParticipantList] : [],
     requestTypeId: requestTypeId,
     serviceDeskId: "17",
     raiseOnBehalfOf: warehouseRepresentative,
   };
-
-  if (primaryApproverJiraAccountId) {
-    jiraTicketPayload.requestParticipants.push(primaryApproverJiraAccountId);
-  }
 
   return jiraTicketPayload;
 };
