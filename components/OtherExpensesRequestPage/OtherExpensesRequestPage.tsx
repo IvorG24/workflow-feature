@@ -358,22 +358,12 @@ const OtherExpensesRequestPage = ({
       const projectName = request.request_project.team_project_name;
       const itemCategory = [`"Other Expenses"`];
 
-      const primaryApproverJiraUserResponse = await fetch(
-        `/api/get-jira-user?approverEmail=${user?.user_email}`
-      );
-
-      const primaryApproverJiraUserData =
-        await primaryApproverJiraUserResponse.json();
-
       const jiraTicketPayload = generateJiraTicketPayload({
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "189",
         projectName,
         itemCategory,
-        primaryApproverJiraAccountId: primaryApproverJiraUserData[0]
-          ? primaryApproverJiraUserData[0].accountId
-          : null,
       });
 
       const jiraTicketResponse = await fetch("/api/create-jira-ticket", {

@@ -357,22 +357,12 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             .map(({ field_response }) => field_response?.request_response)
         );
 
-      const primaryApproverJiraUserResponse = await fetch(
-        `/api/get-jira-user?approverEmail=${user?.user_email}`
-      );
-
-      const primaryApproverJiraUserData =
-        await primaryApproverJiraUserResponse.json();
-
       const jiraTicketPayload = generateJiraTicketPayload({
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "189",
         projectName,
         itemCategory: itemCategory as string[],
-        primaryApproverJiraAccountId: primaryApproverJiraUserData[0]
-          ? primaryApproverJiraUserData[0].accountId
-          : null,
       });
 
       const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
