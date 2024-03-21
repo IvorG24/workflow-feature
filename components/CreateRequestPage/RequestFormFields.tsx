@@ -112,16 +112,8 @@ const RequestFormFields = ({
 
   const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [linkToDisplay, setLinkToDisplay] = useState<string | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
+  const [linkToDisplay, setLinkToDisplay] = useState<string | null>(null);
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response

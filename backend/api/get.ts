@@ -6187,10 +6187,11 @@ export const getPropertyNumberOptions = async (
     teamId: string;
     index: number;
     limit: number;
+    equipmentId?: string;
   }
 ) => {
-  const { teamId, index, limit } = params;
-  const { data, error } = await supabaseClient
+  const { teamId, index, limit, equipmentId } = params;
+  let query = supabaseClient
     .from("equipment_description_view")
     .select(
       `
@@ -6204,9 +6205,16 @@ export const getPropertyNumberOptions = async (
     .eq("equipment_description_equipment.equipment_team_id", teamId)
     .eq("equipment_description_is_disabled", false)
     .eq("equipment_description_is_available", true)
-    .order("equipment_description_property_number_with_prefix")
-    .limit(limit)
-    .range(index, index + limit - 1);
+    .order("equipment_description_property_number_with_prefix");
+
+  if (equipmentId) {
+    query.eq("equipment_description_equipment_id", equipmentId);
+  }
+
+  query = query.limit(limit);
+  query = query.range(index, index + limit - 1);
+
+  const { data, error } = await query;
   if (error) throw error;
 
   return data as unknown as {
