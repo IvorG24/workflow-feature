@@ -1,4 +1,4 @@
-import SignUpPage from "@/components/SignUpPage/SignUpPage";
+import SignInPage from "@/components/SignInPage/SignInPage";
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 
@@ -10,52 +10,41 @@ jest.mock("@supabase/auth-helpers-nextjs", () => ({
   createPagesBrowserClient: jest.fn(),
 }));
 
-describe("SignUpPage", () => {
-  it("renders required fields", () => {
-    render(<SignUpPage />);
-
+describe("SignInPage", () => {
+  it("renders required fields", async () => {
+    render(<SignInPage />);
     const emailInput = screen.getByRole("textbox", { name: "Email" });
     const passwordInput = screen.getByLabelText("Password");
-    const confirmPasswordInput = screen.getByLabelText("Confirm Password");
-
     expect(emailInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
-    expect(confirmPasswordInput).toBeInTheDocument();
   });
 
   it("renders oauth buttons", () => {
-    render(<SignUpPage />);
-
+    render(<SignInPage />);
     const googleAuth = screen.getByRole("button", { name: "Google" });
     const azureAuth = screen.getByRole("button", { name: "Azure" });
-
     expect(googleAuth).toBeInTheDocument();
     expect(azureAuth).toBeInTheDocument();
   });
 
   it("renders error on empty input", async () => {
-    render(<SignUpPage />);
-
-    const signUpButton = screen.getByRole("button", { name: /sign up/i });
-    fireEvent.click(signUpButton);
-
+    render(<SignInPage />);
+    const signInButton = screen.getByRole("button", { name: /sign in/i });
+    fireEvent.click(signInButton);
     expect(
       await screen.findByText(/email field cannot be empty/i)
     ).toBeInTheDocument();
     expect(
       await screen.findByText(/^password field cannot be empty/i)
     ).toBeInTheDocument();
-    expect(
-      await screen.findByText(/^confirm password field cannot be empty/i)
-    ).toBeInTheDocument();
   });
 
   it("renders error on invalid email", async () => {
-    render(<SignUpPage />);
+    render(<SignInPage />);
     const emailInput = screen.getByRole("textbox", { name: "Email" });
-    const signUpButton = screen.getByRole("button", { name: /sign up/i });
+    const signInButton = screen.getByRole("button", { name: /sign in/i });
     fireEvent.change(emailInput, { target: { value: "invalidemail" } });
-    fireEvent.click(signUpButton);
+    fireEvent.click(signInButton);
     expect(await screen.findByText(/email is invalid/i)).toBeInTheDocument();
   });
 });
