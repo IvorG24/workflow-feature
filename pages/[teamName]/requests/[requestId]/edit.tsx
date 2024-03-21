@@ -4,15 +4,9 @@ import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequest
 import EditPEDConsumableRequestPage from "@/components/EditPEDConsumableRequestPage/EditPEDConsumableRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
-import EditQuotationRequestPage from "@/components/EditQuotationRequestPage/EditQuotationRequestPage";
-import EditReceivingInspectingReportPage from "@/components/EditReceivingInspectingReport/EditReceivingInspectingReport";
-import EditReleaseOrderPage from "@/components/EditReleaseOrderPage/EditReleaseOrderPage";
 import EditRequestForPaymentPage from "@/components/EditRequestForPaymentPage/EditRequestForPaymentPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
-import EditSourcedItemRequestPage from "@/components/EditSourcedItemRequestPage/EditSourcedItemRequestPage";
-import EditSubconRequestPage from "@/components/EditSubconRequestPage/EditSubconRequestPage";
-import EditTransferReceiptPage from "@/components/EditTransferReceiptPage/EditTransferReceiptPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
@@ -53,10 +47,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 export type EditRequestOnLoadProps = {
   request: RequestWithResponseType;
   itemOptions: OptionTableRow[];
-  serviceOptions: OptionTableRow[];
-  originalItemOptions?: OptionTableRow[];
   projectOptions?: OptionTableRow[];
-  sourceProjectList?: Record<string, string>;
   requestingProject?: string;
   specialApprover?: {
     special_approver_id: string;
@@ -75,11 +66,8 @@ export type EditRequestOnLoadProps = {
 const Page = ({
   request,
   itemOptions,
-  serviceOptions = [],
-  originalItemOptions = [],
   projectOptions = [],
   requestingProject = "",
-  sourceProjectList = {},
   specialApprover = [],
   referenceOnly,
   supplierOptions = [],
@@ -151,60 +139,7 @@ const Page = ({
             referenceOnly={referenceOnly}
           />
         );
-      case "Subcon":
-        return (
-          <EditSubconRequestPage
-            request={request}
-            serviceOptions={serviceOptions}
-            projectOptions={projectOptions}
-          />
-        );
-      case "Sourced Item":
-        return (
-          <EditSourcedItemRequestPage
-            request={request}
-            itemOptions={itemOptions}
-            requestingProject={requestingProject}
-          />
-        );
-      case "Release Order":
-        return (
-          <EditReleaseOrderPage
-            request={request}
-            itemOptions={itemOptions}
-            originalItemOptions={originalItemOptions}
-            sourceProjectList={sourceProjectList}
-            requestingProject={requestingProject}
-          />
-        );
-      case "Transfer Receipt":
-        return (
-          <EditTransferReceiptPage
-            request={request}
-            itemOptions={itemOptions}
-            originalItemOptions={originalItemOptions}
-            sourceProjectList={sourceProjectList}
-            requestingProject={requestingProject}
-          />
-        );
-      case "Quotation":
-        return (
-          <EditQuotationRequestPage
-            request={request}
-            itemOptions={itemOptions}
-            originalItemOptions={originalItemOptions}
-            requestingProject={requestingProject}
-          />
-        );
-      case "Receiving Inspecting Report":
-        return (
-          <EditReceivingInspectingReportPage
-            request={request}
-            itemOptions={itemOptions}
-            originalItemOptions={originalItemOptions}
-            requestingProject={requestingProject}
-          />
-        );
+
       case "Request For Payment":
         return (
           <EditRequestForPaymentPage
