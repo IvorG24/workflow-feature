@@ -1,6 +1,6 @@
 import SignUpPage from "@/components/SignUpPage/SignUpPage";
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 jest.mock("next/router", () => ({
   useRouter: jest.fn(),
@@ -21,5 +21,32 @@ describe("SignUpPage", () => {
     expect(emailInput).toBeInTheDocument();
     expect(passwordInput).toBeInTheDocument();
     expect(confirmPasswordInput).toBeInTheDocument();
+  });
+
+  it("renders oauth buttons", () => {
+    render(<SignUpPage />);
+
+    const googleAuth = screen.getByRole("button", { name: "Google" });
+    const azureAuth = screen.getByRole("button", { name: "Azure" });
+
+    expect(googleAuth).toBeInTheDocument();
+    expect(azureAuth).toBeInTheDocument();
+  });
+
+  it("renders error on empty input", async () => {
+    render(<SignUpPage />);
+
+    const signUpButton = screen.getByRole("button", { name: /sign up/i });
+    fireEvent.click(signUpButton);
+
+    expect(
+      await screen.findByText(/email field cannot be empty/i)
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/^password field cannot be empty/i)
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(/^confirm password field cannot be empty/i)
+    ).toBeInTheDocument();
   });
 });
