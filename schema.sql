@@ -9597,17 +9597,24 @@ plv8.subtransaction(function(){
             ...form.form_section[0].section_field.slice(6)
           ]
         }
-        
-        const generalItemNames = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}" }')`)[0].get_item_section_choices;
-        generalItemNameOptions = generalItemNames.map((generalItemName, index) => {
-          return {
-            option_field_id: "",
-            option_id: generalItemName.equipment_part_id,
-            option_order: index,
-            option_value: generalItemName.equipment_general_name,
-          };
-        });
 
+        let index = 0;
+        const generalItemNameOptions = [];
+        while (1) {
+          const data = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+          const itemNameOption = data.map((generalItemName, index) => {
+            return {
+              option_field_id: "",
+              option_id: generalItemName.equipment_part_id,
+              option_order: index,
+              option_value: generalItemName.equipment_general_name,
+            };
+          });
+          generalItemNameOptions.push(...itemNameOption);
+          if (data.length < 1000) break;
+          index += 1000;
+        }
+        
         itemSectionList = form.form_section.slice(1)
         .map((section) => {
           const generalItemName = JSON.parse(section.section_field[0].field_response[0].request_response).replace(/'/g, "*");
@@ -9615,46 +9622,74 @@ plv8.subtransaction(function(){
           const brand = JSON.parse(section.section_field[2].field_response[0].request_response).replace(/'/g, "*");
           const model = JSON.parse(section.section_field[3].field_response[0].request_response).replace(/'/g, "*");
 
-          const componentCategories = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}" }')`)[0].get_item_section_choices;
-          const componentCategoryOptions = componentCategories.map((componentCategory, index) => {
-            return {
-              option_field_id: "",
-              option_id: componentCategory.equipment_part_id,
-              option_order: index,
-              option_value: componentCategory.equipment_component_category,
-            };
-          });
+          index = 0;
+          const componentCategoryOptions = [];
+          while (1) {
+            const data = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+            const componentCategories = data.map((componentCategory, index) => {
+              return {
+                option_field_id: "",
+                option_id: componentCategory.equipment_part_id,
+                option_order: index,
+                option_value: componentCategory.equipment_component_category,
+              };
+            });
+            componentCategoryOptions.push(...componentCategories);
+            if (data.length < 1000) break;
+            index += 1000;
+          }
 
-          const brands = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}", "componentCategory": "${componentCategory}" }')`)[0].get_item_section_choices;
-          const brandOptions = brands.map((brand, index) => {
-            return {
-              option_field_id: "",
-              option_id: brand.equipment_part_id,
-              option_order: index,
-              option_value: brand.equipment_brand,
-            };
-          });
+          index = 0;
+          const brandOptions = [];
+          while (1) {
+            const data = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+            const brands = data.map((brand, index) => {
+              return {
+                option_field_id: "",
+                option_id: brand.equipment_part_id,
+                option_order: index,
+                option_value: brand.equipment_brand,
+              };
+            });
+            brandOptions.push(...brands);
+            if (data.length < 1000) break;
+            index += 1000;
+          }
 
-          const models = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "brand": "${brand}" }')`)[0].get_item_section_choices;
-          const modelOptions = models.map((model, index) => {
-            return {
-              option_field_id: "",
-              option_id: model.equipment_part_id,
-              option_order: index,
-              option_value: model.equipment_model,
-            };
-          });
+          index = 0;
+          const modelOptions = [];
+          while (1) {
+            const data = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "brand": "${brand}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+            const models = data.map((model, index) => {
+              return {
+                option_field_id: "",
+                option_id: model.equipment_part_id,
+                option_order: index,
+                option_value: model.equipment_model,
+              };
+            });
+            modelOptions.push(...models);
+            if (data.length < 1000) break;
+            index += 1000;
+          }
 
-          const partNumbers = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "brand": "${brand}", "model": "${model}" }')`)[0].get_item_section_choices;
-          const partNumberOptions = partNumbers.map((partNumber, index) => {
-            return {
-              option_field_id: "",
-              option_id: partNumber.equipment_part_id,
-              option_order: index,
-              option_value: partNumber.equipment_part_number,
-            };
-          });
-
+          index = 0;
+          const partNumberOptions = [];
+          while (1) {
+            const data = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "brand": "${brand}", "model": "${model}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+            const partNumbers = data.map((partNumber, index) => {
+              return {
+                option_field_id: "",
+                option_id: partNumber.equipment_part_id,
+                option_order: index,
+                option_value: partNumber.equipment_part_number,
+              };
+            });
+            partNumberOptions.push(...partNumbers);
+            if (data.length < 1000) break;
+            index += 1000;
+          }
+          
           return {
             ...section,
             section_field: [
@@ -9727,15 +9762,22 @@ plv8.subtransaction(function(){
           ]
         }
 
-        const generalItemNames = plv8.execute(`SELECT get_item_section_choices('{}')`)[0].get_item_section_choices;
-        generalItemNameOptions = generalItemNames.map((generalItemName, index) => {
-          return {
-            option_field_id: "",
-            option_id: generalItemName.equipment_part_id,
-            option_order: index,
-            option_value: generalItemName.equipment_general_name,
-          };
-        });
+        let index = 0;
+        const generalItemNameOptions = [];
+        while (1) {
+          const data = plv8.execute(`SELECT get_item_section_choices('{ "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+          const itemNameOption = data.map((generalItemName, index) => {
+            return {
+              option_field_id: "",
+              option_id: generalItemName.equipment_part_id,
+              option_order: index,
+              option_value: generalItemName.equipment_general_name,
+            };
+          });
+          generalItemNameOptions.push(...itemNameOption);
+          if (data.length < 1000) break;
+          index += 1000;
+        }
 
         itemSectionList = form.form_section.slice(1)
         .map((section) => {
@@ -9744,45 +9786,73 @@ plv8.subtransaction(function(){
           const brand = JSON.parse(section.section_field[2].field_response[0].request_response).replace(/'/g, "*");
           const model = JSON.parse(section.section_field[3].field_response[0].request_response).replace(/'/g, "*");
 
-          const componentCategories = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}" }')`)[0].get_item_section_choices;
-          const componentCategoryOptions = componentCategories.map((componentCategory, index) => {
-            return {
-              option_field_id: "",
-              option_id: componentCategory.equipment_part_id,
-              option_order: index,
-              option_value: componentCategory.equipment_component_category,
-            };
-          });
+          index = 0;
+          const componentCategoryOptions = [];
+          while (1) {
+            const data = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+            const componentCategories = data.map((componentCategory, index) => {
+              return {
+                option_field_id: "",
+                option_id: componentCategory.equipment_part_id,
+                option_order: index,
+                option_value: componentCategory.equipment_component_category,
+              };
+            });
+            componentCategoryOptions.push(...componentCategories);
+            if (data.length < 1000) break;
+            index += 1000;
+          }
 
-          const brands = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}", "componentCategory": "${componentCategory}" }')`)[0].get_item_section_choices;
-          const brandOptions = brands.map((brand, index) => {
-            return {
-              option_field_id: "",
-              option_id: brand.equipment_part_id,
-              option_order: index,
-              option_value: brand.equipment_brand,
-            };
-          });
+          index = 0;
+          const brandOptions = [];
+          while (1) {
+            const data = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+            const brands = data.map((brand, index) => {
+              return {
+                option_field_id: "",
+                option_id: brand.equipment_part_id,
+                option_order: index,
+                option_value: brand.equipment_brand,
+              };
+            });
+            brandOptions.push(...brands);
+            if (data.length < 1000) break;
+            index += 1000;
+          }
 
-          const models = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "brand": "${brand}" }')`)[0].get_item_section_choices;
-          const modelOptions = models.map((model, index) => {
-            return {
-              option_field_id: "",
-              option_id: model.equipment_part_id,
-              option_order: index,
-              option_value: model.equipment_model,
-            };
-          });
+          index = 0;
+          const modelOptions = [];
+          while (1) {
+            const data = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "brand": "${brand}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+            const models = data.map((model, index) => {
+              return {
+                option_field_id: "",
+                option_id: model.equipment_part_id,
+                option_order: index,
+                option_value: model.equipment_model,
+              };
+            });
+            modelOptions.push(...models);
+            if (data.length < 1000) break;
+            index += 1000;
+          }
 
-          const partNumbers = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "brand": "${brand}", "model": "${model}" }')`)[0].get_item_section_choices;
-          const partNumberOptions = partNumbers.map((partNumber, index) => {
-            return {
-              option_field_id: "",
-              option_id: partNumber.equipment_part_id,
-              option_order: index,
-              option_value: partNumber.equipment_part_number,
-            };
-          });
+          index = 0;
+          const partNumberOptions = [];
+          while (1) {
+            const data = plv8.execute(`SELECT get_item_section_choices('{ "generalName": "${generalItemName}", "componentCategory": "${componentCategory}", "brand": "${brand}", "model": "${model}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
+            const partNumbers = data.map((partNumber, index) => {
+              return {
+                option_field_id: "",
+                option_id: partNumber.equipment_part_id,
+                option_order: index,
+                option_value: partNumber.equipment_part_number,
+              };
+            });
+            partNumberOptions.push(...partNumbers);
+            if (data.length < 1000) break;
+            index += 1000;
+          }
 
           return {
             ...section,
@@ -10306,7 +10376,9 @@ RETURNS JSON AS $$
       generalName: initialGeneralName,
       componentCategory: initialComponentCategory,
       brand: initialBrand,
-      model: initialModel
+      model: initialModel,
+      index,
+      limit
     } = input_data;
 
     const generalName = initialGeneralName ? initialGeneralName.replace("*", "''") : undefined;
@@ -10364,9 +10436,11 @@ RETURNS JSON AS $$
             ${model ? `AND equipment_model = '${model}'` : ""}
             AND equipment_unit_of_measurement_is_disabled = false
             AND equipment_unit_of_measurement_is_available = true
-          ORDER BY ${order}
         ) AS subquery
         WHERE row_number = 1
+        ORDER BY ${order}
+        LIMIT ${limit} 
+        OFFSET ${index}
       `
     );
 
