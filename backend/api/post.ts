@@ -1582,3 +1582,37 @@ export const createPedPartFromTicketRequest = async (
   if (error) throw error;
   return data;
 };
+
+// create ped part from ticket request
+export const createJiraFormslyProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyProjectId: string;
+    jiraProjectId: string;
+  }
+) => {
+  const { formslyProjectId, jiraProjectId } = params;
+
+  // check if duplicate entry
+
+  const { count } = await supabaseClient
+    .from("jira_formsly_project_table")
+    .select("jira_project_id, formsly_project_id", { count: "exact" })
+    .eq("formsly_project_id", formslyProjectId);
+
+  if (Number(count)) {
+    return { success: false, data: null };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_formsly_project_table")
+    .insert({
+      formsly_project_id: formslyProjectId,
+      jira_project_id: jiraProjectId,
+    })
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+
+  return { success: true, data: data };
+};

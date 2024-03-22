@@ -6222,3 +6222,56 @@ export const getPropertyNumberOptions = async (
     equipment_description_property_number_with_prefix: string;
   }[];
 };
+
+// Fetch jira project list
+export const getJiraProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("jira_project_table")
+    .select("*")
+    .order("jira_project_jira_label")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+export const getJiraFormslyProjectList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, count, error } = await supabaseClient
+    .from("team_project_table")
+    .select(
+      "team_project_id, team_project_name, assigned_jira_project: jira_formsly_project_table(jira_formsly_project_id, jira_project_id, formsly_project_id)",
+      { count: "exact" }
+    )
+    .order("team_project_name")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return {
+    data: data as unknown as {
+      team_project_id: string;
+      team_project_name: string;
+      assigned_jira_project: {
+        jira_formsly_project_id: string;
+        jira_project_id: string;
+        formsly_project_id: string;
+      } | null;
+    }[],
+    count: Number(count),
+  };
+};

@@ -386,6 +386,20 @@ export type AddressTableUpdate =
 export type RequestViewTableRow =
   Database["public"]["Views"]["request_view"]["Row"];
 
+export type JiraProjectTableRow =
+  Database["public"]["Tables"]["jira_project_table"]["Row"];
+export type JiraProjectTableInsert =
+  Database["public"]["Tables"]["jira_project_table"]["Insert"];
+export type JiraProjectTableUpdate =
+  Database["public"]["Tables"]["jira_project_table"]["Update"];
+
+export type JiraFormslyProjectTableRow =
+  Database["public"]["Tables"]["jira_formsly_project_table"]["Row"];
+export type JiraFormslyProjectTableInsert =
+  Database["public"]["Tables"]["jira_formsly_project_table"]["Insert"];
+export type JiraFormslyProjectTableUpdate =
+  Database["public"]["Tables"]["jira_formsly_project_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1568,4 +1582,14 @@ export type ApproverDetailsType = {
   status: string;
   date: string | null;
   signature: string | null;
+};
+
+export type JiraFormslyProjectType = {
+  team_project_id: string;
+  team_project_name: string;
+  assigned_jira_project: {
+    jira_formsly_project_id: string;
+    formsly_project_id: string;
+    jira_project: JiraProjectTableRow;
+  } | null;
 };
