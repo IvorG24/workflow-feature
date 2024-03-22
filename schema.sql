@@ -9599,7 +9599,7 @@ plv8.subtransaction(function(){
         }
 
         let index = 0;
-        const generalItemNameOptions = [];
+        generalItemNameOptions = [];
         while (1) {
           const data = plv8.execute(`SELECT get_item_section_choices('{ "equipmentId": "${equipmentId}", "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
           const itemNameOption = data.map((generalItemName, index) => {
@@ -9763,7 +9763,7 @@ plv8.subtransaction(function(){
         }
 
         let index = 0;
-        const generalItemNameOptions = [];
+        generalItemNameOptions = [];
         while (1) {
           const data = plv8.execute(`SELECT get_item_section_choices('{ "index": ${index}, "limit": 1000 }')`)[0].get_item_section_choices;
           const itemNameOption = data.map((generalItemName, index) => {
