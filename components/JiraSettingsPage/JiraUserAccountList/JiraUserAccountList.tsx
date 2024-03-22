@@ -30,6 +30,7 @@ type Props = {
   setIsManagingUserAccountList: Dispatch<SetStateAction<boolean>>;
   setSelectedFormslyProject: Dispatch<SetStateAction<string | null>>;
   selectedFormslyProject: string | null;
+  selectedFormslyProjectName: string;
   jiraUserRoleList: JiraUserRoleTableRow[];
 };
 
@@ -43,6 +44,7 @@ const JiraUserAccountList = ({
   setIsManagingUserAccountList,
   setSelectedFormslyProject,
   selectedFormslyProject,
+  selectedFormslyProjectName,
   jiraUserRoleList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -199,7 +201,7 @@ const JiraUserAccountList = ({
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
       <Paper p="xl" shadow="xs" pos="relative">
         <Flex justify="space-between" align="center">
-          <Title order={3}>Jira User Accounts</Title>
+          <Title order={3}>{`${selectedFormslyProjectName} Jira Users`}</Title>
           <ActionIcon
             onClick={() => {
               setIsManagingUserAccountList(false);

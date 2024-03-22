@@ -1,5 +1,6 @@
 import { getJiraUserRoleList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { startCase } from "@/utils/string";
 import {
   JiraFormslyProjectType,
   JiraProjectTableRow,
@@ -36,9 +37,11 @@ const JiraSettingsPage = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isManagingUserAccountList, setIsManagingUserAccountList] =
     useState(false);
-  const [selectedFormslyProject, setSelectedFormslyProject] = useState<
+  const [selectedFormslyProjectId, setSelectedFormslyProjectId] = useState<
     string | null
   >(null);
+  const [selectedFormslyProjectName, setSelectedFormslyProjectName] =
+    useState("");
   const [jiraUserRoleList, setJiraUserRoleList] = useState<
     JiraUserRoleTableRow[]
   >([]);
@@ -67,6 +70,16 @@ const JiraSettingsPage = ({
     fetchClientData();
   }, []);
 
+  useEffect(() => {
+    if (selectedFormslyProjectId) {
+      const projectMatch = initialJiraFormslyProjectList.find(
+        (project) => project.team_project_id === selectedFormslyProjectId
+      );
+      if (!projectMatch) return;
+      setSelectedFormslyProjectName(startCase(projectMatch.team_project_name));
+    }
+  }, [selectedFormslyProjectId]);
+
   return (
     <Container>
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
@@ -78,15 +91,16 @@ const JiraSettingsPage = ({
           jiraFormslyProjectCount={initialJiraFormslyProjectCount}
           jiraProjectList={jiraProjectList}
           setIsManagingUserAccountList={setIsManagingUserAccountList}
-          setSelectedFormslyProject={setSelectedFormslyProject}
-          selectedFormslyProject={selectedFormslyProject}
+          setSelectedFormslyProject={setSelectedFormslyProjectId}
+          selectedFormslyProject={selectedFormslyProjectId}
         />
         {isManagingUserAccountList && (
           <JiraUserAccountList
             jiraUserAcountList={jiraUserAcountList}
             setIsManagingUserAccountList={setIsManagingUserAccountList}
-            setSelectedFormslyProject={setSelectedFormslyProject}
-            selectedFormslyProject={selectedFormslyProject}
+            setSelectedFormslyProject={setSelectedFormslyProjectId}
+            selectedFormslyProject={selectedFormslyProjectId}
+            selectedFormslyProjectName={selectedFormslyProjectName}
             jiraUserRoleList={jiraUserRoleList}
           />
         )}
