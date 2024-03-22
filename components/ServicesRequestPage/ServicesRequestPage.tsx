@@ -26,7 +26,16 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Flex, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Accordion,
+  Container,
+  Flex,
+  Group,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -333,22 +342,12 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       const projectName = request.request_project.team_project_name;
       const itemCategory = [`"Services"`];
 
-      const primaryApproverJiraUserResponse = await fetch(
-        `/api/get-jira-user?approverEmail=${user?.user_email}`
-      );
-
-      const primaryApproverJiraUserData =
-        await primaryApproverJiraUserResponse.json();
-
       const jiraTicketPayload = {
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "189",
         projectName,
         itemCategory,
-        primaryApproverJiraAccountId: primaryApproverJiraUserData[0]
-          ? primaryApproverJiraUserData[0].accountId
-          : null,
       };
 
       const jiraTicketData = await createJiraTicket(
@@ -451,23 +450,38 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
           jiraTicketStatus={jiraTicketStatus}
         />
 
-        {formSection.map((section, idx) => {
-          if (
-            idx === 0 &&
-            section.section_field[0].field_response?.request_response ===
-              '"null"'
-          )
-            return;
+        <RequestSection
+          section={formSection[0]}
+          isFormslyForm={true}
+          isOnlyWithResponse
+        />
 
-          return (
-            <RequestSection
-              key={section.section_id + idx}
-              section={section}
-              isFormslyForm={true}
-              isOnlyWithResponse
-            />
-          );
-        })}
+        <Accordion>
+          <Accordion.Item key="item" value="item">
+            <Paper shadow="xs">
+              <Accordion.Control>
+                <Title order={4} color="dimmed">
+                  Request Section
+                </Title>
+              </Accordion.Control>
+            </Paper>
+            <Accordion.Panel>
+              <Stack spacing="xl" mt="lg">
+                {formSection.slice(1).map((section, idx) => {
+                  return (
+                    <RequestSection
+                      key={section.section_id + idx}
+                      section={section}
+                      isFormslyForm={true}
+                      isOnlyWithResponse
+                      index={idx + 1}
+                    />
+                  );
+                })}
+              </Stack>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
 
         <ServicesSummary
           summaryData={formSection

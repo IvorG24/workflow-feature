@@ -58,8 +58,8 @@ const UpdateCategoryLookup = ({
           lookupData: {
             [lookupValue]:
               lookup.label === "Unit of Measurement"
-                ? data.value
-                : data.value.toUpperCase(),
+                ? data.value.trim()
+                : data.value.toUpperCase().trim(),
             [isAvailable]: data.isAvailable,
             [team]: activeTeam.team_id,
           } as unknown as JSON,
@@ -110,14 +110,15 @@ const UpdateCategoryLookup = ({
                 },
                 validate: {
                   duplicate: async (value) => {
-                    if (value === editCategoryLookup.value) return;
+                    const trimmedValue = value.trim();
+                    if (trimmedValue === editCategoryLookup.value) return;
 
                     const isExisting = await checkLookupTable(supabaseClient, {
                       lookupTableName: lookup.table,
                       value:
                         lookup.label === "Unit of Measurement"
-                          ? value
-                          : value.toUpperCase(),
+                          ? trimmedValue
+                          : trimmedValue.toUpperCase(),
                       teamId: activeTeam.team_id,
                     });
                     return isExisting ? `${lookup.label} already exists` : true;

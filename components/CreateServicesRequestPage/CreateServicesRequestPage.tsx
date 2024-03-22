@@ -2,7 +2,7 @@ import {
   getCSICode,
   getCSICodeOptionsForServices,
   getProjectSignerWithTeamMember,
-  getSupplier,
+  getSupplierOptions,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -11,6 +11,7 @@ import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner"
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -65,7 +66,9 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
+  const [preferredSupplierOptions, setPreferredSupplierOptions] = useState<
+    OptionTableRow[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -93,14 +96,56 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
   });
 
   useEffect(() => {
-    replaceSection([
-      form.form_section[0],
-      {
-        ...form.form_section[1],
-        section_field: form.form_section[1].section_field,
-      },
-    ]);
-  }, [form, replaceSection, requestFormMethods]);
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      try {
+        if (!team.team_id) return;
+        let index = 0;
+        const supplierOptionlist: OptionTableRow[] = [];
+        while (1) {
+          const supplierData = await getSupplierOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const supplierOptions = supplierData.map((supplier, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: supplier.supplier_id,
+              option_order: index,
+              option_value: supplier.supplier,
+            };
+          });
+          supplierOptionlist.push(...supplierOptions);
+
+          if (supplierOptions.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setPreferredSupplierOptions(supplierOptionlist);
+        replaceSection([
+          form.form_section[0],
+          {
+            ...form.form_section[1],
+            section_field: [
+              ...form.form_section[1].section_field.slice(0, 9),
+              {
+                ...form.form_section[1].section_field[9],
+                field_option: supplierOptionlist,
+              },
+            ],
+          },
+        ]);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOptions();
+  }, [team]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
@@ -167,10 +212,18 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
         (field) => {
-          return {
-            ...field,
-            field_section_duplicatable_id: sectionDuplicatableId,
-          };
+          if (field.field_name === "Preferred Supplier") {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+              field_option: preferredSupplierOptions,
+            };
+          } else {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+            };
+          }
         }
       );
       const newSection = {
@@ -357,26 +410,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
     }
   };
 
-  const supplierSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id) return;
-    try {
-      setIsSearching(true);
-      const supplierList = await getSupplier(supabaseClient, {
-        supplier: value ?? "",
-        teamId: teamMember.team_member_team_id,
-        fieldId: form.form_section[1].section_field[9].field_id,
-      });
-      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -405,8 +438,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
                       onProjectNameChange: handleProjectNameChange,
                       onCSIDivisionChange: handleCSIDivisionChange,
                       onCSICodeChange: handleCSICodeChange,
-                      supplierSearch,
-                      isSearching,
                     }}
                   />
                   {section.section_is_duplicatable &&

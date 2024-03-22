@@ -129,13 +129,13 @@ const CreateItem = ({
       const newItem = await createItem(supabaseClient, {
         itemDescription: data.descriptions.map((description, index) => {
           return {
-            description: description.description.toUpperCase(),
+            description: description.description.toUpperCase().trim(),
             withUoM: description.withUoM,
             order: index + 1,
           };
         }),
         itemData: {
-          item_general_name: data.generalName.toUpperCase(),
+          item_general_name: data.generalName.toUpperCase().trim(),
           item_is_available: data.isAvailable,
           item_unit: data.unit,
           item_gl_account: data.glAccount,
@@ -219,7 +219,7 @@ const CreateItem = ({
                 validate: {
                   duplicate: async (value) => {
                     const isExisting = await checkItemName(supabaseClient, {
-                      itemName: value.toUpperCase(),
+                      itemName: value.toUpperCase().trim(),
                       teamId: activeTeam.team_id,
                     });
                     return isExisting ? "Item already exists" : true;

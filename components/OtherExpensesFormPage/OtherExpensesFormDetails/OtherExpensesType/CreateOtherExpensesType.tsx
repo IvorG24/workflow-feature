@@ -147,7 +147,7 @@ const CreateOtherExpensesType = ({
                     const isExisting = await checkOtherExpenesesTypeTable(
                       supabaseClient,
                       {
-                        value: value.toUpperCase(),
+                        value: value.toUpperCase().trim(),
                         categoryId: category,
                       }
                     );

@@ -338,9 +338,7 @@ const TicketActionSection = ({
         const valueUom = parseJSONIfValid(
           `${section.ticket_section_fields[1].ticket_field_response}`
         );
-        const fullValue = isWithUom
-          ? `${section.ticket_section_fields[0].ticket_field_response} ${section.ticket_section_fields[1].ticket_field_response}`
-          : `${section.ticket_section_fields[0].ticket_field_response}`;
+        const fullValue = isWithUom ? `${value} ${valueUom}` : value;
 
         const valueExists = valueExistsList?.includes(fullValue.toLowerCase());
         if (!valueExists) fieldValueList.push({ value: value, uom: valueUom });

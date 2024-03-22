@@ -404,9 +404,6 @@ const CreateSourcedItemRequestPage = ({
                     sectionIndex={idx}
                     formslyFormName={form.form_name}
                     onRemoveSection={handleRemoveSection}
-                    sourcedItemFormMethods={{
-                      onProjectSiteChange: handleProjectSiteChange,
-                    }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

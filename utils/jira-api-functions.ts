@@ -14,7 +14,6 @@ export type JiraTicketPayloadProps = {
   requestTypeId: string;
   projectName: string;
   itemCategory: string[];
-  primaryApproverJiraAccountId: string | null;
 };
 
 export type JiraTicketData = {

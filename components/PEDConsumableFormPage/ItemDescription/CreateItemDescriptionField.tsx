@@ -125,7 +125,7 @@ const CreateItemDescriptionField = ({
         supabaseClient,
         data.descriptions.map((descriptionField) => {
           return {
-            item_description_field_value: descriptionField.value,
+            item_description_field_value: descriptionField.value.trim(),
             item_description_field_is_available: descriptionField.isAvailable,
             item_description_field_item_description_id: descriptionId,
             item_description_field_uom: descriptionField.unitOfMeasurement,
@@ -190,13 +190,16 @@ const CreateItemDescriptionField = ({
                       },
                       validate: {
                         duplicate: async (value) => {
+                          const trimmedValue = value.trim();
                           const data = getValues("descriptions");
                           const values = data.map(
                             (value) =>
-                              `${value.value}${value.unitOfMeasurement ?? ""}`
+                              `${value.value.trim()}${
+                                value.unitOfMeasurement ?? ""
+                              }`
                           );
 
-                          if (includesTwoTimes(values, value))
+                          if (includesTwoTimes(values, trimmedValue))
                             return "Value already exists";
 
                           const uom = getValues(
@@ -205,7 +208,7 @@ const CreateItemDescriptionField = ({
                           const isExisting = await checkItemDescription(
                             supabaseClient,
                             {
-                              itemDescription: value,
+                              itemDescription: trimmedValue,
                               itemDescriptionUom: uom,
                               descriptionId: descriptionId,
                             }

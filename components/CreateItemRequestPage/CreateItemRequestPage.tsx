@@ -1,11 +1,11 @@
 import {
-  getCSI,
   getCSICode,
-  getCSICodeOptionsForItems,
+  getCSICodeOptions,
   getItem,
+  getItemOptions,
   getLevelThreeDescription,
   getProjectSignerWithTeamMember,
-  getSupplier,
+  getSupplierOptions,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -14,6 +14,7 @@ import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner"
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -52,7 +53,6 @@ export type FieldWithResponseArray = Field & {
 
 type Props = {
   form: FormType;
-  itemOptions: OptionTableRow[];
   projectOptions: OptionTableRow[];
   specialApprover?: {
     special_approver_id: string;
@@ -63,7 +63,6 @@ type Props = {
 
 const CreateItemRequestPage = ({
   form,
-  itemOptions,
   projectOptions,
   specialApprover,
 }: Props) => {
@@ -80,9 +79,10 @@ const CreateItemRequestPage = ({
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearchingSupplier, setIsSearchingSupplier] = useState(false);
-  const [isSearchingCSI, setIsSearchingCSI] = useState(false);
-  const [itemDivisionIdList, setItemDivisionIdList] = useState<string[][]>([]);
+  const [itemOptions, setItemOptions] = useState<OptionTableRow[]>([]);
+  const [preferredSupplierOptions, setPreferredSupplierOptions] = useState<
+    OptionTableRow[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -110,24 +110,82 @@ const CreateItemRequestPage = ({
   });
 
   useEffect(() => {
-    const newFields = form.form_section[1].section_field.map((field) => {
-      if (field.field_name === "General Name") {
-        return {
-          ...field,
-          field_option: itemOptions,
-        };
-      } else {
-        return field;
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      try {
+        if (!team.team_id) return;
+        let index = 0;
+        const itemOptionList: OptionTableRow[] = [];
+        while (1) {
+          const itemData = await getItemOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const itemOptions = itemData.map((item, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: item.item_id,
+              option_order: index,
+              option_value: item.item_general_name,
+            };
+          });
+          itemOptionList.push(...itemOptions);
+
+          if (itemData.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setItemOptions(itemOptionList);
+        index = 0;
+        const supplierOptionlist: OptionTableRow[] = [];
+        while (1) {
+          const supplierData = await getSupplierOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const supplierOptions = supplierData.map((supplier, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: supplier.supplier_id,
+              option_order: index,
+              option_value: supplier.supplier,
+            };
+          });
+          supplierOptionlist.push(...supplierOptions);
+
+          if (supplierOptions.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setPreferredSupplierOptions(supplierOptionlist);
+        replaceSection([
+          form.form_section[0],
+          {
+            ...form.form_section[1],
+            section_field: [
+              {
+                ...form.form_section[1].section_field[0],
+                field_option: itemOptionList,
+              },
+              ...form.form_section[1].section_field.slice(1, 9),
+              {
+                ...form.form_section[1].section_field[9],
+                field_option: supplierOptionlist,
+              },
+            ],
+          },
+        ]);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
       }
-    });
-    replaceSection([
-      form.form_section[0],
-      {
-        ...form.form_section[1],
-        section_field: newFields,
-      },
-    ]);
-  }, [form, replaceSection, requestFormMethods, itemOptions]);
+    };
+    fetchOptions();
+  }, [team]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
@@ -271,6 +329,12 @@ const CreateItemRequestPage = ({
               field_section_duplicatable_id: sectionDuplicatableId,
               field_option: itemOptions,
             };
+          } else if (field.field_name === "Preferred Supplier") {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+              field_option: preferredSupplierOptions,
+            };
           } else {
             return {
               ...field,
@@ -320,9 +384,19 @@ const CreateItemRequestPage = ({
             levelThreeDescription: item.item_level_three_description,
           });
         } else {
-          csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-            divisionIdList: item.item_division_id_list,
-          });
+          let index = 0;
+          const csiOptionList: CSICodeTableRow[] = [];
+          while (1) {
+            const csiData = await getCSICodeOptions(supabaseClient, {
+              index,
+              limit: FETCH_OPTION_LIMIT,
+              divisionIdList: item.item_division_id_list,
+            });
+            csiOptionList.push(...(csiData as CSICodeTableRow[]));
+            if (csiData.length < FETCH_OPTION_LIMIT) break;
+            index += FETCH_OPTION_LIMIT;
+          }
+          csiCodeList = csiOptionList;
         }
 
         const generalField = [
@@ -443,11 +517,6 @@ const CreateItemRequestPage = ({
             }),
             ...newFields,
           ],
-        });
-
-        setItemDivisionIdList((prev) => {
-          prev[index] = item.item_division_id_list;
-          return prev;
         });
       } else {
         const generalField = [
@@ -586,48 +655,6 @@ const CreateItemRequestPage = ({
     }
   };
 
-  const supplierSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id) return;
-    try {
-      setIsSearchingSupplier(true);
-      const supplierList = await getSupplier(supabaseClient, {
-        supplier: value ?? "",
-        teamId: teamMember.team_member_team_id,
-        fieldId: form.form_section[1].section_field[9].field_id,
-      });
-      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearchingSupplier(false);
-    }
-  };
-
-  const csiSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id) return;
-    if (!itemDivisionIdList[index]) return;
-
-    try {
-      setIsSearchingCSI(true);
-      const csiList = await getCSI(supabaseClient, {
-        csi: value ?? "",
-        fieldId: form.form_section[1].section_field[4].field_id,
-        divisionIdList: itemDivisionIdList[index],
-      });
-      setValue(`sections.${index}.section_field.4.field_option`, csiList);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearchingCSI(false);
-    }
-  };
-
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -655,10 +682,6 @@ const CreateItemRequestPage = ({
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
-                      supplierSearch,
-                      isSearchingSupplier,
-                      csiSearch,
-                      isSearchingCSI,
                     }}
                     formslyFormName={form.form_name}
                   />

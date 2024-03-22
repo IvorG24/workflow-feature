@@ -2842,6 +2842,8 @@ RETURNS JSON AS $$
             FROM request_view
             INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
             INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE team_member_table.team_member_team_id = '${teamId}'
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false`;
@@ -2854,6 +2856,8 @@ RETURNS JSON AS $$
             FROM request_view
             INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
             INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE team_member_table.team_member_team_id = '${teamId}'
             AND request_is_disabled = false
             AND form_table.form_is_disabled = false`;
@@ -2900,7 +2904,7 @@ RETURNS JSON AS $$
             request_signer_status: signer.request_signer_status,
             request_signer: {
                 signer_team_member_id: signer.signer_team_member_id,
-              signer_is_primary_signer: signer.signer_is_primary_signer
+                signer_is_primary_signer: signer.signer_is_primary_signer
             }
           }
         });
@@ -4091,8 +4095,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
-
-
 -- End: Canvass page on load
 
 -- Start: Form list page on load
@@ -4320,7 +4322,7 @@ RETURNS JSON as $$
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
 
         itemData.forEach(value => {
-          const itemDescription = plv8.execute(`SELECT item_description_label FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
+          const itemDescription = plv8.execute(`SELECT item_description_id, item_description_label, item_description_is_with_uom FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
           const itemDivision = plv8.execute(`SELECT item_division_value FROM item_division_table WHERE item_division_item_id = '${value.item_id}' ORDER BY item_division_value ASC;`);
           const itemDivisionDescription = plv8.execute(`SELECT item_level_three_description FROM item_level_three_description_table WHERE item_level_three_description_item_id = '${value.item_id}' LIMIT 1;`);
           
@@ -4605,7 +4607,6 @@ RETURNS JSON as $$
             st.section_form_id
         ORDER BY 
             st.section_order ASC;
-
       `
     );
 
@@ -4686,29 +4687,6 @@ RETURNS JSON as $$
 
     if (form.form_is_formsly_form) {
       if (form.form_name === "Item") {
-        const items = plv8.execute(
-          `
-            SELECT 
-                item_id,
-                item_general_name
-            FROM item_table
-            WHERE
-              item_team_id = '${teamId}'
-              AND item_is_disabled = false
-              AND item_is_available = true
-            ORDER BY item_general_name ASC;
-          `
-        );
-
-        const itemOptions = items.map((item, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: item.item_id,
-            option_order: index,
-            option_value: item.item_general_name,
-          };
-        });
-
         const projects = plv8.execute(
           `
             SELECT 
@@ -4735,56 +4713,32 @@ RETURNS JSON as $$
         const specialApproverWithItem = plv8.execute(
           `
             SELECT 
-                special_approver_table.*,
-                signer_id, 
-                signer_is_primary_signer, 
-                signer_action, 
-                signer_order,
-                signer_is_disabled, 
-                signer_team_project_id,
-                team_member_id,
-                user_id, 
-                user_first_name, 
-                user_last_name, 
-                user_avatar,
-                (SELECT json_agg(special_approver_item_table.*)
-                FROM special_approver_item_table 
-                WHERE special_approver_item_special_approver_id = special_approver_table.special_approver_id
-                ) AS special_approver_item_list
+              special_approver_table.*,
+              signer_id, 
+              signer_is_primary_signer, 
+              signer_action, 
+              signer_order,
+              signer_is_disabled, 
+              signer_team_project_id,
+              team_member_id,
+              user_id, 
+              user_first_name, 
+              user_last_name, 
+              user_avatar,
+              (SELECT json_agg(special_approver_item_table.*)
+              FROM special_approver_item_table 
+              WHERE special_approver_item_special_approver_id = special_approver_table.special_approver_id
+              ) AS special_approver_item_list
             FROM 
-                special_approver_table
+              special_approver_table
             INNER JOIN 
-                signer_table ON signer_id = special_approver_signer_id
+              signer_table ON signer_id = special_approver_signer_id
             INNER JOIN 
-                team_member_table ON team_member_id = signer_team_member_id
+              team_member_table ON team_member_id = signer_team_member_id
             INNER JOIN 
-                user_table ON user_id = team_member_user_id;
-
-            
+              user_table ON user_id = team_member_user_id;
           `
         );
-
-        const suppliers = plv8.execute(
-          `
-            SELECT *
-            FROM supplier_table
-            WHERE
-              supplier_is_available = true
-              AND supplier_is_disabled = false
-              AND supplier_team_id = '${teamId}'
-            ORDER BY supplier ASC
-            LIMIT 100
-          `
-        );
-
-        const supplierOptions = suppliers.map((suppliers, index) => {
-          return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
-            option_id: suppliers.supplier_id,
-            option_order: index,
-            option_value: suppliers.supplier,
-          };
-        });
 
         returnData = {
           form: {
@@ -4803,16 +4757,11 @@ RETURNS JSON as $$
               {
                 ...form.form_section[1],
                 section_field: [
-                  ...form.form_section[1].section_field.slice(0, 9),
-                  {
-                    ...form.form_section[1].section_field[9],
-                    field_option: supplierOptions
-                  }
+                  ...form.form_section[1].section_field.slice(0, 10),
                 ],
               },
             ],
           },
-          itemOptions,
           projectOptions,
           specialApprover: specialApproverWithItem.map(specialApprover => {
             return {
@@ -4936,30 +4885,6 @@ RETURNS JSON as $$
           };
         });
 
-        const suppliers = plv8.execute(
-          `
-            SELECT 
-                supplier,
-                supplier_id
-            FROM supplier_table
-            WHERE
-              supplier_is_available = true
-              AND supplier_is_disabled = false
-              AND supplier_team_id = '${teamId}'
-            ORDER BY supplier ASC
-            LIMIT 100;
-          `
-        );
-
-        const supplierOptions = suppliers.map((suppliers, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[9].field_id,
-            option_id: suppliers.supplier_id,
-            option_order: index,
-            option_value: suppliers.supplier,
-          };
-        });
-
         const categories = plv8.execute(
           `
             SELECT 
@@ -4986,8 +4911,8 @@ RETURNS JSON as $$
         const csiDivisions = plv8.execute(
           `
             SELECT 
-                csi_code_division_id
-                csi_code_division_description
+              csi_code_division_id,
+              csi_code_division_description
             FROM distinct_division_view;
           `
         );
@@ -4995,7 +4920,7 @@ RETURNS JSON as $$
         const csiDivisionOption = csiDivisions.map((division, index) => {
           return {
             option_field_id: form.form_section[1].section_field[4].field_id,
-            option_id: division.csi_code_division_id,
+            option_id: division.csi_code_division_description,
             option_order: index,
             option_value: division.csi_code_division_description,
           };
@@ -5054,11 +4979,7 @@ RETURNS JSON as $$
                     ...form.form_section[1].section_field[4],
                     field_option: csiDivisionOption
                   },
-                  ...form.form_section[1].section_field.slice(5, 9),
-                  {
-                    ...form.form_section[1].section_field[9],
-                    field_option: supplierOptions
-                  }
+                  ...form.form_section[1].section_field.slice(5, 10),
                 ],
               },
             ],
@@ -5087,30 +5008,6 @@ RETURNS JSON as $$
             option_id: project.team_project_id,
             option_order: index,
             option_value: project.team_project_name,
-          };
-        });
-
-        const suppliers = plv8.execute(
-          `
-            SELECT 
-                supplier_id,
-                supplier
-            FROM supplier_table
-            WHERE
-              supplier_is_available = true
-              AND supplier_is_disabled = false
-              AND supplier_team_id = '${teamId}'
-            ORDER BY supplier ASC
-            LIMIT 100
-          `
-        );
-
-        const supplierOptions = suppliers.map((suppliers, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[9].field_id,
-            option_id: suppliers.supplier_id,
-            option_order: index,
-            option_value: suppliers.supplier,
           };
         });
 
@@ -5210,11 +5107,7 @@ RETURNS JSON as $$
                     ...form.form_section[1].section_field[5],
                     field_option: csiCodeDescriptionOptions
                   },
-                  ...form.form_section[1].section_field.slice(6, 9),
-                  {
-                    ...form.form_section[1].section_field[9],
-                    field_option: supplierOptions
-                  }
+                  ...form.form_section[1].section_field.slice(6, 10)
                 ],
               },
             ],
@@ -5424,54 +5317,6 @@ RETURNS JSON as $$
             option_value: project.team_project_name,
           };
         });
-
-        const equipmentPropertyNumbers = plv8.execute(
-          `
-            SELECT 
-                equipment_description_view.equipment_description_id,
-                equipment_description_view.equipment_description_property_number_with_prefix
-            FROM equipment_description_view
-            INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id
-            WHERE 
-              equipment_team_id = '${teamMember.team_member_team_id}'
-              AND equipment_description_is_disabled = false
-              AND equipment_description_is_available = true
-            ORDER BY equipment_description_property_number_with_prefix;
-          `
-        );
-
-        const propertyNumberOptions = equipmentPropertyNumbers.map((propertyNumber, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: propertyNumber.equipment_description_id,
-            option_order: index,
-            option_value: propertyNumber.equipment_description_property_number_with_prefix,
-          };
-        });
-
-        const items = plv8.execute(
-          `
-            SELECT 
-                item_id,
-                item_general_name
-            FROM item_table
-            WHERE
-              item_team_id = '${teamId}'
-              AND item_is_disabled = false
-              AND item_is_available = true
-              AND item_gl_account = 'Fuel, Oil, Lubricants'
-              ORDER BY item_general_name ASC;
-          `
-        );
-
-        const itemOptions = items.map((item, index) => {
-          return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
-            option_id: item.item_id,
-            option_order: index,
-            option_value: item.item_general_name,
-          };
-        });
         
         returnData = {
           form: {
@@ -5490,23 +5335,12 @@ RETURNS JSON as $$
               {
                 ...form.form_section[1],
                 section_field: [
-                  {
-                    ...form.form_section[1].section_field[0],
-                    field_option: propertyNumberOptions,
-                  },
-                  ...form.form_section[1].section_field.slice(1, 4),
-                  {
-                    ...form.form_section[1].section_field[4],
-                    field_option: itemOptions,
-                  },
-                  ...form.form_section[1].section_field.slice(5, 7),
-                ],
-              },
+                  ...form.form_section[1].section_field.slice(0, 7)
+                ]
+              }
             ],
           },
-          projectOptions,
-          itemOptions,
-          propertyNumberOptions
+          projectOptions
         }
         return;
       } else if (form.form_name === "Request For Payment") {
@@ -6168,6 +6002,7 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
+
 
 -- End: Create request page on load
 
@@ -11225,7 +11060,6 @@ RETURNS JSON AS $$
   return memo_data_on_load;
 $$ LANGUAGE plv8;
 
-
 CREATE OR REPLACE FUNCTION get_memo_list(
     input_data JSON
 )
@@ -11319,7 +11153,6 @@ RETURNS JSON AS $$
  });
  return return_value;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION edit_memo(
     input_data JSON
@@ -12337,12 +12170,12 @@ RETURNS VOID AS $$
       teamId
     } = input_data;
     
-    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}'`)[0].equipment_id;
-    let generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`);
-    let brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`);
-    let modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`);
-    let uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`);
-    let categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`);
+    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}' AND equipment_is_disabled = false`)[0].equipment_id;
+    let generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}' AND equipment_general_name_is_disabled = false`);
+    let brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}' AND equipment_brand_is_disabled = false`);
+    let modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}' AND equipment_model_is_disabled = false`);
+    let uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}' AND equipment_unit_of_measurement_is_disabled = false`);
+    let categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}' AND equipment_component_category_is_disabled = false`);
 
     if(generalNameId.length === 0){
       generalNameId = plv8.execute(
@@ -12400,6 +12233,7 @@ RETURNS VOID AS $$
       );
     }
 
+    const formattedPartNumber = partNumber.replace('/[^a-zA-Z0-9]/g', '');
     const partData = plv8.execute(
       `
         SELECT * FROM equipment_part_table
@@ -12407,7 +12241,7 @@ RETURNS VOID AS $$
           equipment_part_is_disabled = false
           AND equipment_part_equipment_id = '${equipmentId}'
           AND equipment_part_general_name_id = '${generalNameId[0].equipment_general_name_id}'
-          AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${partNumber}'
+          AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${formattedPartNumber}'
           AND equipment_part_brand_id = '${brandId[0].equipment_brand_id}'
           AND equipment_part_model_id = '${modelId[0].equipment_model_id}'
           AND equipment_part_unit_of_measurement_id = '${uomId[0].equipment_unit_of_measurement_id}'
@@ -12805,18 +12639,9 @@ RETURNS JSON AS $$
           ORDER BY field_order ASC
         `
       );
-      let fieldWithOptionAndResponse = []
+      let fieldWithResponse = []
       
-      fieldWithOptionAndResponse = fieldList.map(field => {
-        const optionData = plv8.execute(
-          `
-            SELECT *
-            FROM option_table
-            WHERE option_field_id = '${field.field_id}'
-            ORDER BY option_order ASC
-          `
-        );
-
+      fieldWithResponse = fieldList.map(field => {
         const requestResponseData = plv8.execute(
           `
             SELECT *
@@ -12832,13 +12657,12 @@ RETURNS JSON AS $$
 
         return {
           ...field,
-          field_response: requestResponseData,
-          field_option: optionData
+          field_response: requestResponseData
         };
       });
 
-      if (isPedConsumableAndSingle && fieldWithOptionAndResponse.length !== 0) {
-        fieldWithOptionAndResponse[0].field_response = fieldWithOptionAndResponse[0].field_response.map(fieldResponse => {
+      if (isPedConsumableAndSingle && fieldWithResponse.length !== 0) {
+        fieldWithResponse[0].field_response = fieldWithResponse[0].field_response.map(fieldResponse => {
           const categoryData = plv8.execute(
             `
               SELECT equipment_description_property_number_with_prefix FROM equipment_description_view 
@@ -12853,20 +12677,11 @@ RETURNS JSON AS $$
         });
       }
 
-      returnData = fieldWithOptionAndResponse;
+      returnData = fieldWithResponse;
     } else {
-      let fieldWithOptionAndResponse = []
+      let fieldWithResponse = []
       
-      fieldWithOptionAndResponse = fieldData.map(field => {
-        const optionData = plv8.execute(
-          `
-            SELECT *
-            FROM option_table
-            WHERE option_field_id = '${field.field_id}'
-            ORDER BY option_order ASC
-          `
-        );
-
+      fieldWithResponse = fieldData.map(field => {
         const requestResponseData = plv8.execute(
           `
             SELECT *
@@ -12882,12 +12697,11 @@ RETURNS JSON AS $$
 
         return {
           ...field,
-          field_response: requestResponseData,
-          field_option: optionData
+          field_response: requestResponseData
         };
       });
 
-      returnData = fieldWithOptionAndResponse;
+      returnData = fieldWithResponse;
     }
  });
  return returnData;
@@ -16030,6 +15844,7 @@ USING (true);
 
 CREATE INDEX request_response_request_id_idx ON request_response_table (request_response, request_response_request_id);
 CREATE INDEX request_list_idx ON request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
+CREATE INDEX request_response_idx ON request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
 
 -------- End: INDEXES
 

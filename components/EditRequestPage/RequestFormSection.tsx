@@ -1,4 +1,3 @@
-import { OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
   Group,
@@ -26,30 +25,9 @@ type RequestFormSectionProps = {
     csiSearch?: (value: string, index: number) => void;
     isSearchingCSI?: boolean;
   };
-  subconFormMethods?: {
-    onServiceNameChange: (index: number, value: string | null) => void;
-    onProjectNameChange: (value: string | null) => void;
-    subconSearch?: (value: string) => void;
-    subconOption?: OptionTableRow[];
-    isSearching?: boolean;
-  };
-  quotationFormMethods?: {
-    onItemChange: (
-      index: number,
-      value: string | null,
-      prevValue: string | null
-    ) => void;
-    supplierSearch?: (value: string) => void;
-    supplierOption?: OptionTableRow[];
-    isSearching?: boolean;
-  };
-  rirFormMethods?: {
-    onQuantityChange: (index: number, value: number) => void;
-  };
+
   formslyFormName?: string;
-  sourcedItemFormMethods?: {
-    onProjectSiteChange: () => void;
-  };
+
   referenceOnly?: boolean;
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -107,11 +85,7 @@ const RequestFormSection = ({
   onRemoveSection,
   isSectionRemovable,
   itemFormMethods,
-  subconFormMethods,
-  quotationFormMethods,
-  rirFormMethods,
   formslyFormName = "",
-  sourcedItemFormMethods,
   referenceOnly,
   servicesFormMethods,
   pedEquipmentFormMethods,
@@ -150,12 +124,8 @@ const RequestFormSection = ({
             sectionIndex={sectionIndex}
             fieldIndex={idx}
             itemFormMethods={itemFormMethods}
-            subconFormMethods={subconFormMethods}
-            quotationFormMethods={quotationFormMethods}
             servicesFormMethods={servicesFormMethods}
-            rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
-            sourcedItemFormMethods={sourcedItemFormMethods}
             referenceOnly={referenceOnly}
             otherExpensesMethods={otherExpensesMethods}
             pedEquipmentFormMethods={pedEquipmentFormMethods}
