@@ -1,3 +1,4 @@
+import { getJiraFormslyProjectList } from "@/backend/api/get";
 import { createOrUpdateJiraFormslyProject } from "@/backend/api/post";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -21,7 +22,7 @@ import {
   IconUsersGroup,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import JiraProjectForm from "./JiraProjectForm";
 
@@ -29,6 +30,9 @@ type Props = {
   jiraFormslyProjectList: JiraFormslyProjectType[];
   jiraFormslyProjectCount: number;
   jiraProjectList: JiraProjectTableRow[];
+  setIsManagingUserAccountList: Dispatch<SetStateAction<boolean>>;
+  setSelectedFormslyProject: Dispatch<SetStateAction<string | null>>;
+  selectedFormslyProject: string | null;
 };
 
 export type AssignFormslyProjectForm = {
@@ -39,15 +43,16 @@ const JiraFormslyProjectList = ({
   jiraFormslyProjectList: initialJiraFormslyProjectList,
   jiraFormslyProjectCount: initialJiraFormslyProjectCount,
   jiraProjectList,
+  setIsManagingUserAccountList,
+  setSelectedFormslyProject,
+  selectedFormslyProject,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const [isLoading, setIsLoading] = useState(false);
   const [openJiraProjectFormModal, setOpenJiraProjectFormModal] =
     useState(false);
-  const [selectedFormslyProject, setSelectedFormslyProject] = useState<
-    string | null
-  >(null);
+
   const [jiraFormslyProjectList, setJiraFormslyProjectList] = useState(
     initialJiraFormslyProjectList
   );
@@ -66,6 +71,8 @@ const JiraFormslyProjectList = ({
   const assignFormslyProjectFormMethods = useForm<AssignFormslyProjectForm>();
   const { reset: resetAssignFormslyProjectForm } =
     assignFormslyProjectFormMethods;
+
+  const searchTeamProjectFormMethods = useForm<{ search: string }>();
 
   const handleAssignFormslyProject = async (data: AssignFormslyProjectForm) => {
     try {
@@ -104,9 +111,7 @@ const JiraFormslyProjectList = ({
               return {
                 ...project,
                 assigned_jira_project: {
-                  jira_formsly_project_id:
-                    response.data.jira_formsly_project_id,
-                  formsly_project_id: response.data.formsly_project_id,
+                  ...response.data,
                   jira_project: newJiraProjectData,
                 },
               };
@@ -141,35 +146,109 @@ const JiraFormslyProjectList = ({
     }
   };
 
-  // const handleSearchTeamProject = async (searchValue: string) => {
-  //   try {
-  //     setIsLoading(true);
+  const handleFetchJiraFormslyProjectList = async (
+    index: number,
+    search: string
+  ) => {
+    const { data, count } = await getJiraFormslyProjectList(supabaseClient, {
+      index,
+      limit: ROW_PER_PAGE,
+      search,
+    });
 
-  //   } catch (error) {
-  //     notifications.show({
-  //       message: "Failed to fetch projects",
-  //       color: "red",
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }
+    const processedProjects = data.map((project) => {
+      const jiraProjectMatch = jiraProjectList.find(
+        (jiraProject) =>
+          jiraProject.jira_project_id ===
+          project.assigned_jira_project?.jira_project_id
+      );
+
+      if (jiraProjectMatch) {
+        return {
+          ...project,
+          assigned_jira_project: {
+            ...project.assigned_jira_project,
+            jira_project: jiraProjectMatch,
+          },
+        };
+      } else {
+        return project;
+      }
+    });
+
+    return { processedProjects, count };
+  };
+
+  const handleSearchTeamProject = async (formData: { search: string }) => {
+    try {
+      setIsLoading(true);
+      setProjectActivePage(1);
+      const { processedProjects, count } =
+        await handleFetchJiraFormslyProjectList(0, formData.search);
+      setJiraFormslyProjectList(processedProjects as JiraFormslyProjectType[]);
+      setJiraFormslyProjectCount(count);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to fetch projects",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePagination = async (page: number) => {
+    try {
+      setProjectActivePage(page);
+      setIsLoading(true);
+      const { processedProjects, count } =
+        await handleFetchJiraFormslyProjectList(
+          page - 1,
+          searchTeamProjectFormMethods.getValues().search
+        );
+      setJiraFormslyProjectList(processedProjects as JiraFormslyProjectType[]);
+      setJiraFormslyProjectCount(count);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to fetch projects",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Box>
       <Paper p="xl" shadow="xs" pos="relative">
         <Group>
           <Title order={3}>Team Projects</Title>
-          <TextInput
-            miw={250}
-            maxLength={4000}
-            placeholder="Project Name"
-            rightSection={
-              <ActionIcon onClick={() => console.log("search")}>
-                <IconSearch size={16} />
-              </ActionIcon>
-            }
-          />
+          <form
+            onSubmit={searchTeamProjectFormMethods.handleSubmit(
+              handleSearchTeamProject
+            )}
+          >
+            <TextInput
+              miw={250}
+              maxLength={4000}
+              placeholder="Project Name"
+              rightSection={
+                <ActionIcon
+                  onClick={() =>
+                    handleSearchTeamProject(
+                      searchTeamProjectFormMethods.getValues()
+                    )
+                  }
+                >
+                  <IconSearch size={16} />
+                </ActionIcon>
+              }
+              {...searchTeamProjectFormMethods.register("search", {
+                onChange: (e) =>
+                  handleSearchTeamProject({ search: e.currentTarget.value }),
+              })}
+            />
+          </form>
         </Group>
         <DataTable
           mt="xs"
@@ -181,7 +260,7 @@ const JiraFormslyProjectList = ({
           totalRecords={jiraFormslyProjectCount}
           recordsPerPage={ROW_PER_PAGE}
           page={projectActivePage}
-          onPageChange={(p) => setProjectActivePage(p)}
+          onPageChange={handlePagination}
           records={jiraFormslyProjectList}
           columns={[
             {
@@ -235,7 +314,13 @@ const JiraFormslyProjectList = ({
 
                     <Menu.Divider />
 
-                    <Menu.Item icon={<IconUsersGroup size={14} />}>
+                    <Menu.Item
+                      icon={<IconUsersGroup size={14} />}
+                      onClick={() => {
+                        setIsManagingUserAccountList(true);
+                        setSelectedFormslyProject(team_project_id);
+                      }}
+                    >
                       Manage Project Users
                     </Menu.Item>
                   </Menu.Dropdown>

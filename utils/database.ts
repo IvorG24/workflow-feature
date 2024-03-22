@@ -1385,16 +1385,19 @@ export type Database = {
         Row: {
           jira_team_project_assigned_user_account_id: string
           jira_team_project_assigned_user_id: string
+          jira_team_project_assigned_user_role_id: string
           jira_team_project_assigned_user_team_project_id: string
         }
         Insert: {
           jira_team_project_assigned_user_account_id: string
           jira_team_project_assigned_user_id?: string
+          jira_team_project_assigned_user_role_id: string
           jira_team_project_assigned_user_team_project_id: string
         }
         Update: {
           jira_team_project_assigned_user_account_id?: string
           jira_team_project_assigned_user_id?: string
+          jira_team_project_assigned_user_role_id?: string
           jira_team_project_assigned_user_team_project_id?: string
         }
         Relationships: [
@@ -1404,6 +1407,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "team_project_table"
             referencedColumns: ["team_project_id"]
+          },
+          {
+            foreignKeyName: "jira_team_project_assigned_u_jira_team_project_assigned_u_fkey2"
+            columns: ["jira_team_project_assigned_user_role_id"]
+            isOneToOne: false
+            referencedRelation: "jira_user_role_table"
+            referencedColumns: ["jira_user_role_id"]
           },
           {
             foreignKeyName: "jira_team_project_assigned_us_jira_team_project_assigned_u_fkey"
@@ -1422,7 +1432,7 @@ export type Database = {
           jira_user_account_email_address: string
           jira_user_account_id: string
           jira_user_account_jira_id: string
-          jira_user_account_role_id: string
+          jira_user_account_role_id: string | null
         }
         Insert: {
           jira_user_account_date_created?: string
@@ -1431,7 +1441,7 @@ export type Database = {
           jira_user_account_email_address: string
           jira_user_account_id?: string
           jira_user_account_jira_id: string
-          jira_user_account_role_id: string
+          jira_user_account_role_id?: string | null
         }
         Update: {
           jira_user_account_date_created?: string
@@ -1440,7 +1450,7 @@ export type Database = {
           jira_user_account_email_address?: string
           jira_user_account_id?: string
           jira_user_account_jira_id?: string
-          jira_user_account_role_id?: string
+          jira_user_account_role_id?: string | null
         }
         Relationships: [
           {
@@ -3391,16 +3401,6 @@ export type Database = {
           },
         ]
       }
-      hypopg_list_indexes: {
-        Row: {
-          am_name: unknown | null
-          index_name: string | null
-          indexrelid: unknown | null
-          schema_name: unknown | null
-          table_name: unknown | null
-        }
-        Relationships: []
-      }
       request_view: {
         Row: {
           request_date_created: string | null
@@ -3937,55 +3937,6 @@ export type Database = {
           user_id: string
         }
         Returns: string
-      }
-      hypopg: {
-        Args: Record<PropertyKey, never>
-        Returns: Record<string, unknown>[]
-      }
-      hypopg_create_index: {
-        Args: {
-          sql_order: string
-        }
-        Returns: Record<string, unknown>[]
-      }
-      hypopg_drop_index: {
-        Args: {
-          indexid: unknown
-        }
-        Returns: boolean
-      }
-      hypopg_get_indexdef: {
-        Args: {
-          indexid: unknown
-        }
-        Returns: string
-      }
-      hypopg_relation_size: {
-        Args: {
-          indexid: unknown
-        }
-        Returns: number
-      }
-      hypopg_reset: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      hypopg_reset_index: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      index_advisor: {
-        Args: {
-          query: string
-        }
-        Returns: {
-          startup_cost_before: Json
-          startup_cost_after: Json
-          total_cost_before: Json
-          total_cost_after: Json
-          index_statements: string[]
-          errors: string[]
-        }[]
       }
       insert_group_member: {
         Args: {

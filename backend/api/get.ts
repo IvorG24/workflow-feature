@@ -6283,3 +6283,87 @@ export const getJiraFormslyProjectList = async (
     count: Number(count),
   };
 };
+
+export const getJiraUserAccountList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+    search?: string;
+  }
+) => {
+  const { index, limit, search } = params;
+  let query = supabaseClient
+    .from("jira_user_account_table")
+    .select("*, jira_user_account_role_id(jira_user_role_label)", {
+      count: "exact",
+    })
+    .order("jira_user_account_display_name")
+    .limit(limit)
+    .range(index, index + limit - 1);
+
+  if (search) {
+    query = query.ilike("team_project_name", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return {
+    data,
+    count: Number(count),
+  };
+};
+
+export const getProjectJiraUserAccountList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+    search?: string;
+    teamProjectId: string;
+  }
+) => {
+  const { index, limit, search, teamProjectId } = params;
+  let query = supabaseClient
+    .from("jira_team_project_assigned_user_table")
+    .select("*", { count: "exact" })
+    .eq("jira_team_project_assigned_user_team_project_id", teamProjectId)
+    .limit(limit)
+    .range(index, index + limit - 1);
+
+  if (search) {
+    query = query.ilike("team_project_name", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return {
+    data,
+    count: Number(count),
+  };
+};
+
+export const getJiraUserRoleList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const query = supabaseClient
+    .from("jira_user_role_table")
+    .select("*")
+    .limit(limit)
+    .range(index, index + limit - 1);
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data;
+};

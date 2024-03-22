@@ -400,6 +400,27 @@ export type JiraFormslyProjectTableInsert =
 export type JiraFormslyProjectTableUpdate =
   Database["public"]["Tables"]["jira_formsly_project_table"]["Update"];
 
+export type JiraUserAccountTableRow =
+  Database["public"]["Tables"]["jira_user_account_table"]["Row"];
+export type JiraUserAccountTableInsert =
+  Database["public"]["Tables"]["jira_user_account_table"]["Insert"];
+export type JiraUserAccountTableUpdate =
+  Database["public"]["Tables"]["jira_user_account_table"]["Update"];
+
+export type JiraUserRoleTableRow =
+  Database["public"]["Tables"]["jira_user_role_table"]["Row"];
+export type JiraUserRoleTableInsert =
+  Database["public"]["Tables"]["jira_user_role_table"]["Insert"];
+export type JiraUserRoleTableUpdate =
+  Database["public"]["Tables"]["jira_user_role_table"]["Update"];
+
+export type JiraTeamProjectAssignedUserTableRow =
+  Database["public"]["Tables"]["jira_team_project_assigned_user_table"]["Row"];
+export type JiraTeamProjectAssignedUserTableInsert =
+  Database["public"]["Tables"]["jira_team_project_assigned_user_table"]["Insert"];
+export type JiraTeamProjectAssignedUserTableUpdate =
+  Database["public"]["Tables"]["jira_team_project_assigned_user_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1590,6 +1611,11 @@ export type JiraFormslyProjectType = {
   assigned_jira_project: {
     jira_formsly_project_id: string;
     formsly_project_id: string;
+    jira_project_id: string;
     jira_project: JiraProjectTableRow;
   } | null;
 };
+
+export type ProjectJiraUserAccountType = JiraTeamProjectAssignedUserTableRow &
+  JiraUserAccountTableRow &
+  JiraUserRoleTableRow;

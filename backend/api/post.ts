@@ -1630,3 +1630,33 @@ export const createOrUpdateJiraFormslyProject = async (
 
   return { success: true, data: data };
 };
+
+// create or update jira formsly project
+export const createJiraUserToProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userAccountId: string;
+    userRoleId: string;
+    teamProjectId: string;
+  }
+) => {
+  const { userAccountId, teamProjectId, userRoleId } = params;
+
+  // create
+  const { data, error } = await supabaseClient
+    .from("jira_team_project_assigned_user_table")
+    .insert({
+      jira_team_project_assigned_user_account_id: userAccountId,
+      jira_team_project_assigned_user_team_project_id: teamProjectId,
+      jira_team_project_assigned_user_role_id: userRoleId,
+    })
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+
+  if (data) {
+    return { success: true, data: data };
+  } else {
+    return { success: true, data: null };
+  }
+};

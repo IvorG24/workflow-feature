@@ -2,17 +2,27 @@
 import {
   getJiraFormslyProjectList,
   getJiraProjectList,
+  getJiraUserAccountList,
 } from "@/backend/api/get";
 import JiraSettingsPage from "@/components/JiraSettingsPage/JiraSettingsPage";
 import Meta from "@/components/Meta/Meta";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { JiraFormslyProjectType, JiraProjectTableRow } from "@/utils/types";
+import {
+  JiraFormslyProjectType,
+  JiraProjectTableRow,
+  JiraUserAccountTableRow,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient }) => {
     try {
+      const jiraUserAcount = await getJiraUserAccountList(supabaseClient, {
+        index: 0,
+        limit: 200,
+      });
+
       const { data: initialJiraFormslyProjectList, count } =
         await getJiraFormslyProjectList(supabaseClient, {
           index: 0,
@@ -51,6 +61,8 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           jiraFormslyProjectList: jiraFormslyProjectList,
           jiraFormslyProjectCount: count,
           jiraProjectList,
+          jiraUserAcountList: jiraUserAcount.data,
+          jiraUserAcountCount: jiraUserAcount.count,
         },
       };
     } catch (error) {
@@ -69,12 +81,16 @@ type Props = {
   jiraFormslyProjectList: JiraFormslyProjectType[];
   jiraFormslyProjectCount: number;
   jiraProjectList: JiraProjectTableRow[];
+  jiraUserAcountList: JiraUserAccountTableRow[];
+  jiraUserAcountCount: number;
 };
 
 const Page = ({
   jiraFormslyProjectList,
   jiraFormslyProjectCount,
   jiraProjectList,
+  jiraUserAcountList,
+  jiraUserAcountCount,
 }: Props) => {
   return (
     <>
@@ -83,6 +99,8 @@ const Page = ({
         jiraFormslyProjectList={jiraFormslyProjectList}
         jiraFormslyProjectCount={jiraFormslyProjectCount}
         jiraProjectList={jiraProjectList}
+        jiraUserAcountList={jiraUserAcountList}
+        jiraUserAcountCount={jiraUserAcountCount}
       />
     </>
   );
