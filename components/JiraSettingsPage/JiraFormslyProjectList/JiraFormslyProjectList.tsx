@@ -1,4 +1,5 @@
-import { createJiraFormslyProject } from "@/backend/api/post";
+import { createOrUpdateJiraFormslyProject } from "@/backend/api/post";
+import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { JiraFormslyProjectType, JiraProjectTableRow } from "@/utils/types";
 import {
@@ -53,6 +54,8 @@ const JiraFormslyProjectList = ({
   const [jiraFormslyProjectCount, setJiraFormslyProjectCount] = useState(
     initialJiraFormslyProjectCount
   );
+  const [isCreateJiraFormslyProject, setIsCreateJiraFormslyProject] =
+    useState(true);
   const [projectActivePage, setProjectActivePage] = useState(1);
 
   const jiraSelectOptionList = jiraProjectList.map((project) => ({
@@ -75,9 +78,10 @@ const JiraFormslyProjectList = ({
       }
       setIsLoading(true);
 
-      const response = await createJiraFormslyProject(supabaseClient, {
+      const response = await createOrUpdateJiraFormslyProject(supabaseClient, {
         formslyProjectId: selectedFormslyProject,
         jiraProjectId: data.jiraProjectId,
+        isCreate: isCreateJiraFormslyProject,
       });
       if (!response.success) {
         notifications.show({
@@ -123,7 +127,9 @@ const JiraFormslyProjectList = ({
         color: "green",
       });
 
+      resetAssignFormslyProjectForm();
       setOpenJiraProjectFormModal(false);
+      setSelectedFormslyProject(null);
     } catch (error) {
       console.log(error);
       notifications.show({
@@ -173,7 +179,7 @@ const JiraFormslyProjectList = ({
           minHeight={390}
           idAccessor="team_project_id"
           totalRecords={jiraFormslyProjectCount}
-          recordsPerPage={5}
+          recordsPerPage={ROW_PER_PAGE}
           page={projectActivePage}
           onPageChange={(p) => setProjectActivePage(p)}
           records={jiraFormslyProjectList}
@@ -205,7 +211,14 @@ const JiraFormslyProjectList = ({
 
                   <Menu.Dropdown>
                     {assigned_jira_project ? (
-                      <Menu.Item icon={<IconPlugConnected size={14} />}>
+                      <Menu.Item
+                        icon={<IconPlugConnected size={14} />}
+                        onClick={() => {
+                          setIsCreateJiraFormslyProject(false);
+                          setSelectedFormslyProject(team_project_id);
+                          setOpenJiraProjectFormModal(true);
+                        }}
+                      >
                         Reassign to Jira Project
                       </Menu.Item>
                     ) : (
@@ -238,6 +251,7 @@ const JiraFormslyProjectList = ({
           opened={openJiraProjectFormModal}
           close={() => {
             resetAssignFormslyProjectForm();
+            setSelectedFormslyProject(null);
             setOpenJiraProjectFormModal(false);
           }}
           selectOptionList={jiraSelectOptionList}
