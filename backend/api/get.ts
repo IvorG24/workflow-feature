@@ -6248,10 +6248,11 @@ export const getJiraFormslyProjectList = async (
   params: {
     index: number;
     limit: number;
+    search?: string;
   }
 ) => {
-  const { index, limit } = params;
-  const { data, count, error } = await supabaseClient
+  const { index, limit, search } = params;
+  let query = supabaseClient
     .from("team_project_table")
     .select(
       "team_project_id, team_project_name, assigned_jira_project: jira_formsly_project_table(jira_formsly_project_id, jira_project_id, formsly_project_id)",
@@ -6260,6 +6261,13 @@ export const getJiraFormslyProjectList = async (
     .order("team_project_name")
     .limit(limit)
     .range(index, index + limit - 1);
+
+  if (search) {
+    query = query.ilike("team_project_name", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+
   if (error) throw error;
 
   return {

@@ -5,15 +5,20 @@ import {
   ActionIcon,
   Badge,
   Box,
-  Button,
   Group,
+  Menu,
   Paper,
   TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconSearch } from "@tabler/icons-react";
+import {
+  IconPlugConnected,
+  IconSearch,
+  IconSettings,
+  IconUsersGroup,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -130,6 +135,20 @@ const JiraFormslyProjectList = ({
     }
   };
 
+  // const handleSearchTeamProject = async (searchValue: string) => {
+  //   try {
+  //     setIsLoading(true);
+
+  //   } catch (error) {
+  //     notifications.show({
+  //       message: "Failed to fetch projects",
+  //       color: "red",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }
+
   return (
     <Box>
       <Paper p="xl" shadow="xs" pos="relative">
@@ -176,23 +195,39 @@ const JiraFormslyProjectList = ({
             {
               accessor: "assign_to_jira_project",
               title: "Action",
-              render: ({ team_project_id, assigned_jira_project }) =>
-                assigned_jira_project ? (
-                  <Button w={85} size="xs" color="cyan">
-                    REASSIGN
-                  </Button>
-                ) : (
-                  <Button
-                    w={85}
-                    size="xs"
-                    onClick={() => {
-                      setSelectedFormslyProject(team_project_id);
-                      setOpenJiraProjectFormModal(true);
-                    }}
-                  >
-                    ASSIGN
-                  </Button>
-                ),
+              render: ({ team_project_id, assigned_jira_project }) => (
+                <Menu>
+                  <Menu.Target>
+                    <ActionIcon>
+                      <IconSettings size={16} />
+                    </ActionIcon>
+                  </Menu.Target>
+
+                  <Menu.Dropdown>
+                    {assigned_jira_project ? (
+                      <Menu.Item icon={<IconPlugConnected size={14} />}>
+                        Reassign to Jira Project
+                      </Menu.Item>
+                    ) : (
+                      <Menu.Item
+                        icon={<IconPlugConnected size={14} />}
+                        onClick={() => {
+                          setSelectedFormslyProject(team_project_id);
+                          setOpenJiraProjectFormModal(true);
+                        }}
+                      >
+                        Assign to Jira Project
+                      </Menu.Item>
+                    )}
+
+                    <Menu.Divider />
+
+                    <Menu.Item icon={<IconUsersGroup size={14} />}>
+                      Manage Project Users
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              ),
             },
           ]}
         />
