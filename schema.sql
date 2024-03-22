@@ -9713,7 +9713,6 @@ plv8.subtransaction(function(){
             },
             {
               ...form.form_section[0].section_field[1],
-              field_option: projectOptions,
             },
             {
               ...form.form_section[0].section_field[2],
