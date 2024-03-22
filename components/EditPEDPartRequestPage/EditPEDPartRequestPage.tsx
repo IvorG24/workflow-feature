@@ -142,7 +142,7 @@ const EditPEDPartRequestPage = ({
             ...request_form.form_section[0].section_field.slice(9),
           ],
         },
-        ...request_form.form_section.slice(2),
+        ...request_form.form_section.slice(1),
       ]);
     } else {
       replaceSection(request_form.form_section);

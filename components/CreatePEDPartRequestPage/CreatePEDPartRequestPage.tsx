@@ -253,7 +253,7 @@ const CreatePEDPartRequestPage = ({
               field_response: "",
             };
           }),
-          ...newSection.section_field.slice(10),
+          ...newSection.section_field.slice(9),
         ];
 
         updateSection(0, {
