@@ -5260,7 +5260,7 @@ RETURNS JSON as $$
 
         const categoryOptions = categories.map((category, index) => {
           return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_field_id: form.form_section[0].section_field[2].field_id,
             option_id: category.equipment_category_id,
             option_order: index,
             option_value: category.equipment_category,
@@ -5279,10 +5279,13 @@ RETURNS JSON as $$
                     field_option: projectOptions,
                   },
                   {
-                    ...form.form_section[0].section_field[1],
+                    ...form.form_section[0].section_field[1]
+                  },
+                  {
+                    ...form.form_section[0].section_field[2],
                     field_option: categoryOptions,
                   },
-                  ...form.form_section[0].section_field.slice(2),
+                  ...form.form_section[0].section_field.slice(3),
                 ],
               },
               {
@@ -6002,7 +6005,6 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
 
 -- End: Create request page on load
 
