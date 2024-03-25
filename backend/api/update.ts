@@ -14,6 +14,8 @@ import {
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraItemCategoryTableUpdate,
   MemberRoleType,
   MemoAgreementTableRow,
   MemoFormatAttachmentTableInsert,
@@ -1002,4 +1004,46 @@ export const updateSLAHours = async (
 
   if (error) throw error;
   return data[0];
+};
+
+// update jira item category
+export const updateJiraItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraItemCategoryTableUpdate
+) => {
+  const { data, error } = await supabaseClient
+    .from("jira_item_category_table")
+    .update(params)
+    .eq("jira_item_category_id", params.jira_item_category_id)
+    .select(
+      "*, assigned_jira_user: jira_item_user_table(jira_item_user_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label))"
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const assignedUser = data?.assigned_jira_user as {
+    jira_item_user_id: string;
+    jira_item_user_account_id: {
+      jira_user_account_jira_id: string;
+      jira_user_account_display_name: string;
+      jira_user_account_id: string;
+    };
+    jira_item_user_role_id: {
+      jira_user_role_id: string;
+      jira_user_role_label: string;
+    };
+  }[];
+
+  const formattedData = {
+    ...data,
+    assigned_jira_user:
+      {
+        ...assignedUser[0],
+        ...assignedUser[0]?.jira_item_user_account_id,
+        ...assignedUser[0]?.jira_item_user_role_id,
+      } ?? null,
+  };
+
+  return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;
 };

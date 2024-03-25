@@ -2,6 +2,7 @@ import { getJiraUserRoleList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { startCase } from "@/utils/string";
 import {
+  JiraFormslyItemCategoryWithUserDataType,
   JiraFormslyProjectType,
   JiraProjectTableRow,
   JiraUserAccountTableRow,
@@ -11,6 +12,7 @@ import { Container, LoadingOverlay, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
+import JiraFormslyItemCategoryList from "./JiraFormslyItemCategoryList/JiraFormslyItemCategoryList";
 import JiraFormslyProjectList from "./JiraFormslyProjectList/JiraFormslyProjectList";
 import JiraUserAccountList from "./JiraUserAccountList/JiraUserAccountList";
 
@@ -20,6 +22,10 @@ type Props = {
   jiraProjectList: JiraProjectTableRow[];
   jiraUserAcountList: JiraUserAccountTableRow[];
   jiraUserAcountCount: number;
+  jiraItemCategoryData: {
+    data: JiraFormslyItemCategoryWithUserDataType[];
+    count: number;
+  };
 };
 
 export type AssignFormslyProjectForm = {
@@ -31,6 +37,7 @@ const JiraSettingsPage = ({
   jiraFormslyProjectCount: initialJiraFormslyProjectCount,
   jiraProjectList,
   jiraUserAcountList,
+  jiraItemCategoryData,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
 
@@ -51,8 +58,8 @@ const JiraSettingsPage = ({
       try {
         setIsLoading(true);
         const jiraUserRoleList = await getJiraUserRoleList(supabaseClient, {
-          index: 0,
-          limit: ROW_PER_PAGE,
+          from: 0,
+          to: ROW_PER_PAGE,
         });
 
         setJiraUserRoleList(jiraUserRoleList);
@@ -104,6 +111,12 @@ const JiraSettingsPage = ({
             jiraUserRoleList={jiraUserRoleList}
           />
         )}
+
+        <JiraFormslyItemCategoryList
+          jiraItemCategoryData={jiraItemCategoryData}
+          jiraUserAcountList={jiraUserAcountList}
+          jiraUserRoleList={jiraUserRoleList}
+        />
       </Stack>
     </Container>
   );

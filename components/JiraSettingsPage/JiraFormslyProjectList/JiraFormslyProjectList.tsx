@@ -2,6 +2,7 @@ import { getJiraFormslyProjectList } from "@/backend/api/get";
 import { assignJiraFormslyProject } from "@/backend/api/post";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { getPagination } from "@/utils/functions";
 import { JiraFormslyProjectType, JiraProjectTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -150,9 +151,10 @@ const JiraFormslyProjectList = ({
     index: number,
     search: string
   ) => {
+    const { from, to } = getPagination(index, ROW_PER_PAGE);
     const { data, count } = await getJiraFormslyProjectList(supabaseClient, {
-      index,
-      limit: ROW_PER_PAGE,
+      from,
+      to,
       search,
     });
 
@@ -262,6 +264,7 @@ const JiraFormslyProjectList = ({
           page={projectActivePage}
           onPageChange={handlePagination}
           records={jiraFormslyProjectList}
+          fetching={isLoading}
           columns={[
             {
               accessor: "team_project_name",

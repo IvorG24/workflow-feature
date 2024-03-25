@@ -1,6 +1,7 @@
 // Imports
 import {
   getJiraFormslyProjectList,
+  getJiraItemCategoryList,
   getJiraProjectList,
   getJiraUserAccountList,
 } from "@/backend/api/get";
@@ -9,6 +10,7 @@ import Meta from "@/components/Meta/Meta";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
+  JiraFormslyItemCategoryWithUserDataType,
   JiraFormslyProjectType,
   JiraProjectTableRow,
   JiraUserAccountTableRow,
@@ -19,20 +21,28 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient }) => {
     try {
       const jiraUserAcount = await getJiraUserAccountList(supabaseClient, {
-        index: 0,
-        limit: 200,
+        from: 0,
+        to: 256,
       });
 
       const { data: initialJiraFormslyProjectList, count } =
         await getJiraFormslyProjectList(supabaseClient, {
-          index: 0,
-          limit: ROW_PER_PAGE,
+          from: 0,
+          to: ROW_PER_PAGE,
         });
 
       const jiraProjectList = await getJiraProjectList(supabaseClient, {
-        index: 0,
-        limit: 999,
+        from: 0,
+        to: 256,
       });
+
+      const jiraItemCategoryData = await getJiraItemCategoryList(
+        supabaseClient,
+        {
+          from: 0,
+          to: ROW_PER_PAGE - 1,
+        }
+      );
 
       const jiraFormslyProjectList = initialJiraFormslyProjectList.map(
         (project) => {
@@ -63,6 +73,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           jiraProjectList,
           jiraUserAcountList: jiraUserAcount.data,
           jiraUserAcountCount: jiraUserAcount.count,
+          jiraItemCategoryData,
         },
       };
     } catch (error) {
@@ -83,6 +94,10 @@ type Props = {
   jiraProjectList: JiraProjectTableRow[];
   jiraUserAcountList: JiraUserAccountTableRow[];
   jiraUserAcountCount: number;
+  jiraItemCategoryData: {
+    data: JiraFormslyItemCategoryWithUserDataType[];
+    count: number;
+  };
 };
 
 const Page = ({
@@ -91,6 +106,7 @@ const Page = ({
   jiraProjectList,
   jiraUserAcountList,
   jiraUserAcountCount,
+  jiraItemCategoryData,
 }: Props) => {
   return (
     <>
@@ -101,6 +117,7 @@ const Page = ({
         jiraProjectList={jiraProjectList}
         jiraUserAcountList={jiraUserAcountList}
         jiraUserAcountCount={jiraUserAcountCount}
+        jiraItemCategoryData={jiraItemCategoryData}
       />
     </>
   );

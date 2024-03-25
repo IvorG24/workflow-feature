@@ -421,6 +421,20 @@ export type JiraProjectUserTableInsert =
 export type JiraProjectUserTableUpdate =
   Database["public"]["Tables"]["jira_project_user_table"]["Update"];
 
+export type JiraItemCategoryTableRow =
+  Database["public"]["Tables"]["jira_item_category_table"]["Row"];
+export type JiraItemCategoryTableInsert =
+  Database["public"]["Tables"]["jira_item_category_table"]["Insert"];
+export type JiraItemCategoryTableUpdate =
+  Database["public"]["Tables"]["jira_item_category_table"]["Update"];
+
+export type JiraItemCategoryUserTableRow =
+  Database["public"]["Tables"]["jira_item_user_table"]["Row"];
+export type JiraItemCategoryUserTableInsert =
+  Database["public"]["Tables"]["jira_item_user_table"]["Insert"];
+export type JiraItemCategoryUserTableUpdate =
+  Database["public"]["Tables"]["jira_item_user_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1619,3 +1633,15 @@ export type JiraFormslyProjectType = {
 export type ProjectJiraUserAccountType = JiraProjectUserTableRow &
   JiraUserAccountTableRow &
   JiraUserRoleTableRow;
+
+export type JiraFormslyItemCategoryType = JiraItemCategoryTableRow & {
+  assigned_jira_user: {
+    jira_item_user_account_id: string;
+    jira_item_user_role_id: string;
+  } | null;
+};
+
+export type JiraFormslyItemCategoryWithUserDataType =
+  JiraItemCategoryTableRow & {
+    assigned_jira_user: (JiraUserAccountTableRow & JiraUserRoleTableRow) | null;
+  };

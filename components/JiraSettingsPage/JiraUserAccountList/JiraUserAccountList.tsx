@@ -3,6 +3,7 @@ import { getProjectJiraUserAccountList } from "@/backend/api/get";
 import { assignJiraUserToProject } from "@/backend/api/post";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { getPagination } from "@/utils/functions";
 import {
   JiraUserAccountTableRow,
   JiraUserRoleTableRow,
@@ -189,19 +190,19 @@ const JiraUserAccountList = ({
       centered: true,
     });
 
-  const handleFetchJiraUserAccountList = async () => {
+  const handleFetchJiraUserAccountList = async (index: number) => {
     try {
       if (!selectedFormslyProject) {
         console.warn("Missing selectedFormslyProject");
         return;
       }
       setIsLoading(true);
-
+      const { from, to } = getPagination(index, ROW_PER_PAGE);
       const { data, count } = await getProjectJiraUserAccountList(
         supabaseClient,
         {
-          index: 0,
-          limit: ROW_PER_PAGE,
+          from,
+          to,
           teamProjectId: selectedFormslyProject,
         }
       );
@@ -246,9 +247,24 @@ const JiraUserAccountList = ({
     }
   };
 
+  const handlePagination = async (page: number) => {
+    try {
+      setActivePage(page);
+      setIsLoading(true);
+      await handleFetchJiraUserAccountList(page - 1);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to fetch projects",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedFormslyProject) {
-      handleFetchJiraUserAccountList();
+      handleFetchJiraUserAccountList(0);
     }
   }, [selectedFormslyProject]);
 
@@ -283,7 +299,7 @@ const JiraUserAccountList = ({
           totalRecords={projectJiraUserAccountCount}
           recordsPerPage={ROW_PER_PAGE}
           page={activePage}
-          onPageChange={setActivePage}
+          onPageChange={handlePagination}
           records={projectJiraUserAccountList}
           columns={[
             {

@@ -22,6 +22,7 @@ import {
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
+  JiraItemCategoryUserTableInsert,
   MemoAgreementTableRow,
   MemoLineItem,
   MemoTableRow,
@@ -1693,4 +1694,72 @@ export const assignJiraUserToProject = async (
   } else {
     return { success: true, data: null, error: null };
   }
+};
+
+// assign jira user item category
+export const assignJiraUserToItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    data: JiraItemCategoryUserTableInsert;
+    isUpdate: boolean;
+  }
+) => {
+  // // update
+  // if (params.isUpdate) {
+  //   const { data, error } = await supabaseClient
+  //     .from("jira_item_user_table")
+  //     .update(params.data)
+  //     .eq("jira_item_user_id", params.data.jira_item_user_id)
+  //     .select()
+  //     .maybeSingle();
+  //   if (error) throw error;
+
+  //   return { success: true, data: data, error: null };
+  // }
+
+  // check if duplicate entry
+  const { count } = await supabaseClient
+    .from("jira_item_user_table")
+    .select("jira_item_user_id", { count: "exact" })
+    .eq(
+      "jira_item_user_item_category_id",
+      params.data.jira_item_user_item_category_id
+    );
+
+  if (Number(count)) {
+    return { success: false, data: null, error: "Duplicate entry" };
+  }
+
+  // assign
+  const { data, error } = await supabaseClient
+    .from("jira_item_user_table")
+    .insert(params.data as JiraItemCategoryUserTableInsert)
+    .select(
+      "jira_item_user_id, jira_item_user_item_category_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label)"
+    )
+    .maybeSingle();
+  if (error) throw error;
+
+  const assignedUser = data as unknown as {
+    jira_item_user_id: string;
+    jira_item_user_item_category_id: string;
+    jira_item_user_account_id: {
+      jira_user_account_jira_id: string;
+      jira_user_account_display_name: string;
+      jira_user_account_id: string;
+    };
+    jira_item_user_role_id: {
+      jira_user_role_id: string;
+      jira_user_role_label: string;
+    };
+  };
+
+  const formattedData =
+    {
+      ...assignedUser,
+      ...assignedUser?.jira_item_user_account_id,
+      ...assignedUser?.jira_item_user_role_id,
+    } ?? null;
+
+  return { success: true, data: formattedData, error: null };
 };

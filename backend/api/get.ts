@@ -36,6 +36,7 @@ import {
   ItemTableRow,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
+  JiraFormslyItemCategoryWithUserDataType,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -6239,17 +6240,16 @@ export const getPropertyNumberOptions = async (
 export const getJiraProjectList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    index: number;
-    limit: number;
+    from: number;
+    to: number;
   }
 ) => {
-  const { index, limit } = params;
+  const { from, to } = params;
   const { data, error } = await supabaseClient
     .from("jira_project_table")
     .select("*")
     .order("jira_project_jira_label")
-    .limit(limit)
-    .range(index, index + limit - 1);
+    .range(from, to);
   if (error) throw error;
 
   return data;
@@ -6258,12 +6258,12 @@ export const getJiraProjectList = async (
 export const getJiraFormslyProjectList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    index: number;
-    limit: number;
+    from: number;
+    to: number;
     search?: string;
   }
 ) => {
-  const { index, limit, search } = params;
+  const { from, to, search } = params;
   let query = supabaseClient
     .from("team_project_table")
     .select(
@@ -6271,8 +6271,7 @@ export const getJiraFormslyProjectList = async (
       { count: "exact" }
     )
     .order("team_project_name")
-    .limit(limit)
-    .range(index, index + limit - 1);
+    .range(from, to);
 
   if (search) {
     query = query.ilike("team_project_name", `%${search}%`);
@@ -6299,20 +6298,19 @@ export const getJiraFormslyProjectList = async (
 export const getJiraUserAccountList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    index: number;
-    limit: number;
+    from: number;
+    to: number;
     search?: string;
   }
 ) => {
-  const { index, limit, search } = params;
+  const { from, to, search } = params;
   let query = supabaseClient
     .from("jira_user_account_table")
-    .select("*, jira_user_account_role_id(jira_user_role_label)", {
+    .select("*", {
       count: "exact",
     })
     .order("jira_user_account_display_name")
-    .limit(limit)
-    .range(index, index + limit - 1);
+    .range(from, to);
 
   if (search) {
     query = query.ilike("team_project_name", `%${search}%`);
@@ -6331,19 +6329,18 @@ export const getJiraUserAccountList = async (
 export const getProjectJiraUserAccountList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    index: number;
-    limit: number;
+    from: number;
+    to: number;
     search?: string;
     teamProjectId: string;
   }
 ) => {
-  const { index, limit, search, teamProjectId } = params;
+  const { from, to, search, teamProjectId } = params;
   let query = supabaseClient
     .from("jira_project_user_table")
     .select("*", { count: "exact" })
     .eq("jira_project_user_team_project_id", teamProjectId)
-    .limit(limit)
-    .range(index, index + limit - 1);
+    .range(from, to);
 
   if (search) {
     query = query.ilike("team_project_name", `%${search}%`);
@@ -6362,20 +6359,71 @@ export const getProjectJiraUserAccountList = async (
 export const getJiraUserRoleList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    index: number;
-    limit: number;
+    from: number;
+    to: number;
   }
 ) => {
-  const { index, limit } = params;
+  const { from, to } = params;
   const query = supabaseClient
     .from("jira_user_role_table")
     .select("*")
-    .limit(limit)
-    .range(index, index + limit - 1);
+    .range(from, to);
 
   const { data, error } = await query;
 
   if (error) throw error;
 
   return data;
+};
+
+export const getJiraItemCategoryList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    from: number;
+    to: number;
+  }
+) => {
+  const { from, to } = params;
+  const query = supabaseClient
+    .from("jira_item_category_table")
+    .select(
+      "*, assigned_jira_user: jira_item_user_table(jira_item_user_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label))",
+      { count: "exact" }
+    )
+    .order("jira_item_category_formsly_label")
+    .range(from, to);
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  const formattedData = data.map((item) => {
+    const assignedUser = item.assigned_jira_user as {
+      jira_item_user_id: string;
+      jira_item_user_account_id: {
+        jira_user_account_jira_id: string;
+        jira_user_account_display_name: string;
+        jira_user_account_id: string;
+      };
+      jira_item_user_role_id: {
+        jira_user_role_id: string;
+        jira_user_role_label: string;
+      };
+    }[];
+
+    return {
+      ...item,
+      assigned_jira_user:
+        {
+          ...assignedUser[0],
+          ...assignedUser[0]?.jira_item_user_account_id,
+          ...assignedUser[0]?.jira_item_user_role_id,
+        } ?? null,
+    };
+  });
+
+  return {
+    data: formattedData as unknown as JiraFormslyItemCategoryWithUserDataType[],
+    count: Number(count),
+  };
 };
