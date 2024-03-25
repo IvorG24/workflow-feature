@@ -5260,7 +5260,7 @@ RETURNS JSON as $$
 
         const categoryOptions = categories.map((category, index) => {
           return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_field_id: form.form_section[0].section_field[2].field_id,
             option_id: category.equipment_category_id,
             option_order: index,
             option_value: category.equipment_category,
@@ -5279,10 +5279,13 @@ RETURNS JSON as $$
                     field_option: projectOptions,
                   },
                   {
-                    ...form.form_section[0].section_field[1],
+                    ...form.form_section[0].section_field[1]
+                  },
+                  {
+                    ...form.form_section[0].section_field[2],
                     field_option: categoryOptions,
                   },
-                  ...form.form_section[0].section_field.slice(2),
+                  ...form.form_section[0].section_field.slice(3),
                 ],
               },
               {
@@ -6002,7 +6005,6 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
 
 -- End: Create request page on load
 
@@ -9516,7 +9518,7 @@ plv8.subtransaction(function(){
         };
       });
 
-      const typeOfOrder = JSON.parse(form.form_section[0].section_field[2].field_response[0].request_response);
+      const typeOfOrder = JSON.parse(form.form_section[0].section_field[3].field_response[0].request_response);
       let headerSection;
       let itemSectionList = [];
 
@@ -9524,8 +9526,8 @@ plv8.subtransaction(function(){
       let equipmentId = "";
 
       if (typeOfOrder === "Single"){
-        const categoryResponse = JSON.parse(form.form_section[0].section_field[1].field_response[0].request_response);
-        const equipmentNameResponse = JSON.parse(form.form_section[0].section_field[3].field_response[0].request_response);
+        const categoryResponse = JSON.parse(form.form_section[0].section_field[2].field_response[0].request_response);
+        const equipmentNameResponse = JSON.parse(form.form_section[0].section_field[4].field_response[0].request_response);
 
         const categoryId = categoryOptions.find(category => category.option_value === categoryResponse).option_id;
 
@@ -9576,20 +9578,23 @@ plv8.subtransaction(function(){
             },
             {
               ...form.form_section[0].section_field[1],
-              field_option: categoryOptions,
             },
             {
               ...form.form_section[0].section_field[2],
+              field_option: categoryOptions,
             },
             {
               ...form.form_section[0].section_field[3],
-              field_option: equipmentNameOptions,
             },
             {
               ...form.form_section[0].section_field[4],
+              field_option: equipmentNameOptions,
+            },
+            {
+              ...form.form_section[0].section_field[5],
               field_option: equipmentPropertyNumberOptions,
             },
-            ...form.form_section[0].section_field.slice(5)
+            ...form.form_section[0].section_field.slice(6)
           ]
         }
         
@@ -9678,7 +9683,7 @@ plv8.subtransaction(function(){
           };
         });
       } else if (typeOfOrder === "Bulk") {
-        const categoryResponse = JSON.parse(form.form_section[0].section_field[1].field_response[0].request_response);
+        const categoryResponse = JSON.parse(form.form_section[0].section_field[2].field_response[0].request_response);
         const categoryId = categoryOptions.find(category => category.option_value === categoryResponse).option_id;
 
         const equipmentNames = plv8.execute(
@@ -9708,14 +9713,17 @@ plv8.subtransaction(function(){
             },
             {
               ...form.form_section[0].section_field[1],
+            },
+            {
+              ...form.form_section[0].section_field[2],
               field_option: categoryOptions,
             },
-            {...form.form_section[0].section_field[2]},
+            {...form.form_section[0].section_field[3]},
             {
-              ...form.form_section[0].section_field[3],
+              ...form.form_section[0].section_field[4],
               field_option: equipmentNameOptions,
             },
-            ...form.form_section[0].section_field.slice(4)
+            ...form.form_section[0].section_field.slice(5)
           ]
         }
 
@@ -9804,7 +9812,7 @@ plv8.subtransaction(function(){
           };
         });
       }
-
+      
       const formattedRequest = {
         ...request,
         request_form: {
