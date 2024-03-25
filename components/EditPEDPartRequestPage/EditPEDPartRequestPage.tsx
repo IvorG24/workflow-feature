@@ -665,7 +665,8 @@ const EditPEDPartRequestPage = ({
           ...section.section_field.slice(0, 4),
           ...section.section_field.slice(9),
         ];
-        updateSection(0, {
+        removeSection(0);
+        addSection(0, {
           ...section,
           section_field: generalField,
         });
@@ -704,7 +705,8 @@ const EditPEDPartRequestPage = ({
           ...section.section_field.slice(4),
         ];
         setStoredFields([]);
-        updateSection(0, {
+        removeSection(0);
+        addSection(0, {
           ...section,
           section_field: generalField,
         });
@@ -724,7 +726,8 @@ const EditPEDPartRequestPage = ({
           }),
           ...section.section_field.slice(9),
         ];
-        updateSection(0, {
+        removeSection(0);
+        addSection(0, {
           ...section,
           section_field: generalField,
         });
