@@ -2,7 +2,7 @@ import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
-import { FORMSLY_FORM_ORDER } from "@/utils/constant";
+import { FETCH_OPTION_LIMIT, FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import {
@@ -5715,25 +5715,37 @@ export const getItemSectionChoices = async (
 ) => {
   const { equipmentId, generalName, componentCategory, brand, model } = params;
 
-  const { data, error } = await supabaseClient.rpc("get_item_section_choices", {
-    input_data: {
-      equipmentId: equipmentId
-        ? `${safeParse(equipmentId.replace(/'/g, "''"))}`
-        : undefined,
-      generalName: generalName
-        ? `${safeParse(generalName.replace(/'/g, "''"))}`
-        : undefined,
-      componentCategory: componentCategory
-        ? `${safeParse(componentCategory.replace(/'/g, "''"))}`
-        : undefined,
-      brand: brand ? `${safeParse(brand.replace(/'/g, "''"))}` : undefined,
-      model: model ? `${safeParse(model.replace(/'/g, "''"))}` : undefined,
-    },
-  });
+  let index = 0;
+  const optionList: JSON[] = [];
+  while (1) {
+    const { data, error } = await supabaseClient.rpc(
+      "get_item_section_choices",
+      {
+        input_data: {
+          equipmentId: equipmentId
+            ? `${safeParse(equipmentId.replace(/'/g, "''"))}`
+            : undefined,
+          generalName: generalName
+            ? `${safeParse(generalName.replace(/'/g, "''"))}`
+            : undefined,
+          componentCategory: componentCategory
+            ? `${safeParse(componentCategory.replace(/'/g, "''"))}`
+            : undefined,
+          brand: brand ? `${safeParse(brand.replace(/'/g, "''"))}` : undefined,
+          model: model ? `${safeParse(model.replace(/'/g, "''"))}` : undefined,
+          index,
+          limit: FETCH_OPTION_LIMIT,
+        },
+      }
+    );
+    if (error) throw error;
+    const formattedData = data as unknown as JSON[];
+    optionList.push(...formattedData);
+    if (formattedData.length < FETCH_OPTION_LIMIT) break;
+    index += FETCH_OPTION_LIMIT;
+  }
 
-  if (error) throw error;
-
-  return data;
+  return optionList;
 };
 
 // Fetch item unit of measurement based on given parameters

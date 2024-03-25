@@ -487,7 +487,7 @@ const EditPEDPartRequestPage = ({
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId.option_id,
         });
-        const equipmentGeneralNameChoices = data as {
+        const equipmentGeneralNameChoices = data as unknown as {
           equipment_part_id: string;
           equipment_general_name: string;
         }[];
@@ -671,7 +671,7 @@ const EditPEDPartRequestPage = ({
         });
 
         const data = await getItemSectionChoices(supabaseClient, {});
-        const equipmentGeneralNameChoices = data as {
+        const equipmentGeneralNameChoices = data as unknown as {
           equipment_part_id: string;
           equipment_general_name: string;
         }[];
@@ -750,7 +750,7 @@ const EditPEDPartRequestPage = ({
           generalName: value,
         });
 
-        const equipmentComponentCategoryChoices = data as {
+        const equipmentComponentCategoryChoices = data as unknown as {
           equipment_part_id: string;
           equipment_component_category: string;
         }[];
@@ -834,7 +834,7 @@ const EditPEDPartRequestPage = ({
             .request_response as string,
           componentCategory: value,
         });
-        const brandOptionChoices = data as {
+        const brandOptionChoices = data as unknown as {
           equipment_part_id: string;
           equipment_brand: string;
         }[];
@@ -915,7 +915,7 @@ const EditPEDPartRequestPage = ({
             .request_response as string,
           brand: value,
         });
-        const modelOptionChoices = data as {
+        const modelOptionChoices = data as unknown as {
           equipment_part_id: string;
           equipment_model: string;
         }[];
@@ -998,7 +998,7 @@ const EditPEDPartRequestPage = ({
             .request_response as string,
           model: value,
         });
-        const partNumberOptionChoices = data as {
+        const partNumberOptionChoices = data as unknown as {
           equipment_part_id: string;
           equipment_part_number: string;
         }[];
