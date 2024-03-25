@@ -120,13 +120,13 @@ const EditPEDPartRequestPage = ({
   useEffect(() => {
     if (
       JSON.parse(
-        request_form.form_section[0].section_field[2].field_response[0]
+        request_form.form_section[0].section_field[3].field_response[0]
           .request_response
       ) === "Bulk"
     ) {
       setStoredFields([
         ...request_form.form_section[0].section_field
-          .slice(3, 8)
+          .slice(4, 9)
           .map((field) => {
             return {
               ...field,
@@ -138,8 +138,8 @@ const EditPEDPartRequestPage = ({
         {
           ...request_form.form_section[0],
           section_field: [
-            ...request_form.form_section[0].section_field.slice(0, 3),
-            ...request_form.form_section[0].section_field.slice(8),
+            ...request_form.form_section[0].section_field.slice(0, 4),
+            ...request_form.form_section[0].section_field.slice(9),
           ],
         },
         ...request_form.form_section.slice(1),
@@ -346,28 +346,28 @@ const EditPEDPartRequestPage = ({
         });
 
         const generalField = [
-          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(0, 4),
           {
-            ...newSection.section_field[3],
+            ...newSection.section_field[4],
             field_response: [],
             field_option: equipmentName.map((equipment, index) => {
               return {
                 option_field_id:
-                  request_form.form_section[0].section_field[3].field_id,
+                  request_form.form_section[0].section_field[4].field_id,
                 option_id: equipment.equipment_id,
                 option_order: index,
                 option_value: equipment.equipment_name,
               };
             }),
           },
-          ...newSection.section_field.slice(4, 8).map((field) => {
+          ...newSection.section_field.slice(5, 9).map((field) => {
             return {
               ...field,
               field_response: [],
               field_option: [],
             };
           }),
-          ...newSection.section_field.slice(8),
+          ...newSection.section_field.slice(9),
         ];
 
         updateSection(0, {
@@ -376,8 +376,8 @@ const EditPEDPartRequestPage = ({
         });
       } else {
         const generalField = [
-          ...newSection.section_field.slice(0, 3),
-          ...newSection.section_field.slice(3, 8).map((field) => {
+          ...newSection.section_field.slice(0, 4),
+          ...newSection.section_field.slice(4, 9).map((field) => {
             return {
               ...field,
               field_response: [
@@ -389,7 +389,7 @@ const EditPEDPartRequestPage = ({
               field_option: [],
             };
           }),
-          ...newSection.section_field.slice(8),
+          ...newSection.section_field.slice(9),
         ];
         updateSection(0, {
           ...newSection,
@@ -397,7 +397,7 @@ const EditPEDPartRequestPage = ({
         });
       }
     } catch (e) {
-      setValue(`sections.0.section_field.${1}.field_response`, []);
+      setValue(`sections.0.section_field.${2}.field_response`, []);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -441,7 +441,7 @@ const EditPEDPartRequestPage = ({
     resetItemSection();
     try {
       if (value) {
-        const equipmentOptions = newSection.section_field[3].field_option;
+        const equipmentOptions = newSection.section_field[4].field_option;
         const equipmentId = equipmentOptions.find(
           (equipment) => equipment.option_value === value
         );
@@ -454,15 +454,15 @@ const EditPEDPartRequestPage = ({
         );
 
         const generalField = [
-          ...newSection.section_field.slice(0, 4),
+          ...newSection.section_field.slice(0, 5),
           {
-            ...newSection.section_field[4],
+            ...newSection.section_field[5],
             field_response: [],
             field_option: equipmentPropertyNumber.map(
               (propertyNumber, index) => {
                 return {
                   option_field_id:
-                    request_form.form_section[0].section_field[0].field_id,
+                    request_form.form_section[0].section_field[5].field_id,
                   option_id: `${propertyNumber.equipment_description_id}`,
                   option_order: index,
                   option_value: `${propertyNumber.equipment_description_property_number_with_prefix}`,
@@ -470,13 +470,13 @@ const EditPEDPartRequestPage = ({
               }
             ),
           },
-          ...newSection.section_field.slice(5, 8).map((field) => {
+          ...newSection.section_field.slice(6, 9).map((field) => {
             return {
               ...field,
               field_response: [],
             };
           }),
-          ...newSection.section_field.slice(8),
+          ...newSection.section_field.slice(9),
         ];
 
         updateSection(0, {
@@ -487,7 +487,7 @@ const EditPEDPartRequestPage = ({
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId.option_id,
         });
-        const equipmentGeneralNameChoices = data as {
+        const equipmentGeneralNameChoices = data as unknown as {
           equipment_part_id: string;
           equipment_general_name: string;
         }[];
@@ -498,7 +498,7 @@ const EditPEDPartRequestPage = ({
           (choice, index) => {
             return {
               option_field_id:
-                request_form.form_section[0].section_field[0].field_id,
+                request_form.form_section[1].section_field[0].field_id,
               option_id: choice.equipment_part_id,
               option_order: index,
               option_value: choice.equipment_general_name,
@@ -515,8 +515,8 @@ const EditPEDPartRequestPage = ({
         });
       } else {
         const generalField = [
-          ...newSection.section_field.slice(0, 4),
-          ...newSection.section_field.slice(4, 8).map((field) => {
+          ...newSection.section_field.slice(0, 5),
+          ...newSection.section_field.slice(5, 9).map((field) => {
             return {
               ...field,
               field_response: [
@@ -528,7 +528,7 @@ const EditPEDPartRequestPage = ({
               field_option: [],
             };
           }),
-          ...newSection.section_field.slice(8),
+          ...newSection.section_field.slice(9),
         ];
         updateSection(0, {
           ...newSection,
@@ -538,7 +538,7 @@ const EditPEDPartRequestPage = ({
         setGeneralItemNameChoices([]);
       }
     } catch (e) {
-      setValue(`sections.0.section_field.${3}.field_response`, []);
+      setValue(`sections.0.section_field.${4}.field_response`, []);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -558,31 +558,15 @@ const EditPEDPartRequestPage = ({
         );
 
         const generalField = [
-          ...newSection.section_field.slice(0, 5),
-          {
-            ...newSection.section_field[5],
-            field_response: [
-              {
-                request_response_id: uuidv4(),
-                request_response:
-                  equipmentDescription.equipment_description_brand
-                    .equipment_brand,
-                request_response_duplicatable_section_id:
-                  newSection.section_field[5].field_section_duplicatable_id ??
-                  null,
-                request_response_request_id: request.request_id,
-                request_response_field_id: newSection.section_field[5].field_id,
-              },
-            ],
-          },
+          ...newSection.section_field.slice(0, 6),
           {
             ...newSection.section_field[6],
             field_response: [
               {
                 request_response_id: uuidv4(),
                 request_response:
-                  equipmentDescription.equipment_description_model
-                    .equipment_model,
+                  equipmentDescription.equipment_description_brand
+                    .equipment_brand,
                 request_response_duplicatable_section_id:
                   newSection.section_field[6].field_section_duplicatable_id ??
                   null,
@@ -597,7 +581,8 @@ const EditPEDPartRequestPage = ({
               {
                 request_response_id: uuidv4(),
                 request_response:
-                  equipmentDescription.equipment_description_serial_number,
+                  equipmentDescription.equipment_description_model
+                    .equipment_model,
                 request_response_duplicatable_section_id:
                   newSection.section_field[7].field_section_duplicatable_id ??
                   null,
@@ -606,8 +591,23 @@ const EditPEDPartRequestPage = ({
               },
             ],
           },
+          {
+            ...newSection.section_field[8],
+            field_response: [
+              {
+                request_response_id: uuidv4(),
+                request_response:
+                  equipmentDescription.equipment_description_serial_number,
+                request_response_duplicatable_section_id:
+                  newSection.section_field[8].field_section_duplicatable_id ??
+                  null,
+                request_response_request_id: request.request_id,
+                request_response_field_id: newSection.section_field[8].field_id,
+              },
+            ],
+          },
 
-          ...newSection.section_field.slice(8),
+          ...newSection.section_field.slice(9),
         ];
 
         updateSection(0, {
@@ -616,8 +616,8 @@ const EditPEDPartRequestPage = ({
         });
       } else {
         const generalField = [
-          ...newSection.section_field.slice(0, 5),
-          ...newSection.section_field.slice(5, 8).map((field) => {
+          ...newSection.section_field.slice(0, 6),
+          ...newSection.section_field.slice(6, 9).map((field) => {
             return {
               ...field,
               field_response: [
@@ -628,7 +628,7 @@ const EditPEDPartRequestPage = ({
               ],
             };
           }),
-          ...newSection.section_field.slice(8),
+          ...newSection.section_field.slice(9),
         ];
         updateSection(0, {
           ...newSection,
@@ -636,7 +636,7 @@ const EditPEDPartRequestPage = ({
         });
       }
     } catch (e) {
-      setValue(`sections.0.section_field.${4}.field_response`, []);
+      setValue(`sections.0.section_field.${5}.field_response`, []);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -654,7 +654,7 @@ const EditPEDPartRequestPage = ({
 
       if (value === "Bulk") {
         setStoredFields([
-          ...section.section_field.slice(3, 8).map((field) => {
+          ...section.section_field.slice(4, 9).map((field) => {
             return {
               ...field,
               field_response: [],
@@ -662,8 +662,8 @@ const EditPEDPartRequestPage = ({
           }),
         ]);
         const generalField = [
-          ...section.section_field.slice(0, 3),
-          ...section.section_field.slice(8),
+          ...section.section_field.slice(0, 4),
+          ...section.section_field.slice(9),
         ];
         updateSection(0, {
           ...section,
@@ -671,7 +671,7 @@ const EditPEDPartRequestPage = ({
         });
 
         const data = await getItemSectionChoices(supabaseClient, {});
-        const equipmentGeneralNameChoices = data as {
+        const equipmentGeneralNameChoices = data as unknown as {
           equipment_part_id: string;
           equipment_general_name: string;
         }[];
@@ -680,7 +680,7 @@ const EditPEDPartRequestPage = ({
           (choice, index) => {
             return {
               option_field_id:
-                request_form.form_section[0].section_field[0].field_id,
+                request_form.form_section[1].section_field[0].field_id,
               option_id: choice.equipment_part_id,
               option_order: index,
               option_value: choice.equipment_general_name,
@@ -699,9 +699,9 @@ const EditPEDPartRequestPage = ({
         setEquipmentId("");
       } else if (prevValue && safeParse(prevValue) === "Bulk") {
         const generalField = [
-          ...section.section_field.slice(0, 3),
+          ...section.section_field.slice(0, 4),
           ...storedFields,
-          ...section.section_field.slice(3),
+          ...section.section_field.slice(4),
         ];
         setStoredFields([]);
         updateSection(0, {
@@ -710,19 +710,19 @@ const EditPEDPartRequestPage = ({
         });
       } else {
         const generalField = [
-          ...section.section_field.slice(0, 3),
+          ...section.section_field.slice(0, 4),
           {
-            ...section.section_field[3],
+            ...section.section_field[4],
             field_response: [],
           },
-          ...section.section_field.slice(4, 8).map((field) => {
+          ...section.section_field.slice(5, 9).map((field) => {
             return {
               ...field,
               field_response: [],
               field_option: [],
             };
           }),
-          ...section.section_field.slice(8),
+          ...section.section_field.slice(9),
         ];
         updateSection(0, {
           ...section,
@@ -730,7 +730,7 @@ const EditPEDPartRequestPage = ({
         });
       }
     } catch (e) {
-      setValue(`sections.0.section_field.${2}.field_response`, []);
+      setValue(`sections.0.section_field.${3}.field_response`, []);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -750,7 +750,7 @@ const EditPEDPartRequestPage = ({
           generalName: value,
         });
 
-        const equipmentComponentCategoryChoices = data as {
+        const equipmentComponentCategoryChoices = data as unknown as {
           equipment_part_id: string;
           equipment_component_category: string;
         }[];
@@ -759,7 +759,7 @@ const EditPEDPartRequestPage = ({
           (choice, index) => {
             return {
               option_field_id:
-                request_form.form_section[0].section_field[0].field_id,
+                request_form.form_section[1].section_field[0].field_id,
               option_id: choice.equipment_part_id,
               option_order: index,
               option_value: choice.equipment_component_category,
@@ -834,7 +834,7 @@ const EditPEDPartRequestPage = ({
             .request_response as string,
           componentCategory: value,
         });
-        const brandOptionChoices = data as {
+        const brandOptionChoices = data as unknown as {
           equipment_part_id: string;
           equipment_brand: string;
         }[];
@@ -842,7 +842,7 @@ const EditPEDPartRequestPage = ({
         const brandOption = brandOptionChoices.map((choice, index) => {
           return {
             option_field_id:
-              request_form.form_section[0].section_field[0].field_id,
+              request_form.form_section[1].section_field[0].field_id,
             option_id: choice.equipment_part_id,
             option_order: index,
             option_value: choice.equipment_brand,
@@ -915,7 +915,7 @@ const EditPEDPartRequestPage = ({
             .request_response as string,
           brand: value,
         });
-        const modelOptionChoices = data as {
+        const modelOptionChoices = data as unknown as {
           equipment_part_id: string;
           equipment_model: string;
         }[];
@@ -923,7 +923,7 @@ const EditPEDPartRequestPage = ({
         const modelOption = modelOptionChoices.map((choice, index) => {
           return {
             option_field_id:
-              request_form.form_section[0].section_field[0].field_id,
+              request_form.form_section[1].section_field[0].field_id,
             option_id: choice.equipment_part_id,
             option_order: index,
             option_value: choice.equipment_model,
@@ -998,7 +998,7 @@ const EditPEDPartRequestPage = ({
             .request_response as string,
           model: value,
         });
-        const partNumberOptionChoices = data as {
+        const partNumberOptionChoices = data as unknown as {
           equipment_part_id: string;
           equipment_part_number: string;
         }[];
