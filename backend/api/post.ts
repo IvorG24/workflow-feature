@@ -1583,19 +1583,19 @@ export const createPedPartFromTicketRequest = async (
   return data;
 };
 
-// create or update jira formsly project
-export const createOrUpdateJiraFormslyProject = async (
+// assign jira formsly project
+export const assignJiraFormslyProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formslyProjectId: string;
     jiraProjectId: string;
-    isCreate: boolean;
+    isReassign: boolean;
   }
 ) => {
-  const { formslyProjectId, jiraProjectId, isCreate } = params;
+  const { formslyProjectId, jiraProjectId, isReassign } = params;
 
-  // update
-  if (!isCreate) {
+  // reassign
+  if (isReassign) {
     const { data, error } = await supabaseClient
       .from("jira_formsly_project_table")
       .update({ jira_project_id: jiraProjectId })
@@ -1617,7 +1617,7 @@ export const createOrUpdateJiraFormslyProject = async (
     return { success: false, data: null };
   }
 
-  // create
+  // assign
   const { data, error } = await supabaseClient
     .from("jira_formsly_project_table")
     .insert({
@@ -1631,18 +1631,52 @@ export const createOrUpdateJiraFormslyProject = async (
   return { success: true, data: data };
 };
 
-// create or update jira formsly project
-export const createJiraUserToProject = async (
+// assign jira user to project
+export const assignJiraUserToProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     userAccountId: string;
     userRoleId: string;
     teamProjectId: string;
+    selectedRoleLabel: string;
   }
 ) => {
-  const { userAccountId, teamProjectId, userRoleId } = params;
+  const { userAccountId, teamProjectId, userRoleId, selectedRoleLabel } =
+    params;
 
-  // create
+  // check for duplicate
+  const { count, error: CountError } = await supabaseClient
+    .from("jira_team_project_assigned_user_table")
+    .select("jira_team_project_assigned_user_id", { count: "exact" })
+    .eq("jira_team_project_assigned_user_account_id", userAccountId)
+    .eq("jira_team_project_assigned_user_team_project_id", teamProjectId);
+  if (CountError) throw CountError;
+
+  if (Number(count) > 1) {
+    return { success: false, data: null, error: "Duplicate entry." };
+  }
+
+  if (
+    ["WAREHOUSE REPRESENTATIVE", "WAREHOUSE AREA LEAD"].includes(
+      selectedRoleLabel
+    )
+  ) {
+    const { count, error: CountError } = await supabaseClient
+      .from("jira_team_project_assigned_user_table")
+      .select("jira_team_project_assigned_user_id", { count: "exact" })
+      .eq("jira_team_project_assigned_user_role_id", userRoleId)
+      .eq("jira_team_project_assigned_user_team_project_id", teamProjectId);
+    if (CountError) throw CountError;
+
+    if (Number(count) >= 1) {
+      return {
+        success: false,
+        data: null,
+        error: `${selectedRoleLabel} must only have 1 entry per project.`,
+      };
+    }
+  }
+
   const { data, error } = await supabaseClient
     .from("jira_team_project_assigned_user_table")
     .insert({
@@ -1655,8 +1689,8 @@ export const createJiraUserToProject = async (
   if (error) throw error;
 
   if (data) {
-    return { success: true, data: data };
+    return { success: true, data: data, error: null };
   } else {
-    return { success: true, data: null };
+    return { success: true, data: null, error: null };
   }
 };

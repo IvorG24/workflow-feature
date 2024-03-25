@@ -1,5 +1,5 @@
 import { getJiraFormslyProjectList } from "@/backend/api/get";
-import { createOrUpdateJiraFormslyProject } from "@/backend/api/post";
+import { assignJiraFormslyProject } from "@/backend/api/post";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { JiraFormslyProjectType, JiraProjectTableRow } from "@/utils/types";
@@ -59,8 +59,8 @@ const JiraFormslyProjectList = ({
   const [jiraFormslyProjectCount, setJiraFormslyProjectCount] = useState(
     initialJiraFormslyProjectCount
   );
-  const [isCreateJiraFormslyProject, setIsCreateJiraFormslyProject] =
-    useState(true);
+  const [isReassignJiraFormslyProject, setIsReassignJiraFormslyProject] =
+    useState(false);
   const [projectActivePage, setProjectActivePage] = useState(1);
 
   const jiraSelectOptionList = jiraProjectList.map((project) => ({
@@ -85,10 +85,10 @@ const JiraFormslyProjectList = ({
       }
       setIsLoading(true);
 
-      const response = await createOrUpdateJiraFormslyProject(supabaseClient, {
+      const response = await assignJiraFormslyProject(supabaseClient, {
         formslyProjectId: selectedFormslyProject,
         jiraProjectId: data.jiraProjectId,
-        isCreate: isCreateJiraFormslyProject,
+        isReassign: isReassignJiraFormslyProject,
       });
       if (!response.success) {
         notifications.show({
@@ -293,7 +293,7 @@ const JiraFormslyProjectList = ({
                       <Menu.Item
                         icon={<IconPlugConnected size={14} />}
                         onClick={() => {
-                          setIsCreateJiraFormslyProject(false);
+                          setIsReassignJiraFormslyProject(true);
                           setSelectedFormslyProject(team_project_id);
                           setOpenJiraProjectFormModal(true);
                         }}

@@ -1,5 +1,6 @@
+import { removeJiraUserFromProject } from "@/backend/api/delete";
 import { getProjectJiraUserAccountList } from "@/backend/api/get";
-import { createJiraUserToProject } from "@/backend/api/post";
+import { assignJiraUserToProject } from "@/backend/api/post";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
@@ -17,9 +18,10 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconSettings, IconX } from "@tabler/icons-react";
+import { IconTrashFilled, IconX } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -80,11 +82,24 @@ const JiraUserAccountList = ({
       }
       setIsAddingProjectJiraUser(true);
 
-      const response = await createJiraUserToProject(supabaseClient, {
+      const selectedRoleLabel = roleSelectOptionList.filter(
+        (role) => role.value === data.userRoleId
+      )[0].label;
+
+      const response = await assignJiraUserToProject(supabaseClient, {
         userAccountId: data.userAccountId,
         userRoleId: data.userRoleId,
         teamProjectId: selectedFormslyProject,
+        selectedRoleLabel: selectedRoleLabel,
       });
+
+      if (response.error) {
+        notifications.show({
+          message: `${response.error}`,
+          color: "red",
+        });
+        return;
+      }
 
       if (response.data) {
         const jiraUserAccountMatch = jiraUserAcountList.find(
@@ -130,6 +145,56 @@ const JiraUserAccountList = ({
       setIsAddingProjectJiraUser(false);
     }
   };
+
+  const handleDeleteJiraUserFromProject = async (
+    jiraTeamProjectAssignedUserId: string
+  ) => {
+    try {
+      setIsLoading(true);
+
+      await removeJiraUserFromProject(supabaseClient, {
+        jiraTeamProjectAssignedUserId,
+      });
+
+      const updatedProjectJiraUserAccountList =
+        projectJiraUserAccountList.filter(
+          (user) =>
+            user.jira_team_project_assigned_user_id !==
+            jiraTeamProjectAssignedUserId
+        );
+
+      setProjectJiraUserAccountList(updatedProjectJiraUserAccountList);
+      setProjectJiraUserAccountCount((prev) => prev - 1);
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Failed to delete jira user",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openDeleteJiraUserFromProjectModal = (
+    jiraTeamProjectAssignedUserId: string
+  ) =>
+    modals.openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you want to remove user from the project?
+        </Text>
+      ),
+      labels: { confirm: "Remove User", cancel: "Cancel" },
+      onCancel: () => console.log("Cancel"),
+      onConfirm: async () =>
+        await handleDeleteJiraUserFromProject(jiraTeamProjectAssignedUserId),
+      confirmProps: {
+        color: "red",
+      },
+      centered: true,
+    });
 
   const handleFetchJiraUserAccountList = async () => {
     try {
@@ -214,7 +279,7 @@ const JiraUserAccountList = ({
         <Flex mt="xs" justify="space-between" align="center">
           <Text c="dimmed">Manage project jira users.</Text>
           <Button size="xs" onClick={() => setOpenJiraUserAccountForm(true)}>
-            Add New User
+            Assign User
           </Button>
         </Flex>
         <DataTable
@@ -223,7 +288,7 @@ const JiraUserAccountList = ({
           fw="bolder"
           c="dimmed"
           minHeight={390}
-          idAccessor="jira_user_account_id"
+          idAccessor="jira_team_project_assigned_user_id"
           totalRecords={projectJiraUserAccountCount}
           recordsPerPage={ROW_PER_PAGE}
           page={activePage}
@@ -250,9 +315,16 @@ const JiraUserAccountList = ({
             {
               accessor: "action",
               title: "Action",
-              render: () => (
-                <ActionIcon>
-                  <IconSettings size={16} />
+              render: ({ jira_team_project_assigned_user_id }) => (
+                <ActionIcon
+                  color="red"
+                  onClick={() =>
+                    openDeleteJiraUserFromProjectModal(
+                      jira_team_project_assigned_user_id
+                    )
+                  }
+                >
+                  <IconTrashFilled size={16} />
                 </ActionIcon>
               ),
             },

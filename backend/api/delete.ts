@@ -94,25 +94,19 @@ export const removeMemberFromGroup = async (
   if (error) throw error;
 };
 
-// Remove member from project
-export const removeMemberFromProject = async (
+// Remove jira user from project
+export const removeJiraUserFromProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    teamProjectMemberIdList: string[];
+    jiraTeamProjectAssignedUserId: string;
   }
 ) => {
-  const { teamProjectMemberIdList } = params;
-
-  const condition = teamProjectMemberIdList
-    .map((id) => {
-      return `team_project_member_id.eq.${id}`;
-    })
-    .join(",");
+  const { jiraTeamProjectAssignedUserId } = params;
 
   const { error } = await supabaseClient
-    .from("team_project_member_table")
+    .from("jira_team_project_assigned_user_table")
     .delete()
-    .or(condition);
+    .eq("jira_team_project_assigned_user_id", jiraTeamProjectAssignedUserId);
 
   if (error) throw error;
 };
