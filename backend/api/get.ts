@@ -6339,9 +6339,9 @@ export const getProjectJiraUserAccountList = async (
 ) => {
   const { index, limit, search, teamProjectId } = params;
   let query = supabaseClient
-    .from("jira_team_project_assigned_user_table")
+    .from("jira_project_user_table")
     .select("*", { count: "exact" })
-    .eq("jira_team_project_assigned_user_team_project_id", teamProjectId)
+    .eq("jira_project_user_team_project_id", teamProjectId)
     .limit(limit)
     .range(index, index + limit - 1);
 

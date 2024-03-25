@@ -105,12 +105,11 @@ const JiraUserAccountList = ({
         const jiraUserAccountMatch = jiraUserAcountList.find(
           (account) =>
             account.jira_user_account_id ===
-            response.data.jira_team_project_assigned_user_account_id
+            response.data.jira_project_user_account_id
         );
         const jiraUserRoleMatch = jiraUserRoleList.find(
           (role) =>
-            role.jira_user_role_id ===
-            response.data.jira_team_project_assigned_user_role_id
+            role.jira_user_role_id === response.data.jira_project_user_role_id
         );
 
         if (jiraUserAccountMatch && jiraUserRoleMatch) {
@@ -146,21 +145,17 @@ const JiraUserAccountList = ({
     }
   };
 
-  const handleDeleteJiraUserFromProject = async (
-    jiraTeamProjectAssignedUserId: string
-  ) => {
+  const handleDeleteJiraUserFromProject = async (jiraProjectUserId: string) => {
     try {
       setIsLoading(true);
 
       await removeJiraUserFromProject(supabaseClient, {
-        jiraTeamProjectAssignedUserId,
+        jiraProjectUserId,
       });
 
       const updatedProjectJiraUserAccountList =
         projectJiraUserAccountList.filter(
-          (user) =>
-            user.jira_team_project_assigned_user_id !==
-            jiraTeamProjectAssignedUserId
+          (user) => user.jira_project_user_id !== jiraProjectUserId
         );
 
       setProjectJiraUserAccountList(updatedProjectJiraUserAccountList);
@@ -176,9 +171,7 @@ const JiraUserAccountList = ({
     }
   };
 
-  const openDeleteJiraUserFromProjectModal = (
-    jiraTeamProjectAssignedUserId: string
-  ) =>
+  const openDeleteJiraUserFromProjectModal = (jiraProjectUserId: string) =>
     modals.openConfirmModal({
       title: "Please confirm your action",
       children: (
@@ -189,7 +182,7 @@ const JiraUserAccountList = ({
       labels: { confirm: "Remove User", cancel: "Cancel" },
       onCancel: () => console.log("Cancel"),
       onConfirm: async () =>
-        await handleDeleteJiraUserFromProject(jiraTeamProjectAssignedUserId),
+        await handleDeleteJiraUserFromProject(jiraProjectUserId),
       confirmProps: {
         color: "red",
       },
@@ -216,13 +209,11 @@ const JiraUserAccountList = ({
       const newProjectJiraUserAccountList = data.map((d) => {
         const jiraUserAccountMatch = jiraUserAcountList.find(
           (account) =>
-            account.jira_user_account_id ===
-            d.jira_team_project_assigned_user_account_id
+            account.jira_user_account_id === d.jira_project_user_account_id
         );
 
         const jiraUserRoleMatch = jiraUserRoleList.find(
-          (role) =>
-            role.jira_user_role_id === d.jira_team_project_assigned_user_role_id
+          (role) => role.jira_user_role_id === d.jira_project_user_role_id
         );
 
         return jiraUserAccountMatch
@@ -277,7 +268,7 @@ const JiraUserAccountList = ({
           </ActionIcon>
         </Flex>
         <Flex mt="xs" justify="space-between" align="center">
-          <Text c="dimmed">Manage project jira users.</Text>
+          <Text c="dimmed">Manage project JIRA users.</Text>
           <Button size="xs" onClick={() => setOpenJiraUserAccountForm(true)}>
             Assign User
           </Button>
@@ -288,7 +279,7 @@ const JiraUserAccountList = ({
           fw="bolder"
           c="dimmed"
           minHeight={390}
-          idAccessor="jira_team_project_assigned_user_id"
+          idAccessor="jira_project_user_id"
           totalRecords={projectJiraUserAccountCount}
           recordsPerPage={ROW_PER_PAGE}
           page={activePage}
@@ -315,13 +306,11 @@ const JiraUserAccountList = ({
             {
               accessor: "action",
               title: "Action",
-              render: ({ jira_team_project_assigned_user_id }) => (
+              render: ({ jira_project_user_id }) => (
                 <ActionIcon
                   color="red"
                   onClick={() =>
-                    openDeleteJiraUserFromProjectModal(
-                      jira_team_project_assigned_user_id
-                    )
+                    openDeleteJiraUserFromProjectModal(jira_project_user_id)
                   }
                 >
                   <IconTrashFilled size={16} />

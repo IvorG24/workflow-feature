@@ -414,12 +414,12 @@ export type JiraUserRoleTableInsert =
 export type JiraUserRoleTableUpdate =
   Database["public"]["Tables"]["jira_user_role_table"]["Update"];
 
-export type JiraTeamProjectAssignedUserTableRow =
-  Database["public"]["Tables"]["jira_team_project_assigned_user_table"]["Row"];
-export type JiraTeamProjectAssignedUserTableInsert =
-  Database["public"]["Tables"]["jira_team_project_assigned_user_table"]["Insert"];
-export type JiraTeamProjectAssignedUserTableUpdate =
-  Database["public"]["Tables"]["jira_team_project_assigned_user_table"]["Update"];
+export type JiraProjectUserTableRow =
+  Database["public"]["Tables"]["jira_project_user_table"]["Row"];
+export type JiraProjectUserTableInsert =
+  Database["public"]["Tables"]["jira_project_user_table"]["Insert"];
+export type JiraProjectUserTableUpdate =
+  Database["public"]["Tables"]["jira_project_user_table"]["Update"];
 
 // End: Database Table Types
 
@@ -1616,6 +1616,6 @@ export type JiraFormslyProjectType = {
   } | null;
 };
 
-export type ProjectJiraUserAccountType = JiraTeamProjectAssignedUserTableRow &
+export type ProjectJiraUserAccountType = JiraProjectUserTableRow &
   JiraUserAccountTableRow &
   JiraUserRoleTableRow;

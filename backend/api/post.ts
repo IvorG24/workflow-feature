@@ -1646,10 +1646,10 @@ export const assignJiraUserToProject = async (
 
   // check for duplicate
   const { count, error: CountError } = await supabaseClient
-    .from("jira_team_project_assigned_user_table")
-    .select("jira_team_project_assigned_user_id", { count: "exact" })
-    .eq("jira_team_project_assigned_user_account_id", userAccountId)
-    .eq("jira_team_project_assigned_user_team_project_id", teamProjectId);
+    .from("jira_project_user_table")
+    .select("jira_project_user_id", { count: "exact" })
+    .eq("jira_project_user_account_id", userAccountId)
+    .eq("jira_project_user_team_project_id", teamProjectId);
   if (CountError) throw CountError;
 
   if (Number(count) > 1) {
@@ -1662,10 +1662,10 @@ export const assignJiraUserToProject = async (
     )
   ) {
     const { count, error: CountError } = await supabaseClient
-      .from("jira_team_project_assigned_user_table")
-      .select("jira_team_project_assigned_user_id", { count: "exact" })
-      .eq("jira_team_project_assigned_user_role_id", userRoleId)
-      .eq("jira_team_project_assigned_user_team_project_id", teamProjectId);
+      .from("jira_project_user_table")
+      .select("jira_project_user_id", { count: "exact" })
+      .eq("jira_project_user_role_id", userRoleId)
+      .eq("jira_project_user_team_project_id", teamProjectId);
     if (CountError) throw CountError;
 
     if (Number(count) >= 1) {
@@ -1678,11 +1678,11 @@ export const assignJiraUserToProject = async (
   }
 
   const { data, error } = await supabaseClient
-    .from("jira_team_project_assigned_user_table")
+    .from("jira_project_user_table")
     .insert({
-      jira_team_project_assigned_user_account_id: userAccountId,
-      jira_team_project_assigned_user_team_project_id: teamProjectId,
-      jira_team_project_assigned_user_role_id: userRoleId,
+      jira_project_user_account_id: userAccountId,
+      jira_project_user_team_project_id: teamProjectId,
+      jira_project_user_role_id: userRoleId,
     })
     .select()
     .maybeSingle();
