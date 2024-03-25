@@ -1053,10 +1053,10 @@ const getRequestParticipantList = (formslyProjectSite: string) => {
           emailAddress: "reysheltobias@gmail.com",
         },
         {
-          fullName: "Jomari Herno",
+          fullName: "Jovenyle Battalao",
           jiraAccountId:
-            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:56405af4-d2d0-4b27-80dc-0e841b07de3b",
-          emailAddress: "gollosojomari@gmail.com",
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d0caa6e9-94c2-4427-bddf-6b4fef814da5",
+          emailAddress: "battalaojovenyle25@gmail.com",
         },
       ],
     },
