@@ -54,7 +54,7 @@ type Props = {
   projectOptions: OptionTableRow[];
 };
 
-const CreatePEDConsumableRequestPage = ({ form, projectOptions }: Props) => {
+const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -601,7 +601,7 @@ const CreatePEDConsumableRequestPage = ({ form, projectOptions }: Props) => {
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     formslyFormName={form.form_name}
-                    pedConsumableFormMethods={{
+                    pedItemFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onPropertyNumberChange: handlePropertyNumberChange,
                       onRequestTypeChange: handleRequestTypeChange,
@@ -636,4 +636,4 @@ const CreatePEDConsumableRequestPage = ({ form, projectOptions }: Props) => {
   );
 };
 
-export default CreatePEDConsumableRequestPage;
+export default CreatePEDItemRequestPage;

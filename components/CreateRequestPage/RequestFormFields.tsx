@@ -74,7 +74,7 @@ type RequestFormFieldsProps = {
     onModelChange: (value: string | null, index: number) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
   };
-  pedConsumableFormMethods?: {
+  pedItemFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onPropertyNumberChange: (value: string | null, index: number) => void;
     onRequestTypeChange: (
@@ -99,7 +99,7 @@ const RequestFormFields = ({
   pedEquipmentFormMethods,
   pedPartFormMethods,
   otherExpensesMethods,
-  pedConsumableFormMethods,
+  pedItemFormMethods,
   paymentRequestFormMethods,
 }: RequestFormFieldsProps) => {
   const {
@@ -295,7 +295,7 @@ const RequestFormFields = ({
                   switch (field.field_name) {
                     case "General Name":
                       itemFormMethods?.onGeneralNameChange(sectionIndex, value);
-                      pedConsumableFormMethods?.onGeneralNameChange(
+                      pedItemFormMethods?.onGeneralNameChange(
                         value,
                         sectionIndex
                       );
@@ -322,7 +322,7 @@ const RequestFormFields = ({
                       otherExpensesMethods?.onProjectNameChange(value);
                       pedPartFormMethods?.onProjectNameChange(value);
                       pedEquipmentFormMethods?.onProjectNameChange(value);
-                      pedConsumableFormMethods?.onProjectNameChange(value);
+                      pedItemFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
                       break;
                     case "CSI Division":
@@ -350,7 +350,7 @@ const RequestFormFields = ({
                       break;
                     case "Equipment Property Number":
                       pedPartFormMethods?.onPropertyNumberChange(value);
-                      pedConsumableFormMethods?.onPropertyNumberChange(
+                      pedItemFormMethods?.onPropertyNumberChange(
                         value,
                         sectionIndex
                       );
@@ -391,7 +391,7 @@ const RequestFormFields = ({
                       );
                       break;
                     case "Request Type":
-                      pedConsumableFormMethods?.onRequestTypeChange(
+                      pedItemFormMethods?.onRequestTypeChange(
                         prevValue as string | null,
                         value
                       );

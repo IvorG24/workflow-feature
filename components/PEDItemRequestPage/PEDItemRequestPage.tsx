@@ -48,17 +48,14 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
-import PEDConsumableSummary from "../SummarySection/PEDConsumableSummary";
+import PEDItemSummary from "../SummarySection/PEDItemSummary";
 
 type Props = {
   request: RequestWithResponseType;
   duplicatableSectionIdList: string[];
 };
 
-const PEDConsumableRequestPage = ({
-  request,
-  duplicatableSectionIdList,
-}: Props) => {
+const PEDItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { setIsLoading } = useLoadingActions();
@@ -115,7 +112,7 @@ const PEDConsumableRequestPage = ({
               duplicatableSectionIdCondition.length !== 0
                 ? duplicatableSectionIdCondition
                 : `'${uuidv4()}'`,
-            isPedConsumableAndSingle:
+            isPedItemAndSingle:
               request.request_form.form_section[0].section_field[2]
                 .field_response[0].request_response === `"Single"`,
           });
@@ -563,7 +560,7 @@ const PEDConsumableRequestPage = ({
         </Accordion>
 
         {formSection.length > 2 && (
-          <PEDConsumableSummary
+          <PEDItemSummary
             summaryData={formSection.slice(2)}
             isSingle={
               JSON.parse(
@@ -612,4 +609,4 @@ const PEDConsumableRequestPage = ({
   );
 };
 
-export default PEDConsumableRequestPage;
+export default PEDItemRequestPage;

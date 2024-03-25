@@ -1,7 +1,7 @@
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
-import CreatePEDConsumableRequestPage from "@/components/CreatePEDConsumableRequestPage/CreatePEDConsumableRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
+import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
@@ -105,9 +105,9 @@ const Page = ({
             categoryOptions={categoryOptions}
           />
         );
-      case "PED Consumable":
+      case "PED Item":
         return (
-          <CreatePEDConsumableRequestPage
+          <CreatePEDItemRequestPage
             form={form}
             projectOptions={projectOptions}
           />

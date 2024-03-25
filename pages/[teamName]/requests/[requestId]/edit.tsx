@@ -1,8 +1,8 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
-import EditPEDConsumableRequestPage from "@/components/EditPEDConsumableRequestPage/EditPEDConsumableRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
+import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
 import EditRequestForPaymentPage from "@/components/EditRequestForPaymentPage/EditRequestForPaymentPage";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
@@ -129,9 +129,9 @@ const Page = ({
             equipmentId={equipmentId}
           />
         );
-      case "PED Consumable":
+      case "PED Item":
         return (
-          <EditPEDConsumableRequestPage
+          <EditPEDItemRequestPage
             request={request}
             projectOptions={projectOptions}
             itemOptions={itemOptions}
