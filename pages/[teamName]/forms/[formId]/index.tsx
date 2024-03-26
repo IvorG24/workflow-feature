@@ -2,8 +2,8 @@ import { getForm } from "@/backend/api/get";
 import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
-import PEDConsumableFormPage from "@/components/PEDConsumableFormPage/PEDConsumableFormPage";
 import PEDEquipmentFormPage from "@/components/PEDEquipmentFormPage/PEDEquipmentFormPage";
+import PEDItemFormPage from "@/components/PEDItemFormPage/PEDItemFormPage";
 import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
 import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
 import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
@@ -128,9 +128,9 @@ const Page = ({
             teamProjectListCount={teamProjectListCount}
           />
         );
-      case "PED Consumable":
+      case "PED Item":
         return (
-          <PEDConsumableFormPage
+          <PEDItemFormPage
             items={items}
             itemListCount={itemListCount}
             teamMemberList={teamMemberList}

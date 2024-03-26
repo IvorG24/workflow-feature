@@ -7,7 +7,7 @@ type Props = {
   isSingle: boolean;
 };
 
-const PEDConsumableSummary = ({ summaryData, isSingle }: Props) => {
+const PEDItemSummary = ({ summaryData, isSingle }: Props) => {
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -117,4 +117,4 @@ const PEDConsumableSummary = ({ summaryData, isSingle }: Props) => {
   );
 };
 
-export default PEDConsumableSummary;
+export default PEDItemSummary;

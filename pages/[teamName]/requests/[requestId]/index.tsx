@@ -1,8 +1,8 @@
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
-import PEDConsumableRequestPage from "@/components/PEDConsumableRequestPage/PEDConsumableRequestPage";
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
+import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
 import PaymentRequestPage from "@/components/PaymentRequestPage/PaymentRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
@@ -81,9 +81,9 @@ const Page = ({ request, duplicatableSectionIdList }: Props) => {
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
-    } else if (request.request_form.form_name === "PED Consumable") {
+    } else if (request.request_form.form_name === "PED Item") {
       return (
-        <PEDConsumableRequestPage
+        <PEDItemRequestPage
           request={request}
           duplicatableSectionIdList={duplicatableSectionIdList}
         />

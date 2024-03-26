@@ -1408,7 +1408,7 @@ RETURNS JSON AS $$
         endId = `PE`;
       } else if(formName==='PED Part') {
         endId = `PP`;
-      } else if(formName==='PED Consumable') {
+      } else if(formName==='PED Item') {
         endId = `PC`;
       } else if(formName==='Sourced Item') {
         endId = `SI`;
@@ -4366,7 +4366,7 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`),
         }
-      } else if (formName === 'PED Consumable') {
+      } else if (formName === 'PED Item') {
         const items = [];
         const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants' ORDER BY item_general_name ASC LIMIT ${limit}`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants';`)[0].count;
@@ -5297,7 +5297,7 @@ RETURNS JSON as $$
           categoryOptions
         }
         return;
-      } else if (form.form_name === "PED Consumable") {
+      } else if (form.form_name === "PED Item") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -6107,7 +6107,7 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Consumable")) {
+    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Item")) {
       sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
@@ -9905,7 +9905,7 @@ plv8.subtransaction(function(){
         generalItemNameOptions,
         equipmentId
       }
-    } else if (form.form_name === "PED Consumable") {
+    } else if (form.form_name === "PED Item") {
       const equipmentPropertyNumbers = plv8.execute(
         `
           SELECT equipment_description_view.*
@@ -9949,7 +9949,7 @@ plv8.subtransaction(function(){
 
       const sectionData = sectionWithDuplicateList.slice(1).map((section) => {
         const itemName = JSON.parse(
-          section.section_field[isBulk ? 0 : 4].field_response[0].request_response
+          section.section_field[4].field_response[0].request_response
         );
 
         const item = plv8.execute(`
@@ -10015,7 +10015,7 @@ plv8.subtransaction(function(){
               }
             );
 
-            const descriptionList = section.section_field.slice(isBulk ? 3: 7);
+            const descriptionList = section.section_field.slice(7);
 
             const field = descriptionList.find(
               (refDescription) =>
@@ -10029,68 +10029,37 @@ plv8.subtransaction(function(){
           }
         );
 
-        if (isBulk) {
-          const optionalFieldData = plv8.execute(
-            `
-              SELECT * FROM field_table 
-              WHERE 
-                field_section_id = 'b232d5a5-6212-405e-8d35-5f9127dca1aa'
-              ORDER BY field_order
-              LIMIT 4
-            `
-          );
-
-          return {
-            ...section,
-            section_field: [
-              {
-                ...optionalFieldData[0],
-                field_option: propertyNumberOptions,
-                field_response: []
-              },
-              ...optionalFieldData.slice(1).map(field => {
-                return {
-                  ...field,
-                  field_response: []
-                }
-              }),
-              {
-                ...section.section_field[0],
-                field_option: itemOptions,
-              },
-              ...section.section_field.slice(1, 3),
-              ...newFieldsWithOptions,
-            ],
-          };
-        } else {
-          const categoryData = plv8.execute(
+        let categoryData = "";
+        
+        if(!isBulk){
+          categoryData = plv8.execute(
             `
               SELECT equipment_description_property_number_with_prefix FROM equipment_description_view 
               WHERE equipment_description_property_number = '${JSON.parse(section.section_field[0].field_response[0].request_response)}' 
             `
           )[0].equipment_description_property_number_with_prefix;
-
-          return {
-            ...section,
-            section_field: [
-              {
-                ...section.section_field[0],
-                field_option: propertyNumberOptions,
-                field_response: [{
-                  ...section.section_field[0].field_response[0],
-                  request_response: categoryData
-                }]
-              },
-              ...section.section_field.slice(1, 4),
-              {
-                ...section.section_field[4],
-                field_option: itemOptions,
-              },
-              ...section.section_field.slice(5, 7),
-              ...newFieldsWithOptions,
-            ],
-          };
         }
+        
+        return {
+          ...section,
+          section_field: [
+            {
+              ...section.section_field[0],
+              field_option: propertyNumberOptions,
+              field_response: [{
+                ...section.section_field[0].field_response[0],
+                request_response: categoryData
+              }]
+            },
+            ...section.section_field.slice(1, 4),
+            {
+              ...section.section_field[4],
+              field_option: itemOptions,
+            },
+            ...section.section_field.slice(5, 7),
+            ...newFieldsWithOptions,
+          ],
+        };
       }).filter(value => value);
     
       const formattedRequest = {
@@ -12511,7 +12480,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    const isWithConditionalFields = requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Consumable")
+    const isWithConditionalFields = requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Item")
 
     const sectionData = plv8.execute(
       `
@@ -12696,7 +12665,7 @@ RETURNS JSON AS $$
       sectionId,
       fieldData,
       duplicatableSectionIdCondition,
-      isPedConsumableAndSingle
+      isPedItemAndSingle
     } = input_data;
 
     const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa'];
@@ -12743,7 +12712,7 @@ RETURNS JSON AS $$
         };
       });
 
-      if (isPedConsumableAndSingle && fieldWithResponse.length !== 0) {
+      if (isPedItemAndSingle && fieldWithResponse.length !== 0) {
         fieldWithResponse[0].field_response = fieldWithResponse[0].field_response.map(fieldResponse => {
           const categoryData = plv8.execute(
             `

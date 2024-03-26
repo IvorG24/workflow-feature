@@ -14,9 +14,9 @@ import { useRouter } from "next/router";
 import { useEffect } from "react";
 import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
-import PEDConsumableBulkPdfDocumentTableVersion from "./PEDConsumableBulkPdfDocumentTableVersion";
-import PEDConsumableSinglePdfDocumentTableVersion from "./PEDConsumableSinglePdfDocumentTableVersion";
 import PEDEquipmentPdfDocumentTableVersion from "./PEDEquipmentPdfDocumentTableVersion";
+import PEDItemBulkPdfDocumentTableVersion from "./PEDItemBulkPdfDocumentTableVersion";
+import PEDItemSinglePdfDocumentTableVersion from "./PEDItemSinglePdfDocumentTableVersion";
 import PEDPartPdfDocumentTableVersion from "./PEDPartPdfDocumentTableVersion";
 import PdfDocument from "./PdfDocument";
 import ServicesPdfDocumentTableVersion from "./ServicesPdfDocumentTableVersion";
@@ -217,10 +217,10 @@ const ExportToPdf = ({
             approverDetails={approverDetails}
           />
         );
-      case "PED Consumable":
+      case "PED Item":
         if (requestItems[0].fields[2].value === "Single") {
           return (
-            <PEDConsumableSinglePdfDocumentTableVersion
+            <PEDItemSinglePdfDocumentTableVersion
               requestDetails={requestDetails}
               requestorDetails={requestorDetails}
               requestIDs={requestIDs}
@@ -230,7 +230,7 @@ const ExportToPdf = ({
           );
         } else if (requestItems[0].fields[2].value === "Bulk") {
           return (
-            <PEDConsumableBulkPdfDocumentTableVersion
+            <PEDItemBulkPdfDocumentTableVersion
               requestDetails={requestDetails}
               requestorDetails={requestorDetails}
               requestIDs={requestIDs}
