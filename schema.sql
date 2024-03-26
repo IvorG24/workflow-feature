@@ -1408,7 +1408,7 @@ RETURNS JSON AS $$
         endId = `PE`;
       } else if(formName==='PED Part') {
         endId = `PP`;
-      } else if(formName==='PED Consumable') {
+      } else if(formName==='PED Item') {
         endId = `PC`;
       } else if(formName==='Sourced Item') {
         endId = `SI`;
@@ -4383,7 +4383,7 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`),
         }
-      } else if (formName === 'PED Consumable') {
+      } else if (formName === 'PED Item') {
         const items = [];
         const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants' ORDER BY item_general_name ASC LIMIT ${limit}`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants';`)[0].count;
@@ -5314,7 +5314,7 @@ RETURNS JSON as $$
           categoryOptions
         }
         return;
-      } else if (form.form_name === "PED Consumable") {
+      } else if (form.form_name === "PED Item") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -6124,7 +6124,7 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Consumable")) {
+    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Item")) {
       sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
@@ -9922,7 +9922,7 @@ plv8.subtransaction(function(){
         generalItemNameOptions,
         equipmentId
       }
-    } else if (form.form_name === "PED Consumable") {
+    } else if (form.form_name === "PED Item") {
       const equipmentPropertyNumbers = plv8.execute(
         `
           SELECT equipment_description_view.*
@@ -12528,7 +12528,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    const isWithConditionalFields = requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Consumable")
+    const isWithConditionalFields = requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Item")
 
     const sectionData = plv8.execute(
       `
