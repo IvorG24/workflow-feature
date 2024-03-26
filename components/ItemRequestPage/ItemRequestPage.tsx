@@ -8,6 +8,10 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
+import {
+  useJiraItemCategoryData,
+  useJiraProjectData,
+} from "@/stores/useJiraAutomationData";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -17,6 +21,7 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
+import { mostOccurringElement } from "@/utils/functions";
 import { createJiraTicket } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -83,6 +88,8 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
+  const jiraProjectData = useJiraProjectData();
+  const jiraItemCategoryData = useJiraItemCategoryData();
 
   useEffect(() => {
     if (!activeTeam.team_id) return;
@@ -340,8 +347,12 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
     try {
       setIsLoading(true);
 
-      const projectName = request.request_project.team_project_name;
-      const itemCategory = formSection
+      const requestProjectName = request.request_project.team_project_name;
+      const jiraProjectMatch = jiraProjectData.find(
+        (project) => project.team_project_name === requestProjectName
+      );
+
+      const requestItemCategoryList = formSection
         .slice(1)
         .flatMap(({ section_field }) =>
           section_field
@@ -349,19 +360,56 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             .map(({ field_response }) => field_response?.request_response)
         );
 
+      const itemCategory = JSON.parse(
+        mostOccurringElement(requestItemCategoryList as string[])
+      );
+
+      const itemCategoryMatch = jiraItemCategoryData.find(
+        (item) => item.jira_item_category_formsly_label === itemCategory
+      );
+
+      if (!jiraProjectMatch || !itemCategoryMatch) {
+        notifications.show({
+          message: "Jira project and item category data is missing.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
+      const warehouseAreaLead = jiraProjectMatch.jira_user_list.filter(
+        (user) => user.jira_user_role_label === "WAREHOUSE AREA LEAD"
+      )[0];
+      const warehouseRepresentative = jiraProjectMatch.jira_user_list.filter(
+        (user) => user.jira_user_role_label === "WAREHOUSE REPRESENTATIVE"
+      )[0];
+      const warehouseRequestParticipant =
+        jiraProjectMatch.jira_user_list.filter(
+          (user) =>
+            user.jira_user_role_label === "WAREHOUSE REQUEST PARTICIPANT"
+        );
+
       const jiraTicketPayload = {
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
-        requestTypeId: "299",
-        projectName,
-        itemCategory: itemCategory as string[],
+        requestTypeId: "189",
+        jiraProjectSiteId: jiraProjectMatch.jira_project_jira_id,
+        jiraItemCategoryId: itemCategoryMatch.jira_item_category_jira_id,
+
+        warehouseCorporateLeadId: itemCategoryMatch.jira_user_account_jira_id,
+        warehouseAreaLeadId: warehouseAreaLead.jira_user_account_jira_id,
+        warehouseRepresentativeId:
+          warehouseRepresentative.jira_user_account_jira_id,
+        warehouseRequestParticipantIdList: warehouseRequestParticipant.map(
+          (user) => user.jira_user_account_jira_id
+        ),
       };
 
-      const jiraTicketData = await createJiraTicket(
+      const jiraTicketData = await createJiraTicket({
         jiraTicketPayload,
+        jiraItemCategoryLabel: itemCategory,
         requestCommentList,
-        supabaseClient
-      );
+        supabaseClient,
+      });
 
       if (!jiraTicketData.success) {
         return { success: false, data: null };

@@ -614,6 +614,7 @@ export type RequestWithResponseType = RequestTableRow & {
 } & {
   request_project: {
     team_project_name: string;
+    team_project_id: string;
   };
 };
 
@@ -1634,14 +1635,62 @@ export type ProjectJiraUserAccountType = JiraProjectUserTableRow &
   JiraUserAccountTableRow &
   JiraUserRoleTableRow;
 
-export type JiraFormslyItemCategoryType = JiraItemCategoryTableRow & {
-  assigned_jira_user: {
-    jira_item_user_account_id: string;
-    jira_item_user_role_id: string;
-  } | null;
+export type JiraItemUserTableData = {
+  jira_item_user_id: string;
+  jira_item_user_item_category_id: string;
+  jira_item_user_account_id: {
+    jira_user_account_jira_id: string;
+    jira_user_account_display_name: string;
+    jira_user_account_id: string;
+  };
+  jira_item_user_role_id: {
+    jira_user_role_id: string;
+    jira_user_role_label: string;
+  };
 };
 
 export type JiraFormslyItemCategoryWithUserDataType =
   JiraItemCategoryTableRow & {
-    assigned_jira_user: (JiraUserAccountTableRow & JiraUserRoleTableRow) | null;
+    assigned_jira_user:
+      | ({ jira_item_user_id: string } & JiraUserAccountTableRow &
+          JiraUserRoleTableRow)
+      | null;
   };
+
+export type JiraUserDataType = {
+  jira_user_account_jira_id: string;
+  jira_user_account_display_name: string;
+  jira_user_role_label: string;
+};
+
+export type JiraProjectDataType = {
+  team_project_id: string;
+  team_project_name: string;
+  jira_project_jira_id: string;
+  jira_project_jira_label: string;
+  jira_user_list: JiraUserDataType[];
+};
+
+export type JiraItemCategoryDataType = {
+  jira_item_category_id: string;
+  jira_item_category_jira_id: string;
+  jira_item_category_jira_label: string;
+  jira_item_category_formsly_label: string;
+} & JiraUserDataType;
+
+export type JiraTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  requestTypeId: string;
+  jiraProjectSiteId: string;
+  jiraItemCategoryId: string;
+  warehouseCorporateLeadId: string;
+  warehouseAreaLeadId: string;
+  warehouseRepresentativeId: string;
+  warehouseRequestParticipantIdList: string[];
+};
+
+export type JiraTicketData = {
+  success: boolean;
+  data: { jiraTicketKey: string; jiraTicketWebLink: string } | null;
+};

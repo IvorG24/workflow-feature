@@ -37,6 +37,8 @@ import {
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
   JiraFormslyItemCategoryWithUserDataType,
+  JiraItemCategoryDataType,
+  JiraProjectDataType,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -6367,6 +6369,7 @@ export const getJiraUserRoleList = async (
   const query = supabaseClient
     .from("jira_user_role_table")
     .select("*")
+    .order("jira_user_role_label")
     .range(from, to);
 
   const { data, error } = await query;
@@ -6425,5 +6428,27 @@ export const getJiraItemCategoryList = async (
   return {
     data: formattedData as unknown as JiraFormslyItemCategoryWithUserDataType[],
     count: Number(count),
+  };
+};
+
+export const getJiraAutomationDataByTeamMemberId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_jira_automation_data", {
+    input_data: params,
+  });
+
+  if (error) {
+    console.log(error);
+    console.warn("Failed to fetch jira automation data");
+    return null;
+  }
+
+  return data as {
+    jiraProjectData: JiraProjectDataType[];
+    jiraItemCategoryData: JiraItemCategoryDataType[];
   };
 };

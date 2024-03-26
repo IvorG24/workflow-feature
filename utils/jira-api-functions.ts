@@ -3,40 +3,37 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import { Database } from "./database";
 import {
+  formatJiraTicketPayload,
   generateJiraCommentPayload,
-  generateJiraTicketPayload,
 } from "./functions";
-import { RequestCommentType } from "./types";
+import {
+  JiraTicketData,
+  JiraTicketPayloadProps,
+  RequestCommentType,
+} from "./types";
 
-export type JiraTicketPayloadProps = {
-  requestId: string;
-  requestUrl: string;
-  requestTypeId: string;
-  projectName: string;
-  itemCategory: string[];
+type CreateJiraTicketProps = {
+  jiraTicketPayload: JiraTicketPayloadProps;
+  jiraItemCategoryLabel: string;
+  requestCommentList: RequestCommentType[];
+  supabaseClient: SupabaseClient<Database>;
 };
 
-export type JiraTicketData = {
-  success: boolean;
-  data: { jiraTicketKey: string; jiraTicketWebLink: string } | null;
-};
-
-export const createJiraTicket = async (
-  initialJiraTicketPayload: JiraTicketPayloadProps,
-  requestCommentList: RequestCommentType[],
-  supabaseClient: SupabaseClient<Database>
-): Promise<JiraTicketData> => {
+export const createJiraTicket = async ({
+  jiraTicketPayload,
+  jiraItemCategoryLabel,
+  requestCommentList,
+  supabaseClient,
+}: CreateJiraTicketProps): Promise<JiraTicketData> => {
   try {
-    const newJiraTicketPayload = generateJiraTicketPayload(
-      initialJiraTicketPayload
-    );
-
+    const formattedJiraTicketPayload =
+      formatJiraTicketPayload(jiraTicketPayload);
     const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(newJiraTicketPayload),
+      body: JSON.stringify(formattedJiraTicketPayload),
     });
 
     const jiraTicketData = await jiraTicketResponse.json();
@@ -51,8 +48,8 @@ export const createJiraTicket = async (
 
     // transition jira ticket
     if (
-      initialJiraTicketPayload.itemCategory.includes(`"Other Expenses"`) ||
-      initialJiraTicketPayload.itemCategory.includes(`"Services"`)
+      jiraItemCategoryLabel.includes("Other Expenses") ||
+      jiraItemCategoryLabel.includes("Services")
     ) {
       await fetch("/api/transition-jira-ticket", {
         method: "POST",

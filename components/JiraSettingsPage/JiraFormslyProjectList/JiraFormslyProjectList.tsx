@@ -292,28 +292,24 @@ const JiraFormslyProjectList = ({
                   </Menu.Target>
 
                   <Menu.Dropdown>
-                    {assigned_jira_project ? (
-                      <Menu.Item
-                        icon={<IconPlugConnected size={14} />}
-                        onClick={() => {
+                    <Menu.Item
+                      icon={<IconPlugConnected size={14} />}
+                      onClick={() => {
+                        setSelectedFormslyProject(team_project_id);
+                        setOpenJiraProjectFormModal(true);
+                        if (assigned_jira_project) {
                           setIsReassignJiraFormslyProject(true);
-                          setSelectedFormslyProject(team_project_id);
-                          setOpenJiraProjectFormModal(true);
-                        }}
-                      >
-                        Reassign to Jira Project
-                      </Menu.Item>
-                    ) : (
-                      <Menu.Item
-                        icon={<IconPlugConnected size={14} />}
-                        onClick={() => {
-                          setSelectedFormslyProject(team_project_id);
-                          setOpenJiraProjectFormModal(true);
-                        }}
-                      >
-                        Assign to Jira Project
-                      </Menu.Item>
-                    )}
+                          assignFormslyProjectFormMethods.setValue(
+                            "jiraProjectId",
+                            assigned_jira_project.jira_project_id
+                          );
+                        }
+                      }}
+                    >
+                      {`${
+                        assigned_jira_project ? "Reassign" : "Assign"
+                      } to Jira Project`}
+                    </Menu.Item>
 
                     <Menu.Divider />
 

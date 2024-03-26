@@ -4,6 +4,7 @@ import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/Tea
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { formatJiraItemUserTableData } from "@/utils/functions";
 import { escapeQuotes, parseJSONIfValid } from "@/utils/string";
 import {
   AddressTableInsert,
@@ -23,6 +24,7 @@ import {
   ItemForm,
   ItemTableInsert,
   JiraItemCategoryUserTableInsert,
+  JiraItemUserTableData,
   MemoAgreementTableRow,
   MemoLineItem,
   MemoTableRow,
@@ -1696,7 +1698,8 @@ export const assignJiraUserToProject = async (
   }
 };
 
-// assign jira user item category
+// assign or update jira user to item category
+
 export const assignJiraUserToItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -1704,20 +1707,40 @@ export const assignJiraUserToItemCategory = async (
     isUpdate: boolean;
   }
 ) => {
-  // // update
-  // if (params.isUpdate) {
-  //   const { data, error } = await supabaseClient
-  //     .from("jira_item_user_table")
-  //     .update(params.data)
-  //     .eq("jira_item_user_id", params.data.jira_item_user_id)
-  //     .select()
-  //     .maybeSingle();
-  //   if (error) throw error;
+  if (params.isUpdate) {
+    return await updateJiraItemCategory(supabaseClient, params);
+  } else {
+    return await insertJiraItemCategory(supabaseClient, params);
+  }
+};
 
-  //   return { success: true, data: data, error: null };
-  // }
+const updateJiraItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { data: JiraItemCategoryUserTableInsert }
+) => {
+  const { data, error } = await supabaseClient
+    .from("jira_item_user_table")
+    .update(params.data)
+    .eq("jira_item_user_id", params.data.jira_item_user_id)
+    .select(
+      `
+      jira_item_user_id,
+      jira_item_user_item_category_id,
+      jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id),
+      jira_item_user_role_id(jira_user_role_id, jira_user_role_label)
+      `
+    )
+    .maybeSingle();
 
-  // check if duplicate entry
+  if (error) throw error;
+
+  return formatJiraItemUserTableData(data as JiraItemUserTableData);
+};
+
+const insertJiraItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { data: JiraItemCategoryUserTableInsert }
+) => {
   const { count } = await supabaseClient
     .from("jira_item_user_table")
     .select("jira_item_user_id", { count: "exact" })
@@ -1730,36 +1753,20 @@ export const assignJiraUserToItemCategory = async (
     return { success: false, data: null, error: "Duplicate entry" };
   }
 
-  // assign
   const { data, error } = await supabaseClient
     .from("jira_item_user_table")
-    .insert(params.data as JiraItemCategoryUserTableInsert)
+    .insert(params.data)
     .select(
-      "jira_item_user_id, jira_item_user_item_category_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label)"
+      `
+      jira_item_user_id,
+      jira_item_user_item_category_id,
+      jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id),
+      jira_item_user_role_id(jira_user_role_id, jira_user_role_label)
+      `
     )
     .maybeSingle();
+
   if (error) throw error;
 
-  const assignedUser = data as unknown as {
-    jira_item_user_id: string;
-    jira_item_user_item_category_id: string;
-    jira_item_user_account_id: {
-      jira_user_account_jira_id: string;
-      jira_user_account_display_name: string;
-      jira_user_account_id: string;
-    };
-    jira_item_user_role_id: {
-      jira_user_role_id: string;
-      jira_user_role_label: string;
-    };
-  };
-
-  const formattedData =
-    {
-      ...assignedUser,
-      ...assignedUser?.jira_item_user_account_id,
-      ...assignedUser?.jira_item_user_role_id,
-    } ?? null;
-
-  return { success: true, data: formattedData, error: null };
+  return formatJiraItemUserTableData(data as JiraItemUserTableData);
 };

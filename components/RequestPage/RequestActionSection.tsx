@@ -1,6 +1,6 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { JiraTicketData } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { JiraTicketData } from "@/utils/types";
 import { Button, Flex, Paper, Space, Stack, Text, Title } from "@mantine/core";
 // import { useRouter } from "next/router";
 import { modals, openConfirmModal } from "@mantine/modals";

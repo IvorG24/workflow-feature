@@ -167,11 +167,17 @@ const JiraFormslyItemCategoryList = ({
           }
         });
         setJiraItemCategoryList(updatedJiraItemCategoryList);
+        notifications.show({
+          message: `Successfully ${
+            isUpdate ? "updated" : "assigned"
+          } jira user.`,
+          color: "green",
+        });
       }
     } catch (error) {
       const isUpdate = Boolean(data.jira_item_user_id);
       notifications.show({
-        message: `Failed to ${isUpdate ? "update" : "assign"} item category`,
+        message: `Failed to ${isUpdate ? "update" : "assign"} jira user.`,
         color: "red",
       });
     } finally {
@@ -293,6 +299,14 @@ const JiraFormslyItemCategoryList = ({
                       onClick={() => {
                         setOpenJiraFormslyItemCategoryUserForm(true);
                         setSelectedItemCategory(record);
+                        assignJiraFormslyItemCategoryUserMethods.setValue(
+                          "jira_item_user_account_id",
+                          record.assigned_jira_user?.jira_user_account_id
+                        );
+                        assignJiraFormslyItemCategoryUserMethods.setValue(
+                          "jira_item_user_id",
+                          record.assigned_jira_user?.jira_item_user_id
+                        );
                       }}
                     >
                       Assign User

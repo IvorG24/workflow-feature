@@ -8,7 +8,7 @@ import {
   JiraUserAccountTableRow,
   JiraUserRoleTableRow,
 } from "@/utils/types";
-import { Container, LoadingOverlay, Stack, Title } from "@mantine/core";
+import { Container, LoadingOverlay, Stack, Text, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
@@ -92,6 +92,10 @@ const JiraSettingsPage = ({
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
       <Stack>
         <Title order={2}>Manage Jira Automation</Title>
+        <Text>
+          Manage, update, and assign JIRA users to Team Projects and Item
+          Categories.
+        </Text>
 
         <JiraFormslyProjectList
           jiraFormslyProjectList={initialJiraFormslyProjectList}

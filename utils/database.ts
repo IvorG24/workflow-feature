@@ -1024,39 +1024,6 @@ export type Database = {
           }
         ];
       };
-      item_description_consumable_field_table: {
-        Row: {
-          item_description_consumable_field_field_id: string;
-          item_description_consumable_field_id: string;
-          item_description_consumable_field_item_description_id: string;
-        };
-        Insert: {
-          item_description_consumable_field_field_id: string;
-          item_description_consumable_field_id?: string;
-          item_description_consumable_field_item_description_id: string;
-        };
-        Update: {
-          item_description_consumable_field_field_id?: string;
-          item_description_consumable_field_id?: string;
-          item_description_consumable_field_item_description_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "item_description_consumable__item_description_consumable__fkey1";
-            columns: ["item_description_consumable_field_field_id"];
-            isOneToOne: false;
-            referencedRelation: "field_table";
-            referencedColumns: ["field_id"];
-          },
-          {
-            foreignKeyName: "item_description_consumable_f_item_description_consumable__fkey";
-            columns: ["item_description_consumable_field_item_description_id"];
-            isOneToOne: false;
-            referencedRelation: "item_description_table";
-            referencedColumns: ["item_description_id"];
-          }
-        ];
-      };
       item_description_field_table: {
         Row: {
           item_description_field_date_created: string;
@@ -1243,6 +1210,7 @@ export type Database = {
           item_id: string;
           item_is_available: boolean;
           item_is_disabled: boolean;
+          item_is_ped_item: boolean;
           item_team_id: string;
           item_unit: string;
         };
@@ -1254,6 +1222,7 @@ export type Database = {
           item_id?: string;
           item_is_available?: boolean;
           item_is_disabled?: boolean;
+          item_is_ped_item?: boolean;
           item_team_id: string;
           item_unit: string;
         };
@@ -1265,6 +1234,7 @@ export type Database = {
           item_id?: string;
           item_is_available?: boolean;
           item_is_disabled?: boolean;
+          item_is_ped_item?: boolean;
           item_team_id?: string;
           item_unit?: string;
         };
@@ -1496,7 +1466,6 @@ export type Database = {
           jira_user_account_email_address: string;
           jira_user_account_id: string;
           jira_user_account_jira_id: string;
-          jira_user_account_role_id: string | null;
         };
         Insert: {
           jira_user_account_date_created?: string;
@@ -1505,7 +1474,6 @@ export type Database = {
           jira_user_account_email_address: string;
           jira_user_account_id?: string;
           jira_user_account_jira_id: string;
-          jira_user_account_role_id?: string | null;
         };
         Update: {
           jira_user_account_date_created?: string;
@@ -1514,17 +1482,8 @@ export type Database = {
           jira_user_account_email_address?: string;
           jira_user_account_id?: string;
           jira_user_account_jira_id?: string;
-          jira_user_account_role_id?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: "jira_user_account_table_jira_user_account_role_id_fkey";
-            columns: ["jira_user_account_role_id"];
-            isOneToOne: false;
-            referencedRelation: "jira_user_role_table";
-            referencedColumns: ["jira_user_role_id"];
-          }
-        ];
+        Relationships: [];
       };
       jira_user_role_table: {
         Row: {
@@ -2098,6 +2057,39 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "team_member_table";
             referencedColumns: ["team_member_id"];
+          }
+        ];
+      };
+      ped_item_field_table: {
+        Row: {
+          ped_item_field_field_id: string;
+          ped_item_field_id: string;
+          ped_item_field_item_description_id: string;
+        };
+        Insert: {
+          ped_item_field_field_id: string;
+          ped_item_field_id?: string;
+          ped_item_field_item_description_id: string;
+        };
+        Update: {
+          ped_item_field_field_id?: string;
+          ped_item_field_id?: string;
+          ped_item_field_item_description_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_description_consumable__item_description_consumable__fkey1";
+            columns: ["ped_item_field_field_id"];
+            isOneToOne: false;
+            referencedRelation: "field_table";
+            referencedColumns: ["field_id"];
+          },
+          {
+            foreignKeyName: "item_description_consumable_f_item_description_consumable__fkey";
+            columns: ["ped_item_field_item_description_id"];
+            isOneToOne: false;
+            referencedRelation: "item_description_table";
+            referencedColumns: ["item_description_id"];
           }
         ];
       };
@@ -3889,6 +3881,12 @@ export type Database = {
         Returns: Json;
       };
       get_item_section_choices: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      get_jira_automation_data: {
         Args: {
           input_data: Json;
         };
