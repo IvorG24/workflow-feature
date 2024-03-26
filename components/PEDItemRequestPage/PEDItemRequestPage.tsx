@@ -561,7 +561,17 @@ const PEDItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
         {formSection.length > 2 && (
           <PEDItemSummary
-            summaryData={formSection.slice(2)}
+            summaryData={formSection
+              .slice(2)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
             isSingle={
               JSON.parse(
                 request.request_form.form_section[0].section_field[2]
