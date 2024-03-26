@@ -138,6 +138,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
         glAccount: editItem.item_gl_account,
         division: editItem.item_division_id_list,
         divisionDescription: editItem.item_level_three_description,
+        isPedItem: editItem.item_is_ped_item,
       },
     });
 
@@ -189,6 +190,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             item_team_id: activeTeam.team_id,
             item_division_id_list: data.division.map((id) => `'${id}'`),
             item_level_three_description: data.divisionDescription,
+            item_is_ped_item: data.isPedItem,
           },
           formId: formId,
         }
@@ -285,7 +287,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                     return isExisting ? "Item already exists" : true;
                   },
                   validCharacters: (value) =>
-                    value.match(/^[a-zA-Z ]*$/)
+                    value.match(/^[a-zA-Z0-9 ]*$/)
                       ? true
                       : "General name must not include invalid character/s",
                 },
@@ -386,6 +388,22 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                   rightSection={
                     isFetchingDivisionDescriptionOption && <Loader size={16} />
                   }
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="isPedItem"
+              render={({ field: { value, onChange } }) => (
+                <Checkbox
+                  sx={{
+                    input: {
+                      cursor: "pointer",
+                    },
+                  }}
+                  label={"PED Item"}
+                  checked={value}
+                  onChange={onChange}
                 />
               )}
             />

@@ -779,6 +779,7 @@ export const getItemList = async (
     status: string;
     sortColumn?: ItemOrderType;
     sortOrder?: string;
+    isPedItem?: boolean;
   }
 ) => {
   const {
@@ -793,6 +794,7 @@ export const getItemList = async (
     status,
     sortColumn,
     sortOrder,
+    isPedItem,
   } = params;
 
   const start = (page - 1) * limit;
@@ -841,6 +843,9 @@ export const getItemList = async (
         query = query.eq("item_is_available", false);
         break;
     }
+  }
+  if (isPedItem !== undefined) {
+    query = query.eq("item_is_ped_item ", isPedItem);
   }
 
   if (sortColumn) {
@@ -5918,7 +5923,7 @@ export const getEquipmentSectionChoices = async (
   }
 };
 
-export const getConsumableItem = async (
+export const getPedItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; itemName: string }
 ) => {
@@ -5937,8 +5942,8 @@ export const getConsumableItem = async (
               item_description_field_uom
             )
           ),
-          item_field: item_description_consumable_field_table(
-            item_description_consumable_field: item_description_consumable_field_field_id(*)
+          item_field: ped_item_field_table(
+            ped_item_field: ped_item_field_field_id(*)
           )
         )
       `
@@ -5962,15 +5967,14 @@ export const getConsumableItem = async (
 
   const formattedData = data as unknown as ItemTableRow & {
     item_description: {
-      item_field: { item_description_consumable_field: FieldTableRow }[];
+      item_field: { ped_item_field: FieldTableRow }[];
     }[];
   };
 
   return {
     ...formattedData,
     item_description: formattedData.item_description.map((description) => {
-      const itemField =
-        description.item_field[0].item_description_consumable_field;
+      const itemField = description.item_field[0].ped_item_field;
       return {
         ...description,
         item_field: itemField,
@@ -6167,8 +6171,8 @@ export const getCSICodeOptions = async (
   return data;
 };
 
-// Fetch item consumable options
-export const getItemConsumableOptions = async (
+// Fetch ped item options
+export const getPedItemOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
@@ -6183,7 +6187,7 @@ export const getItemConsumableOptions = async (
     .eq("item_team_id", teamId)
     .eq("item_is_disabled", false)
     .eq("item_is_available", true)
-    .eq("item_gl_account", "Fuel, Oil, Lubricants")
+    .eq("item_is_ped_item", true)
     .order("item_general_name")
     .limit(limit)
     .range(index, index + limit - 1);

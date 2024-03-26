@@ -288,6 +288,7 @@ CREATE TABLE item_table(
   item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
+  item_is_ped_item BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   item_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
@@ -920,15 +921,15 @@ CREATE TABLE capacity_unit_of_measurement_table(
 
 -- End: Capacity unit of measurement table
 
--- Start: Item description consumable field table
+-- Start: Ped item field table
 
-CREATE TABLE item_description_consumable_field_table (
-  item_description_consumable_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_description_consumable_field_item_description_id UUID REFERENCES item_description_table(item_description_id) NOT NULL,
-  item_description_consumable_field_field_id UUID REFERENCES field_table(field_id) NOT NULL
+CREATE TABLE ped_item_field_table (
+  ped_item_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  ped_item_field_item_description_id UUID REFERENCES item_description_table(item_description_id) NOT NULL,
+  ped_item_field_field_id UUID REFERENCES field_table(field_id) NOT NULL
 );
 
--- End: Item description consumable field table
+-- End: Ped item field table
 
 -- Start: Region table
 
@@ -1608,13 +1609,13 @@ RETURNS JSON AS $$
         item_team_id,
         item_division_id_list,
         item_encoder_team_member_id,
-        item_level_three_description
+        item_level_three_description,
+        item_is_ped_item
       },
       itemDescription
     } = input_data;
-
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_encoder_team_member_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_encoder_team_member_id}') RETURNING *`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_encoder_team_member_id, item_is_ped_item) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_encoder_team_member_id}',${item_is_ped_item}) RETURNING *`)[0];
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");
@@ -1627,7 +1628,7 @@ RETURNS JSON AS $$
     const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
     const itemDescriptionInput = [];
     const fieldInput= [];
-    const consumableDescriptionFieldInput = [];
+    const pedItemDescriptionFieldInput = [];
 
     itemDescription.forEach((description) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
@@ -1649,10 +1650,10 @@ RETURNS JSON AS $$
         field_section_id: section_id,
         field_is_required: true,
       });
-      if (item_gl_account === 'Fuel, Oil, Lubricants') {
-        consumableDescriptionFieldInput.push({
-          item_description_consumable_field_item_description_id: descriptionId,
-          item_description_consumable_field_field_id: fieldId
+      if (item_is_ped_item) {
+        pedItemDescriptionFieldInput.push({
+          ped_item_field_item_description_id: descriptionId,
+          ped_item_field_field_id: fieldId
         })
       }
     });
@@ -1672,12 +1673,12 @@ RETURNS JSON AS $$
     
     const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
 
-    if(item_gl_account === 'Fuel, Oil, Lubricants' && consumableDescriptionFieldInput.length){
-      const consumableFieldValues = consumableDescriptionFieldInput
-        .map((consumableField) =>
-          `('${consumableField.item_description_consumable_field_item_description_id}','${consumableField.item_description_consumable_field_field_id}')`
+    if(item_is_ped_item && pedItemDescriptionFieldInput.length){
+      const pedItemFieldValues = pedItemDescriptionFieldInput
+        .map((pedItem) =>
+          `('${pedItem.ped_item_field_item_description_id}','${pedItem.ped_item_field_field_id}')`
         ).join(",");
-      plv8.execute(`INSERT INTO item_description_consumable_field_table (item_description_consumable_field_item_description_id, item_description_consumable_field_field_id) VALUES ${consumableFieldValues}`);
+      plv8.execute(`INSERT INTO ped_item_field_table  (ped_item_field_item_description_id, ped_item_field_field_id) VALUES ${pedItemFieldValues}`);
     }
 
     item_data = {
@@ -1709,7 +1710,8 @@ RETURNS JSON AS $$
         item_gl_account,
         item_team_id,
         item_division_id_list,
-        item_level_three_description
+        item_level_three_description,
+        item_is_ped_item 
       },
       toAdd,
       toUpdate,
@@ -1725,7 +1727,8 @@ RETURNS JSON AS $$
           item_is_available = '${item_is_available}',
           item_unit = '${item_unit}',
           item_gl_account = '${item_gl_account}',
-          item_team_id = '${item_team_id}'
+          item_team_id = '${item_team_id}',
+          item_is_ped_item = ${item_is_ped_item}
         WHERE item_id = '${item_id}'
         RETURNING *
       `
@@ -1734,7 +1737,7 @@ RETURNS JSON AS $$
     const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
     const itemDescriptionInput = [];
     const fieldInput = [];
-    const consumableDescriptionFieldInput = [];
+    const pedItemDescriptionFieldInput = [];
 
     toAdd.forEach((description) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
@@ -1756,10 +1759,10 @@ RETURNS JSON AS $$
         field_section_id: section_id,
         field_is_required: true,
       });
-      if (item_gl_account === 'Fuel, Oil, Lubricants') {
-        consumableDescriptionFieldInput.push({
-          item_description_consumable_field_item_description_id: descriptionId,
-          item_description_consumable_field_field_id: fieldId
+      if (item_is_ped_item) {
+        pedItemDescriptionFieldInput.push({
+          ped_item_field_item_description_id: descriptionId,
+          ped_item_field_field_id: fieldId
         })
       }
     });
@@ -1796,6 +1799,12 @@ RETURNS JSON AS $$
           WHERE field_id = '${description.item_description_field_id}'
         `
       );
+      if (item_is_ped_item) {
+        pedItemDescriptionFieldInput.push({
+          ped_item_field_item_description_id: description.item_description_id,
+          ped_item_field_field_id: description.item_description_field_id
+        })
+      }
       updatedItemDescription.push(updatedDescription);
     });
 
@@ -1822,14 +1831,23 @@ RETURNS JSON AS $$
       plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
 
       addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+    }
 
-      if(item_gl_account === 'Fuel, Oil, Lubricants' && consumableDescriptionFieldInput.length){
-        const consumableFieldValues = consumableDescriptionFieldInput
-          .map((consumableField) =>
-            `('${consumableField.item_description_consumable_field_item_description_id}','${consumableField.item_description_consumable_field_field_id}')`
-          ).join(",");
-        plv8.execute(`INSERT INTO item_description_consumable_field_table (item_description_consumable_field_item_description_id, item_description_consumable_field_field_id) VALUES ${consumableFieldValues}`);
-      }
+    if(item_is_ped_item && pedItemDescriptionFieldInput.length){
+      pedItemDescriptionFieldInput.map((pedItem) => {
+        plv8.execute(
+          `
+            INSERT INTO ped_item_field_table (ped_item_field_item_description_id, ped_item_field_field_id)
+            SELECT '${pedItem.ped_item_field_item_description_id}', '${pedItem.ped_item_field_field_id}'
+            WHERE NOT EXISTS (
+              SELECT 1 FROM ped_item_field_table
+              WHERE 
+                ped_item_field_item_description_id = '${pedItem.ped_item_field_item_description_id}'
+                AND ped_item_field_field_id = '${pedItem.ped_item_field_field_id}'
+            );
+          `
+        )
+      });
     }
 
     plv8.execute(`DELETE FROM item_division_table WHERE item_division_item_id='${item_id}'`);
@@ -4368,8 +4386,8 @@ RETURNS JSON as $$
         }
       } else if (formName === 'PED Item') {
         const items = [];
-        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants' ORDER BY item_general_name ASC LIMIT ${limit}`);
-        const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants';`)[0].count;
+        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_is_ped_item = true ORDER BY item_general_name ASC LIMIT ${limit}`);
+        const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_is_ped_item = true`)[0].count;
 
         itemData.forEach(value => {
           const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
@@ -9932,7 +9950,7 @@ plv8.subtransaction(function(){
         WHERE item_team_id='${teamId}'
           AND item_is_disabled = false
           AND item_is_available = true
-          AND item_gl_account = 'Fuel, Oil, Lubricants'
+          AND item_is_ped_item = true
         ORDER BY item_general_name ASC
       `);
 
@@ -9959,7 +9977,7 @@ plv8.subtransaction(function(){
             AND item_general_name = '${itemName}'
             AND item_is_disabled = false
             AND item_is_available = true
-            AND item_gl_account = 'Fuel, Oil, Lubricants'
+            AND item_is_ped_item = true
         `)[0];
 
         if(!item) return null;
@@ -9967,7 +9985,7 @@ plv8.subtransaction(function(){
         const itemDescriptionList = plv8.execute(`
           SELECT * 
           FROM item_description_table
-          INNER JOIN item_description_consumable_field_table ON item_description_consumable_field_item_description_id = item_description_id
+          INNER JOIN ped_item_field_table  ON ped_item_field_item_description_id = item_description_id
           WHERE item_description_item_id = '${item.item_id}'
             AND item_description_is_disabled = false
             AND item_description_is_available = true;
@@ -9988,7 +10006,7 @@ plv8.subtransaction(function(){
             const field = plv8.execute(`
               SELECT * 
               FROM field_table
-              WHERE field_id = '${description.item_description_consumable_field_field_id}';
+              WHERE field_id = '${description.ped_item_field_field_id}';
             `)[0];
 
             return {
@@ -12913,7 +12931,7 @@ ALTER TABLE equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_general_name_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_part_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_description_consumable_field_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ped_item_field_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE region_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE province_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE city_table ENABLE ROW LEVEL SECURITY;
@@ -13230,10 +13248,10 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON capacity_unit_of_mea
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_consumable_field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_consumable_field_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON ped_item_field_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ped_item_field_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON ped_item_field_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON ped_item_field_table;
 
 DROP POLICY IF EXISTS "Allow READ for authenticated users" ON region_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users" ON province_table;
@@ -15781,8 +15799,8 @@ USING (
   )
 );
 
---- ITEM_DESCRIPTION_CONSUMABLE_FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_consumable_field_table"
+--- PED_ITEM_FIELD_TABLE
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."ped_item_field_table "
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK ( 
@@ -15792,7 +15810,7 @@ WITH CHECK (
     INNER JOIN section_table ON section_id = field_section_id
     INNER JOIN form_table ON form_id = section_form_id
     INNER JOIN team_member_table ON team_member_id = form_team_member_id
-    WHERE field_id = item_description_consumable_field_field_id
+    WHERE field_id = ped_item_field_field_id
   ) IN (
     SELECT team_member_team_id
     FROM team_member_table
@@ -15801,11 +15819,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_consumable_field_table"
+CREATE POLICY "Allow READ access for anon users" ON "public"."ped_item_field_table "
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_consumable_field_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."ped_item_field_table "
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING ( 
@@ -15815,7 +15833,7 @@ USING (
     INNER JOIN section_table ON section_id = field_section_id
     INNER JOIN form_table ON form_id = section_form_id
     INNER JOIN team_member_table ON team_member_id = form_team_member_id
-    WHERE field_id = item_description_consumable_field_field_id
+    WHERE field_id = ped_item_field_field_id
   ) IN (
     SELECT team_member_team_id
     FROM team_member_table
@@ -15824,7 +15842,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_consumable_field_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."ped_item_field_table "
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING ( 
@@ -15834,7 +15852,7 @@ USING (
     INNER JOIN section_table ON section_id = field_section_id
     INNER JOIN form_table ON form_id = section_form_id
     INNER JOIN team_member_table ON team_member_id = form_team_member_id
-    WHERE field_id = item_description_consumable_field_field_id
+    WHERE field_id = ped_item_field_field_id
   ) IN (
     SELECT team_member_team_id
     FROM team_member_table

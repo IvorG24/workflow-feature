@@ -1,7 +1,7 @@
 import {
   checkIfRequestIsEditable,
-  getConsumableItem,
   getEquipmentDescription,
+  getPedItem,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
@@ -570,7 +570,7 @@ const EditPEDItemRequestPage = ({
       ) === "Bulk";
     try {
       if (value) {
-        const item = await getConsumableItem(supabaseClient, {
+        const item = await getPedItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
         });
