@@ -19,46 +19,17 @@ type RequestFormSectionProps = {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
-    supplierSearch?: (value: string, index: number) => void;
-    isSearchingSupplier?: boolean;
-    csiSearch?: (value: string, index: number) => void;
-    isSearchingCSI?: boolean;
-  };
-  subconFormMethods?: {
-    onServiceNameChange: (index: number, value: string | null) => void;
-    onProjectNameChange: (value: string | null) => void;
-    subconSearch?: (value: string) => void;
-    isSearching?: boolean;
-  };
-  quotationFormMethods?: {
-    onItemChange: (
-      index: number,
-      value: string | null,
-      prevValue: string | null
-    ) => void;
-    supplierSearch?: (value: string) => void;
-    isSearching?: boolean;
-  };
-  rirFormMethods?: {
-    onQuantityChange: (index: number, value: number) => void;
   };
   formslyFormName?: string;
-  sourcedItemFormMethods?: {
-    onProjectSiteChange: () => void;
-  };
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCSIDivisionChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
-    supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
   };
   otherExpensesMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
     onCategoryChange: (index: number, value: string | null) => void;
-    supplierSearch?: (value: string, index: number) => void;
-    isSearching?: boolean;
   };
   pedEquipmentFormMethods?: {
     onCategoryChange: (value: string | null, index: number) => void;
@@ -81,7 +52,7 @@ type RequestFormSectionProps = {
     onModelChange: (value: string | null, index: number) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
   };
-  pedConsumableFormMethods?: {
+  pedItemFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onPropertyNumberChange: (value: string | null, index: number) => void;
     onRequestTypeChange: (
@@ -101,16 +72,12 @@ const RequestFormSection = ({
   sectionIndex,
   onRemoveSection,
   itemFormMethods,
-  subconFormMethods,
-  quotationFormMethods,
-  rirFormMethods,
   formslyFormName = "",
-  sourcedItemFormMethods,
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
   otherExpensesMethods,
-  pedConsumableFormMethods,
+  pedItemFormMethods,
   paymentRequestFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
@@ -148,16 +115,12 @@ const RequestFormSection = ({
             sectionIndex={sectionIndex}
             fieldIndex={idx}
             itemFormMethods={itemFormMethods}
-            subconFormMethods={subconFormMethods}
-            quotationFormMethods={quotationFormMethods}
-            rirFormMethods={rirFormMethods}
             formslyFormName={formslyFormName}
-            sourcedItemFormMethods={sourcedItemFormMethods}
             servicesFormMethods={servicesFormMethods}
             pedEquipmentFormMethods={pedEquipmentFormMethods}
             pedPartFormMethods={pedPartFormMethods}
             otherExpensesMethods={otherExpensesMethods}
-            pedConsumableFormMethods={pedConsumableFormMethods}
+            pedItemFormMethods={pedItemFormMethods}
             paymentRequestFormMethods={paymentRequestFormMethods}
           />
         ))}

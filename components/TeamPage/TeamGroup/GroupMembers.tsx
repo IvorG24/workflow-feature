@@ -1,4 +1,5 @@
 import {
+  getAllProjects,
   getAllTeamMembersWithoutGroupMembers,
   getTeamGroupMemberList,
 } from "@/backend/api/get";
@@ -78,35 +79,39 @@ const GroupMembers = ({
   const [groupMemberChoiceList, setGroupMemberChoiceList] = useState<
     { label: string; value: string; member: TeamMemberChoiceType }[]
   >([]);
+  const [teamProjectChoiceList, setTeamProjectChoiceList] = useState<
+    { label: string; value: string }[]
+  >([]);
 
   useEffect(() => {
-    const fetchGroupMembers = async () => {
-      try {
-        const { data: teamMemberList, count: teamMemberListCount } =
-          await getTeamGroupMemberList(supabaseClient, {
-            groupId: selectedGroup.team_group_id,
-            page: 1,
-            limit: ROW_PER_PAGE,
-          });
-
-        setGroupMemberList(teamMemberList as unknown as TeamMemberType[]);
-        setGroupMemberListCount(teamMemberListCount ? teamMemberListCount : 0);
-        setIsFetchingMembers(false);
-        setCheckList([]);
-        setActivePage(1);
-        setSearch("");
-        setIsAddingMember(false);
-      } catch {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      }
-    };
     if (selectedGroup) {
       fetchGroupMembers();
     }
   }, [selectedGroup]);
+
+  const fetchGroupMembers = async () => {
+    try {
+      const { data: teamMemberList, count: teamMemberListCount } =
+        await getTeamGroupMemberList(supabaseClient, {
+          groupId: selectedGroup.team_group_id,
+          page: 1,
+          limit: ROW_PER_PAGE,
+        });
+
+      setGroupMemberList(teamMemberList as unknown as TeamMemberType[]);
+      setGroupMemberListCount(teamMemberListCount ? teamMemberListCount : 0);
+      setIsFetchingMembers(false);
+      setCheckList([]);
+      setActivePage(1);
+      setSearch("");
+      setIsAddingMember(false);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchTeamMemeberChoiceList = async () => {
@@ -124,6 +129,17 @@ const GroupMembers = ({
         };
       });
       setGroupMemberChoiceList(formattedChoices);
+
+      const projectChoices = await getAllProjects(supabaseClient, {
+        teamId: teamId,
+      });
+      const formattedProjectChoices = projectChoices.map((project) => {
+        return {
+          label: project.team_project_name,
+          value: project.team_project_id,
+        };
+      });
+      setTeamProjectChoiceList(formattedProjectChoices);
       setIsFetchingMembers(false);
     };
     if (isAddingMember) {
@@ -166,10 +182,10 @@ const GroupMembers = ({
           {isAddingMember ? (
             <AddTeamMember
               setIsAddingMember={setIsAddingMember}
-              setGroupMemberList={setGroupMemberList}
-              setGroupMemberListCount={setGroupMemberListCount}
               groupMemberChoiceList={groupMemberChoiceList}
               selectedGroup={selectedGroup}
+              teamProjectChoiceList={teamProjectChoiceList}
+              fetchGroupMembers={fetchGroupMembers}
             />
           ) : null}
         </Paper>

@@ -1,7 +1,7 @@
 import {
   checkIfRequestIsEditable,
-  getConsumableItem,
   getEquipmentDescription,
+  getPedItem,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
@@ -53,7 +53,7 @@ type Props = {
   referenceOnly: boolean;
 };
 
-const EditPEDConsumableRequestPage = ({
+const EditPEDItemRequestPage = ({
   request,
   projectOptions,
   itemOptions,
@@ -171,7 +171,7 @@ const EditPEDConsumableRequestPage = ({
       }
 
       const isBulk =
-        JSON.parse(
+        safeParse(
           data.sections[0].section_field[2].field_response[0].request_response
         ) === "Bulk";
 
@@ -225,7 +225,7 @@ const EditPEDConsumableRequestPage = ({
           edittedRequest.request_formsly_id_prefix
         }-${edittedRequest.request_formsly_id_serial}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -570,7 +570,7 @@ const EditPEDConsumableRequestPage = ({
       ) === "Bulk";
     try {
       if (value) {
-        const item = await getConsumableItem(supabaseClient, {
+        const item = await getPedItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
         });
@@ -746,7 +746,7 @@ const EditPEDConsumableRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     isSectionRemovable={isRemovable}
-                    pedConsumableFormMethods={{
+                    pedItemFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onPropertyNumberChange: handlePropertyNumberChange,
                       onRequestTypeChange: handleRequestTypeChange,
@@ -783,4 +783,4 @@ const EditPEDConsumableRequestPage = ({
   );
 };
 
-export default EditPEDConsumableRequestPage;
+export default EditPEDItemRequestPage;

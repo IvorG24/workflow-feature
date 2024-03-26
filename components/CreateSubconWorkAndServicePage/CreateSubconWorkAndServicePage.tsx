@@ -2,7 +2,6 @@ import {
   getCSICode,
   getCSIDescriptionOption,
   getProjectSignerWithTeamMember,
-  getSupplier,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -74,7 +73,6 @@ const CreateSubconWorkAndServiceRequestPage = ({
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -87,7 +85,7 @@ const CreateSubconWorkAndServiceRequestPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
+  const { handleSubmit, control, getValues } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
@@ -419,26 +417,6 @@ const CreateSubconWorkAndServiceRequestPage = ({
     }
   };
 
-  const supplierSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id) return;
-    try {
-      setIsSearching(true);
-      const supplierList = await getSupplier(supabaseClient, {
-        supplier: value ?? "",
-        teamId: teamMember.team_member_team_id,
-        fieldId: form.form_section[1].section_field[9].field_id,
-      });
-      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -467,8 +445,6 @@ const CreateSubconWorkAndServiceRequestPage = ({
                       onProjectNameChange: handleProjectNameChange,
                       onCSIDivisionChange: handleCSIDivisionChange,
                       onCSICodeChange: handleCSICodeChange,
-                      supplierSearch,
-                      isSearching,
                     }}
                   />
                   {section.section_is_duplicatable &&

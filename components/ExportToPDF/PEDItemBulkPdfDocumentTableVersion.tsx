@@ -78,23 +78,17 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: "bold",
   },
-  "Equipment Property Number": {
-    width: "10%",
-  },
-  "Equipment Description": {
-    width: "30%",
-  },
   "General Name": {
-    width: "22%",
+    width: "20%",
   },
   "Item Description": {
-    width: "28%",
+    width: "50%",
   },
   Quantity: {
-    width: "10%",
+    width: "15%",
   },
   "Base UoM": {
-    width: "10%",
+    width: "15%",
   },
   badge: {
     padding: "0px 4px",
@@ -167,13 +161,7 @@ const styles = StyleSheet.create({
   },
 });
 
-type ColumnType =
-  | "Equipment Property Number"
-  | "Equipment Description"
-  | "General Name"
-  | "Item Description"
-  | "Quantity"
-  | "Base UoM";
+type ColumnType = "General Name" | "Item Description" | "Quantity" | "Base UoM";
 
 type FieldType = {
   label: string;
@@ -198,7 +186,7 @@ type Props = {
   }[];
 };
 
-const PEDConsumableSinglePdfDocumentTableVersion = ({
+const PEDItemBulkPdfDocumentTableVersion = ({
   requestDetails,
   requestorDetails,
   requestIDs,
@@ -304,16 +292,6 @@ const PEDConsumableSinglePdfDocumentTableVersion = ({
             </Text>
             <View style={styles.table}>
               <View style={[styles.tableRow, { backgroundColor: "#A5D8FF" }]}>
-                <View
-                  style={[styles.tableCol, styles["Equipment Property Number"]]}
-                >
-                  <Text style={styles.tableHeader}>Property Number</Text>
-                </View>
-                <View
-                  style={[styles.tableCol, styles["Equipment Description"]]}
-                >
-                  <Text style={styles.tableHeader}>Equipment Description</Text>
-                </View>
                 <View style={[styles.tableCol, styles["General Name"]]}>
                   <Text style={styles.tableHeader}>General Name</Text>
                 </View>
@@ -328,15 +306,8 @@ const PEDConsumableSinglePdfDocumentTableVersion = ({
                 </View>
               </View>
               {requestItems.slice(1).map((item, index) => {
-                let equipmentDescription = "";
-                item.fields.slice(1, 4).forEach((field) => {
-                  if (field.value) {
-                    equipmentDescription += `${field.label}: ${field.value}\n`;
-                  }
-                });
-
                 let itemDescription = "";
-                item.fields.slice(7).forEach((field) => {
+                item.fields.slice(3).forEach((field) => {
                   if (field.value) {
                     itemDescription += `${field.label}: ${field.value}\n`;
                   }
@@ -356,39 +327,20 @@ const PEDConsumableSinglePdfDocumentTableVersion = ({
                         </Text>
                       </View>
                     }
-                    <View
-                      style={[styles.tableCol, styles["Equipment Description"]]}
-                    >
-                      <Text style={styles.tableCell}>
-                        {equipmentDescription}
-                      </Text>
-                    </View>
-                    {
-                      <View
-                        style={[
-                          styles.tableCol,
-                          styles[item.fields[4].label as ColumnType],
-                        ]}
-                      >
-                        <Text style={styles.tableCell}>
-                          {item.fields[4].value}
-                        </Text>
-                      </View>
-                    }
                     <View style={[styles.tableCol, styles["Item Description"]]}>
                       <Text style={styles.tableCell}>{itemDescription}</Text>
                     </View>
                     {
                       <View style={[styles.tableCol, styles["Quantity"]]}>
                         <Text style={styles.tableCell}>
-                          {item.fields[6].value}
+                          {item.fields[2].value}
                         </Text>
                       </View>
                     }
                     {
                       <View style={[styles.tableCol, styles["Base UoM"]]}>
                         <Text style={styles.tableCell}>
-                          {item.fields[5].value}
+                          {item.fields[1].value}
                         </Text>
                       </View>
                     }
@@ -475,7 +427,7 @@ const PEDConsumableSinglePdfDocumentTableVersion = ({
   );
 };
 
-export default PEDConsumableSinglePdfDocumentTableVersion;
+export default PEDItemBulkPdfDocumentTableVersion;
 
 const Footer = () => (
   <View style={styles.footer} fixed>

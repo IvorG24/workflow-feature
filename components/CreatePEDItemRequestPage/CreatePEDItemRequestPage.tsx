@@ -1,7 +1,9 @@
 import {
-  getConsumableItem,
   getEquipmentDescription,
+  getPedItem,
+  getPedItemOptions,
   getProjectSignerWithTeamMember,
+  getPropertyNumberOptions,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -10,6 +12,7 @@ import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner"
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { fetchNumberFromString } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -49,16 +52,9 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
-  itemOptions: OptionTableRow[];
-  propertyNumberOptions: OptionTableRow[];
 };
 
-const CreatePEDConsumableRequestPage = ({
-  form,
-  projectOptions,
-  itemOptions,
-  propertyNumberOptions,
-}: Props) => {
+const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -81,6 +77,10 @@ const CreatePEDConsumableRequestPage = ({
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [itemOptions, setItemOptions] = useState<OptionTableRow[]>([]);
+  const [propertyNumberOptions, setPropertyNumberOptions] = useState<
+    OptionTableRow[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -106,8 +106,90 @@ const CreatePEDConsumableRequestPage = ({
   });
 
   useEffect(() => {
-    replaceSection(form.form_section);
-  }, [form, requestFormMethods]);
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      try {
+        if (!team.team_id) return;
+        let index = 0;
+        const itemOptionList: OptionTableRow[] = [];
+        while (1) {
+          const itemData = await getPedItemOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const itemOptions = itemData.map((item, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: item.item_id,
+              option_order: index,
+              option_value: item.item_general_name,
+            };
+          });
+          itemOptionList.push(...itemOptions);
+
+          if (itemData.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setItemOptions(itemOptionList);
+        index = 0;
+        const propertyNumberOptionList: OptionTableRow[] = [];
+        while (1) {
+          const propertyNumberData = await getPropertyNumberOptions(
+            supabaseClient,
+            {
+              teamId: team.team_id,
+              index,
+              limit: FETCH_OPTION_LIMIT,
+            }
+          );
+          const propertyNumberOptions = propertyNumberData.map(
+            (propertyNumber, index) => {
+              return {
+                option_field_id: form.form_section[1].section_field[0].field_id,
+                option_id: propertyNumber.equipment_description_id,
+                option_order: index,
+                option_value:
+                  propertyNumber.equipment_description_property_number_with_prefix,
+              };
+            }
+          );
+          propertyNumberOptionList.push(...propertyNumberOptions);
+
+          if (propertyNumberData.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setPropertyNumberOptions(propertyNumberOptionList);
+
+        replaceSection([
+          form.form_section[0],
+          {
+            ...form.form_section[1],
+            section_field: [
+              {
+                ...form.form_section[1].section_field[0],
+                field_option: propertyNumberOptionList,
+              },
+              ...form.form_section[1].section_field.slice(1, 4),
+              {
+                ...form.form_section[1].section_field[4],
+                field_option: itemOptionList,
+              },
+              ...form.form_section[1].section_field.slice(5),
+            ],
+          },
+        ]);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOptions();
+  }, [team]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
@@ -358,7 +440,11 @@ const CreatePEDConsumableRequestPage = ({
         });
       } else if (prevValue === "Bulk") {
         sectionList.forEach((section, index) => {
-          const generalField = [...optionalFields, ...section.section_field];
+          const generalField = [
+            { ...optionalFields[0], field_option: propertyNumberOptions },
+            ...optionalFields.slice(1),
+            ...section.section_field,
+          ];
           updateSection(index + 1, {
             ...section,
             section_field: generalField,
@@ -383,7 +469,7 @@ const CreatePEDConsumableRequestPage = ({
       getValues(`sections.0.section_field.2.field_response`) === "Bulk";
     try {
       if (value) {
-        const item = await getConsumableItem(supabaseClient, {
+        const item = await getPedItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
         });
@@ -515,7 +601,7 @@ const CreatePEDConsumableRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     formslyFormName={form.form_name}
-                    pedConsumableFormMethods={{
+                    pedItemFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onPropertyNumberChange: handlePropertyNumberChange,
                       onRequestTypeChange: handleRequestTypeChange,
@@ -550,4 +636,4 @@ const CreatePEDConsumableRequestPage = ({
   );
 };
 
-export default CreatePEDConsumableRequestPage;
+export default CreatePEDItemRequestPage;

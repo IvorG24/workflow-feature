@@ -277,6 +277,9 @@ const TicketListPage = ({
                     <Grid.Col span={1}>
                       <Text weight={600}>Date Created</Text>
                     </Grid.Col>
+                    <Grid.Col span={1}>
+                      <Text weight={600}>Date Updated</Text>
+                    </Grid.Col>
                     <Grid.Col span={1} sx={{ textAlign: "center" }}>
                       <Text weight={600}>View</Text>
                     </Grid.Col>

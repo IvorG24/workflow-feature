@@ -1,4 +1,5 @@
 import {
+  getAllGroups,
   getAllTeamMembersWithoutProjectMembers,
   getTeamProjectMemberList,
 } from "@/backend/api/get";
@@ -83,37 +84,39 @@ const ProjectMembers = ({
   const [projectMemberChoiceList, setProjectMemberChoiceList] = useState<
     { label: string; value: string; member: TeamMemberChoiceType }[]
   >([]);
+  const [teamGroupChoiceList, setTeamGroupChoiceList] = useState<
+    { label: string; value: string }[]
+  >([]);
 
   useEffect(() => {
-    const fetchProjectMembers = async () => {
-      try {
-        const { data: teamMemberList, count: teamMemberListCount } =
-          await getTeamProjectMemberList(supabaseClient, {
-            projectId: selectedProject.team_project_id,
-            page: 1,
-            limit: ROW_PER_PAGE,
-          });
-
-        setProjectMemberList(teamMemberList as unknown as TeamMemberType[]);
-        setProjectMemberListCount(
-          teamMemberListCount ? teamMemberListCount : 0
-        );
-        setIsFetchingMembers(false);
-        setCheckList([]);
-        setActivePage(1);
-        setSearch("");
-        setIsAddingMember(false);
-      } catch {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      }
-    };
     if (selectedProject) {
       fetchProjectMembers();
     }
   }, [selectedProject]);
+
+  const fetchProjectMembers = async () => {
+    try {
+      const { data: teamMemberList, count: teamMemberListCount } =
+        await getTeamProjectMemberList(supabaseClient, {
+          projectId: selectedProject.team_project_id,
+          page: 1,
+          limit: ROW_PER_PAGE,
+        });
+
+      setProjectMemberList(teamMemberList as unknown as TeamMemberType[]);
+      setProjectMemberListCount(teamMemberListCount ? teamMemberListCount : 0);
+      setIsFetchingMembers(false);
+      setCheckList([]);
+      setActivePage(1);
+      setSearch("");
+      setIsAddingMember(false);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchTeamMemeberChoiceList = async () => {
@@ -131,6 +134,17 @@ const ProjectMembers = ({
         };
       });
       setProjectMemberChoiceList(formattedChoices);
+
+      const groupChoices = await getAllGroups(supabaseClient, {
+        teamId: teamId,
+      });
+      const formattedGroupChoices = groupChoices.map((group) => {
+        return {
+          label: group.team_group_name,
+          value: group.team_group_id,
+        };
+      });
+      setTeamGroupChoiceList(formattedGroupChoices);
       setIsFetchingMembers(false);
     };
     if (isAddingMember) {
@@ -173,10 +187,10 @@ const ProjectMembers = ({
           {isAddingMember ? (
             <AddTeamMember
               setIsAddingMember={setIsAddingMember}
-              setProjectMemberList={setProjectMemberList}
-              setProjectMemberListCount={setProjectMemberListCount}
               projectMemberChoiceList={projectMemberChoiceList}
               selectedProject={selectedProject}
+              teamGroupChoiceList={teamGroupChoiceList}
+              fetchProjectMembers={fetchProjectMembers}
             />
           ) : null}
         </Paper>

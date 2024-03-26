@@ -17,6 +17,8 @@ export const MAX_FILE_SIZE = MAX_FILE_SIZE_IN_MB * 1024 * 1024;
 export const DEFAULT_NUMBER_SSOT_ROWS = 10;
 export const DEFAULT_ITEM_ANALYTICS_ROWS = 20;
 export const DEFAULT_ON_SCROLL_LIMIT = 10;
+export const FETCH_OPTION_LIMIT = 1000;
+export const SELECT_OPTION_LIMIT = 1000;
 
 export const READ_ONLY_TICKET_CATEGORY_LIST = [
   "Incident Report for Employees",

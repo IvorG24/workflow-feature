@@ -48,17 +48,14 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
-import PEDConsumableSummary from "../SummarySection/PEDConsumableSummary";
+import PEDItemSummary from "../SummarySection/PEDItemSummary";
 
 type Props = {
   request: RequestWithResponseType;
   duplicatableSectionIdList: string[];
 };
 
-const PEDConsumableRequestPage = ({
-  request,
-  duplicatableSectionIdList,
-}: Props) => {
+const PEDItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { setIsLoading } = useLoadingActions();
@@ -115,7 +112,7 @@ const PEDConsumableRequestPage = ({
               duplicatableSectionIdCondition.length !== 0
                 ? duplicatableSectionIdCondition
                 : `'${uuidv4()}'`,
-            isPedConsumableAndSingle:
+            isPedItemAndSingle:
               request.request_form.form_section[0].section_field[2]
                 .field_response[0].request_response === `"Single"`,
           });
@@ -352,14 +349,7 @@ const PEDConsumableRequestPage = ({
         return null;
       }
       const projectName = request.request_project.team_project_name;
-      const itemCategory = [`"Fuel, Oil, Lubricants"`];
-
-      const primaryApproverJiraUserResponse = await fetch(
-        `/api/get-jira-user?approverEmail=${user?.user_email}`
-      );
-
-      const primaryApproverJiraUserData =
-        await primaryApproverJiraUserResponse.json();
+      const itemCategory = [`"Spare Parts & Supplies"`];
 
       const jiraTicketPayload = generateJiraTicketPayload({
         requestId: request.request_formsly_id,
@@ -367,9 +357,6 @@ const PEDConsumableRequestPage = ({
         requestTypeId: "189",
         projectName,
         itemCategory,
-        primaryApproverJiraAccountId: primaryApproverJiraUserData[0]
-          ? primaryApproverJiraUserData[0].accountId
-          : null,
       });
 
       const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
@@ -573,8 +560,18 @@ const PEDConsumableRequestPage = ({
         </Accordion>
 
         {formSection.length > 2 && (
-          <PEDConsumableSummary
-            summaryData={formSection.slice(2)}
+          <PEDItemSummary
+            summaryData={formSection
+              .slice(2)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
             isSingle={
               JSON.parse(
                 request.request_form.form_section[0].section_field[2]
@@ -622,4 +619,4 @@ const PEDConsumableRequestPage = ({
   );
 };
 
-export default PEDConsumableRequestPage;
+export default PEDItemRequestPage;
