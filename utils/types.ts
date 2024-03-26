@@ -783,6 +783,7 @@ export type ItemForm = {
   glAccount: string;
   division: string[];
   divisionDescription: string;
+  isPedItem: boolean;
 };
 
 export type ServiceForm = {

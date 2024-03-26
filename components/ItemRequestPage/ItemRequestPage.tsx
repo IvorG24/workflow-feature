@@ -539,7 +539,19 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         </Accordion>
 
         {formSection.length > 2 && (
-          <ItemSummary summaryData={formSection.slice(2)} />
+          <ItemSummary
+            summaryData={formSection
+              .slice(2)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
         )}
 
         {isRequestActionSectionVisible && (

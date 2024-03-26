@@ -135,6 +135,13 @@ const TicketListItem = ({ ticket }: Props) => {
         </Text>
       </Grid.Col>
       <Grid.Col span={1}>
+        <Text miw={105}>
+          {ticket.ticket_status_date_updated
+            ? formatDate(new Date(ticket.ticket_status_date_updated))
+            : ""}
+        </Text>
+      </Grid.Col>
+      <Grid.Col span={1}>
         <Group position="center">
           <ActionIcon
             color="blue"

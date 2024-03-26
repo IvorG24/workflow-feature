@@ -871,6 +871,7 @@ export const insertGroupMember = async (
   params: {
     groupId: string;
     teamMemberIdList: string[];
+    teamProjectIdList: string[];
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -888,6 +889,7 @@ export const insertProjectMember = async (
   params: {
     projectId: string;
     teamMemberIdList: string[];
+    teamGroupIdList: string[];
   }
 ) => {
   const { data, error } = await supabaseClient

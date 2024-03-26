@@ -112,6 +112,7 @@ const CreateItem = ({
         generalName: "",
         unit: "",
         isAvailable: true,
+        isPedItem: false,
       },
     });
 
@@ -143,6 +144,7 @@ const CreateItem = ({
           item_division_id_list: data.division.map((id) => `'${id}'`),
           item_encoder_team_member_id: teamMember.team_member_id,
           item_level_three_description: data.divisionDescription,
+          item_is_ped_item: data.isPedItem,
         },
         formId: formId,
       });
@@ -325,6 +327,22 @@ const CreateItem = ({
                   rightSection={
                     isFetchingDivisionDescriptionOption && <Loader size={16} />
                   }
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="isPedItem"
+              render={({ field: { value, onChange } }) => (
+                <Checkbox
+                  sx={{
+                    input: {
+                      cursor: "pointer",
+                    },
+                  }}
+                  label={"PED Item"}
+                  checked={value}
+                  onChange={onChange}
                 />
               )}
             />

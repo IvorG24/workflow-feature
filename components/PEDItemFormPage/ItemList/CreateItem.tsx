@@ -7,6 +7,7 @@ import {
 import { createItem } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { GL_ACCOUNT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
 import {
@@ -110,8 +111,9 @@ const CreateItem = ({
         descriptions: [{ description: "", withUoM: false }],
         generalName: "",
         unit: "",
-        glAccount: "Fuel, Oil, Lubricants",
+        glAccount: "",
         isAvailable: true,
+        isPedItem: true,
       },
     });
 
@@ -143,6 +145,7 @@ const CreateItem = ({
           item_division_id_list: data.division.map((id) => `'${id}'`),
           item_encoder_team_member_id: teamMember.team_member_id,
           item_level_three_description: data.divisionDescription,
+          item_is_ped_item: data.isPedItem,
         },
         formId: formId,
       });
@@ -268,18 +271,12 @@ const CreateItem = ({
                 <Select
                   value={value as string}
                   onChange={onChange}
-                  data={[
-                    {
-                      label: "Fuel, Oil, Lubricants",
-                      value: "Fuel, Oil, Lubricants",
-                    },
-                  ]}
+                  data={GL_ACCOUNT_CHOICES}
                   withAsterisk
                   error={formState.errors.glAccount?.message}
                   searchable
                   clearable
                   label="GL Account"
-                  disabled
                 />
               )}
               rules={{
@@ -288,7 +285,6 @@ const CreateItem = ({
                   value: true,
                 },
               }}
-              defaultValue="Fuel, Oil, Lubricants"
             />
             <Controller
               control={control}
@@ -331,6 +327,22 @@ const CreateItem = ({
                   rightSection={
                     isFetchingDivisionDescriptionOption && <Loader size={16} />
                   }
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="isPedItem"
+              render={({ field: { value, onChange } }) => (
+                <Checkbox
+                  sx={{
+                    input: {
+                      cursor: "pointer",
+                    },
+                  }}
+                  label={"PED Item"}
+                  checked={value}
+                  onChange={onChange}
                 />
               )}
             />

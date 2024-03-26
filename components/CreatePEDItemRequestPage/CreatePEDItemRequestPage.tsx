@@ -1,7 +1,7 @@
 import {
-  getConsumableItem,
   getEquipmentDescription,
-  getItemConsumableOptions,
+  getPedItem,
+  getPedItemOptions,
   getProjectSignerWithTeamMember,
   getPropertyNumberOptions,
 } from "@/backend/api/get";
@@ -113,7 +113,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
         let index = 0;
         const itemOptionList: OptionTableRow[] = [];
         while (1) {
-          const itemData = await getItemConsumableOptions(supabaseClient, {
+          const itemData = await getPedItemOptions(supabaseClient, {
             teamId: team.team_id,
             index,
             limit: FETCH_OPTION_LIMIT,
@@ -469,7 +469,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
       getValues(`sections.0.section_field.2.field_response`) === "Bulk";
     try {
       if (value) {
-        const item = await getConsumableItem(supabaseClient, {
+        const item = await getPedItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
         });
