@@ -6234,3 +6234,39 @@ export const getPropertyNumberOptions = async (
     equipment_description_property_number_with_prefix: string;
   }[];
 };
+
+// Get all projects
+export const getAllProjects = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_project_table")
+    .select("team_project_id, team_project_name")
+    .eq("team_project_is_disabled", false)
+    .eq("team_project_team_id", teamId);
+  if (error) throw error;
+
+  return data;
+};
+
+// Get all groups
+export const getAllGroups = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_group_table")
+    .select("team_group_id, team_group_name")
+    .eq("team_group_is_disabled", false)
+    .eq("team_group_team_id", teamId);
+  if (error) throw error;
+
+  return data;
+};

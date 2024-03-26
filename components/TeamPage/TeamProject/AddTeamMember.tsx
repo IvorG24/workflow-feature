@@ -24,7 +24,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction, forwardRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { SelecteItemType } from "../CreateTeamProject";
-import { TeamMemberChoiceType, TeamMemberType } from "./ProjectMembers";
+import { TeamMemberChoiceType } from "./ProjectMembers";
 
 const Value = ({
   label,
@@ -109,26 +109,30 @@ const SelectItem = forwardRef<HTMLDivElement, SelecteItemType>(
 
 type ProjectForm = {
   projectMembers: string[];
+  teamGroups: string[];
 };
 
 type Props = {
   setIsAddingMember: Dispatch<SetStateAction<boolean>>;
-  setProjectMemberList: Dispatch<SetStateAction<TeamMemberType[]>>;
-  setProjectMemberListCount: Dispatch<SetStateAction<number>>;
   projectMemberChoiceList: {
     label: string;
     value: string;
     member: TeamMemberChoiceType;
   }[];
   selectedProject: TeamProjectTableRow;
+  teamGroupChoiceList: {
+    label: string;
+    value: string;
+  }[];
+  fetchProjectMembers: () => Promise<void>;
 };
 
 const AddTeamMember = ({
   setIsAddingMember,
-  setProjectMemberList,
-  setProjectMemberListCount,
   projectMemberChoiceList,
   selectedProject,
+  teamGroupChoiceList,
+  fetchProjectMembers,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
@@ -136,29 +140,24 @@ const AddTeamMember = ({
     useForm<ProjectForm>({
       defaultValues: {
         projectMembers: [],
+        teamGroups: [],
       },
     });
 
   const onSubmit = async (data: ProjectForm) => {
     try {
-      const { data: newMembers, count } = await insertProjectMember(
-        supabaseClient,
-        {
-          projectId: selectedProject.team_project_id,
-          teamMemberIdList: data.projectMembers,
-        }
-      );
-      setProjectMemberList((prev) => {
-        prev.unshift(...(newMembers as unknown as TeamMemberType[]));
-        return prev;
+      await insertProjectMember(supabaseClient, {
+        projectId: selectedProject.team_project_id,
+        teamMemberIdList: data.projectMembers,
+        teamGroupIdList: data.teamGroups,
       });
-      setProjectMemberListCount((prev) => prev + count);
+      await fetchProjectMembers();
       notifications.show({
         message: "Team memeber/s added.",
         color: "green",
       });
       setIsAddingMember(false);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -182,6 +181,22 @@ const AddTeamMember = ({
           <Flex direction="column" gap={16}>
             <Controller
               control={control}
+              name="teamGroups"
+              render={({ field: { value, onChange } }) => (
+                <MultiSelect
+                  value={value as string[]}
+                  onChange={(value) => onChange(value)}
+                  data={teamGroupChoiceList}
+                  error={formState.errors.teamGroups?.message}
+                  searchable
+                  nothingFound="Group not found"
+                  placeholder="Select team groups"
+                  label="Team groups"
+                />
+              )}
+            />
+            <Controller
+              control={control}
               name="projectMembers"
               render={({ field: { value, onChange } }) => (
                 <MultiSelect
@@ -194,7 +209,8 @@ const AddTeamMember = ({
                   valueComponent={Value}
                   itemComponent={SelectItem}
                   nothingFound="Member not found"
-                  placeholder="Select project member/s"
+                  placeholder="Select project members"
+                  label="Project members"
                 />
               )}
               rules={{ required: "Project member/s is/are required" }}
