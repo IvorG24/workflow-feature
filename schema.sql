@@ -1408,7 +1408,7 @@ RETURNS JSON AS $$
         endId = `PE`;
       } else if(formName==='PED Part') {
         endId = `PP`;
-      } else if(formName==='PED Item') {
+      } else if(formName==='PED Consumable') {
         endId = `PC`;
       } else if(formName==='Sourced Item') {
         endId = `SI`;
@@ -1709,7 +1709,8 @@ RETURNS JSON AS $$
         item_gl_account,
         item_team_id,
         item_division_id_list,
-        item_level_three_description
+        item_level_three_description,
+        item_is_ped_item 
       },
       toAdd,
       toUpdate,
@@ -1725,7 +1726,8 @@ RETURNS JSON AS $$
           item_is_available = '${item_is_available}',
           item_unit = '${item_unit}',
           item_gl_account = '${item_gl_account}',
-          item_team_id = '${item_team_id}'
+          item_team_id = '${item_team_id}',
+          item_is_ped_item = ${item_is_ped_item}
         WHERE item_id = '${item_id}'
         RETURNING *
       `
@@ -1734,7 +1736,7 @@ RETURNS JSON AS $$
     const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
     const itemDescriptionInput = [];
     const fieldInput = [];
-    const consumableDescriptionFieldInput = [];
+    const pedItemDescriptionFieldInput = [];
 
     toAdd.forEach((description) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
@@ -1756,10 +1758,10 @@ RETURNS JSON AS $$
         field_section_id: section_id,
         field_is_required: true,
       });
-      if (item_gl_account === 'Fuel, Oil, Lubricants') {
-        consumableDescriptionFieldInput.push({
-          item_description_consumable_field_item_description_id: descriptionId,
-          item_description_consumable_field_field_id: fieldId
+      if (item_is_ped_item) {
+        pedItemDescriptionFieldInput.push({
+          ped_item_field_item_description_id: descriptionId,
+          ped_item_field_field_id: fieldId
         })
       }
     });
@@ -1796,6 +1798,12 @@ RETURNS JSON AS $$
           WHERE field_id = '${description.item_description_field_id}'
         `
       );
+      if (item_is_ped_item) {
+        pedItemDescriptionFieldInput.push({
+          ped_item_field_item_description_id: description.item_description_id,
+          ped_item_field_field_id: description.item_description_field_id
+        })
+      }
       updatedItemDescription.push(updatedDescription);
     });
 
@@ -1822,14 +1830,23 @@ RETURNS JSON AS $$
       plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
 
       addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+    }
 
-      if(item_gl_account === 'Fuel, Oil, Lubricants' && consumableDescriptionFieldInput.length){
-        const consumableFieldValues = consumableDescriptionFieldInput
-          .map((consumableField) =>
-            `('${consumableField.item_description_consumable_field_item_description_id}','${consumableField.item_description_consumable_field_field_id}')`
-          ).join(",");
-        plv8.execute(`INSERT INTO item_description_consumable_field_table (item_description_consumable_field_item_description_id, item_description_consumable_field_field_id) VALUES ${consumableFieldValues}`);
-      }
+    if(item_is_ped_item && pedItemDescriptionFieldInput.length){
+      pedItemDescriptionFieldInput.map((pedItem) => {
+        plv8.execute(
+          `
+            INSERT INTO ped_item_field_table (ped_item_field_item_description_id, ped_item_field_field_id)
+            SELECT '${pedItem.ped_item_field_item_description_id}', '${pedItem.ped_item_field_field_id}'
+            WHERE NOT EXISTS (
+              SELECT 1 FROM ped_item_field_table
+              WHERE 
+                ped_item_field_item_description_id = '${pedItem.ped_item_field_item_description_id}'
+                AND ped_item_field_field_id = '${pedItem.ped_item_field_field_id}'
+            );
+          `
+        )
+      });
     }
 
     plv8.execute(`DELETE FROM item_division_table WHERE item_division_item_id='${item_id}'`);
@@ -4366,7 +4383,7 @@ RETURNS JSON as $$
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`),
         }
-      } else if (formName === 'PED Item') {
+      } else if (formName === 'PED Consumable') {
         const items = [];
         const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants' ORDER BY item_general_name ASC LIMIT ${limit}`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_gl_account = 'Fuel, Oil, Lubricants';`)[0].count;
@@ -5297,7 +5314,7 @@ RETURNS JSON as $$
           categoryOptions
         }
         return;
-      } else if (form.form_name === "PED Item") {
+      } else if (form.form_name === "PED Consumable") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -6107,7 +6124,7 @@ RETURNS JSON as $$
     );
 
     const formSection = [];
-    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Item")) {
+    if(requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Consumable")) {
       sectionData.forEach(section => {
         const fieldData = plv8.execute(
           `
@@ -9905,7 +9922,7 @@ plv8.subtransaction(function(){
         generalItemNameOptions,
         equipmentId
       }
-    } else if (form.form_name === "PED Item") {
+    } else if (form.form_name === "PED Consumable") {
       const equipmentPropertyNumbers = plv8.execute(
         `
           SELECT equipment_description_view.*
@@ -9949,7 +9966,7 @@ plv8.subtransaction(function(){
 
       const sectionData = sectionWithDuplicateList.slice(1).map((section) => {
         const itemName = JSON.parse(
-          section.section_field[4].field_response[0].request_response
+          section.section_field[isBulk ? 0 : 4].field_response[0].request_response
         );
 
         const item = plv8.execute(`
@@ -10015,7 +10032,7 @@ plv8.subtransaction(function(){
               }
             );
 
-            const descriptionList = section.section_field.slice(7);
+            const descriptionList = section.section_field.slice(isBulk ? 3: 7);
 
             const field = descriptionList.find(
               (refDescription) =>
@@ -10029,37 +10046,68 @@ plv8.subtransaction(function(){
           }
         );
 
-        let categoryData = "";
-        
-        if(!isBulk){
-          categoryData = plv8.execute(
+        if (isBulk) {
+          const optionalFieldData = plv8.execute(
+            `
+              SELECT * FROM field_table 
+              WHERE 
+                field_section_id = 'b232d5a5-6212-405e-8d35-5f9127dca1aa'
+              ORDER BY field_order
+              LIMIT 4
+            `
+          );
+
+          return {
+            ...section,
+            section_field: [
+              {
+                ...optionalFieldData[0],
+                field_option: propertyNumberOptions,
+                field_response: []
+              },
+              ...optionalFieldData.slice(1).map(field => {
+                return {
+                  ...field,
+                  field_response: []
+                }
+              }),
+              {
+                ...section.section_field[0],
+                field_option: itemOptions,
+              },
+              ...section.section_field.slice(1, 3),
+              ...newFieldsWithOptions,
+            ],
+          };
+        } else {
+          const categoryData = plv8.execute(
             `
               SELECT equipment_description_property_number_with_prefix FROM equipment_description_view 
               WHERE equipment_description_property_number = '${JSON.parse(section.section_field[0].field_response[0].request_response)}' 
             `
           )[0].equipment_description_property_number_with_prefix;
+
+          return {
+            ...section,
+            section_field: [
+              {
+                ...section.section_field[0],
+                field_option: propertyNumberOptions,
+                field_response: [{
+                  ...section.section_field[0].field_response[0],
+                  request_response: categoryData
+                }]
+              },
+              ...section.section_field.slice(1, 4),
+              {
+                ...section.section_field[4],
+                field_option: itemOptions,
+              },
+              ...section.section_field.slice(5, 7),
+              ...newFieldsWithOptions,
+            ],
+          };
         }
-        
-        return {
-          ...section,
-          section_field: [
-            {
-              ...section.section_field[0],
-              field_option: propertyNumberOptions,
-              field_response: [{
-                ...section.section_field[0].field_response[0],
-                request_response: categoryData
-              }]
-            },
-            ...section.section_field.slice(1, 4),
-            {
-              ...section.section_field[4],
-              field_option: itemOptions,
-            },
-            ...section.section_field.slice(5, 7),
-            ...newFieldsWithOptions,
-          ],
-        };
       }).filter(value => value);
     
       const formattedRequest = {
@@ -12480,7 +12528,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    const isWithConditionalFields = requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Item")
+    const isWithConditionalFields = requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Consumable")
 
     const sectionData = plv8.execute(
       `
@@ -12665,7 +12713,7 @@ RETURNS JSON AS $$
       sectionId,
       fieldData,
       duplicatableSectionIdCondition,
-      isPedItemAndSingle
+      isPedConsumableAndSingle
     } = input_data;
 
     const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa'];
@@ -12712,7 +12760,7 @@ RETURNS JSON AS $$
         };
       });
 
-      if (isPedItemAndSingle && fieldWithResponse.length !== 0) {
+      if (isPedConsumableAndSingle && fieldWithResponse.length !== 0) {
         fieldWithResponse[0].field_response = fieldWithResponse[0].field_response.map(fieldResponse => {
           const categoryData = plv8.execute(
             `

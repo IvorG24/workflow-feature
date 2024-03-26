@@ -349,7 +349,7 @@ const PEDItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         return null;
       }
       const projectName = request.request_project.team_project_name;
-      const itemCategory = [`"Fuel, Oil, Lubricants"`];
+      const itemCategory = [`"Spare Parts & Supplies"`];
 
       const jiraTicketPayload = generateJiraTicketPayload({
         requestId: request.request_formsly_id,

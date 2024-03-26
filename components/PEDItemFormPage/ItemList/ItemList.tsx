@@ -1,8 +1,12 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getItemList, getItemUnitOfMeasurementOption } from "@/backend/api/get";
+import {
+  getItemDivisionOption,
+  getItemList,
+  getItemUnitOfMeasurementOption,
+} from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { ROW_PER_PAGE } from "@/utils/constant";
+import { GL_ACCOUNT_CHOICES, ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -62,9 +66,10 @@ type FilterType = {
   generalName: string;
   unitOfMeasurement: string;
   description: string;
+  glAccount: string;
+  division: string;
   status: string;
 };
-
 export type ItemOrderType =
   | "item_general_name"
   | "item_unit"
@@ -110,9 +115,14 @@ const ItemList = ({
     generalName: "",
     description: "",
     unitOfMeasurement: "",
+    glAccount: "",
+    division: "",
     status: "",
   });
 
+  const [divisionIdOptions, setDivisionIdOptions] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [unitOfMeasurementOptions, setUnitOfMeasurementOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -128,6 +138,16 @@ const ItemList = ({
     const fetchOptions = async () => {
       try {
         setIsLoading(true);
+        const divisionOption = await getItemDivisionOption(supabaseClient);
+        divisionOption &&
+          setDivisionIdOptions(
+            divisionOption.map((divisionId) => {
+              return {
+                label: `${divisionId.csi_code_division_id}`,
+                value: `${divisionId.csi_code_division_id}`,
+              };
+            })
+          );
 
         const unitOfMeasurementOptions = await getItemUnitOfMeasurementOption(
           supabaseClient,
@@ -268,6 +288,8 @@ const ItemList = ({
       generalName,
       description,
       unitOfMeasurement,
+      glAccount,
+      division,
       status,
     }: FilterType = getValues()
   ) => {
@@ -281,9 +303,10 @@ const ItemList = ({
         generalName,
         description,
         unitOfMeasurement,
-        glAccount: "Fuel, Oil, Lubricants",
-        division: "",
+        glAccount,
+        division,
         status,
+        isPedItem: true,
       });
       setItemList(data as ItemWithDescriptionType[]);
       setItemCount(Number(count));
@@ -316,9 +339,10 @@ const ItemList = ({
         generalName,
         description,
         unitOfMeasurement,
-        glAccount: "Fuel, Oil, Lubricants",
+        glAccount: "",
         division: "",
         status,
+        isPedItem: true,
       });
       setItemList(data as ItemWithDescriptionType[]);
       setItemCount(Number(count));
@@ -346,6 +370,8 @@ const ItemList = ({
       generalName,
       description,
       unitOfMeasurement,
+      glAccount,
+      division,
       status,
     }: FilterType = getValues()
   ) => {
@@ -359,11 +385,12 @@ const ItemList = ({
         generalName,
         description,
         unitOfMeasurement,
-        glAccount: "Fuel, Oil, Lubricants",
-        division: "",
+        glAccount,
+        division,
         status,
         sortColumn: sortStatus.columnAccessor as ItemOrderType,
         sortOrder: sortStatus.direction,
+        isPedItem: true,
       });
       setItemList(data as ItemWithDescriptionType[]);
       setItemCount(Number(count));
@@ -382,7 +409,7 @@ const ItemList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of Consumables
+            List of PED Item
           </Title>
         </Group>
 
@@ -509,6 +536,49 @@ const ItemList = ({
           />
           <Controller
             control={control}
+            name="glAccount"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <Select
+                value={value as string}
+                onChange={(value: string) => {
+                  onChange(value);
+                  handleFilterChange("glAccount", value);
+                }}
+                placeholder="GL Account"
+                data={GL_ACCOUNT_CHOICES.map((glAccount) => {
+                  return {
+                    value: glAccount,
+                    label: glAccount,
+                  };
+                })}
+                clearable
+                error={error?.message}
+                className={classes.flexGrow}
+                searchable
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="division"
+            render={({ field: { value, onChange }, fieldState: { error } }) => (
+              <Select
+                value={value as string}
+                onChange={(value: string) => {
+                  onChange(value);
+                  handleFilterChange("division", value);
+                }}
+                placeholder="Division"
+                data={divisionIdOptions}
+                clearable
+                error={error?.message}
+                className={classes.flexGrow}
+                searchable
+              />
+            )}
+          />
+          <Controller
+            control={control}
             name="status"
             render={({ field: { value, onChange }, fieldState: { error } }) => (
               <Select
@@ -625,6 +695,41 @@ const ItemList = ({
                 }}
               >
                 {formatItemField(item_description)}
+              </Text>
+            ),
+          },
+          {
+            accessor: "item_gl_account",
+            title: "GL Account",
+            render: ({ item_gl_account, item_id }) => (
+              <Text
+                className={classes.clickableColumn}
+                onClick={() => {
+                  handleColumnClick(item_id);
+                }}
+              >
+                {item_gl_account}
+              </Text>
+            ),
+            sortable: true,
+          },
+          {
+            accessor: "item_division_id_list",
+            title: "Division",
+            render: ({
+              item_division_id_list,
+              item_id,
+              item_level_three_description,
+            }) => (
+              <Text
+                className={classes.clickableColumn}
+                onClick={() => {
+                  handleColumnClick(item_id);
+                }}
+              >
+                {item_level_three_description
+                  ? item_level_three_description
+                  : item_division_id_list.join(", ")}
               </Text>
             ),
           },

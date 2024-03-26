@@ -451,7 +451,7 @@ const getWarehouseCorporateLead = (formslyItemCategory: string) => {
       fullName: "Meynard F. Gante",
       jiraAccountId: "712020:5569bf38-2e86-4a70-9f86-24d79f271743",
       emailAddress: "meynard.gante@staclara.com.ph",
-    }, // Consumables
+    },
     {
       categories: ["Fixed Asset", "Formworks"],
       fullName: "Aljoy Mulles",
