@@ -6284,17 +6284,24 @@ export const getJiraProjectList = async (
   params: {
     from: number;
     to: number;
+    search?: string;
   }
 ) => {
-  const { from, to } = params;
-  const { data, error } = await supabaseClient
+  const { from, to, search } = params;
+  let query = supabaseClient
     .from("jira_project_table")
-    .select("*")
+    .select("*", { count: "exact" })
     .order("jira_project_jira_label")
     .range(from, to);
+
+  if (search) {
+    query = query.ilike("jira_project_jira_label", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
   if (error) throw error;
 
-  return data;
+  return { data, count: Number(count) };
 };
 
 export const getJiraFormslyProjectList = async (

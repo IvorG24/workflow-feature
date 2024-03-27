@@ -31,7 +31,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           to: ROW_PER_PAGE,
         });
 
-      const jiraProjectList = await getJiraProjectList(supabaseClient, {
+      const jiraProjectData = await getJiraProjectList(supabaseClient, {
         from: 0,
         to: 256,
       });
@@ -46,7 +46,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
       const jiraFormslyProjectList = initialJiraFormslyProjectList.map(
         (project) => {
-          const jiraProjectMatch = jiraProjectList.find(
+          const jiraProjectMatch = jiraProjectData.data.find(
             (jiraProject) =>
               jiraProject.jira_project_id ===
               project.assigned_jira_project?.jira_project_id
@@ -70,7 +70,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         props: {
           jiraFormslyProjectList: jiraFormslyProjectList,
           jiraFormslyProjectCount: count,
-          jiraProjectList,
+          jiraProjectData,
           jiraUserAcountList: jiraUserAcount.data,
           jiraUserAcountCount: jiraUserAcount.count,
           jiraItemCategoryData,
@@ -91,7 +91,10 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 type Props = {
   jiraFormslyProjectList: JiraFormslyProjectType[];
   jiraFormslyProjectCount: number;
-  jiraProjectList: JiraProjectTableRow[];
+  jiraProjectData: {
+    data: JiraProjectTableRow[];
+    count: number;
+  };
   jiraUserAcountList: JiraUserAccountTableRow[];
   jiraUserAcountCount: number;
   jiraItemCategoryData: {
@@ -103,7 +106,7 @@ type Props = {
 const Page = ({
   jiraFormslyProjectList,
   jiraFormslyProjectCount,
-  jiraProjectList,
+  jiraProjectData,
   jiraUserAcountList,
   jiraUserAcountCount,
   jiraItemCategoryData,
@@ -114,7 +117,7 @@ const Page = ({
       <JiraSettingsPage
         jiraFormslyProjectList={jiraFormslyProjectList}
         jiraFormslyProjectCount={jiraFormslyProjectCount}
-        jiraProjectList={jiraProjectList}
+        jiraProjectData={jiraProjectData}
         jiraUserAcountList={jiraUserAcountList}
         jiraUserAcountCount={jiraUserAcountCount}
         jiraItemCategoryData={jiraItemCategoryData}

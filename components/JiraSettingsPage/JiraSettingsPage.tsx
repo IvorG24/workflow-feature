@@ -8,18 +8,30 @@ import {
   JiraUserAccountTableRow,
   JiraUserRoleTableRow,
 } from "@/utils/types";
-import { Container, LoadingOverlay, Stack, Text, Title } from "@mantine/core";
+import {
+  Center,
+  Container,
+  LoadingOverlay,
+  SegmentedControl,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 import JiraFormslyItemCategoryList from "./JiraFormslyItemCategoryList/JiraFormslyItemCategoryList";
 import JiraFormslyProjectList from "./JiraFormslyProjectList/JiraFormslyProjectList";
+import JiraProjectLookupTable from "./JiraProjectLookupTable/JiraProjectLookupTable";
 import JiraUserAccountList from "./JiraUserAccountList/JiraUserAccountList";
 
 type Props = {
   jiraFormslyProjectList: JiraFormslyProjectType[];
   jiraFormslyProjectCount: number;
-  jiraProjectList: JiraProjectTableRow[];
+  jiraProjectData: {
+    data: JiraProjectTableRow[];
+    count: number;
+  };
   jiraUserAcountList: JiraUserAccountTableRow[];
   jiraUserAcountCount: number;
   jiraItemCategoryData: {
@@ -35,7 +47,7 @@ export type AssignFormslyProjectForm = {
 const JiraSettingsPage = ({
   jiraFormslyProjectList: initialJiraFormslyProjectList,
   jiraFormslyProjectCount: initialJiraFormslyProjectCount,
-  jiraProjectList,
+  jiraProjectData,
   jiraUserAcountList,
   jiraItemCategoryData,
 }: Props) => {
@@ -52,6 +64,8 @@ const JiraSettingsPage = ({
   const [jiraUserRoleList, setJiraUserRoleList] = useState<
     JiraUserRoleTableRow[]
   >([]);
+  const [segmentedControlValue, setSegmentedControlValue] =
+    useState("jira-settings");
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -90,38 +104,54 @@ const JiraSettingsPage = ({
   return (
     <Container>
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
-      <Stack>
-        <Title order={2}>Manage Jira Automation</Title>
-        <Text>
-          Manage, update, and assign JIRA users to Team Projects and Item
-          Categories.
-        </Text>
-
-        <JiraFormslyProjectList
-          jiraFormslyProjectList={initialJiraFormslyProjectList}
-          jiraFormslyProjectCount={initialJiraFormslyProjectCount}
-          jiraProjectList={jiraProjectList}
-          setIsManagingUserAccountList={setIsManagingUserAccountList}
-          setSelectedFormslyProject={setSelectedFormslyProjectId}
-          selectedFormslyProject={selectedFormslyProjectId}
+      <Title order={2}>Manage Jira Automation</Title>
+      <Text>
+        Manage, update, and assign JIRA users to Team Projects and Item
+        Categories.
+      </Text>
+      <Center my="sm">
+        <SegmentedControl
+          data={[
+            { label: "Jira Settings", value: "jira-settings" },
+            { label: "Jira Lookup", value: "jira-lookup" },
+          ]}
+          value={segmentedControlValue}
+          onChange={setSegmentedControlValue}
         />
-        {isManagingUserAccountList && (
-          <JiraUserAccountList
-            jiraUserAcountList={jiraUserAcountList}
+      </Center>
+      {segmentedControlValue === "jira-settings" && (
+        <Stack>
+          <JiraFormslyProjectList
+            jiraFormslyProjectList={initialJiraFormslyProjectList}
+            jiraFormslyProjectCount={initialJiraFormslyProjectCount}
+            jiraProjectList={jiraProjectData.data}
             setIsManagingUserAccountList={setIsManagingUserAccountList}
             setSelectedFormslyProject={setSelectedFormslyProjectId}
             selectedFormslyProject={selectedFormslyProjectId}
-            selectedFormslyProjectName={selectedFormslyProjectName}
+          />
+          {isManagingUserAccountList && (
+            <JiraUserAccountList
+              jiraUserAcountList={jiraUserAcountList}
+              setIsManagingUserAccountList={setIsManagingUserAccountList}
+              setSelectedFormslyProject={setSelectedFormslyProjectId}
+              selectedFormslyProject={selectedFormslyProjectId}
+              selectedFormslyProjectName={selectedFormslyProjectName}
+              jiraUserRoleList={jiraUserRoleList}
+            />
+          )}
+
+          <JiraFormslyItemCategoryList
+            jiraItemCategoryData={jiraItemCategoryData}
+            jiraUserAcountList={jiraUserAcountList}
             jiraUserRoleList={jiraUserRoleList}
           />
-        )}
-
-        <JiraFormslyItemCategoryList
-          jiraItemCategoryData={jiraItemCategoryData}
-          jiraUserAcountList={jiraUserAcountList}
-          jiraUserRoleList={jiraUserRoleList}
-        />
-      </Stack>
+        </Stack>
+      )}
+      {segmentedControlValue === "jira-lookup" && (
+        <Stack>
+          <JiraProjectLookupTable jiraProjectData={jiraProjectData} />
+        </Stack>
+      )}
     </Container>
   );
 };
