@@ -722,15 +722,18 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       emailAddress: "darrylcanoza12@gmail.com",
     },
     {
-      items: [
-        "SANTISIMO YARD",
-        "LUZ-23-006 LAND DEV LEMERY P1",
-        "LUZ-18-007A STE TR4 PACKAGE C",
-      ],
+      items: ["SANTISIMO YARD", "LUZ-18-007A STE TR4 PACKAGE C"],
       fullName: "Edwin Probadora",
       jiraAccountId:
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:41b4ed4f-b660-4354-b031-0d221b54655b",
       emailAddress: "edwinprobadora@gmail.com",
+    },
+    {
+      items: ["LUZ-23-006 LAND DEV LEMERY P1"],
+      fullName: "Rohen Laurente",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:5b923902-c543-403e-8716-bab2d0e76a43",
+      emailAddress: "rohenlaurente30@gmail.com",
     },
     {
       items: ["MIN-19-027 MALITBOG MINI HYDRO", "MIN-21-015 MATI-1"],
@@ -1081,10 +1084,10 @@ const getRequestParticipantList = (formslyProjectSite: string) => {
       projectSiteList: ["LUZ-23-006 LAND DEV LEMERY P1"],
       participantList: [
         {
-          fullName: "Edwin Probadora",
+          fullName: "Rohen Laurente",
           jiraAccountId:
-            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:41b4ed4f-b660-4354-b031-0d221b54655b",
-          emailAddress: "edwinprobadora@gmail.com",
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:5b923902-c543-403e-8716-bab2d0e76a43",
+          emailAddress: "rohenlaurente30@gmail.com",
         },
       ],
     },
