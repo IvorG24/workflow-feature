@@ -1,8 +1,8 @@
-import { uuid } from "uuidv4";
+import { v4 as uuidv4 } from "uuid";
 
 export const helpPageData = [
   {
-    id: uuid(),
+    id: uuidv4(),
     title: "How to create a Formsly Account",
     content: `
         <p><strong>You have 3 ways to create an account. First, go to <a href='https://formsly.io/sign-up' target="__blank">Sign Up Page</a>.</strong></p>
@@ -32,7 +32,7 @@ export const helpPageData = [
         </ol>`,
   },
   {
-    id: uuid(),
+    id: uuidv4(),
     title: "How to create a Formsly Request",
     content: `
     <p><strong>Creating a Formsly Request</strong></p>
@@ -50,7 +50,7 @@ export const helpPageData = [
     </ol>`,
   },
   {
-    id: uuid(),
+    id: uuidv4(),
     title: "Team Management",
     content: `
     <p><strong>In your <a target="__blank" href="https://formsly.io/team">Team Page</a>, the team Owner can do the following:</strong></p>
@@ -95,7 +95,7 @@ export const helpPageData = [
     `,
   },
   {
-    id: uuid(),
+    id: uuidv4(),
     title: "How to add items in the Item Form",
     content: `
     <p><strong>Only members with owner and approver roles can add items.</strong></p>
@@ -116,7 +116,7 @@ export const helpPageData = [
     `,
   },
   {
-    id: uuid(),
+    id: uuidv4(),
     title: "Restrict form access to a specific team group",
     content: `
     <ol>
@@ -128,7 +128,7 @@ export const helpPageData = [
     `,
   },
   {
-    id: uuid(),
+    id: uuidv4(),
     title: "Add signers/approvers to a form",
     content: `
     <ol>
@@ -142,7 +142,7 @@ export const helpPageData = [
     `,
   },
   {
-    id: uuid(),
+    id: uuidv4(),
     title: "How to add and remove suppliers in the Quotation Form",
     content: `
     <ol>

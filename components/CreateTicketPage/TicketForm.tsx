@@ -10,7 +10,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { uuid as uuidv4 } from "uuidv4";
+import { v4 as uuidv4 } from "uuid";
 import TicketFormSection from "../CreateTicketPage/TicketFormSection";
 
 type Props = {

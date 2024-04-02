@@ -64,7 +64,7 @@
     "tiptap-markdown": "^0.8.9",
     "typescript": "5.0.4",
     "use-deep-compare-effect": "^1.8.1",
-    "uuidv4": "^6.2.13",
+    "uuid": "^9.0.1",
     "validator": "^13.9.0",
     "word-exists": "^1.0.0",
     "zustand": "^4.3.8"
@@ -74,6 +74,7 @@
     "@types/nodemailer": "^6.4.9",
     "@types/react-beforeunload": "^2.1.1",
     "@types/react-signature-canvas": "^1.0.2",
+    "@types/uuid": "^9.0.8",
     "@types/validator": "^13.7.17",
     "cypress": "^12.17.3",
     "eslint-config-prettier": "^8.8.0",
