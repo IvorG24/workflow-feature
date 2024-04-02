@@ -14,6 +14,7 @@ import {
 import { useUserStore, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { startCase } from "@/utils/string";
 import {
   AppType,
   ApproverUnresolvedRequestListType,
@@ -36,7 +37,6 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { startCase } from "utils/string";
 import ApproverNotification from "./ApproverNotification";
 import NotificationList from "./NotificationList";
 
