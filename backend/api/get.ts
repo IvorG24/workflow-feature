@@ -6074,8 +6074,6 @@ export const getSectionInItemRequestPage = async (
   params: {
     index: number;
     requestId: string;
-    teamId: string;
-    formId: string;
     sectionId: string;
     fieldData?: RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
     duplicatableSectionIdCondition: string;
