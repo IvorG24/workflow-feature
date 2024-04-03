@@ -1,6 +1,9 @@
 "use client";
 
-import { getUserSignatureList } from "@/backend/api/get";
+import {
+  getUserCurrentSignature,
+  getUserSignatureList,
+} from "@/backend/api/get";
 import ExportToPdf from "@/components/ExportToPDF/ExportToPdf";
 import Meta from "@/components/Meta/Meta";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
@@ -63,7 +66,21 @@ const Page = ({ request }: Props) => {
                     .team_member_user.user_id,
               });
 
-              const defaultSignature = signatureList[signatureList.length - 1];
+              let defaultSignature = "";
+              if (signatureList.length) {
+                defaultSignature =
+                  signatureList[signatureList.length - 1]
+                    .signature_history_value;
+              } else {
+                defaultSignature = await getUserCurrentSignature(
+                  supabaseClient,
+                  {
+                    userId:
+                      signer.request_signer_signer.signer_team_member
+                        .team_member_user.user_id,
+                  }
+                );
+              }
 
               const signedDate = new Date(
                 `${signer.request_signer_status_date_updated}`
@@ -87,9 +104,7 @@ const Page = ({ request }: Props) => {
               if (signatureMatch) {
                 signatureUrl = signatureMatch.signature_history_value;
               } else {
-                signatureUrl = defaultSignature
-                  ? defaultSignature.signature_history_value
-                  : "";
+                signatureUrl = defaultSignature;
               }
             }
 
