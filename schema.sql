@@ -291,7 +291,8 @@ CREATE TABLE item_table(
   item_is_ped_item BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
-  item_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+  item_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  item_category_id UUID REFERENCES item_category_table(item_category_id)
 );
 
 CREATE TABLE item_division_table(
@@ -323,6 +324,16 @@ CREATE TABLE item_description_field_table(
 
   item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL,
   item_description_field_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+);
+
+CREATE TABLE item_category_table(
+  item_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_category VARCHAR(4000) NOT NULL,
+  item_category_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_category_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  item_category_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
 );
 
 -- End: Item Form
@@ -1610,12 +1621,13 @@ RETURNS JSON AS $$
         item_division_id_list,
         item_encoder_team_member_id,
         item_level_three_description,
-        item_is_ped_item
+        item_is_ped_item,
+        item_category_id
       },
       itemDescription
     } = input_data;
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_encoder_team_member_id, item_is_ped_item) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_encoder_team_member_id}',${item_is_ped_item}) RETURNING *`)[0];
+    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_encoder_team_member_id, item_is_ped_item, item_category_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_encoder_team_member_id}',${item_is_ped_item},${item_category_id ? `'${item_category_id}'` : NULL}) RETURNING *`)[0];
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");
@@ -4368,7 +4380,7 @@ RETURNS JSON as $$
       const teamProjectList = plv8.execute(`SELECT team_project_id, team_project_name FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit};`);
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false;`)[0].count;
     
-      if (formName === 'Item') {
+      if (formName === "Item") {
         const items = [];
         const itemData = plv8.execute(`SELECT item_id, item_general_name, item_unit, item_gl_account, item_is_available FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false ORDER BY item_general_name ASC LIMIT ${limit};`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
@@ -4384,7 +4396,54 @@ RETURNS JSON as $$
             item_description: itemDescription,
             item_level_three_description: itemDivisionDescription.length !== 0 ? itemDivisionDescription[0].item_level_three_description : ""
           })
-        })
+        });
+
+        const itemCategoryList = plv8.execute(
+          `
+            SELECT 
+              item_category_table.*,
+              signer_id,
+              team_member_id,
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            FROM item_category_table
+            INNER JOIN signer_table ON signer_id = item_category_signer_id
+            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_table ON user_id = team_member_user_id
+            WHERE item_category_is_disabled = false
+            ORDER BY item_category
+            LIMIT ${limit}
+          `
+        );
+
+        const itemCategories = itemCategoryList.map(itemCategory => {
+          const { signer_id, team_member_id, user_id, user_first_name, user_last_name, user_avatar, ...categoryDetails } = itemCategory;
+          return {
+            ...categoryDetails,
+            item_category_signer: {
+              signer_id: signer_id,
+              signer_team_member: {
+                team_member_id: team_member_id,
+                team_member_user: {
+                  user_id: user_id,
+                  user_first_name: user_first_name,
+                  user_last_name: user_last_name,
+                  user_avatar: user_avatar,
+                }
+              }
+            }
+          }
+        });
+
+        const itemCategoryCount = plv8.execute(
+          `
+            SELECT COUNT(*)
+            FROM item_category_table
+            WHERE item_category_is_disabled = false
+          `
+        )[0].count;
 
         returnData = {
           items,
@@ -4393,6 +4452,8 @@ RETURNS JSON as $$
           teamGroupList,
           teamProjectList,
           teamProjectListCount: Number(`${teamProjectListCount}`),
+          itemCategories,
+          itemCategoryCount: Number(`${itemCategoryCount}`)
         }
       } else if (formName === 'PED Part') {
         const equipments = plv8.execute(`SELECT et.equipment_id, et.equipment_name, et.equipment_name_shorthand, et.equipment_is_available, ect.equipment_category FROM equipment_table et INNER JOIN equipment_category_table ect ON equipment_equipment_category_id = equipment_category_id WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false ORDER BY equipment_name ASC LIMIT ${limit};`);
@@ -4814,30 +4875,7 @@ RETURNS JSON as $$
               },
             ],
           },
-          projectOptions,
-          specialApprover: specialApproverWithItem.map(specialApprover => {
-            return {
-              special_approver_id: specialApprover.special_approver_id,
-              special_approver_item_list: specialApprover.special_approver_item_list,
-              special_approver_signer: {
-                signer_id: specialApprover.signer_id,
-                signer_is_primary_signer: specialApprover.signer_is_primary_signer,
-                signer_action: specialApprover.signer_action,
-                signer_order: specialApprover.signer_order,
-                signer_is_disabled: specialApprover.signer_is_disabled,
-                signer_team_project_id: specialApprover.signer_team_project_id,
-                signer_team_member: {
-                  team_member_id: specialApprover.team_member_id,
-                  team_member_user: {
-                    user_id: specialApprover.user_id,
-                    user_first_name: specialApprover.user_first_name,
-                    user_last_name: specialApprover.user_last_name,
-                    user_avatar: specialApprover.user_avatar,
-                  }
-                }
-              }
-            }
-          })
+          projectOptions
         }
         return;
       } else if (form.form_name === "Subcon") {
@@ -12949,6 +12987,100 @@ RETURNS JSON as $$
 $$ LANGUAGE plv8;
 
 -- End: Public request page on load
+
+-- Start: Create item category
+
+CREATE OR REPLACE FUNCTION create_item_category(
+  input_data JSON
+)
+RETURNS VOID AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      category,
+      teamMemberId
+    } = input_data;
+    
+    let signerData;
+    signerData = plv8.execute(
+      `
+        SELECT signer_id FROM signer_table 
+        WHERE
+          signer_is_primary_signer = false
+          AND signer_form_id = 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'
+          AND signer_team_member_id = '${teamMemberId}'
+          AND signer_team_project_id IS NULL
+      `
+    )[0];
+
+    if(!signerData) {
+      signerData = plv8.execute(
+        `
+          INSERT INTO signer_table 
+          (signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_form_id, signer_team_member_id, signer_team_project_id)
+          VALUES
+          (false, 'Approved', 5, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '${teamMemberId}', null)
+          RETURNING signer_id
+        `
+      )[0]; 
+    }
+
+    plv8.execute(
+      `
+        INSERT INTO item_category_table 
+        (item_category, item_category_signer_id)
+        VALUES
+        ('${category}', '${signerData.signer_id}')
+      `
+    );
+ });
+$$ LANGUAGE plv8;
+
+-- End: Create item category
+
+-- Start: Update item category
+
+CREATE OR REPLACE FUNCTION update_item_category(
+  input_data JSON
+)
+RETURNS VOID AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      category,
+      teamMemberId,
+      categoryId
+    } = input_data;
+    
+    let signerData;
+    signerData = plv8.execute(
+      `
+        SELECT signer_id FROM signer_table 
+        WHERE
+          signer_is_primary_signer = false
+          AND signer_form_id = 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'
+          AND signer_team_member_id = '${teamMemberId}'
+          AND signer_team_project_id IS NULL
+      `
+    )[0];
+    
+    if(!signerData) {
+      signerData = plv8.execute(
+        `
+          INSERT INTO signer_table 
+          (signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_form_id, signer_team_member_id, signer_team_project_id)
+          VALUES
+          (false, 'Approved', 5, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '${teamMemberId}', null)
+          RETURNING signer_id
+        `
+      )[0]; 
+    }
+
+    plv8.execute(`UPDATE item_category_table SET item_category = '${category}', item_category_signer_id = '${signerData.signer_id}' WHERE item_category_id = '${categoryId}'`);
+ });
+$$ LANGUAGE plv8;
+
+-- End: Update item category
 
 ---------- End: FUNCTIONS
 

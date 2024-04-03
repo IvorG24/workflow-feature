@@ -386,6 +386,13 @@ export type AddressTableUpdate =
 export type RequestViewTableRow =
   Database["public"]["Views"]["request_view"]["Row"];
 
+export type ItemCategoryTableRow =
+  Database["public"]["Tables"]["item_category_table"]["Row"];
+export type ItemCategoryTableInsert =
+  Database["public"]["Tables"]["item_category_table"]["Insert"];
+export type ItemCategoryTableUpdate =
+  Database["public"]["Tables"]["item_category_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -734,6 +741,12 @@ export type ItemForm = {
   division: string[];
   divisionDescription: string;
   isPedItem: boolean;
+  itemCategory: string;
+};
+
+export type ItemCategoryForm = {
+  category: string;
+  signer: string;
 };
 
 export type ServiceForm = {
@@ -1569,4 +1582,19 @@ export type ApproverDetailsType = {
   status: string;
   date: string | null;
   signature: string | null;
+};
+
+export type ItemCategoryWithSigner = ItemCategoryTableRow & {
+  item_category_signer: {
+    signer_id: string;
+    signer_team_member: {
+      team_member_id: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+      };
+    };
+  };
 };

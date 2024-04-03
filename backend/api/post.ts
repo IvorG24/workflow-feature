@@ -1584,3 +1584,18 @@ export const createPedPartFromTicketRequest = async (
   if (error) throw error;
   return data;
 };
+
+// Create item category
+export const createItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    category: string;
+    teamMemberId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("create_item_category", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+};
