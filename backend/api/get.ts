@@ -6272,3 +6272,31 @@ export const getAllGroups = async (
 
   return data;
 };
+
+// Get user current signature
+export const getUserCurrentSignature = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+  }
+) => {
+  const { userId } = params;
+  const { data, error } = await supabaseClient
+    .from("user_table")
+    .select(
+      "user_signature_attachment: user_signature_attachment_id!inner(attachment_value, attachment_bucket)"
+    )
+    .eq("user_id", userId)
+    .maybeSingle();
+  const formattedData = data as {
+    user_signature_attachment: {
+      attachment_value: string;
+      attachment_bucket: string;
+    };
+  };
+
+  if (error) throw error;
+  return formattedData
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${formattedData.user_signature_attachment.attachment_bucket}/${formattedData.user_signature_attachment.attachment_value}`
+    : "";
+};
