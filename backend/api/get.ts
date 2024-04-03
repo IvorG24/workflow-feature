@@ -6360,7 +6360,7 @@ export const getJiraUserAccountList = async (
     .range(from, to);
 
   if (search) {
-    query = query.ilike("team_project_name", `%${search}%`);
+    query = query.ilike("jira_user_account_display_name", `%${search}%`);
   }
 
   const { data, count, error } = await query;
@@ -6429,10 +6429,11 @@ export const getJiraItemCategoryList = async (
   params: {
     from: number;
     to: number;
+    search?: string;
   }
 ) => {
-  const { from, to } = params;
-  const query = supabaseClient
+  const { from, to, search } = params;
+  let query = supabaseClient
     .from("jira_item_category_table")
     .select(
       "*, assigned_jira_user: jira_item_user_table(jira_item_user_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label))",
@@ -6440,6 +6441,12 @@ export const getJiraItemCategoryList = async (
     )
     .order("jira_item_category_formsly_label")
     .range(from, to);
+
+  if (search) {
+    query = query.or(
+      `jira_item_category_jira_label.ilike.%${search}%, jira_item_category_formsly_label.ilike.%${search}%`
+    );
+  }
 
   const { data, count, error } = await query;
 

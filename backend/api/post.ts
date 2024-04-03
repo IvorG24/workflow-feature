@@ -23,8 +23,12 @@ import {
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraItemCategoryTableInsert,
   JiraItemCategoryUserTableInsert,
   JiraItemUserTableData,
+  JiraProjectTableInsert,
+  JiraUserAccountTableInsert,
   MemoAgreementTableRow,
   MemoLineItem,
   MemoTableRow,
@@ -1771,4 +1775,98 @@ const insertJiraItemCategory = async (
   if (error) throw error;
 
   return formatJiraItemUserTableData(data as JiraItemUserTableData);
+};
+
+// create jira project
+export const createJiraProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraProjectTableInsert
+) => {
+  // check if duplicate
+  const { count, error: duplicateError } = await supabaseClient
+    .from("jira_project_table")
+    .select("jira_project_id", { count: "exact" })
+    .eq("jira_project_jira_id", params.jira_project_jira_id);
+
+  if (duplicateError) throw duplicateError;
+
+  if (Number(count)) {
+    return { data: null, error: "Jira project already exists." };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_project_table")
+    .insert(params)
+    .select("*");
+
+  if (error) throw error;
+
+  return { data, error: null };
+};
+
+// create jira user
+export const createJiraUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraUserAccountTableInsert
+) => {
+  // check if duplicate
+  const { count, error: duplicateError } = await supabaseClient
+    .from("jira_user_account_table")
+    .select("jira_user_account_id", { count: "exact" })
+    .eq("jira_user_account_jira_id", params.jira_user_account_jira_id);
+
+  if (duplicateError) throw duplicateError;
+
+  if (Number(count)) {
+    return { success: false, error: "Jira user already exists." };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_user_account_table")
+    .insert(params);
+
+  if (error) throw error;
+
+  return { data, error: null };
+};
+
+// create jira item category
+export const createJiraFormslyItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraItemCategoryTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("jira_item_category_table")
+    .insert(params)
+    .select(
+      "*, assigned_jira_user: jira_item_user_table(jira_item_user_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label))"
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const assignedUser = data?.assigned_jira_user as {
+    jira_item_user_id: string;
+    jira_item_user_account_id: {
+      jira_user_account_jira_id: string;
+      jira_user_account_display_name: string;
+      jira_user_account_id: string;
+    };
+    jira_item_user_role_id: {
+      jira_user_role_id: string;
+      jira_user_role_label: string;
+    };
+  }[];
+
+  const formattedData = {
+    ...data,
+    assigned_jira_user:
+      {
+        ...assignedUser[0],
+        ...assignedUser[0]?.jira_item_user_account_id,
+        ...assignedUser[0]?.jira_item_user_role_id,
+      } ?? null,
+  };
+
+  return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;
 };

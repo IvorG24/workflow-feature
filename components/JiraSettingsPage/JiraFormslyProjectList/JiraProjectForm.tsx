@@ -17,7 +17,11 @@ const JiraProjectForm = ({
   onSubmit,
   isLoading,
 }: Props) => {
-  const { control, handleSubmit } = useFormContext<AssignFormslyProjectForm>();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useFormContext<AssignFormslyProjectForm>();
   return (
     <Modal
       opened={opened}
@@ -39,6 +43,7 @@ const JiraProjectForm = ({
                 data={selectOptionList}
                 withinPortal={true}
                 value={value}
+                error={errors.jiraProjectId?.message}
                 onChange={onChange}
               />
             )}

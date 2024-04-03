@@ -16,6 +16,8 @@ import {
   ItemTableInsert,
   JiraFormslyItemCategoryWithUserDataType,
   JiraItemCategoryTableUpdate,
+  JiraProjectTableUpdate,
+  JiraUserAccountTableUpdate,
   MemberRoleType,
   MemoAgreementTableRow,
   MemoFormatAttachmentTableInsert,
@@ -1046,4 +1048,34 @@ export const updateJiraItemCategory = async (
   };
 
   return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;
+};
+
+// update jira project
+export const updateJiraProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraProjectTableUpdate
+) => {
+  const { error } = await supabaseClient
+    .from("jira_project_table")
+    .update(params)
+    .eq("jira_project_id", params.jira_project_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
+};
+
+// update jira user
+export const updateJiraUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraUserAccountTableUpdate
+) => {
+  const { error } = await supabaseClient
+    .from("jira_user_account_table")
+    .update(params)
+    .eq("jira_user_account_jira_id", params.jira_user_account_jira_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
 };

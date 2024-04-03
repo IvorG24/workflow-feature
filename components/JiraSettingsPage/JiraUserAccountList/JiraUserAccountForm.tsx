@@ -19,7 +19,11 @@ const JiraUserAccountForm = ({
   onSubmit,
   isLoading,
 }: Props) => {
-  const { control, handleSubmit } = useFormContext<AddProjectJiraUserForm>();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useFormContext<AddProjectJiraUserForm>();
   return (
     <Modal
       opened={opened}
@@ -42,6 +46,7 @@ const JiraUserAccountForm = ({
                 withinPortal={true}
                 value={value}
                 onChange={onChange}
+                error={errors.userAccountId?.message}
               />
             )}
             rules={{ required: "This field is required." }}
@@ -56,6 +61,7 @@ const JiraUserAccountForm = ({
                 withinPortal={true}
                 value={value}
                 onChange={onChange}
+                error={errors.userRoleId?.message}
               />
             )}
             rules={{ required: "This field is required." }}

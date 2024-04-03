@@ -1,29 +1,56 @@
 import { getJiraProjectList } from "@/backend/api/get";
+import { createJiraProject } from "@/backend/api/post";
+import { updateJiraProject } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getPagination } from "@/utils/functions";
-import { JiraProjectTableRow } from "@/utils/types";
-import { ActionIcon, Box, Group, Paper, TextInput, Title } from "@mantine/core";
+import {
+  JiraProjectTableInsert,
+  JiraProjectTableRow,
+  JiraProjectTableUpdate,
+} from "@/utils/types";
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Flex,
+  Group,
+  Paper,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconSearch, IconSettings } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconReload,
+  IconSearch,
+  IconSettings,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
+import { JiraAutomationFormObject } from "../JiraSettingsPage";
+import JiraProjectLookupForm from "./JiraProjectLookupForm";
 
 type Props = {
   jiraProjectData: {
     data: JiraProjectTableRow[];
     count: number;
   };
+  jiraAutomationFormData: JiraAutomationFormObject | null;
 };
 
-const JiraProjectLookupTable = ({ jiraProjectData }: Props) => {
+const JiraProjectLookupTable = ({
+  jiraProjectData,
+  jiraAutomationFormData,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const [isLoading, setIsLoading] = useState(false);
-  // const [openJiraProjectFormModal, setOpenJiraProjectFormModal] =
-  //   useState(false);
+  const [openJiraProjectLookupFormModal, setOpenJiraProjectLookupFormModal] =
+    useState(false);
+  const [isUpdatingJiraProject, setIsUpdatingJiraProject] = useState(false);
   const [jiraProjectList, setJiraProjectList] = useState(
     jiraProjectData.data.slice(0, ROW_PER_PAGE)
   );
@@ -33,6 +60,8 @@ const JiraProjectLookupTable = ({ jiraProjectData }: Props) => {
   const [activePage, setActivePage] = useState(1);
 
   const searchJiraProjectFormMethods = useForm<{ search: string }>();
+  const updateOrCreateJiraProjectFormMethods =
+    useForm<JiraProjectTableUpdate>();
 
   const handleFetchJiraProjectList = async ({
     index,
@@ -88,39 +117,123 @@ const JiraProjectLookupTable = ({ jiraProjectData }: Props) => {
       console.log(error);
       notifications.show({
         message: "Failed to fetch jira project list",
+        color: "red",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleUpdateOrCreateJiraProject = async (
+    data: JiraProjectTableUpdate | JiraProjectTableInsert
+  ) => {
+    try {
+      if (!jiraAutomationFormData) {
+        notifications.show({
+          message: "Jira Form data is empty. Please contact the dev team.",
+          color: "orange",
+        });
+        return;
+      }
+
+      const existingJiraProjectList = jiraAutomationFormData["21"];
+      // verify if jira id
+      const isValid = existingJiraProjectList.choices?.find(
+        (project) => project.id === data.jira_project_jira_id
+      );
+
+      if (!isValid) {
+        notifications.show({
+          message:
+            "Jira id not found in current jira project list. Please contact IT.",
+          color: "orange",
+        });
+        return;
+      }
+
+      if (isUpdatingJiraProject) {
+        setIsUpdatingJiraProject(false);
+        await updateJiraProject(supabaseClient, data);
+      } else {
+        const { error } = await createJiraProject(
+          supabaseClient,
+          data as JiraProjectTableInsert
+        );
+
+        if (error) {
+          notifications.show({
+            message: `${error}`,
+            color: "red",
+          });
+          return;
+        }
+      }
+
+      notifications.show({
+        message: `Successfully ${
+          isUpdatingJiraProject ? "updated" : "created"
+        } jira project.`,
+        color: "green",
+      });
+
+      setOpenJiraProjectLookupFormModal(false);
+      updateOrCreateJiraProjectFormMethods.reset();
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Failed to update or create jira project",
+        color: "red",
+      });
+    }
+  };
+
   return (
     <Box>
       <Paper p="xl" shadow="xs" pos="relative">
-        <Group>
-          <Title order={3}>Jira Projects</Title>
+        <Flex justify="space-between" align="center">
+          <Group>
+            <Title order={3}>Jira Projects</Title>
 
-          <TextInput
-            miw={250}
-            maxLength={4000}
-            placeholder="Project Name"
-            rightSection={
-              <ActionIcon
-                onClick={() =>
-                  handleSearchJiraProject(
-                    searchJiraProjectFormMethods.getValues()
-                  )
-                }
-              >
-                <IconSearch size={16} />
-              </ActionIcon>
-            }
-            {...searchJiraProjectFormMethods.register("search", {
-              onChange: (e) =>
-                handleSearchJiraProject({ search: e.currentTarget.value }),
-            })}
-          />
-        </Group>
+            <TextInput
+              miw={250}
+              maxLength={4000}
+              placeholder="Project Name"
+              rightSection={
+                <ActionIcon
+                  onClick={() =>
+                    handleSearchJiraProject(
+                      searchJiraProjectFormMethods.getValues()
+                    )
+                  }
+                >
+                  <IconSearch size={16} />
+                </ActionIcon>
+              }
+              {...searchJiraProjectFormMethods.register("search", {
+                onChange: (e) =>
+                  handleSearchJiraProject({ search: e.currentTarget.value }),
+              })}
+            />
+            <Button
+              variant="light"
+              leftIcon={<IconReload size={16} />}
+              onClick={() => handlePagination(activePage)}
+            >
+              Refresh
+            </Button>
+          </Group>
+
+          <Button
+            size="xs"
+            leftIcon={<IconPlus size={14} />}
+            onClick={() => {
+              setOpenJiraProjectLookupFormModal(true);
+              setIsUpdatingJiraProject(false);
+            }}
+          >
+            Add Project
+          </Button>
+        </Flex>
         <DataTable
           mt="xs"
           withBorder
@@ -149,8 +262,29 @@ const JiraProjectLookupTable = ({ jiraProjectData }: Props) => {
             {
               accessor: "jira_project_id",
               title: "Action",
-              render: ({ jira_project_id }) => (
-                <ActionIcon key={jira_project_id}>
+              render: ({
+                jira_project_id,
+                jira_project_jira_id,
+                jira_project_jira_label,
+              }) => (
+                <ActionIcon
+                  onClick={() => {
+                    setOpenJiraProjectLookupFormModal(true);
+                    setIsUpdatingJiraProject(true);
+                    updateOrCreateJiraProjectFormMethods.setValue(
+                      "jira_project_id",
+                      jira_project_id
+                    );
+                    updateOrCreateJiraProjectFormMethods.setValue(
+                      "jira_project_jira_id",
+                      jira_project_jira_id
+                    );
+                    updateOrCreateJiraProjectFormMethods.setValue(
+                      "jira_project_jira_label",
+                      jira_project_jira_label
+                    );
+                  }}
+                >
                   <IconSettings size={16} />
                 </ActionIcon>
               ),
@@ -158,6 +292,18 @@ const JiraProjectLookupTable = ({ jiraProjectData }: Props) => {
           ]}
         />
       </Paper>
+      <FormProvider {...updateOrCreateJiraProjectFormMethods}>
+        <JiraProjectLookupForm
+          opened={openJiraProjectLookupFormModal}
+          close={() => {
+            setOpenJiraProjectLookupFormModal(false);
+            updateOrCreateJiraProjectFormMethods.reset();
+          }}
+          onSubmit={handleUpdateOrCreateJiraProject}
+          isLoading={isLoading}
+          isUpdate={isUpdatingJiraProject}
+        />
+      </FormProvider>
     </Box>
   );
 };

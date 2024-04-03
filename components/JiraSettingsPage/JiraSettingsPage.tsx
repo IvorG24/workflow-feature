@@ -24,6 +24,7 @@ import JiraFormslyItemCategoryList from "./JiraFormslyItemCategoryList/JiraForms
 import JiraFormslyProjectList from "./JiraFormslyProjectList/JiraFormslyProjectList";
 import JiraProjectLookupTable from "./JiraProjectLookupTable/JiraProjectLookupTable";
 import JiraUserAccountList from "./JiraUserAccountList/JiraUserAccountList";
+import JiraUserLookupTable from "./JiraUserLookupTable/JiraUserLookupTable";
 
 type Props = {
   jiraFormslyProjectList: JiraFormslyProjectType[];
@@ -32,13 +33,31 @@ type Props = {
     data: JiraProjectTableRow[];
     count: number;
   };
-  jiraUserAcountList: JiraUserAccountTableRow[];
-  jiraUserAcountCount: number;
+  jiraUserAccountData: {
+    data: JiraUserAccountTableRow[];
+    count: number;
+  };
   jiraItemCategoryData: {
     data: JiraFormslyItemCategoryWithUserDataType[];
     count: number;
   };
 };
+
+type JiraAutomationFormFieldType = {
+  choices?: { id: string; name: string }[];
+  jiraField: {
+    id: string;
+    configId: string;
+    custom: string;
+    type: string;
+  };
+  answer: object;
+};
+
+export type JiraAutomationFormObject = Record<
+  string,
+  JiraAutomationFormFieldType
+>;
 
 export type AssignFormslyProjectForm = {
   jiraProjectId: string;
@@ -48,7 +67,7 @@ const JiraSettingsPage = ({
   jiraFormslyProjectList: initialJiraFormslyProjectList,
   jiraFormslyProjectCount: initialJiraFormslyProjectCount,
   jiraProjectData,
-  jiraUserAcountList,
+  jiraUserAccountData,
   jiraItemCategoryData,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
@@ -67,6 +86,9 @@ const JiraSettingsPage = ({
   const [segmentedControlValue, setSegmentedControlValue] =
     useState("jira-settings");
 
+  const [jiraAutomationFormData, setJiraAutomationFormData] =
+    useState<JiraAutomationFormObject | null>(null);
+
   useEffect(() => {
     const fetchClientData = async () => {
       try {
@@ -77,6 +99,16 @@ const JiraSettingsPage = ({
         });
 
         setJiraUserRoleList(jiraUserRoleList);
+
+        const response = await fetch("/api/get-jira-automation-form", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        setJiraAutomationFormData(data.fields);
       } catch (error) {
         console.log(error);
         notifications.show({
@@ -131,7 +163,7 @@ const JiraSettingsPage = ({
           />
           {isManagingUserAccountList && (
             <JiraUserAccountList
-              jiraUserAcountList={jiraUserAcountList}
+              jiraUserAcountList={jiraUserAccountData.data}
               setIsManagingUserAccountList={setIsManagingUserAccountList}
               setSelectedFormslyProject={setSelectedFormslyProjectId}
               selectedFormslyProject={selectedFormslyProjectId}
@@ -142,14 +174,19 @@ const JiraSettingsPage = ({
 
           <JiraFormslyItemCategoryList
             jiraItemCategoryData={jiraItemCategoryData}
-            jiraUserAcountList={jiraUserAcountList}
+            jiraUserAcountList={jiraUserAccountData.data}
             jiraUserRoleList={jiraUserRoleList}
+            jiraAutomationFormData={jiraAutomationFormData}
           />
         </Stack>
       )}
       {segmentedControlValue === "jira-lookup" && (
         <Stack>
-          <JiraProjectLookupTable jiraProjectData={jiraProjectData} />
+          <JiraProjectLookupTable
+            jiraProjectData={jiraProjectData}
+            jiraAutomationFormData={jiraAutomationFormData}
+          />
+          <JiraUserLookupTable jiraUserAccountData={jiraUserAccountData} />
         </Stack>
       )}
     </Container>

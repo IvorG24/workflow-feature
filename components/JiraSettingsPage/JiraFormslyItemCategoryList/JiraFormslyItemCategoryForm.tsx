@@ -1,12 +1,18 @@
-import { JiraItemCategoryTableUpdate } from "@/utils/types";
+import {
+  JiraItemCategoryTableInsert,
+  JiraItemCategoryTableUpdate,
+} from "@/utils/types";
 import { Button, LoadingOverlay, Modal, Stack, TextInput } from "@mantine/core";
 import { useFormContext } from "react-hook-form";
 
 type Props = {
   opened: boolean;
   close: () => void;
-  onSubmit: (data: JiraItemCategoryTableUpdate) => void;
+  onSubmit: (
+    data: JiraItemCategoryTableUpdate | JiraItemCategoryTableInsert
+  ) => void;
   isLoading?: boolean;
+  isUpdating?: boolean;
 };
 
 const JiraFormslyItemCategoryForm = ({
@@ -14,14 +20,16 @@ const JiraFormslyItemCategoryForm = ({
   close,
   onSubmit,
   isLoading,
+  isUpdating,
 }: Props) => {
-  const { register, handleSubmit } =
-    useFormContext<JiraItemCategoryTableUpdate>();
+  const { register, handleSubmit } = useFormContext<
+    JiraItemCategoryTableUpdate | JiraItemCategoryTableInsert
+  >();
   return (
     <Modal
       opened={opened}
       onClose={close}
-      title="Update Item Category"
+      title={`${isUpdating ? "Update" : "Create"} Item Category`}
       centered
       pos="relative"
     >
@@ -35,8 +43,8 @@ const JiraFormslyItemCategoryForm = ({
             {...register("jira_item_category_formsly_label", {
               required: "This field is required.",
             })}
-            readOnly
-            variant="filled"
+            readOnly={isUpdating}
+            variant={isUpdating ? "filled" : "default"}
           />
           <TextInput
             placeholder="Jira ID"

@@ -71,8 +71,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           jiraFormslyProjectList: jiraFormslyProjectList,
           jiraFormslyProjectCount: count,
           jiraProjectData,
-          jiraUserAcountList: jiraUserAcount.data,
-          jiraUserAcountCount: jiraUserAcount.count,
+          jiraUserAccountData: jiraUserAcount,
           jiraItemCategoryData,
         },
       };
@@ -95,8 +94,10 @@ type Props = {
     data: JiraProjectTableRow[];
     count: number;
   };
-  jiraUserAcountList: JiraUserAccountTableRow[];
-  jiraUserAcountCount: number;
+  jiraUserAccountData: {
+    data: JiraUserAccountTableRow[];
+    count: number;
+  };
   jiraItemCategoryData: {
     data: JiraFormslyItemCategoryWithUserDataType[];
     count: number;
@@ -107,8 +108,7 @@ const Page = ({
   jiraFormslyProjectList,
   jiraFormslyProjectCount,
   jiraProjectData,
-  jiraUserAcountList,
-  jiraUserAcountCount,
+  jiraUserAccountData,
   jiraItemCategoryData,
 }: Props) => {
   return (
@@ -118,8 +118,7 @@ const Page = ({
         jiraFormslyProjectList={jiraFormslyProjectList}
         jiraFormslyProjectCount={jiraFormslyProjectCount}
         jiraProjectData={jiraProjectData}
-        jiraUserAcountList={jiraUserAcountList}
-        jiraUserAcountCount={jiraUserAcountCount}
+        jiraUserAccountData={jiraUserAccountData}
         jiraItemCategoryData={jiraItemCategoryData}
       />
     </>

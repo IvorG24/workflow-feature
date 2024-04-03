@@ -1,11 +1,15 @@
 import { getJiraItemCategoryList } from "@/backend/api/get";
-import { assignJiraUserToItemCategory } from "@/backend/api/post";
+import {
+  assignJiraUserToItemCategory,
+  createJiraFormslyItemCategory,
+} from "@/backend/api/post";
 import { updateJiraItemCategory } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getPagination } from "@/utils/functions";
 import {
   JiraFormslyItemCategoryWithUserDataType,
+  JiraItemCategoryTableInsert,
   JiraItemCategoryTableUpdate,
   JiraItemCategoryUserTableInsert,
   JiraItemCategoryUserTableUpdate,
@@ -16,21 +20,26 @@ import {
   ActionIcon,
   Badge,
   Box,
+  Button,
   Group,
   Menu,
   Paper,
+  TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconPlugConnected,
+  IconPlus,
+  IconSearch,
   IconSettings,
   IconUserPlus,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { JiraAutomationFormObject } from "../JiraSettingsPage";
 import JiraFormslyItemCategoryForm from "./JiraFormslyItemCategoryForm";
 import JiraFormslyItemCategoryUserForm from "./JiraFormslyItemCategoryUserForm";
 
@@ -41,12 +50,14 @@ type Props = {
   };
   jiraUserAcountList: JiraUserAccountTableRow[];
   jiraUserRoleList: JiraUserRoleTableRow[];
+  jiraAutomationFormData: JiraAutomationFormObject | null;
 };
 
 const JiraFormslyItemCategoryList = ({
   jiraItemCategoryData,
   jiraUserAcountList,
   jiraUserRoleList,
+  jiraAutomationFormData,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [isLoading, setIsLoading] = useState(false);
@@ -65,12 +76,17 @@ const JiraFormslyItemCategoryList = ({
   ] = useState(false);
   const [selectedItemCategory, setSelectedItemCategory] =
     useState<JiraFormslyItemCategoryWithUserDataType | null>(null);
+  const [
+    isUpdatingJiraFormslyItemCategory,
+    setIsUpdatingJiraFormslyItemCategory,
+  ] = useState(false);
 
   const userSelectOptionList = jiraUserAcountList.map((user) => ({
     value: user.jira_user_account_id,
     label: user.jira_user_account_display_name,
   }));
 
+  const searchJiraFormslyItemCategoryMethods = useForm<{ search: string }>();
   const updateJiraFormslyItemCategoryMethods =
     useForm<JiraItemCategoryTableUpdate>();
 
@@ -83,21 +99,61 @@ const JiraFormslyItemCategoryList = ({
   ) => {
     try {
       setIsLoading(true);
-      const updatedJiraItemCategory = await updateJiraItemCategory(
-        supabaseClient,
-        data
-      );
 
-      const updatedJiraItemCategoryIndex = jiraItemCategoryList.findIndex(
-        (item) => item.jira_item_category_id
-      );
-
-      if (updatedJiraItemCategory) {
-        jiraItemCategoryList[updatedJiraItemCategoryIndex] =
-          updatedJiraItemCategory;
+      if (!jiraAutomationFormData) {
+        notifications.show({
+          message: "Jira Form data is empty. Please contact the dev team.",
+          color: "orange",
+        });
+        return;
       }
 
+      const existingJiraProjectList = jiraAutomationFormData["23"];
+      // verify if jira id
+      const isValid = existingJiraProjectList.choices?.find(
+        (project) => project.id === data.jira_item_category_jira_id
+      );
+
+      if (!isValid) {
+        notifications.show({
+          message:
+            "Jira id not found in current jira item category list. Please contact IT.",
+          color: "orange",
+        });
+        return;
+      }
+
+      if (isUpdatingJiraFormslyItemCategory) {
+        setIsUpdatingJiraFormslyItemCategory(false);
+        const updatedJiraItemCategory = await updateJiraItemCategory(
+          supabaseClient,
+          data
+        );
+        const updatedJiraItemCategoryIndex = jiraItemCategoryList.findIndex(
+          (item) => item.jira_item_category_id
+        );
+
+        if (updatedJiraItemCategory) {
+          jiraItemCategoryList[updatedJiraItemCategoryIndex] =
+            updatedJiraItemCategory;
+        }
+      } else {
+        await createJiraFormslyItemCategory(
+          supabaseClient,
+          data as JiraItemCategoryTableInsert
+        );
+        handlePagination(activePage);
+      }
+
+      setOpenJiraFormslyItemCategoryForm(false);
       updateJiraFormslyItemCategoryMethods.reset();
+
+      notifications.show({
+        message: `Successfully ${
+          isUpdatingJiraFormslyItemCategory ? "updated" : "created"
+        } item category.`,
+        color: "green",
+      });
     } catch (error) {
       notifications.show({
         message: "Failed to update item category",
@@ -105,7 +161,6 @@ const JiraFormslyItemCategoryList = ({
       });
     } finally {
       setIsLoading(false);
-      setOpenJiraFormslyItemCategoryForm(false);
     }
   };
 
@@ -188,11 +243,15 @@ const JiraFormslyItemCategoryList = ({
     }
   };
 
-  const handleFetchJiraItemCategoryList = async (index: number) => {
+  const handleFetchJiraItemCategoryList = async (
+    index: number,
+    search: string
+  ) => {
     const { from, to } = getPagination(index, ROW_PER_PAGE);
     const { data, count } = await getJiraItemCategoryList(supabaseClient, {
       from,
       to,
+      search,
     });
 
     return { data, count };
@@ -202,7 +261,12 @@ const JiraFormslyItemCategoryList = ({
     try {
       setActivePage(page);
       setIsLoading(true);
-      const { data, count } = await handleFetchJiraItemCategoryList(page - 1);
+      const searchValue =
+        searchJiraFormslyItemCategoryMethods.getValues().search;
+      const { data, count } = await handleFetchJiraItemCategoryList(
+        page - 1,
+        searchValue
+      );
       setJiraItemCategoryList(data);
       setJiraItemCategoryCount(count);
     } catch (error) {
@@ -215,11 +279,66 @@ const JiraFormslyItemCategoryList = ({
     }
   };
 
+  const handleSearchJiraFormslyItemCategory = async (data: {
+    search: string;
+  }) => {
+    try {
+      setIsLoading(true);
+
+      const { data: itemCategoryList, count } =
+        await handleFetchJiraItemCategoryList(0, data.search);
+
+      setJiraItemCategoryList(itemCategoryList);
+      setJiraItemCategoryCount(count);
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Failed to fetch jira item category list",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Box>
       <Paper p="xl" shadow="xs" pos="relative">
-        <Group>
-          <Title order={3}>Item Category</Title>
+        <Group position="apart">
+          <Group>
+            <Title order={3}>Item Category</Title>
+            <TextInput
+              miw={250}
+              maxLength={4000}
+              placeholder="Item Name"
+              rightSection={
+                <ActionIcon
+                  onClick={() =>
+                    handleSearchJiraFormslyItemCategory(
+                      searchJiraFormslyItemCategoryMethods.getValues()
+                    )
+                  }
+                >
+                  <IconSearch size={16} />
+                </ActionIcon>
+              }
+              {...searchJiraFormslyItemCategoryMethods.register("search", {
+                onChange: (e) =>
+                  handleSearchJiraFormslyItemCategory({
+                    search: e.currentTarget.value,
+                  }),
+              })}
+            />
+          </Group>
+          <Button
+            size="xs"
+            leftIcon={<IconPlus size={14} />}
+            onClick={() => {
+              setOpenJiraFormslyItemCategoryForm(true);
+              setIsUpdatingJiraFormslyItemCategory(false);
+            }}
+          >
+            Add Item Category
+          </Button>
         </Group>
         <DataTable
           mt="xs"
@@ -271,6 +390,7 @@ const JiraFormslyItemCategoryList = ({
                       icon={<IconPlugConnected size={14} />}
                       onClick={() => {
                         setOpenJiraFormslyItemCategoryForm(true);
+                        setIsUpdatingJiraFormslyItemCategory(true);
                         updateJiraFormslyItemCategoryMethods.setValue(
                           "jira_item_category_id",
                           record.jira_item_category_id
@@ -328,6 +448,7 @@ const JiraFormslyItemCategoryList = ({
           }}
           onSubmit={handleUpdateJiraFormslyItemCategory}
           isLoading={isLoading}
+          isUpdating={isUpdatingJiraFormslyItemCategory}
         />
       </FormProvider>
 

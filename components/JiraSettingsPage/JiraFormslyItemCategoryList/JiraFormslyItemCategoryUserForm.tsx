@@ -17,8 +17,11 @@ const JiraFormslyItemCategoryUserForm = ({
   isLoading,
   selectOptionList,
 }: Props) => {
-  const { control, handleSubmit } =
-    useFormContext<JiraItemCategoryUserTableInsert>();
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useFormContext<JiraItemCategoryUserTableInsert>();
   return (
     <Modal
       opened={opened}
@@ -42,6 +45,7 @@ const JiraFormslyItemCategoryUserForm = ({
                 withinPortal={true}
                 value={value}
                 onChange={onChange}
+                error={errors.jira_item_user_account_id?.message}
               />
             )}
             rules={{ required: "This field is required." }}
