@@ -6,6 +6,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import {
   ColorScheme,
   ColorSchemeProvider,
+  Loader,
   LoadingOverlay,
   MantineProvider,
 } from "@mantine/core";
@@ -15,7 +16,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { getCookie, setCookie } from "cookies-next";
 import NextApp, { AppContext } from "next/app";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 export default function App(
   props: PageWithLayoutProps & { colorScheme: ColorScheme }
@@ -67,7 +68,9 @@ export default function App(
                 overlayBlur={2}
                 sx={{ position: "fixed" }}
               />
-              <Component {...pageProps} />
+              <Suspense fallback={<Loader />}>
+                <Component {...pageProps} />
+              </Suspense>
               <SpeedInsights />
             </Layout>
           </SessionContextProvider>

@@ -22,8 +22,8 @@ const JiraProjectLookupTable = ({ jiraProjectData }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [openJiraProjectFormModal, setOpenJiraProjectFormModal] =
-    useState(false);
+  // const [openJiraProjectFormModal, setOpenJiraProjectFormModal] =
+  //   useState(false);
   const [jiraProjectList, setJiraProjectList] = useState(
     jiraProjectData.data.slice(0, ROW_PER_PAGE)
   );

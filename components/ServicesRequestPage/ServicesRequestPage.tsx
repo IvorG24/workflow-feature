@@ -91,7 +91,6 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const jiraItemCategoryData = useJiraItemCategoryData();
 
   useEffect(() => {
-    if (!activeTeam.team_id) return;
     try {
       const fetchSections = async () => {
         const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
@@ -106,8 +105,6 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
           const data = await getSectionInItemRequestPage(supabaseClient, {
             index,
             requestId: request.request_id,
-            teamId: activeTeam.team_id,
-            formId: request.request_form_id,
             sectionId: request.request_form.form_section[1].section_id,
             duplicatableSectionIdCondition:
               duplicatableSectionIdCondition.length !== 0
@@ -163,7 +160,7 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         color: "red",
       });
     }
-  }, [activeTeam.team_id]);
+  }, []);
 
   const requestor = request.request_team_member.team_member_user;
 
