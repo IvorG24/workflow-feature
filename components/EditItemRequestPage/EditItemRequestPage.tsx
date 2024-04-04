@@ -126,6 +126,7 @@ const EditItemRequestPage = ({
     try {
       const fetchRequestDetails = async () => {
         setIsLoading(true);
+
         // fetch item option
         let index = 0;
         const itemOptionList: OptionTableRow[] = [];
@@ -379,6 +380,9 @@ const EditItemRequestPage = ({
             };
           }
         );
+
+        // fetch additional signer
+        handleProjectNameChange(nonDuplicatableSectionField[0].field_response);
 
         replaceSection([
           {
