@@ -12720,8 +12720,7 @@ plv8.subtransaction(function(){
     requestId,
     sectionId,
     fieldData,
-    duplicatableSectionIdCondition,
-    isPedItemAndSingle
+    duplicatableSectionIdCondition
   } = input_data;
 
   const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa'];
@@ -12767,22 +12766,6 @@ plv8.subtransaction(function(){
         field_response: requestResponseData
       };
     });
-
-    if (isPedItemAndSingle && fieldWithResponse.length !== 0) {
-      fieldWithResponse[0].field_response = fieldWithResponse[0].field_response.map(fieldResponse => {
-        const categoryData = plv8.execute(
-          `
-            SELECT equipment_description_property_number_with_prefix FROM equipment_description_view 
-            WHERE equipment_description_property_number = '${JSON.parse(fieldResponse.request_response)}' 
-          `
-        )[0].equipment_description_property_number_with_prefix;
-
-        return {
-          ...fieldResponse,
-          request_response: `"${categoryData}"`
-        }
-      });
-    }
 
     returnData = fieldWithResponse;
   } else {

@@ -6077,7 +6077,6 @@ export const getSectionInItemRequestPage = async (
     sectionId: string;
     fieldData?: RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
     duplicatableSectionIdCondition: string;
-    isPedItemAndSingle?: boolean;
   }
 ) => {
   const { data, error } = await supabaseClient
