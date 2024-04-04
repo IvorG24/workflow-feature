@@ -36,10 +36,10 @@ import {
 import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
+import { isEmpty, isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { IconSearch } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { isEmpty, isEqual } from "utils/functions";
 import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
