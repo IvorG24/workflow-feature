@@ -1,6 +1,5 @@
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
-import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FETCH_OPTION_LIMIT, FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -4213,7 +4212,7 @@ export const getEditRequestOnLoad = async (
     .select("*");
   if (error) throw error;
 
-  return data as unknown as EditRequestOnLoadProps;
+  return data;
 };
 
 // Get all group of team member
@@ -6069,7 +6068,7 @@ export const getBarangay = async (
 };
 
 // Fetch section in request page
-export const getSectionInItemRequestPage = async (
+export const getSectionInRequestPage = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     index: number;
@@ -6298,4 +6297,39 @@ export const getUserCurrentSignature = async (
   return formattedData
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${formattedData.user_signature_attachment.attachment_bucket}/${formattedData.user_signature_attachment.attachment_value}`
     : "";
+};
+
+// Get non duplicatable section response
+export const getNonDuplictableSectionResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldIdList: string[];
+    requestId: string;
+  }
+) => {
+  const { fieldIdList, requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response_field_id, request_response")
+    .eq("request_response_request_id", requestId)
+    .in("request_response_field_id", fieldIdList);
+  if (error) throw error;
+  return data;
+};
+
+// Fetch item request conditional options
+export const getItemRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      itemName: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_item_request_conditional_options", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
 };

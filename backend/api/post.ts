@@ -31,7 +31,6 @@ import {
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestTableRow,
-  RequestWithResponseType,
   ServiceForm,
   ServiceScopeChoiceTableInsert,
   ServiceTableInsert,
@@ -587,9 +586,7 @@ export const editRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
-    requestFormValues: {
-      sections: RequestWithResponseType["request_form"]["form_section"];
-    };
+    requestFormValues: RequestFormValues;
     signers: FormType["form_signer"];
     teamId: string;
     requesterName: string;
@@ -614,7 +611,7 @@ export const editRequest = async (
       ? uuidv4()
       : null;
     for (const field of section.section_field) {
-      let responseValue = field?.field_response[0]?.request_response as unknown;
+      let responseValue = field?.field_response as unknown;
       if (
         typeof responseValue === "boolean" ||
         responseValue ||

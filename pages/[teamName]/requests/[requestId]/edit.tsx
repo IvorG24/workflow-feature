@@ -1,20 +1,8 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
-import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
-import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
-import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
-import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
-import EditRequestForPaymentPage from "@/components/EditRequestForPaymentPage/EditRequestForPaymentPage";
-import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
-import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import {
-  FieldTableRow,
-  FormType,
-  OptionTableRow,
-  RequestWithResponseType,
-} from "@/utils/types";
+import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -44,111 +32,98 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
   }
 );
 
-export type EditRequestOnLoadProps = {
-  request: RequestWithResponseType;
-  itemOptions: OptionTableRow[];
+type Props = {
+  form: FormWithResponseType;
   projectOptions?: OptionTableRow[];
+  sourceProjectList?: Record<string, string>;
+  requestProjectId: string;
   requestingProject?: string;
   specialApprover?: {
     special_approver_id: string;
     special_approver_item_list: string[];
     special_approver_signer: FormType["form_signer"][0];
   }[];
-  referenceOnly: boolean;
-  supplierOptions?: OptionTableRow[];
-  preferredSupplierField?: FieldTableRow;
   categoryOptions?: OptionTableRow[];
-  propertyNumberOptions?: OptionTableRow[];
-  generalItemNameOptions?: OptionTableRow[];
-  equipmentId: string;
+  duplicatableSectionIdList: string[];
+  requestId: string;
 };
 
 const Page = ({
-  request,
-  itemOptions,
+  form,
   projectOptions = [],
-  requestingProject = "",
   specialApprover = [],
-  referenceOnly,
-  supplierOptions = [],
-  preferredSupplierField,
-  categoryOptions = [],
-  propertyNumberOptions = [],
-  generalItemNameOptions = [],
-  equipmentId,
-}: EditRequestOnLoadProps) => {
-  const { request_form: form } = request;
-
+  // categoryOptions = [],
+  duplicatableSectionIdList = [],
+  requestId,
+}: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Item":
         return (
           <EditItemRequestPage
-            request={request}
-            itemOptions={itemOptions}
+            form={form}
             projectOptions={projectOptions}
             specialApprover={specialApprover}
-            referenceOnly={referenceOnly}
-            supplierOptions={supplierOptions}
-            preferredSupplierField={preferredSupplierField}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
           />
         );
-      case "Services":
-        return (
-          <EditServicesRequestPage
-            request={request}
-            projectOptions={projectOptions}
-            referenceOnly={referenceOnly}
-          />
-        );
-      case "Other Expenses":
-        return (
-          <EditOtherExpensesRequestPage
-            request={request}
-            projectOptions={projectOptions}
-            referenceOnly={referenceOnly}
-          />
-        );
-      case "PED Equipment":
-        return (
-          <EditPEDEquipmentRequestPage
-            request={request}
-            projectOptions={projectOptions}
-            categoryOptions={categoryOptions}
-            referenceOnly={referenceOnly}
-          />
-        );
-      case "PED Part":
-        return (
-          <EditPEDPartRequestPage
-            request={request}
-            projectOptions={projectOptions}
-            categoryOptions={categoryOptions}
-            referenceOnly={referenceOnly}
-            generalItemNameOptions={generalItemNameOptions}
-            equipmentId={equipmentId}
-          />
-        );
-      case "PED Item":
-        return (
-          <EditPEDItemRequestPage
-            request={request}
-            projectOptions={projectOptions}
-            itemOptions={itemOptions}
-            propertyNumberOptions={propertyNumberOptions}
-            referenceOnly={referenceOnly}
-          />
-        );
+      // case "Services":
+      //   return (
+      //     <EditServicesRequestPage
+      //       request={request}
+      //       projectOptions={projectOptions}
+      //       referenceOnly={referenceOnly}
+      //     />
+      //   );
+      // case "Other Expenses":
+      //   return (
+      //     <EditOtherExpensesRequestPage
+      //       request={request}
+      //       projectOptions={projectOptions}
+      //       referenceOnly={referenceOnly}
+      //     />
+      //   );
+      // case "PED Equipment":
+      //   return (
+      //     <EditPEDEquipmentRequestPage
+      //       request={request}
+      //       projectOptions={projectOptions}
+      //       categoryOptions={categoryOptions}
+      //       referenceOnly={referenceOnly}
+      //     />
+      //   );
+      // case "PED Part":
+      //   return (
+      //     <EditPEDPartRequestPage
+      //       request={request}
+      //       projectOptions={projectOptions}
+      //       categoryOptions={categoryOptions}
+      //       referenceOnly={referenceOnly}
+      //       generalItemNameOptions={generalItemNameOptions}
+      //       equipmentId={equipmentId}
+      //     />
+      //   );
+      // case "PED Item":
+      //   return (
+      //     <EditPEDItemRequestPage
+      //       request={request}
+      //       projectOptions={projectOptions}
+      //       itemOptions={itemOptions}
+      //       propertyNumberOptions={propertyNumberOptions}
+      //       referenceOnly={referenceOnly}
+      //     />
+      //   );
 
-      case "Request For Payment":
-        return (
-          <EditRequestForPaymentPage
-            request={request}
-            projectOptions={projectOptions}
-            referenceOnly={referenceOnly}
-            requestingProject={requestingProject}
-          />
-        );
+      // case "Request For Payment":
+      //   return (
+      //     <EditRequestForPaymentPage
+      //       request={request}
+      //       projectOptions={projectOptions}
+      //       referenceOnly={referenceOnly}
+      //       requestingProject={requestingProject}
+      //     />
+      //   );
     }
   };
 
@@ -159,9 +134,9 @@ const Page = ({
         url="/<teamName>/requests/[requestId]/edit"
       />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? (
+      {/* {!form.form_is_formsly_form ? (
         <EditRequestPage request={request} />
-      ) : null}
+      ) : null} */}
     </>
   );
 };
