@@ -67,7 +67,7 @@ const mockGroupList = [
   },
 ];
 
-describe("SignInPage", () => {
+describe("BuildFormPage", () => {
   it("renders initial required fields", async () => {
     render(
       <BuildFormPage
