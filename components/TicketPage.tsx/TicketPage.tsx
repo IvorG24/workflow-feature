@@ -152,7 +152,9 @@ const TicketPage = ({
           {canAssignTicket && (
             <Tooltip label="You will be assigned to review this ticket.">
               <Button size="md" onClick={handleAssignTicketToUser}>
-                Assign To Me
+                {`${
+                  ticketStatus === "UNDER REVIEW" ? "Reassign" : "Assign"
+                } To Me`}
               </Button>
             </Tooltip>
           )}
