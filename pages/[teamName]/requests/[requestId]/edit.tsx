@@ -1,5 +1,6 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
+import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -78,14 +79,15 @@ const Page = ({
             requestId={requestId}
           />
         );
-      // case "Other Expenses":
-      //   return (
-      //     <EditOtherExpensesRequestPage
-      //       request={request}
-      //       projectOptions={projectOptions}
-      //       referenceOnly={referenceOnly}
-      //     />
-      //   );
+      case "Other Expenses":
+        return (
+          <EditOtherExpensesRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
       // case "PED Equipment":
       //   return (
       //     <EditPEDEquipmentRequestPage

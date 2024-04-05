@@ -9870,7 +9870,64 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetch item request conditional options
+-- End: Fetch service request conditional options
+
+-- Start: Fetch other expenses request conditional options
+
+CREATE OR REPLACE FUNCTION fetch_other_expenses_request_conditional_options(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      sectionList
+    } = input_data;
+
+    returnData = sectionList.map(section => {
+      return {
+        category: section.category,
+        fieldList: section.fieldIdList.map(field => {
+          let optionData = [];
+      
+          const csiCodeData = plv8.execute(
+            `
+              SELECT
+                other_expenses_type_id,
+                other_expenses_type
+              FROM other_expenses_category_table
+              INNER JOIN other_expenses_type_table ON other_expenses_type_category_id = other_expenses_category_id
+              WHERE
+                other_expenses_category = '${section.category}'
+                AND other_expenses_type_is_available = true
+                AND other_expenses_type_is_disabled = false
+                AND other_expenses_category_is_disabled = false
+                AND other_expenses_category_is_available = true
+            `
+          );
+
+          optionData = csiCodeData.map((options, index) => {
+            return {
+              option_field_id: field,
+              option_id: options.other_expenses_type_id,
+              option_order: index + 1,
+              option_value: options.other_expenses_type
+            }
+
+          });
+          
+          return {
+            fieldId: field,
+            optionList: optionData
+          }
+        })
+      }
+    });
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetother expenses request conditional options
 
 ---------- End: FUNCTIONS
 

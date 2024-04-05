@@ -1,13 +1,13 @@
 import {
   getCSICode,
   getCSICodeOptionsForServices,
+  getGeneralUnitOfMeasurementOptions,
   getNonDuplictableSectionResponse,
   getProjectSignerWithTeamMember,
   getSectionInRequestPage,
   getServiceCSIDivisionOptions,
   getServiceCategoryOptions,
   getServiceRequestConditionalOptions,
-  getServiceUnitOfMeasurementOptions,
   getSupplierOptions,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
@@ -133,12 +133,12 @@ const EditServicesRequestPage = ({
         let index = 0;
         const categoryOptionList: OptionTableRow[] = [];
         while (1) {
-          const supplierData = await getServiceCategoryOptions(supabaseClient, {
+          const categoryData = await getServiceCategoryOptions(supabaseClient, {
             teamId: team.team_id,
             index,
             limit: FETCH_OPTION_LIMIT,
           });
-          const categoryOptions = supplierData.map((category, index) => {
+          const categoryOptions = categoryData.map((category, index) => {
             return {
               option_field_id: form.form_section[1].section_field[0].field_id,
               option_id: category.service_category_id,
@@ -158,7 +158,7 @@ const EditServicesRequestPage = ({
         const unitOfMeasurementOptionlist: OptionTableRow[] = [];
         while (1) {
           const unitOfMeasurementData =
-            await getServiceUnitOfMeasurementOptions(supabaseClient, {
+            await getGeneralUnitOfMeasurementOptions(supabaseClient, {
               teamId: team.team_id,
               index,
               limit: FETCH_OPTION_LIMIT,
@@ -489,6 +489,7 @@ const EditServicesRequestPage = ({
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
         });
       }
+
       notifications.show({
         message: "Request created.",
         color: "green",

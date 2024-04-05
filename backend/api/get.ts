@@ -6348,6 +6348,8 @@ export const getServiceCategoryOptions = async (
     .from("service_category_table")
     .select("service_category_id, service_category")
     .eq("service_category_team_id", teamId)
+    .eq("service_category_is_disabled", false)
+    .eq("service_category_is_available", true)
     .order("service_category")
     .limit(limit)
     .range(index, index + limit - 1);
@@ -6357,7 +6359,7 @@ export const getServiceCategoryOptions = async (
 };
 
 // Fetch service unit of measurement options
-export const getServiceUnitOfMeasurementOptions = async (
+export const getGeneralUnitOfMeasurementOptions = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
@@ -6370,6 +6372,8 @@ export const getServiceUnitOfMeasurementOptions = async (
     .from("general_unit_of_measurement_table")
     .select("general_unit_of_measurement_id, general_unit_of_measurement")
     .eq("general_unit_of_measurement_team_id", teamId)
+    .eq("general_unit_of_measurement_is_disabled", false)
+    .eq("general_unit_of_measurement_is_available", true)
     .order("general_unit_of_measurement")
     .limit(limit)
     .range(index, index + limit - 1);
@@ -6410,6 +6414,70 @@ export const getServiceRequestConditionalOptions = async (
 ) => {
   const { data, error } = await supabaseClient
     .rpc("fetch_service_request_conditional_options", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch other expenses category options
+export const getOtherExpensesCategoryOptionsWithLimit = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("other_expenses_category_table")
+    .select("other_expenses_category_id, other_expenses_category")
+    .eq("other_expenses_category_team_id", teamId)
+    .eq("other_expenses_category_is_disabled", false)
+    .eq("other_expenses_category_is_available", true)
+    .order("other_expenses_category")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch other expenses csi description options
+export const getOtherExpensesCSIDescriptionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_id, csi_code_level_three_description")
+    .eq("csi_code_division_id", "01")
+    .order("csi_code_level_three_description")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch other expenses request conditional options
+export const getOtherExpensesRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      category: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_other_expenses_request_conditional_options", {
+      input_data: params,
+    })
     .select("*");
   if (error) throw error;
   return data;
