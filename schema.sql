@@ -9520,7 +9520,8 @@ plv8.subtransaction(function(){
     requestId,
     sectionId,
     fieldData,
-    duplicatableSectionIdCondition
+    duplicatableSectionIdCondition,
+    withOption
   } = input_data;
 
   const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa'];
@@ -9561,9 +9562,21 @@ plv8.subtransaction(function(){
         `
       );
 
+      let requestOptionData = [];
+      if (withOption) { 
+        requestOptionData = plv8.execute(
+          `
+            SELECT *
+            FROM option_table
+            WHERE option_field_id = '${field.field_id}'
+          `
+        );
+      }
+
       return {
         ...field,
-        field_response: requestResponseData
+        field_response: requestResponseData,
+        field_option: requestOptionData
       };
     });
 
@@ -9585,9 +9598,21 @@ plv8.subtransaction(function(){
         `
       );
 
+      let requestOptionData = [];
+      if (withOption) { 
+        requestOptionData = plv8.execute(
+          `
+            SELECT *
+            FROM option_table
+            WHERE option_field_id = '${field.field_id}'
+          `
+        );
+      }
+
       return {
         ...field,
-        field_response: requestResponseData
+        field_response: requestResponseData,
+        field_option: requestOptionData
       };
     });
 
@@ -9927,7 +9952,152 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetother expenses request conditional options
+-- End: Fetch other expenses request conditional options
+
+-- Start: Fetch ped equipment request conditional options
+
+CREATE OR REPLACE FUNCTION fetch_ped_equipment_request_conditional_options(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      sectionList
+    } = input_data;
+
+    const fieldIdMap = {
+      "2c715814-fecf-448e-9b78-460d8a536714": "equipmentName",
+      "ce9d94a2-bfef-48ea-977a-b3e1918ac90e": "brand",
+      "6bd08eb7-f872-4475-8323-4eca2abf4264": "model"
+    }
+
+    returnData = sectionList.map(section => {
+      return {
+        category: section.category,
+        equipmentName: section.equipmentName,
+        brand: section.brand,
+        fieldList: section.fieldIdList.map(field => {
+          let optionData = [];
+      
+          if (fieldIdMap[field] === "equipmentName") {
+            const equipmentData = plv8.execute(
+              `
+                SELECT
+                  DISTINCT
+                  equipment_id,
+                  equipment_name
+                FROM equipment_table
+                INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                WHERE
+                  equipment_category = '${section.category}'
+                  AND equipment_is_disabled = false
+                  AND equipment_is_available = true
+                  AND equipment_category_is_disabled = false
+                  AND equipment_category_is_available = true
+              `
+            );
+            optionData = equipmentData.map((options, index) => {
+              return {
+                option_field_id: field,
+                option_id: options.equipment_id,
+                option_order: index + 1,
+                option_value: options.equipment_name
+              }
+            });
+          } else if (fieldIdMap[field] === "brand") {
+            const equipmentData = plv8.execute(
+              `
+                SELECT
+                  DISTINCT
+                  equipment_brand_id,
+                  equipment_brand
+                FROM equipment_table
+                INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                INNER JOIN equipment_description_table ON equipment_description_equipment_id = equipment_id
+                INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
+                WHERE
+                  equipment_category = '${section.category}'
+                  AND equipment_is_disabled = false
+                  AND equipment_is_available = true
+                  AND equipment_category_is_disabled = false
+                  AND equipment_category_is_available = true
+                  AND equipment_description_is_disabled = false
+                  AND equipment_description_is_available = true
+                  AND equipment_brand_is_disabled = false
+                  AND equipment_brand_is_available = true
+              `
+            );
+
+            optionData = equipmentData.map((options, index) => {
+              return {
+                option_field_id: field,
+                option_id: options.equipment_brand_id,
+                option_order: index + 1,
+                option_value: options.equipment_brand
+              }
+            });
+            optionData.unshift({
+              option_field_id: field,
+              option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+              option_order: 0,
+              option_value: "ANY"
+            });
+          } else if (fieldIdMap[field] === "model") {
+            const equipmentData = plv8.execute(
+              `
+                SELECT
+                  DISTINCT
+                  equipment_model_id,
+                  equipment_model
+                FROM equipment_table
+                INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                INNER JOIN equipment_description_table ON equipment_description_equipment_id = equipment_id
+                INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
+                INNER JOIN equipment_model_table ON equipment_model_id = equipment_description_model_id
+                WHERE
+                  equipment_category = '${section.category}'
+                  AND equipment_is_disabled = false
+                  AND equipment_is_available = true
+                  AND equipment_category_is_disabled = false
+                  AND equipment_category_is_available = true
+                  AND equipment_description_is_disabled = false
+                  AND equipment_description_is_available = true
+                  AND equipment_brand_is_disabled = false
+                  AND equipment_brand_is_available = true
+                  AND equipment_brand = '${section.brand}'
+                  AND equipment_brand_is_disabled = false
+                  AND equipment_brand_is_available = true
+              `
+            ); 
+            optionData = equipmentData.map((options, index) => {
+              return {
+                option_field_id: field,
+                option_id: options.equipment_model_id,
+                option_order: index + 1,
+                option_value: options.equipment_model
+              }
+            });
+            optionData.unshift({
+              option_field_id: field,
+              option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+              option_order: 0,
+              option_value: "ANY"
+            });
+          }
+          
+          return {
+            fieldId: field,
+            optionList: optionData
+          }
+        })
+      }
+    });
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetch ped equipment request conditional options
 
 ---------- End: FUNCTIONS
 

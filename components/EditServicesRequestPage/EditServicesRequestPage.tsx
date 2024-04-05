@@ -269,6 +269,7 @@ const EditServicesRequestPage = ({
               duplicatableSectionIdCondition.length !== 0
                 ? duplicatableSectionIdCondition
                 : `'${uuidv4()}'`,
+            withOption: true,
           });
           newFields.push(...data);
           index += 5;
@@ -307,7 +308,7 @@ const EditServicesRequestPage = ({
             const response = field.field_response?.request_response
               ? safeParse(field.field_response?.request_response)
               : "";
-            let option: OptionTableRow[] = [];
+            let option: OptionTableRow[] = field.field_option ?? [];
             switch (fieldIndex) {
               case 0:
                 option = categoryOptionList;
@@ -491,10 +492,9 @@ const EditServicesRequestPage = ({
       }
 
       notifications.show({
-        message: "Request created.",
+        message: `Request ${isReferenceOnly ? "created" : "edited"}.`,
         color: "green",
       });
-
       router.push(
         `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
           request.request_formsly_id_prefix

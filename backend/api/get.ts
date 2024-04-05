@@ -6076,6 +6076,7 @@ export const getSectionInRequestPage = async (
     sectionId: string;
     fieldData?: RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
     duplicatableSectionIdCondition: string;
+    withOption?: boolean;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -6476,6 +6477,74 @@ export const getOtherExpensesRequestConditionalOptions = async (
 ) => {
   const { data, error } = await supabaseClient
     .rpc("fetch_other_expenses_request_conditional_options", {
+      input_data: params,
+    })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch ped equipment category options
+export const getPEDEquipmentCategoryOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_category_table")
+    .select("equipment_category_id, equipment_category")
+    .eq("equipment_category_team_id", teamId)
+    .eq("equipment_category_is_disabled", false)
+    .eq("equipment_category_is_available", true)
+    .order("equipment_category")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+// Fetch capacity unit of measurement options
+export const getCapacityUnitOfMeasurementOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("capacity_unit_of_measurement_table")
+    .select("capacity_unit_of_measurement_id, capacity_unit_of_measurement")
+    .eq("capacity_unit_of_measurement_team_id", teamId)
+    .eq("capacity_unit_of_measurement_is_disabled", false)
+    .eq("capacity_unit_of_measurement_is_available", true)
+    .order("capacity_unit_of_measurement")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch ped equipment request conditional options
+export const getPEDEquipmentRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      category: string;
+      equipmentName: string;
+      brand: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_ped_equipment_request_conditional_options", {
       input_data: params,
     })
     .select("*");

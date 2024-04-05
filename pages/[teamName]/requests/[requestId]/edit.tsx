@@ -1,6 +1,7 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
+import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -88,15 +89,15 @@ const Page = ({
             requestId={requestId}
           />
         );
-      // case "PED Equipment":
-      //   return (
-      //     <EditPEDEquipmentRequestPage
-      //       request={request}
-      //       projectOptions={projectOptions}
-      //       categoryOptions={categoryOptions}
-      //       referenceOnly={referenceOnly}
-      //     />
-      //   );
+      case "PED Equipment":
+        return (
+          <EditPEDEquipmentRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
       // case "PED Part":
       //   return (
       //     <EditPEDPartRequestPage

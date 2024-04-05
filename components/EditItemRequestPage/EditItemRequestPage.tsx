@@ -220,6 +220,7 @@ const EditItemRequestPage = ({
               duplicatableSectionIdCondition.length !== 0
                 ? duplicatableSectionIdCondition
                 : `'${uuidv4()}'`,
+            withOption: true,
           });
           newFields.push(...data);
           index += 5;
@@ -259,7 +260,7 @@ const EditItemRequestPage = ({
             const response = field.field_response?.request_response
               ? safeParse(field.field_response?.request_response)
               : "";
-            let option: OptionTableRow[] = [];
+            let option: OptionTableRow[] = field.field_option ?? [];
             switch (fieldIndex) {
               case 0:
                 option = itemOptionList;
