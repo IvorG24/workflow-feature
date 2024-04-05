@@ -383,7 +383,6 @@ const EditItemRequestPage = ({
 
         // fetch additional signer
         handleProjectNameChange(nonDuplicatableSectionField[0].field_response);
-
         replaceSection([
           {
             ...form.form_section[0],

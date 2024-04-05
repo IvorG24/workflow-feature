@@ -4,7 +4,7 @@ import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/Tea
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { escapeQuotes, parseJSONIfValid } from "@/utils/string";
+import { escapeQuotes } from "@/utils/string";
 import {
   AddressTableInsert,
   AttachmentBucketType,
@@ -640,18 +640,6 @@ export const editRequest = async (
           }
         } else if (field.field_type === "SWITCH" && !field.field_response) {
           responseValue = false;
-        }
-        const parsedResponse = parseJSONIfValid(`${responseValue}`);
-
-        if (field.field_type === "MULTISELECT") {
-          if (typeof responseValue === "string") responseValue = parsedResponse;
-        } else {
-          responseValue =
-            parsedResponse.length >= 2 &&
-            parsedResponse[0] === '"' &&
-            parsedResponse[parsedResponse.length - 1] === '"'
-              ? parsedResponse.slice(1, -1)
-              : parsedResponse;
         }
 
         const response = {
