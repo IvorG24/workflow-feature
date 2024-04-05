@@ -35,6 +35,7 @@ import {
   Box,
   Button,
   Container,
+  Flex,
   LoadingOverlay,
   Space,
   Stack,
@@ -84,6 +85,8 @@ const EditItemRequestPage = ({
 
   const isReferenceOnly = Boolean(router.query.referenceOnly);
 
+  const [initialRequestDetails, setInitialRequestDetails] =
+    useState<RequestFormValues>();
   const [signerList, setSignerList] = useState(
     form.form_signer.map((signer) => ({
       ...signer,
@@ -122,12 +125,12 @@ const EditItemRequestPage = ({
   });
 
   useEffect(() => {
+    setIsLoading(true);
     if (!team.team_id) return;
     try {
       const fetchRequestDetails = async () => {
-        setIsLoading(true);
-
-        // fetch item option
+        // Fetch unconditional option
+        // Fetch item option
         let index = 0;
         const itemOptionList: OptionTableRow[] = [];
         while (1) {
@@ -151,7 +154,7 @@ const EditItemRequestPage = ({
         }
         setItemOptions(itemOptionList);
 
-        // fetch supplier option
+        // Fetch supplier option
         index = 0;
         const supplierOptionlist: OptionTableRow[] = [];
         while (1) {
@@ -175,7 +178,8 @@ const EditItemRequestPage = ({
         }
         setPreferredSupplierOptions(supplierOptionlist);
 
-        // fetch response
+        // Fetch response
+        // Non duplicatable section response
         const nonDuplicatableSectionResponse =
           await getNonDuplictableSectionResponse(supabaseClient, {
             requestId,
@@ -197,6 +201,7 @@ const EditItemRequestPage = ({
             };
           });
 
+        // Duplicatable section response
         index = 0;
         const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
@@ -238,7 +243,7 @@ const EditItemRequestPage = ({
           }
         });
 
-        // format section
+        // Format section
         const newSection = generateSectionWithDuplicateList([
           {
             ...form.form_section[1],
@@ -246,7 +251,7 @@ const EditItemRequestPage = ({
           },
         ]);
 
-        // Add supplier field if missing
+        // Input option to the sections
         const sectionIndexListWithoutSupplier: number[] = [];
         const formattedSection = newSection.map((section, sectionIndex) => {
           const fieldList: Section["section_field"] = [];
@@ -281,6 +286,8 @@ const EditItemRequestPage = ({
             section_field: fieldList,
           };
         });
+
+        // Add supplier field if missing
         sectionIndexListWithoutSupplier.forEach((index) => {
           formattedSection[index].section_field.splice(9, 0, {
             field_id: "159c86c3-dda6-4c8a-919f-50e1674659bd",
@@ -311,7 +318,7 @@ const EditItemRequestPage = ({
           }
         });
 
-        // Fetch item conditional options
+        // Fetch conditional options
         const conditionalOptionList: {
           itemName: string;
           fieldList: {
@@ -383,13 +390,16 @@ const EditItemRequestPage = ({
 
         // fetch additional signer
         handleProjectNameChange(nonDuplicatableSectionField[0].field_response);
-        replaceSection([
+
+        const finalInitialRequestDetails = [
           {
             ...form.form_section[0],
             section_field: nonDuplicatableSectionField,
           },
           ...sectionWithDuplicatableId,
-        ]);
+        ];
+        replaceSection(finalInitialRequestDetails);
+        setInitialRequestDetails({ sections: finalInitialRequestDetails });
         setIsLoading(false);
       };
       fetchRequestDetails();
@@ -398,6 +408,8 @@ const EditItemRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   }, [team]);
 
@@ -494,7 +506,6 @@ const EditItemRequestPage = ({
       }
 
       let request: RequestTableRow;
-
       if (isReferenceOnly) {
         request = await createRequest(supabaseClient, {
           requestFormValues: newData,
@@ -883,10 +894,18 @@ const EditItemRequestPage = ({
     }
   };
 
+  const handleResetRequest = () => {
+    replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
+    handleProjectNameChange(
+      initialRequestDetails?.sections[0].section_field[0]
+        .field_response as string
+    );
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Create Request
+        {isReferenceOnly ? "Create" : "Edit"} Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
@@ -912,6 +931,7 @@ const EditItemRequestPage = ({
                       onCSICodeChange: handleCSICodeChange,
                     }}
                     formslyFormName={form.form_name}
+                    isEdit={!isReferenceOnly}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -933,7 +953,16 @@ const EditItemRequestPage = ({
               <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
               <RequestFormSigner signerList={signerList} />
             </Box>
-            <Button type="submit">Submit</Button>
+            <Flex direction="column" gap="sm">
+              <Button
+                variant="outline"
+                color="red"
+                onClick={handleResetRequest}
+              >
+                Reset
+              </Button>
+              <Button type="submit">Submit</Button>
+            </Flex>
           </Stack>
         </form>
       </FormProvider>

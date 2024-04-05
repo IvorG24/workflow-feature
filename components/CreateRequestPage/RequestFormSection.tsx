@@ -65,6 +65,7 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
+  isEdit?: boolean;
 };
 
 const RequestFormSection = ({
@@ -79,6 +80,7 @@ const RequestFormSection = ({
   otherExpensesMethods,
   pedItemFormMethods,
   paymentRequestFormMethods,
+  isEdit = false,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -122,6 +124,7 @@ const RequestFormSection = ({
             otherExpensesMethods={otherExpensesMethods}
             pedItemFormMethods={pedItemFormMethods}
             paymentRequestFormMethods={paymentRequestFormMethods}
+            isEdit={isEdit}
           />
         ))}
       </Stack>

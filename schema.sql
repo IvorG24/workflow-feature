@@ -9820,6 +9820,58 @@ $$ LANGUAGE plv8;
 
 -- End: Fetch item request conditional options
 
+-- Start: Fetch service request conditional options
+
+CREATE OR REPLACE FUNCTION fetch_service_request_conditional_options(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      sectionList
+    } = input_data;
+
+    returnData = sectionList.map(section => {
+      return {
+        csiDivision: section.csiDivision,
+        fieldList: section.fieldIdList.map(field => {
+          let optionData = [];
+      
+          const csiCodeData = plv8.execute(
+            `
+              SELECT
+                csi_code_id,
+                csi_code_level_three_description
+              FROM csi_code_table
+              WHERE
+                csi_code_division_description = '${section.csiDivision}'
+            `
+          );
+
+          optionData = csiCodeData.map((options, index) => {
+            return {
+              option_field_id: field,
+              option_id: options.csi_code_id,
+              option_order: index + 1,
+              option_value: options.csi_code_level_three_description
+            }
+
+          });
+          
+          return {
+            fieldId: field,
+            optionList: optionData
+          }
+        })
+      }
+    });
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetch item request conditional options
+
 ---------- End: FUNCTIONS
 
 

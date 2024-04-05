@@ -87,6 +87,7 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
+  isEdit?: boolean;
 };
 
 const RequestFormFields = ({
@@ -101,6 +102,7 @@ const RequestFormFields = ({
   otherExpensesMethods,
   pedItemFormMethods,
   paymentRequestFormMethods,
+  isEdit,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -410,6 +412,7 @@ const RequestFormFields = ({
                 searchable={formslyFormName !== ""}
                 nothingFound="Nothing found. Try a different keyword"
                 limit={SELECT_OPTION_LIMIT}
+                disabled={isEdit && field.field_name === "Requesting Project"}
               />
             )}
             rules={{ ...fieldRules }}

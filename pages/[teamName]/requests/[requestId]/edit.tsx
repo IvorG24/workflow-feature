@@ -1,5 +1,6 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
+import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -68,14 +69,15 @@ const Page = ({
             requestId={requestId}
           />
         );
-      // case "Services":
-      //   return (
-      //     <EditServicesRequestPage
-      //       request={request}
-      //       projectOptions={projectOptions}
-      //       referenceOnly={referenceOnly}
-      //     />
-      //   );
+      case "Services":
+        return (
+          <EditServicesRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
       // case "Other Expenses":
       //   return (
       //     <EditOtherExpensesRequestPage
