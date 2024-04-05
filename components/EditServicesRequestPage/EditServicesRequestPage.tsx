@@ -343,11 +343,11 @@ const EditServicesRequestPage = ({
         formattedSection.forEach((section) => {
           if (
             !uniqueCSIDivision.includes(
-              `${section.section_field[0].field_response}`
+              `${section.section_field[4].field_response}`
             )
           ) {
             uniqueCSIDivision.push(
-              `${section.section_field[0].field_response}`
+              `${section.section_field[4].field_response}`
             );
             filteredSection.push(section);
           }
