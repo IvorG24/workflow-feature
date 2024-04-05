@@ -58,6 +58,20 @@ const TicketPage = ({
     ticket.ticket_approver_team_member_id === user.team_member_id &&
     !READ_ONLY_TICKET_CATEGORY_LIST.includes(ticket.ticket_category);
 
+  const isTicketPendingOrUnderReview = ["PENDING", "UNDER REVIEW"].includes(
+    ticketStatus
+  );
+  const isNotApproverOrCreator = ![
+    ticket.ticket_approver_team_member_id,
+    ticket.ticket_requester_team_member_id,
+  ].includes(user.team_member_id);
+  const isUserAdminOrOwner = ["ADMIN", "OWNER"].includes(user.team_member_role);
+
+  const canAssignTicket =
+    isTicketPendingOrUnderReview &&
+    isNotApproverOrCreator &&
+    isUserAdminOrOwner;
+
   const handleOverrideTicket = async () => {
     try {
       const newTicket = await getTicketOnLoad(supabaseClient, {
@@ -135,16 +149,13 @@ const TicketPage = ({
     <Container>
       <Paper p="md" withBorder>
         <Stack>
-          {ticketStatus === "PENDING" &&
-            ticket.ticket_approver_team_member_id === null &&
-            ticket.ticket_requester_team_member_id !== user.team_member_id &&
-            ["ADMIN", "OWNER"].includes(user.team_member_role) && (
-              <Tooltip label="You will be assigned to review this ticket.">
-                <Button size="md" onClick={handleAssignTicketToUser}>
-                  Assign To Me
-                </Button>
-              </Tooltip>
-            )}
+          {canAssignTicket && (
+            <Tooltip label="You will be assigned to review this ticket.">
+              <Button size="md" onClick={handleAssignTicketToUser}>
+                Assign To Me
+              </Button>
+            </Tooltip>
+          )}
           <TicketDetailSection ticket={ticket} ticketStatus={ticketStatus} />
 
           <Divider mt="md" />
