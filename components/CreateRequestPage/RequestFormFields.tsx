@@ -34,7 +34,7 @@ import { RequestFormValues } from "./CreateRequestPage";
 type RequestFormFieldsProps = {
   field: FieldTableRow & {
     options: OptionTableRow[];
-  };
+  } & { field_section_duplicatable_id: string | undefined };
   sectionIndex: number;
   fieldIndex: number;
   itemFormMethods?: {
@@ -68,11 +68,44 @@ type RequestFormFieldsProps = {
       prevValue: string | null,
       value: string | null
     ) => void;
-    onGeneralItemNameChange: (value: string | null, index: number) => void;
-    onComponentCategoryChange: (value: string | null, index: number) => void;
-    onBrandChange: (value: string | null, index: number) => void;
-    onModelChange: (value: string | null, index: number) => void;
+    onGeneralItemNameChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onComponentCategoryChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onBrandChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onModelChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
+    onGeneralItemNameOpen?: (index: number) => void;
   };
   pedItemFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -293,7 +326,6 @@ const RequestFormFields = ({
                     `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`
                   );
                   onChange(value);
-
                   switch (field.field_name) {
                     case "General Name":
                       itemFormMethods?.onGeneralNameChange(sectionIndex, value);
@@ -369,6 +401,7 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+
                       break;
                     case "Component Category":
                       pedPartFormMethods?.onComponentCategoryChange(
@@ -401,6 +434,79 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+                      break;
+                  }
+                }}
+                onDropdownOpen={() => {
+                  switch (field.field_name) {
+                    case "General Item Name":
+                      isEdit && pedPartFormMethods?.onGeneralItemNameOpen
+                        ? pedPartFormMethods.onGeneralItemNameOpen(sectionIndex)
+                        : null;
+                      break;
+                    case "Component Category":
+                      isEdit &&
+                        pedPartFormMethods?.onGeneralItemNameChange(
+                          getValues(
+                            `sections.${sectionIndex}.section_field.${0}.field_response`
+                          ) as string,
+                          sectionIndex,
+                          {
+                            fieldId: field.field_id,
+                            response: getValues(
+                              `sections.${sectionIndex}.section_field.${1}.field_response`
+                            ) as string,
+                            dupId: field.field_section_duplicatable_id,
+                          }
+                        );
+                      break;
+                    case "Brand":
+                      isEdit &&
+                        pedPartFormMethods?.onComponentCategoryChange(
+                          getValues(
+                            `sections.${sectionIndex}.section_field.${1}.field_response`
+                          ) as string,
+                          sectionIndex,
+                          {
+                            fieldId: field.field_id,
+                            response: getValues(
+                              `sections.${sectionIndex}.section_field.${2}.field_response`
+                            ) as string,
+                            dupId: field.field_section_duplicatable_id,
+                          }
+                        );
+                      break;
+                    case "Model":
+                      isEdit &&
+                        pedPartFormMethods?.onBrandChange(
+                          getValues(
+                            `sections.${sectionIndex}.section_field.${2}.field_response`
+                          ) as string,
+                          sectionIndex,
+                          {
+                            fieldId: field.field_id,
+                            response: getValues(
+                              `sections.${sectionIndex}.section_field.${3}.field_response`
+                            ) as string,
+                            dupId: field.field_section_duplicatable_id,
+                          }
+                        );
+                      break;
+                    case "Part Number":
+                      isEdit &&
+                        pedPartFormMethods?.onModelChange(
+                          getValues(
+                            `sections.${sectionIndex}.section_field.${3}.field_response`
+                          ) as string,
+                          sectionIndex,
+                          {
+                            fieldId: field.field_id,
+                            response: getValues(
+                              `sections.${sectionIndex}.section_field.${4}.field_response`
+                            ) as string,
+                            dupId: field.field_section_duplicatable_id,
+                          }
+                        );
                       break;
                   }
                 }}

@@ -6507,6 +6507,7 @@ export const getPEDEquipmentCategoryOptions = async (
 
   return data;
 };
+
 // Fetch capacity unit of measurement options
 export const getCapacityUnitOfMeasurementOptions = async (
   supabaseClient: SupabaseClient<Database>,

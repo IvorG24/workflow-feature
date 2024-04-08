@@ -281,6 +281,10 @@ const CreatePEDPartRequestPage = ({
           section_field: generalField,
         });
       }
+
+      if (newSection.section_field[3].field_response === "Bulk") {
+        handleTypeOfOrderChange("Bulk", "Single");
+      }
     } catch (e) {
       setValue(`sections.0.section_field.${2}.field_response`, "");
       notifications.show({
@@ -624,7 +628,7 @@ const CreatePEDPartRequestPage = ({
         const componentCategoryOption = equipmentComponentCategoryChoices.map(
           (choice, index) => {
             return {
-              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_field_id: form.form_section[1].section_field[1].field_id,
               option_id: choice.equipment_part_id,
               option_order: index,
               option_value: choice.equipment_component_category,
@@ -695,7 +699,7 @@ const CreatePEDPartRequestPage = ({
 
         const brandOption = brandOptionChoices.map((choice, index) => {
           return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_field_id: form.form_section[1].section_field[2].field_id,
             option_id: choice.equipment_part_id,
             option_order: index,
             option_value: choice.equipment_brand,
@@ -764,7 +768,7 @@ const CreatePEDPartRequestPage = ({
 
         const modelOption = modelOptionChoices.map((choice, index) => {
           return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_field_id: form.form_section[1].section_field[3].field_id,
             option_id: choice.equipment_part_id,
             option_order: index,
             option_value: choice.equipment_model,
@@ -835,7 +839,7 @@ const CreatePEDPartRequestPage = ({
         const partNumberOption = partNumberOptionChoices.map(
           (choice, index) => {
             return {
-              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_field_id: form.form_section[1].section_field[4].field_id,
               option_id: choice.equipment_part_id,
               option_order: index,
               option_value: choice.equipment_part_number,

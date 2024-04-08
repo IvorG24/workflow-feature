@@ -46,11 +46,44 @@ type RequestFormSectionProps = {
       prevValue: string | null,
       value: string | null
     ) => void;
-    onGeneralItemNameChange: (value: string | null, index: number) => void;
-    onComponentCategoryChange: (value: string | null, index: number) => void;
-    onBrandChange: (value: string | null, index: number) => void;
-    onModelChange: (value: string | null, index: number) => void;
+    onGeneralItemNameChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onComponentCategoryChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onBrandChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onModelChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
+    onGeneralItemNameOpen?: (index: number) => void;
   };
   pedItemFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -113,6 +146,8 @@ const RequestFormSection = ({
             field={{
               ...field,
               options: field.field_option ? field.field_option : [],
+              field_section_duplicatable_id:
+                field.field_section_duplicatable_id,
             }}
             sectionIndex={sectionIndex}
             fieldIndex={idx}

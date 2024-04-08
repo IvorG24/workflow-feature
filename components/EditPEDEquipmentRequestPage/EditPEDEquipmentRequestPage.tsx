@@ -62,6 +62,7 @@ type Props = {
   duplicatableSectionIdList: string[];
   requestId: string;
 };
+
 const EditPEDEquipmentRequestPage = ({
   form,
   projectOptions,
@@ -365,7 +366,6 @@ const EditPEDEquipmentRequestPage = ({
         replaceSection(finalInitialRequestDetails);
         setInitialRequestDetails({ sections: finalInitialRequestDetails });
         setIsLoading(false);
-        console.log(finalInitialRequestDetails);
       };
       fetchRequestDetails();
     } catch (e) {
