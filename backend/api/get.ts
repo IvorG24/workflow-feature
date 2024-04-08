@@ -6552,3 +6552,47 @@ export const getPEDEquipmentRequestConditionalOptions = async (
   if (error) throw error;
   return data;
 };
+
+// Fetch ped item general name options
+export const getPedItemGeneralNameOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .select("item_id, item_general_name")
+    .eq("item_team_id", teamId)
+    .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
+    .eq("item_is_ped_item", true)
+    .order("item_general_name")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch ped item request conditional options
+export const getPEDItemRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      itemName: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_ped_item_request_conditional_options", {
+      input_data: params,
+    })
+    .select("*");
+  if (error) throw error;
+  return data;
+};

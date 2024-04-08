@@ -2,6 +2,7 @@ import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
+import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
@@ -108,16 +109,15 @@ const Page = ({
             requestId={requestId}
           />
         );
-      // case "PED Item":
-      //   return (
-      //     <EditPEDItemRequestPage
-      //       request={request}
-      //       projectOptions={projectOptions}
-      //       itemOptions={itemOptions}
-      //       propertyNumberOptions={propertyNumberOptions}
-      //       referenceOnly={referenceOnly}
-      //     />
-      //   );
+      case "PED Item":
+        return (
+          <EditPEDItemRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
 
       // case "Request For Payment":
       //   return (

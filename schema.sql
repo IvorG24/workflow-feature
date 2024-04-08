@@ -10099,6 +10099,64 @@ $$ LANGUAGE plv8;
 
 -- End: Fetch ped equipment request conditional options
 
+-- Start: Fetch PED item request conditional options
+
+CREATE OR REPLACE FUNCTION fetch_ped_item_request_conditional_options(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      sectionList
+    } = input_data;
+
+    returnData = sectionList.map(section => {
+      return {
+        itemName: section.itemName,
+        fieldList: section.fieldIdList.map(field => {
+          let optionData = [];
+          const itemDescriptionData = plv8.execute(
+            `
+              SELECT
+                idft.item_description_field_id,
+                item_description_field_value,
+                item_description_field_uom
+              FROM item_table
+              INNER JOIN item_description_table ON item_description_item_id = item_id
+              INNER JOIN field_table ON field_id = item_description_field_id
+              INNER JOIN item_description_field_table AS idft ON idft.item_description_field_item_description_id = item_description_id
+              INNER JOIN ped_item_field_table ON ped_item_field_item_description_id = item_description_id
+              LEFT JOIN item_description_field_uom_table ON item_description_field_uom_item_description_field_id = idft.item_description_field_id
+              WHERE
+                item_general_name = '${section.itemName}'
+                AND ped_item_field_field_id = '${field}'
+                AND item_is_disabled = false
+            `
+          );
+
+          optionData = itemDescriptionData.map((options, index) => {
+            return {
+              option_field_id: field,
+              option_id: options.item_description_field_id,
+              option_order: index + 1,
+              option_value: `${options.item_description_field_value}${options.item_description_field_uom ? ` ${options.item_description_field_uom}`: ''}`,
+            }
+          });
+
+          return {
+            fieldId: field,
+            optionList: optionData
+          }
+        })
+      }
+    });
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetch PED item request conditional options
+
 ---------- End: FUNCTIONS
 
 
