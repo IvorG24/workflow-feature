@@ -222,15 +222,16 @@ const RequestFormFields = ({
           )
         );
         setPrevFileLink(fileLink);
-        if (!fileLink) return;
 
-        const response = await fetch(fileLink);
-        const blob = await response.blob();
-        const file = new File([blob], fileLink, { type: blob.type });
-        setValue(
-          `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`,
-          file as never
-        );
+        if (fileLink && !fileLink.name) {
+          const response = await fetch(fileLink);
+          const blob = await response.blob();
+          const file = new File([blob], fileLink, { type: blob.type });
+          setValue(
+            `sections.${sectionIndex}.section_field.${fieldIndex}.field_response.0.request_response`,
+            file as never
+          );
+        }
       } catch (error) {
         console.error("Error downloading file:", error);
       }
@@ -759,10 +760,7 @@ const RequestFormFields = ({
                 <FileInput
                   {...inputProps}
                   icon={<IconFile size={16} />}
-                  defaultValue={field.value}
-                  value={
-                    typeof field.value === "string" ? undefined : field.value
-                  }
+                  value={field.value}
                   clearable
                   multiple={false}
                   onChange={field.onChange}

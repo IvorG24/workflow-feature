@@ -109,9 +109,6 @@ const PEDItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
               duplicatableSectionIdCondition.length !== 0
                 ? duplicatableSectionIdCondition
                 : `'${uuidv4()}'`,
-            isPedItemAndSingle:
-              request.request_form.form_section[0].section_field[2]
-                .field_response[0].request_response === `"Single"`,
           });
           newFields.push(...data);
           index += 5;

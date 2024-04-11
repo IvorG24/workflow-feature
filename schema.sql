@@ -2837,7 +2837,7 @@ CREATE OR REPLACE FUNCTION fetch_request_list(
 RETURNS JSON AS $$
     let return_value
     plv8.subtransaction(function(){
-        const {
+      const {
         teamId,
         page,
         limit,
@@ -2851,70 +2851,77 @@ RETURNS JSON AS $$
         teamMemberId,
         project,
         idFilter
-        } = input_data;
+      } = input_data;
 
-        const start = (page - 1) * limit;
+      const start = (page - 1) * limit;
 
-        let request_list = [];
-        let request_count = 0;
+      let request_list = [];
+      let request_count = 0;
 
-        let fetch_request_list_query = 
-            `SELECT DISTINCT
-                request_id, 
-                request_formsly_id,
-                request_date_created, 
-                request_status,
-                request_team_member_id,
-                request_jira_id,
-                request_jira_link,
-                request_otp_id,
-                request_form_id
-            FROM request_view
-            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
-            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-            WHERE team_member_table.team_member_team_id = '${teamId}'
-            AND request_is_disabled = false
-            AND form_table.form_is_disabled = false`;
+      let fetch_request_list_query = 
+        `
+          SELECT DISTINCT
+              request_id, 
+              request_formsly_id,
+              request_date_created, 
+              request_status,
+              request_team_member_id,
+              request_jira_id,
+              request_jira_link,
+              request_otp_id,
+              request_form_id
+          FROM request_view
+          INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+          INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+          INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+          INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+          WHERE team_member_table.team_member_team_id = '${teamId}'
+          AND request_is_disabled = false
+          AND form_table.form_is_disabled = false
+        `;
 
-        let sort_request_list_query = ` ORDER BY request_view.request_date_created ${sort} 
-            OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY`;
+      let sort_request_list_query = 
+        `
+          ORDER BY request_view.request_date_created ${sort} 
+          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+        `;
 
-        let request_list_count_query = 
-            `SELECT COUNT(DISTINCT request_id)
-            FROM request_view
-            INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-            INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
-            INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-            WHERE team_member_table.team_member_team_id = '${teamId}'
-            AND request_is_disabled = false
-            AND form_table.form_is_disabled = false`;
+      let request_list_count_query = 
+        `
+          SELECT COUNT(DISTINCT request_id)
+          FROM request_view
+          INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+          INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+          INNER JOIN request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+          INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+          WHERE team_member_table.team_member_team_id = '${teamId}'
+          AND request_is_disabled = false
+          AND form_table.form_is_disabled = false
+        `;
 
-        if (!isApproversView) {
-            const nonApproverFilterQuery = 
-                ` ${requestor}
-                ${approver}
-                ${status}
-                ${form}
-                ${project}
-                ${idFilter}
-                ${search}`;
+      if (!isApproversView) {
+        const nonApproverFilterQuery = 
+          `
+            ${requestor}
+            ${approver}
+            ${status}
+            ${form}
+            ${project}
+            ${idFilter}
+            ${search}
+          `;
 
-            request_list = plv8.execute(fetch_request_list_query + nonApproverFilterQuery + sort_request_list_query);
-
-            request_count = plv8.execute(request_list_count_query + ' ' + nonApproverFilterQuery)[0];
-        } else {
-            const approverFilterQuery = 
-                ` AND signer_team_member_id = '${teamMemberId}'
-                AND request_status = 'PENDING'
-                AND request_signer_status = 'PENDING'`;
-
-            request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
-
-            request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
-        }
+        request_list = plv8.execute(fetch_request_list_query + nonApproverFilterQuery + sort_request_list_query);
+        request_count = plv8.execute(request_list_count_query + ' ' + nonApproverFilterQuery)[0];
+      } else {
+        const approverFilterQuery = 
+          `
+            AND signer_team_member_id = '${teamMemberId}'
+            AND request_signer_status = 'PENDING'
+          `;
+        request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
+        request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
+      }
 
       const request_data = request_list.map(request => {
         const request_signer = plv8.execute(
@@ -2952,7 +2959,6 @@ RETURNS JSON AS $$
     });
     return return_value
 $$ LANGUAGE plv8;
-
 
 -- End: Fetch request list
 
@@ -7303,9 +7309,6 @@ RETURNS JSON as $$
 
     const isApprover = member.team_member_role === 'OWNER' || member.team_member_role === 'ADMIN';
     if (!isApprover) throw new Error("User is not an Approver");
-
-    const hasApprover = ticket.ticket_approver_team_member_id !== null
-    if (hasApprover) throw new Error("Ticket already have approver");
     
     plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
 
@@ -12752,8 +12755,7 @@ plv8.subtransaction(function(){
     requestId,
     sectionId,
     fieldData,
-    duplicatableSectionIdCondition,
-    isPedItemAndSingle
+    duplicatableSectionIdCondition
   } = input_data;
 
   const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa'];
@@ -12799,22 +12801,6 @@ plv8.subtransaction(function(){
         field_response: requestResponseData
       };
     });
-
-    if (isPedItemAndSingle && fieldWithResponse.length !== 0) {
-      fieldWithResponse[0].field_response = fieldWithResponse[0].field_response.map(fieldResponse => {
-        const categoryData = plv8.execute(
-          `
-            SELECT equipment_description_property_number_with_prefix FROM equipment_description_view 
-            WHERE equipment_description_property_number = '${JSON.parse(fieldResponse.request_response)}' 
-          `
-        )[0].equipment_description_property_number_with_prefix;
-
-        return {
-          ...fieldResponse,
-          request_response: `"${categoryData}"`
-        }
-      });
-    }
 
     returnData = fieldWithResponse;
   } else {

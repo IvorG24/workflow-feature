@@ -501,6 +501,7 @@ const RequestFormFields = ({
                 icon={<IconFile size={16} />}
                 clearable
                 multiple={false}
+                value={field.value as File | null | undefined}
                 onChange={field.onChange}
                 error={fieldError}
                 accept={
