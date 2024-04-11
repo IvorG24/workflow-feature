@@ -4,6 +4,7 @@ import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequest
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
+import EditRequestForPaymentPage from "@/components/EditRequestForPaymentPage/EditRequestForPaymentPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -118,16 +119,14 @@ const Page = ({
             requestId={requestId}
           />
         );
-
-      // case "Request For Payment":
-      //   return (
-      //     <EditRequestForPaymentPage
-      //       request={request}
-      //       projectOptions={projectOptions}
-      //       referenceOnly={referenceOnly}
-      //       requestingProject={requestingProject}
-      //     />
-      //   );
+      case "Request For Payment":
+        return (
+          <EditRequestForPaymentPage
+            form={form}
+            projectOptions={projectOptions}
+            requestId={requestId}
+          />
+        );
     }
   };
 
