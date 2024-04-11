@@ -5,6 +5,7 @@ import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPag
 import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
 import EditRequestForPaymentPage from "@/components/EditRequestForPaymentPage/EditRequestForPaymentPage";
+import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -137,9 +138,13 @@ const Page = ({
         url="/<teamName>/requests/[requestId]/edit"
       />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {/* {!form.form_is_formsly_form ? (
-        <EditRequestPage request={request} />
-      ) : null} */}
+      {!form.form_is_formsly_form ? (
+        <EditRequestPage
+          requestId={requestId}
+          form={form}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      ) : null}
     </>
   );
 };

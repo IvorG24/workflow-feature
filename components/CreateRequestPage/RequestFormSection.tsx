@@ -99,6 +99,7 @@ type RequestFormSectionProps = {
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
   isEdit?: boolean;
+  loadingFieldList: { sectionIndex: number; fieldIndex: number }[];
 };
 
 const RequestFormSection = ({
@@ -114,6 +115,7 @@ const RequestFormSection = ({
   pedItemFormMethods,
   paymentRequestFormMethods,
   isEdit,
+  loadingFieldList,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -140,28 +142,36 @@ const RequestFormSection = ({
       </Group>
       <Space />
       <Stack mt="xl">
-        {section.section_field.map((field, idx) => (
-          <RequestFormFields
-            key={field.field_id + section.section_id}
-            field={{
-              ...field,
-              options: field.field_option ? field.field_option : [],
-              field_section_duplicatable_id:
-                field.field_section_duplicatable_id,
-            }}
-            sectionIndex={sectionIndex}
-            fieldIndex={idx}
-            itemFormMethods={itemFormMethods}
-            formslyFormName={formslyFormName}
-            servicesFormMethods={servicesFormMethods}
-            pedEquipmentFormMethods={pedEquipmentFormMethods}
-            pedPartFormMethods={pedPartFormMethods}
-            otherExpensesMethods={otherExpensesMethods}
-            pedItemFormMethods={pedItemFormMethods}
-            paymentRequestFormMethods={paymentRequestFormMethods}
-            isEdit={isEdit}
-          />
-        ))}
+        {section.section_field.map((field, idx) => {
+          const isLoading = loadingFieldList.find(
+            (loadingField) =>
+              loadingField.sectionIndex === sectionIndex &&
+              loadingField.fieldIndex === idx
+          );
+          return (
+            <RequestFormFields
+              key={field.field_id + section.section_id}
+              field={{
+                ...field,
+                options: field.field_option ? field.field_option : [],
+                field_section_duplicatable_id:
+                  field.field_section_duplicatable_id,
+              }}
+              sectionIndex={sectionIndex}
+              fieldIndex={idx}
+              itemFormMethods={itemFormMethods}
+              formslyFormName={formslyFormName}
+              servicesFormMethods={servicesFormMethods}
+              pedEquipmentFormMethods={pedEquipmentFormMethods}
+              pedPartFormMethods={pedPartFormMethods}
+              otherExpensesMethods={otherExpensesMethods}
+              pedItemFormMethods={pedItemFormMethods}
+              paymentRequestFormMethods={paymentRequestFormMethods}
+              isEdit={isEdit}
+              isLoading={isLoading}
+            />
+          );
+        })}
       </Stack>
     </Paper>
   );

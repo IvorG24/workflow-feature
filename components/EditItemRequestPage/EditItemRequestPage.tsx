@@ -93,10 +93,14 @@ const EditItemRequestPage = ({
       signer_action: signer.signer_action.toUpperCase(),
     }))
   );
+
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
   const [itemOptions, setItemOptions] = useState<OptionTableRow[]>([]);
   const [preferredSupplierOptions, setPreferredSupplierOptions] = useState<
     OptionTableRow[]
+  >([]);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
   >([]);
 
   const requestorProfile = useUserProfile();
@@ -612,6 +616,11 @@ const EditItemRequestPage = ({
 
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 1 },
+          { sectionIndex: index, fieldIndex: 3 },
+          { sectionIndex: index, fieldIndex: 4 },
+        ]);
         const item = await getItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
@@ -787,6 +796,7 @@ const EditItemRequestPage = ({
         color: "red",
       });
     }
+    setLoadingFieldList([]);
   };
 
   const handleCSICodeChange = async (index: number, value: string | null) => {
@@ -933,6 +943,7 @@ const EditItemRequestPage = ({
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
