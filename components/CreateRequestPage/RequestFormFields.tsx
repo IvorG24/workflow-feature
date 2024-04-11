@@ -5,7 +5,7 @@ import {
   MAX_FILE_SIZE_IN_MB,
   SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
-import { requestPath } from "@/utils/string";
+import { parseJSONIfValid, requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -17,6 +17,7 @@ import {
   Switch,
   TextInput,
   Textarea,
+  Tooltip,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -142,6 +143,7 @@ const RequestFormFields = ({
     control,
     formState: { errors },
     getValues,
+    setValue,
   } = useFormContext<RequestFormValues>();
   const team = useActiveTeam();
 
@@ -149,6 +151,7 @@ const RequestFormFields = ({
   const timeInputRef = useRef<HTMLInputElement>(null);
 
   const [linkToDisplay, setLinkToDisplay] = useState<string | null>(null);
+  const [prevFileLink, setPrevFileLink] = useState<string | null>(null);
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
@@ -185,8 +188,35 @@ const RequestFormFields = ({
       }
     };
 
+    const fetchFile = async () => {
+      try {
+        const fileLink = parseJSONIfValid(
+          `${getValues(
+            `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`
+          )}`
+        );
+        setPrevFileLink(fileLink);
+
+        if (fileLink && !fileLink.name) {
+          const response = await fetch(fileLink);
+          const blob = await response.blob();
+          const file = new File([blob], fileLink, { type: blob.type });
+          setValue(
+            `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+            file as never
+          );
+        }
+      } catch (error) {
+        console.error("Error downloading file:", error);
+      }
+    };
+
     if (field.field_type === "LINK") {
       fetchLinkToDisplay();
+    }
+
+    if (field.field_type === "FILE" && isEdit !== undefined) {
+      fetchFile();
     }
   }, []);
 
@@ -605,20 +635,34 @@ const RequestFormFields = ({
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
             render={({ field }) => (
-              <FileInput
-                {...inputProps}
-                icon={<IconFile size={16} />}
-                clearable
-                multiple={false}
-                value={field.value as File | null | undefined}
-                onChange={field.onChange}
-                error={fieldError}
-                accept={
-                  formslyFormName === "Quotation"
-                    ? "application/pdf"
-                    : undefined
-                }
-              />
+              <Flex w="100%" align="flex-end" gap="xs">
+                <FileInput
+                  {...inputProps}
+                  icon={<IconFile size={16} />}
+                  clearable
+                  multiple={false}
+                  value={field.value as File | null | undefined}
+                  onChange={field.onChange}
+                  error={fieldError}
+                  sx={{ width: prevFileLink ? "96%" : "100%" }}
+                />
+                {parseJSONIfValid(`${field.value}`) && isEdit !== undefined ? (
+                  <Tooltip
+                    label="Open last saved file in new tab"
+                    openDelay={200}
+                  >
+                    <ActionIcon
+                      mb={4}
+                      p={4}
+                      variant="light"
+                      color="blue"
+                      onClick={() => window.open(`${prevFileLink}`, "_blank")}
+                    >
+                      <IconExternalLink />
+                    </ActionIcon>
+                  </Tooltip>
+                ) : null}
+              </Flex>
             )}
             rules={{
               ...fieldRules,

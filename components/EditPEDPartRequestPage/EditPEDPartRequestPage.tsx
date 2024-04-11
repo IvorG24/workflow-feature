@@ -393,7 +393,7 @@ const EditPEDPartRequestPage = ({
       }
 
       notifications.show({
-        message: "Request created.",
+        message: `Request ${isReferenceOnly ? "created" : "edited"}.`,
         color: "green",
       });
 

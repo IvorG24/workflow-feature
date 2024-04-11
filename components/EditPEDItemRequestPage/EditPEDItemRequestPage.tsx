@@ -308,10 +308,12 @@ const EditPEDItemRequestPage = ({
         formattedSection.forEach((section) => {
           if (
             !uniqueItemName.includes(
-              `${section.section_field[0].field_response}`
+              `${section.section_field[isBulk ? 0 : 4].field_response}`
             )
           ) {
-            uniqueItemName.push(`${section.section_field[0].field_response}`);
+            uniqueItemName.push(
+              `${section.section_field[isBulk ? 0 : 4].field_response}`
+            );
             filteredSection.push(section);
           }
         });
@@ -453,7 +455,7 @@ const EditPEDItemRequestPage = ({
       }
 
       notifications.show({
-        message: "Request created.",
+        message: `Request ${isReferenceOnly ? "created" : "edited"}.`,
         color: "green",
       });
 
@@ -823,6 +825,7 @@ const EditPEDItemRequestPage = ({
                       onRequestTypeChange: handleRequestTypeChange,
                       onGeneralNameChange: handleGeneralNameChange,
                     }}
+                    isEdit={!isReferenceOnly}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

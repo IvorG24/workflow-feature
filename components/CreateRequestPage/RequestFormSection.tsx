@@ -113,7 +113,7 @@ const RequestFormSection = ({
   otherExpensesMethods,
   pedItemFormMethods,
   paymentRequestFormMethods,
-  isEdit = false,
+  isEdit,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
