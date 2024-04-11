@@ -2,7 +2,7 @@ import { deleteRequest } from "@/backend/api/delete";
 import {
   getCommentAttachment,
   getRequestComment,
-  getSectionInItemRequestPage,
+  getSectionInRequestPage,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
@@ -101,7 +101,7 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             .slice(index, index + 5)
             .map((dupId) => `'${dupId}'`)
             .join(",");
-          const data = await getSectionInItemRequestPage(supabaseClient, {
+          const data = await getSectionInRequestPage(supabaseClient, {
             index,
             requestId: request.request_id,
             sectionId: request.request_form.form_section[1].section_id,
@@ -120,7 +120,7 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         const uniqueFieldIdList: string[] = [];
         const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
-        newFields.map((field) => {
+        newFields.forEach((field) => {
           if (uniqueFieldIdList.includes(field.field_id)) {
             const currentFieldIndex = combinedFieldList.findIndex(
               (combinedField) => combinedField.field_id === field.field_id

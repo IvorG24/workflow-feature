@@ -1,14 +1,16 @@
-import { checkIfRequestIsEditable } from "@/backend/api/get";
-import { editRequest } from "@/backend/api/post";
+import { getNonDuplictableSectionResponse } from "@/backend/api/get";
+import { createRequest, editRequest } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
+  FormWithResponseType,
   RequestResponseTableRow,
-  RequestWithResponseType,
+  RequestTableRow,
 } from "@/utils/types";
 import {
   Box,
@@ -19,81 +21,67 @@ import {
   Stack,
   Title,
 } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
-import { useBeforeunload } from "react-beforeunload";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
-import RequestFormDetails from "./RequestFormDetails";
-import RequestFormSection from "./RequestFormSection";
-import RequestFormSigner from "./RequestFormSigner";
+import RequestFormDetails from "../CreateRequestPage/RequestFormDetails";
+import RequestFormSection from "../CreateRequestPage/RequestFormSection";
+import RequestFormSigner from "../CreateRequestPage/RequestFormSigner";
 
-export type Section =
-  RequestWithResponseType["request_form"]["form_section"][0];
+export type Section = FormWithResponseType["form_section"][0];
+
 export type RequestFormValues = {
   sections: Section[];
 };
 
-export type FieldWithResponseArray = Section["section_field"][0] & {
-  field_response: RequestResponseTableRow[];
-};
+export type FieldWithResponseArray =
+  FormType["form_section"][0]["section_field"][0] & {
+    field_response: RequestResponseTableRow[];
+  };
 
 type Props = {
-  request: RequestWithResponseType;
+  form: FormType;
+  requestId: string;
+  duplicatableSectionIdList: string[];
   formslyFormName?: string;
+  requestProjectId?: string;
 };
 
-const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
+const EditRequestPage = ({
+  form,
+  requestId,
+  formslyFormName = "",
+  requestProjectId,
+}: Props) => {
   const router = useRouter();
-  const teamMember = useUserTeamMember();
   const supabaseClient = createPagesBrowserClient<Database>();
-  const activeTeam = useActiveTeam();
+  const teamMember = useUserTeamMember();
+  const team = useActiveTeam();
+
+  const isReferenceOnly = Boolean(router.query.referenceOnly);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
-  const [localFormState, setLocalFormState, removeLocalFormState] =
-    useLocalStorage<RequestWithResponseType | null>({
-      key: `${router.query.requestId}`,
-      defaultValue: request,
-    });
+  const [initialRequestDetails, setInitialRequestDetails] =
+    useState<RequestFormValues>();
 
-  const { request_form } = request;
   const formDetails = {
-    form_name: request_form.form_name,
-    form_description: request_form.form_description,
-    form_date_created: request.request_date_created,
-    form_team_member: request.request_team_member,
+    form_name: form.form_name,
+    form_description: form.form_description,
+    form_date_created: form.form_date_created,
+    form_team_member: form.form_team_member,
   };
+  const signerList = form.form_signer.map((signer) => ({
+    ...signer,
+    signer_action: signer.signer_action.toUpperCase(),
+  }));
 
-  const signerList: FormType["form_signer"] = request.request_signer
-    .map((signer) => signer.request_signer_signer)
-    .map((signer) => ({
-      ...signer,
-      signer_action: signer.signer_action.toUpperCase(),
-      signer_team_member: {
-        ...signer.signer_team_member,
-        team_member_user: {
-          ...signer.signer_team_member.team_member_user,
-          user_id: signer.signer_team_member.team_member_user.user_id,
-          user_avatar: "",
-        },
-      },
-    }));
-
-  const requestFormMethods = useForm<RequestFormValues>({
-    defaultValues: { sections: request_form.form_section },
-  });
-  const {
-    control,
-    getValues,
-    handleSubmit,
-    formState: { isDirty },
-    reset,
-  } = requestFormMethods;
+  const requestFormMethods = useForm<RequestFormValues>();
+  const { handleSubmit, control, getValues } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
@@ -104,46 +92,45 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
     name: "sections",
   });
 
-  const handleEditRequest = async (data: RequestFormValues) => {
+  const onSubmit = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
 
       setIsLoading(true);
-      const isPending = await checkIfRequestIsEditable(supabaseClient, {
-        requestId: request.request_id,
-      });
 
-      if (!isPending) {
-        notifications.show({
-          message: "Request can't be edited",
-          color: "red",
+      let request: RequestTableRow;
+      if (isReferenceOnly) {
+        request = await createRequest(supabaseClient, {
+          requestFormValues: data,
+          formId: form.form_id,
+          teamMemberId: teamMember.team_member_id,
+          signers: form.form_signer,
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
+          isFormslyForm: false,
+          projectId: requestProjectId || "",
+          teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
         });
-        router.push(
-          `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
-            request.request_id
-          }`
-        );
-        return;
+      } else {
+        request = await editRequest(supabaseClient, {
+          requestId,
+          requestFormValues: data,
+          signers: form.form_signer,
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
+          teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        });
       }
 
-      await editRequest(supabaseClient, {
-        requestId: request.request_id,
-        requestFormValues: data,
-        signers: signerList,
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: request_form.form_name,
-        teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
-      });
-
-      removeLocalFormState();
       notifications.show({
-        message: "Request Edited.",
+        message: `Request ${isReferenceOnly ? "created" : "edited"}.`,
         color: "green",
       });
       router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
           request.request_id
         }`
       );
@@ -161,7 +148,7 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
       .lastIndexOf(sectionId);
-    const sectionMatch = request_form.form_section.find(
+    const sectionMatch = form.form_section.find(
       (section) => section.section_id === sectionId
     );
     if (sectionMatch) {
@@ -169,11 +156,6 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
         (field) => ({
           ...field,
-          field_response: field.field_response.map((response) => ({
-            ...response,
-            request_response_duplicatable_section_id: sectionDuplicatableId,
-            request_response: "",
-          })),
           field_section_duplicatable_id: sectionDuplicatableId,
         })
       );
@@ -186,36 +168,85 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
     }
   };
 
-  const handleRemoveSection = (sectionMatchIndex: number) =>
-    removeSection(sectionMatchIndex);
+  const handleRemoveSection = (sectionDuplicatableId: string) => {
+    const sectionMatchIndex = formSections.findIndex(
+      (section) =>
+        section.section_field[0].field_section_duplicatable_id ===
+        sectionDuplicatableId
+    );
+    if (sectionMatchIndex) {
+      removeSection(sectionMatchIndex);
+      return;
+    }
+  };
 
   useEffect(() => {
-    if (localFormState) {
-      replaceSection(localFormState.request_form.form_section);
-    } else {
-      replaceSection(request.request_form.form_section);
-    }
-  }, [request, localFormState, replaceSection, requestFormMethods]);
+    setIsLoading(true);
+    if (!team.team_id) return;
+    try {
+      const fetchRequestDetails = async () => {
+        // Fetch response
+        const fieldIdList: string[] = [];
+        form.form_section.forEach((section) => {
+          if (section.section_is_duplicatable) return;
+          section.section_field.map((field) => {
+            fieldIdList.push(field.field_id);
+          });
+        });
+        const sectionResponse = await getNonDuplictableSectionResponse(
+          supabaseClient,
+          {
+            requestId,
+            fieldIdList,
+          }
+        );
 
-  useBeforeunload(() => {
-    const formWithResponse: RequestWithResponseType = {
-      ...request,
-      request_form: {
-        ...request.request_form,
-        form_section: getValues("sections"),
-      },
-    };
-    setLocalFormState(formWithResponse);
-  });
+        const requestDetailsSection = form.form_section.map((section) => {
+          const sectionField = section.section_field.map((field) => {
+            const response = sectionResponse.find(
+              (response) =>
+                response.request_response_field_id === field.field_id
+            );
+            return {
+              ...field,
+              field_response: response
+                ? safeParse(response.request_response)
+                : "",
+            };
+          });
+          return {
+            ...section,
+            section_field: sectionField,
+          };
+        });
+
+        replaceSection(requestDetailsSection);
+        setInitialRequestDetails({ sections: requestDetailsSection });
+        setIsLoading(false);
+      };
+      fetchRequestDetails();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [team]);
+
+  const handleResetRequest = () => {
+    replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
+  };
 
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Edit Request
+        {isReferenceOnly ? "Create" : "Edit"} Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleEditRequest)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {
@@ -226,10 +257,6 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
                 .map((sectionItem) => sectionItem.section_id)
                 .lastIndexOf(sectionIdToFind);
 
-              const isRemovable =
-                formSections[idx - 1]?.section_is_duplicatable &&
-                section.section_is_duplicatable;
-
               return (
                 <Box key={section.id}>
                   <RequestFormSection
@@ -238,7 +265,7 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     formslyFormName={formslyFormName}
-                    isSectionRemovable={isRemovable}
+                    isEdit={!isReferenceOnly}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -258,14 +285,14 @@ const EditRequestPage = ({ request, formslyFormName = "" }: Props) => {
             })}
             <RequestFormSigner signerList={signerList} />
             <Flex direction="column" gap="sm">
-              {isDirty && (
-                <Button variant="outline" color="red" onClick={() => reset()}>
-                  Reset
-                </Button>
-              )}
-              <Button type="submit" disabled={!isDirty}>
-                Submit
+              <Button
+                variant="outline"
+                color="red"
+                onClick={handleResetRequest}
+              >
+                Reset
               </Button>
+              <Button type="submit">Submit</Button>
             </Flex>
           </Stack>
         </form>

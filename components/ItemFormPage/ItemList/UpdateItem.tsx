@@ -315,6 +315,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                   searchable
                   clearable
                   label="Base Unit of Measurement"
+                  disabled
                 />
               )}
               rules={{
