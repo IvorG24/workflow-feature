@@ -9810,7 +9810,8 @@ RETURNS JSON as $$
                 SELECT
                   idft.item_description_field_id,
                   item_description_field_value,
-                  item_description_field_uom
+                  item_description_field_uom,
+                  item_description_is_with_uom
                 FROM item_table
                 INNER JOIN item_description_table ON item_description_item_id = item_id
                 INNER JOIN field_table ON field_id = item_description_field_id
@@ -9828,7 +9829,7 @@ RETURNS JSON as $$
                 option_field_id: field,
                 option_id: options.item_description_field_id,
                 option_order: index + 1,
-                option_value: `${options.item_description_field_value}${options.item_description_field_uom ? ` ${options.item_description_field_uom}`: ''}`,
+                option_value: `${options.item_description_field_value}${options.item_description_is_with_uom ? ` ${options.item_description_field_uom}`: ''}`,
               }
             });
           }

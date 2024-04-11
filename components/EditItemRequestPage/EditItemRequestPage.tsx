@@ -93,6 +93,7 @@ const EditItemRequestPage = ({
       signer_action: signer.signer_action.toUpperCase(),
     }))
   );
+
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
   const [itemOptions, setItemOptions] = useState<OptionTableRow[]>([]);
   const [preferredSupplierOptions, setPreferredSupplierOptions] = useState<
