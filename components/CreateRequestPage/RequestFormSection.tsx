@@ -99,7 +99,7 @@ type RequestFormSectionProps = {
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
   isEdit?: boolean;
-  loadingFieldList: { sectionIndex: number; fieldIndex: number }[];
+  loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
 };
 
 const RequestFormSection = ({
@@ -143,10 +143,12 @@ const RequestFormSection = ({
       <Space />
       <Stack mt="xl">
         {section.section_field.map((field, idx) => {
-          const isLoading = loadingFieldList.find(
-            (loadingField) =>
-              loadingField.sectionIndex === sectionIndex &&
-              loadingField.fieldIndex === idx
+          const isLoading = Boolean(
+            loadingFieldList?.find(
+              (loadingField) =>
+                loadingField.sectionIndex === sectionIndex &&
+                loadingField.fieldIndex === idx
+            )
           );
           return (
             <RequestFormFields

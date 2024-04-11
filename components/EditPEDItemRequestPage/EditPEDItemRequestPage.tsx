@@ -100,6 +100,9 @@ const EditPEDItemRequestPage = ({
   const [generalNameOptions, setGeneralNameOptions] = useState<
     OptionTableRow[]
   >([]);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -576,6 +579,11 @@ const EditPEDItemRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 1 },
+          { sectionIndex: index, fieldIndex: 2 },
+          { sectionIndex: index, fieldIndex: 3 },
+        ]);
         const equipmentDescription = await getEquipmentDescription(
           supabaseClient,
           {
@@ -630,6 +638,8 @@ const EditPEDItemRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -679,6 +689,9 @@ const EditPEDItemRequestPage = ({
       getValues(`sections.0.section_field.2.field_response`) === "Bulk";
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: isBulk ? 1 : 5 },
+        ]);
         const item = await getPedItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
@@ -784,6 +797,8 @@ const EditPEDItemRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -826,6 +841,7 @@ const EditPEDItemRequestPage = ({
                       onGeneralNameChange: handleGeneralNameChange,
                     }}
                     isEdit={!isReferenceOnly}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

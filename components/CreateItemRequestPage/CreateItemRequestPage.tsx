@@ -554,8 +554,9 @@ const CreateItemRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
-    setLoadingFieldList([]);
   };
 
   const handleCSICodeChange = async (index: number, value: string | null) => {

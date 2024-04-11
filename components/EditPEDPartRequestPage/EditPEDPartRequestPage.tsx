@@ -100,6 +100,9 @@ const EditPEDPartRequestPage = ({
     fieldIdListWithoutFetchedOptions,
     setFieldIdListWithoutFetchedOptions,
   ] = useState<string[]>([]);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -480,6 +483,7 @@ const EditPEDPartRequestPage = ({
     try {
       resetItemSection();
       if (value) {
+        setLoadingFieldList([{ sectionIndex: 0, fieldIndex: 4 }]);
         const categoryId = newSection.section_field[2].field_option.find(
           (category) => category.option_value === value
         );
@@ -549,6 +553,8 @@ const EditPEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -599,6 +605,8 @@ const EditPEDPartRequestPage = ({
 
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: 0, fieldIndex: 5 }]);
+
         const equipmentOptions = newSection.section_field[4].field_option;
         const equipmentId = equipmentOptions.find(
           (equipment) => equipment.option_value === value
@@ -708,6 +716,8 @@ const EditPEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -715,6 +725,12 @@ const EditPEDPartRequestPage = ({
     const newSection = getValues(`sections.0`);
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: 0, fieldIndex: 6 },
+          { sectionIndex: 0, fieldIndex: 7 },
+          { sectionIndex: 0, fieldIndex: 8 },
+        ]);
+
         const equipmentDescription = await getEquipmentDescription(
           supabaseClient,
           {
@@ -768,6 +784,8 @@ const EditPEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -889,6 +907,7 @@ const EditPEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 1 }]);
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: value,
@@ -912,7 +931,7 @@ const EditPEDPartRequestPage = ({
 
         if (!editDetails) {
           const generalField = [
-            { ...newSection.section_field[0] },
+            newSection.section_field[0],
             {
               ...newSection.section_field[1],
               field_option: componentCategoryOption,
@@ -938,7 +957,7 @@ const EditPEDPartRequestPage = ({
         }
       } else {
         const generalField = [
-          { ...newSection.section_field[0] },
+          newSection.section_field[0],
           ...newSection.section_field.slice(1).map((field) => {
             return {
               ...field,
@@ -964,6 +983,8 @@ const EditPEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -989,6 +1010,7 @@ const EditPEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 2 }]);
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: newSection.section_field[0].field_response as string,
@@ -1062,6 +1084,8 @@ const EditPEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -1087,6 +1111,7 @@ const EditPEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 3 }]);
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: newSection.section_field[0].field_response as string,
@@ -1162,6 +1187,8 @@ const EditPEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -1187,6 +1214,7 @@ const EditPEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 4 }]);
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: newSection.section_field[0].field_response as string,
@@ -1265,6 +1293,8 @@ const EditPEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -1275,6 +1305,7 @@ const EditPEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 6 }]);
         const equipmentPartUoM = await getItemUnitOfMeasurement(
           supabaseClient,
           {
@@ -1320,6 +1351,8 @@ const EditPEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -1376,6 +1409,7 @@ const EditPEDPartRequestPage = ({
                       onGeneralItemNameOpen: handleGeneralItemNameOpen,
                     }}
                     isEdit={!isReferenceOnly}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

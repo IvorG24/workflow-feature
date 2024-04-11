@@ -124,7 +124,7 @@ type RequestFormFieldsProps = {
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
   isEdit?: boolean;
-  isLoading: boolean;
+  isLoading: boolean | undefined;
 };
 
 const RequestFormFields = ({
