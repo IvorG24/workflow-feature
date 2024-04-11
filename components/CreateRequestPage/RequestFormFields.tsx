@@ -11,6 +11,7 @@ import {
   ActionIcon,
   FileInput,
   Flex,
+  Loader,
   MultiSelect,
   NumberInput,
   Select,
@@ -122,6 +123,7 @@ type RequestFormFieldsProps = {
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
   isEdit?: boolean;
+  isLoading: boolean;
 };
 
 const RequestFormFields = ({
@@ -137,6 +139,7 @@ const RequestFormFields = ({
   pedItemFormMethods,
   paymentRequestFormMethods,
   isEdit,
+  isLoading,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -270,6 +273,8 @@ const RequestFormFields = ({
             )}
             error={fieldError}
             withAsterisk={field.field_is_required}
+            readOnly={isLoading}
+            rightSection={isLoading && <Loader size={16} />}
           />
         );
 
@@ -355,6 +360,7 @@ const RequestFormFields = ({
                   const prevValue = getValues(
                     `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`
                   );
+
                   onChange(value);
                   switch (field.field_name) {
                     case "General Name":
@@ -549,6 +555,8 @@ const RequestFormFields = ({
                 nothingFound="Nothing found. Try a different keyword"
                 limit={SELECT_OPTION_LIMIT}
                 disabled={isEdit && field.field_name === "Requesting Project"}
+                readOnly={isLoading}
+                rightSection={isLoading && <Loader size={16} />}
               />
             )}
             rules={{ ...fieldRules }}
