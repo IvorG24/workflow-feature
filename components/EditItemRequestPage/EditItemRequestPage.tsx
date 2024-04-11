@@ -805,6 +805,12 @@ const EditItemRequestPage = ({
 
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 5 },
+          { sectionIndex: index, fieldIndex: 6 },
+          { sectionIndex: index, fieldIndex: 7 },
+          { sectionIndex: index, fieldIndex: 8 },
+        ]);
         const csiCode = await getCSICode(supabaseClient, { csiCode: value });
 
         const generalField = [
@@ -862,6 +868,8 @@ const EditItemRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
