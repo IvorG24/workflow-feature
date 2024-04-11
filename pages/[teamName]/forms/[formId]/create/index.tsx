@@ -21,10 +21,6 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           input_data: {
             formId: context.query.formId,
             userId: user.id,
-            itemId: context.query.itemId,
-            quotationId: context.query.quotationId,
-            sourcedItemId: context.query.sourcedItemId,
-            releaseOrderId: context.query.releaseOrderId,
           },
         }
       );

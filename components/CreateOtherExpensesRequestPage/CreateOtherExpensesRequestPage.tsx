@@ -69,6 +69,9 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
   const [preferredSupplierOptions, setPreferredSupplierOptions] = useState<
     OptionTableRow[]
   >([]);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -249,53 +252,67 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
   const handleCSICodeChange = async (index: number, value: string | null) => {
     const newSection = getValues(`sections.${index}`);
 
-    if (value) {
-      const csiCode = await getCSICode(supabaseClient, { csiCode: value });
+    try {
+      if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 6 },
+          { sectionIndex: index, fieldIndex: 7 },
+          { sectionIndex: index, fieldIndex: 8 },
+        ]);
+        const csiCode = await getCSICode(supabaseClient, { csiCode: value });
 
-      const generalField = [
-        ...newSection.section_field.slice(0, 6),
-        {
-          ...newSection.section_field[6],
-          field_response: csiCode?.csi_code_section,
-        },
-        {
-          ...newSection.section_field[7],
-          field_response: csiCode?.csi_code_level_two_major_group_description,
-        },
-        {
-          ...newSection.section_field[8],
-          field_response: csiCode?.csi_code_level_two_minor_group_description,
-        },
-        ...newSection.section_field.slice(9),
-      ];
-      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
+        const generalField = [
+          ...newSection.section_field.slice(0, 6),
+          {
+            ...newSection.section_field[6],
+            field_response: csiCode?.csi_code_section,
+          },
+          {
+            ...newSection.section_field[7],
+            field_response: csiCode?.csi_code_level_two_major_group_description,
+          },
+          {
+            ...newSection.section_field[8],
+            field_response: csiCode?.csi_code_level_two_minor_group_description,
+          },
+          ...newSection.section_field.slice(9),
+        ];
+        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
-      updateSection(index, {
-        ...newSection,
-        section_field: [
-          ...generalField.map((field) => {
+        updateSection(index, {
+          ...newSection,
+          section_field: [
+            ...generalField.map((field) => {
+              return {
+                ...field,
+                field_section_duplicatable_id: duplicatableSectionId,
+              };
+            }),
+          ],
+        });
+      } else {
+        const generalField = [
+          ...newSection.section_field.slice(0, 6),
+          ...newSection.section_field.slice(6, 9).map((field) => {
             return {
               ...field,
-              field_section_duplicatable_id: duplicatableSectionId,
+              field_response: "",
             };
           }),
-        ],
+          ...newSection.section_field.slice(9),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
-    } else {
-      const generalField = [
-        ...newSection.section_field.slice(0, 6),
-        ...newSection.section_field.slice(6, 9).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(9),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -343,60 +360,70 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
   const handleCategoryChange = async (index: number, value: string | null) => {
     const newSection = getValues(`sections.${index}`);
 
-    if (value) {
-      const categoryId = newSection.section_field[0].field_option.find(
-        (option) => option.option_value === value
-      )?.option_id;
-      if (!categoryId) return;
+    try {
+      if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 1 }]);
+        const categoryId = newSection.section_field[0].field_option.find(
+          (option) => option.option_value === value
+        )?.option_id;
+        if (!categoryId) return;
 
-      const data = await getTypeOptions(supabaseClient, {
-        categoryId: categoryId,
-      });
+        const data = await getTypeOptions(supabaseClient, {
+          categoryId: categoryId,
+        });
 
-      const typeOptions = data.map((type) => {
-        return {
-          option_field_id: form.form_section[1].section_field[0].field_id,
-          option_id: type.other_expenses_type_id,
-          option_order: index,
-          option_value: type.other_expenses_type,
-        };
-      });
+        const typeOptions = data.map((type) => {
+          return {
+            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_id: type.other_expenses_type_id,
+            option_order: index,
+            option_value: type.other_expenses_type,
+          };
+        });
 
-      const generalField = [
-        newSection.section_field[0],
-        {
-          ...newSection.section_field[1],
-          field_option: typeOptions,
-        },
-        ...newSection.section_field.slice(2),
-      ];
-      const duplicatableSectionId = index === 1 ? undefined : uuidv4();
+        const generalField = [
+          newSection.section_field[0],
+          {
+            ...newSection.section_field[1],
+            field_option: typeOptions,
+          },
+          ...newSection.section_field.slice(2),
+        ];
+        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
-      updateSection(index, {
-        ...newSection,
-        section_field: [
-          ...generalField.map((field) => {
-            return {
-              ...field,
-              field_section_duplicatable_id: duplicatableSectionId,
-            };
-          }),
-        ],
+        updateSection(index, {
+          ...newSection,
+          section_field: [
+            ...generalField.map((field) => {
+              return {
+                ...field,
+                field_section_duplicatable_id: duplicatableSectionId,
+              };
+            }),
+          ],
+        });
+      } else {
+        const generalField = [
+          newSection.section_field[0],
+          {
+            ...newSection.section_field[1],
+            field_response: "",
+            field_option: [],
+          },
+          ...newSection.section_field.slice(2),
+        ];
+        updateSection(index, {
+          ...newSection,
+          section_field: generalField,
+        });
+      }
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
-    } else {
-      const generalField = [
-        newSection.section_field[0],
-        {
-          ...newSection.section_field[1],
-          field_response: "",
-          field_option: [],
-        },
-        ...newSection.section_field.slice(2),
-      ];
-      updateSection(index, {
-        ...newSection,
-        section_field: generalField,
-      });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -429,6 +456,7 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
                       onCSICodeChange: handleCSICodeChange,
                       onCategoryChange: handleCategoryChange,
                     }}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

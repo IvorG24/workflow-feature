@@ -69,6 +69,9 @@ const CreatePEDEquipmentRequestPage = ({
     }))
   );
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -232,6 +235,7 @@ const CreatePEDEquipmentRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 1 }]);
         const categoryId = categoryOptions.find(
           (category) => category.option_value === value
         );
@@ -296,6 +300,8 @@ const CreatePEDEquipmentRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -306,6 +312,10 @@ const CreatePEDEquipmentRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 2 },
+          { sectionIndex: index, fieldIndex: 3 },
+        ]);
         const brandChoices = await getEquipmentSectionChoices(supabaseClient, {
           category: newSection.section_field[0].field_response as string,
           equipmentName: value,
@@ -383,6 +393,8 @@ const CreatePEDEquipmentRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -390,6 +402,7 @@ const CreatePEDEquipmentRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 3 }]);
         const modelChoices = await getEquipmentSectionChoices(supabaseClient, {
           category: newSection.section_field[0].field_response as string,
           equipmentName: newSection.section_field[1].field_response as string,
@@ -462,6 +475,8 @@ const CreatePEDEquipmentRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -495,6 +510,7 @@ const CreatePEDEquipmentRequestPage = ({
                       onEquipmentNameChange: handleEquipmentNameChange,
                       onBrandChange: handleBrandChange,
                     }}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

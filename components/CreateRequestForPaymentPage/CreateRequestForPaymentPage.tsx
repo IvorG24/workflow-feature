@@ -60,7 +60,6 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
   const {
     fields: formSections,
     replace: replaceSection,
-    update: updateSection,
     remove: removeSection,
     insert: insertSection,
   } = useFieldArray({
@@ -180,19 +179,19 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
     const defaultPoFieldIndex = defaultSection.section_field.findIndex(
       (field) => field.field_name === "PO Number"
     );
-    const poFieldExists =
+    const currentPoFieldExists =
       currentSection.section_field[defaultPoFieldIndex].field_name ===
       "PO Number";
 
-    if (value === "With PO" && !poFieldExists) {
+    if (value === "With PO" && !currentPoFieldExists) {
       const poFieldValue = defaultSection.section_field[defaultPoFieldIndex];
       currentSection.section_field.splice(defaultPoFieldIndex, 0, poFieldValue);
-      updateSection(index, currentSection);
-    } else if ((value === "Without PO" && poFieldExists) || !value) {
+    } else if ((value === "Without PO" || !value) && currentPoFieldExists) {
       currentSection.section_field.splice(defaultPoFieldIndex, 1);
-      removeSection(index);
-      insertSection(index, currentSection);
     }
+
+    removeSection(index);
+    insertSection(index, currentSection);
   };
 
   useEffect(() => {

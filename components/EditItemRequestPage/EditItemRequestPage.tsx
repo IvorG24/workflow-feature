@@ -1,30 +1,34 @@
 import {
-  checkIfRequestIsEditable,
-  getCSI,
   getCSICode,
-  getCSICodeOptionsForItems,
+  getCSICodeOptions,
   getItem,
+  getItemOptions,
+  getItemRequestConditionalOptions,
   getLevelThreeDescription,
+  getNonDuplictableSectionResponse,
   getProjectSignerWithTeamMember,
-  getSectionInEditRequest,
-  getSupplier,
+  getSectionInRequestPage,
+  getSupplierOptions,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
-import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
-import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
-import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
+import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
+import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
+import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { isStringParsable, safeParse } from "@/utils/functions";
+import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CSICodeTableRow,
-  FieldTableRow,
   FormType,
   FormWithResponseType,
   OptionTableRow,
+  RequestResponseTableRow,
+  RequestTableRow,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
@@ -43,82 +47,72 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
-import { RequestFormValues } from "../EditRequestPage/EditRequestPage";
 
-export type RequestFormValuesForReferenceRequest = {
-  sections: FormWithResponseType["form_section"];
+export type Section = FormWithResponseType["form_section"][0];
+export type Field = FormType["form_section"][0]["section_field"][0];
+
+export type RequestFormValues = {
+  sections: Section[];
+};
+
+export type FieldWithResponseArray = Field & {
+  field_response: RequestResponseTableRow[];
 };
 
 type Props = {
-  request: RequestWithResponseType;
-  itemOptions: OptionTableRow[];
+  form: FormType;
   projectOptions: OptionTableRow[];
-  specialApprover: {
+  specialApprover?: {
     special_approver_id: string;
     special_approver_item_list: string[];
     special_approver_signer: FormType["form_signer"][0];
   }[];
-  referenceOnly: boolean;
-  supplierOptions: OptionTableRow[];
-  preferredSupplierField?: FieldTableRow;
+  duplicatableSectionIdList: string[];
+  requestId: string;
 };
 
 const EditItemRequestPage = ({
-  request,
-  itemOptions,
+  form,
   projectOptions,
   specialApprover,
-  referenceOnly,
-  supplierOptions,
-  preferredSupplierField,
+  duplicatableSectionIdList,
+  requestId,
 }: Props) => {
   const router = useRouter();
-  const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
 
-  const specialApproverList = specialApprover.map(
-    (approver) => approver.special_approver_signer.signer_id
-  );
+  const isReferenceOnly = Boolean(router.query.referenceOnly);
 
-  const initialSignerList: FormType["form_signer"] = request.request_signer
-    .map((signer) => signer.request_signer_signer)
-    .map((signer) => ({
+  const [initialRequestDetails, setInitialRequestDetails] =
+    useState<RequestFormValues>();
+  const [signerList, setSignerList] = useState(
+    form.form_signer.map((signer) => ({
       ...signer,
       signer_action: signer.signer_action.toUpperCase(),
-      signer_team_member: {
-        ...signer.signer_team_member,
-        team_member_user: {
-          ...signer.signer_team_member.team_member_user,
-          user_id: signer.signer_team_member.team_member_user.user_id,
-          user_avatar: "",
-        },
-      },
-    }));
+    }))
+  );
 
-  const [signerList, setSignerList] = useState(initialSignerList);
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [isSearchingSupplier, setIsSearching] = useState(false);
-  const [isSearchingCSI, setIsSearchingCSI] = useState(false);
-  const [itemDivisionIdList, setItemDivisionIdList] = useState<string[][]>([
-    [],
-  ]);
-  const [originalSections, setOriginalSections] = useState<
-    RequestWithResponseType["request_form"]["form_section"]
+  const [itemOptions, setItemOptions] = useState<OptionTableRow[]>([]);
+  const [preferredSupplierOptions, setPreferredSupplierOptions] = useState<
+    OptionTableRow[]
+  >([]);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
   >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
-  const { request_form } = request;
   const formDetails = {
-    form_name: request_form.form_name,
-    form_description: request_form.form_description,
-    form_date_created: request.request_date_created,
-    form_team_member: request.request_team_member,
-    form_type: request_form.form_type,
-    form_sub_type: request_form.form_sub_type,
+    form_name: form.form_name,
+    form_description: form.form_description,
+    form_date_created: form.form_date_created,
+    form_team_member: form.form_team_member,
+    form_type: form.form_type,
+    form_sub_type: form.form_sub_type,
   };
 
   const requestFormMethods = useForm<RequestFormValues>();
@@ -127,53 +121,312 @@ const EditItemRequestPage = ({
     fields: formSections,
     insert: addSection,
     remove: removeSection,
-    update: updateSection,
     replace: replaceSection,
+    update: updateSection,
   } = useFieldArray({
     control,
     name: "sections",
   });
 
   useEffect(() => {
-    if (!team.team_id || !preferredSupplierField) return;
+    setIsLoading(true);
+    if (!team.team_id) return;
     try {
-      const fetchSections = async () => {
-        const newSection: RequestWithResponseType["request_form"]["form_section"] =
+      const fetchRequestDetails = async () => {
+        // Fetch unconditional option
+        // Fetch item option
+        let index = 0;
+        const itemOptionList: OptionTableRow[] = [];
+        while (1) {
+          const itemData = await getItemOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const itemOptions = itemData.map((item, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: item.item_id,
+              option_order: index,
+              option_value: item.item_general_name,
+            };
+          });
+          itemOptionList.push(...itemOptions);
+
+          if (itemData.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setItemOptions(itemOptionList);
+
+        // Fetch supplier option
+        index = 0;
+        const supplierOptionlist: OptionTableRow[] = [];
+        while (1) {
+          const supplierData = await getSupplierOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const supplierOptions = supplierData.map((supplier, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: supplier.supplier_id,
+              option_order: index,
+              option_value: supplier.supplier,
+            };
+          });
+          supplierOptionlist.push(...supplierOptions);
+
+          if (supplierOptions.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setPreferredSupplierOptions(supplierOptionlist);
+
+        // Fetch response
+        // Non duplicatable section response
+        const nonDuplicatableSectionResponse =
+          await getNonDuplictableSectionResponse(supabaseClient, {
+            requestId,
+            fieldIdList: form.form_section[0].section_field.map(
+              (field) => field.field_id
+            ),
+          });
+        const nonDuplicatableSectionField =
+          form.form_section[0].section_field.map((field) => {
+            const response = nonDuplicatableSectionResponse.find(
+              (response) =>
+                response.request_response_field_id === field.field_id
+            );
+            return {
+              ...field,
+              field_response: response
+                ? safeParse(response.request_response)
+                : "",
+            };
+          });
+
+        // Duplicatable section response
+        index = 0;
+        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
-        let index = 1;
         while (1) {
           setIsLoading(true);
-          const { sectionData, itemDivisionIdList } =
-            await getSectionInEditRequest(supabaseClient, {
-              index,
-              supplierOptions,
-              requestId: request.request_id,
-              teamId: team.team_id,
-              itemOptions,
-              preferredSupplierField,
-            });
-          if (sectionData.length === 0) break;
-          newSection.push(...sectionData);
-          setItemDivisionIdList((prev) => [...prev, ...itemDivisionIdList]);
-          index += 10;
+          const duplicatableSectionIdCondition = duplicatableSectionIdList
+            .slice(index, index + 5)
+            .map((dupId) => `'${dupId}'`)
+            .join(",");
+
+          const data = await getSectionInRequestPage(supabaseClient, {
+            index,
+            requestId: requestId,
+            sectionId: form.form_section[1].section_id,
+            duplicatableSectionIdCondition:
+              duplicatableSectionIdCondition.length !== 0
+                ? duplicatableSectionIdCondition
+                : `'${uuidv4()}'`,
+            withOption: true,
+          });
+          newFields.push(...data);
+          index += 5;
+
+          if (index > duplicatableSectionIdList.length) break;
         }
-        replaceSection([{ ...request_form.form_section[0] }, ...newSection]);
-        setOriginalSections([
-          { ...request_form.form_section[0] },
-          ...newSection,
+        const uniqueFieldIdList: string[] = [];
+        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        newFields.forEach((field) => {
+          if (uniqueFieldIdList.includes(field.field_id)) {
+            const currentFieldIndex = combinedFieldList.findIndex(
+              (combinedField) => combinedField.field_id === field.field_id
+            );
+            combinedFieldList[currentFieldIndex].field_response.push(
+              ...field.field_response
+            );
+          } else {
+            uniqueFieldIdList.push(field.field_id);
+            combinedFieldList.push(field);
+          }
+        });
+
+        // Format section
+        const newSection = generateSectionWithDuplicateList([
+          {
+            ...form.form_section[1],
+            section_field: combinedFieldList,
+          },
         ]);
+
+        // Input option to the sections
+        const sectionIndexListWithoutSupplier: number[] = [];
+        const formattedSection = newSection.map((section, sectionIndex) => {
+          const fieldList: Section["section_field"] = [];
+          section.section_field.forEach((field, fieldIndex) => {
+            const response = field.field_response?.request_response
+              ? safeParse(field.field_response?.request_response)
+              : "";
+            let option: OptionTableRow[] = field.field_option ?? [];
+            switch (fieldIndex) {
+              case 0:
+                option = itemOptionList;
+                break;
+              case 9:
+                if (field.field_name === "Preferred Supplier")
+                  option = supplierOptionlist;
+                else {
+                  sectionIndexListWithoutSupplier.push(sectionIndex);
+                }
+                break;
+            }
+            if (response || field.field_name === "Preferred Supplier") {
+              fieldList.push({
+                ...field,
+                field_response: response,
+                field_option: option,
+              });
+            }
+          });
+
+          return {
+            ...section,
+            section_field: fieldList,
+          };
+        });
+
+        // Add supplier field if missing
+        sectionIndexListWithoutSupplier.forEach((index) => {
+          formattedSection[index].section_field.splice(9, 0, {
+            field_id: "159c86c3-dda6-4c8a-919f-50e1674659bd",
+            field_name: "Preferred Supplier",
+            field_description: "",
+            field_is_required: false,
+            field_type: "DROPDOWN",
+            field_order: 14,
+            field_is_positive_metric: true,
+            field_is_read_only: false,
+            field_section_id: "0672ef7d-849d-4bc7-81b1-7a5eefcc1451",
+            field_response: "",
+            field_option: supplierOptionlist,
+          });
+        });
+
+        // Filter section with unique item name
+        const uniqueItemName: string[] = [];
+        const filteredSection: RequestFormValues["sections"] = [];
+        formattedSection.forEach((section) => {
+          if (
+            !uniqueItemName.includes(
+              `${section.section_field[0].field_response}`
+            )
+          ) {
+            uniqueItemName.push(`${section.section_field[0].field_response}`);
+            filteredSection.push(section);
+          }
+        });
+
+        // Fetch conditional options
+        const conditionalOptionList: {
+          itemName: string;
+          fieldList: {
+            fieldId: string;
+            optionList: OptionTableRow[];
+          }[];
+        }[] = [];
+
+        index = 0;
+        while (1) {
+          const optionData = await getItemRequestConditionalOptions(
+            supabaseClient,
+            {
+              sectionList: filteredSection
+                .slice(index, index + 5)
+                .map((section) => {
+                  return {
+                    itemName: `${section.section_field[0].field_response}`,
+                    fieldIdList: [
+                      section.section_field[4].field_id,
+                      ...section.section_field
+                        .slice(10)
+                        .map((field) => field.field_id),
+                    ],
+                  };
+                }),
+            }
+          );
+          conditionalOptionList.push(...optionData);
+          if (optionData.length < 5) break;
+          index += 5;
+        }
+
+        // Insert option to section list
+        formattedSection.forEach((section, sectionIndex) => {
+          const itemIndex = conditionalOptionList.findIndex(
+            (value) =>
+              value.itemName === section.section_field[0].field_response
+          );
+          if (itemIndex === -1) return;
+
+          conditionalOptionList[itemIndex].fieldList.forEach((field) => {
+            const fieldIndex = section.section_field.findIndex(
+              (value) => value.field_id === field.fieldId
+            );
+            if (fieldIndex === -1) return;
+
+            formattedSection[sectionIndex].section_field[
+              fieldIndex
+            ].field_option = field.optionList;
+          });
+        });
+
+        // Add duplicatable section id
+        const sectionWithDuplicatableId = formattedSection.map(
+          (section, index) => {
+            const dupId = index ? uuidv4() : undefined;
+            return {
+              ...section,
+              section_field: section.section_field.map((field) => {
+                return {
+                  ...field,
+                  field_section_duplicatable_id: dupId,
+                };
+              }),
+            };
+          }
+        );
+
+        // fetch additional signer
+        handleProjectNameChange(nonDuplicatableSectionField[0].field_response);
+
+        const finalInitialRequestDetails = [
+          {
+            ...form.form_section[0],
+            section_field: nonDuplicatableSectionField,
+          },
+          ...sectionWithDuplicatableId,
+        ];
+        replaceSection(finalInitialRequestDetails);
+        setInitialRequestDetails({ sections: finalInitialRequestDetails });
         setIsLoading(false);
       };
-      fetchSections();
+      fetchRequestDetails();
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-  }, [team.team_id]);
+  }, [team]);
 
-  const handleEditRequest = async (data: RequestFormValues) => {
+  const onSubmit = async (data: RequestFormValues) => {
+    if (isFetchingSigner) {
+      notifications.show({
+        message: "Wait until all signers are fetched before submitting.",
+        color: "orange",
+      });
+      return;
+    }
+
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -191,182 +444,16 @@ const EditItemRequestPage = ({
           newSections.forEach((newSection) => {
             // if section general name is equal
             if (
-              safeParse(
-                newSection.section_field[0].field_response[0].request_response
-              ) ==
-              safeParse(
-                section.section_field[0].field_response[0].request_response
-              )
+              newSection.section_field[0].field_response ===
+              section.section_field[0].field_response
             ) {
               let uniqueField = false;
               // loop on every field except name and quantity
               for (let i = 5; i < newSection.section_field.length; i++) {
-                const newSectionField =
-                  safeParse(
-                    newSection.section_field[i].field_response[0]
-                      .request_response
-                  ) ?? "";
-                const sectionField =
-                  safeParse(
-                    section.section_field[i].field_response[0].request_response
-                  ) ?? "";
-                if (newSectionField != sectionField) {
-                  uniqueField = true;
-                  break;
-                }
-              }
-              if (!uniqueField) {
-                newSection.section_field[2].field_response[0].request_response = `${
-                  Number(
-                    newSection.section_field[2].field_response[0]
-                      .request_response
-                  ) +
-                  Number(
-                    section.section_field[2].field_response[0].request_response
-                  )
-                }`;
-                uniqueItem = false;
-              }
-            }
-          });
-          if (uniqueItem) {
-            newSections.push(section);
-          }
-        }
-      });
-
-      const newData = {
-        sections: [data.sections[0], ...newSections],
-      };
-
-      const isPending = await checkIfRequestIsEditable(supabaseClient, {
-        requestId: request.request_id,
-      });
-
-      if (!isPending) {
-        notifications.show({
-          message: "A signer reviewed your request. Request can't be edited",
-          color: "red",
-          autoClose: false,
-        });
-        router.push(
-          `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-            request.request_formsly_id_prefix
-          }-${request.request_formsly_id_serial}`
-        );
-        return;
-      }
-
-      const filteredSignerList = signerList.filter(
-        (signer) => !specialApproverList.includes(signer.signer_id)
-      );
-
-      // special approver
-      const additionalSignerList: FormType["form_signer"] = [];
-      const alreadyAddedAdditionalSigner: string[] = [];
-      if (specialApprover && specialApprover.length !== 0) {
-        const generalNameList = newSections.map((section) =>
-          safeParse(section.section_field[0].field_response[0].request_response)
-        );
-        specialApprover.map((approver) => {
-          if (
-            alreadyAddedAdditionalSigner.includes(
-              approver.special_approver_signer.signer_id
-            )
-          )
-            return;
-          if (
-            approver.special_approver_item_list.some((item) =>
-              generalNameList.includes(item)
-            )
-          ) {
-            additionalSignerList.push(approver.special_approver_signer);
-            alreadyAddedAdditionalSigner.push(
-              approver.special_approver_signer.signer_id
-            );
-          }
-        });
-      }
-
-      const edittedRequest = await editRequest(supabaseClient, {
-        requestId: request.request_id,
-        requestFormValues: newData,
-        signers: [...filteredSignerList, ...additionalSignerList],
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: request_form.form_name,
-        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
-      });
-
-      notifications.show({
-        message: "Request edited.",
-        color: "green",
-      });
-
-      router.push(
-        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-          edittedRequest.request_formsly_id_prefix
-        }-${edittedRequest.request_formsly_id_serial}`
-      );
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCreateRequest = async (data: RequestFormValues) => {
-    try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
-
-      setIsLoading(true);
-      const formattedData = data.sections.map((section, index) => {
-        const duplicatableId = uuidv4();
-        return {
-          ...section,
-          section_field: section.section_field.map((field) => {
-            return {
-              ...field,
-              field_section_duplicatable_id:
-                index > 1 ? duplicatableId : undefined,
-              field_response: isStringParsable(
-                field.field_response[0].request_response
-              )
-                ? JSON.parse(field.field_response[0].request_response)
-                : field.field_response[0].request_response ?? undefined,
-            };
-          }),
-        };
-      });
-      const toBeCheckedSections = formattedData.slice(1);
-      const newSections: RequestFormValuesForReferenceRequest["sections"] = [];
-      toBeCheckedSections.forEach((section) => {
-        // if new section if empty
-        if (newSections.length === 0) {
-          newSections.push(section);
-        } else {
-          let uniqueItem = true;
-          newSections.forEach((newSection) => {
-            // if section general name is equal
-
-            if (
-              safeParse(newSection.section_field[0].field_response as string) ==
-              safeParse(section.section_field[0].field_response)
-            ) {
-              let uniqueField = false;
-              // loop on every field except name and quantity
-              for (let i = 5; i < newSection.section_field.length; i++) {
-                const newSectionField =
-                  safeParse(
-                    newSection.section_field[i].field_response as string
-                  ) ?? "";
-                const sectionField =
-                  safeParse(section.section_field[i].field_response) ?? "";
-                if (newSectionField != sectionField) {
+                if (
+                  newSection.section_field[i].field_response !==
+                  section.section_field[i].field_response
+                ) {
                   uniqueField = true;
                   break;
                 }
@@ -386,19 +473,15 @@ const EditItemRequestPage = ({
       });
 
       const newData = {
-        sections: [formattedData[0], ...newSections],
+        sections: [data.sections[0], ...newSections],
       };
 
-      const response = formattedData[0].section_field[0]
+      const response = data.sections[0].section_field[0]
         .field_response as string;
 
-      const projectId = formattedData[0].section_field[0].field_option.find(
+      const projectId = data.sections[0].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
-
-      const filteredSignerList = signerList.filter(
-        (signer) => !specialApproverList.includes(signer.signer_id)
-      );
 
       // special approver
       const additionalSignerList: FormType["form_signer"] = [];
@@ -427,28 +510,41 @@ const EditItemRequestPage = ({
         });
       }
 
-      const newRequest = await createRequest(supabaseClient, {
-        requestFormValues: newData,
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        signers: [...filteredSignerList, ...additionalSignerList],
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: request.request_form.form_name,
-        isFormslyForm: true,
-        projectId,
-        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
-      });
+      let request: RequestTableRow;
+      if (isReferenceOnly) {
+        request = await createRequest(supabaseClient, {
+          requestFormValues: newData,
+          formId: form.form_id,
+          teamMemberId: teamMember.team_member_id,
+          signers: [...signerList, ...additionalSignerList],
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
+          isFormslyForm: true,
+          projectId,
+          teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        });
+      } else {
+        request = await editRequest(supabaseClient, {
+          requestId,
+          requestFormValues: newData,
+          signers: [...signerList, ...additionalSignerList],
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
+          teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        });
+      }
 
       notifications.show({
-        message: "Request created.",
+        message: `Request ${isReferenceOnly ? "created" : "edited"}.`,
         color: "green",
       });
 
       router.push(
         `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-          newRequest.request_formsly_id_prefix
-        }-${newRequest.request_formsly_id_serial}`
+          request.request_formsly_id_prefix
+        }-${request.request_formsly_id_serial}`
       );
     } catch (error) {
       notifications.show({
@@ -464,37 +560,33 @@ const EditItemRequestPage = ({
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
       .lastIndexOf(sectionId);
-    const sectionMatch = formSections.find(
+    const sectionMatch = form.form_section.find(
       (section) => section.section_id === sectionId
     );
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
-      const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field
-        .slice(0, 10)
-        .map((field) => {
+      const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
+        (field) => {
           if (field.field_name === "General Name") {
             return {
               ...field,
-              field_response: field.field_response.map((response) => ({
-                ...response,
-                request_response_duplicatable_section_id: sectionDuplicatableId,
-                request_response: "",
-              })),
               field_section_duplicatable_id: sectionDuplicatableId,
               field_option: itemOptions,
+            };
+          } else if (field.field_name === "Preferred Supplier") {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+              field_option: preferredSupplierOptions,
             };
           } else {
             return {
               ...field,
-              field_response: field.field_response.map((response) => ({
-                ...response,
-                request_response_duplicatable_section_id: sectionDuplicatableId,
-                request_response: "",
-              })),
               field_section_duplicatable_id: sectionDuplicatableId,
             };
           }
-        });
+        }
+      );
       const newSection = {
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,
@@ -504,8 +596,17 @@ const EditItemRequestPage = ({
     }
   };
 
-  const handleRemoveSection = (sectionMatchIndex: number) =>
-    removeSection(sectionMatchIndex);
+  const handleRemoveSection = (sectionDuplicatableId: string) => {
+    const sectionMatchIndex = formSections.findIndex(
+      (section) =>
+        section.section_field[0].field_section_duplicatable_id ===
+        sectionDuplicatableId
+    );
+    if (sectionMatchIndex) {
+      removeSection(sectionMatchIndex);
+      return;
+    }
+  };
 
   const handleGeneralNameChange = async (
     index: number,
@@ -515,6 +616,11 @@ const EditItemRequestPage = ({
 
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 1 },
+          { sectionIndex: index, fieldIndex: 3 },
+          { sectionIndex: index, fieldIndex: 4 },
+        ]);
         const item = await getItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
@@ -527,159 +633,93 @@ const EditItemRequestPage = ({
             levelThreeDescription: item.item_level_three_description,
           });
         } else {
-          csiCodeList = await getCSICodeOptionsForItems(supabaseClient, {
-            divisionIdList: item.item_division_id_list,
-          });
+          let index = 0;
+          const csiOptionList: CSICodeTableRow[] = [];
+          while (1) {
+            const csiData = await getCSICodeOptions(supabaseClient, {
+              index,
+              limit: FETCH_OPTION_LIMIT,
+              divisionIdList: item.item_division_id_list,
+            });
+            csiOptionList.push(...(csiData as CSICodeTableRow[]));
+            if (csiData.length < FETCH_OPTION_LIMIT) break;
+            index += FETCH_OPTION_LIMIT;
+          }
+          csiCodeList = csiOptionList;
         }
 
-        const generalField: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [
-            {
-              ...newSection.section_field[0],
-            },
-            {
-              ...newSection.section_field[1],
-              field_response: newSection.section_field[1].field_response.map(
-                (response) => ({
-                  ...response,
-                  request_response: item.item_unit,
-                  request_response_id: uuidv4(),
-                })
-              ),
-            },
-            {
-              ...newSection.section_field[2],
-            },
-            {
-              ...newSection.section_field[3],
-              field_response: newSection.section_field[3].field_response.map(
-                (response) => ({
-                  ...response,
-                  request_response: item.item_gl_account,
-                  request_response_id: uuidv4(),
-                })
-              ),
-            },
-            {
-              ...newSection.section_field[4],
-              field_response: newSection.section_field[4].field_response.map(
-                (response) => ({
-                  ...response,
-                  request_response: isWithDescription
-                    ? csiCodeList[0].csi_code_level_three_description
-                    : "",
-                  request_response_id: uuidv4(),
-                })
-              ),
-              field_option: csiCodeList.map((csiCode, index) => {
-                return {
-                  option_field_id:
-                    request_form.form_section[0].section_field[0].field_id,
-                  option_id: csiCode.csi_code_id,
-                  option_order: index,
-                  option_value: csiCode.csi_code_level_three_description,
-                };
-              }),
-            },
-            ...newSection.section_field.slice(5, 9).map((field, fieldIdx) => {
-              if (isWithDescription) {
-                switch (field.field_name) {
-                  case "CSI Code":
-                    return {
-                      ...field,
-                      field_response: newSection.section_field[
-                        5 + fieldIdx
-                      ].field_response.map((response) => ({
-                        ...response,
-                        request_response: csiCodeList[0].csi_code_section,
-                        request_response_duplicatable_section_id:
-                          newSection.section_field[0].field_response[0]
-                            .request_response_duplicatable_section_id,
-                        request_response_id: uuidv4(),
-                      })),
-                    };
-                  case "Division Description":
-                    return {
-                      ...field,
-                      field_response: newSection.section_field[
-                        5 + fieldIdx
-                      ].field_response.map((response) => ({
-                        ...response,
-                        request_response:
-                          csiCodeList[0].csi_code_division_description,
-                        request_response_duplicatable_section_id:
-                          newSection.section_field[0].field_response[0]
-                            .request_response_duplicatable_section_id,
-                        request_response_id: uuidv4(),
-                      })),
-                    };
-                  case "Level 2 Major Group Description":
-                    return {
-                      ...field,
-                      field_response: newSection.section_field[
-                        5 + fieldIdx
-                      ].field_response.map((response) => ({
-                        ...response,
-                        request_response:
-                          csiCodeList[0]
-                            .csi_code_level_two_major_group_description,
-                        request_response_duplicatable_section_id:
-                          newSection.section_field[0].field_response[0]
-                            .request_response_duplicatable_section_id,
-                        request_response_id: uuidv4(),
-                      })),
-                    };
-                  case "Level 2 Minor Group Description":
-                    return {
-                      ...field,
-                      field_response: newSection.section_field[
-                        5 + fieldIdx
-                      ].field_response.map((response) => ({
-                        ...response,
-                        request_response:
-                          csiCodeList[0]
-                            .csi_code_level_two_minor_group_description,
-                        request_response_duplicatable_section_id:
-                          newSection.section_field[0].field_response[0]
-                            .request_response_duplicatable_section_id,
-                        request_response_id: uuidv4(),
-                      })),
-                    };
-                  default:
-                    return {
-                      ...field,
-                      field_response: newSection.section_field[
-                        5 + fieldIdx
-                      ].field_response.map((response) => ({
-                        ...response,
-                        request_response: "",
-                        request_response_duplicatable_section_id:
-                          newSection.section_field[0].field_response[0]
-                            .request_response_duplicatable_section_id,
-                        request_response_id: uuidv4(),
-                      })),
-                    };
-                }
-              } else {
-                return {
-                  ...field,
-                  field_response: newSection.section_field[
-                    5 + fieldIdx
-                  ].field_response.map((response) => ({
-                    ...response,
-                    request_response: "",
-                    request_response_duplicatable_section_id:
-                      newSection.section_field[0].field_response[0]
-                        .request_response_duplicatable_section_id,
-                    request_response_id: uuidv4(),
-                  })),
-                };
-              }
+        const generalField = [
+          {
+            ...newSection.section_field[0],
+          },
+          {
+            ...newSection.section_field[1],
+            field_response: item.item_unit,
+          },
+          {
+            ...newSection.section_field[2],
+          },
+          {
+            ...newSection.section_field[3],
+            field_response: item.item_gl_account,
+          },
+          {
+            ...newSection.section_field[4],
+            field_response: isWithDescription
+              ? csiCodeList[0].csi_code_level_three_description
+              : "",
+            field_option: csiCodeList.map((csiCode, index) => {
+              return {
+                option_field_id: form.form_section[0].section_field[0].field_id,
+                option_id: csiCode.csi_code_id,
+                option_order: index,
+                option_value: csiCode.csi_code_level_three_description,
+              };
             }),
-            {
-              ...newSection.section_field[9],
-            },
-          ];
+          },
+          ...newSection.section_field.slice(5, 9).map((field) => {
+            if (isWithDescription) {
+              switch (field.field_name) {
+                case "CSI Code":
+                  return {
+                    ...field,
+                    field_response: csiCodeList[0].csi_code_section,
+                  };
+                case "Division Description":
+                  return {
+                    ...field,
+                    field_response:
+                      csiCodeList[0].csi_code_division_description,
+                  };
+                case "Level 2 Major Group Description":
+                  return {
+                    ...field,
+                    field_response:
+                      csiCodeList[0].csi_code_level_two_major_group_description,
+                  };
+                case "Level 2 Minor Group Description":
+                  return {
+                    ...field,
+                    field_response:
+                      csiCodeList[0].csi_code_level_two_minor_group_description,
+                  };
+                default:
+                  return {
+                    ...field,
+                    field_response: "",
+                  };
+              }
+            } else {
+              return {
+                ...field,
+                field_response: "",
+              };
+            }
+          }),
+          {
+            ...newSection.section_field[9],
+          },
+        ];
         const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
         const newFields = item.item_description.map((description) => {
@@ -698,23 +738,23 @@ const EditItemRequestPage = ({
             }
           );
 
+          const index = options.findIndex(
+            (value) => value.option_value === "Any"
+          );
+          if (index !== -1) {
+            const anyOption = options[index];
+            options.splice(index, 1);
+            options.unshift({ ...anyOption });
+          }
+
           return {
             ...description.item_field,
             field_section_duplicatable_id: duplicatableSectionId,
             field_option: options,
-            field_response: [
-              {
-                request_response: "",
-                request_response_id: uuidv4(),
-                request_response_duplicatable_section_id:
-                  newSection.section_field[0].field_response[0]
-                    .request_response_duplicatable_section_id,
-                request_response_field_id: description.item_field.field_id,
-                request_response_request_id: request.request_id,
-              },
-            ],
+            field_response: index !== -1 ? "Any" : "",
           };
         });
+
         updateSection(index, {
           ...newSection,
           section_field: [
@@ -725,64 +765,38 @@ const EditItemRequestPage = ({
               };
             }),
             ...newFields,
-          ] as RequestWithResponseType["request_form"]["form_section"][0]["section_field"],
-        });
-        setItemDivisionIdList((prev) => {
-          prev[index] = item.item_division_id_list;
-          return prev;
+          ],
         });
       } else {
-        const generalField: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [
-            newSection.section_field[0],
-            {
-              ...newSection.section_field[1],
-              field_response: [
-                {
-                  request_response: "",
-                  request_response_duplicatable_section_id:
-                    newSection.section_field[1].field_section_duplicatable_id ||
-                    null,
-                  request_response_field_id:
-                    newSection.section_field[1].field_id,
-                  request_response_id:
-                    newSection.section_field[1].field_response[0]
-                      .request_response_id,
-                  request_response_request_id: request.request_id,
-                },
-              ],
-            },
-            newSection.section_field[2],
-            ...newSection.section_field.slice(3, 9).map((field) => {
-              return {
-                ...field,
-                field_response: [
-                  {
-                    request_response: "",
-                    request_response_duplicatable_section_id:
-                      field.field_section_duplicatable_id || null,
-                    request_response_field_id: field.field_id,
-                    request_response_id:
-                      field.field_response[0].request_response_id,
-                    request_response_request_id: request.request_id,
-                  },
-                ],
-                field_option: [],
-              };
-            }),
-            newSection.section_field[9],
-          ];
+        const generalField = [
+          newSection.section_field[0],
+          {
+            ...newSection.section_field[1],
+            field_response: "",
+          },
+          newSection.section_field[2],
+          ...newSection.section_field.slice(3, 9).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+            };
+          }),
+          newSection.section_field[9],
+        ];
         updateSection(index, {
           ...newSection,
           section_field: generalField,
         });
       }
     } catch (e) {
-      setValue(`sections.${index}.section_field.0.field_response`, []);
+      setValue(`sections.${index}.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -791,68 +805,46 @@ const EditItemRequestPage = ({
 
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 5 },
+          { sectionIndex: index, fieldIndex: 6 },
+          { sectionIndex: index, fieldIndex: 7 },
+          { sectionIndex: index, fieldIndex: 8 },
+        ]);
         const csiCode = await getCSICode(supabaseClient, { csiCode: value });
 
         const generalField = [
           ...newSection.section_field.slice(0, 5),
           {
             ...newSection.section_field[5],
-            field_response: newSection.section_field[5].field_response.map(
-              (response) => ({
-                ...response,
-                request_response: csiCode?.csi_code_section,
-                request_response_id: uuidv4(),
-              })
-            ),
+            field_response: csiCode?.csi_code_section,
           },
           {
             ...newSection.section_field[6],
-            field_response: newSection.section_field[6].field_response.map(
-              (response) => ({
-                ...response,
-                request_response: csiCode?.csi_code_division_description,
-                request_response_id: uuidv4(),
-              })
-            ),
+            field_response: csiCode?.csi_code_division_description,
           },
           {
             ...newSection.section_field[7],
-            field_response: newSection.section_field[7].field_response.map(
-              (response) => ({
-                ...response,
-                request_response:
-                  csiCode?.csi_code_level_two_major_group_description,
-                request_response_id: uuidv4(),
-              })
-            ),
+            field_response: csiCode?.csi_code_level_two_major_group_description,
           },
           {
             ...newSection.section_field[8],
-            field_response: newSection.section_field[8].field_response.map(
-              (response) => ({
-                ...response,
-                request_response:
-                  csiCode?.csi_code_level_two_minor_group_description,
-                request_response_id: uuidv4(),
-              })
-            ),
+            field_response: csiCode?.csi_code_level_two_minor_group_description,
           },
           ...newSection.section_field.slice(9),
         ];
         const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [
+
+        updateSection(index, {
+          ...newSection,
+          section_field: [
             ...generalField.map((field) => {
               return {
                 ...field,
                 field_section_duplicatable_id: duplicatableSectionId,
               };
             }),
-          ];
-
-        updateSection(index, {
-          ...newSection,
-          section_field: newFields,
+          ],
         });
       } else {
         const generalField = [
@@ -860,11 +852,7 @@ const EditItemRequestPage = ({
           ...newSection.section_field.slice(4, 9).map((field) => {
             return {
               ...field,
-              field_response: field.field_response.map((response) => ({
-                ...response,
-                request_response: "",
-                request_response_id: uuidv4(),
-              })),
+              field_response: "",
             };
           }),
           ...newSection.section_field.slice(9),
@@ -875,16 +863,23 @@ const EditItemRequestPage = ({
         });
       }
     } catch (e) {
-      setValue(`sections.${index}.section_field.4.field_response`, []);
+      setValue(`sections.${index}.section_field.4.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
   const resetSigner = () => {
-    setSignerList(initialSignerList);
+    setSignerList(
+      form.form_signer.map((signer) => ({
+        ...signer,
+        signer_action: signer.signer_action.toUpperCase(),
+      }))
+    );
   };
 
   const handleProjectNameChange = async (value: string | null) => {
@@ -897,7 +892,7 @@ const EditItemRequestPage = ({
         if (projectId) {
           const data = await getProjectSignerWithTeamMember(supabaseClient, {
             projectId,
-            formId,
+            formId: form.form_id,
           });
           if (data.length !== 0) {
             setSignerList(data as unknown as FormType["form_signer"]);
@@ -909,7 +904,7 @@ const EditItemRequestPage = ({
         resetSigner();
       }
     } catch (e) {
-      setValue(`sections.0.section_field.0.field_response`, []);
+      setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -919,61 +914,22 @@ const EditItemRequestPage = ({
     }
   };
 
-  const supplierSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id || !formSections[1]) return;
-    try {
-      setIsSearching(true);
-      const supplierList = await getSupplier(supabaseClient, {
-        supplier: value ?? "",
-        teamId: teamMember.team_member_team_id,
-        fieldId: formSections[1].section_field[9].field_id,
-      });
-      setValue(`sections.${index}.section_field.9.field_option`, supplierList);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const csiSearch = async (value: string, index: number) => {
-    if (!teamMember?.team_member_team_id || !formSections[1]) return;
-    if (!itemDivisionIdList[index]) return;
-
-    try {
-      setIsSearchingCSI(true);
-      const csiList = await getCSI(supabaseClient, {
-        csi: value ?? "",
-        fieldId: formSections[1].section_field[4].field_id,
-        divisionIdList: itemDivisionIdList[index],
-      });
-
-      setValue(`sections.${index}.section_field.4.field_option`, csiList);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsSearchingCSI(false);
-    }
+  const handleResetRequest = () => {
+    replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
+    handleProjectNameChange(
+      initialRequestDetails?.sections[0].section_field[0]
+        .field_response as string
+    );
   };
 
   return (
     <Container>
       <Title order={2} color="dimmed">
-        {referenceOnly ? "Reference" : "Edit"} Request
+        {isReferenceOnly ? "Create" : "Edit"} Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form
-          onSubmit={handleSubmit(
-            referenceOnly ? handleCreateRequest : handleEditRequest
-          )}
-        >
+        <form onSubmit={handleSubmit(onSubmit)}>
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {
@@ -982,9 +938,6 @@ const EditItemRequestPage = ({
                 .map((sectionItem) => sectionItem.section_id)
                 .lastIndexOf(sectionIdToFind);
 
-              const isRemovable =
-                formSections[idx - 1]?.section_is_duplicatable &&
-                section.section_is_duplicatable;
               return (
                 <Box key={section.id}>
                   <RequestFormSection
@@ -992,18 +945,14 @@ const EditItemRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
-                    isSectionRemovable={isRemovable}
                     itemFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
                       onCSICodeChange: handleCSICodeChange,
-                      supplierSearch,
-                      isSearchingSupplier,
-                      csiSearch,
-                      isSearchingCSI,
                     }}
-                    formslyFormName={request_form.form_name}
-                    referenceOnly={referenceOnly}
+                    formslyFormName={form.form_name}
+                    isEdit={!isReferenceOnly}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -1029,7 +978,7 @@ const EditItemRequestPage = ({
               <Button
                 variant="outline"
                 color="red"
-                onClick={() => replaceSection(originalSections)}
+                onClick={handleResetRequest}
               >
                 Reset
               </Button>

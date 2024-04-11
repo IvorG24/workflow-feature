@@ -83,6 +83,9 @@ const CreateItemRequestPage = ({
   const [preferredSupplierOptions, setPreferredSupplierOptions] = useState<
     OptionTableRow[]
   >([]);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -372,6 +375,11 @@ const CreateItemRequestPage = ({
 
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 1 },
+          { sectionIndex: index, fieldIndex: 3 },
+          { sectionIndex: index, fieldIndex: 4 },
+        ]);
         const item = await getItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
@@ -546,6 +554,8 @@ const CreateItemRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -554,6 +564,12 @@ const CreateItemRequestPage = ({
 
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 5 },
+          { sectionIndex: index, fieldIndex: 6 },
+          { sectionIndex: index, fieldIndex: 7 },
+          { sectionIndex: index, fieldIndex: 8 },
+        ]);
         const csiCode = await getCSICode(supabaseClient, { csiCode: value });
 
         const generalField = [
@@ -611,6 +627,8 @@ const CreateItemRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -684,6 +702,7 @@ const CreateItemRequestPage = ({
                       onCSICodeChange: handleCSICodeChange,
                     }}
                     formslyFormName={form.form_name}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
