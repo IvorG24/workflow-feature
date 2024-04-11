@@ -6558,9 +6558,6 @@ RETURNS JSON as $$
 
     const isApprover = member.team_member_role === 'OWNER' || member.team_member_role === 'ADMIN';
     if (!isApprover) throw new Error("User is not an Approver");
-
-    const hasApprover = ticket.ticket_approver_team_member_id !== null
-    if (hasApprover) throw new Error("Ticket already have approver");
     
     plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
 
