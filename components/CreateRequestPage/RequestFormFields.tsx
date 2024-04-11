@@ -30,6 +30,7 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import isURL from "validator/lib/isURL";
 import { RequestFormValues } from "./CreateRequestPage";
 
 type RequestFormFieldsProps = {
@@ -197,7 +198,7 @@ const RequestFormFields = ({
         );
         setPrevFileLink(fileLink);
 
-        if (fileLink && !fileLink.name) {
+        if (isURL(fileLink)) {
           const response = await fetch(fileLink);
           const blob = await response.blob();
           const file = new File([blob], fileLink, { type: blob.type });

@@ -74,11 +74,11 @@ const EditRequestForPaymentPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>({ mode: "onChange" });
-  const { handleSubmit, control, setValue, getValues } = requestFormMethods;
+  const { handleSubmit, control, setValue, getValues, unregister } =
+    requestFormMethods;
   const {
     fields: formSections,
     replace: replaceSection,
-    update: updateSection,
     remove: removeSection,
     insert: insertSection,
   } = useFieldArray({
@@ -208,24 +208,54 @@ const EditRequestForPaymentPage = ({
     value: string | null,
     index: number
   ) => {
-    const defaultSection = form.form_section[index];
-    const currentSection = getValues(`sections.${index}`);
-    const defaultPoFieldIndex = defaultSection.section_field.findIndex(
+    if (!initialRequestDetails) {
+      return notifications.show({
+        message:
+          "Request details not available. Please reload the page and try again.",
+        color: "red",
+      });
+    }
+
+    const defaultPoFieldIndex = form.form_section[0].section_field.findIndex(
       (field) => field.field_name === "PO Number"
     );
-    const poFieldExists =
-      currentSection.section_field[defaultPoFieldIndex].field_name ===
-      "PO Number";
+    const defaultPoField = form.form_section[0].section_field.find(
+      (field) => field.field_name === "PO Number"
+    );
+    const initialSection = initialRequestDetails.sections[index];
+    const currentSection = getValues(`sections.${index}`);
+    const initialPoField = initialSection.section_field.find(
+      (field) => field.field_name === "PO Number"
+    );
 
-    if (value === "With PO" && !poFieldExists) {
-      const poFieldValue = defaultSection.section_field[defaultPoFieldIndex];
-      currentSection.section_field.splice(defaultPoFieldIndex, 0, poFieldValue);
-      updateSection(index, currentSection);
-    } else if ((value === "Without PO" && poFieldExists) || !value) {
-      currentSection.section_field.splice(defaultPoFieldIndex, 1);
-      removeSection(index);
-      insertSection(index, currentSection);
+    if (value === "With PO") {
+      let poFieldValue = defaultPoField;
+
+      // if initial po field exists, use initial po field
+      if (initialPoField) {
+        poFieldValue = initialPoField;
+      }
+      currentSection.section_field.splice(
+        defaultPoFieldIndex,
+        0,
+        poFieldValue as Field
+      );
+    } else if (value === "Without PO" || !value) {
+      currentSection.section_field = currentSection.section_field.filter(
+        (field) => field.field_name !== "PO Number"
+      );
     }
+    removeSection(index);
+    insertSection(index, currentSection);
+  };
+
+  const handleResetRequest = () => {
+    unregister(`sections.${0}`);
+    replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
+    handleProjectNameChange(
+      initialRequestDetails?.sections[0].section_field[0]
+        .field_response as string
+    );
   };
 
   useEffect(() => {
@@ -294,14 +324,6 @@ const EditRequestForPaymentPage = ({
       setIsLoading(false);
     }
   }, [team]);
-
-  const handleResetRequest = () => {
-    replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
-    handleProjectNameChange(
-      initialRequestDetails?.sections[0].section_field[0]
-        .field_response as string
-    );
-  };
 
   return (
     <Container>
