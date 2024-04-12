@@ -93,8 +93,9 @@ const EquipmentLookupList = ({
         message: `Error on fetching equipment ${lookup.label} list`,
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleCheckRow = (equipmentLookupId: string) => {

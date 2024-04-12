@@ -90,8 +90,9 @@ const OtherExpensesTypeList = ({
         message: `Error on fetching type list`,
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleCheckRow = (typeId: string) => {

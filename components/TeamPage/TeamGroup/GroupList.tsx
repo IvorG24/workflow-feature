@@ -121,8 +121,9 @@ const GroupList = ({
         message: "Error on fetching group list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleDelete = async () => {

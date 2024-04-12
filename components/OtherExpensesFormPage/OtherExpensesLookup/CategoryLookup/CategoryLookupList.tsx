@@ -93,8 +93,9 @@ const CategoryLookupList = ({
         message: `Error on fetching category ${lookup.label} list`,
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleCheckRow = (categoryLookupId: string) => {

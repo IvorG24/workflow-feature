@@ -117,8 +117,9 @@ const MemberList = ({
         message: "Error on fetching project member list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleRemove = async () => {

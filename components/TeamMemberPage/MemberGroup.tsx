@@ -61,8 +61,9 @@ const MemberGroup = ({ memberId, groupList, groupCount }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
