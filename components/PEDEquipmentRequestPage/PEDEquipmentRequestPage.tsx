@@ -160,6 +160,8 @@ const PEDEquipmentRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 

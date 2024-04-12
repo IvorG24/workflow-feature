@@ -10,6 +10,7 @@ import { Database } from "@/utils/database";
 import {
   FormSegmentType,
   FormType,
+  ItemCategoryWithSigner,
   ItemWithDescriptionType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
@@ -61,6 +62,8 @@ type Props = {
   teamGroupList: TeamGroupTableRow[];
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
+  itemCategories: ItemCategoryWithSigner[];
+  itemCategoryCount: number;
 };
 
 const ItemFormPage = ({
@@ -71,6 +74,8 @@ const ItemFormPage = ({
   teamGroupList,
   teamProjectList,
   teamProjectListCount,
+  itemCategories,
+  itemCategoryCount: itemCategoryInitialCount,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -90,6 +95,14 @@ const ItemFormPage = ({
   );
   const [itemList, setItemList] = useState(items);
   const [itemCount, setItemCount] = useState(itemListCount);
+
+  const [isCreatingItemCategory, setIsCreatingItemCategory] = useState(false);
+  const [editItemCategory, setEditItemCategory] =
+    useState<ItemCategoryWithSigner | null>(null);
+  const [itemCategoryList, setItemCategoryList] = useState(itemCategories);
+  const [itemCategoryCount, setItemCategoryCount] = useState(
+    itemCategoryInitialCount
+  );
 
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -418,6 +431,14 @@ const ItemFormPage = ({
           setSelectedItem={setSelectedItem}
           setEditItem={setEditItem}
           selectedItem={selectedItem}
+          isCreatingItemCategory={isCreatingItemCategory}
+          editItemCategory={editItemCategory}
+          itemCategoryList={itemCategoryList}
+          setItemCategoryList={setItemCategoryList}
+          itemCategoryCount={itemCategoryCount}
+          setItemCategoryCount={setItemCategoryCount}
+          setIsCreatingItemCategory={setIsCreatingItemCategory}
+          setEditItemCategory={setEditItemCategory}
         />
       ) : null}
 

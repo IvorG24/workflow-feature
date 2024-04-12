@@ -61,8 +61,9 @@ const MemberProject = ({ memberId, projectList, projectCount }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

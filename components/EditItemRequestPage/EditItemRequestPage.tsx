@@ -26,6 +26,7 @@ import {
   CSICodeTableRow,
   FormType,
   FormWithResponseType,
+  ItemCategoryType,
   OptionTableRow,
   RequestResponseTableRow,
   RequestTableRow,
@@ -62,11 +63,6 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
-  specialApprover?: {
-    special_approver_id: string;
-    special_approver_item_list: string[];
-    special_approver_signer: FormType["form_signer"][0];
-  }[];
   duplicatableSectionIdList: string[];
   requestId: string;
 };
@@ -74,7 +70,6 @@ type Props = {
 const EditItemRequestPage = ({
   form,
   projectOptions,
-  specialApprover,
   duplicatableSectionIdList,
   requestId,
 }: Props) => {
@@ -102,6 +97,9 @@ const EditItemRequestPage = ({
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
+  const [itemCategoryList, setItemCategoryList] = useState<
+    (ItemCategoryType["item_category"] | null)[]
+  >([null]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -326,6 +324,7 @@ const EditItemRequestPage = ({
         // Fetch conditional options
         const conditionalOptionList: {
           itemName: string;
+          category: ItemCategoryType["item_category"] | null;
           fieldList: {
             fieldId: string;
             optionList: OptionTableRow[];
@@ -357,6 +356,10 @@ const EditItemRequestPage = ({
           index += 5;
         }
 
+        const initialCategoryList: (
+          | ItemCategoryType["item_category"]
+          | null
+        )[] = [null];
         // Insert option to section list
         formattedSection.forEach((section, sectionIndex) => {
           const itemIndex = conditionalOptionList.findIndex(
@@ -364,6 +367,10 @@ const EditItemRequestPage = ({
               value.itemName === section.section_field[0].field_response
           );
           if (itemIndex === -1) return;
+
+          initialCategoryList.push(
+            conditionalOptionList[itemIndex].category ?? null
+          );
 
           conditionalOptionList[itemIndex].fieldList.forEach((field) => {
             const fieldIndex = section.section_field.findIndex(
@@ -376,6 +383,8 @@ const EditItemRequestPage = ({
             ].field_option = field.optionList;
           });
         });
+
+        setItemCategoryList(initialCategoryList);
 
         // Add duplicatable section id
         const sectionWithDuplicatableId = formattedSection.map(
@@ -483,32 +492,24 @@ const EditItemRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
-      // special approver
       const additionalSignerList: FormType["form_signer"] = [];
-      const alreadyAddedAdditionalSigner: string[] = [];
-      if (specialApprover && specialApprover.length !== 0) {
-        const generalNameList = newSections.map(
-          (section) => section.section_field[0].field_response
-        );
-        specialApprover.map((approver) => {
-          if (
-            alreadyAddedAdditionalSigner.includes(
-              approver.special_approver_signer.signer_id
-            )
+      const alreadyAddedAdditionalSigner: string[] = signerList.map(
+        (signer) => signer.signer_team_member.team_member_id
+      );
+
+      itemCategoryList.forEach((itemCategory) => {
+        if (!itemCategory) return;
+        if (
+          alreadyAddedAdditionalSigner.includes(
+            itemCategory.item_category_signer.signer_team_member.team_member_id
           )
-            return;
-          if (
-            approver.special_approver_item_list.some((item) =>
-              generalNameList.includes(item)
-            )
-          ) {
-            additionalSignerList.push(approver.special_approver_signer);
-            alreadyAddedAdditionalSigner.push(
-              approver.special_approver_signer.signer_id
-            );
-          }
-        });
-      }
+        )
+          return;
+        alreadyAddedAdditionalSigner.push(
+          itemCategory.item_category_signer.signer_team_member.team_member_id
+        );
+        additionalSignerList.push(itemCategory.item_category_signer);
+      });
 
       let request: RequestTableRow;
       if (isReferenceOnly) {
@@ -546,7 +547,7 @@ const EditItemRequestPage = ({
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -604,7 +605,10 @@ const EditItemRequestPage = ({
     );
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
-      return;
+      const newItemCategoryList = itemCategoryList.filter(
+        (_, index) => index !== sectionMatchIndex
+      );
+      setItemCategoryList(newItemCategoryList);
     }
   };
 
@@ -624,6 +628,10 @@ const EditItemRequestPage = ({
         const item = await getItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
+        });
+        setItemCategoryList((prev) => {
+          prev[index] = item.item_category;
+          return prev;
         });
         const isWithDescription = Boolean(item.item_level_three_description);
         let csiCodeList: CSICodeTableRow[] = [];
@@ -784,6 +792,10 @@ const EditItemRequestPage = ({
           }),
           newSection.section_field[9],
         ];
+        setItemCategoryList((prev) => {
+          prev[index] = null;
+          return prev;
+        });
         updateSection(index, {
           ...newSection,
           section_field: generalField,

@@ -9,7 +9,7 @@ import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
+import { FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
@@ -42,15 +42,6 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 type Props = {
   form: FormWithResponseType;
   projectOptions?: OptionTableRow[];
-  sourceProjectList?: Record<string, string>;
-  requestProjectId: string;
-  requestingProject?: string;
-  specialApprover?: {
-    special_approver_id: string;
-    special_approver_item_list: string[];
-    special_approver_signer: FormType["form_signer"][0];
-  }[];
-  categoryOptions?: OptionTableRow[];
   duplicatableSectionIdList: string[];
   requestId: string;
 };
@@ -58,8 +49,6 @@ type Props = {
 const Page = ({
   form,
   projectOptions = [],
-  specialApprover = [],
-  // categoryOptions = [],
   duplicatableSectionIdList = [],
   requestId,
 }: Props) => {
@@ -70,7 +59,6 @@ const Page = ({
           <EditItemRequestPage
             form={form}
             projectOptions={projectOptions}
-            specialApprover={specialApprover}
             duplicatableSectionIdList={duplicatableSectionIdList}
             requestId={requestId}
           />

@@ -87,8 +87,9 @@ const EquipmentPartList = ({
         message: "Error on fetching equipment part list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleCheckRow = (equipmentPartId: string) => {

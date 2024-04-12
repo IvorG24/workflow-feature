@@ -30,6 +30,7 @@ import {
   FieldTableRow,
   FormStatusType,
   FormType,
+  ItemCategoryType,
   ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
   ItemTableRow,
@@ -1021,7 +1022,21 @@ export const getItem = async (
             *
           )
         ),
-        item_level_three_description: item_level_three_description_table(*)
+        item_level_three_description: item_level_three_description_table(*),
+        item_category: item_category_id(
+          item_category_signer: item_category_signer_id(
+            *,
+            signer_team_member: signer_team_member_id(
+              team_member_id,
+              team_member_user: team_member_user_id(
+                user_id,
+                user_first_name,
+                user_last_name,
+                user_avatar
+              )
+            )
+          )
+        )
       `
     )
     .eq("item_team_id", teamId)
@@ -4682,7 +4697,6 @@ export const getOnboardList = async (
     .from("user_onboard_table")
     .select("*")
     .eq("user_onboard_user_id", userId)
-
     .order("user_onboard_date_created", { ascending: false });
 
   if (onboardName) query.eq("user_onboard_name", onboardName);
@@ -5311,6 +5325,7 @@ export const getSectionInEditRequest = async (
   const formattedData = data as unknown as {
     sectionData: RequestWithResponseType["request_form"]["form_section"];
     itemDivisionIdList: string[][];
+    itemCategorySignerList: (ItemCategoryType["item_category"] | null)[];
   };
 
   return formattedData;
@@ -6595,4 +6610,139 @@ export const getPEDItemRequestConditionalOptions = async (
     .select("*");
   if (error) throw error;
   return data;
+};
+
+// Fetch all item category option
+export const getItemCategoryOption = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .from("item_category_table")
+    .select("item_category_id, item_category")
+    .eq("item_category_is_available", true)
+    .eq("item_category_is_disabled", false)
+    .order("item_category", { ascending: true });
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch all item form approver
+export const getItemFormApprover = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+        team_member_id,
+        team_member_user: team_member_user_id!inner(
+          user_first_name,
+          user_last_name
+        )
+      `
+    )
+    .eq("team_member_role", "APPROVER")
+    .eq("team_member_is_disabled", false)
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_user.user_is_disabled", false)
+    .order("team_member_user(user_first_name)", {
+      ascending: true,
+      foreignTable: "",
+    })
+    .order("team_member_user(user_last_name)", {
+      ascending: true,
+      foreignTable: "",
+    });
+
+  if (error) throw error;
+
+  const formattedData = data as {
+    team_member_id: string;
+    team_member_user: {
+      user_first_name: string;
+      user_last_name: string;
+    };
+  }[];
+
+  return formattedData.map((teamMember) => {
+    return {
+      value: teamMember.team_member_id,
+      label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+    };
+  });
+};
+
+// check if item category already exists
+export const checkItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { category: string }
+) => {
+  const { category } = params;
+
+  const { count, error } = await supabaseClient
+    .from("item_category_table")
+    .select("*", { count: "exact", head: true })
+    .eq("item_category", category)
+    .eq("item_category_is_disabled", false);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get item category list
+export const getItemCategoryList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("item_category_table")
+    .select(
+      `
+        *,
+        item_category_signer: item_category_signer_id(
+          signer_id,
+          signer_team_member: signer_team_member_id(
+            team_member_id,
+            team_member_user: team_member_user_id(
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            )
+          )
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("item_category_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("item_category", `%${search}%`);
+  }
+
+  query.order("item_category", { ascending: true });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
 };

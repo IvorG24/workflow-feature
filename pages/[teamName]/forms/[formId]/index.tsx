@@ -14,6 +14,7 @@ import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
   EquipmentWithCategoryType,
   FormType,
+  ItemCategoryWithSigner,
   ItemWithDescriptionType,
   OtherExpensesTypeWithCategoryType,
   ServiceWithScopeType,
@@ -44,7 +45,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
       return {
         props: { ...(data as unknown as Props), form },
       };
-    } catch (error) {
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",
@@ -71,6 +72,8 @@ type Props = {
   otherExpensesTypeCount?: number;
   equipments?: EquipmentWithCategoryType[];
   equipmentListCount?: number;
+  itemCategories?: ItemCategoryWithSigner[];
+  itemCategoryCount?: number;
 };
 
 const Page = ({
@@ -89,6 +92,8 @@ const Page = ({
   otherExpensesTypeCount = 0,
   equipments = [],
   equipmentListCount = 0,
+  itemCategories = [],
+  itemCategoryCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -102,6 +107,8 @@ const Page = ({
             teamGroupList={teamGroupList}
             teamProjectList={teamProjectList}
             teamProjectListCount={teamProjectListCount}
+            itemCategories={itemCategories}
+            itemCategoryCount={itemCategoryCount}
           />
         );
       case "PED Part":

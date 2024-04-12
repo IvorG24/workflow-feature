@@ -115,8 +115,9 @@ const EquipmentList = ({
         message: "Error on fetching equipment list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleDelete = async () => {

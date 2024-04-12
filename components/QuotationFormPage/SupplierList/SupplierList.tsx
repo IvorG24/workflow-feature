@@ -116,8 +116,9 @@ const SupplierList = ({
         message: "Error on fetching supplier list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleDelete = async () => {
