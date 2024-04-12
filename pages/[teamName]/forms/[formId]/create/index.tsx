@@ -9,7 +9,7 @@ import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/Cr
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { FormType, FormWithResponseType, OptionTableRow } from "@/utils/types";
+import { FormWithResponseType, OptionTableRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -47,29 +47,16 @@ type Props = {
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
   requestingProject?: string;
-  specialApprover?: {
-    special_approver_id: string;
-    special_approver_item_list: string[];
-    special_approver_signer: FormType["form_signer"][0];
-  }[];
+
   categoryOptions?: OptionTableRow[];
 };
 
-const Page = ({
-  form,
-  projectOptions = [],
-  specialApprover = [],
-  categoryOptions = [],
-}: Props) => {
+const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Item":
         return (
-          <CreateItemRequestPage
-            form={form}
-            projectOptions={projectOptions}
-            specialApprover={specialApprover}
-          />
+          <CreateItemRequestPage form={form} projectOptions={projectOptions} />
         );
       case "Services":
         return (

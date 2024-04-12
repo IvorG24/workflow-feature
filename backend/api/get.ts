@@ -30,6 +30,7 @@ import {
   FieldTableRow,
   FormStatusType,
   FormType,
+  ItemCategoryType,
   ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
   ItemTableRow,
@@ -1021,7 +1022,21 @@ export const getItem = async (
             *
           )
         ),
-        item_level_three_description: item_level_three_description_table(*)
+        item_level_three_description: item_level_three_description_table(*),
+        item_category: item_category_id(
+          item_category_signer: item_category_signer_id(
+            *,
+            signer_team_member: signer_team_member_id(
+              team_member_id,
+              team_member_user: team_member_user_id(
+                user_id,
+                user_first_name,
+                user_last_name,
+                user_avatar
+              )
+            )
+          )
+        )
       `
     )
     .eq("item_team_id", teamId)
@@ -5310,6 +5325,7 @@ export const getSectionInEditRequest = async (
   const formattedData = data as unknown as {
     sectionData: RequestWithResponseType["request_form"]["form_section"];
     itemDivisionIdList: string[][];
+    itemCategorySignerList: (ItemCategoryType["item_category"] | null)[];
   };
 
   return formattedData;

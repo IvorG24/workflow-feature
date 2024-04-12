@@ -207,6 +207,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             item_division_id_list: data.division.map((id) => `'${id}'`),
             item_level_three_description: data.divisionDescription,
             item_is_ped_item: data.isPedItem,
+            item_category_id: data.itemCategory,
           },
           formId: formId,
         }

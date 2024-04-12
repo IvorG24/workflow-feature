@@ -21,6 +21,7 @@ import {
   CSICodeTableRow,
   FormType,
   FormWithResponseType,
+  ItemCategoryType,
   OptionTableRow,
   RequestResponseTableRow,
 } from "@/utils/types";
@@ -54,18 +55,9 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
-  specialApprover?: {
-    special_approver_id: string;
-    special_approver_item_list: string[];
-    special_approver_signer: FormType["form_signer"][0];
-  }[];
 };
 
-const CreateItemRequestPage = ({
-  form,
-  projectOptions,
-  specialApprover,
-}: Props) => {
+const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -86,6 +78,9 @@ const CreateItemRequestPage = ({
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
+  const [itemCategoryList, setItemCategoryList] = useState<
+    (ItemCategoryType["item_category"] | null)[]
+  >([null]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -255,32 +250,24 @@ const CreateItemRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
-      // special approver
       const additionalSignerList: FormType["form_signer"] = [];
-      const alreadyAddedAdditionalSigner: string[] = [];
-      if (specialApprover && specialApprover.length !== 0) {
-        const generalNameList = newSections.map(
-          (section) => section.section_field[0].field_response
-        );
-        specialApprover.map((approver) => {
-          if (
-            alreadyAddedAdditionalSigner.includes(
-              approver.special_approver_signer.signer_id
-            )
+      const alreadyAddedAdditionalSigner: string[] = signerList.map(
+        (signer) => signer.signer_team_member.team_member_id
+      );
+
+      itemCategoryList.forEach((itemCategory) => {
+        if (!itemCategory) return;
+        if (
+          alreadyAddedAdditionalSigner.includes(
+            itemCategory.item_category_signer.signer_team_member.team_member_id
           )
-            return;
-          if (
-            approver.special_approver_item_list.some((item) =>
-              generalNameList.includes(item)
-            )
-          ) {
-            additionalSignerList.push(approver.special_approver_signer);
-            alreadyAddedAdditionalSigner.push(
-              approver.special_approver_signer.signer_id
-            );
-          }
-        });
-      }
+        )
+          return;
+        alreadyAddedAdditionalSigner.push(
+          itemCategory.item_category_signer.signer_team_member.team_member_id
+        );
+        additionalSignerList.push(itemCategory.item_category_signer);
+      });
 
       const request = await createRequest(supabaseClient, {
         requestFormValues: newData,
@@ -363,7 +350,10 @@ const CreateItemRequestPage = ({
     );
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
-      return;
+      const newItemCategoryList = itemCategoryList.filter(
+        (_, index) => index !== sectionMatchIndex
+      );
+      setItemCategoryList(newItemCategoryList);
     }
   };
 
@@ -383,6 +373,10 @@ const CreateItemRequestPage = ({
         const item = await getItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
+        });
+        setItemCategoryList((prev) => {
+          prev[index] = item.item_category;
+          return prev;
         });
         const isWithDescription = Boolean(item.item_level_three_description);
         let csiCodeList: CSICodeTableRow[] = [];
@@ -543,6 +537,10 @@ const CreateItemRequestPage = ({
           }),
           newSection.section_field[9],
         ];
+        setItemCategoryList((prev) => {
+          prev[index] = null;
+          return prev;
+        });
         updateSection(index, {
           ...newSection,
           section_field: generalField,

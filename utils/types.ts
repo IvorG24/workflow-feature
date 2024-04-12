@@ -791,7 +791,7 @@ export type ItemWithDescriptionAndField = ItemTableRow & {
     item_field: FieldTableRow;
   })[];
   item_level_three_description?: string;
-};
+} & ItemCategoryType;
 
 export type InvitationWithTeam = InvitationTableRow & {
   invitation_from_team_member: TeamMemberTableRow & {
@@ -1594,6 +1594,26 @@ export type ItemCategoryWithSigner = ItemCategoryTableRow & {
         user_first_name: string;
         user_last_name: string;
         user_avatar: string;
+      };
+    };
+  };
+};
+
+export type ItemCategoryType = {
+  item_category: {
+    item_category_signer: {
+      signer_id: string;
+      signer_is_primary_signer: boolean;
+      signer_action: string;
+      signer_order: number;
+      signer_team_member: {
+        team_member_id: string;
+        team_member_user: {
+          user_id: string;
+          user_first_name: string;
+          user_last_name: string;
+          user_avatar: string;
+        };
       };
     };
   };

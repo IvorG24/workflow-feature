@@ -499,16 +499,6 @@ CREATE TABLE ticket_comment_table(
 
 -- End: Ticket comment
 
--- Start: Special Approver
-
-CREATE TABLE special_approver_table(
-  special_approver_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-
-  special_approver_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
-);
-
--- End: Special Approver
-
 -- Start: Item Description Field UOM
 CREATE TABLE item_description_field_uom_table(
   item_description_field_uom_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
@@ -517,17 +507,6 @@ CREATE TABLE item_description_field_uom_table(
   item_description_field_uom_item_description_field_id UUID REFERENCES item_description_field_table(item_description_field_id) ON DELETE CASCADE NOT NULL
 );
 -- End: Item Description Field UOM
-
--- Start: Special approver item table
-
-CREATE TABLE special_approver_item_table(
-  special_approver_item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  special_approver_item_value VARCHAR(4000) NOT NULL,
-  
-  special_approver_item_special_approver_id UUID REFERENCES special_approver_table(special_approver_id) ON DELETE CASCADE NOT NULL
-);
-
--- End: Special approver item table
 
 -- Start: Equipment category
 
@@ -1724,7 +1703,8 @@ RETURNS JSON AS $$
         item_team_id,
         item_division_id_list,
         item_level_three_description,
-        item_is_ped_item 
+        item_is_ped_item,
+        item_category_id
       },
       toAdd,
       toUpdate,
@@ -1741,7 +1721,8 @@ RETURNS JSON AS $$
           item_unit = '${item_unit}',
           item_gl_account = '${item_gl_account}',
           item_team_id = '${item_team_id}',
-          item_is_ped_item = ${item_is_ped_item}
+          item_is_ped_item = ${item_is_ped_item},
+          item_category_id = '${item_category_id}'
         WHERE item_id = '${item_id}'
         RETURNING *
       `
@@ -4389,11 +4370,11 @@ RETURNS JSON as $$
     
       if (formName === "Item") {
         const items = [];
-        const itemData = plv8.execute(`SELECT item_id, item_general_name, item_unit, item_gl_account, item_is_available FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false ORDER BY item_general_name ASC LIMIT ${limit};`);
+        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false ORDER BY item_general_name ASC LIMIT ${limit};`);
         const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
 
         itemData.forEach(value => {
-          const itemDescription = plv8.execute(`SELECT item_description_id, item_description_label, item_description_is_with_uom FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
+          const itemDescription = plv8.execute(`SELECT item_description_id, item_description_label, item_description_is_with_uom, item_description_field_id FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
           const itemDivision = plv8.execute(`SELECT item_division_value FROM item_division_table WHERE item_division_item_id = '${value.item_id}' ORDER BY item_division_value ASC;`);
           const itemDivisionDescription = plv8.execute(`SELECT item_level_three_description FROM item_level_three_description_table WHERE item_level_three_description_item_id = '${value.item_id}' LIMIT 1;`);
           
@@ -4793,36 +4774,6 @@ RETURNS JSON as $$
           };
         });
 
-        const specialApproverWithItem = plv8.execute(
-          `
-            SELECT 
-              special_approver_table.*,
-              signer_id, 
-              signer_is_primary_signer, 
-              signer_action, 
-              signer_order,
-              signer_is_disabled, 
-              signer_team_project_id,
-              team_member_id,
-              user_id, 
-              user_first_name, 
-              user_last_name, 
-              user_avatar,
-              (SELECT json_agg(special_approver_item_table.*)
-              FROM special_approver_item_table 
-              WHERE special_approver_item_special_approver_id = special_approver_table.special_approver_id
-              ) AS special_approver_item_list
-            FROM 
-              special_approver_table
-            INNER JOIN 
-              signer_table ON signer_id = special_approver_signer_id
-            INNER JOIN 
-              team_member_table ON team_member_id = signer_team_member_id
-            INNER JOIN 
-              user_table ON user_id = team_member_user_id;
-          `
-        );
-
         returnData = {
           form: {
             ...form,
@@ -4845,30 +4796,7 @@ RETURNS JSON as $$
               },
             ],
           },
-          projectOptions,
-          specialApprover: specialApproverWithItem.map(specialApprover => {
-            return {
-              special_approver_id: specialApprover.special_approver_id,
-              special_approver_item_list: specialApprover.special_approver_item_list,
-              special_approver_signer: {
-                signer_id: specialApprover.signer_id,
-                signer_is_primary_signer: specialApprover.signer_is_primary_signer,
-                signer_action: specialApprover.signer_action,
-                signer_order: specialApprover.signer_order,
-                signer_is_disabled: specialApprover.signer_is_disabled,
-                signer_team_project_id: specialApprover.signer_team_project_id,
-                signer_team_member: {
-                  team_member_id: specialApprover.team_member_id,
-                  team_member_user: {
-                    user_id: specialApprover.user_id,
-                    user_first_name: specialApprover.user_first_name,
-                    user_last_name: specialApprover.user_last_name,
-                    user_avatar: specialApprover.user_avatar,
-                  }
-                }
-              }
-            }
-          })
+          projectOptions
         }
         return;
       } else if (form.form_name === "Services") {
@@ -8472,7 +8400,7 @@ RETURNS JSON AS $$
     });
 
     const itemDivisionIdList = [];
-
+    const itemCategorySignerList = [null];
     const sectionData = sectionWithDuplicateList
       .slice(index, index + 10).map((section) => {
         const isWithPreferredSupplier =
@@ -8485,7 +8413,8 @@ RETURNS JSON AS $$
         const item = plv8.execute(`
           SELECT *
           FROM item_table
-          WHERE item_team_id = '${teamId}'
+          WHERE 
+            item_team_id = '${teamId}'
             AND item_general_name = '${itemName}'
             AND item_is_disabled = false
             AND item_is_available = true;
@@ -8500,7 +8429,8 @@ RETURNS JSON AS $$
         const itemDescriptionList = plv8.execute(`
           SELECT * 
           FROM item_description_table
-          WHERE item_description_item_id = '${item.item_id}'
+          WHERE 
+            item_description_item_id = '${item.item_id}'
             AND item_description_is_disabled = false
             AND item_description_is_available = true;
         `);
@@ -8512,7 +8442,8 @@ RETURNS JSON AS $$
               SELECT * 
               FROM item_description_field_table
               LEFT JOIN item_description_field_uom_table ON item_description_field_id = item_description_field_uom_item_description_field_id
-              WHERE item_description_field_item_description_id = '${description.item_description_id}'
+              WHERE 
+                item_description_field_item_description_id = '${description.item_description_id}'
                 AND item_description_field_is_disabled = false
                 AND item_description_field_is_available = true;
             `);
@@ -8561,6 +8492,50 @@ RETURNS JSON AS $$
           }
         );
 
+        if(item.item_category_id.length !== 0){
+          const signerData = plv8.execute(
+            `
+              SELECT 
+                signer_action,
+                signer_id,
+                signer_is_primary_signer,
+                signer_order,
+                team_member_id,
+                user_id,
+                user_first_name,
+                user_last_name,
+                user_avatar
+              FROM item_category_table
+              INNER JOIN signer_table ON signer_id = item_category_signer_id
+              INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+              INNER JOIN user_table ON user_id = team_member_user_id
+              WHERE item_category_id = '${item.item_category_id}'
+            `
+          );
+          if (signerData.lenght === 0) {
+            itemCategorySignerList.push(null);
+          } else {
+            const signer = signerData[0];
+            itemCategorySignerList.push({
+              item_category_signer: {
+                signer_id: signer.signer_id,
+                signer_is_primary_signer: signer.signer_is_primary_signer,
+                signer_action: signer.signer_action,
+                signer_order: signer.signer_order,
+                signer_team_member: {
+                  team_member_id: signer.team_member_id,
+                  team_member_user: {
+                    user_id: signer.user_id,
+                    user_first_name: signer.user_first_name,
+                    user_last_name: signer.user_last_name,
+                    user_avatar: signer.user_avatar
+                  }
+                }
+              }
+            });
+          }
+        }
+      
         return {
           ...section,
           section_field: [
@@ -8619,7 +8594,8 @@ RETURNS JSON AS $$
     
     returnData = {
       sectionData,
-      itemDivisionIdList
+      itemDivisionIdList,
+      itemCategorySignerList
     }
  });
  return returnData;
@@ -9835,8 +9811,50 @@ RETURNS JSON as $$
     } = input_data;
 
     returnData = sectionList.map(section => {
+      const itemCategory = plv8.execute(
+        `
+          SELECT 
+            ict.item_category,
+            signer_id,
+            signer_is_primary_signer,
+            signer_action,
+            signer_order,
+            team_member_id,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_avatar
+          FROM item_table AS it
+          INNER JOIN item_category_table AS ict ON it.item_category_id = ict.item_category_id
+          INNER JOIN signer_table ON signer_id = item_category_signer_id
+          INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+          INNER JOIN user_table ON user_id = team_member_user_id
+          WHERE
+            it.item_general_name = '${section.itemName}'
+            AND it.item_is_disabled = false
+            AND ict.item_category_is_disabled = false
+        `
+      );
+
       return {
         itemName: section.itemName,
+        category: itemCategory.length ? {
+          item_category_signer: {
+            signer_id: itemCategory[0].signer_id,
+            signer_is_primary_signer: itemCategory[0].signer_is_primary_signer,
+            signer_action: itemCategory[0].signer_action,
+            signer_order: itemCategory[0].signer_order,
+            signer_team_member: {
+              team_member_id: itemCategory[0].team_member_id,
+              team_member_user: {
+                user_id: itemCategory[0].user_id,
+                user_first_name: itemCategory[0].user_first_name,
+                user_last_name: itemCategory[0].user_last_name,
+                user_avatar: itemCategory[0].user_avatar
+              }
+            }
+          }
+        } : null,
         fieldList: section.fieldIdList.map(field => {
           let optionData = [];
           if (field === 'a6266f0b-1339-4c50-910e-9bae73031df0') {
@@ -10342,7 +10360,6 @@ ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE special_approver_item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE signature_history_table ENABLE ROW LEVEL SECURITY;
@@ -10530,8 +10547,6 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_table;
-
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON special_approver_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_division_table;
@@ -12053,11 +12068,6 @@ USING (
   )
 );
 
---- SPECIAL_APPROVER_TABLE
-CREATE POLICY "Allow READ access for anon users" ON "public"."special_approver_table"
-AS PERMISSIVE FOR SELECT
-USING (true);
-
 --- ITEM_DIVISION_TABLE
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
 AS PERMISSIVE FOR INSERT
@@ -12163,11 +12173,6 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
-
---- SPECIAL_APPROVER_ITEM_TABLE
-CREATE POLICY "Allow READ access for anon users" ON "public"."special_approver_item_table"
-AS PERMISSIVE FOR SELECT
-USING (true);
 
 -- USER_EMPLOYEE_NUMBER_TABLE
 CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_employee_number_table"
