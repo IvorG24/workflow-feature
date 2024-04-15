@@ -41,11 +41,7 @@ const OtherExpensesType = ({
         />
       ) : null}
       {isCreatingType ? (
-        <CreateOtherExpensesType
-          setIsCreatingType={setIsCreatingType}
-          setTypeList={setTypeList}
-          setTypeCount={setTypeCount}
-        />
+        <CreateOtherExpensesType setIsCreatingType={setIsCreatingType} />
       ) : null}
       {editType ? (
         <UpdateOtherExpensesType

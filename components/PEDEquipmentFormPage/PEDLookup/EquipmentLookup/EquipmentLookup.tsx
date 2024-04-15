@@ -78,8 +78,6 @@ const EquipmentLookup = ({ lookup }: Props) => {
         <CreateEquipmentLookUp
           lookup={lookup}
           setIsCreatingEquipmentLookup={setIsCreatingEquipmentLookup}
-          setEquipmentLookupList={setEquipmentLookupList}
-          setEquipmentLookupCount={setEquipmentLookupCount}
         />
       ) : null}
       {editEquipmentLookup ? (

@@ -1,11 +1,9 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getFileUrl } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import { AddressTableRow, TeamProjectWithAddressType } from "@/utils/types";
+import { TeamGroupTableRow } from "@/utils/types";
 import {
   ActionIcon,
-  Badge,
   Box,
   Button,
   Checkbox,
@@ -19,7 +17,7 @@ import {
 import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconFile, IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
+import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 
@@ -44,33 +42,30 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  projectList: TeamProjectWithAddressType[];
-  setProjectList: Dispatch<SetStateAction<TeamProjectWithAddressType[]>>;
-  setIsCreatingProject: Dispatch<SetStateAction<boolean>>;
-  setSelectedProject: Dispatch<
-    SetStateAction<TeamProjectWithAddressType | null>
-  >;
+  groupList: TeamGroupTableRow[];
+  setGroupList: Dispatch<SetStateAction<TeamGroupTableRow[]>>;
+  setGroupCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingGroup: Dispatch<SetStateAction<boolean>>;
+  setSelectedGroup: Dispatch<SetStateAction<TeamGroupTableRow | null>>;
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
-  selectedProject: TeamProjectWithAddressType | null;
+  selectedGroup: TeamGroupTableRow | null;
   isOwnerOrAdmin: boolean;
   handleFetch: (search: string, page: number) => void;
   isLoading: boolean;
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
-  projectCount: number;
+  groupCount: number;
 };
 
-const ProjectList = ({
-  projectList,
-  setProjectList,
-  setIsCreatingProject,
-  setSelectedProject,
+const GroupList = ({
+  groupList,
+  setGroupList,
+  setIsCreatingGroup,
+  setSelectedGroup,
   setIsFetchingMembers,
-  selectedProject,
+  selectedGroup,
   isOwnerOrAdmin,
   handleFetch,
   isLoading,
-  setIsLoading,
-  projectCount,
+  groupCount,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
@@ -81,20 +76,18 @@ const ProjectList = ({
 
   const headerCheckboxKey = generateRandomId();
 
-  const handleCheckRow = (projectId: string) => {
-    if (checkList.includes(projectId)) {
-      setCheckList(checkList.filter((id) => id !== projectId));
+  const handleCheckRow = (groupId: string) => {
+    if (checkList.includes(groupId)) {
+      setCheckList(checkList.filter((id) => id !== groupId));
     } else {
-      setCheckList([...checkList, projectId]);
+      setCheckList([...checkList, groupId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const projectIdList = projectList.map(
-        (project) => project.team_project_id
-      );
-      setCheckList(projectIdList);
+      const groupIdList = groupList.map((group) => group.team_group_id);
+      setCheckList(groupIdList);
     } else {
       setCheckList([]);
     }
@@ -109,22 +102,23 @@ const ProjectList = ({
 
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = projectList;
+    const savedRecord = groupList;
 
     try {
       setCheckList([]);
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "team_project",
+        table: "team_group",
       });
-      setSelectedProject(null);
       handleFetch("", 1);
+      setSelectedGroup(null);
+
       notifications.show({
-        message: "Project/s deleted.",
+        message: "Group/s deleted.",
         color: "green",
       });
     } catch {
-      setProjectList(savedRecord);
+      setGroupList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -133,35 +127,17 @@ const ProjectList = ({
     }
   };
 
-  const handleColumnClick = (project_id: string) => {
-    if (selectedProject?.team_project_id === project_id) return;
+  const handleColumnClick = (group_id: string) => {
+    if (selectedGroup?.team_group_id === group_id) return;
 
     setIsFetchingMembers(true);
-    const newSelectedProject = projectList.find(
-      (project) => project.team_project_id === project_id
+    const newSelectedGroup = groupList.find(
+      (group) => group.team_group_id === group_id
     );
-    setSelectedProject(newSelectedProject || null);
+    setSelectedGroup(newSelectedGroup || null);
   };
 
-  const handleFileClick = async (path: string) => {
-    setIsLoading(true);
-    try {
-      const url = await getFileUrl(supabaseClient, {
-        bucket: "TEAM_PROJECT_ATTACHMENTS",
-        path: path,
-      });
-      window.open(url);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const columnData: DataTableColumn<TeamProjectWithAddressType>[] = [
+  const columnData: DataTableColumn<TeamGroupTableRow>[] = [
     {
       accessor: "checkbox",
       title: (
@@ -169,120 +145,50 @@ const ProjectList = ({
           key={headerCheckboxKey}
           className={classes.checkbox}
           checked={
-            checkList.length > 0 && checkList.length === projectList.length
+            checkList.length > 0 && checkList.length === groupList.length
           }
           size="xs"
           onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
         />
       ),
-      render: ({ team_project_id }) => (
+      render: ({ team_group_id }) => (
         <Checkbox
           className={classes.checkbox}
           size="xs"
-          checked={checkList.includes(team_project_id)}
+          checked={checkList.includes(team_group_id)}
           onChange={() => {
-            handleCheckRow(team_project_id);
+            handleCheckRow(team_group_id);
           }}
         />
       ),
       width: 40,
     },
     {
-      accessor: "project_general_name",
-      title: "Project Name",
-      render: ({ team_project_name, team_project_id }) => (
+      accessor: "group_general_name",
+      title: "Group Name",
+      render: ({ team_group_name, team_group_id }) => (
         <Text
           className={classes.clickableColumn}
           onClick={() => {
-            handleColumnClick(team_project_id);
+            handleColumnClick(team_group_id);
           }}
         >
-          {team_project_name}
+          {team_group_name}
         </Text>
       ),
-    },
-    {
-      accessor: "project_initials",
-      title: "Code",
-      render: ({ team_project_code, team_project_id }) => (
-        <Text
-          className={classes.clickableColumn}
-          onClick={() => {
-            handleColumnClick(team_project_id);
-          }}
-        >
-          {team_project_code}
-        </Text>
-      ),
-    },
-    {
-      accessor: "team_project_site_map_attachment_id",
-      title: "Site Map",
-      textAlignment: "center",
-      render: ({ team_project_site_map_attachment_id }) =>
-        team_project_site_map_attachment_id && (
-          <Badge
-            className={classes.clickableColumn}
-            onClick={() => {
-              handleFileClick(team_project_site_map_attachment_id);
-            }}
-          >
-            <Flex align="center" justify="center" gap={3}>
-              <IconFile size={14} /> <Text>File</Text>
-            </Flex>
-          </Badge>
-        ),
-    },
-    {
-      accessor: "team_project_boq_attachment_id",
-      title: "BOQ",
-      textAlignment: "center",
-      render: ({ team_project_boq_attachment_id }) =>
-        team_project_boq_attachment_id && (
-          <Badge
-            className={classes.clickableColumn}
-            onClick={() => {
-              handleFileClick(team_project_boq_attachment_id);
-            }}
-          >
-            <Flex align="center" justify="center" gap={3}>
-              <IconFile size={14} /> <Text>File</Text>
-            </Flex>
-          </Badge>
-        ),
-    },
-    {
-      accessor: "team_project_address",
-      title: "Address",
-      render: ({ team_project_id, team_project_address }) =>
-        team_project_address && (
-          <Text
-            className={classes.clickableColumn}
-            onClick={() => {
-              handleColumnClick(team_project_id);
-            }}
-          >
-            {formatAddress(team_project_address)}
-          </Text>
-        ),
     },
   ];
-
-  const formatAddress = (address: AddressTableRow | null) => {
-    if (!address) return "";
-    return `${address.address_street}, ${address.address_barangay}, ${address.address_city}, ${address.address_province}, ${address.address_region}, ${address.address_zip_code}`;
-  };
 
   return (
     <Box>
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            Team Projects
+            Team Groups
           </Title>
           <TextInput
             miw={250}
-            placeholder="Project Name"
+            placeholder="Group Name"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
                 <IconSearch size={16} />
@@ -318,9 +224,7 @@ const ProjectList = ({
                   children: (
                     <Text size={14}>
                       Are you sure you want to delete{" "}
-                      {checkList.length === 1
-                        ? "this project?"
-                        : "these projects?"}
+                      {checkList.length === 1 ? "this group?" : "these groups?"}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -336,7 +240,7 @@ const ProjectList = ({
             <Button
               rightIcon={<IconPlus size={16} />}
               className={classes.flexGrow}
-              onClick={() => setIsCreatingProject(true)}
+              onClick={() => setIsCreatingGroup(true)}
             >
               Add
             </Button>
@@ -344,16 +248,16 @@ const ProjectList = ({
         </Group>
       </Flex>
       <DataTable
-        idAccessor="team_project_id"
+        idAccessor="team_group_id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={projectList}
+        records={groupList}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
-        totalRecords={projectCount}
+        totalRecords={groupCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -365,4 +269,4 @@ const ProjectList = ({
   );
 };
 
-export default ProjectList;
+export default GroupList;

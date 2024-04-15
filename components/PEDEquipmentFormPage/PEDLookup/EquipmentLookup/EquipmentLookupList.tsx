@@ -28,7 +28,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -74,6 +74,10 @@ const EquipmentLookupList = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const headerCheckboxKey = generateRandomId();
+
+  useEffect(() => {
+    handleFetch("", 1);
+  }, []);
 
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
@@ -129,20 +133,13 @@ const EquipmentLookupList = ({
     const savedRecord = equipmentLookupList;
 
     try {
-      const updatedEquipmentLookupList = equipmentLookupList.filter(
-        (equipmentLookup) => {
-          if (!checkList.includes(equipmentLookup.id)) {
-            return equipmentLookup;
-          }
-        }
-      );
-      setEquipmentLookupList(updatedEquipmentLookupList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: lookup.table,
       });
+      handleFetch("", 1);
 
       notifications.show({
         message: `${lookup.label}/s deleted.`,

@@ -1,6 +1,6 @@
 import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestPage";
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
-import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/GroupMembers";
+import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/TeamGroups/GroupMembers";
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";

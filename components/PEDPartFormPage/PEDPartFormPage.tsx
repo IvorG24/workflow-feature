@@ -414,8 +414,6 @@ const PEDPartFormPage = ({
             {isCreatingEquipment ? (
               <CreateEquipment
                 setIsCreatingEquipment={setIsCreatingEquipment}
-                setEquipmentList={setEquipmentList}
-                setEquipmentCount={setEquipmentCount}
               />
             ) : null}
             {editEquipment ? (

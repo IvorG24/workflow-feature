@@ -27,7 +27,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -70,6 +70,10 @@ const EquipmentPartList = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const headerCheckboxKey = generateRandomId();
+
+  useEffect(() => {
+    handleFetch("", 1);
+  }, []);
 
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
@@ -123,20 +127,13 @@ const EquipmentPartList = ({
     const savedRecord = equipmentPartList;
 
     try {
-      const updatedEquipmentPartList = equipmentPartList.filter(
-        (equipmentPart) => {
-          if (!checkList.includes(equipmentPart.equipment_part_id)) {
-            return equipmentPart;
-          }
-        }
-      );
-      setEquipmentPartList(updatedEquipmentPartList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "equipment_part",
       });
+      handleFetch("", 1);
 
       notifications.show({
         message: "Equipment Part/s deleted.",

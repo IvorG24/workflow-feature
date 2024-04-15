@@ -10,7 +10,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { GL_ACCOUNT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { ItemForm, ItemWithDescriptionType } from "@/utils/types";
+import { ItemForm } from "@/utils/types";
 import {
   Box,
   Button,
@@ -36,15 +36,9 @@ import MoveUpAndDown from "../MoveUpAndDown";
 
 type Props = {
   setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
-  setItemList: Dispatch<SetStateAction<ItemWithDescriptionType[]>>;
-  setItemCount: Dispatch<SetStateAction<number>>;
 };
 
-const CreateItem = ({
-  setIsCreatingItem,
-  setItemList,
-  setItemCount,
-}: Props) => {
+const CreateItem = ({ setIsCreatingItem }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -143,7 +137,7 @@ const CreateItem = ({
   const onSubmit = async (data: ItemForm) => {
     try {
       if (!teamMember) throw new Error("Team member not found");
-      const newItem = await createItem(supabaseClient, {
+      await createItem(supabaseClient, {
         itemDescription: data.descriptions.map((description, index) => {
           return {
             description: description.description.toUpperCase().trim(),
@@ -165,12 +159,6 @@ const CreateItem = ({
         },
         formId: formId,
       });
-
-      setItemList((prev) => {
-        prev.unshift(newItem);
-        return prev;
-      });
-      setItemCount((prev) => prev + 1);
       notifications.show({
         message: "Item created.",
         color: "green",

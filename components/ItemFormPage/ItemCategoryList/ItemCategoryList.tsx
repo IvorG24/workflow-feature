@@ -88,7 +88,6 @@ const ItemCategoryList = ({
       setItemCategoryList(data as ItemCategoryWithSigner[]);
       setItemCategoryCount(Number(count));
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: `Error on fetching item category list`,
         color: "red",
