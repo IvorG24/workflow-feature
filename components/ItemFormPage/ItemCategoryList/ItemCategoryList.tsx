@@ -1,12 +1,14 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getTypeList } from "@/backend/api/get";
+import { getItemCategoryList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import { OtherExpensesTypeWithCategoryType } from "@/utils/types";
+import { getAvatarColor } from "@/utils/styling";
+import { ItemCategoryWithSigner } from "@/utils/types";
 import {
   ActionIcon,
+  Avatar,
   Box,
   Button,
   Center,
@@ -28,7 +30,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -42,23 +44,21 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  typeList: OtherExpensesTypeWithCategoryType[];
-  setTypeList: Dispatch<SetStateAction<OtherExpensesTypeWithCategoryType[]>>;
-  typeCount: number;
-  setTypeCount: Dispatch<SetStateAction<number>>;
-  setIsCreatingType: Dispatch<SetStateAction<boolean>>;
-  setEditType: Dispatch<
-    SetStateAction<OtherExpensesTypeWithCategoryType | null>
-  >;
+  itemCategoryList: ItemCategoryWithSigner[];
+  setItemCategoryList: Dispatch<SetStateAction<ItemCategoryWithSigner[]>>;
+  itemCategoryCount: number;
+  setItemCategoryCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingItemCategory: Dispatch<SetStateAction<boolean>>;
+  setEditItemCategory: Dispatch<SetStateAction<ItemCategoryWithSigner | null>>;
 };
 
-const OtherExpensesTypeList = ({
-  typeList,
-  setTypeList,
-  typeCount,
-  setTypeCount,
-  setIsCreatingType,
-  setEditType,
+const ItemCategoryList = ({
+  itemCategoryList,
+  setItemCategoryList,
+  itemCategoryCount,
+  setItemCategoryCount,
+  setIsCreatingItemCategory,
+  setEditItemCategory,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
   const { classes } = useStyles();
@@ -72,22 +72,25 @@ const OtherExpensesTypeList = ({
 
   const headerCheckboxKey = generateRandomId();
 
+  useEffect(() => {
+    handleFetch("", 1);
+  }, []);
+
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
     try {
       if (!team.team_id) return;
-      const { data, count } = await getTypeList(supabaseClient, {
-        teamId: team.team_id,
+      const { data, count } = await getItemCategoryList(supabaseClient, {
         search,
         limit: ROW_PER_PAGE,
         page,
       });
-
-      setTypeList(data as unknown as OtherExpensesTypeWithCategoryType[]);
-      setTypeCount(Number(count));
+      setItemCategoryList(data as ItemCategoryWithSigner[]);
+      setItemCategoryCount(Number(count));
     } catch (e) {
+      console.log(e);
       notifications.show({
-        message: `Error on fetching type list`,
+        message: `Error on fetching item category list`,
         color: "red",
       });
     } finally {
@@ -95,18 +98,20 @@ const OtherExpensesTypeList = ({
     }
   };
 
-  const handleCheckRow = (typeId: string) => {
-    if (checkList.includes(typeId)) {
-      setCheckList(checkList.filter((id) => id !== typeId));
+  const handleCheckRow = (categoryLookupId: string) => {
+    if (checkList.includes(categoryLookupId)) {
+      setCheckList(checkList.filter((id) => id !== categoryLookupId));
     } else {
-      setCheckList([...checkList, typeId]);
+      setCheckList([...checkList, categoryLookupId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const typeIdList = typeList.map((type) => type.other_expenses_type_id);
-      setCheckList(typeIdList);
+      const itemCategoryIdList = itemCategoryList.map(
+        (category) => category.item_category_id
+      );
+      setCheckList(itemCategoryIdList);
     } else {
       setCheckList([]);
     }
@@ -121,28 +126,30 @@ const OtherExpensesTypeList = ({
 
   const handleDelete = async () => {
     const saveCheckList = checkList;
-    const savedRecord = typeList;
+    const savedRecord = itemCategoryList;
 
     try {
-      const updatedTypeList = typeList.filter((type) => {
-        if (!checkList.includes(type.other_expenses_type_id)) {
-          return type;
+      const updatedItemCategoryList = itemCategoryList.filter(
+        (itemCategory) => {
+          if (!checkList.includes(itemCategory.item_category_id)) {
+            return itemCategory;
+          }
         }
-      });
-      setTypeList(updatedTypeList);
+      );
+      setItemCategoryList(updatedItemCategoryList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
-        table: "other_expenses_type",
+        table: "item_category",
       });
 
       notifications.show({
-        message: `Type/s deleted.`,
+        message: `Item Category deleted.`,
         color: "green",
       });
-    } catch (e) {
-      setTypeList(savedRecord);
+    } catch {
+      setItemCategoryList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -151,30 +158,30 @@ const OtherExpensesTypeList = ({
     }
   };
 
-  const handleUpdateStatus = async (typeId: string, value: boolean) => {
-    const savedRecord = typeList;
+  const handleUpdateStatus = async (itemCategoryId: string, value: boolean) => {
+    const savedRecord = itemCategoryList;
     try {
-      setTypeList((prev) =>
-        prev.map((type) => {
-          if (type.other_expenses_type_id !== typeId) return type;
+      setItemCategoryList((prev) =>
+        prev.map((itemCategory) => {
+          if (itemCategory.item_category_id !== itemCategoryId)
+            return itemCategory;
           return {
-            ...type,
-            other_expenses_type_is_available: value,
+            ...itemCategory,
+            item_category_is_available: value,
           };
         })
       );
-
       await toggleStatus(supabaseClient, {
-        table: "other_expenses_type",
-        id: typeId,
+        table: "item_category",
+        id: itemCategoryId,
         status: value,
       });
-    } catch (e) {
+    } catch {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-      setTypeList(savedRecord);
+      setItemCategoryList(savedRecord);
     }
   };
 
@@ -183,7 +190,7 @@ const OtherExpensesTypeList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            List of Types
+            List of Item Category
           </Title>
           <TextInput
             miw={250}
@@ -223,7 +230,7 @@ const OtherExpensesTypeList = ({
                   title: <Text>Please confirm your action.</Text>,
                   children: (
                     <Text size={14}>
-                      Are you sure you want to delete {`this type/s?`}
+                      Are you sure you want to delete this item category?
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -238,21 +245,21 @@ const OtherExpensesTypeList = ({
           <Button
             rightIcon={<IconPlus size={16} />}
             className={classes.flexGrow}
-            onClick={() => setIsCreatingType(true)}
+            onClick={() => setIsCreatingItemCategory(true)}
           >
             Add
           </Button>
         </Group>
       </Flex>
       <DataTable
-        idAccessor="other_expenses_type_id"
+        idAccessor="item_category_id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={typeList}
+        records={itemCategoryList}
         columns={[
           {
             accessor: "checkbox",
@@ -261,7 +268,8 @@ const OtherExpensesTypeList = ({
                 key={headerCheckboxKey}
                 className={classes.checkbox}
                 checked={
-                  checkList.length > 0 && checkList.length === typeList.length
+                  checkList.length > 0 &&
+                  checkList.length === itemCategoryList.length
                 }
                 size="xs"
                 onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
@@ -271,37 +279,65 @@ const OtherExpensesTypeList = ({
               <Checkbox
                 className={classes.checkbox}
                 size="xs"
-                checked={checkList.includes(data.other_expenses_type_id)}
+                checked={checkList.includes(data.item_category_id)}
                 onChange={() => {
-                  handleCheckRow(data.other_expenses_type_id);
+                  handleCheckRow(data.item_category_id);
                 }}
               />
             ),
             width: 40,
           },
           {
-            accessor: `other_expenses_type_table`,
-            title: `Type`,
-            render: (data) => <Text>{data.other_expenses_type}</Text>,
+            accessor: "item_category",
+            title: "Category",
+            render: (data) => <Text>{data.item_category}</Text>,
           },
           {
-            accessor: `other_expenses_category`,
-            title: `Category`,
-            render: (data) => <Text>{data.other_expenses_category}</Text>,
+            accessor: "item_category_signer",
+            title: "Signer",
+            render: (data) => {
+              const firstName =
+                data.item_category_signer.signer_team_member.team_member_user
+                  .user_first_name;
+              const lastName =
+                data.item_category_signer.signer_team_member.team_member_user
+                  .user_last_name;
+              const userId =
+                data.item_category_signer.signer_team_member.team_member_user
+                  .user_id;
+
+              return (
+                <Flex gap="md" align="center" mt="xs">
+                  <Avatar
+                    size="sm"
+                    src={
+                      data.item_category_signer.signer_team_member
+                        .team_member_user.user_avatar
+                    }
+                    color={getAvatarColor(Number(`${userId.charCodeAt(0)}`))}
+                    radius="xl"
+                  >
+                    {`${firstName[0]}${lastName[0]}`}
+                  </Avatar>
+
+                  <Text>{`${firstName} ${lastName}`}</Text>
+                </Flex>
+              );
+            },
           },
           {
-            accessor: "status",
+            accessor: "item_category_is_available",
             title: "Status",
             textAlignment: "center",
             render: (data) => (
               <Center>
                 <Checkbox
-                  checked={data.other_expenses_type_is_available}
+                  checked={data.item_category_is_available}
                   className={classes.checkbox}
                   size="xs"
                   onChange={(e) =>
                     handleUpdateStatus(
-                      data.other_expenses_type_id,
+                      data.item_category_id,
                       e.currentTarget.checked
                     )
                   }
@@ -313,11 +349,11 @@ const OtherExpensesTypeList = ({
             accessor: "edit",
             title: "",
             textAlignment: "center",
-            render: (type) => (
+            render: (category) => (
               <Center>
                 <ActionIcon
                   onClick={() => {
-                    setEditType(type);
+                    setEditItemCategory(category);
                   }}
                 >
                   <IconSettings size={16} />
@@ -326,7 +362,7 @@ const OtherExpensesTypeList = ({
             ),
           },
         ]}
-        totalRecords={typeCount}
+        totalRecords={itemCategoryCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -338,4 +374,4 @@ const OtherExpensesTypeList = ({
   );
 };
 
-export default OtherExpensesTypeList;
+export default ItemCategoryList;

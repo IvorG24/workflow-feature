@@ -1,6 +1,5 @@
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
-import { EditRequestOnLoadProps } from "@/pages/[teamName]/requests/[requestId]/edit";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import { FETCH_OPTION_LIMIT, FORMSLY_FORM_ORDER } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -31,6 +30,7 @@ import {
   FieldTableRow,
   FormStatusType,
   FormType,
+  ItemCategoryType,
   ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
   ItemTableRow,
@@ -1022,7 +1022,21 @@ export const getItem = async (
             *
           )
         ),
-        item_level_three_description: item_level_three_description_table(*)
+        item_level_three_description: item_level_three_description_table(*),
+        item_category: item_category_id(
+          item_category_signer: item_category_signer_id(
+            *,
+            signer_team_member: signer_team_member_id(
+              team_member_id,
+              team_member_user: team_member_user_id(
+                user_id,
+                user_first_name,
+                user_last_name,
+                user_avatar
+              )
+            )
+          )
+        )
       `
     )
     .eq("item_team_id", teamId)
@@ -4213,7 +4227,7 @@ export const getEditRequestOnLoad = async (
     .select("*");
   if (error) throw error;
 
-  return data as unknown as EditRequestOnLoadProps;
+  return data;
 };
 
 // Get all group of team member
@@ -4683,7 +4697,6 @@ export const getOnboardList = async (
     .from("user_onboard_table")
     .select("*")
     .eq("user_onboard_user_id", userId)
-
     .order("user_onboard_date_created", { ascending: false });
 
   if (onboardName) query.eq("user_onboard_name", onboardName);
@@ -5312,6 +5325,7 @@ export const getSectionInEditRequest = async (
   const formattedData = data as unknown as {
     sectionData: RequestWithResponseType["request_form"]["form_section"];
     itemDivisionIdList: string[][];
+    itemCategorySignerList: (ItemCategoryType["item_category"] | null)[];
   };
 
   return formattedData;
@@ -6069,7 +6083,7 @@ export const getBarangay = async (
 };
 
 // Fetch section in request page
-export const getSectionInItemRequestPage = async (
+export const getSectionInRequestPage = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     index: number;
@@ -6077,6 +6091,7 @@ export const getSectionInItemRequestPage = async (
     sectionId: string;
     fieldData?: RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
     duplicatableSectionIdCondition: string;
+    withOption?: boolean;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -6298,4 +6313,436 @@ export const getUserCurrentSignature = async (
   return formattedData
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${formattedData.user_signature_attachment.attachment_bucket}/${formattedData.user_signature_attachment.attachment_value}`
     : "";
+};
+
+// Get non duplicatable section response
+export const getNonDuplictableSectionResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldIdList: string[];
+    requestId: string;
+  }
+) => {
+  const { fieldIdList, requestId } = params;
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response_field_id, request_response")
+    .eq("request_response_request_id", requestId)
+    .in("request_response_field_id", fieldIdList);
+  if (error) throw error;
+  return data;
+};
+
+// Fetch item request conditional options
+export const getItemRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      itemName: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_item_request_conditional_options", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch service category options
+export const getServiceCategoryOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("service_category_table")
+    .select("service_category_id, service_category")
+    .eq("service_category_team_id", teamId)
+    .eq("service_category_is_disabled", false)
+    .eq("service_category_is_available", true)
+    .order("service_category")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch service unit of measurement options
+export const getGeneralUnitOfMeasurementOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("general_unit_of_measurement_table")
+    .select("general_unit_of_measurement_id, general_unit_of_measurement")
+    .eq("general_unit_of_measurement_team_id", teamId)
+    .eq("general_unit_of_measurement_is_disabled", false)
+    .eq("general_unit_of_measurement_is_available", true)
+    .order("general_unit_of_measurement")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch service unit of measurement options
+export const getServiceCSIDivisionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("distinct_division_view")
+    .select("csi_code_division_id, csi_code_division_description")
+    .order("csi_code_division_description")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch service request conditional options
+export const getServiceRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      csiDivision: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_service_request_conditional_options", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch other expenses category options
+export const getOtherExpensesCategoryOptionsWithLimit = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("other_expenses_category_table")
+    .select("other_expenses_category_id, other_expenses_category")
+    .eq("other_expenses_category_team_id", teamId)
+    .eq("other_expenses_category_is_disabled", false)
+    .eq("other_expenses_category_is_available", true)
+    .order("other_expenses_category")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch other expenses csi description options
+export const getOtherExpensesCSIDescriptionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_id, csi_code_level_three_description")
+    .eq("csi_code_division_id", "01")
+    .order("csi_code_level_three_description")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch other expenses request conditional options
+export const getOtherExpensesRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      category: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_other_expenses_request_conditional_options", {
+      input_data: params,
+    })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch ped equipment category options
+export const getPEDEquipmentCategoryOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_category_table")
+    .select("equipment_category_id, equipment_category")
+    .eq("equipment_category_team_id", teamId)
+    .eq("equipment_category_is_disabled", false)
+    .eq("equipment_category_is_available", true)
+    .order("equipment_category")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch capacity unit of measurement options
+export const getCapacityUnitOfMeasurementOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("capacity_unit_of_measurement_table")
+    .select("capacity_unit_of_measurement_id, capacity_unit_of_measurement")
+    .eq("capacity_unit_of_measurement_team_id", teamId)
+    .eq("capacity_unit_of_measurement_is_disabled", false)
+    .eq("capacity_unit_of_measurement_is_available", true)
+    .order("capacity_unit_of_measurement")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch ped equipment request conditional options
+export const getPEDEquipmentRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      category: string;
+      equipmentName: string;
+      brand: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_ped_equipment_request_conditional_options", {
+      input_data: params,
+    })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch ped item general name options
+export const getPedItemGeneralNameOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .select("item_id, item_general_name")
+    .eq("item_team_id", teamId)
+    .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
+    .eq("item_is_ped_item", true)
+    .order("item_general_name")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch ped item request conditional options
+export const getPEDItemRequestConditionalOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionList: {
+      itemName: string;
+      fieldIdList: string[];
+    }[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_ped_item_request_conditional_options", {
+      input_data: params,
+    })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch all item category option
+export const getItemCategoryOption = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .from("item_category_table")
+    .select("item_category_id, item_category")
+    .eq("item_category_is_available", true)
+    .eq("item_category_is_disabled", false)
+    .order("item_category", { ascending: true });
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch all item form approver
+export const getItemFormApprover = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+        team_member_id,
+        team_member_user: team_member_user_id!inner(
+          user_first_name,
+          user_last_name
+        )
+      `
+    )
+    .eq("team_member_role", "APPROVER")
+    .eq("team_member_is_disabled", false)
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_user.user_is_disabled", false)
+    .order("team_member_user(user_first_name)", {
+      ascending: true,
+      foreignTable: "",
+    })
+    .order("team_member_user(user_last_name)", {
+      ascending: true,
+      foreignTable: "",
+    });
+
+  if (error) throw error;
+
+  const formattedData = data as {
+    team_member_id: string;
+    team_member_user: {
+      user_first_name: string;
+      user_last_name: string;
+    };
+  }[];
+
+  return formattedData.map((teamMember) => {
+    return {
+      value: teamMember.team_member_id,
+      label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+    };
+  });
+};
+
+// check if item category already exists
+export const checkItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { category: string }
+) => {
+  const { category } = params;
+
+  const { count, error } = await supabaseClient
+    .from("item_category_table")
+    .select("*", { count: "exact", head: true })
+    .eq("item_category", category)
+    .eq("item_category_is_disabled", false);
+  if (error) throw error;
+
+  return Boolean(count);
+};
+
+// Get item category list
+export const getItemCategoryList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    limit: number;
+    page: number;
+    search?: string;
+  }
+) => {
+  const { search, limit, page } = params;
+
+  const start = (page - 1) * limit;
+
+  let query = supabaseClient
+    .from("item_category_table")
+    .select(
+      `
+        *,
+        item_category_signer: item_category_signer_id(
+          signer_id,
+          signer_team_member: signer_team_member_id(
+            team_member_id,
+            team_member_user: team_member_user_id(
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            )
+          )
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("item_category_is_disabled", false);
+
+  if (search) {
+    query = query.ilike("item_category", `%${search}%`);
+  }
+
+  query.order("item_category", { ascending: true });
+  query.limit(limit);
+  query.range(start, start + limit - 1);
+  query.maybeSingle;
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  return {
+    data,
+    count,
+  };
 };

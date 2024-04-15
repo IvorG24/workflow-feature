@@ -4,7 +4,7 @@ import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/Tea
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { escapeQuotes, parseJSONIfValid } from "@/utils/string";
+import { escapeQuotes } from "@/utils/string";
 import {
   AddressTableInsert,
   AttachmentBucketType,
@@ -31,7 +31,6 @@ import {
   RequestResponseTableInsert,
   RequestSignerTableInsert,
   RequestTableRow,
-  RequestWithResponseType,
   ServiceForm,
   ServiceScopeChoiceTableInsert,
   ServiceTableInsert,
@@ -587,9 +586,7 @@ export const editRequest = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     requestId: string;
-    requestFormValues: {
-      sections: RequestWithResponseType["request_form"]["form_section"];
-    };
+    requestFormValues: RequestFormValues;
     signers: FormType["form_signer"];
     teamId: string;
     requesterName: string;
@@ -614,7 +611,7 @@ export const editRequest = async (
       ? uuidv4()
       : null;
     for (const field of section.section_field) {
-      let responseValue = field?.field_response[0]?.request_response as unknown;
+      let responseValue = field?.field_response as unknown;
       if (
         typeof responseValue === "boolean" ||
         responseValue ||
@@ -643,18 +640,6 @@ export const editRequest = async (
           }
         } else if (field.field_type === "SWITCH" && !field.field_response) {
           responseValue = false;
-        }
-        const parsedResponse = parseJSONIfValid(`${responseValue}`);
-
-        if (field.field_type === "MULTISELECT") {
-          if (typeof responseValue === "string") responseValue = parsedResponse;
-        } else {
-          responseValue =
-            parsedResponse.length >= 2 &&
-            parsedResponse[0] === '"' &&
-            parsedResponse[parsedResponse.length - 1] === '"'
-              ? parsedResponse.slice(1, -1)
-              : parsedResponse;
         }
 
         const response = {
@@ -1583,4 +1568,19 @@ export const createPedPartFromTicketRequest = async (
   );
   if (error) throw error;
   return data;
+};
+
+// Create item category
+export const createItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    category: string;
+    teamMemberId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("create_item_category", {
+    input_data: params,
+  });
+
+  if (error) throw error;
 };

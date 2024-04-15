@@ -127,8 +127,9 @@ const ProjectList = ({
         message: "Error on fetching project list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleDelete = async () => {

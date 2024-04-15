@@ -115,8 +115,9 @@ const ServiceList = ({
         message: "Error on fetching service list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleDelete = async () => {

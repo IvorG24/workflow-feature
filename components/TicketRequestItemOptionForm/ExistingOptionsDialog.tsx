@@ -73,8 +73,9 @@ const ExistingOptionsDialog = ({ item, opened, close }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleSearch = async (isEmpty?: boolean) => {

@@ -46,11 +46,44 @@ type RequestFormSectionProps = {
       prevValue: string | null,
       value: string | null
     ) => void;
-    onGeneralItemNameChange: (value: string | null, index: number) => void;
-    onComponentCategoryChange: (value: string | null, index: number) => void;
-    onBrandChange: (value: string | null, index: number) => void;
-    onModelChange: (value: string | null, index: number) => void;
+    onGeneralItemNameChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onComponentCategoryChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onBrandChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onModelChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
+    onGeneralItemNameOpen?: (index: number) => void;
   };
   pedItemFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -65,6 +98,8 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
+  isEdit?: boolean;
+  loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
 };
 
 const RequestFormSection = ({
@@ -79,6 +114,8 @@ const RequestFormSection = ({
   otherExpensesMethods,
   pedItemFormMethods,
   paymentRequestFormMethods,
+  isEdit,
+  loadingFieldList,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -105,25 +142,38 @@ const RequestFormSection = ({
       </Group>
       <Space />
       <Stack mt="xl">
-        {section.section_field.map((field, idx) => (
-          <RequestFormFields
-            key={field.field_id + section.section_id}
-            field={{
-              ...field,
-              options: field.field_option ? field.field_option : [],
-            }}
-            sectionIndex={sectionIndex}
-            fieldIndex={idx}
-            itemFormMethods={itemFormMethods}
-            formslyFormName={formslyFormName}
-            servicesFormMethods={servicesFormMethods}
-            pedEquipmentFormMethods={pedEquipmentFormMethods}
-            pedPartFormMethods={pedPartFormMethods}
-            otherExpensesMethods={otherExpensesMethods}
-            pedItemFormMethods={pedItemFormMethods}
-            paymentRequestFormMethods={paymentRequestFormMethods}
-          />
-        ))}
+        {section.section_field.map((field, idx) => {
+          const isLoading = Boolean(
+            loadingFieldList?.find(
+              (loadingField) =>
+                loadingField.sectionIndex === sectionIndex &&
+                loadingField.fieldIndex === idx
+            )
+          );
+          return (
+            <RequestFormFields
+              key={field.field_id + section.section_id}
+              field={{
+                ...field,
+                options: field.field_option ? field.field_option : [],
+                field_section_duplicatable_id:
+                  field.field_section_duplicatable_id,
+              }}
+              sectionIndex={sectionIndex}
+              fieldIndex={idx}
+              itemFormMethods={itemFormMethods}
+              formslyFormName={formslyFormName}
+              servicesFormMethods={servicesFormMethods}
+              pedEquipmentFormMethods={pedEquipmentFormMethods}
+              pedPartFormMethods={pedPartFormMethods}
+              otherExpensesMethods={otherExpensesMethods}
+              pedItemFormMethods={pedItemFormMethods}
+              paymentRequestFormMethods={paymentRequestFormMethods}
+              isEdit={isEdit}
+              isLoading={isLoading}
+            />
+          );
+        })}
       </Stack>
     </Paper>
   );

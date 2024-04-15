@@ -81,6 +81,9 @@ const CreatePEDPartRequestPage = ({
     OptionTableRow[]
   >([]);
   const [equipmentId, setEquipmentId] = useState("");
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -221,6 +224,8 @@ const CreatePEDPartRequestPage = ({
     try {
       resetItemSection();
       if (value) {
+        setLoadingFieldList([{ sectionIndex: 0, fieldIndex: 4 }]);
+
         const categoryId = categoryOptions.find(
           (category) => category.option_value === value
         );
@@ -281,12 +286,18 @@ const CreatePEDPartRequestPage = ({
           section_field: generalField,
         });
       }
+
+      if (newSection.section_field[3].field_response === "Bulk") {
+        handleTypeOfOrderChange("Bulk", "Single");
+      }
     } catch (e) {
       setValue(`sections.0.section_field.${2}.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -336,6 +347,8 @@ const CreatePEDPartRequestPage = ({
     resetItemSection();
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: 0, fieldIndex: 5 }]);
+
         const equipmentOptions = newSection.section_field[4].field_option;
         const equipmentId = equipmentOptions.find(
           (equipment) => equipment.option_value === value
@@ -445,6 +458,8 @@ const CreatePEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -452,6 +467,11 @@ const CreatePEDPartRequestPage = ({
     const newSection = getValues(`sections.0`);
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: 0, fieldIndex: 6 },
+          { sectionIndex: 0, fieldIndex: 7 },
+          { sectionIndex: 0, fieldIndex: 8 },
+        ]);
         const equipmentDescription = await getEquipmentDescription(
           supabaseClient,
           {
@@ -505,6 +525,8 @@ const CreatePEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -611,6 +633,7 @@ const CreatePEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 1 }]);
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: value,
@@ -624,7 +647,7 @@ const CreatePEDPartRequestPage = ({
         const componentCategoryOption = equipmentComponentCategoryChoices.map(
           (choice, index) => {
             return {
-              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_field_id: form.form_section[1].section_field[1].field_id,
               option_id: choice.equipment_part_id,
               option_order: index,
               option_value: choice.equipment_component_category,
@@ -633,7 +656,7 @@ const CreatePEDPartRequestPage = ({
         );
 
         const generalField = [
-          { ...newSection.section_field[0] },
+          newSection.section_field[0],
           {
             ...newSection.section_field[1],
             field_option: componentCategoryOption,
@@ -653,7 +676,7 @@ const CreatePEDPartRequestPage = ({
         });
       } else {
         const generalField = [
-          { ...newSection.section_field[0] },
+          newSection.section_field[0],
           ...newSection.section_field.slice(1).map((field) => {
             return {
               ...field,
@@ -673,6 +696,8 @@ const CreatePEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -683,6 +708,7 @@ const CreatePEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 2 }]);
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: newSection.section_field[0].field_response as string,
@@ -695,7 +721,7 @@ const CreatePEDPartRequestPage = ({
 
         const brandOption = brandOptionChoices.map((choice, index) => {
           return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_field_id: form.form_section[1].section_field[2].field_id,
             option_id: choice.equipment_part_id,
             option_order: index,
             option_value: choice.equipment_brand,
@@ -743,6 +769,8 @@ const CreatePEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -750,6 +778,8 @@ const CreatePEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 3 }]);
+
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: newSection.section_field[0].field_response as string,
@@ -764,7 +794,7 @@ const CreatePEDPartRequestPage = ({
 
         const modelOption = modelOptionChoices.map((choice, index) => {
           return {
-            option_field_id: form.form_section[1].section_field[0].field_id,
+            option_field_id: form.form_section[1].section_field[3].field_id,
             option_id: choice.equipment_part_id,
             option_order: index,
             option_value: choice.equipment_model,
@@ -812,6 +842,8 @@ const CreatePEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -819,6 +851,7 @@ const CreatePEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 4 }]);
         const data = await getItemSectionChoices(supabaseClient, {
           equipmentId: equipmentId,
           generalName: newSection.section_field[0].field_response as string,
@@ -835,7 +868,7 @@ const CreatePEDPartRequestPage = ({
         const partNumberOption = partNumberOptionChoices.map(
           (choice, index) => {
             return {
-              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_field_id: form.form_section[1].section_field[4].field_id,
               option_id: choice.equipment_part_id,
               option_order: index,
               option_value: choice.equipment_part_number,
@@ -884,6 +917,8 @@ const CreatePEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -894,6 +929,7 @@ const CreatePEDPartRequestPage = ({
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 6 }]);
         const equipmentPartUoM = await getItemUnitOfMeasurement(
           supabaseClient,
           {
@@ -939,6 +975,8 @@ const CreatePEDPartRequestPage = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -978,6 +1016,7 @@ const CreatePEDPartRequestPage = ({
                       onModelChange: handleModelChange,
                       onPartNumberChange: handlePartNumberChange,
                     }}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

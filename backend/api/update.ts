@@ -1003,3 +1003,19 @@ export const updateSLAHours = async (
   if (error) throw error;
   return data[0];
 };
+
+// Update item category
+export const updateItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    categoryId: string;
+    category: string;
+    teamMemberId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_item_category", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+};

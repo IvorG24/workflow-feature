@@ -697,8 +697,9 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
     {
       items: ["LUZ-18-018 SUMITOMO NSCR"],
       fullName: "Montano Bulalaque",
-      jiraAccountId: "712020:39d96cbd-511b-47db-846c-7a7097bb5989",
-      emailAddress: "montano.bulalaque@staclara.com.ph",
+      jiraAccountId:
+        "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e0161032-74ba-43e4-b7cc-db4f9f0c8510",
+      emailAddress: "montano.bulalaque.staclara@gmail.com",
     },
     {
       items: ["LUZ-22-010 PHILIP MORRIS"],
@@ -1146,8 +1147,9 @@ const getRequestParticipantList = (formslyProjectSite: string) => {
       participantList: [
         {
           fullName: "Montano Bulalaque",
-          jiraAccountId: "712020:39d96cbd-511b-47db-846c-7a7097bb5989",
-          emailAddress: "montano.bulalaque@staclara.com.ph",
+          jiraAccountId:
+            "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:e0161032-74ba-43e4-b7cc-db4f9f0c8510",
+          emailAddress: "montano.bulalaque.staclara@gmail.com",
         },
       ],
     },

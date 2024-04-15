@@ -78,8 +78,9 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleDeclineInvitation = async () => {
@@ -98,8 +99,9 @@ const TeamInvitationPage = ({ invitation }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (

@@ -99,8 +99,9 @@ const EquipmentDescriptionList = ({
         message: "Error on fetching equipment description list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleCheckRow = (equipmentDescriptionId: string) => {
