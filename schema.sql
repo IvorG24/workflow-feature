@@ -3765,7 +3765,7 @@ $$ LANGUAGE plv8;
 
 -- START: Get notifications on load
 
-CREATE FUNCTION get_notification_on_load(
+CREATE FUNCTION OR REPLACE get_notification_on_load(
     input_data JSON
 )
 RETURNS JSON AS $$
