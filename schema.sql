@@ -1607,7 +1607,33 @@ RETURNS JSON AS $$
       itemDescription
     } = input_data;
     
-    const item_result = plv8.execute(`INSERT INTO item_table (item_general_name,item_is_available,item_unit,item_gl_account,item_team_id,item_encoder_team_member_id, item_is_ped_item, item_category_id) VALUES ('${item_general_name}','${item_is_available}','${item_unit}','${item_gl_account}','${item_team_id}','${item_encoder_team_member_id}',${item_is_ped_item},${item_category_id ? `'${item_category_id}'` : NULL}) RETURNING *`)[0];
+    const item_result = plv8.execute(
+      `
+        INSERT INTO item_table 
+        (
+          item_general_name,
+          item_is_available,
+          item_unit,
+          item_gl_account,
+          item_team_id,
+          item_encoder_team_member_id, 
+          item_is_ped_item, 
+          item_category_id
+        ) 
+        VALUES 
+        (
+          '${item_general_name}',
+          '${item_is_available}',
+          '${item_unit}',
+          '${item_gl_account}',
+          '${item_team_id}',
+          '${item_encoder_team_member_id}',
+          ${item_is_ped_item},
+          ${item_category_id ? `'${item_category_id}'` : null}
+        ) RETURNING *
+      `
+    )[0];
+
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");
@@ -1722,7 +1748,7 @@ RETURNS JSON AS $$
           item_gl_account = '${item_gl_account}',
           item_team_id = '${item_team_id}',
           item_is_ped_item = ${item_is_ped_item},
-          item_category_id = '${item_category_id}'
+          item_category_id = ${item_category_id ? '${item_category_id}' : null}
         WHERE item_id = '${item_id}'
         RETURNING *
       `
