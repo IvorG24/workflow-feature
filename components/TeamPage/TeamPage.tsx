@@ -19,15 +19,7 @@ import {
   TeamTableRow,
   UserValidIDTableRow,
 } from "@/utils/types";
-import {
-  Box,
-  Center,
-  Container,
-  Paper,
-  Space,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Box, Container, Paper, Space, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
@@ -39,14 +31,10 @@ import LeaveTeamSection from "./LeaveTeamSection";
 import QuickOnboarding from "./QuickOnboarding";
 import AdminGroup from "./TeamGroup/AdminGroup";
 import ApproverGroup from "./TeamGroup/ApproverGroup";
-import CreateGroup from "./TeamGroup/CreateGroup";
-import GroupList from "./TeamGroup/GroupList";
-import GroupMembers from "./TeamGroup/GroupMembers";
+import TeamGroups from "./TeamGroup/TeamGroups/TeamGroups";
 import TeamInfoForm from "./TeamInfoForm";
 import TeamMemberList from "./TeamMemberList";
-import CreateProject from "./TeamProject/CreateProject";
-import ProjectList from "./TeamProject/ProjectList";
-import ProjectMembers from "./TeamProject/ProjectMembers";
+import TeamProject from "./TeamProject/TeamProject";
 import ValidIDVerificationList from "./ValidIDVerificationList";
 
 export type UpdateTeamInfoForm = {
@@ -94,21 +82,6 @@ const TeamPage = ({
   const [teamMemberPage, setTeamMemberPage] = useState(1);
 
   const [teamLogo, setTeamLogo] = useState<File | null>(null);
-
-  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
-  const [groupList, setGroupList] = useState(teamGroups);
-  const [groupCount, setGroupCount] = useState(teamGroupsCount);
-  const [selectedGroup, setSelectedGroup] = useState<TeamGroupTableRow | null>(
-    null
-  );
-
-  const [isCreatingProject, setIsCreatingProject] = useState(false);
-  const [projectList, setProjectList] = useState(teamProjects);
-  const [projectCount, setProjectCount] = useState(teamProjectsCount);
-  const [selectedProject, setSelectedProject] =
-    useState<TeamProjectWithAddressType | null>(null);
-
-  const [isFetchingMembers, setIsFetchingMembers] = useState(false);
 
   const memberEmailList = teamMemberList.map(
     (member) => member.team_member_user.user_email
@@ -406,91 +379,19 @@ const TeamPage = ({
         </Box>
       )}
 
-      <Box mt="xl">
-        <Paper p="xl" shadow="xs">
-          {!isCreatingGroup ? (
-            <GroupList
-              groupList={groupList}
-              setGroupList={setGroupList}
-              groupCount={groupCount}
-              setGroupCount={setGroupCount}
-              setIsCreatingGroup={setIsCreatingGroup}
-              setSelectedGroup={setSelectedGroup}
-              setIsFetchingMembers={setIsFetchingMembers}
-              selectedGroup={selectedGroup}
-              isOwnerOrAdmin={isOwnerOrAdmin}
-            />
-          ) : null}
-          {isCreatingGroup ? (
-            <CreateGroup
-              setIsCreatingGroup={setIsCreatingGroup}
-              setGroupList={setGroupList}
-              setGroupCount={setGroupCount}
-            />
-          ) : null}
-        </Paper>
-        <Space h="xl" />
-        <Paper p="xl" shadow="xs">
-          {!selectedGroup ? (
-            <Center>
-              <Text color="dimmed">No group selected</Text>
-            </Center>
-          ) : null}
-          {selectedGroup ? (
-            <GroupMembers
-              teamId={initialTeam.team_id}
-              selectedGroup={selectedGroup}
-              setSelectedGroup={setSelectedGroup}
-              isFetchingMembers={isFetchingMembers}
-              setIsFetchingMembers={setIsFetchingMembers}
-              isOwnerOrAdmin={isOwnerOrAdmin}
-            />
-          ) : null}
-        </Paper>
-      </Box>
+      <TeamGroups
+        teamGroups={teamGroups}
+        teamGroupsCount={teamGroupsCount}
+        isOwnerOrAdmin={isOwnerOrAdmin}
+        teamId={initialTeam.team_id}
+      />
 
-      <Box mt="xl">
-        <Paper p="xl" shadow="xs">
-          {!isCreatingProject ? (
-            <ProjectList
-              projectList={projectList}
-              setProjectList={setProjectList}
-              projectCount={projectCount}
-              setProjectCount={setProjectCount}
-              setIsCreatingProject={setIsCreatingProject}
-              setSelectedProject={setSelectedProject}
-              setIsFetchingMembers={setIsFetchingMembers}
-              selectedProject={selectedProject}
-              isOwnerOrAdmin={isOwnerOrAdmin}
-            />
-          ) : null}
-          {isCreatingProject ? (
-            <CreateProject
-              setIsCreatingProject={setIsCreatingProject}
-              setProjectList={setProjectList}
-              setProjectCount={setProjectCount}
-            />
-          ) : null}
-        </Paper>
-        <Space h="xl" />
-        <Paper p="xl" shadow="xs">
-          {!selectedProject ? (
-            <Center>
-              <Text color="dimmed">No project selected</Text>
-            </Center>
-          ) : null}
-          {selectedProject ? (
-            <ProjectMembers
-              teamId={initialTeam.team_id}
-              selectedProject={selectedProject}
-              setSelectedProject={setSelectedProject}
-              isFetchingMembers={isFetchingMembers}
-              setIsFetchingMembers={setIsFetchingMembers}
-              isOwnerOrAdmin={isOwnerOrAdmin}
-            />
-          ) : null}
-        </Paper>
-      </Box>
+      <TeamProject
+        teamProjects={teamProjects}
+        teamProjectsCount={teamProjectsCount}
+        isOwnerOrAdmin={isOwnerOrAdmin}
+        teamId={initialTeam.team_id}
+      />
 
       {isOwnerOrAdmin && (
         <>

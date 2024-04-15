@@ -2,7 +2,6 @@ import { checkIfTeamGroupExists } from "@/backend/api/get";
 import { createTeamGroup } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
-import { TeamGroupTableRow } from "@/utils/types";
 import {
   Button,
   Container,
@@ -24,15 +23,10 @@ type GroupForm = {
 
 type Props = {
   setIsCreatingGroup: Dispatch<SetStateAction<boolean>>;
-  setGroupList: Dispatch<SetStateAction<TeamGroupTableRow[]>>;
-  setGroupCount: Dispatch<SetStateAction<number>>;
+  handleFetch: (search: string, page: number) => void;
 };
 
-const CreateGroup = ({
-  setIsCreatingGroup,
-  setGroupList,
-  setGroupCount,
-}: Props) => {
+const CreateGroup = ({ setIsCreatingGroup, handleFetch }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
 
@@ -58,15 +52,12 @@ const CreateGroup = ({
         return;
       }
 
-      const newGroup = await createTeamGroup(supabaseClient, {
+      await createTeamGroup(supabaseClient, {
         team_group_name: groupName,
         team_group_team_id: activeTeam.team_id,
       });
-      setGroupList((prev) => {
-        prev.unshift(newGroup);
-        return prev;
-      });
-      setGroupCount((prev) => prev + 1);
+      handleFetch("", 1);
+
       notifications.show({
         message: "Team group created.",
         color: "green",

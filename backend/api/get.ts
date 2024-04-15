@@ -2709,7 +2709,7 @@ export const getTeamGroupList = async (
     query = query.ilike("team_group_name", `%${search}%`);
   }
 
-  query = query.order("team_group_date_created", { ascending: false });
+  query = query.order("team_group_name", { ascending: true });
   query.limit(limit);
   query.range(start, start + limit - 1);
 
@@ -2870,14 +2870,19 @@ export const getTeamGroupMemberList = async (
     );
   }
 
-  query = query.order("team_member_date_created", {
-    ascending: false,
-    foreignTable: "team_member",
+  query = query.order("user_first_name", {
+    ascending: true,
+    foreignTable: "team_member.team_member_user",
+  });
+  query = query.order("user_last_name", {
+    ascending: true,
+    foreignTable: "team_member.team_member_user",
   });
   query.limit(limit);
   query.range(start, start + limit - 1);
 
   const { data, count, error } = await query;
+
   if (error) throw error;
 
   const formattedData = data as unknown as {

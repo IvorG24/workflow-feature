@@ -3,7 +3,7 @@ import { createRowInLookupTable } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { LookupForm, LookupTable } from "@/utils/types";
+import { LookupForm } from "@/utils/types";
 
 import {
   Button,
@@ -27,15 +27,11 @@ type Props = {
     label: string;
   };
   setIsCreatingCategoryLookup: Dispatch<SetStateAction<boolean>>;
-  setCategoryLookupList: Dispatch<SetStateAction<LookupTable[]>>;
-  setCategoryLookupCount: Dispatch<SetStateAction<number>>;
 };
 
 const CreateCategoryLookup = ({
   lookup,
   setIsCreatingCategoryLookup,
-  setCategoryLookupList,
-  setCategoryLookupCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -55,7 +51,7 @@ const CreateCategoryLookup = ({
       const encoder = `${lookup.table}_encoder_team_member_id`;
       const team = `${lookup.table}_team_id`;
 
-      const newCategoryLookup = await createRowInLookupTable(supabaseClient, {
+      await createRowInLookupTable(supabaseClient, {
         inputData: {
           [lookupValue]:
             lookup.label === "Unit of Measurement"
@@ -67,11 +63,7 @@ const CreateCategoryLookup = ({
         } as unknown as JSON,
         tableName: lookup.table,
       });
-      setCategoryLookupList((prev) => {
-        prev.unshift(newCategoryLookup);
-        return prev;
-      });
-      setCategoryLookupCount((prev) => prev + 1);
+
       notifications.show({
         message: `${lookup.label} created.`,
         color: "green",

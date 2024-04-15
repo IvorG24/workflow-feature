@@ -7,11 +7,7 @@ import {
 import { createEquipmentPart } from "@/backend/api/post";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import {
-  EquipmentPartForm,
-  EquipmentPartType,
-  EquipmentWithCategoryType,
-} from "@/utils/types";
+import { EquipmentPartForm, EquipmentWithCategoryType } from "@/utils/types";
 import {
   Button,
   Checkbox,
@@ -32,15 +28,11 @@ import { Controller, useForm } from "react-hook-form";
 type Props = {
   selectedEquipment: EquipmentWithCategoryType;
   setIsCreatingEquipmentPart: Dispatch<SetStateAction<boolean>>;
-  setEquipmentPartList: Dispatch<SetStateAction<EquipmentPartType[]>>;
-  setEquipmentPartCount: Dispatch<SetStateAction<number>>;
 };
 
 const CreateEquipmentPart = ({
   selectedEquipment,
   setIsCreatingEquipmentPart,
-  setEquipmentPartList,
-  setEquipmentPartCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [isFetchingOptions, setIsFetchingOptions] = useState(true);
@@ -189,7 +181,7 @@ const CreateEquipmentPart = ({
         return;
       }
 
-      const newEquipmentPart = await createEquipmentPart(supabaseClient, {
+      await createEquipmentPart(supabaseClient, {
         equipmentPartData: {
           ...params,
           equipment_part_number: data.partNumber.trim().toUpperCase(),
@@ -205,11 +197,7 @@ const CreateEquipmentPart = ({
           (category) => category.value === data.category
         )?.label as string,
       });
-      setEquipmentPartList((prev) => {
-        prev.unshift(newEquipmentPart);
-        return prev;
-      });
-      setEquipmentPartCount((prev) => prev + 1);
+
       notifications.show({
         message: "Equipment Part created.",
         color: "green",

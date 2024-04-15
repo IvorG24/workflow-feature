@@ -352,7 +352,7 @@ const PEDPartFormPage = ({
             onClick={() =>
               router.push({
                 pathname: `/${formatTeamNameToUrlKey(
-                  team.team_name 
+                  team.team_name
                 )}/dashboard/`,
                 query: { ...router.query, formId },
               })
@@ -409,8 +409,6 @@ const PEDPartFormPage = ({
             {isCreatingEquipment ? (
               <CreateEquipment
                 setIsCreatingEquipment={setIsCreatingEquipment}
-                setEquipmentList={setEquipmentList}
-                setEquipmentCount={setEquipmentCount}
               />
             ) : null}
             {editEquipment ? (

@@ -3,7 +3,7 @@ import { createRowInLookupTable } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { EquipmentLookupChoices, LookupForm, LookupTable } from "@/utils/types";
+import { EquipmentLookupChoices, LookupForm } from "@/utils/types";
 import {
   Button,
   Checkbox,
@@ -26,15 +26,11 @@ type Props = {
     label: string;
   };
   setIsCreatingEquipmentLookup: Dispatch<SetStateAction<boolean>>;
-  setEquipmentLookupList: Dispatch<SetStateAction<LookupTable[]>>;
-  setEquipmentLookupCount: Dispatch<SetStateAction<number>>;
 };
 
 const CreateEquipmentLookup = ({
   lookup,
   setIsCreatingEquipmentLookup,
-  setEquipmentLookupList,
-  setEquipmentLookupCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -54,7 +50,7 @@ const CreateEquipmentLookup = ({
       const encoder = `${lookup.table}_encoder_team_member_id`;
       const team = `${lookup.table}_team_id`;
 
-      const newEquipmentLookup = await createRowInLookupTable(supabaseClient, {
+      await createRowInLookupTable(supabaseClient, {
         inputData: {
           [lookupValue]:
             lookup.label === "Unit of Measurement"
@@ -66,11 +62,7 @@ const CreateEquipmentLookup = ({
         } as unknown as JSON,
         tableName: lookup.table,
       });
-      setEquipmentLookupList((prev) => {
-        prev.unshift(newEquipmentLookup);
-        return prev;
-      });
-      setEquipmentLookupCount((prev) => prev + 1);
+
       notifications.show({
         message: `${lookup.label} created.`,
         color: "green",
