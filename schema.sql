@@ -10354,6 +10354,47 @@ $$ LANGUAGE plv8;
 
 -- End: Update item category
 
+-- Start: Get approver unresolved request count
+CREATE OR REPLACE FUNCTION get_approver_unresolved_request_count(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let data;
+  plv8.subtransaction(function() {
+    const {
+      teamMemberId
+    } = input_data;
+
+    const getCount = (status, jiraIdCondition) => {
+      return plv8.execute(`
+        SELECT COUNT(*) 
+        FROM request_signer_table 
+        INNER JOIN signer_table ON signer_id = request_signer_signer_id 
+        INNER JOIN request_table ON request_id = request_signer_request_id 
+        WHERE signer_team_member_id = '${teamMemberId}' 
+        AND request_signer_status='${status}' 
+        ${jiraIdCondition}`
+      )[0].count;
+    };
+
+    const pendingRequestCount = getCount('PENDING', '');
+    const totalApprovedRequestCount = getCount('APPROVED', '');
+    const approvedRequestWithJiraIdCount = getCount('APPROVED', 'AND request_jira_id IS NOT NULL');
+    const approvedRequestWithoutJiraIdCount = getCount('APPROVED', 'AND request_jira_id IS NULL');
+
+    data = {
+      pendingRequestCount: parseInt(pendingRequestCount),
+      approvedRequestCount: {
+        total: parseInt(totalApprovedRequestCount),
+        withJiraId: parseInt(approvedRequestWithJiraIdCount),
+        withoutJiraId: parseInt(approvedRequestWithoutJiraIdCount),
+      },
+    };
+  });
+  return data;
+$$ LANGUAGE plv8;
+-- End: Get approver unresolved request count
+
 ---------- End: FUNCTIONS
 
 

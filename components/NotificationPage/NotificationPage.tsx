@@ -19,6 +19,7 @@ import {
   AppType,
   ApproverUnresolvedRequestCountType,
   NotificationTableRow,
+  TeamMemberTableRow,
 } from "@/utils/types";
 import {
   Box,
@@ -224,8 +225,9 @@ const NotificationPage = ({
   }, [storeNotificationList, router.query]);
 
   useEffect(() => {
-    const fetchApproverRequestList = async () => {
-      if (!userTeamMemberData) return;
+    const fetchApproverRequestList = async (
+      userTeamMemberData: TeamMemberTableRow
+    ) => {
       const unresolvedRequestCount = await getApproverUnresolvedRequestCount(
         supabaseClient,
         {
@@ -234,17 +236,23 @@ const NotificationPage = ({
       );
       setApproverUnresolvedRequestCount(unresolvedRequestCount);
     };
-    fetchApproverRequestList();
+    if (
+      userTeamMemberData &&
+      userTeamMemberData.team_member_role === "APPROVER"
+    ) {
+      fetchApproverRequestList(userTeamMemberData);
+    }
   }, [supabaseClient, userTeamMemberData]);
 
   return (
     <Container p={0}>
       <Title order={2}>{startCase(app)} Notifications </Title>
-      {approverUnresolvedRequestCount && (
-        <ApproverNotification
-          approverUnresolvedRequestCount={approverUnresolvedRequestCount}
-        />
-      )}
+      {approverUnresolvedRequestCount &&
+        approverUnresolvedRequestCount.approvedRequestCount.total > 0 && (
+          <ApproverNotification
+            approverUnresolvedRequestCount={approverUnresolvedRequestCount}
+          />
+        )}
 
       <Paper p="md">
         <Tabs

@@ -7,7 +7,7 @@ import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { FormTableRow } from "@/utils/types";
+import { FormTableRow, TeamMemberTableRow } from "@/utils/types";
 import {
   Box,
   Button,
@@ -324,8 +324,9 @@ const ReviewAppNavLink = () => {
   ];
 
   useEffect(() => {
-    const fetchApproverRequestList = async () => {
-      if (!userTeamMemberData) return;
+    const fetchApproverRequestList = async (
+      userTeamMemberData: TeamMemberTableRow
+    ) => {
       const pendingRequestCount = await getApproverRequestCount(
         supabaseClient,
         {
@@ -336,7 +337,12 @@ const ReviewAppNavLink = () => {
 
       setUserNotificationCount(pendingRequestCount + unreadNotificationCount);
     };
-    fetchApproverRequestList();
+    if (
+      userTeamMemberData &&
+      userTeamMemberData.team_member_role === "APPROVER"
+    ) {
+      fetchApproverRequestList(userTeamMemberData);
+    }
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
 
   return (

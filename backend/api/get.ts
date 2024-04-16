@@ -12,6 +12,7 @@ import {
 } from "@/utils/string";
 import {
   AppType,
+  ApproverUnresolvedRequestCountType,
   AttachmentBucketType,
   AttachmentTableRow,
   CSICodeTableRow,
@@ -4243,34 +4244,13 @@ export const getApproverUnresolvedRequestCount = async (
   }
 ) => {
   const { teamMemberId } = params;
-  const pendingRequestCount = await getApproverRequestCount(supabaseClient, {
-    teamMemberId,
-    status: "PENDING",
-  });
-
-  const totalApprovedRequestCount = await getApproverRequestCount(
-    supabaseClient,
-    { teamMemberId, status: "APPROVED" }
+  const { data, error } = await supabaseClient.rpc(
+    "get_approver_unresolved_request_count",
+    { input_data: { teamMemberId } }
   );
-
-  const approvedRequestWithJiraIdCount = await getApproverRequestCount(
-    supabaseClient,
-    { teamMemberId, status: "APPROVED", withJiraId: true }
-  );
-
-  const approvedRequestWithoutJiraIdCount = await getApproverRequestCount(
-    supabaseClient,
-    { teamMemberId, status: "APPROVED", withJiraId: false }
-  );
-
-  return {
-    pendingRequestCount,
-    approvedRequestCount: {
-      total: totalApprovedRequestCount,
-      withJiraId: approvedRequestWithJiraIdCount,
-      withoutJiraId: approvedRequestWithoutJiraIdCount,
-    },
-  };
+  if (error) throw error;
+  console.log(data);
+  return data as ApproverUnresolvedRequestCountType;
 };
 
 // Get edit request on load
