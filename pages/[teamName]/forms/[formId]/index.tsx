@@ -1,6 +1,7 @@
 import { getForm } from "@/backend/api/get";
 import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
+import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
@@ -69,16 +70,16 @@ const Page = ({
             teamProjectListCount={teamProjectListCount}
           />
         );
-      // case "Services":
-      //   return (
-      //     <ServicesFormPage
-      //       teamMemberList={teamMemberList}
-      //       form={form}
-      //       teamGroupList={teamGroupList}
-      //       teamProjectList={teamProjectList}
-      //       teamProjectListCount={teamProjectListCount}
-      //     />
-      //   );
+      case "Services":
+        return (
+          <ServicesFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
       // case "Other Expenses":
       //   return (
       //     <OtherExpensesFormPage
