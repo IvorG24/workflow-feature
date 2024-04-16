@@ -10,7 +10,7 @@ import { Database } from "@/utils/database";
 import {
   EquipmentWithCategoryType,
   FormSegmentType,
-  FormType,
+  InitialFormType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -27,7 +27,6 @@ import {
   Paper,
   SegmentedControl,
   Space,
-  Stack,
   Text,
   TextInput,
   Title,
@@ -50,7 +49,7 @@ import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
-import FormSection from "../RequestFormPage/FormSection";
+import FormSectionList from "../RequestFormPage/FormSectionList";
 import EquipmentDescription from "./EquipmentDescription/EquipmentDescription";
 import CreateEquipment from "./EquipmentList/CreateEquipment";
 import EquipmentList from "./EquipmentList/EquipmentList";
@@ -59,20 +58,16 @@ import EquipmentPart from "./EquipmentPart/EquipmentPart";
 import PEDLookup from "./PEDLookup/PEDLookup";
 
 type Props = {
-  equipments: EquipmentWithCategoryType[];
-  equipmentListCount: number;
+  form: InitialFormType;
   teamMemberList: TeamMemberWithUserType[];
-  form: FormType;
   teamGroupList: TeamGroupTableRow[];
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
 };
 
 const PEDPartFormPage = ({
-  equipments,
-  equipmentListCount,
-  teamMemberList,
   form,
+  teamMemberList,
   teamGroupList,
   teamProjectList,
   teamProjectListCount,
@@ -92,8 +87,10 @@ const PEDPartFormPage = ({
     useState<EquipmentWithCategoryType | null>(null);
   const [editEquipment, setEditEquipment] =
     useState<EquipmentWithCategoryType | null>(null);
-  const [equipmentList, setEquipmentList] = useState(equipments);
-  const [equipmentCount, setEquipmentCount] = useState(equipmentListCount);
+  const [equipmentList, setEquipmentList] = useState<
+    EquipmentWithCategoryType[]
+  >([]);
+  const [equipmentCount, setEquipmentCount] = useState(0);
 
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -466,15 +463,7 @@ const PEDPartFormPage = ({
       ) : null}
 
       {segmentValue === "Form Preview" ? (
-        <Stack spacing="xl">
-          <FormSection section={form.form_section[0]} />
-          <FormSection
-            section={{
-              ...form.form_section[1],
-              section_field: form.form_section[1].section_field.slice(0, 9),
-            }}
-          />
-        </Stack>
+        <FormSectionList formId={form.form_id} formName={form.form_name} />
       ) : null}
 
       {segmentValue === "Form Lookup" ? <PEDLookup /> : null}

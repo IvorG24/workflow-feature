@@ -3,6 +3,7 @@ import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
 import PEDEquipmentFormPage from "@/components/PEDEquipmentFormPage/PEDEquipmentFormPage";
+import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
 import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
@@ -102,18 +103,16 @@ const Page = ({
             teamProjectListCount={teamProjectListCount}
           />
         );
-      // case "PED Part":
-      //   return (
-      //     <PEDPartFormPage
-      //       equipments={equipments}
-      //       equipmentListCount={equipmentListCount}
-      //       teamMemberList={teamMemberList}
-      //       form={form}
-      //       teamGroupList={teamGroupList}
-      //       teamProjectList={teamProjectList}
-      //       teamProjectListCount={teamProjectListCount}
-      //     />
-      //   );
+      case "PED Part":
+        return (
+          <PEDPartFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
       // case "PED Item":
       //   return (
       //     <PEDItemFormPage
