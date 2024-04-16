@@ -136,7 +136,7 @@ const ItemList = ({
 
   useEffect(() => {
     handleFilterForms();
-  }, []);
+  }, [activeTeam.team_id]);
 
   useEffect(() => {
     const fetchOptions = async () => {

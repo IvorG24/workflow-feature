@@ -3,7 +3,9 @@ import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
 import PEDEquipmentFormPage from "@/components/PEDEquipmentFormPage/PEDEquipmentFormPage";
+import PEDItemFormPage from "@/components/PEDItemFormPage/PEDItemFormPage";
 import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
+import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
 import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
@@ -113,21 +115,28 @@ const Page = ({
             teamProjectListCount={teamProjectListCount}
           />
         );
-      // case "PED Item":
-      //   return (
-      //     <PEDItemFormPage
-      //       items={items}
-      //       itemListCount={itemListCount}
-      //       teamMemberList={teamMemberList}
-      //       form={form}
-      //       teamGroupList={teamGroupList}
-      //       teamProjectList={teamProjectList}
-      //       teamProjectListCount={teamProjectListCount}
-      //     />
-      //   );
+      case "PED Item":
+        return (
+          <PEDItemFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
 
-      // default:
-      //   return <RequestFormPage />;
+      default:
+        return (
+          <RequestFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+            isFormslyForm={true}
+          />
+        );
     }
   };
 
@@ -135,16 +144,16 @@ const Page = ({
     <>
       <Meta description="Request Page" url="/teamName/forms/[formId]" />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {/* {!form.form_is_formsly_form ? (
+      {!form.form_is_formsly_form ? (
         <RequestFormPage
           form={form}
           teamMemberList={teamMemberList}
           teamGroupList={teamGroupList}
-          isFormslyForm={false}
           teamProjectList={teamProjectList}
           teamProjectListCount={teamProjectListCount}
+          isFormslyForm={false}
         />
-      ) : null} */}
+      ) : null}
     </>
   );
 };
