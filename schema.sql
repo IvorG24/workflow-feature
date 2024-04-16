@@ -280,6 +280,16 @@ CREATE TABLE item_unit_of_measurement_table(
 -- End: Item unit of measurement
 
 -- Start: Item Form
+CREATE TABLE item_category_table(
+  item_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_category VARCHAR(4000) NOT NULL,
+  item_category_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_category_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  item_category_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
+);
+
 CREATE TABLE item_table(
   item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -324,16 +334,6 @@ CREATE TABLE item_description_field_table(
 
   item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL,
   item_description_field_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
-);
-
-CREATE TABLE item_category_table(
-  item_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  item_category VARCHAR(4000) NOT NULL,
-  item_category_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  item_category_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-
-  item_category_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
 );
 
 -- End: Item Form
@@ -4394,210 +4394,13 @@ RETURNS JSON as $$
       const teamProjectList = plv8.execute(`SELECT team_project_id, team_project_name FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit};`);
       const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false;`)[0].count;
     
-      if (formName === "Item") {
-        const items = [];
-        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false ORDER BY item_general_name ASC LIMIT ${limit};`);
-        const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false`)[0].count;
-
-        itemData.forEach(value => {
-          const itemDescription = plv8.execute(`SELECT item_description_id, item_description_label, item_description_is_with_uom, item_description_field_id FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
-          const itemDivision = plv8.execute(`SELECT item_division_value FROM item_division_table WHERE item_division_item_id = '${value.item_id}' ORDER BY item_division_value ASC;`);
-          const itemDivisionDescription = plv8.execute(`SELECT item_level_three_description FROM item_level_three_description_table WHERE item_level_three_description_item_id = '${value.item_id}' LIMIT 1;`);
-          
-          items.push({
-            ...value,
-            item_division_id_list: itemDivision.map(division => division.item_division_value),
-            item_description: itemDescription,
-            item_level_three_description: itemDivisionDescription.length !== 0 ? itemDivisionDescription[0].item_level_three_description : ""
-          })
-        });
-
-        const itemCategoryList = plv8.execute(
-          `
-            SELECT 
-              item_category_table.*,
-              signer_id,
-              team_member_id,
-              user_id,
-              user_first_name,
-              user_last_name,
-              user_avatar
-            FROM item_category_table
-            INNER JOIN signer_table ON signer_id = item_category_signer_id
-            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-            INNER JOIN user_table ON user_id = team_member_user_id
-            WHERE item_category_is_disabled = false
-            ORDER BY item_category
-            LIMIT ${limit}
-          `
-        );
-
-        const itemCategories = itemCategoryList.map(itemCategory => {
-          const { signer_id, team_member_id, user_id, user_first_name, user_last_name, user_avatar, ...categoryDetails } = itemCategory;
-          return {
-            ...categoryDetails,
-            item_category_signer: {
-              signer_id: signer_id,
-              signer_team_member: {
-                team_member_id: team_member_id,
-                team_member_user: {
-                  user_id: user_id,
-                  user_first_name: user_first_name,
-                  user_last_name: user_last_name,
-                  user_avatar: user_avatar,
-                }
-              }
-            }
-          }
-        });
-
-        const itemCategoryCount = plv8.execute(
-          `
-            SELECT COUNT(*)
-            FROM item_category_table
-            WHERE item_category_is_disabled = false
-          `
-        )[0].count;
-
-        returnData = {
-          items,
-          itemListCount: Number(`${itemListCount}`),
-          teamMemberList,
-          teamGroupList,
-          teamProjectList,
-          teamProjectListCount: Number(`${teamProjectListCount}`),
-          itemCategories,
-          itemCategoryCount: Number(`${itemCategoryCount}`)
-        }
-      } else if (formName === 'PED Part') {
-        const equipments = plv8.execute(`SELECT et.equipment_id, et.equipment_name, et.equipment_name_shorthand, et.equipment_is_available, ect.equipment_category FROM equipment_table et INNER JOIN equipment_category_table ect ON equipment_equipment_category_id = equipment_category_id WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false ORDER BY equipment_name ASC LIMIT ${limit};`);
-        const equipmentListCount = plv8.execute(`SELECT COUNT(*) FROM equipment_table WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false`)[0].count;
-
-        returnData = {
-          equipments,
-          equipmentListCount: Number(`${equipmentListCount}`),
-          teamMemberList,
-          teamGroupList,
-          teamProjectList,
-          teamProjectListCount: Number(`${teamProjectListCount}`),
-        }
-      } else if (formName === 'PED Equipment') {
-        const equipments = plv8.execute(`SELECT et.equipment_id, et.equipment_name, et.equipment_name_shorthand, et.equipment_is_available, ect.equipment_category FROM equipment_table et INNER JOIN equipment_category_table ect ON equipment_equipment_category_id = equipment_category_id WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false ORDER BY equipment_name ASC LIMIT ${limit};`);
-        const equipmentListCount = plv8.execute(`SELECT COUNT(*) FROM equipment_table WHERE equipment_team_id = '${teamId}' AND equipment_is_disabled = false`)[0].count;
-
-        returnData = {
-          equipments,
-          equipmentListCount: Number(`${equipmentListCount}`),
-          teamMemberList,
-          teamGroupList,
-          teamProjectList,
-          teamProjectListCount: Number(`${teamProjectListCount}`),
-        }
-      } else if (formName === 'PED Item') {
-        const items = [];
-        const itemData = plv8.execute(`SELECT * FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_is_ped_item = true ORDER BY item_general_name ASC LIMIT ${limit}`);
-        const itemListCount = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id = '${teamId}' AND item_is_disabled = false AND item_is_ped_item = true`)[0].count;
-
-        itemData.forEach(value => {
-          const itemDescription = plv8.execute(`SELECT * FROM item_description_table WHERE item_description_item_id = '${value.item_id}' AND item_description_is_disabled = false ORDER BY item_description_order ASC;`);
-          const itemDivision = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${value.item_id}' ORDER BY item_division_value ASC;`);
-          const itemDivisionDescription = plv8.execute(`SELECT * FROM item_level_three_description_table WHERE item_level_three_description_item_id = '${value.item_id}';`);
-          
-          items.push({
-            ...value,
-            item_division_id_list: itemDivision.map(division => division.item_division_value),
-            item_description: itemDescription,
-            item_level_three_description: itemDivisionDescription.length !== 0 ? itemDivisionDescription[0].item_level_three_description : ""
-          })
-        })
-
-        returnData = {
-          items,
-          itemListCount: Number(`${itemListCount}`),
-          teamMemberList,
-          teamGroupList,
-          teamProjectList,
-          teamProjectListCount: Number(`${teamProjectListCount}`),
-        }
-      } else if (formName === 'Quotation') {
-        const suppliers = plv8.execute(`SELECT * FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false ORDER BY supplier_date_created DESC LIMIT ${limit}`);
-        const supplierListCount = plv8.execute(`SELECT COUNT(*) FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false;`)[0].count;
-
-        returnData = {
-          teamMemberList,
-          suppliers,
-          supplierListCount: Number(`${supplierListCount}`),
-          teamGroupList,
-          teamProjectList,
-          teamProjectListCount: Number(`${teamProjectListCount}`)
-        }
-      } else if (formName === 'Subcon') {
-        const services = [];
-        const serviceData = plv8.execute(`SELECT * FROM service_table WHERE service_team_id = '${teamId}' AND service_is_disabled = false LIMIT ${limit};`);
-        const serviceListCount = plv8.execute(`SELECT COUNT(*) FROM service_table WHERE service_team_id = '${teamId}' AND service_is_disabled = false;`)[0].count;
-
-        serviceData.forEach(value => {
-          const serviceScope = plv8.execute(`SELECT * FROM service_scope_table WHERE service_scope_service_id = '${value.service_id}';`);
-          services.push({
-            ...value,
-            service_scope: serviceScope
-          })
-        });
-
-        const suppliers = plv8.execute(`SELECT * FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false ORDER BY supplier_date_created DESC LIMIT ${limit};`);
-        const supplierListCount = plv8.execute(`SELECT COUNT(*) FROM supplier_table WHERE supplier_team_id = '${teamId}' AND supplier_is_disabled = false;`)[0].count;
-
-        returnData = {
-          services,
-          serviceListCount: Number(`${serviceListCount}`),
-          teamMemberList,
-          teamGroupList,
-          teamProjectList,
-          teamProjectListCount: Number(`${teamProjectListCount}`),
-          suppliers,
-          supplierListCount: Number(`${supplierListCount}`),
-        }
-      } else if (formName === 'Other Expenses') {
-        const otherExpensesTypes = plv8.execute(`
-          SELECT 
-            oett.other_expenses_type_id,
-            oett.other_expenses_type,
-            oett.other_expenses_type_is_available,
-            oect.other_expenses_category
-          FROM other_expenses_type_table oett
-          INNER JOIN other_expenses_category_table oect ON other_expenses_category_id = other_expenses_type_category_id
-          WHERE 
-            other_expenses_category_team_id = '${teamId}' 
-            AND other_expenses_type_is_disabled = false
-          ORDER BY other_expenses_type
-          LIMIT ${limit};
-        `);
-        const otherExpensesTypeCount = plv8.execute(`
-          SELECT COUNT(*)
-          FROM other_expenses_type_table 
-          INNER JOIN other_expenses_category_table ON other_expenses_category_id = other_expenses_type_category_id
-          WHERE 
-            other_expenses_category_team_id = '${teamId}' 
-            AND other_expenses_type_is_disabled = false;
-        `)[0].count;
-
-        returnData = {
-          otherExpensesTypes,
-          otherExpensesTypeCount: Number(otherExpensesTypeCount),
-          teamMemberList,
-          teamGroupList,
-          teamProjectList,
-          teamProjectListCount: Number(teamProjectListCount)
-        }
-      } else {
-        returnData = {
-          teamMemberList,
-          teamGroupList,
-          teamProjectList,
-          teamProjectListCount: Number(`${teamProjectListCount}`)
-        }
+      returnData = {
+        teamMemberList,
+        teamGroupList,
+        teamProjectList,
+        teamProjectListCount: Number(`${teamProjectListCount}`)
       }
-    }else{
+    } else {
       returnData = {
         teamMemberList, 
         teamGroupList

@@ -1,24 +1,10 @@
 import { getForm } from "@/backend/api/get";
 import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
-import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
-import PEDEquipmentFormPage from "@/components/PEDEquipmentFormPage/PEDEquipmentFormPage";
-import PEDItemFormPage from "@/components/PEDItemFormPage/PEDItemFormPage";
-import PEDPartFormPage from "@/components/PEDPartFormPage/PEDPartFormPage";
-import QuotationFormPage from "@/components/QuotationFormPage/QuotationFormPage";
-import RequestFormPage from "@/components/RequestFormPage/RequestFormPage";
-import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
-import SubconFormPage from "@/components/SubconFormPage/SubconFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
-  EquipmentWithCategoryType,
-  FormType,
-  ItemCategoryWithSigner,
-  ItemWithDescriptionType,
-  OtherExpensesTypeWithCategoryType,
-  ServiceWithScopeType,
-  SupplierTableRow,
+  InitialFormType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -57,155 +43,93 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 );
 
 type Props = {
-  form: FormType;
+  form: InitialFormType;
   teamMemberList: TeamMemberWithUserType[];
   teamGroupList: TeamGroupTableRow[];
-  items?: ItemWithDescriptionType[];
-  itemListCount?: number;
-  suppliers?: SupplierTableRow[];
-  supplierListCount?: number;
   teamProjectList?: TeamProjectTableRow[];
   teamProjectListCount?: number;
-  services?: ServiceWithScopeType[];
-  serviceListCount?: number;
-  otherExpensesTypes?: OtherExpensesTypeWithCategoryType[];
-  otherExpensesTypeCount?: number;
-  equipments?: EquipmentWithCategoryType[];
-  equipmentListCount?: number;
-  itemCategories?: ItemCategoryWithSigner[];
-  itemCategoryCount?: number;
 };
 
 const Page = ({
   form,
   teamMemberList = [],
-  items = [],
-  itemListCount = 0,
-  suppliers = [],
-  supplierListCount = 0,
-  teamGroupList,
+  teamGroupList = [],
   teamProjectList = [],
   teamProjectListCount = 0,
-  services = [],
-  serviceListCount = 0,
-  otherExpensesTypes = [],
-  otherExpensesTypeCount = 0,
-  equipments = [],
-  equipmentListCount = 0,
-  itemCategories = [],
-  itemCategoryCount = 0,
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Item":
         return (
           <ItemFormPage
-            items={items}
-            itemListCount={itemListCount}
-            teamMemberList={teamMemberList}
             form={form}
-            teamGroupList={teamGroupList}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-            itemCategories={itemCategories}
-            itemCategoryCount={itemCategoryCount}
-          />
-        );
-      case "PED Part":
-        return (
-          <PEDPartFormPage
-            equipments={equipments}
-            equipmentListCount={equipmentListCount}
             teamMemberList={teamMemberList}
-            form={form}
             teamGroupList={teamGroupList}
             teamProjectList={teamProjectList}
             teamProjectListCount={teamProjectListCount}
           />
         );
-      case "PED Equipment":
-        return (
-          <PEDEquipmentFormPage
-            equipments={equipments}
-            equipmentListCount={equipmentListCount}
-            teamMemberList={teamMemberList}
-            form={form}
-            teamGroupList={teamGroupList}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-          />
-        );
-      case "PED Item":
-        return (
-          <PEDItemFormPage
-            items={items}
-            itemListCount={itemListCount}
-            teamMemberList={teamMemberList}
-            form={form}
-            teamGroupList={teamGroupList}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-          />
-        );
-      case "Quotation":
-        return (
-          <QuotationFormPage
-            teamMemberList={teamMemberList}
-            form={form}
-            suppliers={suppliers}
-            supplierListCount={supplierListCount}
-            teamGroupList={teamGroupList}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-          />
-        );
-      case "Subcon":
-        return (
-          <SubconFormPage
-            services={services}
-            serviceListCount={serviceListCount}
-            teamMemberList={teamMemberList}
-            form={form}
-            teamGroupList={teamGroupList}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-            suppliers={suppliers}
-            supplierListCount={supplierListCount}
-          />
-        );
-      case "Services":
-        return (
-          <ServicesFormPage
-            teamMemberList={teamMemberList}
-            form={form}
-            teamGroupList={teamGroupList}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-          />
-        );
-      case "Other Expenses":
-        return (
-          <OtherExpensesFormPage
-            teamMemberList={teamMemberList}
-            form={form}
-            teamGroupList={teamGroupList}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-            otherExpensesTypes={otherExpensesTypes}
-            otherExpensesTypeCount={otherExpensesTypeCount}
-          />
-        );
-      default:
-        return (
-          <RequestFormPage
-            form={form}
-            teamMemberList={teamMemberList}
-            teamGroupList={teamGroupList}
-            isFormslyForm={true}
-            teamProjectList={teamProjectList}
-            teamProjectListCount={teamProjectListCount}
-          />
-        );
+      // case "Services":
+      //   return (
+      //     <ServicesFormPage
+      //       teamMemberList={teamMemberList}
+      //       form={form}
+      //       teamGroupList={teamGroupList}
+      //       teamProjectList={teamProjectList}
+      //       teamProjectListCount={teamProjectListCount}
+      //     />
+      //   );
+      // case "Other Expenses":
+      //   return (
+      //     <OtherExpensesFormPage
+      //       teamMemberList={teamMemberList}
+      //       form={form}
+      //       teamGroupList={teamGroupList}
+      //       teamProjectList={teamProjectList}
+      //       teamProjectListCount={teamProjectListCount}
+      //       otherExpensesTypes={otherExpensesTypes}
+      //       otherExpensesTypeCount={otherExpensesTypeCount}
+      //     />
+      //   );
+      // case "PED Part":
+      //   return (
+      //     <PEDPartFormPage
+      //       equipments={equipments}
+      //       equipmentListCount={equipmentListCount}
+      //       teamMemberList={teamMemberList}
+      //       form={form}
+      //       teamGroupList={teamGroupList}
+      //       teamProjectList={teamProjectList}
+      //       teamProjectListCount={teamProjectListCount}
+      //     />
+      //   );
+      // case "PED Equipment":
+      //   return (
+      //     <PEDEquipmentFormPage
+      //       equipments={equipments}
+      //       equipmentListCount={equipmentListCount}
+      //       teamMemberList={teamMemberList}
+      //       form={form}
+      //       teamGroupList={teamGroupList}
+      //       teamProjectList={teamProjectList}
+      //       teamProjectListCount={teamProjectListCount}
+      //     />
+      //   );
+      // case "PED Item":
+      //   return (
+      //     <PEDItemFormPage
+      //       items={items}
+      //       itemListCount={itemListCount}
+      //       teamMemberList={teamMemberList}
+      //       form={form}
+      //       teamGroupList={teamGroupList}
+      //       teamProjectList={teamProjectList}
+      //       teamProjectListCount={teamProjectListCount}
+      //     />
+      //   );
+
+      // default:
+      //   return <RequestFormPage />;
     }
   };
 
@@ -213,7 +137,7 @@ const Page = ({
     <>
       <Meta description="Request Page" url="/teamName/forms/[formId]" />
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? (
+      {/* {!form.form_is_formsly_form ? (
         <RequestFormPage
           form={form}
           teamMemberList={teamMemberList}
@@ -222,7 +146,7 @@ const Page = ({
           teamProjectList={teamProjectList}
           teamProjectListCount={teamProjectListCount}
         />
-      ) : null}
+      ) : null} */}
     </>
   );
 };
