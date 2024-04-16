@@ -2738,7 +2738,8 @@ export const getTeamProjectList = async (
       `
         *,
         team_project_site_map_attachment: team_project_site_map_attachment_id(*),
-        team_project_boq_attachment: team_project_boq_attachment_id(*)
+        team_project_boq_attachment: team_project_boq_attachment_id(*),
+        team_project_address: team_project_address_id(*)
       `,
       { count: "exact" }
     )
