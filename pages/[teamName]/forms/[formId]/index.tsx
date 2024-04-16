@@ -1,6 +1,7 @@
 import { getForm } from "@/backend/api/get";
 import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
+import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
 import ServicesFormPage from "@/components/ServicesFormPage/ServicesFormPage";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { withOwnerOrApprover } from "@/utils/server-side-protections";
@@ -80,18 +81,16 @@ const Page = ({
             teamProjectListCount={teamProjectListCount}
           />
         );
-      // case "Other Expenses":
-      //   return (
-      //     <OtherExpensesFormPage
-      //       teamMemberList={teamMemberList}
-      //       form={form}
-      //       teamGroupList={teamGroupList}
-      //       teamProjectList={teamProjectList}
-      //       teamProjectListCount={teamProjectListCount}
-      //       otherExpensesTypes={otherExpensesTypes}
-      //       otherExpensesTypeCount={otherExpensesTypeCount}
-      //     />
-      //   );
+      case "Other Expenses":
+        return (
+          <OtherExpensesFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
       // case "PED Part":
       //   return (
       //     <PEDPartFormPage

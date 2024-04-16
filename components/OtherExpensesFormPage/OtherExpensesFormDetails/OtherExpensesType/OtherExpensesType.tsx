@@ -11,18 +11,11 @@ export type TypeForm = {
   category: string;
 };
 
-type Props = {
-  otherExpensesTypes: OtherExpensesTypeWithCategoryType[];
-  otherExpensesTypeCount: number;
-};
-
-const OtherExpensesType = ({
-  otherExpensesTypes,
-  otherExpensesTypeCount,
-}: Props) => {
-  const [typeList, setTypeList] =
-    useState<OtherExpensesTypeWithCategoryType[]>(otherExpensesTypes);
-  const [typeCount, setTypeCount] = useState(otherExpensesTypeCount);
+const OtherExpensesType = () => {
+  const [typeList, setTypeList] = useState<OtherExpensesTypeWithCategoryType[]>(
+    []
+  );
+  const [typeCount, setTypeCount] = useState(0);
   const [isCreatingType, setIsCreatingType] = useState(false);
 
   const [editType, setEditType] =

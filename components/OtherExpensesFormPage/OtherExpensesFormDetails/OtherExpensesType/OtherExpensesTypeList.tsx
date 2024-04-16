@@ -74,7 +74,7 @@ const OtherExpensesTypeList = ({
 
   useEffect(() => {
     handleFetch("", 1);
-  }, []);
+  }, [team.team_id]);
 
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
