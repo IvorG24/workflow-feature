@@ -75,7 +75,7 @@ const EquipmentList = ({
 
   useEffect(() => {
     handleFetch("", 1);
-  }, []);
+  }, [activeTeam.team_id]);
 
   const handleCheckRow = (equipmentId: string) => {
     if (checkList.includes(equipmentId)) {
