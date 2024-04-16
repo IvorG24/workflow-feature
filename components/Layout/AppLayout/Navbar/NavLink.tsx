@@ -1,4 +1,4 @@
-import { getUnresolvedRequestListPerApprover } from "@/backend/api/get";
+import { getApproverRequestCount } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
@@ -326,24 +326,19 @@ const ReviewAppNavLink = () => {
   useEffect(() => {
     const fetchApproverRequestList = async () => {
       if (!userTeamMemberData) return;
-      const unresolvedRequestList = await getUnresolvedRequestListPerApprover(
+      const pendingRequestCount = await getApproverRequestCount(
         supabaseClient,
         {
           teamMemberId: userTeamMemberData.team_member_id,
+          status: "PENDING",
         }
       );
-      const pendingRequestList = unresolvedRequestList.filter(
-        (request) =>
-          request.request_signer_status === "PENDING" &&
-          request.request.request_status === "PENDING"
-      );
 
-      setUserNotificationCount(
-        pendingRequestList.length + unreadNotificationCount
-      );
+      setUserNotificationCount(pendingRequestCount + unreadNotificationCount);
     };
     fetchApproverRequestList();
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
+
   return (
     <>
       {!isEmpty(activeTeam) && hasTeam ? (

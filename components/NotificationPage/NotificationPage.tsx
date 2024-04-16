@@ -1,6 +1,6 @@
 import {
+  getApproverUnresolvedRequestCount,
   getNotificationList,
-  getUnresolvedRequestListPerApprover,
 } from "@/backend/api/get";
 import {
   readAllNotification,
@@ -17,7 +17,7 @@ import { Database } from "@/utils/database";
 import { startCase } from "@/utils/string";
 import {
   AppType,
-  ApproverUnresolvedRequestListType,
+  ApproverUnresolvedRequestCountType,
   NotificationTableRow,
 } from "@/utils/types";
 import {
@@ -76,8 +76,8 @@ const NotificationPage = ({
   } = useNotificationActions();
   const [activePage, setActivePage] = useState(initialPage);
   const [isLoading, setIsLoading] = useState(false);
-  const [approverUnresolvedRequestList, setApproverUnresolvedRequestList] =
-    useState<ApproverUnresolvedRequestListType[]>([]);
+  const [approverUnresolvedRequestCount, setApproverUnresolvedRequestCount] =
+    useState<ApproverUnresolvedRequestCountType | null>(null);
 
   const handleMarkAllAsRead = async () => {
     setIsLoading(true);
@@ -226,13 +226,13 @@ const NotificationPage = ({
   useEffect(() => {
     const fetchApproverRequestList = async () => {
       if (!userTeamMemberData) return;
-      const unresolvedRequestList = await getUnresolvedRequestListPerApprover(
+      const unresolvedRequestCount = await getApproverUnresolvedRequestCount(
         supabaseClient,
         {
           teamMemberId: userTeamMemberData.team_member_id,
         }
       );
-      setApproverUnresolvedRequestList(unresolvedRequestList);
+      setApproverUnresolvedRequestCount(unresolvedRequestCount);
     };
     fetchApproverRequestList();
   }, [supabaseClient, userTeamMemberData]);
@@ -240,9 +240,9 @@ const NotificationPage = ({
   return (
     <Container p={0}>
       <Title order={2}>{startCase(app)} Notifications </Title>
-      {approverUnresolvedRequestList.length > 0 && (
+      {approverUnresolvedRequestCount && (
         <ApproverNotification
-          approverUnresolvedRequestList={approverUnresolvedRequestList}
+          approverUnresolvedRequestCount={approverUnresolvedRequestCount}
         />
       )}
 

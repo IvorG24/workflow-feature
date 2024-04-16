@@ -1,6 +1,6 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { ApproverUnresolvedRequestListType } from "@/utils/types";
+import { ApproverUnresolvedRequestCountType } from "@/utils/types";
 import {
   Badge,
   Box,
@@ -17,19 +17,11 @@ import { useLocalStorage } from "@mantine/hooks";
 import { useRouter } from "next/router";
 import { RequestListLocalFilter } from "../RequestListPage/RequestListPage";
 
-export type UnresolvedRequestType = {
-  request_id: string;
-  request_formsly_id: string | null;
-  request_jira_id: string | null;
-  request_status: string;
-  request_signer_status: string;
-};
-
 type Props = {
-  approverUnresolvedRequestList: ApproverUnresolvedRequestListType[];
+  approverUnresolvedRequestCount: ApproverUnresolvedRequestCountType;
 };
 
-const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
+const ApproverNotification = ({ approverUnresolvedRequestCount }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const { colorScheme } = useMantineTheme();
@@ -53,33 +45,25 @@ const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
   const withJiraIdColor = "green";
   const withoutJiraIdColor = "yellow";
 
-  const pendingRequestList = approverUnresolvedRequestList.filter(
-    (request) =>
-      request.request_signer_status === "PENDING" &&
-      request.request.request_status === "PENDING"
-  );
-
-  const approvedRequestList = approverUnresolvedRequestList.filter(
-    (request) => request.request_signer_status === "APPROVED"
-  );
-  const approvedRequestCount = approvedRequestList.length;
-  const approvedRequestWithJiraId = approvedRequestList.filter(
-    (request) => request.request.request_jira_id
-  );
-  const approvedRequestWithoutJiraId = approvedRequestList.filter(
-    (request) => request.request.request_jira_id === null
-  );
+  const {
+    pendingRequestCount,
+    approvedRequestCount: {
+      total: totalApprovedRequest,
+      withJiraId,
+      withoutJiraId,
+    },
+  } = approverUnresolvedRequestCount;
 
   const progressSections = [
     {
-      value: (approvedRequestWithJiraId.length / approvedRequestCount) * 100,
+      value: (withJiraId / totalApprovedRequest) * 100,
       color: withJiraIdColor,
-      label: `${approvedRequestWithJiraId.length}`,
+      label: `${withJiraId}`,
     },
     {
-      value: (approvedRequestWithoutJiraId.length / approvedRequestCount) * 100,
+      value: (withoutJiraId / totalApprovedRequest) * 100,
       color: withoutJiraIdColor,
-      label: `${approvedRequestWithoutJiraId.length}`,
+      label: `${withoutJiraId}`,
     },
   ];
 
@@ -97,13 +81,12 @@ const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
         <Text color="white">Approver Notification</Text>
       </Card.Section>
       <Stack mt="sm">
-        {pendingRequestList.length > 0 && (
+        {pendingRequestCount > 0 && (
           <>
             {" "}
             <Group>
               <Text size="md">
-                You have {`(${pendingRequestList.length})`} requests that needs
-                approval.
+                You have {pendingRequestCount} requests that needs approval.
               </Text>
               <Button
                 size="xs"
@@ -116,11 +99,11 @@ const ApproverNotification = ({ approverUnresolvedRequestList }: Props) => {
           </>
         )}
 
-        {approvedRequestList.length > 0 && (
+        {totalApprovedRequest > 0 && (
           <Box>
             <Group fw={600} mb="sm" position="apart">
               <Text>Your Approved Requests: Jira ID vs. No Jira ID</Text>
-              <Text>Total: {approvedRequestList.length}</Text>
+              <Text>Total: {totalApprovedRequest}</Text>
             </Group>
             <Progress radius={0} size={40} sections={progressSections} />
             <Group mt="xs" position="apart">
