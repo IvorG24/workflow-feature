@@ -167,21 +167,21 @@ const ServicesFormPage = ({
   }, [form]);
 
   const newTeamMember = {
-    form_team_member: {
-      team_member_id: form.form_team_member.team_member_id,
-      team_member_user: {
-        user_id: uuidv4(),
-        user_first_name: "Formsly",
-        user_last_name: "",
-        user_avatar: "/icon-request-light.svg",
-        user_username: "formsly",
-      },
+    team_member_id: form.form_team_member.team_member_id,
+    team_member_user: {
+      user_id: uuidv4(),
+      user_first_name: "Formsly",
+      user_last_name: "",
+      user_avatar: "/icon-request-light.svg",
+      user_username: "formsly",
     },
   };
 
   const newForm = {
     ...form,
-    ...newTeamMember,
+    form_team_member: {
+      ...newTeamMember,
+    },
   };
 
   const handleSaveSigners = async () => {
