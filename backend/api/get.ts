@@ -4249,7 +4249,6 @@ export const getApproverUnresolvedRequestCount = async (
     { input_data: { teamMemberId } }
   );
   if (error) throw error;
-  console.log(data);
   return data as ApproverUnresolvedRequestCountType;
 };
 

@@ -225,7 +225,7 @@ const NotificationPage = ({
   }, [storeNotificationList, router.query]);
 
   useEffect(() => {
-    const fetchApproverRequestList = async (
+    const fetchApproverRequestCount = async (
       userTeamMemberData: TeamMemberTableRow
     ) => {
       const unresolvedRequestCount = await getApproverUnresolvedRequestCount(
@@ -240,7 +240,7 @@ const NotificationPage = ({
       userTeamMemberData &&
       userTeamMemberData.team_member_role === "APPROVER"
     ) {
-      fetchApproverRequestList(userTeamMemberData);
+      fetchApproverRequestCount(userTeamMemberData);
     }
   }, [supabaseClient, userTeamMemberData]);
 

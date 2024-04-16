@@ -324,7 +324,7 @@ const ReviewAppNavLink = () => {
   ];
 
   useEffect(() => {
-    const fetchApproverRequestList = async (
+    const fetchApproverRequestCount = async (
       userTeamMemberData: TeamMemberTableRow
     ) => {
       const pendingRequestCount = await getApproverRequestCount(
@@ -341,7 +341,7 @@ const ReviewAppNavLink = () => {
       userTeamMemberData &&
       userTeamMemberData.team_member_role === "APPROVER"
     ) {
-      fetchApproverRequestList(userTeamMemberData);
+      fetchApproverRequestCount(userTeamMemberData);
     }
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
 
