@@ -17,7 +17,7 @@ import {
 } from "@/utils/string";
 import {
   AppType,
-  ApproverUnresolvedRequestListType,
+  ApproverUnresolvedRequestCountType,
   AttachmentBucketType,
   AttachmentTableRow,
   CSICodeTableRow,
@@ -4151,25 +4151,59 @@ export const getTicketListOnLoad = async (
   return data as unknown as TicketListOnLoad;
 };
 
-// Get ticket list on load
-export const getUnresolvedRequestListPerApprover = async (
+// Get approver request count
+export const getApproverRequestCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    status: string;
+    withJiraId?: boolean;
+  }
+) => {
+  const { teamMemberId, status, withJiraId } = params;
+  let query = supabaseClient
+    .from("request_signer_table")
+    .select(
+      "request_signer_status, request_signer: request_signer_signer_id!inner(signer_team_member_id), request: request_signer_request_id!inner(request_jira_id)",
+      { count: "exact", head: true }
+    )
+    .eq("request_signer.signer_team_member_id", teamMemberId)
+    .eq("request_signer_status", status);
+
+  if (withJiraId !== undefined) {
+    switch (withJiraId) {
+      case true:
+        query = query.neq("request.request_jira_id", null);
+        break;
+      case false:
+        query = query.is("request.request_jira_id", null);
+        break;
+      default:
+        break;
+    }
+  }
+
+  const { count, error } = await query;
+
+  if (error) throw error;
+
+  return Number(count);
+};
+
+// Get approver unresolved request count
+export const getApproverUnresolvedRequestCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamMemberId: string;
   }
 ) => {
   const { teamMemberId } = params;
-  const { data, error } = await supabaseClient
-    .from("request_signer_table")
-    .select(
-      "request_signer_status, request_signer: request_signer_signer_id!inner(signer_team_member_id), request: request_signer_request_id!inner(request_id, request_jira_id, request_status)"
-    )
-    .eq("request_signer.signer_team_member_id", teamMemberId)
-    .in("request_signer_status", ["APPROVED", "PENDING"]);
-
+  const { data, error } = await supabaseClient.rpc(
+    "get_approver_unresolved_request_count",
+    { input_data: { teamMemberId } }
+  );
   if (error) throw error;
-
-  return data as unknown as ApproverUnresolvedRequestListType[];
+  return data as ApproverUnresolvedRequestCountType;
 };
 
 // Get edit request on load
