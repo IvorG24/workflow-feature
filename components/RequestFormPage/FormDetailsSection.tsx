@@ -6,7 +6,7 @@ import { useFormActions, useFormList } from "@/stores/useFormStore";
 import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
-import { FormType } from "@/utils/types";
+import { InitialFormType } from "@/utils/types";
 import {
   Avatar,
   Box,
@@ -30,7 +30,7 @@ import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
 type Props = {
-  form: FormType;
+  form: InitialFormType;
   formVisibilityRestriction?: () => Promise<string | boolean | undefined>;
 };
 

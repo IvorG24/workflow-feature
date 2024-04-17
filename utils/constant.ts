@@ -1282,3 +1282,34 @@ export const generateMonthList = (): string[] => {
   }
   return months;
 };
+
+export const ITEM_FIELD_ID_LIST = [
+  "51b6da24-3e28-49c4-9e19-5988b9ad3909",
+  "6882287e-57c7-42ae-a672-b0d6c8979b01",
+  "46dc154d-1c35-4a3c-9809-698b56d17faa",
+  "c08820a5-592a-4bf9-9528-97b7ee7be94b",
+  "b2c899e8-4ac7-4019-819e-d6ebcae71f41",
+  "c3efa89d-8297-4920-8c3e-d9dee61fdf13",
+  "d78145e8-ba83-4fa8-907f-db66fd3cae0d",
+  "440d9a37-656a-4237-be3b-c434f512eaa9",
+  "a6266f0b-1339-4c50-910e-9bae73031df0",
+  "0c9831e7-dc18-4aaf-87f7-2e7bcbc53eae",
+  "64bb5899-bad4-4fe4-bc08-60dce9923f57",
+  "8fdb158b-bed5-4eac-a6dc-bc69275f1ac7",
+  "b69182a9-dc96-472b-aa31-b1f2f92ec78b",
+  "159c86c3-dda6-4c8a-919f-50e1674659bd",
+];
+
+export const PED_ITEM_FIELD_ID_LIST = [
+  "b93e3160-4f07-4b70-98bc-f84a372bd54c",
+  "cf80d363-be97-4fb3-a91f-4fb9a0616b67",
+  "20d9159a-c410-4e4b-8c21-c02e44d8f1e9",
+  "218b70f8-7a3b-49a4-91c8-04567500812f",
+  "53df2b33-9d35-4a15-b13d-431940738c68",
+  "5f8d6c56-cac1-4756-8419-8aa8998bf8ed",
+  "5eed4963-e011-4a1e-a03c-a901636d0dfa",
+  "9638fdb6-4f8a-41cf-bf26-68b94f479a51",
+  "7971912e-bdea-4820-9e1d-ff501296a62c",
+  "c81706d5-bebf-4ffd-813b-71f57b219de5",
+  "137bbd25-2f65-4b65-86e7-7f5726857084",
+];
