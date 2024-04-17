@@ -152,7 +152,17 @@ export const formatJiraTicketPayload = ({
   warehouseAreaLeadId,
   warehouseRepresentativeId,
   warehouseRequestParticipantIdList,
+  jiraItemCategoryLabel,
 }: JiraTicketPayloadProps) => {
+  const itemCategoryDoesNotRequireCorporateLead = [
+    "Other Expenses",
+    "Services",
+  ].includes(`${jiraItemCategoryLabel}`);
+
+  const warehouseCorporateLeadValue = itemCategoryDoesNotRequireCorporateLead
+    ? []
+    : [warehouseCorporateLeadId];
+
   const jiraTicketPayload = {
     form: {
       answers: {
@@ -175,7 +185,7 @@ export const formatJiraTicketPayload = ({
           choices: [], // attachments
         },
         "11": {
-          users: [warehouseCorporateLeadId], // Warehouse Corporate Lead
+          users: warehouseCorporateLeadValue, // Warehouse Corporate Lead
         },
         "14": {
           users: [warehouseAreaLeadId], // Warehouse Area Lead

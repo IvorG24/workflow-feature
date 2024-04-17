@@ -1,8 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import {
-  getRequestComment,
-  getSectionInRequestPage,
-} from "@/backend/api/get";
+import { getRequestComment, getSectionInRequestPage } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -415,10 +412,6 @@ const PEDEquipmentRequestPage = ({
       return jiraTicketData;
     } catch (error) {
       console.log(error);
-      notifications.show({
-        message: "Failed to create jira ticket.",
-        color: "red",
-      });
       return { success: false, data: null };
     } finally {
       setIsLoading(false);

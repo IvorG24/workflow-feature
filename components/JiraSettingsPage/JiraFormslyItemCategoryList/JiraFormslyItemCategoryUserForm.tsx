@@ -26,7 +26,7 @@ const JiraFormslyItemCategoryUserForm = ({
     <Modal
       opened={opened}
       onClose={close}
-      title="Assign User"
+      title="Assign Corporate Lead"
       centered
       pos="relative"
     >

@@ -1702,6 +1702,7 @@ export type JiraTicketPayloadProps = {
   warehouseAreaLeadId: string;
   warehouseRepresentativeId: string;
   warehouseRequestParticipantIdList: string[];
+  jiraItemCategoryLabel?: string;
 };
 
 export type JiraTicketData = {

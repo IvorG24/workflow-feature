@@ -7003,3 +7003,24 @@ export const getFormSection = async (
 
   return sortedSection;
 };
+
+// check for duplicate jira formsly project
+export const checkJiraFormslyProjectDuplicate = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    jiraProjectId: string;
+  }
+) => {
+  const { jiraProjectId } = params;
+
+  const { count } = await supabaseClient
+    .from("jira_formsly_project_table")
+    .select("jira_project_id, formsly_project_id", { count: "exact" })
+    .eq("jira_project_id", jiraProjectId);
+
+  if (Number(count)) {
+    return { success: false, data: null };
+  }
+
+  return Number(count) > 0;
+};

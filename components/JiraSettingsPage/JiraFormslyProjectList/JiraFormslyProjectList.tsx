@@ -1,5 +1,6 @@
 import { getJiraFormslyProjectList } from "@/backend/api/get";
 import { assignJiraFormslyProject } from "@/backend/api/post";
+import { updateJiraFormslyProject } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getPagination } from "@/utils/functions";
@@ -40,6 +41,15 @@ export type AssignFormslyProjectForm = {
   jiraProjectId: string;
 };
 
+type AssignUpdateFormslyProjectResponseType = {
+  success: boolean;
+  data: {
+    formsly_project_id: string;
+    jira_formsly_project_id: string;
+    jira_project_id: string;
+  } | null;
+};
+
 const JiraFormslyProjectList = ({
   jiraFormslyProjectList: initialJiraFormslyProjectList,
   jiraFormslyProjectCount: initialJiraFormslyProjectCount,
@@ -69,7 +79,10 @@ const JiraFormslyProjectList = ({
     label: project.jira_project_jira_label,
   }));
 
-  const assignFormslyProjectFormMethods = useForm<AssignFormslyProjectForm>();
+  const assignFormslyProjectFormMethods = useForm<AssignFormslyProjectForm>({
+    defaultValues: { jiraProjectId: "" },
+  });
+
   const { reset: resetAssignFormslyProjectForm } =
     assignFormslyProjectFormMethods;
 
@@ -86,11 +99,20 @@ const JiraFormslyProjectList = ({
       }
       setIsLoading(true);
 
-      const response = await assignJiraFormslyProject(supabaseClient, {
-        formslyProjectId: selectedFormslyProject,
-        jiraProjectId: data.jiraProjectId,
-        isReassign: isReassignJiraFormslyProject,
-      });
+      let response: AssignUpdateFormslyProjectResponseType;
+
+      if (isReassignJiraFormslyProject) {
+        response = await updateJiraFormslyProject(supabaseClient, {
+          formslyProjectId: selectedFormslyProject,
+          jiraProjectId: data.jiraProjectId,
+        });
+      } else {
+        response = await assignJiraFormslyProject(supabaseClient, {
+          formslyProjectId: selectedFormslyProject,
+          jiraProjectId: data.jiraProjectId,
+        });
+      }
+
       if (!response.success) {
         notifications.show({
           message: "The selected project is already assigned.",
@@ -98,6 +120,7 @@ const JiraFormslyProjectList = ({
         });
         return;
       }
+
       const newJiraProjectData = jiraProjectList.find(
         (project) => project.jira_project_id === response.data?.jira_project_id
       );
@@ -123,7 +146,6 @@ const JiraFormslyProjectList = ({
           .sort((a, b) =>
             a.team_project_name.localeCompare(b.team_project_name)
           );
-
         setJiraFormslyProjectList(updatedJiraFormslyProjectList);
         setJiraFormslyProjectCount((prev) => prev + 1);
       }
@@ -132,10 +154,6 @@ const JiraFormslyProjectList = ({
         message: "Successfully assigned to jira project",
         color: "green",
       });
-
-      resetAssignFormslyProjectForm();
-      setOpenJiraProjectFormModal(false);
-      setSelectedFormslyProject(null);
     } catch (error) {
       console.log(error);
       notifications.show({
@@ -143,6 +161,9 @@ const JiraFormslyProjectList = ({
         color: "red",
       });
     } finally {
+      resetAssignFormslyProjectForm();
+      setOpenJiraProjectFormModal(false);
+      setSelectedFormslyProject(null);
       setIsLoading(false);
     }
   };
@@ -297,7 +318,8 @@ const JiraFormslyProjectList = ({
                       onClick={() => {
                         setSelectedFormslyProject(team_project_id);
                         setOpenJiraProjectFormModal(true);
-                        if (assigned_jira_project) {
+
+                        if (assigned_jira_project !== null) {
                           setIsReassignJiraFormslyProject(true);
                           assignFormslyProjectFormMethods.setValue(
                             "jiraProjectId",

@@ -429,7 +429,7 @@ const JiraFormslyItemCategoryList = ({
                         );
                       }}
                     >
-                      Assign User
+                      Assign Corporate Lead
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>

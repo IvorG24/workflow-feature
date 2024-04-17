@@ -8,7 +8,7 @@ import {
 import JiraSettingsPage from "@/components/JiraSettingsPage/JiraSettingsPage";
 import Meta from "@/components/Meta/Meta";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { withActiveTeam } from "@/utils/server-side-protections";
+import { withOwnerOrApprover } from "@/utils/server-side-protections";
 import {
   JiraFormslyItemCategoryWithUserDataType,
   JiraFormslyProjectType,
@@ -17,7 +17,7 @@ import {
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = withActiveTeam(
+export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
   async ({ supabaseClient }) => {
     try {
       const jiraUserAcount = await getJiraUserAccountList(supabaseClient, {

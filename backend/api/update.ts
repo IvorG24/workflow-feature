@@ -31,7 +31,11 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { getCurrentDate, getMemoFormat } from "./get";
+import {
+  checkJiraFormslyProjectDuplicate,
+  getCurrentDate,
+  getMemoFormat,
+} from "./get";
 import { uploadImage } from "./post";
 
 // Update Team
@@ -1072,4 +1076,33 @@ export const updateItemCategory = async (
   });
 
   if (error) throw error;
+};
+
+// re-assign jira formsly project
+export const updateJiraFormslyProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyProjectId: string;
+    jiraProjectId: string;
+  }
+) => {
+  const { formslyProjectId, jiraProjectId } = params;
+
+  const hasDuplicate = await checkJiraFormslyProjectDuplicate(supabaseClient, {
+    jiraProjectId,
+  });
+
+  if (hasDuplicate) {
+    return { success: false, data: null };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_formsly_project_table")
+    .update({ jira_project_id: jiraProjectId })
+    .eq("formsly_project_id", formslyProjectId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+
+  return { success: true, data: data };
 };

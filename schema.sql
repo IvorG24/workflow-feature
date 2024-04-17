@@ -10008,6 +10008,13 @@ ALTER TABLE province_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE city_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE barangay_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_user_role_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_user_account_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_project_user_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_item_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_item_user_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -10331,6 +10338,18 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON address_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_project_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_user_role_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_user_account_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_project_user_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_category_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_user_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -12962,6 +12981,110 @@ USING (true);
 
 CREATE POLICY "Allow DELETE for authenticated users" ON "public"."address_table"
 AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (true);
+
+-- JIRA_PROJECT_TABLE
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_project_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- JIRA_FORMSLY_PROJECT_TABLE
+CREATE POLICY "Allow READ for anon users" ON "public"."jira_formsly_project_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_formsly_project_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = formsly_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_formsly_project_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = formsly_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+-- JIRA_FORMSLY_PROJECT_TABLE
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_user_role_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- JIRA_USER_ACCOUNT_TABLE
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_user_account_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- JIRA_PROJECT_USER_TABLE
+CREATE POLICY "Allow READ for anon users" ON "public"."jira_project_user_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_project_user_team_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_project_user_team_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+-- JIRA_ITEM_CATEGORY_TABLE
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_item_category_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- JIRA_ITEM_USER_TABLE
+CREATE POLICY "Allow CRUD for authenticated users " ON "public"."jira_item_user_table"
+AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 

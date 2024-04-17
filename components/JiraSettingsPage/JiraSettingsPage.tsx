@@ -12,6 +12,7 @@ import {
   Center,
   Container,
   LoadingOverlay,
+  Paper,
   SegmentedControl,
   Stack,
   Text,
@@ -137,10 +138,13 @@ const JiraSettingsPage = ({
     <Container>
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
       <Title order={2}>Manage Jira Automation</Title>
-      <Text>
-        Manage, update, and assign JIRA users to Team Projects and Item
-        Categories.
-      </Text>
+      <Paper mt="sm" p="xl" shadow="xs" pos="relative">
+        <Text>
+          Manage, update, and assign JIRA users to team projects and item
+          categories.
+        </Text>
+      </Paper>
+
       <Center my="sm">
         <SegmentedControl
           data={[

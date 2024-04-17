@@ -47,10 +47,7 @@ export const createJiraTicket = async ({
     const jiraTicketWebLink: string = jiraTicketData._links.web;
 
     // transition jira ticket
-    if (
-      jiraItemCategoryLabel.includes("Other Expenses") ||
-      jiraItemCategoryLabel.includes("Services")
-    ) {
+    if (["Other Expenses", "Services"].includes(jiraItemCategoryLabel)) {
       await fetch("/api/transition-jira-ticket", {
         method: "POST",
         headers: {

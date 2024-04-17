@@ -1,8 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import {
-  getRequestComment,
-  getSectionInRequestPage,
-} from "@/backend/api/get";
+import { getRequestComment, getSectionInRequestPage } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -397,6 +394,7 @@ const OtherExpensesRequestPage = ({
         warehouseRequestParticipantIdList: warehouseRequestParticipant.map(
           (user) => user.jira_user_account_jira_id
         ),
+        jiraItemCategoryLabel: itemCategoryMatch.jira_item_category_jira_label,
       };
 
       const jiraTicketData = await createJiraTicket({
@@ -420,10 +418,6 @@ const OtherExpensesRequestPage = ({
       return jiraTicketData;
     } catch (error) {
       console.log(error);
-      notifications.show({
-        message: "Failed to create jira ticket.",
-        color: "red",
-      });
       return { success: false, data: null };
     } finally {
       setIsLoading(false);

@@ -56,6 +56,7 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
 import { v4 as uuidv4 } from "uuid";
+import { checkJiraFormslyProjectDuplicate } from "./get";
 
 // Upload Image
 export const uploadImage = async (
@@ -1583,35 +1584,18 @@ export const assignJiraFormslyProject = async (
   params: {
     formslyProjectId: string;
     jiraProjectId: string;
-    isReassign: boolean;
   }
 ) => {
-  const { formslyProjectId, jiraProjectId, isReassign } = params;
+  const { formslyProjectId, jiraProjectId } = params;
 
-  // reassign
-  if (isReassign) {
-    const { data, error } = await supabaseClient
-      .from("jira_formsly_project_table")
-      .update({ jira_project_id: jiraProjectId })
-      .eq("formsly_project_id", formslyProjectId)
-      .select()
-      .maybeSingle();
-    if (error) throw error;
+  const hasDuplicate = await checkJiraFormslyProjectDuplicate(supabaseClient, {
+    jiraProjectId,
+  });
 
-    return { success: true, data: data };
-  }
-
-  // check if duplicate entry
-  const { count } = await supabaseClient
-    .from("jira_formsly_project_table")
-    .select("jira_project_id, formsly_project_id", { count: "exact" })
-    .eq("formsly_project_id", formslyProjectId);
-
-  if (Number(count)) {
+  if (hasDuplicate) {
     return { success: false, data: null };
   }
 
-  // assign
   const { data, error } = await supabaseClient
     .from("jira_formsly_project_table")
     .insert({
@@ -1620,6 +1604,7 @@ export const assignJiraFormslyProject = async (
     })
     .select()
     .maybeSingle();
+
   if (error) throw error;
 
   return { success: true, data: data };
