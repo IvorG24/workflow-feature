@@ -47,11 +47,7 @@ const ItemFormDetails = ({
           />
         ) : null}
         {isCreatingItem ? (
-          <CreateItem
-            setIsCreatingItem={setIsCreatingItem}
-            setItemList={setItemList}
-            setItemCount={setItemCount}
-          />
+          <CreateItem setIsCreatingItem={setIsCreatingItem} />
         ) : null}
         {editItem ? (
           <UpdateItem

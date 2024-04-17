@@ -1,7 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   getRequestComment,
-  getSectionInItemRequestPage,
+  getSectionInRequestPage,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
@@ -104,7 +104,7 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             .map((dupId) => `'${dupId}'`)
             .join(",");
 
-          const data = await getSectionInItemRequestPage(supabaseClient, {
+          const data = await getSectionInRequestPage(supabaseClient, {
             index,
             requestId: request.request_id,
             sectionId: request.request_form.form_section[1].section_id,
@@ -122,7 +122,7 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         const uniqueFieldIdList: string[] = [];
         const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
-        newFields.map((field) => {
+        newFields.forEach((field) => {
           if (uniqueFieldIdList.includes(field.field_id)) {
             const currentFieldIndex = combinedFieldList.findIndex(
               (combinedField) => combinedField.field_id === field.field_id
@@ -160,6 +160,8 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 

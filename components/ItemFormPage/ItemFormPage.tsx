@@ -9,7 +9,8 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   FormSegmentType,
-  FormType,
+  InitialFormType,
+  ItemCategoryWithSigner,
   ItemWithDescriptionType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
@@ -26,7 +27,6 @@ import {
   Paper,
   SegmentedControl,
   Space,
-  Stack,
   Text,
   TextInput,
   Title,
@@ -49,25 +49,21 @@ import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
-import FormSection from "../RequestFormPage/FormSection";
+import FormSectionList from "../RequestFormPage/FormSectionList";
 import ItemFormDetails from "./ItemFormDetails/ItemFormDetails";
 import ItemLookup from "./ItemLookup/ItemLookup";
 
 type Props = {
-  items: ItemWithDescriptionType[];
-  itemListCount: number;
+  form: InitialFormType;
   teamMemberList: TeamMemberWithUserType[];
-  form: FormType;
   teamGroupList: TeamGroupTableRow[];
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
 };
 
 const ItemFormPage = ({
-  items,
-  itemListCount,
-  teamMemberList,
   form,
+  teamMemberList,
   teamGroupList,
   teamProjectList,
   teamProjectListCount,
@@ -88,8 +84,16 @@ const ItemFormPage = ({
   const [editItem, setEditItem] = useState<ItemWithDescriptionType | null>(
     null
   );
-  const [itemList, setItemList] = useState(items);
-  const [itemCount, setItemCount] = useState(itemListCount);
+  const [itemList, setItemList] = useState<ItemWithDescriptionType[]>([]);
+  const [itemCount, setItemCount] = useState(0);
+
+  const [isCreatingItemCategory, setIsCreatingItemCategory] = useState(false);
+  const [editItemCategory, setEditItemCategory] =
+    useState<ItemCategoryWithSigner | null>(null);
+  const [itemCategoryList, setItemCategoryList] = useState<
+    ItemCategoryWithSigner[]
+  >([]);
+  const [itemCategoryCount, setItemCategoryCount] = useState(0);
 
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -150,6 +154,20 @@ const ItemFormPage = ({
     checkIfMember();
   }, [teamMember]);
 
+  useEffect(() => {
+    const initialRequestSigners = form.form_signer.map((signer) => {
+      return {
+        signer_id: signer.signer_id,
+        signer_team_member_id: signer.signer_team_member.team_member_id,
+        signer_action: signer.signer_action,
+        signer_is_primary_signer: signer.signer_is_primary_signer,
+        signer_order: signer.signer_order,
+        signer_form_id: `${formId}`,
+      };
+    });
+    signerMethods.setValue("signers", initialRequestSigners);
+  }, [form]);
+
   const signerMethods = useForm<{
     signers: RequestSigner[];
     isSignatureRequired: boolean;
@@ -169,36 +187,22 @@ const ItemFormPage = ({
 
   const watchGroup = requesterMethods.watch("groupList");
 
-  useEffect(() => {
-    const initialRequestSigners = form.form_signer.map((signer) => {
-      return {
-        signer_id: signer.signer_id,
-        signer_team_member_id: signer.signer_team_member.team_member_id,
-        signer_action: signer.signer_action,
-        signer_is_primary_signer: signer.signer_is_primary_signer,
-        signer_order: signer.signer_order,
-        signer_form_id: `${formId}`,
-      };
-    });
-    signerMethods.setValue("signers", initialRequestSigners);
-  }, [form]);
-
   const newTeamMember = {
-    form_team_member: {
-      team_member_id: form.form_team_member.team_member_id,
-      team_member_user: {
-        user_id: uuidv4(),
-        user_first_name: "Formsly",
-        user_last_name: "",
-        user_avatar: "/icon-request-light.svg",
-        user_username: "formsly",
-      },
+    team_member_id: form.form_team_member.team_member_id,
+    team_member_user: {
+      user_id: uuidv4(),
+      user_first_name: "Formsly",
+      user_last_name: "",
+      user_avatar: "/icon-request-light.svg",
+      user_username: "formsly",
     },
   };
 
   const newForm = {
     ...form,
-    ...newTeamMember,
+    form_team_member: {
+      ...newTeamMember,
+    },
   };
 
   const handleSaveSigners = async () => {
@@ -395,15 +399,7 @@ const ItemFormPage = ({
       <Space h="xl" />
 
       {segmentValue === "Form Preview" ? (
-        <Stack spacing="xl">
-          <FormSection section={form.form_section[0]} />
-          <FormSection
-            section={{
-              ...form.form_section[1],
-              section_field: form.form_section[1].section_field.slice(0, 7),
-            }}
-          />
-        </Stack>
+        <FormSectionList formId={form.form_id} formName={form.form_name} />
       ) : null}
 
       {segmentValue === "Form Details" ? (
@@ -418,6 +414,14 @@ const ItemFormPage = ({
           setSelectedItem={setSelectedItem}
           setEditItem={setEditItem}
           selectedItem={selectedItem}
+          isCreatingItemCategory={isCreatingItemCategory}
+          editItemCategory={editItemCategory}
+          itemCategoryList={itemCategoryList}
+          setItemCategoryList={setItemCategoryList}
+          itemCategoryCount={itemCategoryCount}
+          setItemCategoryCount={setItemCategoryCount}
+          setIsCreatingItemCategory={setIsCreatingItemCategory}
+          setEditItemCategory={setEditItemCategory}
         />
       ) : null}
 

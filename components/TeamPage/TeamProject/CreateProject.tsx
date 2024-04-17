@@ -9,7 +9,7 @@ import { createAttachment, createTeamProject } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { OptionType, TeamProjectWithAddressType } from "@/utils/types";
+import { OptionType } from "@/utils/types";
 import {
   Button,
   Container,
@@ -42,15 +42,10 @@ type ProjectForm = {
 
 type Props = {
   setIsCreatingProject: Dispatch<SetStateAction<boolean>>;
-  setProjectList: Dispatch<SetStateAction<TeamProjectWithAddressType[]>>;
-  setProjectCount: Dispatch<SetStateAction<number>>;
+  handleFetch: (search: string, page: number) => void;
 };
 
-const CreateProject = ({
-  setIsCreatingProject,
-  setProjectList,
-  setProjectCount,
-}: Props) => {
+const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
 
@@ -139,7 +134,7 @@ const CreateProject = ({
 
       if (!region || !province || !city || !barangay) throw new Error();
 
-      const newProject = await createTeamProject(supabaseClient, {
+      await createTeamProject(supabaseClient, {
         teamProjectName: projectName,
         teamProjectInitials: projectInitials,
         teamProjectTeamId: activeTeam.team_id,
@@ -152,16 +147,8 @@ const CreateProject = ({
         street: data.street.replace(/'/g, "''"),
         zipCode: data.zipCode,
       });
+      handleFetch("", 1);
 
-      setProjectList((prev) => {
-        prev.unshift({
-          ...newProject,
-          team_project_site_map_attachment_id: siteMapData.attachment_value,
-          team_project_boq_attachment_id: boqData.attachment_value,
-        });
-        return prev;
-      });
-      setProjectCount((prev) => Number(prev) + 1);
       notifications.show({
         message: "Team project created.",
         color: "green",

@@ -78,8 +78,6 @@ const CategoryLookup = ({ lookup }: Props) => {
         <CreateCategoryLookUp
           lookup={lookup}
           setIsCreatingCategoryLookup={setIsCreatingCategoryLookup}
-          setCategoryLookupList={setCategoryLookupList}
-          setCategoryLookupCount={setCategoryLookupCount}
         />
       ) : null}
       {editCategoryLookup ? (

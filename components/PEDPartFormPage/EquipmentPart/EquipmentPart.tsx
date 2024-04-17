@@ -87,8 +87,6 @@ const EquipmentPart = ({ selectedEquipment, setSelectedEquipment }: Props) => {
         <CreateEquipmentPart
           selectedEquipment={selectedEquipment}
           setIsCreatingEquipmentPart={setIsCreatingEquipmentPart}
-          setEquipmentPartList={setEquipmentPartList}
-          setEquipmentPartCount={setEquipmentPartCount}
         />
       ) : null}
       {editEquipmentPart ? (

@@ -9,7 +9,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   FormSegmentType,
-  FormType,
+  InitialFormType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -25,7 +25,6 @@ import {
   Paper,
   SegmentedControl,
   Space,
-  Stack,
   Text,
   TextInput,
   Title,
@@ -48,20 +47,19 @@ import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
-import FormSection from "../RequestFormPage/FormSection";
+import FormSectionList from "../RequestFormPage/FormSectionList";
 import ServicesLookup from "./ServicesLookup/ServicesLookup";
 
 type Props = {
+  form: InitialFormType;
   teamMemberList: TeamMemberWithUserType[];
-  form: FormType;
   teamGroupList: TeamGroupTableRow[];
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
 };
-
 const ServicesFormPage = ({
-  teamMemberList,
   form,
+  teamMemberList,
   teamGroupList,
   teamProjectList,
   teamProjectListCount,
@@ -169,21 +167,21 @@ const ServicesFormPage = ({
   }, [form]);
 
   const newTeamMember = {
-    form_team_member: {
-      team_member_id: form.form_team_member.team_member_id,
-      team_member_user: {
-        user_id: uuidv4(),
-        user_first_name: "Formsly",
-        user_last_name: "",
-        user_avatar: "/icon-request-light.svg",
-        user_username: "formsly",
-      },
+    team_member_id: form.form_team_member.team_member_id,
+    team_member_user: {
+      user_id: uuidv4(),
+      user_first_name: "Formsly",
+      user_last_name: "",
+      user_avatar: "/icon-request-light.svg",
+      user_username: "formsly",
     },
   };
 
   const newForm = {
     ...form,
-    ...newTeamMember,
+    form_team_member: {
+      ...newTeamMember,
+    },
   };
 
   const handleSaveSigners = async () => {
@@ -380,11 +378,7 @@ const ServicesFormPage = ({
       <Space h="xl" />
 
       {segmentValue === "Form Preview" ? (
-        <Stack spacing="xl">
-          {form.form_section.map((section) => (
-            <FormSection section={section} key={section.section_id} />
-          ))}
-        </Stack>
+        <FormSectionList formId={form.form_id} formName={form.form_name} />
       ) : null}
 
       {segmentValue === "Form Lookup" ? <ServicesLookup /> : null}

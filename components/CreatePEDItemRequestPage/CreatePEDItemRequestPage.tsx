@@ -14,7 +14,6 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { fetchNumberFromString } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -80,6 +79,9 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
   const [itemOptions, setItemOptions] = useState<OptionTableRow[]>([]);
   const [propertyNumberOptions, setPropertyNumberOptions] = useState<
     OptionTableRow[]
+  >([]);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
   >([]);
 
   const requestorProfile = useUserProfile();
@@ -205,34 +207,8 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
         (option) => option.option_value === response
       )?.option_id as string;
 
-      const isBulk =
-        data.sections[0].section_field[2].field_response === "Bulk";
-
-      let newData = data;
-      if (!isBulk) {
-        newData = {
-          sections: [
-            data.sections[0],
-            ...data.sections.slice(1).map((section) => {
-              return {
-                ...section,
-                section_field: [
-                  {
-                    ...section.section_field[0],
-                    field_response: `${fetchNumberFromString(
-                      section.section_field[0].field_response as string
-                    )}`,
-                  },
-                  ...section.section_field.slice(1),
-                ],
-              };
-            }),
-          ],
-        };
-      }
-
       const request = await createRequest(supabaseClient, {
-        requestFormValues: newData,
+        requestFormValues: data,
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: signerList,
@@ -366,6 +342,11 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
     const newSection = getValues(`sections.${index}`);
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: 1 },
+          { sectionIndex: index, fieldIndex: 2 },
+          { sectionIndex: index, fieldIndex: 3 },
+        ]);
         const equipmentDescription = await getEquipmentDescription(
           supabaseClient,
           {
@@ -420,6 +401,8 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -469,6 +452,9 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
       getValues(`sections.0.section_field.2.field_response`) === "Bulk";
     try {
       if (value) {
+        setLoadingFieldList([
+          { sectionIndex: index, fieldIndex: isBulk ? 1 : 5 },
+        ]);
         const item = await getPedItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
@@ -574,6 +560,8 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -607,6 +595,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
                       onRequestTypeChange: handleRequestTypeChange,
                       onGeneralNameChange: handleGeneralNameChange,
                     }}
+                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

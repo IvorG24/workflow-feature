@@ -5,18 +5,20 @@ import {
   MAX_FILE_SIZE_IN_MB,
   SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
-import { requestPath } from "@/utils/string";
+import { parseJSONIfValid, requestPath } from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
   FileInput,
   Flex,
+  Loader,
   MultiSelect,
   NumberInput,
   Select,
   Switch,
   TextInput,
   Textarea,
+  Tooltip,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -29,12 +31,13 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
+import isURL from "validator/lib/isURL";
 import { RequestFormValues } from "./CreateRequestPage";
 
 type RequestFormFieldsProps = {
   field: FieldTableRow & {
     options: OptionTableRow[];
-  };
+  } & { field_section_duplicatable_id: string | undefined };
   sectionIndex: number;
   fieldIndex: number;
   itemFormMethods?: {
@@ -68,11 +71,44 @@ type RequestFormFieldsProps = {
       prevValue: string | null,
       value: string | null
     ) => void;
-    onGeneralItemNameChange: (value: string | null, index: number) => void;
-    onComponentCategoryChange: (value: string | null, index: number) => void;
-    onBrandChange: (value: string | null, index: number) => void;
-    onModelChange: (value: string | null, index: number) => void;
+    onGeneralItemNameChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onComponentCategoryChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onBrandChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onModelChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
+    onGeneralItemNameOpen?: (index: number) => void;
   };
   pedItemFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -87,6 +123,8 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
+  isEdit?: boolean;
+  isLoading: boolean | undefined;
 };
 
 const RequestFormFields = ({
@@ -101,12 +139,15 @@ const RequestFormFields = ({
   otherExpensesMethods,
   pedItemFormMethods,
   paymentRequestFormMethods,
+  isEdit,
+  isLoading,
 }: RequestFormFieldsProps) => {
   const {
     register,
     control,
     formState: { errors },
     getValues,
+    setValue,
   } = useFormContext<RequestFormValues>();
   const team = useActiveTeam();
 
@@ -114,6 +155,7 @@ const RequestFormFields = ({
   const timeInputRef = useRef<HTMLInputElement>(null);
 
   const [linkToDisplay, setLinkToDisplay] = useState<string | null>(null);
+  const [prevFileLink, setPrevFileLink] = useState<string | null>(null);
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
@@ -150,8 +192,35 @@ const RequestFormFields = ({
       }
     };
 
+    const fetchFile = async () => {
+      try {
+        const fileLink = parseJSONIfValid(
+          `${getValues(
+            `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`
+          )}`
+        );
+        setPrevFileLink(fileLink);
+
+        if (isURL(fileLink)) {
+          const response = await fetch(fileLink);
+          const blob = await response.blob();
+          const file = new File([blob], fileLink, { type: blob.type });
+          setValue(
+            `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+            file as never
+          );
+        }
+      } catch (error) {
+        console.error("Error downloading file:", error);
+      }
+    };
+
     if (field.field_type === "LINK") {
       fetchLinkToDisplay();
+    }
+
+    if (field.field_type === "FILE" && isEdit !== undefined) {
+      fetchFile();
     }
   }, []);
 
@@ -205,6 +274,8 @@ const RequestFormFields = ({
             )}
             error={fieldError}
             withAsterisk={field.field_is_required}
+            readOnly={isLoading}
+            rightSection={isLoading && <Loader size={16} />}
           />
         );
 
@@ -290,8 +361,8 @@ const RequestFormFields = ({
                   const prevValue = getValues(
                     `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`
                   );
-                  onChange(value);
 
+                  onChange(value);
                   switch (field.field_name) {
                     case "General Name":
                       itemFormMethods?.onGeneralNameChange(sectionIndex, value);
@@ -367,6 +438,7 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+
                       break;
                     case "Component Category":
                       pedPartFormMethods?.onComponentCategoryChange(
@@ -402,6 +474,79 @@ const RequestFormFields = ({
                       break;
                   }
                 }}
+                onDropdownOpen={() => {
+                  switch (field.field_name) {
+                    case "General Item Name":
+                      isEdit && pedPartFormMethods?.onGeneralItemNameOpen
+                        ? pedPartFormMethods.onGeneralItemNameOpen(sectionIndex)
+                        : null;
+                      break;
+                    case "Component Category":
+                      isEdit &&
+                        pedPartFormMethods?.onGeneralItemNameChange(
+                          getValues(
+                            `sections.${sectionIndex}.section_field.${0}.field_response`
+                          ) as string,
+                          sectionIndex,
+                          {
+                            fieldId: field.field_id,
+                            response: getValues(
+                              `sections.${sectionIndex}.section_field.${1}.field_response`
+                            ) as string,
+                            dupId: field.field_section_duplicatable_id,
+                          }
+                        );
+                      break;
+                    case "Brand":
+                      isEdit &&
+                        pedPartFormMethods?.onComponentCategoryChange(
+                          getValues(
+                            `sections.${sectionIndex}.section_field.${1}.field_response`
+                          ) as string,
+                          sectionIndex,
+                          {
+                            fieldId: field.field_id,
+                            response: getValues(
+                              `sections.${sectionIndex}.section_field.${2}.field_response`
+                            ) as string,
+                            dupId: field.field_section_duplicatable_id,
+                          }
+                        );
+                      break;
+                    case "Model":
+                      isEdit &&
+                        pedPartFormMethods?.onBrandChange(
+                          getValues(
+                            `sections.${sectionIndex}.section_field.${2}.field_response`
+                          ) as string,
+                          sectionIndex,
+                          {
+                            fieldId: field.field_id,
+                            response: getValues(
+                              `sections.${sectionIndex}.section_field.${3}.field_response`
+                            ) as string,
+                            dupId: field.field_section_duplicatable_id,
+                          }
+                        );
+                      break;
+                    case "Part Number":
+                      isEdit &&
+                        pedPartFormMethods?.onModelChange(
+                          getValues(
+                            `sections.${sectionIndex}.section_field.${3}.field_response`
+                          ) as string,
+                          sectionIndex,
+                          {
+                            fieldId: field.field_id,
+                            response: getValues(
+                              `sections.${sectionIndex}.section_field.${4}.field_response`
+                            ) as string,
+                            dupId: field.field_section_duplicatable_id,
+                          }
+                        );
+                      break;
+                  }
+                }}
                 data={dropdownOption}
                 withAsterisk={field.field_is_required}
                 {...inputProps}
@@ -410,6 +555,9 @@ const RequestFormFields = ({
                 searchable={formslyFormName !== ""}
                 nothingFound="Nothing found. Try a different keyword"
                 limit={SELECT_OPTION_LIMIT}
+                disabled={isEdit && field.field_name === "Requesting Project"}
+                readOnly={isLoading}
+                rightSection={isLoading && <Loader size={16} />}
               />
             )}
             rules={{ ...fieldRules }}
@@ -496,19 +644,34 @@ const RequestFormFields = ({
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
             render={({ field }) => (
-              <FileInput
-                {...inputProps}
-                icon={<IconFile size={16} />}
-                clearable
-                multiple={false}
-                onChange={field.onChange}
-                error={fieldError}
-                accept={
-                  formslyFormName === "Quotation"
-                    ? "application/pdf"
-                    : undefined
-                }
-              />
+              <Flex w="100%" align="flex-end" gap="xs">
+                <FileInput
+                  {...inputProps}
+                  icon={<IconFile size={16} />}
+                  clearable
+                  multiple={false}
+                  value={field.value as File | null | undefined}
+                  onChange={field.onChange}
+                  error={fieldError}
+                  sx={{ width: prevFileLink ? "96%" : "100%" }}
+                />
+                {parseJSONIfValid(`${field.value}`) && isEdit !== undefined ? (
+                  <Tooltip
+                    label="Open last saved file in new tab"
+                    openDelay={200}
+                  >
+                    <ActionIcon
+                      mb={4}
+                      p={4}
+                      variant="light"
+                      color="blue"
+                      onClick={() => window.open(`${prevFileLink}`, "_blank")}
+                    >
+                      <IconExternalLink />
+                    </ActionIcon>
+                  </Tooltip>
+                ) : null}
+              </Flex>
             )}
             rules={{
               ...fieldRules,

@@ -8,7 +8,6 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import {
   EquipmentDescriptionForm,
-  EquipmentDescriptionType,
   EquipmentWithCategoryType,
 } from "@/utils/types";
 import {
@@ -31,17 +30,11 @@ import { Controller, useForm } from "react-hook-form";
 type Props = {
   selectedEquipment: EquipmentWithCategoryType;
   setIsCreatingEquipmentDescription: Dispatch<SetStateAction<boolean>>;
-  setEquipmentDescriptionList: Dispatch<
-    SetStateAction<EquipmentDescriptionType[]>
-  >;
-  setEquipmentDescriptionCount: Dispatch<SetStateAction<number>>;
 };
 
 const CreateEquipmentDescription = ({
   selectedEquipment,
   setIsCreatingEquipmentDescription,
-  setEquipmentDescriptionList,
-  setEquipmentDescriptionCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -105,32 +98,25 @@ const CreateEquipmentDescription = ({
 
   const onSubmit = async (data: EquipmentDescriptionForm) => {
     try {
-      const newEquipmentDescription = await createEquipmentDescription(
-        supabaseClient,
-        {
-          equipmentDescriptionData: {
-            equipment_description_property_number: data.propertyNumber.trim(),
-            equipment_description_serial_number: data.serialNumber
-              .toLocaleUpperCase()
-              .trim(),
-            equipment_description_brand_id: data.brand,
-            equipment_description_model_id: data.model,
-            equipment_description_equipment_id: selectedEquipment.equipment_id,
-            equipment_description_encoder_team_member_id:
-              teamMember?.team_member_id,
-            equipment_description_is_available: data.isAvailable,
-          },
-          brand: brandOption.find((brand) => brand.value === data.brand)
-            ?.label as string,
-          model: modelOption.find((model) => model.value === data.model)
-            ?.label as string,
-        }
-      );
-      setEquipmentDescriptionList((prev) => {
-        prev.unshift(newEquipmentDescription);
-        return prev;
+      await createEquipmentDescription(supabaseClient, {
+        equipmentDescriptionData: {
+          equipment_description_property_number: data.propertyNumber.trim(),
+          equipment_description_serial_number: data.serialNumber
+            .toLocaleUpperCase()
+            .trim(),
+          equipment_description_brand_id: data.brand,
+          equipment_description_model_id: data.model,
+          equipment_description_equipment_id: selectedEquipment.equipment_id,
+          equipment_description_encoder_team_member_id:
+            teamMember?.team_member_id,
+          equipment_description_is_available: data.isAvailable,
+        },
+        brand: brandOption.find((brand) => brand.value === data.brand)
+          ?.label as string,
+        model: modelOption.find((model) => model.value === data.model)
+          ?.label as string,
       });
-      setEquipmentDescriptionCount((prev) => prev + 1);
+
       notifications.show({
         message: "Equipment Description created.",
         color: "green",

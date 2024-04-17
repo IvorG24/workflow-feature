@@ -1,6 +1,9 @@
-import { ItemWithDescriptionType } from "@/utils/types";
+import { ItemCategoryWithSigner, ItemWithDescriptionType } from "@/utils/types";
 import { Center, Container, Paper, Space, Text } from "@mantine/core";
 import { Dispatch, SetStateAction } from "react";
+import CreateItemCategory from "../ItemCategoryList/CreateItemCategory";
+import ItemCategoryList from "../ItemCategoryList/ItemCategoryList";
+import UpdateItemCategory from "../ItemCategoryList/UpdateItemCategory";
 import ItemDescription from "../ItemDescription/ItemDescription";
 import CreateItem from "../ItemList/CreateItem";
 import ItemList from "../ItemList/ItemList";
@@ -17,6 +20,14 @@ type Props = {
   setSelectedItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
   setEditItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
   selectedItem: ItemWithDescriptionType | null;
+  isCreatingItemCategory: boolean;
+  editItemCategory: ItemCategoryWithSigner | null;
+  itemCategoryList: ItemCategoryWithSigner[];
+  setItemCategoryList: Dispatch<SetStateAction<ItemCategoryWithSigner[]>>;
+  itemCategoryCount: number;
+  setItemCategoryCount: Dispatch<SetStateAction<number>>;
+  setIsCreatingItemCategory: Dispatch<SetStateAction<boolean>>;
+  setEditItemCategory: Dispatch<SetStateAction<ItemCategoryWithSigner | null>>;
 };
 
 const ItemFormDetails = ({
@@ -30,6 +41,14 @@ const ItemFormDetails = ({
   setSelectedItem,
   setEditItem,
   selectedItem,
+  isCreatingItemCategory,
+  editItemCategory,
+  itemCategoryList,
+  setItemCategoryList,
+  itemCategoryCount,
+  setItemCategoryCount,
+  setIsCreatingItemCategory,
+  setEditItemCategory,
 }: Props) => {
   return (
     <Container p={0} fluid pos="relative">
@@ -47,11 +66,7 @@ const ItemFormDetails = ({
           />
         ) : null}
         {isCreatingItem ? (
-          <CreateItem
-            setIsCreatingItem={setIsCreatingItem}
-            setItemList={setItemList}
-            setItemCount={setItemCount}
-          />
+          <CreateItem setIsCreatingItem={setIsCreatingItem} />
         ) : null}
         {editItem ? (
           <UpdateItem
@@ -72,6 +87,30 @@ const ItemFormDetails = ({
           <ItemDescription
             selectedItem={selectedItem}
             setSelectedItem={setSelectedItem}
+          />
+        ) : null}
+      </Paper>
+      <Space h="xl" />
+      <Paper p="xl" shadow="xs">
+        {!isCreatingItemCategory && !editItemCategory ? (
+          <ItemCategoryList
+            itemCategoryList={itemCategoryList}
+            itemCategoryCount={itemCategoryCount}
+            setItemCategoryCount={setItemCategoryCount}
+            setIsCreatingItemCategory={setIsCreatingItemCategory}
+            setEditItemCategory={setEditItemCategory}
+            setItemCategoryList={setItemCategoryList}
+          />
+        ) : null}
+        {isCreatingItemCategory ? (
+          <CreateItemCategory
+            setIsCreatingItemCategory={setIsCreatingItemCategory}
+          />
+        ) : null}
+        {editItemCategory ? (
+          <UpdateItemCategory
+            setEditItemCategory={setEditItemCategory}
+            editItemCategory={editItemCategory}
           />
         ) : null}
       </Paper>

@@ -1,6 +1,5 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getFileUrl, getTeamProjectList } from "@/backend/api/get";
-import { useActiveTeam } from "@/stores/useTeamStore";
+import { getFileUrl } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
 import { AddressTableRow, TeamProjectWithAddressType } from "@/utils/types";
@@ -47,8 +46,6 @@ const useStyles = createStyles((theme) => ({
 type Props = {
   projectList: TeamProjectWithAddressType[];
   setProjectList: Dispatch<SetStateAction<TeamProjectWithAddressType[]>>;
-  projectCount: number;
-  setProjectCount: Dispatch<SetStateAction<number>>;
   setIsCreatingProject: Dispatch<SetStateAction<boolean>>;
   setSelectedProject: Dispatch<
     SetStateAction<TeamProjectWithAddressType | null>
@@ -56,31 +53,31 @@ type Props = {
   setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
   selectedProject: TeamProjectWithAddressType | null;
   isOwnerOrAdmin: boolean;
+  handleFetch: (search: string, page: number) => void;
+  isLoading: boolean;
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  projectCount: number;
 };
 
 const ProjectList = ({
   projectList,
   setProjectList,
-  projectCount,
-  setProjectCount,
   setIsCreatingProject,
   setSelectedProject,
   setIsFetchingMembers,
   selectedProject,
   isOwnerOrAdmin,
+  handleFetch,
+  isLoading,
+  setIsLoading,
+  projectCount,
 }: Props) => {
   const { classes } = useStyles();
-
   const supabaseClient = useSupabaseClient();
-  const activeTeam = useActiveTeam();
-
-  const [isLoading, setIsLoading] = useState(false);
 
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
-  const [searchResult, setSearchResult] =
-    useState<TeamProjectWithAddressType[]>(projectList);
 
   const headerCheckboxKey = generateRandomId();
 
@@ -110,48 +107,18 @@ const ProjectList = ({
     handleFetch(isEmpty ? "" : search, 1);
   };
 
-  const handleFetch = async (search: string, page: number) => {
-    setIsLoading(true);
-    try {
-      const { data, count } = await getTeamProjectList(supabaseClient, {
-        teamId: activeTeam.team_id,
-        search,
-        limit: ROW_PER_PAGE,
-        page: page,
-      });
-      setProjectList(data as unknown as TeamProjectWithAddressType[]);
-      setProjectCount(Number(count));
-      setSearchResult(data as unknown as TeamProjectWithAddressType[]);
-    } catch (e) {
-      notifications.show({
-        message: "Error on fetching project list",
-        color: "red",
-      });
-    }
-    setIsLoading(false);
-  };
-
   const handleDelete = async () => {
     const saveCheckList = checkList;
     const savedRecord = projectList;
 
     try {
-      const updatedProjectList = projectList.filter((project) => {
-        if (!checkList.includes(project.team_project_id)) {
-          return project;
-        }
-      });
-      setProjectList(updatedProjectList);
-      setSearchResult(updatedProjectList);
       setCheckList([]);
-
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "team_project",
       });
-
       setSelectedProject(null);
-
+      handleFetch("", 1);
       notifications.show({
         message: "Project/s deleted.",
         color: "green",
@@ -159,7 +126,6 @@ const ProjectList = ({
     } catch {
       setProjectList(savedRecord);
       setCheckList(saveCheckList);
-      setSearchResult(savedRecord);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -385,7 +351,7 @@ const ProjectList = ({
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={searchResult}
+        records={projectList}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
         totalRecords={projectCount}
         recordsPerPage={ROW_PER_PAGE}

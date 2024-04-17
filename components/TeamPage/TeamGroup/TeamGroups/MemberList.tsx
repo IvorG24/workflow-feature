@@ -1,11 +1,12 @@
-import { deleteRow } from "@/backend/api/delete";
-import { getTeamGroupList } from "@/backend/api/get";
-import { useActiveTeam } from "@/stores/useTeamStore";
+import { removeMemberFromGroup } from "@/backend/api/delete";
+import { getTeamGroupMemberList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
+import { getAvatarColor } from "@/utils/styling";
 import { TeamGroupTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  Avatar,
   Box,
   Button,
   Checkbox,
@@ -22,6 +23,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
+import { TeamMemberType } from "./GroupMembers";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -32,66 +34,60 @@ const useStyles = createStyles((theme) => ({
       flexGrow: 1,
     },
   },
-  clickableColumn: {
-    "&:hover": {
-      color:
-        theme.colorScheme === "dark"
-          ? theme.colors.gray[7]
-          : theme.colors.gray[5],
-    },
-    cursor: "pointer",
-  },
 }));
 
 type Props = {
-  groupList: TeamGroupTableRow[];
-  setGroupList: Dispatch<SetStateAction<TeamGroupTableRow[]>>;
-  groupCount: number;
-  setGroupCount: Dispatch<SetStateAction<number>>;
-  setIsCreatingGroup: Dispatch<SetStateAction<boolean>>;
-  setSelectedGroup: Dispatch<SetStateAction<TeamGroupTableRow | null>>;
-  setIsFetchingMembers: Dispatch<SetStateAction<boolean>>;
-  selectedGroup: TeamGroupTableRow | null;
+  groupMemberList: TeamMemberType[];
+  setGroupMemberList: Dispatch<SetStateAction<TeamMemberType[]>>;
+  groupMemberListCount: number;
+  setGroupMemberListCount: Dispatch<SetStateAction<number>>;
+  setIsAddingMember: Dispatch<SetStateAction<boolean>>;
+  checkList: string[];
+  setCheckList: Dispatch<SetStateAction<string[]>>;
+  activePage: number;
+  setActivePage: Dispatch<SetStateAction<number>>;
+  search: string;
+  setSearch: Dispatch<SetStateAction<string>>;
+  selectedGroup: TeamGroupTableRow;
   isOwnerOrAdmin: boolean;
 };
 
-const GroupList = ({
-  groupList,
-  setGroupList,
-  groupCount,
-  setGroupCount,
-  setIsCreatingGroup,
-  setSelectedGroup,
-  setIsFetchingMembers,
+const MemberList = ({
+  groupMemberList,
+  setGroupMemberList,
+  groupMemberListCount,
+  setGroupMemberListCount,
+  setIsAddingMember,
+  checkList,
+  setCheckList,
+  activePage,
+  setActivePage,
+  search,
+  setSearch,
   selectedGroup,
   isOwnerOrAdmin,
 }: Props) => {
   const { classes } = useStyles();
-
   const supabaseClient = useSupabaseClient();
-  const activeTeam = useActiveTeam();
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [activePage, setActivePage] = useState(1);
-  const [checkList, setCheckList] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
-  const [searchResult, setSearchResult] = useState(groupList);
-
   const headerCheckboxKey = generateRandomId();
 
-  const handleCheckRow = (groupId: string) => {
-    if (checkList.includes(groupId)) {
-      setCheckList(checkList.filter((id) => id !== groupId));
+  const handleCheckRow = (groupMemberId: string) => {
+    if (checkList.includes(groupMemberId)) {
+      setCheckList(checkList.filter((id) => id !== groupMemberId));
     } else {
-      setCheckList([...checkList, groupId]);
+      setCheckList([...checkList, groupMemberId]);
     }
   };
 
   const handleCheckAllRows = (checkAll: boolean) => {
     if (checkAll) {
-      const groupIdList = groupList.map((group) => group.team_group_id);
-      setCheckList(groupIdList);
+      const memberIdList = groupMemberList.map(
+        (groupMember) => groupMember.team_group_member_id
+      );
+      setCheckList(memberIdList);
     } else {
       setCheckList([]);
     }
@@ -107,53 +103,42 @@ const GroupList = ({
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
     try {
-      const { data, count } = await getTeamGroupList(supabaseClient, {
-        teamId: activeTeam.team_id,
+      const { data, count } = await getTeamGroupMemberList(supabaseClient, {
+        groupId: selectedGroup.team_group_id,
         search,
         limit: ROW_PER_PAGE,
         page: page,
       });
-      setGroupList(data as TeamGroupTableRow[]);
-      setGroupCount(Number(count));
-      setSearchResult(data as TeamGroupTableRow[]);
-    } catch {
+
+      setGroupMemberList(data as unknown as TeamMemberType[]);
+      setGroupMemberListCount(Number(count));
+    } catch (e) {
       notifications.show({
-        message: "Error on fetching group list",
+        message: "Error on fetching group member list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-  const handleDelete = async () => {
+  const handleRemove = async () => {
     const saveCheckList = checkList;
-    const savedRecord = groupList;
+    const savedRecord = groupMemberList;
 
     try {
-      const updatedGroupList = groupList.filter((group) => {
-        if (!checkList.includes(group.team_group_id)) {
-          return group;
-        }
-      });
-      setGroupList(updatedGroupList);
-      setSearchResult(updatedGroupList);
       setCheckList([]);
-
-      await deleteRow(supabaseClient, {
-        rowId: checkList,
-        table: "team_group",
+      await removeMemberFromGroup(supabaseClient, {
+        teamGroupMemberIdList: checkList,
       });
-
-      setSelectedGroup(null);
-
+      handleFetch("", 1);
       notifications.show({
-        message: "Group/s deleted.",
+        message: "Group member/s removed.",
         color: "green",
       });
     } catch {
-      setGroupList(savedRecord);
+      setGroupMemberList(savedRecord);
       setCheckList(saveCheckList);
-      setSearchResult(savedRecord);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -161,17 +146,7 @@ const GroupList = ({
     }
   };
 
-  const handleColumnClick = (group_id: string) => {
-    if (selectedGroup?.team_group_id === group_id) return;
-
-    setIsFetchingMembers(true);
-    const newSelectedGroup = groupList.find(
-      (group) => group.team_group_id === group_id
-    );
-    setSelectedGroup(newSelectedGroup || null);
-  };
-
-  const columnData: DataTableColumn<TeamGroupTableRow>[] = [
+  const columnData: DataTableColumn<TeamMemberType>[] = [
     {
       accessor: "checkbox",
       title: (
@@ -179,35 +154,64 @@ const GroupList = ({
           key={headerCheckboxKey}
           className={classes.checkbox}
           checked={
-            checkList.length > 0 && checkList.length === groupList.length
+            checkList.length > 0 && checkList.length === groupMemberList.length
           }
           size="xs"
           onChange={(e) => handleCheckAllRows(e.currentTarget.checked)}
         />
       ),
-      render: ({ team_group_id }) => (
+      render: ({ team_group_member_id }) => (
         <Checkbox
           className={classes.checkbox}
           size="xs"
-          checked={checkList.includes(team_group_id)}
+          checked={checkList.includes(team_group_member_id)}
           onChange={() => {
-            handleCheckRow(team_group_id);
+            handleCheckRow(team_group_member_id);
           }}
         />
       ),
       width: 40,
     },
     {
-      accessor: "group_general_name",
-      title: "Group Name",
-      render: ({ team_group_name, team_group_id }) => (
-        <Text
-          className={classes.clickableColumn}
-          onClick={() => {
-            handleColumnClick(team_group_id);
-          }}
-        >
-          {team_group_name}
+      accessor: "team_member.team_member_user.user_id",
+      title: "Member Name",
+      render: ({ team_member }) => (
+        <Flex gap="xs">
+          <Avatar
+            size={24}
+            src={team_member.team_member_user.user_avatar}
+            color={getAvatarColor(
+              Number(`${team_member.team_member_user.user_id.charCodeAt(0)}`)
+            )}
+            radius="xl"
+          >
+            {(
+              team_member.team_member_user.user_first_name[0] +
+              team_member.team_member_user.user_last_name[0]
+            ).toUpperCase()}
+          </Avatar>
+          <Text>
+            {team_member.team_member_user.user_first_name}{" "}
+            {team_member.team_member_user.user_last_name}
+          </Text>
+        </Flex>
+      ),
+    },
+    {
+      accessor: "team_member.team_member_user.user_email",
+      title: "Email",
+      render: ({ team_member }) => (
+        <Text>{team_member.team_member_user.user_email}</Text>
+      ),
+    },
+    {
+      accessor: "team_member.team_member_project_list",
+      title: "Project",
+      render: ({ team_member }) => (
+        <Text>
+          {team_member.team_member_project_list
+            ? team_member.team_member_project_list.join(", ")
+            : ""}
         </Text>
       ),
     },
@@ -218,11 +222,11 @@ const GroupList = ({
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
-            Team Groups
+            Group Members
           </Title>
           <TextInput
             miw={250}
-            placeholder="Group Name"
+            placeholder="Member Name"
             rightSection={
               <ActionIcon onClick={() => search && handleSearch()}>
                 <IconSearch size={16} />
@@ -257,24 +261,26 @@ const GroupList = ({
                   title: <Text>Please confirm your action.</Text>,
                   children: (
                     <Text size={14}>
-                      Are you sure you want to delete{" "}
-                      {checkList.length === 1 ? "this group?" : "these groups?"}
+                      Are you sure you want to remove{" "}
+                      {checkList.length === 1
+                        ? "this group member?"
+                        : "these group members?"}
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
                   centered: true,
-                  onConfirm: handleDelete,
+                  onConfirm: handleRemove,
                 });
               }}
             >
-              Delete
+              Remove
             </Button>
           ) : null}
           {isOwnerOrAdmin && (
             <Button
               rightIcon={<IconPlus size={16} />}
               className={classes.flexGrow}
-              onClick={() => setIsCreatingGroup(true)}
+              onClick={() => setIsAddingMember(true)}
             >
               Add
             </Button>
@@ -282,16 +288,16 @@ const GroupList = ({
         </Group>
       </Flex>
       <DataTable
-        idAccessor="team_group_id"
+        idAccessor="team_group_member_id"
         mt="xs"
         withBorder
         fw="bolder"
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={searchResult}
+        records={groupMemberList}
         columns={columnData.slice(isOwnerOrAdmin ? 0 : 1)}
-        totalRecords={groupCount}
+        totalRecords={groupMemberListCount}
         recordsPerPage={ROW_PER_PAGE}
         page={activePage}
         onPageChange={(page: number) => {
@@ -303,4 +309,4 @@ const GroupList = ({
   );
 };
 
-export default GroupList;
+export default MemberList;

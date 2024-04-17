@@ -437,28 +437,6 @@ export const updateTicketStatus = async (
   return data as TicketTableRow;
 };
 
-// reverse request approval
-export const reverseRequestApproval = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestAction: "REVERSED";
-    requestId: string;
-    isPrimarySigner: boolean;
-    requestSignerId: string;
-    requestOwnerId: string;
-    signerFullName: string;
-    formName: string;
-    memberId: string;
-    teamId: string;
-  }
-) => {
-  const { error } = await supabaseClient.rpc("reverse_request_approval", {
-    input_data: { ...params },
-  });
-
-  if (error) throw error;
-};
-
 // leave team
 export const leaveTeam = async (
   supabaseClient: SupabaseClient<Database>,
@@ -1078,4 +1056,20 @@ export const updateJiraUser = async (
   if (error) throw error;
 
   return { success: true, error: null };
+};
+
+// Update item category
+export const updateItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    categoryId: string;
+    category: string;
+    teamMemberId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_item_category", {
+    input_data: params,
+  });
+
+  if (error) throw error;
 };

@@ -435,6 +435,13 @@ export type JiraItemCategoryUserTableInsert =
 export type JiraItemCategoryUserTableUpdate =
   Database["public"]["Tables"]["jira_item_user_table"]["Update"];
 
+export type ItemCategoryTableRow =
+  Database["public"]["Tables"]["item_category_table"]["Row"];
+export type ItemCategoryTableInsert =
+  Database["public"]["Tables"]["item_category_table"]["Insert"];
+export type ItemCategoryTableUpdate =
+  Database["public"]["Tables"]["item_category_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -784,6 +791,12 @@ export type ItemForm = {
   division: string[];
   divisionDescription: string;
   isPedItem: boolean;
+  itemCategory: string;
+};
+
+export type ItemCategoryForm = {
+  category: string;
+  signer: string;
 };
 
 export type ServiceForm = {
@@ -828,7 +841,7 @@ export type ItemWithDescriptionAndField = ItemTableRow & {
     item_field: FieldTableRow;
   })[];
   item_level_three_description?: string;
-};
+} & ItemCategoryType;
 
 export type InvitationWithTeam = InvitationTableRow & {
   invitation_from_team_member: TeamMemberTableRow & {
@@ -1694,4 +1707,73 @@ export type JiraTicketPayloadProps = {
 export type JiraTicketData = {
   success: boolean;
   data: { jiraTicketKey: string; jiraTicketWebLink: string } | null;
+};
+
+export type ItemCategoryWithSigner = ItemCategoryTableRow & {
+  item_category_signer: {
+    signer_id: string;
+    signer_team_member: {
+      team_member_id: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+      };
+    };
+  };
+};
+
+export type ItemCategoryType = {
+  item_category: {
+    item_category_signer: {
+      signer_id: string;
+      signer_is_primary_signer: boolean;
+      signer_action: string;
+      signer_order: number;
+      signer_team_member: {
+        team_member_id: string;
+        team_member_user: {
+          user_id: string;
+          user_first_name: string;
+          user_last_name: string;
+          user_avatar: string;
+        };
+      };
+    };
+  };
+};
+
+export type InitialFormType = FormTableRow & {
+  form_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+      user_username: string;
+    };
+  };
+} & {
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_name: string;
+      team_group_is_disabled: boolean;
+    };
+  }[];
+} & {
+  form_signer: (SignerTableRow & {
+    signer_team_member: {
+      team_member_id: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+        user_username: string;
+      };
+    };
+  })[];
 };

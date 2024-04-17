@@ -1,29 +1,29 @@
 import {
-  checkIfRequestIsEditable,
+  getNonDuplictableSectionResponse,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
-import RequestFormDetails from "@/components/EditRequestPage/RequestFormDetails";
-import RequestFormSection from "@/components/EditRequestPage/RequestFormSection";
-import RequestFormSigner from "@/components/EditRequestPage/RequestFormSigner";
+import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
+import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
+import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { isStringParsable } from "@/utils/functions";
+import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
   OptionTableRow,
-  RequestWithResponseType,
+  RequestResponseTableRow,
+  RequestTableRow,
 } from "@/utils/types";
 import {
   Box,
   Button,
   Container,
   Flex,
-  LoadingOverlay,
   Space,
   Stack,
   Title,
@@ -33,182 +33,127 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
-import { v4 as uuidv4 } from "uuid";
-import { RequestFormValues } from "../EditRequestPage/EditRequestPage";
 
-export type RequestFormValuesForReferenceRequest = {
-  sections: FormWithResponseType["form_section"];
+export type Section = FormWithResponseType["form_section"][0];
+export type Field = FormType["form_section"][0]["section_field"][0];
+
+export type RequestFormValues = {
+  sections: Section[];
+};
+
+export type FieldWithResponseArray = Field & {
+  field_response: RequestResponseTableRow[];
 };
 
 type Props = {
-  request: RequestWithResponseType;
+  form: FormType;
   projectOptions: OptionTableRow[];
-  referenceOnly: boolean;
-  requestingProject: string;
+  requestId: string;
+
 };
 
 const EditRequestForPaymentPage = ({
-  request,
+  form,
   projectOptions,
-  referenceOnly,
+  requestId,
+
 }: Props) => {
   const router = useRouter();
-  const formId = request.request_form_id;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+  const requestorProfile = useUserProfile();
   const team = useActiveTeam();
 
-  const initialSignerList: FormType["form_signer"] = request.request_signer
-    .map((signer) => signer.request_signer_signer)
-    .map((signer) => ({
-      ...signer,
-      signer_action: signer.signer_action.toUpperCase(),
-      signer_team_member: {
-        ...signer.signer_team_member,
-        team_member_user: {
-          ...signer.signer_team_member.team_member_user,
-          user_id: signer.signer_team_member.team_member_user.user_id,
-          user_avatar: "",
-        },
-      },
-    }));
+  const isReferenceOnly = Boolean(router.query.referenceOnly);
 
-  const [signerList, setSignerList] = useState(initialSignerList);
-  const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-
-  const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
-  const { request_form } = request;
   const formDetails = {
-    form_name: request_form.form_name,
-    form_description: request_form.form_description,
-    form_date_created: request.request_date_created,
-    form_team_member: request.request_team_member,
-    form_type: request_form.form_type,
-    form_sub_type: request_form.form_sub_type,
+    form_name: form.form_name,
+    form_description: form.form_description,
+    form_date_created: form.form_date_created,
+    form_team_member: form.form_team_member,
   };
 
-  const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const requestFormMethods = useForm<RequestFormValues>({ mode: "onChange" });
+  const { handleSubmit, control, setValue, getValues, unregister } =
+    requestFormMethods;
   const {
     fields: formSections,
     replace: replaceSection,
-    update: updateSection,
+    remove: removeSection,
+    insert: insertSection,
   } = useFieldArray({
     control,
     name: "sections",
   });
 
-  const handleEditRequest = async (data: RequestFormValues) => {
-    try {
-      if (!requestorProfile) return;
-      if (!teamMember) return;
+  const [initialRequestDetails, setInitialRequestDetails] =
+    useState<RequestFormValues>();
+  const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [signerList, setSignerList] = useState(
+    form.form_signer.map((signer) => ({
+      ...signer,
+      signer_action: signer.signer_action.toUpperCase(),
+    }))
+  );
 
-      setIsLoading(true);
-
-      const isPending = await checkIfRequestIsEditable(supabaseClient, {
-        requestId: request.request_id,
-      });
-
-      if (!isPending) {
-        notifications.show({
-          message: "A signer reviewed your request. Request can't be edited",
-          color: "red",
-          autoClose: false,
-        });
-        router.push(
-          `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-            request.request_formsly_id_prefix
-          }-${request.request_formsly_id_serial}`
-        );
-        return;
-      }
-
-      const editedRequest = await editRequest(supabaseClient, {
-        requestId: request.request_id,
-        requestFormValues: data,
-        signers: signerList,
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: request_form.form_name,
-        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
-      });
-
+  const onSubmit = async (data: RequestFormValues) => {
+    if (isFetchingSigner) {
       notifications.show({
-        message: "Request edited.",
-        color: "green",
+        message: "Wait until all signers are fetched before submitting.",
+        color: "orange",
       });
-
-      router.push(
-        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-          editedRequest.request_formsly_id_prefix
-        }-${editedRequest.request_formsly_id_serial}`
-      );
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
+      return;
     }
-  };
-
-  const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
 
       setIsLoading(true);
-      const formattedData = data.sections.map((section, index) => {
-        const duplicatableId = uuidv4();
-        return {
-          ...section,
-          section_field: section.section_field.map((field) => {
-            return {
-              ...field,
-              field_section_duplicatable_id:
-                index > 1 ? duplicatableId : undefined,
-              field_response: isStringParsable(
-                field.field_response[0].request_response
-              )
-                ? JSON.parse(field.field_response[0].request_response)
-                : field.field_response[0].request_response ?? undefined,
-            };
-          }),
-        };
-      });
 
-      const response = formattedData[0].section_field[0]
+      const response = data.sections[0].section_field[0]
         .field_response as string;
 
-      const projectId = formattedData[0].section_field[0].field_option.find(
+      const projectId = data.sections[0].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
 
-      const newRequest = await createRequest(supabaseClient, {
-        requestFormValues: { sections: formattedData },
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        signers: signerList,
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: request.request_form.form_name,
-        isFormslyForm: true,
-        projectId,
-        teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
-      });
+      let request: RequestTableRow;
+      if (isReferenceOnly) {
+        request = await createRequest(supabaseClient, {
+          requestFormValues: data,
+          formId: form.form_id,
+          teamMemberId: teamMember.team_member_id,
+          signers: signerList,
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
+          isFormslyForm: true,
+          projectId,
+          teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        });
+      } else {
+        request = await editRequest(supabaseClient, {
+          requestId,
+          requestFormValues: data,
+          signers: signerList,
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
+          teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        });
+      }
 
       notifications.show({
-        message: "Request created.",
+        message: `Request ${isReferenceOnly ? "created" : "edited"}.`,
         color: "green",
       });
 
       router.push(
         `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
-          newRequest.request_formsly_id_prefix
-        }-${newRequest.request_formsly_id_serial}`
+          request.request_formsly_id_prefix
+        }-${request.request_formsly_id_serial}`
       );
     } catch (error) {
       notifications.show({
@@ -221,7 +166,12 @@ const EditRequestForPaymentPage = ({
   };
 
   const resetSigner = () => {
-    setSignerList(initialSignerList);
+    setSignerList(
+      form.form_signer.map((signer) => ({
+        ...signer,
+        signer_action: signer.signer_action.toUpperCase(),
+      }))
+    );
   };
 
   const handleProjectNameChange = async (value: string | null) => {
@@ -234,7 +184,7 @@ const EditRequestForPaymentPage = ({
         if (projectId) {
           const data = await getProjectSignerWithTeamMember(supabaseClient, {
             projectId,
-            formId,
+            formId: form.form_id,
           });
           if (data.length !== 0) {
             setSignerList(data as unknown as FormType["form_signer"]);
@@ -246,6 +196,7 @@ const EditRequestForPaymentPage = ({
         resetSigner();
       }
     } catch (e) {
+      setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -259,61 +210,131 @@ const EditRequestForPaymentPage = ({
     value: string | null,
     index: number
   ) => {
-    if (value === "With PO") {
-      const POField = request_form.form_section[0].section_field.filter(
-        (field) => field.field_name === "PO Number"
-      )[0];
-
-      getValues(`sections.${0}`).section_field.splice(3, 0, POField);
-      updateSection(index, {
-        ...getValues(`sections.${0}`),
-      });
-    } else if (value === "Without PO") {
-      updateSection(index, {
-        ...getValues(`sections.${0}`),
-        section_field: [
-          ...getValues(`sections.${0}`).section_field.filter(
-            (field) => field.field_name !== "PO Number"
-          ),
-        ],
+    if (!initialRequestDetails) {
+      return notifications.show({
+        message:
+          "Request details not available. Please reload the page and try again.",
+        color: "red",
       });
     }
+
+    const defaultPoFieldIndex = form.form_section[0].section_field.findIndex(
+      (field) => field.field_name === "PO Number"
+    );
+    const defaultPoField = form.form_section[0].section_field.find(
+      (field) => field.field_name === "PO Number"
+    );
+    const initialSection = initialRequestDetails.sections[index];
+    const currentSection = getValues(`sections.${index}`);
+    const initialPoField = initialSection.section_field.find(
+      (field) => field.field_name === "PO Number"
+    );
+
+    if (value === "With PO") {
+      let poFieldValue = defaultPoField;
+
+      // if initial po field exists, use initial po field
+      if (initialPoField) {
+        poFieldValue = initialPoField;
+      }
+      currentSection.section_field.splice(
+        defaultPoFieldIndex,
+        0,
+        poFieldValue as Field
+      );
+    } else if (value === "Without PO" || !value) {
+      currentSection.section_field = currentSection.section_field.filter(
+        (field) => field.field_name !== "PO Number"
+      );
+    }
+    removeSection(index);
+    insertSection(index, currentSection);
+  };
+
+  const handleResetRequest = () => {
+    unregister(`sections.${0}`);
+    replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
+    handleProjectNameChange(
+      initialRequestDetails?.sections[0].section_field[0]
+        .field_response as string
+    );
   };
 
   useEffect(() => {
-    const requestType = request_form.form_section[0].section_field.filter(
-      (field) => field.field_name === "Request Type"
-    )[0];
-    const requestTypeResponse = JSON.parse(
-      requestType.field_response[0].request_response
-    );
-    const removePOField = request_form.form_section[0].section_field.filter(
-      (field) => field.field_name !== "PO Number"
-    );
-
-    updateSection(0, {
-      ...request_form.form_section[0],
-      section_field:
-        requestTypeResponse === "With PO"
-          ? request_form.form_section[0].section_field
-          : removePOField,
-    });
-
-    updateSection(1, request_form.form_section[1]);
-  }, []);
+    setIsLoading(true);
+    if (!team.team_id) return;
+    try {
+      const fetchRequestDetails = async () => {
+        // Fetch response
+        const fieldIdList: string[] = [];
+        form.form_section.forEach((section) =>
+          section.section_field.map((field) => {
+            fieldIdList.push(field.field_id);
+          })
+        );
+        const nonDuplicatableSectionResponse =
+          await getNonDuplictableSectionResponse(supabaseClient, {
+            requestId,
+            fieldIdList,
+          });
+        const requestDetailsSection = form.form_section[0].section_field
+          .map((field) => {
+            const response = nonDuplicatableSectionResponse.find(
+              (response) =>
+                response.request_response_field_id === field.field_id
+            );
+            return {
+              ...field,
+              field_response: response
+                ? safeParse(response.request_response)
+                : "",
+            };
+          })
+          .filter((field) => field.field_response);
+        const payeeSection = form.form_section[1].section_field.map((field) => {
+          const response = nonDuplicatableSectionResponse.find(
+            (response) => response.request_response_field_id === field.field_id
+          );
+          return {
+            ...field,
+            field_response: response
+              ? safeParse(response.request_response)
+              : "",
+          };
+        });
+        const finalInitialRequestDetails = [
+          {
+            ...form.form_section[0],
+            section_field: requestDetailsSection,
+          },
+          {
+            ...form.form_section[1],
+            section_field: payeeSection,
+          },
+        ];
+        replaceSection(finalInitialRequestDetails);
+        setInitialRequestDetails({ sections: finalInitialRequestDetails });
+        setIsLoading(false);
+      };
+      fetchRequestDetails();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [team]);
 
   return (
     <Container>
       <Title order={2} color="dimmed">
-        {referenceOnly ? "Reference" : "Edit"} Request
+        {isReferenceOnly ? "Create" : "Edit"} Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form
-          onSubmit={handleSubmit(
-            referenceOnly ? handleCreateRequest : handleEditRequest
-          )}
-        >
+        <form onSubmit={handleSubmit(onSubmit)}>
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {
@@ -323,25 +344,22 @@ const EditRequestForPaymentPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName={request.request_form.form_name}
-                    referenceOnly={referenceOnly}
+                    formslyFormName={form.form_name}
                     paymentRequestFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onRequestTypeChange: handleRequestTypeChange,
                     }}
+                    isEdit={!isReferenceOnly}
                   />
                 </Box>
               );
             })}
-            <Box pos="relative">
-              <LoadingOverlay visible={isFetchingSigner} overlayBlur={2} />
-              <RequestFormSigner signerList={signerList} />
-            </Box>
+            <RequestFormSigner signerList={signerList} />
             <Flex direction="column" gap="sm">
               <Button
                 variant="outline"
                 color="red"
-                onClick={() => replaceSection(request_form.form_section)}
+                onClick={handleResetRequest}
               >
                 Reset
               </Button>

@@ -1024,6 +1024,41 @@ export type Database = {
           }
         ];
       };
+      item_category_table: {
+        Row: {
+          item_category: string;
+          item_category_date_created: string;
+          item_category_id: string;
+          item_category_is_available: boolean;
+          item_category_is_disabled: boolean;
+          item_category_signer_id: string;
+        };
+        Insert: {
+          item_category: string;
+          item_category_date_created?: string;
+          item_category_id?: string;
+          item_category_is_available?: boolean;
+          item_category_is_disabled?: boolean;
+          item_category_signer_id: string;
+        };
+        Update: {
+          item_category?: string;
+          item_category_date_created?: string;
+          item_category_id?: string;
+          item_category_is_available?: boolean;
+          item_category_is_disabled?: boolean;
+          item_category_signer_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_category_table_item_category_signer_id_fkey";
+            columns: ["item_category_signer_id"];
+            isOneToOne: false;
+            referencedRelation: "signer_table";
+            referencedColumns: ["signer_id"];
+          }
+        ];
+      };
       item_description_field_table: {
         Row: {
           item_description_field_date_created: string;
@@ -1203,6 +1238,7 @@ export type Database = {
       };
       item_table: {
         Row: {
+          item_category_id: string | null;
           item_date_created: string;
           item_encoder_team_member_id: string | null;
           item_general_name: string;
@@ -1215,6 +1251,7 @@ export type Database = {
           item_unit: string;
         };
         Insert: {
+          item_category_id?: string | null;
           item_date_created?: string;
           item_encoder_team_member_id?: string | null;
           item_general_name: string;
@@ -1227,6 +1264,7 @@ export type Database = {
           item_unit: string;
         };
         Update: {
+          item_category_id?: string | null;
           item_date_created?: string;
           item_encoder_team_member_id?: string | null;
           item_general_name?: string;
@@ -1239,6 +1277,13 @@ export type Database = {
           item_unit?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "item_table_item_category_id_fkey";
+            columns: ["item_category_id"];
+            isOneToOne: false;
+            referencedRelation: "item_category_table";
+            referencedColumns: ["item_category_id"];
+          },
           {
             foreignKeyName: "item_table_item_encoder_team_member_id_fkey";
             columns: ["item_encoder_team_member_id"];
@@ -2608,55 +2653,6 @@ export type Database = {
           }
         ];
       };
-      special_approver_item_table: {
-        Row: {
-          special_approver_item_id: string;
-          special_approver_item_special_approver_id: string;
-          special_approver_item_value: string;
-        };
-        Insert: {
-          special_approver_item_id?: string;
-          special_approver_item_special_approver_id: string;
-          special_approver_item_value: string;
-        };
-        Update: {
-          special_approver_item_id?: string;
-          special_approver_item_special_approver_id?: string;
-          special_approver_item_value?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "special_approver_item_table_special_approver_item_special__fkey";
-            columns: ["special_approver_item_special_approver_id"];
-            isOneToOne: false;
-            referencedRelation: "special_approver_table";
-            referencedColumns: ["special_approver_id"];
-          }
-        ];
-      };
-      special_approver_table: {
-        Row: {
-          special_approver_id: string;
-          special_approver_signer_id: string;
-        };
-        Insert: {
-          special_approver_id?: string;
-          special_approver_signer_id: string;
-        };
-        Update: {
-          special_approver_id?: string;
-          special_approver_signer_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "special_approver_table_special_approver_signer_id_fkey";
-            columns: ["special_approver_signer_id"];
-            isOneToOne: false;
-            referencedRelation: "signer_table";
-            referencedColumns: ["signer_id"];
-          }
-        ];
-      };
       supplier_table: {
         Row: {
           supplier: string;
@@ -3558,12 +3554,6 @@ export type Database = {
         };
         Returns: undefined;
       };
-      approve_sourced_item_request: {
-        Args: {
-          input_data: Json;
-        };
-        Returns: undefined;
-      };
       assign_ticket: {
         Args: {
           input_data: Json;
@@ -3658,6 +3648,12 @@ export type Database = {
           input_data: Json;
         };
         Returns: Json;
+      };
+      create_item_category: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: undefined;
       };
       create_memo: {
         Args: {
@@ -3756,12 +3752,6 @@ export type Database = {
         };
         Returns: Json;
       };
-      edit_ticket_response: {
-        Args: {
-          input_data: Json;
-        };
-        Returns: Json;
-      };
       fetch_dashboard_top_requestor: {
         Args: {
           input_data: Json;
@@ -3780,6 +3770,30 @@ export type Database = {
         };
         Returns: Json;
       };
+      fetch_item_request_conditional_options: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      fetch_other_expenses_request_conditional_options: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      fetch_ped_equipment_request_conditional_options: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      fetch_ped_item_request_conditional_options: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       fetch_request_comment: {
         Args: {
           request_id: string;
@@ -3793,6 +3807,12 @@ export type Database = {
         Returns: Json;
       };
       fetch_request_page_section: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      fetch_service_request_conditional_options: {
         Args: {
           input_data: Json;
         };
@@ -3828,12 +3848,6 @@ export type Database = {
         };
         Returns: string;
       };
-      get_all_approved_item_json: {
-        Args: {
-          team_id: string;
-        };
-        Returns: Json;
-      };
       get_all_notification: {
         Args: {
           input_data: Json;
@@ -3847,6 +3861,12 @@ export type Database = {
         Returns: Json;
       };
       get_all_team_members_without_project_members: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      get_approver_unresolved_request_count: {
         Args: {
           input_data: Json;
         };
@@ -4043,12 +4063,6 @@ export type Database = {
         };
         Returns: Json;
       };
-      reverse_request_approval: {
-        Args: {
-          input_data: Json;
-        };
-        Returns: undefined;
-      };
       transfer_ownership: {
         Args: {
           owner_id: string;
@@ -4073,6 +4087,12 @@ export type Database = {
           input_data: Json;
         };
         Returns: Json;
+      };
+      update_item_category: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: undefined;
       };
       update_multiple_admin: {
         Args: {

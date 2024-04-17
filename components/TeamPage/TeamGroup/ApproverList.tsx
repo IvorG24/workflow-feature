@@ -184,19 +184,12 @@ const ApproverList = ({
     const savedRecord = approverList;
 
     try {
-      const updatedApproverList = approverList.filter((approver) => {
-        if (!checkList.includes(approver.team_member_id)) {
-          return approver;
-        }
-      });
-      setApproverList(updatedApproverList);
       setCheckList([]);
-
       await updateApproverRole(supabaseClient, {
         teamApproverIdList: checkList,
         updateRole: "MEMBER",
       });
-
+      handleFetch("", 1);
       notifications.show({
         message: "Team approver/s removed.",
         color: "green",

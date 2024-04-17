@@ -54,12 +54,14 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
-  const requestFormMethods = useForm<RequestFormValues>();
+
+  const requestFormMethods = useForm<RequestFormValues>({ mode: "onChange" });
   const { handleSubmit, control, setValue, getValues } = requestFormMethods;
   const {
     fields: formSections,
     replace: replaceSection,
-    update: updateSection,
+    remove: removeSection,
+    insert: insertSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -172,26 +174,24 @@ const CreateRequestForPaymentPage = ({ form, projectOptions }: Props) => {
     value: string | null,
     index: number
   ) => {
-    if (value === "With PO") {
-      const POField = form.form_section[0].section_field.filter(
-        (field) => field.field_name === "PO Number"
-      )[0];
+    const defaultSection = form.form_section[index];
+    const currentSection = getValues(`sections.${index}`);
+    const defaultPoFieldIndex = defaultSection.section_field.findIndex(
+      (field) => field.field_name === "PO Number"
+    );
+    const currentPoFieldExists =
+      currentSection.section_field[defaultPoFieldIndex].field_name ===
+      "PO Number";
 
-      getValues(`sections.${0}`).section_field.splice(3, 0, POField);
-
-      updateSection(index, {
-        ...getValues(`sections.${0}`),
-      });
-    } else if (value === "Without PO") {
-      updateSection(index, {
-        ...getValues(`sections.${0}`),
-        section_field: [
-          ...getValues(`sections.${0}`).section_field.filter(
-            (field) => field.field_name !== "PO Number"
-          ),
-        ],
-      });
+    if (value === "With PO" && !currentPoFieldExists) {
+      const poFieldValue = defaultSection.section_field[defaultPoFieldIndex];
+      currentSection.section_field.splice(defaultPoFieldIndex, 0, poFieldValue);
+    } else if ((value === "Without PO" || !value) && currentPoFieldExists) {
+      currentSection.section_field.splice(defaultPoFieldIndex, 1);
     }
+
+    removeSection(index);
+    insertSection(index, currentSection);
   };
 
   useEffect(() => {

@@ -28,7 +28,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -73,6 +73,10 @@ const EquipmentList = ({
 
   const headerCheckboxKey = generateRandomId();
 
+  useEffect(() => {
+    handleFetch("", 1);
+  }, [activeTeam.team_id]);
+
   const handleCheckRow = (equipmentId: string) => {
     if (checkList.includes(equipmentId)) {
       setCheckList(checkList.filter((id) => id !== equipmentId));
@@ -102,6 +106,7 @@ const EquipmentList = ({
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
     try {
+      if (!activeTeam.team_id) return;
       const { data, count } = await getEquipmentList(supabaseClient, {
         teamId: activeTeam.team_id,
         search,
@@ -115,8 +120,9 @@ const EquipmentList = ({
         message: "Error on fetching equipment list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleDelete = async () => {
@@ -124,19 +130,13 @@ const EquipmentList = ({
     const savedRecord = equipmentList;
 
     try {
-      const updatedEquipmentList = equipmentList.filter((equipment) => {
-        if (!checkList.includes(equipment.equipment_id)) {
-          return equipment;
-        }
-      });
-      setEquipmentList(updatedEquipmentList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "equipment",
       });
-
+      handleFetch("", 1);
       notifications.show({
         message: "Equipment/s deleted.",
         color: "green",

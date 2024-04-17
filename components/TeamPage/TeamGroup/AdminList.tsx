@@ -179,19 +179,12 @@ const AdminList = ({
     const savedRecord = adminList;
 
     try {
-      const updatedAdminList = adminList.filter((admin) => {
-        if (!checkList.includes(admin.team_member_id)) {
-          return admin;
-        }
-      });
-      setAdminList(updatedAdminList);
       setCheckList([]);
-
       await updateAdminRole(supabaseClient, {
         teamAdminIdList: checkList,
         updateRole: "MEMBER",
       });
-
+      handleFetch("", 1);
       notifications.show({
         message: "Team admin/s removed.",
         color: "green",

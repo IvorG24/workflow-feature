@@ -45,13 +45,14 @@ const TeamCard = ({ team }: TeamCardProps) => {
       setUnreadNotification(0);
       setFormList(data.formList);
       await router.push(`/${formatTeamNameToUrlKey(team.team_name)}/requests`);
-      setIsLoading(false);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
       router.push("/500");
+    } finally {
+      setIsLoading(false);
     }
   };
 

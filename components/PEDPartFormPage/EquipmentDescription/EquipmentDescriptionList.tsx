@@ -30,7 +30,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -78,6 +78,10 @@ const EquipmentDescriptionList = ({
 
   const headerCheckboxKey = generateRandomId();
 
+  useEffect(() => {
+    handleFetch("", 1);
+  }, []);
+
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
     try {
@@ -99,8 +103,9 @@ const EquipmentDescriptionList = ({
         message: "Error on fetching equipment description list",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleCheckRow = (equipmentDescriptionId: string) => {
@@ -134,22 +139,13 @@ const EquipmentDescriptionList = ({
     const savedRecord = equipmentDescriptionList;
 
     try {
-      const updatedEquipmentDescriptionList = equipmentDescriptionList.filter(
-        (equipmentDescription) => {
-          if (
-            !checkList.includes(equipmentDescription.equipment_description_id)
-          ) {
-            return equipmentDescription;
-          }
-        }
-      );
-      setEquipmentDescriptionList(updatedEquipmentDescriptionList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "equipment_description",
       });
+      handleFetch("", 1);
 
       notifications.show({
         message: "Equipment Description/s deleted.",

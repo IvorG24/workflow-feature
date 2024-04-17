@@ -23,7 +23,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction, forwardRef } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { SelecteItemType } from "../CreateTeamProject";
+import { SelecteItemType } from "../../CreateTeamProject";
 import { TeamMemberChoiceType } from "./GroupMembers";
 
 const Value = ({
