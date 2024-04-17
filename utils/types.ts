@@ -1618,3 +1618,37 @@ export type ItemCategoryType = {
     };
   };
 };
+
+export type InitialFormType = FormTableRow & {
+  form_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+      user_username: string;
+    };
+  };
+} & {
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_name: string;
+      team_group_is_disabled: boolean;
+    };
+  }[];
+} & {
+  form_signer: (SignerTableRow & {
+    signer_team_member: {
+      team_member_id: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+        user_username: string;
+      };
+    };
+  })[];
+};

@@ -9,7 +9,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { Database } from "@/utils/database";
 import {
   FormSegmentType,
-  FormType,
+  InitialFormType,
   ItemWithDescriptionType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
@@ -26,7 +26,6 @@ import {
   Paper,
   SegmentedControl,
   Space,
-  Stack,
   Text,
   TextInput,
   Title,
@@ -49,25 +48,21 @@ import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
-import FormSection from "../RequestFormPage/FormSection";
+import FormSectionList from "../RequestFormPage/FormSectionList";
 import ItemFormDetails from "./ItemFormDetails/ItemFormDetails";
 import ItemLookup from "./ItemLookup/ItemLookup";
 
 type Props = {
-  items: ItemWithDescriptionType[];
-  itemListCount: number;
+  form: InitialFormType;
   teamMemberList: TeamMemberWithUserType[];
-  form: FormType;
   teamGroupList: TeamGroupTableRow[];
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
 };
 
 const PEDItemFormPage = ({
-  items,
-  itemListCount,
-  teamMemberList,
   form,
+  teamMemberList,
   teamGroupList,
   teamProjectList,
   teamProjectListCount,
@@ -88,8 +83,8 @@ const PEDItemFormPage = ({
   const [editItem, setEditItem] = useState<ItemWithDescriptionType | null>(
     null
   );
-  const [itemList, setItemList] = useState(items);
-  const [itemCount, setItemCount] = useState(itemListCount);
+  const [itemList, setItemList] = useState<ItemWithDescriptionType[]>([]);
+  const [itemCount, setItemCount] = useState(0);
 
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -184,21 +179,21 @@ const PEDItemFormPage = ({
   }, [form]);
 
   const newTeamMember = {
-    form_team_member: {
-      team_member_id: form.form_team_member.team_member_id,
-      team_member_user: {
-        user_id: uuidv4(),
-        user_first_name: "Formsly",
-        user_last_name: "",
-        user_avatar: "/icon-request-light.svg",
-        user_username: "formsly",
-      },
+    team_member_id: form.form_team_member.team_member_id,
+    team_member_user: {
+      user_id: uuidv4(),
+      user_first_name: "Formsly",
+      user_last_name: "",
+      user_avatar: "/icon-request-light.svg",
+      user_username: "formsly",
     },
   };
 
   const newForm = {
     ...form,
-    ...newTeamMember,
+    form_team_member: {
+      ...newTeamMember,
+    },
   };
 
   const handleSaveSigners = async () => {
@@ -395,15 +390,7 @@ const PEDItemFormPage = ({
       <Space h="xl" />
 
       {segmentValue === "Form Preview" ? (
-        <Stack spacing="xl">
-          <FormSection section={form.form_section[0]} />
-          <FormSection
-            section={{
-              ...form.form_section[1],
-              section_field: form.form_section[1].section_field.slice(0, 7),
-            }}
-          />
-        </Stack>
+        <FormSectionList formId={form.form_id} formName={form.form_name} />
       ) : null}
 
       {segmentValue === "Form Details" ? (

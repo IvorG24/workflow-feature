@@ -88,7 +88,7 @@ const EquipmentList = ({
 
   useEffect(() => {
     handleFetch("", 1);
-  }, []);
+  }, [activeTeam.team_id]);
 
   const handleCheckRow = (equipmentId: string) => {
     if (checkList.includes(equipmentId)) {
@@ -119,6 +119,7 @@ const EquipmentList = ({
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
     try {
+      if (!activeTeam.team_id) return;
       const { data, count } = await getEquipmentList(supabaseClient, {
         teamId: activeTeam.team_id,
         search,

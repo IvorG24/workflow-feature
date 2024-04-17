@@ -196,7 +196,7 @@ const ItemList = ({
 
   useEffect(() => {
     handleFilterForms();
-  }, []);
+  }, [activeTeam.team_id]);
 
   const handleCheckRow = (itemId: string) => {
     if (checkList.includes(itemId)) {

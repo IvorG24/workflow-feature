@@ -216,15 +216,6 @@ const SignerSection = ({
           >
             Add a Signer
           </Button>
-
-          {/* <Divider mt="md" /> */}
-
-          {/* <Checkbox
-            label="Require requester and signer's signature during request creation and approval"
-            {...methods.register("isSignatureRequired")}
-            my="xl"
-            sx={{ input: { cursor: "pointer" } }}
-          /> */}
         </>
       )}
     </Container>
