@@ -364,6 +364,10 @@ export const getJiraRequestingProjectSite = (formslyItemCategory: string) => {
       id: "10960",
       label: "VIZ-23-008 SAN ISIDRO SOLAR",
     },
+    "CP-102 METRO MANILA SUBWAY PROJECT PHASE 1": {
+      id: "11228",
+      label: "METRO MANILA SUBWAY PROJECT CP102",
+    },
   };
 
   return categoryMappings[formslyItemCategory];
@@ -505,6 +509,7 @@ const getWarehouseAreaLead = (formslyItemCategory: string) => {
         "LUZ-22-002 500KV BACKBONE S2",
         "LUZ-19-021 MERALCO HDD PROJECT",
         "LUZ-18-033 SFEXWIDENING",
+        "METRO MANILA SUBWAY PROJECT CP102",
       ],
       fullName: "Rey Berlon",
       jiraAccountId:
@@ -777,6 +782,12 @@ const getWarehouseRepresentative = (formslyProjectSite: string) => {
       jiraAccountId:
         "qm:1ba2089e-c98a-4c4b-9487-b12072afc5c6:d8344027-3578-4f50-8b8a-11fe72244208",
       emailAddress: "jayquiroz.santaclara@gmail.com",
+    },
+    {
+      items: ["METRO MANILA SUBWAY PROJECT CP102"],
+      fullName: "Gezil Guntan -Whs-Support Lead",
+      jiraAccountId: "6411417f4b23217e558b9610",
+      emailAddress: "gezil.guntan@staclara.com.ph",
     },
   ];
 

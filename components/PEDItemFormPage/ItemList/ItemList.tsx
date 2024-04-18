@@ -135,6 +135,10 @@ const ItemList = ({
   const { handleSubmit, control, register, getValues } = requestFormMethods;
 
   useEffect(() => {
+    handleFilterForms();
+  }, [activeTeam.team_id]);
+
+  useEffect(() => {
     const fetchOptions = async () => {
       try {
         setIsLoading(true);
@@ -215,20 +219,14 @@ const ItemList = ({
     const savedRecord = itemList;
 
     try {
-      const updatedItemList = itemList.filter((item) => {
-        if (!checkList.includes(item.item_id)) {
-          return item;
-        }
-      });
-      setItemList(updatedItemList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "item",
       });
-
       setSelectedItem(null);
+      handleFilterForms();
 
       notifications.show({
         message: "Item/s deleted.",
@@ -295,7 +293,7 @@ const ItemList = ({
   ) => {
     try {
       setIsLoading(true);
-
+      if (!activeTeam.team_id) return;
       const { data, count } = await getItemList(supabaseClient, {
         teamId: activeTeam.team_id,
         limit: ROW_PER_PAGE,

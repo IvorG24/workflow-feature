@@ -1,7 +1,12 @@
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
-import { FETCH_OPTION_LIMIT, FORMSLY_FORM_ORDER } from "@/utils/constant";
+import {
+  FETCH_OPTION_LIMIT,
+  FORMSLY_FORM_ORDER,
+  ITEM_FIELD_ID_LIST,
+  PED_ITEM_FIELD_ID_LIST,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import {
@@ -12,7 +17,7 @@ import {
 } from "@/utils/string";
 import {
   AppType,
-  ApproverUnresolvedRequestListType,
+  ApproverUnresolvedRequestCountType,
   AttachmentBucketType,
   AttachmentTableRow,
   CSICodeTableRow,
@@ -30,6 +35,7 @@ import {
   FieldTableRow,
   FormStatusType,
   FormType,
+  InitialFormType,
   ItemCategoryType,
   ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
@@ -649,98 +655,45 @@ export const getForm = async (
   const { data, error } = await supabaseClient
     .from("form_table")
     .select(
-      `form_id, 
-      form_name, 
-      form_description, 
-      form_date_created, 
-      form_is_hidden, 
-      form_is_formsly_form, 
-      form_is_for_every_member, 
-      form_type,
-      form_sub_type,
-      form_team_member: form_team_member_id(
-        team_member_id, 
-        team_member_user: team_member_user_id(
-          user_id, 
-          user_first_name, 
-          user_last_name, 
-          user_avatar, 
-          user_username
-        )
-      ), 
-      form_signer: signer_table(
-        signer_id, 
-        signer_is_primary_signer, 
-        signer_action, 
-        signer_order,
-        signer_is_disabled, 
-        signer_team_project_id,
-        signer_team_member: signer_team_member_id(
-          team_member_id, 
+      `
+        *,
+        form_team_member: form_team_member_id(
+          team_member_id,
           team_member_user: team_member_user_id(
-            user_id, 
-            user_first_name, 
-            user_last_name, 
-            user_avatar
+            *
+          )
+        ),
+        form_team_group: form_team_group_table(
+          team_group: team_group_id(
+            team_group_id,
+            team_group_name,
+            team_group_is_disabled
+          )
+        ),
+        form_signer: signer_table(
+          signer_id, 
+          signer_is_primary_signer, 
+          signer_action, 
+          signer_order,
+          signer_is_disabled, 
+          signer_team_project_id,
+          signer_team_member: signer_team_member_id(
+            team_member_id,
+            team_member_user: team_member_user_id(
+              *
+            )
           )
         )
-      ), 
-      form_section: section_table(
-        *, 
-        section_field: 
-        field_table(
-          *, 
-          field_option: option_table(*)
-        )
-      ),
-      form_team_group: form_team_group_table(
-        team_group: team_group_id(
-          team_group_id,
-          team_group_name,
-          team_group_is_disabled
-        )
-      )`
+      `
     )
     .eq("form_id", formId)
-    // .eq("form_is_disabled", false)
     .eq("form_team_group.team_group.team_group_is_disabled", false)
     .eq("form_signer.signer_is_disabled", false)
     .is("form_signer.signer_team_project_id", null)
     .single();
   if (error) throw error;
 
-  const formattedForm = data as unknown as FormType;
-  const sortedSection = formattedForm.form_section
-    .sort((a, b) => {
-      return a.section_order - b.section_order;
-    })
-    .map((section) => {
-      const sortedFields = section.section_field
-        .sort((a, b) => {
-          return a.field_order - b.field_order;
-        })
-        .map((field) => {
-          let sortedOption = field.field_option;
-          if (field.field_option) {
-            sortedOption = field.field_option.sort((a, b) => {
-              return a.option_order - b.option_order;
-            });
-          }
-          return {
-            ...field,
-            field_option: sortedOption,
-          };
-        });
-      return {
-        ...section,
-        section_field: sortedFields,
-      };
-    });
-
-  return {
-    ...formattedForm,
-    form_section: sortedSection,
-  };
+  return data as unknown as InitialFormType;
 };
 
 // Get notification
@@ -2709,7 +2662,7 @@ export const getTeamGroupList = async (
     query = query.ilike("team_group_name", `%${search}%`);
   }
 
-  query = query.order("team_group_date_created", { ascending: false });
+  query = query.order("team_group_name", { ascending: true });
   query.limit(limit);
   query.range(start, start + limit - 1);
 
@@ -2738,7 +2691,8 @@ export const getTeamProjectList = async (
       `
         *,
         team_project_site_map_attachment: team_project_site_map_attachment_id(*),
-        team_project_boq_attachment: team_project_boq_attachment_id(*)
+        team_project_boq_attachment: team_project_boq_attachment_id(*),
+        team_project_address: team_project_address_id(*)
       `,
       { count: "exact" }
     )
@@ -2870,14 +2824,19 @@ export const getTeamGroupMemberList = async (
     );
   }
 
-  query = query.order("team_member_date_created", {
-    ascending: false,
-    foreignTable: "team_member",
+  query = query.order("user_first_name", {
+    ascending: true,
+    foreignTable: "team_member.team_member_user",
+  });
+  query = query.order("user_last_name", {
+    ascending: true,
+    foreignTable: "team_member.team_member_user",
   });
   query.limit(limit);
   query.range(start, start + limit - 1);
 
   const { data, count, error } = await query;
+
   if (error) throw error;
 
   const formattedData = data as unknown as {
@@ -4192,25 +4151,59 @@ export const getTicketListOnLoad = async (
   return data as unknown as TicketListOnLoad;
 };
 
-// Get ticket list on load
-export const getUnresolvedRequestListPerApprover = async (
+// Get approver request count
+export const getApproverRequestCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    status: string;
+    withJiraId?: boolean;
+  }
+) => {
+  const { teamMemberId, status, withJiraId } = params;
+  let query = supabaseClient
+    .from("request_signer_table")
+    .select(
+      "request_signer_status, request_signer: request_signer_signer_id!inner(signer_team_member_id), request: request_signer_request_id!inner(request_jira_id)",
+      { count: "exact", head: true }
+    )
+    .eq("request_signer.signer_team_member_id", teamMemberId)
+    .eq("request_signer_status", status);
+
+  if (withJiraId !== undefined) {
+    switch (withJiraId) {
+      case true:
+        query = query.neq("request.request_jira_id", null);
+        break;
+      case false:
+        query = query.is("request.request_jira_id", null);
+        break;
+      default:
+        break;
+    }
+  }
+
+  const { count, error } = await query;
+
+  if (error) throw error;
+
+  return Number(count);
+};
+
+// Get approver unresolved request count
+export const getApproverUnresolvedRequestCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamMemberId: string;
   }
 ) => {
   const { teamMemberId } = params;
-  const { data, error } = await supabaseClient
-    .from("request_signer_table")
-    .select(
-      "request_signer_status, request_signer: request_signer_signer_id!inner(signer_team_member_id), request: request_signer_request_id!inner(request_id, request_jira_id, request_status)"
-    )
-    .eq("request_signer.signer_team_member_id", teamMemberId)
-    .in("request_signer_status", ["APPROVED", "PENDING"]);
-
+  const { data, error } = await supabaseClient.rpc(
+    "get_approver_unresolved_request_count",
+    { input_data: { teamMemberId } }
+  );
   if (error) throw error;
-
-  return data as unknown as ApproverUnresolvedRequestListType[];
+  return data as ApproverUnresolvedRequestCountType;
 };
 
 // Get edit request on load
@@ -6745,4 +6738,70 @@ export const getItemCategoryList = async (
     data,
     count,
   };
+};
+
+// Get form section
+export const getFormSection = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+    formName: string;
+  }
+) => {
+  const { formId, formName } = params;
+  let query = supabaseClient
+    .from("section_table")
+    .select(
+      `
+        *, 
+        section_field: 
+        field_table(
+          *, 
+          field_option: option_table(*)
+        )
+      `
+    )
+    .eq("section_form_id", formId);
+
+  switch (formName) {
+    case "Item":
+      query = query.in("field_table.field_id", ITEM_FIELD_ID_LIST);
+      break;
+    case "PED Item":
+      query = query.in("field_table.field_id", PED_ITEM_FIELD_ID_LIST);
+      break;
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const formattedSection = data as unknown as FormType["form_section"];
+  const sortedSection = formattedSection
+    .sort((a, b) => {
+      return a.section_order - b.section_order;
+    })
+    .map((section) => {
+      const sortedFields = section.section_field
+        .sort((a, b) => {
+          return a.field_order - b.field_order;
+        })
+        .map((field) => {
+          let sortedOption = field.field_option;
+          if (field.field_option) {
+            sortedOption = field.field_option.sort((a, b) => {
+              return a.option_order - b.option_order;
+            });
+          }
+          return {
+            ...field,
+            field_option: sortedOption,
+          };
+        });
+      return {
+        ...section,
+        section_field: sortedFields,
+      };
+    });
+
+  return sortedSection;
 };

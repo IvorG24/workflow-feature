@@ -2,7 +2,7 @@ import { updateFormGroup, updateFormSigner } from "@/backend/api/update";
 import { ROW_PER_PAGE, UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
-  FormType,
+  InitialFormType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -44,10 +44,10 @@ import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "./FormDetailsSection";
-import FormSection from "./FormSection";
+import FormSectionList from "./FormSectionList";
 
 type Props = {
-  form: FormType;
+  form: InitialFormType;
   teamMemberList: TeamMemberWithUserType[];
   teamGroupList: TeamGroupTableRow[];
   teamProjectList: TeamProjectTableRow[];
@@ -328,9 +328,7 @@ const RequestFormPage = ({
       <Stack spacing="xl" mt="xl">
         <FormDetailsSection form={form} />
 
-        {form.form_section.map((section) => (
-          <FormSection section={section} key={section.section_id} />
-        ))}
+        <FormSectionList formId={form.form_id} formName={form.form_name} />
 
         <Paper p="xl" shadow="xs">
           <Title order={3}>Requester Details</Title>

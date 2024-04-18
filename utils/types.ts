@@ -1256,15 +1256,12 @@ export type TicketListOnLoad = {
   ticketCategoryList: TicketCategoryTableRow[];
 };
 
-export type ApproverUnresolvedRequestListType = {
-  request_signer_status: string;
-  request_signer: {
-    signer_team_member_id: string;
-  };
-  request: {
-    request_id: string;
-    request_jira_id: string | null;
-    request_status: string;
+export type ApproverUnresolvedRequestCountType = {
+  pendingRequestCount: number;
+  approvedRequestCount: {
+    total: number;
+    withJiraId: number;
+    withoutJiraId: number;
   };
 };
 
@@ -1617,4 +1614,38 @@ export type ItemCategoryType = {
       };
     };
   };
+};
+
+export type InitialFormType = FormTableRow & {
+  form_team_member: {
+    team_member_id: string;
+    team_member_user: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+      user_username: string;
+    };
+  };
+} & {
+  form_team_group: {
+    team_group: {
+      team_group_id: string;
+      team_group_name: string;
+      team_group_is_disabled: boolean;
+    };
+  }[];
+} & {
+  form_signer: (SignerTableRow & {
+    signer_team_member: {
+      team_member_id: string;
+      team_member_user: {
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_avatar: string;
+        user_username: string;
+      };
+    };
+  })[];
 };

@@ -1,4 +1,4 @@
-import { getUnresolvedRequestListPerApprover } from "@/backend/api/get";
+import { getApproverRequestCount } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
@@ -7,7 +7,7 @@ import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { FormTableRow } from "@/utils/types";
+import { FormTableRow, TeamMemberTableRow } from "@/utils/types";
 import {
   Box,
   Button,
@@ -324,26 +324,27 @@ const ReviewAppNavLink = () => {
   ];
 
   useEffect(() => {
-    const fetchApproverRequestList = async () => {
-      if (!userTeamMemberData) return;
-      const unresolvedRequestList = await getUnresolvedRequestListPerApprover(
+    const fetchApproverRequestCount = async (
+      userTeamMemberData: TeamMemberTableRow
+    ) => {
+      const pendingRequestCount = await getApproverRequestCount(
         supabaseClient,
         {
           teamMemberId: userTeamMemberData.team_member_id,
+          status: "PENDING",
         }
       );
-      const pendingRequestList = unresolvedRequestList.filter(
-        (request) =>
-          request.request_signer_status === "PENDING" &&
-          request.request.request_status === "PENDING"
-      );
 
-      setUserNotificationCount(
-        pendingRequestList.length + unreadNotificationCount
-      );
+      setUserNotificationCount(pendingRequestCount + unreadNotificationCount);
     };
-    fetchApproverRequestList();
+    if (
+      userTeamMemberData &&
+      userTeamMemberData.team_member_role === "APPROVER"
+    ) {
+      fetchApproverRequestCount(userTeamMemberData);
+    }
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
+
   return (
     <>
       {!isEmpty(activeTeam) && hasTeam ? (

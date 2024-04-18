@@ -1,6 +1,5 @@
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { OtherExpensesTypeWithCategoryType } from "@/utils/types";
 
 import {
   checkOtherExpenesesTypeTable,
@@ -28,15 +27,9 @@ import { TypeForm } from "./OtherExpensesType";
 
 type Props = {
   setIsCreatingType: Dispatch<SetStateAction<boolean>>;
-  setTypeList: Dispatch<SetStateAction<OtherExpensesTypeWithCategoryType[]>>;
-  setTypeCount: Dispatch<SetStateAction<number>>;
 };
 
-const CreateOtherExpensesType = ({
-  setIsCreatingType,
-  setTypeList,
-  setTypeCount,
-}: Props) => {
+const CreateOtherExpensesType = ({ setIsCreatingType }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
@@ -85,29 +78,16 @@ const CreateOtherExpensesType = ({
 
   const onSubmit = async (data: TypeForm) => {
     try {
-      const newCategoryLookup = await createRowInOtherExpensesTypeTable(
-        supabaseClient,
-        {
-          inputData: {
-            other_expenses_type_category_id: data.category,
-            other_expenses_type: data.type.toUpperCase().trim(),
-            other_expenses_type_is_available: data.isAvailable,
-            other_expenses_type_encoder_team_member_id:
-              teamMember?.team_member_id,
-          },
-        }
-      );
-      const categoryLabel = categoryOption.find(
-        (value) => value.value === data.category
-      )?.label;
-      setTypeList((prev) => {
-        prev.unshift({
-          ...newCategoryLookup,
-          other_expenses_category: `${categoryLabel}`,
-        });
-        return prev;
+      await createRowInOtherExpensesTypeTable(supabaseClient, {
+        inputData: {
+          other_expenses_type_category_id: data.category,
+          other_expenses_type: data.type.toUpperCase().trim(),
+          other_expenses_type_is_available: data.isAvailable,
+          other_expenses_type_encoder_team_member_id:
+            teamMember?.team_member_id,
+        },
       });
-      setTypeCount((prev) => prev + 1);
+
       notifications.show({
         message: "Type created.",
         color: "green",

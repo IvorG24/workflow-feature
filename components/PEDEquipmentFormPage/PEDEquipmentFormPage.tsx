@@ -10,7 +10,7 @@ import { Database } from "@/utils/database";
 import {
   EquipmentWithCategoryType,
   FormSegmentType,
-  FormType,
+  InitialFormType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -27,7 +27,6 @@ import {
   Paper,
   SegmentedControl,
   Space,
-  Stack,
   Text,
   TextInput,
   Title,
@@ -50,27 +49,23 @@ import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
-import FormSection from "../RequestFormPage/FormSection";
+import FormSectionList from "../RequestFormPage/FormSectionList";
 import CreateEquipment from "./EquipmentList/CreateEquipment";
 import EquipmentList from "./EquipmentList/EquipmentList";
 import UpdateEquipment from "./EquipmentList/UpdateEquipment";
 import PEDLookup from "./PEDLookup/PEDLookup";
 
 type Props = {
-  equipments: EquipmentWithCategoryType[];
-  equipmentListCount: number;
+  form: InitialFormType;
   teamMemberList: TeamMemberWithUserType[];
-  form: FormType;
   teamGroupList: TeamGroupTableRow[];
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
 };
 
-const PEDPartFormPage = ({
-  equipments,
-  equipmentListCount,
-  teamMemberList,
+const PEDEquipmentFormPage = ({
   form,
+  teamMemberList,
   teamGroupList,
   teamProjectList,
   teamProjectListCount,
@@ -88,8 +83,10 @@ const PEDPartFormPage = ({
   const [isCreatingEquipment, setIsCreatingEquipment] = useState(false);
   const [editEquipment, setEditEquipment] =
     useState<EquipmentWithCategoryType | null>(null);
-  const [equipmentList, setEquipmentList] = useState(equipments);
-  const [equipmentCount, setEquipmentCount] = useState(equipmentListCount);
+  const [equipmentList, setEquipmentList] = useState<
+    EquipmentWithCategoryType[]
+  >([]);
+  const [equipmentCount, setEquipmentCount] = useState(0);
 
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -184,21 +181,20 @@ const PEDPartFormPage = ({
   }, [form]);
 
   const newTeamMember = {
-    form_team_member: {
-      team_member_id: form.form_team_member.team_member_id,
-      team_member_user: {
-        user_id: uuidv4(),
-        user_first_name: "Formsly",
-        user_last_name: "",
-        user_avatar: "/icon-request-light.svg",
-        user_username: "formsly",
-      },
+    team_member_id: form.form_team_member.team_member_id,
+    team_member_user: {
+      user_id: uuidv4(),
+      user_first_name: "Formsly",
+      user_last_name: "",
+      user_avatar: "/icon-request-light.svg",
+      user_username: "formsly",
     },
   };
-
   const newForm = {
     ...form,
-    ...newTeamMember,
+    form_team_member: {
+      ...newTeamMember,
+    },
   };
 
   const handleSaveSigners = async () => {
@@ -352,7 +348,7 @@ const PEDPartFormPage = ({
             onClick={() =>
               router.push({
                 pathname: `/${formatTeamNameToUrlKey(
-                  team.team_name 
+                  team.team_name
                 )}/dashboard/`,
                 query: { ...router.query, formId },
               })
@@ -409,8 +405,6 @@ const PEDPartFormPage = ({
             {isCreatingEquipment ? (
               <CreateEquipment
                 setIsCreatingEquipment={setIsCreatingEquipment}
-                setEquipmentList={setEquipmentList}
-                setEquipmentCount={setEquipmentCount}
               />
             ) : null}
             {editEquipment ? (
@@ -425,15 +419,7 @@ const PEDPartFormPage = ({
       ) : null}
 
       {segmentValue === "Form Preview" ? (
-        <Stack spacing="xl">
-          <FormSection section={form.form_section[0]} />
-          <FormSection
-            section={{
-              ...form.form_section[1],
-              section_field: form.form_section[1].section_field.slice(0, 9),
-            }}
-          />
-        </Stack>
+        <FormSectionList formId={form.form_id} formName={form.form_name} />
       ) : null}
 
       {segmentValue === "Form Lookup" ? <PEDLookup /> : null}
@@ -577,4 +563,4 @@ const PEDPartFormPage = ({
   );
 };
 
-export default PEDPartFormPage;
+export default PEDEquipmentFormPage;

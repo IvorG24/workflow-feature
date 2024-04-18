@@ -6,7 +6,7 @@ import { createEquipment } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { EquipmentForm, EquipmentWithCategoryType } from "@/utils/types";
+import { EquipmentForm } from "@/utils/types";
 import {
   Button,
   Checkbox,
@@ -26,15 +26,9 @@ import { Controller, useForm } from "react-hook-form";
 
 type Props = {
   setIsCreatingEquipment: Dispatch<SetStateAction<boolean>>;
-  setEquipmentList: Dispatch<SetStateAction<EquipmentWithCategoryType[]>>;
-  setEquipmentCount: Dispatch<SetStateAction<number>>;
 };
 
-const CreateEquipment = ({
-  setIsCreatingEquipment,
-  setEquipmentList,
-  setEquipmentCount,
-}: Props) => {
+const CreateEquipment = ({ setIsCreatingEquipment }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const activeTeam = useActiveTeam();
@@ -82,7 +76,7 @@ const CreateEquipment = ({
 
   const onSubmit = async (data: EquipmentForm) => {
     try {
-      const newEquipment = await createEquipment(supabaseClient, {
+      await createEquipment(supabaseClient, {
         equipmentData: {
           equipment_name: data.name.toUpperCase().trim(),
           equipment_is_available: data.isAvailable,
@@ -94,11 +88,7 @@ const CreateEquipment = ({
         category: categoryOption.find((value) => value.value === data.category)
           ?.label as string,
       });
-      setEquipmentList((prev) => {
-        prev.unshift(newEquipment);
-        return prev;
-      });
-      setEquipmentCount((prev) => prev + 1);
+
       notifications.show({
         message: "Equipment created.",
         color: "green",

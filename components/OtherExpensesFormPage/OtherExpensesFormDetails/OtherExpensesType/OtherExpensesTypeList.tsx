@@ -28,7 +28,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -71,6 +71,10 @@ const OtherExpensesTypeList = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const headerCheckboxKey = generateRandomId();
+
+  useEffect(() => {
+    handleFetch("", 1);
+  }, [team.team_id]);
 
   const handleFetch = async (search: string, page: number) => {
     setIsLoading(true);
@@ -124,18 +128,13 @@ const OtherExpensesTypeList = ({
     const savedRecord = typeList;
 
     try {
-      const updatedTypeList = typeList.filter((type) => {
-        if (!checkList.includes(type.other_expenses_type_id)) {
-          return type;
-        }
-      });
-      setTypeList(updatedTypeList);
       setCheckList([]);
 
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "other_expenses_type",
       });
+      handleFetch("", 1);
 
       notifications.show({
         message: `Type/s deleted.`,

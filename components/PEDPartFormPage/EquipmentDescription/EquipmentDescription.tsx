@@ -99,8 +99,6 @@ const EquipmentDescription = ({
         <CreateEquipmentDescription
           selectedEquipment={selectedEquipment}
           setIsCreatingEquipmentDescription={setIsCreatingEquipmentDescription}
-          setEquipmentDescriptionList={setEquipmentDescriptionList}
-          setEquipmentDescriptionCount={setEquipmentDescriptionCount}
         />
       ) : null}
       {editEquipmentDescription ? (
