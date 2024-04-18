@@ -56,7 +56,6 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
 import { v4 as uuidv4 } from "uuid";
-import { checkJiraFormslyProjectDuplicate } from "./get";
 
 // Upload Image
 export const uploadImage = async (
@@ -1587,14 +1586,6 @@ export const assignJiraFormslyProject = async (
   }
 ) => {
   const { formslyProjectId, jiraProjectId } = params;
-
-  const hasDuplicate = await checkJiraFormslyProjectDuplicate(supabaseClient, {
-    jiraProjectId,
-  });
-
-  if (hasDuplicate) {
-    return { success: false, data: null };
-  }
 
   const { data, error } = await supabaseClient
     .from("jira_formsly_project_table")

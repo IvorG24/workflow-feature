@@ -51,7 +51,9 @@ const JiraProjectLookupForm = ({
             required
           />
 
-          <Button type="submit">Submit</Button>
+          <Button type="submit" disabled={isLoading}>
+            Submit
+          </Button>
         </Stack>
       </form>
     </Modal>

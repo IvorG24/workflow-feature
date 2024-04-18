@@ -31,11 +31,7 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import {
-  checkJiraFormslyProjectDuplicate,
-  getCurrentDate,
-  getMemoFormat,
-} from "./get";
+import { getCurrentDate, getMemoFormat } from "./get";
 import { uploadImage } from "./post";
 
 // Update Team
@@ -1087,14 +1083,6 @@ export const updateJiraFormslyProject = async (
   }
 ) => {
   const { formslyProjectId, jiraProjectId } = params;
-
-  const hasDuplicate = await checkJiraFormslyProjectDuplicate(supabaseClient, {
-    jiraProjectId,
-  });
-
-  if (hasDuplicate) {
-    return { success: false, data: null };
-  }
 
   const { data, error } = await supabaseClient
     .from("jira_formsly_project_table")
