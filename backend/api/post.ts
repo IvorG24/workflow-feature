@@ -490,7 +490,7 @@ export const createRequest = async (
           const uploadId = `${field.field_id}${
             field.field_section_duplicatable_id
               ? `_${field.field_section_duplicatable_id}`
-              : ""
+              : `_${uuidv4()}`
           }`;
           if (fileResponse["type"].split("/")[0] === "image") {
             responseValue = await uploadImage(supabaseClient, {
@@ -631,7 +631,7 @@ export const editRequest = async (
           const uploadId = `${field.field_id}${
             field.field_section_duplicatable_id
               ? `_${field.field_section_duplicatable_id}`
-              : ""
+              : `_${uuidv4()}`
           }`;
           if (fileResponse["type"].split("/")[0] === "image") {
             responseValue = await uploadImage(supabaseClient, {
