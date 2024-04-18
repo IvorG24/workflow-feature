@@ -18,7 +18,7 @@ import {
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
-  async ({ supabaseClient }) => {
+  async ({ supabaseClient, teamId }) => {
     try {
       const jiraUserAccountData = await getJiraUserAccountList(supabaseClient, {
         from: 0,
@@ -27,6 +27,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 
       const { data: initialJiraFormslyProjectList, count } =
         await getJiraFormslyProjectList(supabaseClient, {
+          teamId,
           from: 0,
           to: ROW_PER_PAGE,
         });

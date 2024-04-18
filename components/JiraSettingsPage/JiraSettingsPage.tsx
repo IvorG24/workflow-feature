@@ -76,6 +76,13 @@ const JiraSettingsPage = ({
   const initialJiraFormslyProjectList = jiraFormslyProjectData.data;
   const initialJiraFormslyProjectCount = jiraFormslyProjectData.count;
 
+  const [jiraFormslyProjectList, setJiraFormslyProjectList] = useState(
+    initialJiraFormslyProjectList
+  );
+  const [jiraFormslyProjectCount, setJiraFormslyProjectCount] = useState(
+    initialJiraFormslyProjectCount
+  );
+
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -131,13 +138,14 @@ const JiraSettingsPage = ({
 
   useEffect(() => {
     if (selectedFormslyProjectId) {
-      const projectMatch = initialJiraFormslyProjectList.find(
+      const projectMatch = jiraFormslyProjectList.find(
         (project) => project.team_project_id === selectedFormslyProjectId
       );
+
       if (!projectMatch) return;
       setSelectedFormslyProjectName(startCase(projectMatch.team_project_name));
     }
-  }, [selectedFormslyProjectId]);
+  }, [jiraFormslyProjectList, selectedFormslyProjectId]);
 
   return (
     <Container>
@@ -163,12 +171,14 @@ const JiraSettingsPage = ({
       {segmentedControlValue === "jira-settings" && (
         <Stack>
           <JiraFormslyProjectList
-            jiraFormslyProjectList={initialJiraFormslyProjectList}
-            jiraFormslyProjectCount={initialJiraFormslyProjectCount}
+            jiraFormslyProjectList={jiraFormslyProjectList}
+            jiraFormslyProjectCount={jiraFormslyProjectCount}
             jiraProjectList={jiraProjectData.data}
             setIsManagingUserAccountList={setIsManagingUserAccountList}
             setSelectedFormslyProject={setSelectedFormslyProjectId}
             selectedFormslyProject={selectedFormslyProjectId}
+            setJiraFormslyProjectList={setJiraFormslyProjectList}
+            setJiraFormslyProjectCount={setJiraFormslyProjectCount}
           />
           {isManagingUserAccountList && (
             <JiraUserAccountList

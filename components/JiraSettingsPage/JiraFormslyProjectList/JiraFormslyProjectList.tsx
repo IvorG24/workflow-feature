@@ -1,6 +1,7 @@
 import { getJiraFormslyProjectList } from "@/backend/api/get";
 import { assignJiraFormslyProject } from "@/backend/api/post";
 import { updateJiraFormslyProject } from "@/backend/api/update";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getPagination } from "@/utils/functions";
@@ -32,9 +33,11 @@ type Props = {
   jiraFormslyProjectList: JiraFormslyProjectType[];
   jiraFormslyProjectCount: number;
   jiraProjectList: JiraProjectTableRow[];
+  selectedFormslyProject: string | null;
   setIsManagingUserAccountList: Dispatch<SetStateAction<boolean>>;
   setSelectedFormslyProject: Dispatch<SetStateAction<string | null>>;
-  selectedFormslyProject: string | null;
+  setJiraFormslyProjectList: Dispatch<SetStateAction<JiraFormslyProjectType[]>>;
+  setJiraFormslyProjectCount: Dispatch<SetStateAction<number>>;
 };
 
 export type AssignFormslyProjectForm = {
@@ -51,25 +54,22 @@ type AssignUpdateFormslyProjectResponseType = {
 };
 
 const JiraFormslyProjectList = ({
-  jiraFormslyProjectList: initialJiraFormslyProjectList,
-  jiraFormslyProjectCount: initialJiraFormslyProjectCount,
+  jiraFormslyProjectList,
+  jiraFormslyProjectCount,
   jiraProjectList,
   setIsManagingUserAccountList,
   setSelectedFormslyProject,
   selectedFormslyProject,
+  setJiraFormslyProjectList,
+  setJiraFormslyProjectCount,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const activeTeam = useActiveTeam();
 
   const [isLoading, setIsLoading] = useState(false);
   const [openJiraProjectFormModal, setOpenJiraProjectFormModal] =
     useState(false);
 
-  const [jiraFormslyProjectList, setJiraFormslyProjectList] = useState(
-    initialJiraFormslyProjectList
-  );
-  const [jiraFormslyProjectCount, setJiraFormslyProjectCount] = useState(
-    initialJiraFormslyProjectCount
-  );
   const [isReassignJiraFormslyProject, setIsReassignJiraFormslyProject] =
     useState(false);
   const [projectActivePage, setProjectActivePage] = useState(1);
@@ -174,6 +174,7 @@ const JiraFormslyProjectList = ({
   ) => {
     const { from, to } = getPagination(index, ROW_PER_PAGE);
     const { data, count } = await getJiraFormslyProjectList(supabaseClient, {
+      teamId: activeTeam.team_id,
       from,
       to,
       search,

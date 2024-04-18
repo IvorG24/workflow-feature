@@ -6312,18 +6312,20 @@ export const getJiraProjectList = async (
 export const getJiraFormslyProjectList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
+    teamId: string;
     from: number;
     to: number;
     search?: string;
   }
 ) => {
-  const { from, to, search } = params;
+  const { from, to, search, teamId } = params;
   let query = supabaseClient
     .from("team_project_table")
     .select(
       "team_project_id, team_project_name, assigned_jira_project: jira_formsly_project_table(jira_formsly_project_id, jira_project_id, formsly_project_id)",
       { count: "exact" }
     )
+    .eq("team_project_team_id", teamId)
     .order("team_project_name")
     .range(from, to);
 
@@ -7036,25 +7038,4 @@ export const getFormSection = async (
     });
 
   return sortedSection;
-};
-
-// check for duplicate jira formsly project
-export const checkJiraFormslyProjectDuplicate = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    jiraProjectId: string;
-  }
-) => {
-  const { jiraProjectId } = params;
-
-  const { count } = await supabaseClient
-    .from("jira_formsly_project_table")
-    .select("jira_project_id, formsly_project_id", { count: "exact" })
-    .eq("jira_project_id", jiraProjectId);
-
-  if (Number(count)) {
-    return { success: false, data: null };
-  }
-
-  return Number(count) > 0;
 };
