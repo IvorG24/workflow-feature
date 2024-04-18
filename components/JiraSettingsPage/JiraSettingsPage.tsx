@@ -1,5 +1,6 @@
 import { getJiraUserRoleList } from "@/backend/api/get";
 import { ROW_PER_PAGE } from "@/utils/constant";
+import { Database } from "@/utils/database";
 import { startCase } from "@/utils/string";
 import {
   JiraFormslyItemCategoryWithUserDataType,
@@ -19,7 +20,7 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import JiraFormslyItemCategoryList from "./JiraFormslyItemCategoryList/JiraFormslyItemCategoryList";
 import JiraFormslyProjectList from "./JiraFormslyProjectList/JiraFormslyProjectList";
@@ -28,8 +29,10 @@ import JiraUserAccountList from "./JiraUserAccountList/JiraUserAccountList";
 import JiraUserLookupTable from "./JiraUserLookupTable/JiraUserLookupTable";
 
 type Props = {
-  jiraFormslyProjectList: JiraFormslyProjectType[];
-  jiraFormslyProjectCount: number;
+  jiraFormslyProjectData: {
+    data: JiraFormslyProjectType[];
+    count: number;
+  };
   jiraProjectData: {
     data: JiraProjectTableRow[];
     count: number;
@@ -65,13 +68,15 @@ export type AssignFormslyProjectForm = {
 };
 
 const JiraSettingsPage = ({
-  jiraFormslyProjectList: initialJiraFormslyProjectList,
-  jiraFormslyProjectCount: initialJiraFormslyProjectCount,
+  jiraFormslyProjectData,
   jiraProjectData,
   jiraUserAccountData,
   jiraItemCategoryData,
 }: Props) => {
-  const supabaseClient = useSupabaseClient();
+  const initialJiraFormslyProjectList = jiraFormslyProjectData.data;
+  const initialJiraFormslyProjectCount = jiraFormslyProjectData.count;
+
+  const supabaseClient = createPagesBrowserClient<Database>();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isManagingUserAccountList, setIsManagingUserAccountList] =
@@ -140,8 +145,8 @@ const JiraSettingsPage = ({
       <Title order={2}>Manage Jira Automation</Title>
       <Paper mt="sm" p="xl" shadow="xs" pos="relative">
         <Text>
-          Manage, update, and assign JIRA users to team projects and item
-          categories.
+          Easily link Formsly projects and item categories to Jira: add, update,
+          and assign them hassle-free.
         </Text>
       </Paper>
 

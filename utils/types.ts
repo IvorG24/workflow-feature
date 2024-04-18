@@ -1662,10 +1662,23 @@ export type JiraItemUserTableData = {
 
 export type JiraFormslyItemCategoryWithUserDataType =
   JiraItemCategoryTableRow & {
-    assigned_jira_user:
-      | ({ jira_item_user_id: string } & JiraUserAccountTableRow &
-          JiraUserRoleTableRow)
-      | null;
+    assigned_jira_user: {
+      jira_item_user_id: string;
+      jira_item_user_account_id: {
+        jira_user_account_jira_id: string;
+        jira_user_account_display_name: string;
+        jira_user_account_id: string;
+      };
+      jira_item_user_role_id: {
+        jira_user_role_id: string;
+        jira_user_role_label: string;
+      };
+      jira_user_account_jira_id: string;
+      jira_user_account_display_name: string;
+      jira_user_account_id: string;
+      jira_user_role_id: string;
+      jira_user_role_label: string;
+    } | null;
   };
 
 export type JiraUserDataType = {

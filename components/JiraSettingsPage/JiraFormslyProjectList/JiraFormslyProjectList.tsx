@@ -252,11 +252,13 @@ const JiraFormslyProjectList = ({
             )}
           >
             <TextInput
+              aria-label="search-project"
               miw={250}
               maxLength={4000}
               placeholder="Project Name"
               rightSection={
                 <ActionIcon
+                  aria-label="search-project-button"
                   onClick={() =>
                     handleSearchTeamProject(
                       searchTeamProjectFormMethods.getValues()
@@ -305,7 +307,7 @@ const JiraFormslyProjectList = ({
               accessor: "assign_to_jira_project",
               title: "Action",
               render: ({ team_project_id, assigned_jira_project }) => (
-                <Menu>
+                <Menu aria-label="project-menu">
                   <Menu.Target>
                     <ActionIcon>
                       <IconSettings size={16} />

@@ -28,6 +28,25 @@ export const createJiraTicket = async ({
   try {
     const formattedJiraTicketPayload =
       formatJiraTicketPayload(jiraTicketPayload);
+
+    const duplicateJiraTicketResponse = await fetch(
+      `/api/check-jira-duplicate-ticket?formslyId=${jiraTicketPayload.requestId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const duplicateJiraTicketData = await duplicateJiraTicketResponse.json();
+
+    if (duplicateJiraTicketData.total > 0) {
+      console.log(duplicateJiraTicketData.total);
+      console.error("Duplicate jira ticket");
+      return { success: false, data: null };
+    }
+
     const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
       method: "POST",
       headers: {

@@ -20,7 +20,7 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
   async ({ supabaseClient }) => {
     try {
-      const jiraUserAcount = await getJiraUserAccountList(supabaseClient, {
+      const jiraUserAccountData = await getJiraUserAccountList(supabaseClient, {
         from: 0,
         to: 256,
       });
@@ -68,10 +68,12 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 
       return {
         props: {
-          jiraFormslyProjectList: jiraFormslyProjectList,
-          jiraFormslyProjectCount: count,
+          jiraFormslyProjectData: {
+            data: jiraFormslyProjectList,
+            count: count,
+          },
           jiraProjectData,
-          jiraUserAccountData: jiraUserAcount,
+          jiraUserAccountData,
           jiraItemCategoryData,
         },
       };
@@ -88,8 +90,10 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 );
 
 type Props = {
-  jiraFormslyProjectList: JiraFormslyProjectType[];
-  jiraFormslyProjectCount: number;
+  jiraFormslyProjectData: {
+    data: JiraFormslyProjectType[];
+    count: number;
+  };
   jiraProjectData: {
     data: JiraProjectTableRow[];
     count: number;
@@ -105,8 +109,7 @@ type Props = {
 };
 
 const Page = ({
-  jiraFormslyProjectList,
-  jiraFormslyProjectCount,
+  jiraFormslyProjectData,
   jiraProjectData,
   jiraUserAccountData,
   jiraItemCategoryData,
@@ -115,8 +118,7 @@ const Page = ({
     <>
       <Meta description="Jira Settings Page" url="/teamName/jira/settings" />
       <JiraSettingsPage
-        jiraFormslyProjectList={jiraFormslyProjectList}
-        jiraFormslyProjectCount={jiraFormslyProjectCount}
+        jiraFormslyProjectData={jiraFormslyProjectData}
         jiraProjectData={jiraProjectData}
         jiraUserAccountData={jiraUserAccountData}
         jiraItemCategoryData={jiraItemCategoryData}
