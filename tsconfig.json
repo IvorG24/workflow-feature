@@ -21,6 +21,13 @@
     },
     "types": ["cypress", "node"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "additional.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "additional.d.ts",
+    "jest.setup.ts",
+    "jest.config.ts"
+  ],
+  "exclude": ["node_modules", "cypress.config.ts", "cypress"]
 }

@@ -14,6 +14,10 @@ import {
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraItemCategoryTableUpdate,
+  JiraProjectTableUpdate,
+  JiraUserAccountTableUpdate,
   MemberRoleType,
   MemoAgreementTableRow,
   MemoFormatAttachmentTableInsert,
@@ -27,7 +31,11 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { getCurrentDate, getMemoFormat } from "./get";
+import {
+  checkJiraFormslyProjectDuplicate,
+  getCurrentDate,
+  getMemoFormat,
+} from "./get";
 import { uploadImage } from "./post";
 
 // Update Team
@@ -982,6 +990,78 @@ export const updateSLAHours = async (
   return data[0];
 };
 
+// update jira item category
+export const updateJiraItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraItemCategoryTableUpdate
+) => {
+  const { data, error } = await supabaseClient
+    .from("jira_item_category_table")
+    .update(params)
+    .eq("jira_item_category_id", params.jira_item_category_id)
+    .select(
+      "*, assigned_jira_user: jira_item_user_table(jira_item_user_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label))"
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const assignedUser = data?.assigned_jira_user as {
+    jira_item_user_id: string;
+    jira_item_user_account_id: {
+      jira_user_account_jira_id: string;
+      jira_user_account_display_name: string;
+      jira_user_account_id: string;
+    };
+    jira_item_user_role_id: {
+      jira_user_role_id: string;
+      jira_user_role_label: string;
+    };
+  }[];
+
+  const formattedData = {
+    ...data,
+    assigned_jira_user:
+      {
+        ...assignedUser[0],
+        ...assignedUser[0]?.jira_item_user_account_id,
+        ...assignedUser[0]?.jira_item_user_role_id,
+      } ?? null,
+  };
+
+  return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;
+};
+
+// update jira project
+export const updateJiraProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraProjectTableUpdate
+) => {
+  const { error } = await supabaseClient
+    .from("jira_project_table")
+    .update(params)
+    .eq("jira_project_id", params.jira_project_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
+};
+
+// update jira user
+export const updateJiraUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraUserAccountTableUpdate
+) => {
+  const { error } = await supabaseClient
+    .from("jira_user_account_table")
+    .update(params)
+    .eq("jira_user_account_jira_id", params.jira_user_account_jira_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
+};
+
 // Update item category
 export const updateItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
@@ -996,4 +1076,33 @@ export const updateItemCategory = async (
   });
 
   if (error) throw error;
+};
+
+// re-assign jira formsly project
+export const updateJiraFormslyProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyProjectId: string;
+    jiraProjectId: string;
+  }
+) => {
+  const { formslyProjectId, jiraProjectId } = params;
+
+  const hasDuplicate = await checkJiraFormslyProjectDuplicate(supabaseClient, {
+    jiraProjectId,
+  });
+
+  if (hasDuplicate) {
+    return { success: false, data: null };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_formsly_project_table")
+    .update({ jira_project_id: jiraProjectId })
+    .eq("formsly_project_id", formslyProjectId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+
+  return { success: true, data: data };
 };

@@ -1,15 +1,15 @@
 import { deleteRequest } from "@/backend/api/delete";
-import {
-  getCommentAttachment,
-  getRequestComment,
-  getSectionInRequestPage,
-} from "@/backend/api/get";
+import { getRequestComment, getSectionInRequestPage } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
+import {
+  useJiraItemCategoryData,
+  useJiraProjectData,
+} from "@/stores/useJiraAutomationData";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -19,10 +19,7 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
-import {
-  generateJiraCommentPayload,
-  generateJiraTicketPayload,
-} from "@/utils/functions";
+import { createJiraTicket } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -43,7 +40,6 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -92,6 +88,8 @@ const OtherExpensesRequestPage = ({
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
+  const jiraProjectData = useJiraProjectData();
+  const jiraItemCategoryData = useJiraItemCategoryData();
 
   useEffect(() => {
     try {
@@ -347,132 +345,82 @@ const OtherExpensesRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const handleCreateJiraTicket = async () => {
+  const onCreateJiraTicket = async () => {
     try {
       setIsLoading(true);
-      if (!request.request_formsly_id) {
-        console.warn("formsly_id not found");
-        return null;
-      }
-      const projectName = request.request_project.team_project_name;
-      const itemCategory = [`"Other Expenses"`];
 
-      const jiraTicketPayload = generateJiraTicketPayload({
+      const requestProjectName = request.request_project.team_project_name;
+      const jiraProjectMatch = jiraProjectData.find(
+        (project) => project.team_project_name === requestProjectName
+      );
+
+      const itemCategory = "Other Expenses";
+
+      const itemCategoryMatch = jiraItemCategoryData.find(
+        (item) => item.jira_item_category_formsly_label === itemCategory
+      );
+
+      if (!jiraProjectMatch || !itemCategoryMatch) {
+        notifications.show({
+          message: "Jira project and item category data is missing.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
+      const warehouseAreaLead = jiraProjectMatch.jira_user_list.filter(
+        (user) => user.jira_user_role_label === "WAREHOUSE AREA LEAD"
+      )[0];
+      const warehouseRepresentative = jiraProjectMatch.jira_user_list.filter(
+        (user) => user.jira_user_role_label === "WAREHOUSE REPRESENTATIVE"
+      )[0];
+      const warehouseRequestParticipant =
+        jiraProjectMatch.jira_user_list.filter(
+          (user) =>
+            user.jira_user_role_label === "WAREHOUSE REQUEST PARTICIPANT"
+        );
+
+      const jiraTicketPayload = {
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "189",
-        projectName,
-        itemCategory,
-      });
+        jiraProjectSiteId: jiraProjectMatch.jira_project_jira_id,
+        jiraItemCategoryId: itemCategoryMatch.jira_item_category_jira_id,
 
-      const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(jiraTicketPayload),
-      });
-
-      const jiraTicketData = await jiraTicketResponse.json();
-
-      if (!jiraTicketResponse.ok) {
-        console.error(jiraTicketData.error);
-        return null;
-      }
-
-      // transition jira ticket
-      await fetch("/api/transition-jira-ticket", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          jiraTicketKey: jiraTicketData.issueKey,
-          transitionId: "261",
-        }),
-      });
-
-      if (requestCommentList.length > 0) {
-        await handleAddCommentToJiraTicket(jiraTicketData.issueKey);
-      }
-      setRequestJira({
-        id: jiraTicketData.issueKey,
-        link: jiraTicketData._links.web,
-      });
-      return JSON.stringify(jiraTicketData);
-    } catch (error) {
-      console.error("Failed to create jira ticket", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchCommentAttachmentList = async () => {
-    const commentListWithAttachmentUrl = await Promise.all(
-      requestCommentList.map(async (comment) => {
-        const commentAttachmentUrlList = await getCommentAttachment(
-          supabaseClient,
-          { commentId: comment.comment_id }
-        );
-
-        return {
-          ...comment,
-          comment_attachment: commentAttachmentUrlList,
-        };
-      })
-    );
-    return commentListWithAttachmentUrl.sort((a, b) => {
-      const aDate = moment(a.comment_date_created).valueOf();
-      const bDate = moment(b.comment_date_created).valueOf();
-
-      return aDate - bDate;
-    });
-  };
-
-  const handleAddCommentToJiraTicket = async (jiraTicketKey: string) => {
-    try {
-      // fetch comments with attachment
-      const rfCommentList = await fetchCommentAttachmentList();
-      const rfCommentListForJira = generateJiraCommentPayload(rfCommentList);
-
-      const bodyData = {
-        body: {
-          version: 1,
-          type: "doc",
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: "Formsly Request Comment List Before Approval",
-                  marks: [
-                    {
-                      type: "strong",
-                    },
-                  ],
-                },
-              ],
-            },
-            ...rfCommentListForJira,
-          ],
-        },
+        warehouseCorporateLeadId: itemCategoryMatch.jira_user_account_jira_id,
+        warehouseAreaLeadId: warehouseAreaLead.jira_user_account_jira_id,
+        warehouseRepresentativeId:
+          warehouseRepresentative.jira_user_account_jira_id,
+        warehouseRequestParticipantIdList: warehouseRequestParticipant.map(
+          (user) => user.jira_user_account_jira_id
+        ),
+        jiraItemCategoryLabel: itemCategoryMatch.jira_item_category_jira_label,
       };
 
-      const jiraTicketCommentResponse = await fetch(
-        `/api/add-comment-to-jira-ticket?jiraTicketKey=${jiraTicketKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(bodyData),
-        }
-      );
+      const jiraTicketData = await createJiraTicket({
+        jiraTicketPayload,
+        jiraItemCategoryLabel: itemCategory,
+        requestCommentList,
+        supabaseClient,
+      });
 
-      return jiraTicketCommentResponse;
+      if (!jiraTicketData.success) {
+        return { success: false, data: null };
+      }
+
+      if (jiraTicketData.data) {
+        setRequestJira({
+          id: jiraTicketData.data.jiraTicketKey,
+          link: jiraTicketData.data.jiraTicketWebLink,
+        });
+      }
+
+      return jiraTicketData;
     } catch (error) {
-      console.error("Error:", error);
+      console.log(error);
+      return { success: false, data: null };
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -609,7 +557,7 @@ const OtherExpensesRequestPage = ({
             isUserRequester={isUserRequester}
             requestId={request.request_id}
             isItemForm
-            onCreateJiraTicket={handleCreateJiraTicket}
+            onCreateJiraTicket={onCreateJiraTicket}
           />
         )}
 

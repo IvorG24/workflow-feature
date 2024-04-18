@@ -386,6 +386,55 @@ export type AddressTableUpdate =
 export type RequestViewTableRow =
   Database["public"]["Views"]["request_view"]["Row"];
 
+export type JiraProjectTableRow =
+  Database["public"]["Tables"]["jira_project_table"]["Row"];
+export type JiraProjectTableInsert =
+  Database["public"]["Tables"]["jira_project_table"]["Insert"];
+export type JiraProjectTableUpdate =
+  Database["public"]["Tables"]["jira_project_table"]["Update"];
+
+export type JiraFormslyProjectTableRow =
+  Database["public"]["Tables"]["jira_formsly_project_table"]["Row"];
+export type JiraFormslyProjectTableInsert =
+  Database["public"]["Tables"]["jira_formsly_project_table"]["Insert"];
+export type JiraFormslyProjectTableUpdate =
+  Database["public"]["Tables"]["jira_formsly_project_table"]["Update"];
+
+export type JiraUserAccountTableRow =
+  Database["public"]["Tables"]["jira_user_account_table"]["Row"];
+export type JiraUserAccountTableInsert =
+  Database["public"]["Tables"]["jira_user_account_table"]["Insert"];
+export type JiraUserAccountTableUpdate =
+  Database["public"]["Tables"]["jira_user_account_table"]["Update"];
+
+export type JiraUserRoleTableRow =
+  Database["public"]["Tables"]["jira_user_role_table"]["Row"];
+export type JiraUserRoleTableInsert =
+  Database["public"]["Tables"]["jira_user_role_table"]["Insert"];
+export type JiraUserRoleTableUpdate =
+  Database["public"]["Tables"]["jira_user_role_table"]["Update"];
+
+export type JiraProjectUserTableRow =
+  Database["public"]["Tables"]["jira_project_user_table"]["Row"];
+export type JiraProjectUserTableInsert =
+  Database["public"]["Tables"]["jira_project_user_table"]["Insert"];
+export type JiraProjectUserTableUpdate =
+  Database["public"]["Tables"]["jira_project_user_table"]["Update"];
+
+export type JiraItemCategoryTableRow =
+  Database["public"]["Tables"]["jira_item_category_table"]["Row"];
+export type JiraItemCategoryTableInsert =
+  Database["public"]["Tables"]["jira_item_category_table"]["Insert"];
+export type JiraItemCategoryTableUpdate =
+  Database["public"]["Tables"]["jira_item_category_table"]["Update"];
+
+export type JiraItemCategoryUserTableRow =
+  Database["public"]["Tables"]["jira_item_user_table"]["Row"];
+export type JiraItemCategoryUserTableInsert =
+  Database["public"]["Tables"]["jira_item_user_table"]["Insert"];
+export type JiraItemCategoryUserTableUpdate =
+  Database["public"]["Tables"]["jira_item_user_table"]["Update"];
+
 export type ItemCategoryTableRow =
   Database["public"]["Tables"]["item_category_table"]["Row"];
 export type ItemCategoryTableInsert =
@@ -572,6 +621,7 @@ export type RequestWithResponseType = RequestTableRow & {
 } & {
   request_project: {
     team_project_name: string;
+    team_project_id: string;
   };
 };
 
@@ -1579,6 +1629,95 @@ export type ApproverDetailsType = {
   status: string;
   date: string | null;
   signature: string | null;
+};
+
+export type JiraFormslyProjectType = {
+  team_project_id: string;
+  team_project_name: string;
+  assigned_jira_project: {
+    jira_formsly_project_id: string;
+    formsly_project_id: string;
+    jira_project_id: string;
+    jira_project: JiraProjectTableRow;
+  } | null;
+};
+
+export type ProjectJiraUserAccountType = JiraProjectUserTableRow &
+  JiraUserAccountTableRow &
+  JiraUserRoleTableRow;
+
+export type JiraItemUserTableData = {
+  jira_item_user_id: string;
+  jira_item_user_item_category_id: string;
+  jira_item_user_account_id: {
+    jira_user_account_jira_id: string;
+    jira_user_account_display_name: string;
+    jira_user_account_id: string;
+  };
+  jira_item_user_role_id: {
+    jira_user_role_id: string;
+    jira_user_role_label: string;
+  };
+};
+
+export type JiraFormslyItemCategoryWithUserDataType =
+  JiraItemCategoryTableRow & {
+    assigned_jira_user: {
+      jira_item_user_id: string;
+      jira_item_user_account_id: {
+        jira_user_account_jira_id: string;
+        jira_user_account_display_name: string;
+        jira_user_account_id: string;
+      };
+      jira_item_user_role_id: {
+        jira_user_role_id: string;
+        jira_user_role_label: string;
+      };
+      jira_user_account_jira_id: string;
+      jira_user_account_display_name: string;
+      jira_user_account_id: string;
+      jira_user_role_id: string;
+      jira_user_role_label: string;
+    } | null;
+  };
+
+export type JiraUserDataType = {
+  jira_user_account_jira_id: string;
+  jira_user_account_display_name: string;
+  jira_user_role_label: string;
+};
+
+export type JiraProjectDataType = {
+  team_project_id: string;
+  team_project_name: string;
+  jira_project_jira_id: string;
+  jira_project_jira_label: string;
+  jira_user_list: JiraUserDataType[];
+};
+
+export type JiraItemCategoryDataType = {
+  jira_item_category_id: string;
+  jira_item_category_jira_id: string;
+  jira_item_category_jira_label: string;
+  jira_item_category_formsly_label: string;
+} & JiraUserDataType;
+
+export type JiraTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  requestTypeId: string;
+  jiraProjectSiteId: string;
+  jiraItemCategoryId: string;
+  warehouseCorporateLeadId: string;
+  warehouseAreaLeadId: string;
+  warehouseRepresentativeId: string;
+  warehouseRequestParticipantIdList: string[];
+  jiraItemCategoryLabel?: string;
+};
+
+export type JiraTicketData = {
+  success: boolean;
+  data: { jiraTicketKey: string; jiraTicketWebLink: string } | null;
 };
 
 export type ItemCategoryWithSigner = ItemCategoryTableRow & {

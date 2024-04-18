@@ -32,6 +32,7 @@ import {
   IconFiles,
   IconListDetails,
   IconReportAnalytics,
+  IconSettingsAutomation,
   IconTicket,
   IconUsersGroup,
 } from "@tabler/icons-react";
@@ -323,6 +324,18 @@ const ReviewAppNavLink = () => {
     },
   ];
 
+  const jiraSection = [
+    {
+      label: "Manage Automation",
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconSettingsAutomation {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/jira/settings`,
+    },
+  ];
+
   useEffect(() => {
     const fetchApproverRequestCount = async (
       userTeamMemberData: TeamMemberTableRow
@@ -406,6 +419,17 @@ const ReviewAppNavLink = () => {
               {renderManageFormMenu()}
             </>
           )}
+        </>
+      )}
+
+      {(userTeamMemberData?.team_member_role === "ADMIN" ||
+        userTeamMemberData?.team_member_role === "OWNER") && (
+        <>
+          <NavLinkSection
+            label={"Jira"}
+            links={jiraSection}
+            {...defaultNavLinkProps}
+          />
         </>
       )}
 

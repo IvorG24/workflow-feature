@@ -973,6 +973,57 @@ CREATE TABLE barangay_table(
 
 -- End: Barangay table
 
+-- Start: Jira automation tables
+CREATE TABLE jira_project_table (
+  jira_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_project_jira_id VARCHAR(4000) NOT NULL,
+  jira_project_jira_label VARCHAR(4000) NOT NULL
+);
+
+CREATE TABLE jira_formsly_project_table (
+  jira_formsly_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_project_id UUID REFERENCES jira_project_table(jira_project_id) NOT NULL,
+  formsly_project_id UUID REFERENCES team_project_table(team_project_id) UNIQUE NOT NULL
+);
+
+CREATE TABLE jira_user_role_table (
+  jira_user_role_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_user_role_label VARCHAR(4000) NOT NULL,
+  jira_user_role_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  jira_user_role_date_updated TIMESTAMPTZ
+);
+
+CREATE TABLE jira_user_account_table (
+  jira_user_account_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_user_account_jira_id VARCHAR(4000) NOT NULL,
+  jira_user_account_email_address VARCHAR(4000) NOT NULL,
+  jira_user_account_display_name VARCHAR(4000) NOT NULL,
+  jira_user_account_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  jira_user_account_date_updated TIMESTAMPTZ
+);
+
+CREATE TABLE jira_project_user_table (
+  jira_project_user_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_project_user_account_id UUID REFERENCES jira_user_account_table(jira_user_account_id) NOT NULL,
+  jira_project_user_team_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL,
+  jira_project_user_role_id UUID REFERENCES jira_user_role_table(jira_user_role_id) NOT NULL
+);
+
+CREATE TABLE jira_item_category_table (
+  jira_item_category_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_item_category_jira_id VARCHAR(4000) NOT NULL,
+  jira_item_category_jira_label VARCHAR(4000) NOT NULL,
+  jira_item_category_formsly_label VARCHAR(4000) NOT NULL
+);
+
+CREATE TABLE jira_item_user_table (
+  jira_item_user_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_item_user_account_id UUID REFERENCES jira_user_account_table(jira_user_account_id) NOT NULL,
+  jira_item_user_item_category_id UUID REFERENCES jira_item_category_table(jira_item_category_id) NOT NULL,
+  jira_item_user_role_id UUID REFERENCES jira_user_role_table(jira_user_role_id) NOT NULL
+);
+-- End: Jira automation tables
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -9787,6 +9838,98 @@ $$ LANGUAGE plv8;
 
 -- End: Update item category
 
+-- Start: Get Jira automation data
+CREATE OR REPLACE FUNCTION get_jira_automation_data(
+    input_data JSON
+)
+RETURNS JSON AS $$
+  let jira_automation_data;
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId
+    } = input_data;
+    
+    const projectJiraUserData = plv8.execute(
+      `
+        SELECT 
+            tpm.team_project_id,
+            tp.team_project_name,
+            jpt.jira_project_jira_id,
+            jpt.jira_project_jira_label,
+            jua.jira_user_account_jira_id,
+            jua.jira_user_account_display_name,
+            jur.jira_user_role_label
+        FROM
+            team_project_member_table tpm
+        LEFT JOIN
+            team_project_table tp ON tp.team_project_id = tpm.team_project_id
+        LEFT JOIN
+            jira_formsly_project_table jfpt ON jfpt.formsly_project_id = tpm.team_project_id
+        LEFT JOIN
+            jira_project_table jpt ON jpt.jira_project_id = jfpt.jira_project_id
+        LEFT JOIN
+            jira_project_user_table jput ON jput.jira_project_user_team_project_id = tpm.team_project_id
+        LEFT JOIN
+            jira_user_account_table jua ON jua.jira_user_account_id = jput.jira_project_user_account_id
+        LEFT JOIN
+            jira_user_role_table jur ON jur.jira_user_role_id = jput.jira_project_user_role_id
+        WHERE
+            tpm.team_member_id = '${teamMemberId}';
+      `
+    );
+
+    const reducedJiraProjectData = projectJiraUserData.reduce((acc, curr) => {
+        const matchIndex = acc.findIndex((item) => item.team_project_id === curr.team_project_id);
+
+        if (matchIndex >= 0) {
+          acc[matchIndex].jira_user_list.push({
+            jira_user_account_jira_id: curr.jira_user_account_jira_id,
+            jira_user_account_display_name: curr.jira_user_account_display_name,
+            jira_user_role_label: curr.jira_user_role_label,
+          })
+        } else {
+          const projectJiraUserData = {
+            jira_user_account_jira_id: curr.jira_user_account_jira_id,
+            jira_user_account_display_name: curr.jira_user_account_display_name,
+            jira_user_role_label: curr.jira_user_role_label,
+          }
+          acc.push({
+            team_project_id: curr.team_project_id,
+            team_project_name: curr.team_project_name,
+            jira_project_jira_id: curr.jira_project_jira_id,
+            jira_project_jira_label: curr.jira_project_jira_label,
+            jira_user_list: curr.jira_user_account_jira_id ? [projectJiraUserData] : []
+          })
+        }
+
+        return acc;
+        
+    }, []);
+
+    const jiraItemCategoryData = plv8.execute(
+      `
+        SELECT
+          jira_item_category_id,
+          jira_item_category_jira_id,
+          jira_item_category_jira_label,
+          jira_item_category_formsly_label,
+          jua.jira_user_account_jira_id,
+          jua.jira_user_account_display_name,
+          jur.jira_user_role_label
+        FROM
+          jira_item_category_table
+        LEFT JOIN jira_item_user_table jiu ON jiu.jira_item_user_item_category_id = jira_item_category_id
+        LEFT JOIN jira_user_account_table jua ON jua.jira_user_account_id = jiu.jira_item_user_account_id
+        LEFT JOIN jira_user_role_table jur ON jur.jira_user_role_id= jiu.jira_item_user_role_id
+      `
+    );
+
+    jira_automation_data = {jiraProjectData: reducedJiraProjectData, jiraItemCategoryData}
+ });
+ return jira_automation_data;
+$$ LANGUAGE plv8;
+-- End: Get Jira automation data
+
 -- Start: Get approver unresolved request count
 CREATE OR REPLACE FUNCTION get_approver_unresolved_request_count(
     input_data JSON
@@ -9905,6 +10048,13 @@ ALTER TABLE province_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE city_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE barangay_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_user_role_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_user_account_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_project_user_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_item_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_item_user_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -10228,6 +10378,18 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON address_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_project_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_user_role_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_user_account_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_project_user_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_category_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_user_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -12859,6 +13021,110 @@ USING (true);
 
 CREATE POLICY "Allow DELETE for authenticated users" ON "public"."address_table"
 AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (true);
+
+-- JIRA_PROJECT_TABLE
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_project_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- JIRA_FORMSLY_PROJECT_TABLE
+CREATE POLICY "Allow READ for anon users" ON "public"."jira_formsly_project_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_formsly_project_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = formsly_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_formsly_project_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = formsly_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+-- JIRA_FORMSLY_PROJECT_TABLE
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_user_role_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- JIRA_USER_ACCOUNT_TABLE
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_user_account_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- JIRA_PROJECT_USER_TABLE
+CREATE POLICY "Allow READ for anon users" ON "public"."jira_project_user_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_project_user_team_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_project_user_team_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+-- JIRA_ITEM_CATEGORY_TABLE
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_item_category_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- JIRA_ITEM_USER_TABLE
+CREATE POLICY "Allow CRUD for authenticated users " ON "public"."jira_item_user_table"
+AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 

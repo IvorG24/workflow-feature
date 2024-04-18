@@ -116,3 +116,20 @@ export const removeMemberFromProject = async (
 
   if (error) throw error;
 };
+
+// Remove jira user from project
+export const removeJiraUserFromProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    jiraProjectUserId: string;
+  }
+) => {
+  const { jiraProjectUserId } = params;
+
+  const { error } = await supabaseClient
+    .from("jira_project_user_table")
+    .delete()
+    .eq("jira_project_user_id", jiraProjectUserId);
+
+  if (error) throw error;
+};

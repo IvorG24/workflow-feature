@@ -4,6 +4,7 @@ import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/Tea
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import { formslyPremadeFormsData } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { formatJiraItemUserTableData } from "@/utils/functions";
 import { escapeQuotes } from "@/utils/string";
 import {
   AddressTableInsert,
@@ -22,6 +23,12 @@ import {
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
+  JiraFormslyItemCategoryWithUserDataType,
+  JiraItemCategoryTableInsert,
+  JiraItemCategoryUserTableInsert,
+  JiraItemUserTableData,
+  JiraProjectTableInsert,
+  JiraUserAccountTableInsert,
   MemoAgreementTableRow,
   MemoLineItem,
   MemoTableRow,
@@ -49,6 +56,7 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
 import { v4 as uuidv4 } from "uuid";
+import { checkJiraFormslyProjectDuplicate } from "./get";
 
 // Upload Image
 export const uploadImage = async (
@@ -1568,6 +1576,269 @@ export const createPedPartFromTicketRequest = async (
   );
   if (error) throw error;
   return data;
+};
+
+// assign jira formsly project
+export const assignJiraFormslyProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyProjectId: string;
+    jiraProjectId: string;
+  }
+) => {
+  const { formslyProjectId, jiraProjectId } = params;
+
+  const hasDuplicate = await checkJiraFormslyProjectDuplicate(supabaseClient, {
+    jiraProjectId,
+  });
+
+  if (hasDuplicate) {
+    return { success: false, data: null };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_formsly_project_table")
+    .insert({
+      formsly_project_id: formslyProjectId,
+      jira_project_id: jiraProjectId,
+    })
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return { success: true, data: data };
+};
+
+// assign jira user to project
+export const assignJiraUserToProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userAccountId: string;
+    userRoleId: string;
+    teamProjectId: string;
+    selectedRoleLabel: string;
+  }
+) => {
+  const { userAccountId, teamProjectId, userRoleId, selectedRoleLabel } =
+    params;
+
+  // check for duplicate
+  const { count, error: CountError } = await supabaseClient
+    .from("jira_project_user_table")
+    .select("jira_project_user_id", { count: "exact" })
+    .eq("jira_project_user_account_id", userAccountId)
+    .eq("jira_project_user_team_project_id", teamProjectId);
+  if (CountError) throw CountError;
+
+  if (Number(count) > 1) {
+    return { success: false, data: null, error: "Duplicate entry." };
+  }
+
+  if (
+    ["WAREHOUSE REPRESENTATIVE", "WAREHOUSE AREA LEAD"].includes(
+      selectedRoleLabel
+    )
+  ) {
+    const { count, error: CountError } = await supabaseClient
+      .from("jira_project_user_table")
+      .select("jira_project_user_id", { count: "exact" })
+      .eq("jira_project_user_role_id", userRoleId)
+      .eq("jira_project_user_team_project_id", teamProjectId);
+    if (CountError) throw CountError;
+
+    if (Number(count) >= 1) {
+      return {
+        success: false,
+        data: null,
+        error: `${selectedRoleLabel} must only have 1 entry per project.`,
+      };
+    }
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_project_user_table")
+    .insert({
+      jira_project_user_account_id: userAccountId,
+      jira_project_user_team_project_id: teamProjectId,
+      jira_project_user_role_id: userRoleId,
+    })
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+
+  if (data) {
+    return { success: true, data: data, error: null };
+  } else {
+    return { success: true, data: null, error: null };
+  }
+};
+
+// assign or update jira user to item category
+
+export const assignJiraUserToItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    data: JiraItemCategoryUserTableInsert;
+    isUpdate: boolean;
+  }
+) => {
+  if (params.isUpdate) {
+    return await updateJiraItemCategory(supabaseClient, params);
+  } else {
+    return await insertJiraItemCategory(supabaseClient, params);
+  }
+};
+
+const updateJiraItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { data: JiraItemCategoryUserTableInsert }
+) => {
+  const { data, error } = await supabaseClient
+    .from("jira_item_user_table")
+    .update(params.data)
+    .eq("jira_item_user_id", params.data.jira_item_user_id)
+    .select(
+      `
+      jira_item_user_id,
+      jira_item_user_item_category_id,
+      jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id),
+      jira_item_user_role_id(jira_user_role_id, jira_user_role_label)
+      `
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return formatJiraItemUserTableData(data as JiraItemUserTableData);
+};
+
+const insertJiraItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { data: JiraItemCategoryUserTableInsert }
+) => {
+  const { count } = await supabaseClient
+    .from("jira_item_user_table")
+    .select("jira_item_user_id", { count: "exact" })
+    .eq(
+      "jira_item_user_item_category_id",
+      params.data.jira_item_user_item_category_id
+    );
+
+  if (Number(count)) {
+    return { success: false, data: null, error: "Duplicate entry" };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_item_user_table")
+    .insert(params.data)
+    .select(
+      `
+      jira_item_user_id,
+      jira_item_user_item_category_id,
+      jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id),
+      jira_item_user_role_id(jira_user_role_id, jira_user_role_label)
+      `
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return formatJiraItemUserTableData(data as JiraItemUserTableData);
+};
+
+// create jira project
+export const createJiraProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraProjectTableInsert
+) => {
+  // check if duplicate
+  const { count, error: duplicateError } = await supabaseClient
+    .from("jira_project_table")
+    .select("jira_project_id", { count: "exact" })
+    .eq("jira_project_jira_id", params.jira_project_jira_id);
+
+  if (duplicateError) throw duplicateError;
+
+  if (Number(count)) {
+    return { data: null, error: "Jira project already exists." };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_project_table")
+    .insert(params)
+    .select("*");
+
+  if (error) throw error;
+
+  return { data, error: null };
+};
+
+// create jira user
+export const createJiraUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraUserAccountTableInsert
+) => {
+  // check if duplicate
+  const { count, error: duplicateError } = await supabaseClient
+    .from("jira_user_account_table")
+    .select("jira_user_account_id", { count: "exact" })
+    .eq("jira_user_account_jira_id", params.jira_user_account_jira_id);
+
+  if (duplicateError) throw duplicateError;
+
+  if (Number(count)) {
+    return { success: false, error: "Jira user already exists." };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_user_account_table")
+    .insert(params);
+
+  if (error) throw error;
+
+  return { data, error: null };
+};
+
+// create jira item category
+export const createJiraFormslyItemCategory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraItemCategoryTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .from("jira_item_category_table")
+    .insert(params)
+    .select(
+      "*, assigned_jira_user: jira_item_user_table(jira_item_user_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label))"
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+
+  const assignedUser = data?.assigned_jira_user as {
+    jira_item_user_id: string;
+    jira_item_user_account_id: {
+      jira_user_account_jira_id: string;
+      jira_user_account_display_name: string;
+      jira_user_account_id: string;
+    };
+    jira_item_user_role_id: {
+      jira_user_role_id: string;
+      jira_user_role_label: string;
+    };
+  }[];
+
+  const formattedData = {
+    ...data,
+    assigned_jira_user:
+      {
+        ...assignedUser[0],
+        ...assignedUser[0]?.jira_item_user_account_id,
+        ...assignedUser[0]?.jira_item_user_role_id,
+      } ?? null,
+  };
+
+  return formattedData as unknown as JiraFormslyItemCategoryWithUserDataType;
 };
 
 // Create item category
