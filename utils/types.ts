@@ -1306,15 +1306,12 @@ export type TicketListOnLoad = {
   ticketCategoryList: TicketCategoryTableRow[];
 };
 
-export type ApproverUnresolvedRequestListType = {
-  request_signer_status: string;
-  request_signer: {
-    signer_team_member_id: string;
-  };
-  request: {
-    request_id: string;
-    request_jira_id: string | null;
-    request_status: string;
+export type ApproverUnresolvedRequestCountType = {
+  pendingRequestCount: number;
+  approvedRequestCount: {
+    total: number;
+    withJiraId: number;
+    withoutJiraId: number;
   };
 };
 
