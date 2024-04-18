@@ -20,7 +20,7 @@ export default async function handler(
     }
 
     const response = await fetch(
-      `${jiraConfig.api_url}/search?maxResults=1&jql=cf[10297]~"${req.query.formslyId}"`,
+      `${jiraConfig.api_url}/search?maxResults=1&jql=cf[10298]="Formsly"+and+cf[10010]["requestType"]="Send a Requisition Form for Notation"+and+cf[10297]~"${req.query.formslyId}"`,
       {
         method: "GET",
         headers: {
