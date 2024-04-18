@@ -345,7 +345,7 @@ const JiraFormslyItemCategoryList = ({
           withBorder
           fw="bolder"
           c="dimmed"
-          minHeight={390}
+          minHeight={600}
           idAccessor="jira_item_category_id"
           records={jiraItemCategoryList}
           totalRecords={jiraItemCategoryCount}
