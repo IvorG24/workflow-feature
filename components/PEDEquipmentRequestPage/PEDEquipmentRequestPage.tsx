@@ -1,15 +1,15 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getRequestComment, getSectionInRequestPage } from "@/backend/api/get";
+import {
+  getJiraAutomationDataByProjectId,
+  getRequestComment,
+  getSectionInRequestPage,
+} from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
-import {
-  useJiraItemCategoryData,
-  useJiraProjectData,
-} from "@/stores/useJiraAutomationData";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -87,8 +87,6 @@ const PEDEquipmentRequestPage = ({
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
-  const jiraProjectData = useJiraProjectData();
-  const jiraItemCategoryData = useJiraItemCategoryData();
 
   useEffect(() => {
     try {
@@ -343,10 +341,29 @@ const PEDEquipmentRequestPage = ({
     try {
       setIsLoading(true);
 
-      const requestProjectName = request.request_project.team_project_name;
-      const jiraProjectMatch = jiraProjectData.find(
-        (project) => project.team_project_name === requestProjectName
+      if (!request.request_project_id) {
+        notifications.show({
+          message: "Project id is not defined.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
+      setIsLoading(true);
+      const jiraAutomationData = await getJiraAutomationDataByProjectId(
+        supabaseClient,
+        { teamProjectId: request.request_project_id }
       );
+
+      if (!jiraAutomationData) {
+        notifications.show({
+          message: "Error fetching of Jira project and item category data.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
+      const { jiraProjectData, jiraItemCategoryData } = jiraAutomationData;
 
       const itemCategory =
         "Fixed Asset - Construction Equipment, Machinery and Tools";
@@ -355,7 +372,7 @@ const PEDEquipmentRequestPage = ({
         (item) => item.jira_item_category_formsly_label === itemCategory
       );
 
-      if (!jiraProjectMatch || !itemCategoryMatch) {
+      if (!jiraProjectData || !itemCategoryMatch) {
         notifications.show({
           message: "Jira project and item category data is missing.",
           color: "red",
@@ -363,23 +380,21 @@ const PEDEquipmentRequestPage = ({
         return { success: false, data: null };
       }
 
-      const warehouseAreaLead = jiraProjectMatch.jira_user_list.filter(
+      const warehouseAreaLead = jiraProjectData.jira_user_list.filter(
         (user) => user.jira_user_role_label === "WAREHOUSE AREA LEAD"
       )[0];
-      const warehouseRepresentative = jiraProjectMatch.jira_user_list.filter(
+      const warehouseRepresentative = jiraProjectData.jira_user_list.filter(
         (user) => user.jira_user_role_label === "WAREHOUSE REPRESENTATIVE"
       )[0];
-      const warehouseRequestParticipant =
-        jiraProjectMatch.jira_user_list.filter(
-          (user) =>
-            user.jira_user_role_label === "WAREHOUSE REQUEST PARTICIPANT"
-        );
+      const warehouseRequestParticipant = jiraProjectData.jira_user_list.filter(
+        (user) => user.jira_user_role_label === "WAREHOUSE REQUEST PARTICIPANT"
+      );
 
       const jiraTicketPayload = {
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "189",
-        jiraProjectSiteId: jiraProjectMatch.jira_project_jira_id,
+        jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
         jiraItemCategoryId: itemCategoryMatch.jira_item_category_jira_id,
 
         warehouseCorporateLeadId: itemCategoryMatch.jira_user_account_jira_id,

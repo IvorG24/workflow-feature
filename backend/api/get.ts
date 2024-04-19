@@ -6492,10 +6492,10 @@ export const getJiraItemCategoryList = async (
   };
 };
 
-export const getJiraAutomationDataByTeamMemberId = async (
+export const getJiraAutomationDataByProjectId = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    teamMemberId: string;
+    teamProjectId: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_jira_automation_data", {
@@ -6509,7 +6509,7 @@ export const getJiraAutomationDataByTeamMemberId = async (
   }
 
   return data as {
-    jiraProjectData: JiraProjectDataType[];
+    jiraProjectData: JiraProjectDataType;
     jiraItemCategoryData: JiraItemCategoryDataType[];
   };
 };

@@ -9846,65 +9846,44 @@ RETURNS JSON AS $$
   let jira_automation_data;
   plv8.subtransaction(function(){
     const {
-      teamMemberId
+      teamProjectId
     } = input_data;
     
     const projectJiraUserData = plv8.execute(
       `
         SELECT 
-            tpm.team_project_id,
-            tp.team_project_name,
             jpt.jira_project_jira_id,
-            jpt.jira_project_jira_label,
-            jua.jira_user_account_jira_id,
-            jua.jira_user_account_display_name,
-            jur.jira_user_role_label
+            jpt.jira_project_jira_label
         FROM
-            team_project_member_table tpm
-        LEFT JOIN
-            team_project_table tp ON tp.team_project_id = tpm.team_project_id
-        LEFT JOIN
-            jira_formsly_project_table jfpt ON jfpt.formsly_project_id = tpm.team_project_id
+            jira_formsly_project_table jfpt
         LEFT JOIN
             jira_project_table jpt ON jpt.jira_project_id = jfpt.jira_project_id
-        LEFT JOIN
-            jira_project_user_table jput ON jput.jira_project_user_team_project_id = tpm.team_project_id
-        LEFT JOIN
-            jira_user_account_table jua ON jua.jira_user_account_id = jput.jira_project_user_account_id
-        LEFT JOIN
-            jira_user_role_table jur ON jur.jira_user_role_id = jput.jira_project_user_role_id
         WHERE
-            tpm.team_member_id = '${teamMemberId}';
+            formsly_project_id = '${teamProjectId}'
       `
     );
 
-    const reducedJiraProjectData = projectJiraUserData.reduce((acc, curr) => {
-        const matchIndex = acc.findIndex((item) => item.team_project_id === curr.team_project_id);
+    const jira_user_list = plv8.execute(
+      `
+        SELECT
+          jua.jira_user_account_jira_id,
+          jua.jira_user_account_display_name,
+          jur.jira_user_role_label
+        FROM
+          jira_project_user_table jira_project_user_team_project_id
+        LEFT JOIN
+          jira_user_account_table jua ON jua.jira_user_account_id = jira_project_user_account_id
+        LEFT JOIN
+          jira_user_role_table jur ON jur.jira_user_role_id = jira_project_user_role_id
+        WHERE
+          jira_project_user_team_project_id = '${teamProjectId}'
+      `
+    );
 
-        if (matchIndex >= 0) {
-          acc[matchIndex].jira_user_list.push({
-            jira_user_account_jira_id: curr.jira_user_account_jira_id,
-            jira_user_account_display_name: curr.jira_user_account_display_name,
-            jira_user_role_label: curr.jira_user_role_label,
-          })
-        } else {
-          const projectJiraUserData = {
-            jira_user_account_jira_id: curr.jira_user_account_jira_id,
-            jira_user_account_display_name: curr.jira_user_account_display_name,
-            jira_user_role_label: curr.jira_user_role_label,
-          }
-          acc.push({
-            team_project_id: curr.team_project_id,
-            team_project_name: curr.team_project_name,
-            jira_project_jira_id: curr.jira_project_jira_id,
-            jira_project_jira_label: curr.jira_project_jira_label,
-            jira_user_list: curr.jira_user_account_jira_id ? [projectJiraUserData] : []
-          })
-        }
-
-        return acc;
-        
-    }, []);
+    const jiraProjectData = {
+      ...projectJiraUserData[0],
+      jira_user_list
+    };
 
     const jiraItemCategoryData = plv8.execute(
       `
@@ -9924,7 +9903,7 @@ RETURNS JSON AS $$
       `
     );
 
-    jira_automation_data = {jiraProjectData: reducedJiraProjectData, jiraItemCategoryData}
+    jira_automation_data = {jiraProjectData, jiraItemCategoryData}
  });
  return jira_automation_data;
 $$ LANGUAGE plv8;

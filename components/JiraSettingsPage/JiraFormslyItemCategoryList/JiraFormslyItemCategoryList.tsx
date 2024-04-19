@@ -321,12 +321,7 @@ const JiraFormslyItemCategoryList = ({
                   <IconSearch size={16} />
                 </ActionIcon>
               }
-              {...searchJiraFormslyItemCategoryMethods.register("search", {
-                onChange: (e) =>
-                  handleSearchJiraFormslyItemCategory({
-                    search: e.currentTarget.value,
-                  }),
-              })}
+              {...searchJiraFormslyItemCategoryMethods.register("search")}
             />
           </Group>
           <Button
