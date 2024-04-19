@@ -3,12 +3,10 @@ import {
   getAllNotification,
   getAllTeamOfUser,
   getFormList,
-  getJiraAutomationDataByTeamMemberId,
   getUser,
   getUserTeamMemberData,
 } from "@/backend/api/get";
 import { useFormActions } from "@/stores/useFormStore";
-import { useJiraAutomationActions } from "@/stores/useJiraAutomationData";
 import { useNotificationActions } from "@/stores/useNotificationStore";
 import { useTeamActions } from "@/stores/useTeamStore";
 import { useUserActions } from "@/stores/useUserStore";
@@ -46,8 +44,6 @@ const Layout = ({ children }: LayoutProps) => {
   } = useUserActions();
   const { setNotificationList, setUnreadNotification } =
     useNotificationActions();
-  const { setJiraProjectData, setJiraItemCategoryData } =
-    useJiraAutomationActions();
 
   const [openNavbar, setOpenNavbar] = useState(false);
 
@@ -114,21 +110,6 @@ const Layout = ({ children }: LayoutProps) => {
 
             // set form list
             setFormList(formList);
-
-            // fetch jira automation data
-            if (teamMember.team_member_role === "APPROVER") {
-              const jiraAutomationData =
-                await getJiraAutomationDataByTeamMemberId(supabaseClient, {
-                  teamMemberId: teamMember.team_member_id,
-                });
-
-              if (jiraAutomationData) {
-                setJiraProjectData(jiraAutomationData.jiraProjectData);
-                setJiraItemCategoryData(
-                  jiraAutomationData.jiraItemCategoryData
-                );
-              }
-            }
           }
         }
 

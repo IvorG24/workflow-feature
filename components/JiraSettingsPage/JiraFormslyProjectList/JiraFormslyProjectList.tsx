@@ -269,10 +269,7 @@ const JiraFormslyProjectList = ({
                   <IconSearch size={16} />
                 </ActionIcon>
               }
-              {...searchTeamProjectFormMethods.register("search", {
-                onChange: (e) =>
-                  handleSearchTeamProject({ search: e.currentTarget.value }),
-              })}
+              {...searchTeamProjectFormMethods.register("search")}
             />
           </form>
         </Group>

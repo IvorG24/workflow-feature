@@ -1688,8 +1688,6 @@ export type JiraUserDataType = {
 };
 
 export type JiraProjectDataType = {
-  team_project_id: string;
-  team_project_name: string;
   jira_project_jira_id: string;
   jira_project_jira_label: string;
   jira_user_list: JiraUserDataType[];

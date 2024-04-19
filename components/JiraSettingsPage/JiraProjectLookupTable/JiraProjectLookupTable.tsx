@@ -209,10 +209,7 @@ const JiraProjectLookupTable = ({
                   <IconSearch size={16} />
                 </ActionIcon>
               }
-              {...searchJiraProjectFormMethods.register("search", {
-                onChange: (e) =>
-                  handleSearchJiraProject({ search: e.currentTarget.value }),
-              })}
+              {...searchJiraProjectFormMethods.register("search")}
             />
             <Button
               variant="light"

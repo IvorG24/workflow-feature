@@ -217,10 +217,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
                   <IconSearch size={16} />
                 </ActionIcon>
               }
-              {...searchJiraUserFormMethods.register("search", {
-                onChange: (e) =>
-                  handleSearchJiraUser({ search: e.currentTarget.value }),
-              })}
+              {...searchJiraUserFormMethods.register("search")}
             />
             <Button
               variant="light"
