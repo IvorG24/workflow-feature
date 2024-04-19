@@ -380,7 +380,7 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
       if (!jiraProjectData || !itemCategoryMatch) {
         notifications.show({
-          message: "Item category data is missing.",
+          message: "Jira project and item category data is missing.",
           color: "red",
         });
         return { success: false, data: null };
