@@ -337,11 +337,18 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
   const onCreateJiraTicket = async () => {
     try {
-      setIsLoading(true);
+      if (!request.request_project_id) {
+        notifications.show({
+          message: "Project id is not defined.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
 
+      setIsLoading(true);
       const jiraAutomationData = await getJiraAutomationDataByProjectId(
         supabaseClient,
-        { teamProjectId: request.request_project.team_project_id }
+        { teamProjectId: request.request_project_id }
       );
 
       if (!jiraAutomationData) {

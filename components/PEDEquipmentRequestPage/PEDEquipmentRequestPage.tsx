@@ -339,8 +339,6 @@ const PEDEquipmentRequestPage = ({
 
   const onCreateJiraTicket = async () => {
     try {
-      setIsLoading(true);
-
       if (!request.request_project_id) {
         notifications.show({
           message: "Project id is not defined.",
