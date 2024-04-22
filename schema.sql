@@ -10367,6 +10367,7 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_user_account_
 DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_project_user_table;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_category_table;
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_user_table;
 
@@ -13046,7 +13047,7 @@ USING (
   )
 );
 
--- JIRA_FORMSLY_PROJECT_TABLE
+-- JIRA_USER_ROLE_TABLE
 CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_user_role_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
@@ -13081,6 +13082,22 @@ WITH CHECK (
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
 AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_project_user_team_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
+AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   (
