@@ -1,11 +1,5 @@
 import { Database } from "@/utils/database";
-import {
-  ActionIcon,
-  Button,
-  ButtonProps,
-  Flex,
-  FlexProps,
-} from "@mantine/core";
+import { Button, ButtonProps, Flex, FlexProps } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Provider } from "@supabase/supabase-js";
@@ -67,11 +61,7 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
         Facebook
       </Button> */}
       <Button
-        leftIcon={
-          <ActionIcon size={16}>
-            <GoogleIcon />
-          </ActionIcon>
-        }
+        leftIcon={<GoogleIcon />}
         {...buttonprops}
         onClick={() => handleSignin("google")}
       >
@@ -85,11 +75,7 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
         Twitter
       </Button> */}
       <Button
-        leftIcon={
-          <ActionIcon size={16}>
-            <AzureIcon />
-          </ActionIcon>
-        }
+        leftIcon={<AzureIcon />}
         {...buttonprops}
         onClick={() => handleSignInWithAzure()}
       >

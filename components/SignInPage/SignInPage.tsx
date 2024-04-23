@@ -179,9 +179,9 @@ const SignInPage = () => {
               <MediaQuery smallerThan="sm" styles={{ display: "none" }}>
                 <Box w="100%">
                   <RedirectButton
-                    link={"/sign-in"}
-                    label="Already have an account?"
-                    highlightLabel="Login Here"
+                    link={"/sign-up"}
+                    label="Don't have an account?"
+                    highlightLabel="Register Here"
                   />
                 </Box>
               </MediaQuery>
