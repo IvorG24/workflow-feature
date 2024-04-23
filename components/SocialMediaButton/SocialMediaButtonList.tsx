@@ -1,5 +1,11 @@
 import { Database } from "@/utils/database";
-import { Button, ButtonProps, Flex, FlexProps } from "@mantine/core";
+import {
+  ActionIcon,
+  Button,
+  ButtonProps,
+  Flex,
+  FlexProps,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Provider } from "@supabase/supabase-js";
@@ -9,10 +15,14 @@ import { GoogleIcon } from "./GoogleIcon";
 type ButtonListProps = {
   flexprops?: FlexProps;
   buttonprops?: ButtonProps;
+  providerLabel: {
+    google: string;
+    azure: string;
+  };
 };
 
 const SocialMediaButtonList = (props: ButtonListProps) => {
-  const { flexprops, buttonprops } = props;
+  const { flexprops, buttonprops, providerLabel } = props;
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const handleSignin = async (provider: Provider) => {
@@ -57,11 +67,15 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
         Facebook
       </Button> */}
       <Button
-        leftIcon={<GoogleIcon />}
+        leftIcon={
+          <ActionIcon size={16}>
+            <GoogleIcon />
+          </ActionIcon>
+        }
         {...buttonprops}
         onClick={() => handleSignin("google")}
       >
-        Google
+        {providerLabel.google}
       </Button>
       {/* <Button
         leftIcon={<TwitterIcon color="#00acee" />}
@@ -71,11 +85,15 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
         Twitter
       </Button> */}
       <Button
-        leftIcon={<AzureIcon />}
+        leftIcon={
+          <ActionIcon size={16}>
+            <AzureIcon />
+          </ActionIcon>
+        }
         {...buttonprops}
         onClick={() => handleSignInWithAzure()}
       >
-        Azure
+        {providerLabel.azure}
       </Button>
     </Flex>
   );

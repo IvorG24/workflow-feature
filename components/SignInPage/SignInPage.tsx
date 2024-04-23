@@ -161,6 +161,10 @@ const SignInPage = () => {
           <SocialMediaButtonList
             flexprops={{ mt: "md", direction: "column", gap: "sm" }}
             buttonprops={{ variant: "outline" }}
+            providerLabel={{
+              google: "Sign in with Google",
+              azure: "Sign in with Azure",
+            }}
           />
         </Paper>
       </Center>

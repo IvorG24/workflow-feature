@@ -26,8 +26,8 @@ describe("SignUpPage", () => {
   it("renders oauth buttons", () => {
     render(<SignUpPage />);
 
-    const googleAuth = screen.getByRole("button", { name: "Google" });
-    const azureAuth = screen.getByRole("button", { name: "Azure" });
+    const googleAuth = screen.getByRole("button", { name: /google/i });
+    const azureAuth = screen.getByRole("button", { name: /azure/i });
 
     expect(googleAuth).toBeInTheDocument();
     expect(azureAuth).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe("SignUpPage", () => {
   it("renders error on empty input", async () => {
     render(<SignUpPage />);
 
-    const signUpButton = screen.getByRole("button", { name: /sign up/i });
+    const signUpButton = screen.getByRole("button", { name: "Sign up" });
     fireEvent.click(signUpButton);
 
     expect(
@@ -53,7 +53,7 @@ describe("SignUpPage", () => {
   it("renders error on invalid email", async () => {
     render(<SignUpPage />);
     const emailInput = screen.getByRole("textbox", { name: "Email" });
-    const signUpButton = screen.getByRole("button", { name: /sign up/i });
+    const signUpButton = screen.getByRole("button", { name: "Sign up" });
     fireEvent.change(emailInput, { target: { value: "invalidemail" } });
     fireEvent.click(signUpButton);
     expect(await screen.findByText(/email is invalid/i)).toBeInTheDocument();
