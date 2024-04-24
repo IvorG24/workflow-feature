@@ -1,6 +1,4 @@
 import {
-  checkUsername,
-  getBarangay,
   getCity,
   getProvince,
   getRegion,
@@ -13,39 +11,27 @@ import {
   uploadImage,
 } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { ID_OPTIONS } from "@/utils/constant";
-import {
-  formatTeamNameToUrlKey,
-  isUUID,
-  removeMultipleSpaces,
-  toTitleCase,
-} from "@/utils/string";
-import { mobileNumberFormatter } from "@/utils/styling";
+import { formatTeamNameToUrlKey, isUUID } from "@/utils/string";
 import { OptionType } from "@/utils/types";
 import {
-  Button,
   Center,
   Container,
   Divider,
-  FileInput,
   Flex,
-  Grid,
-  NumberInput,
   Paper,
-  Select,
   Text,
-  TextInput,
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { User, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import UploadAvatar from "../UploadAvatar/UploadAvatar";
+import FirstStep from "./FirstStep";
+import SecondStep from "./SecondStep";
 
-type OnboardUserParams = {
+export type OnboardUserParams = {
   user_id: string;
   user_email: string;
   user_first_name: string;
@@ -87,7 +73,10 @@ const OnboardingPage = ({ user }: Props) => {
   const [provinceOptions, setProvinceOptions] = useState<OptionType[]>([]);
   const [cityOptions, setCityOptions] = useState<OptionType[]>([]);
   const [barangayOptions, setBarangayOptions] = useState<OptionType[]>([]);
-  const [zipCodeOptions, setZipCodeOptions] = useState<OptionType[]>([]);
+  // const [zipCodeOptions, setZipCodeOptions] = useState<OptionType[]>([]);
+  const [activeStep, setActiveStep] = useState(1);
+
+  const totalSections = 3;
 
   useEffect(() => {
     try {
@@ -103,20 +92,21 @@ const OnboardingPage = ({ user }: Props) => {
     }
   }, []);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    control,
-    setValue,
-    watch,
-  } = useForm<OnboardUserParams>({
+  const submitOnboardingMethods = useForm<OnboardUserParams>({
     defaultValues: { user_id: user.id, user_email: user.email },
-    reValidateMode: "onChange",
   });
 
-  const watchBarangay = watch("user_id_barangay");
+  const {
+    // register,
+    handleSubmit,
+    // formState: { errors },
+    setError,
+    // control,
+    setValue,
+    // watch,
+  } = submitOnboardingMethods;
+
+  // const watchBarangay = watch("user_id_barangay");
 
   const handleOnboardUser = async (data: OnboardUserParams) => {
     setIsLoading(true);
@@ -311,65 +301,108 @@ const OnboardingPage = ({ user }: Props) => {
     }
   };
 
-  const handleFetchBarangayOptions = async (value: string | null) => {
-    try {
-      setBarangayOptions([]);
-      setValue("user_id_barangay", "");
-      setValue("user_id_street", "");
-      setValue("user_id_zip_code", "");
-      if (!value) return;
+  // const handleFetchBarangayOptions = async (value: string | null) => {
+  //   try {
+  //     setBarangayOptions([]);
+  //     setValue("user_id_barangay", "");
+  //     setValue("user_id_street", "");
+  //     setValue("user_id_zip_code", "");
+  //     if (!value) return;
 
-      const data = await getBarangay(supabaseClient, { cityId: value });
-      setBarangayOptions(
-        data.map((barangay) => {
-          return {
-            label: barangay.barangay,
-            value: barangay.barangay_id,
-          };
-        })
-      );
-      setZipCodeOptions(
-        data.map((barangay) => {
-          return {
-            label: barangay.barangay_zip_code,
-            value: barangay.barangay_id,
-          };
-        })
-      );
-    } catch (e) {
-      setValue("user_id_city", "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    }
-  };
+  //     const data = await getBarangay(supabaseClient, { cityId: value });
+  //     setBarangayOptions(
+  //       data.map((barangay) => {
+  //         return {
+  //           label: barangay.barangay,
+  //           value: barangay.barangay_id,
+  //         };
+  //       })
+  //     );
+  //     setZipCodeOptions(
+  //       data.map((barangay) => {
+  //         return {
+  //           label: barangay.barangay_zip_code,
+  //           value: barangay.barangay_id,
+  //         };
+  //       })
+  //     );
+  //   } catch (e) {
+  //     setValue("user_id_city", "");
+  //     notifications.show({
+  //       message: "Something went wrong. Please try again later.",
+  //       color: "red",
+  //     });
+  //   }
+  // };
 
-  const handleFetchZipCode = async (value: string | null) => {
-    try {
-      if (!value) {
-        setValue("user_id_zip_code", "");
+  // const handleFetchZipCode = async (value: string | null) => {
+  //   try {
+  //     if (!value) {
+  //       setValue("user_id_zip_code", "");
+  //       return;
+  //     }
+
+  //     const zipCode = zipCodeOptions.find((zipCode) => zipCode.value === value);
+  //     if (!zipCode) {
+  //       setValue("user_id_zip_code", "");
+  //       return;
+  //     }
+
+  //     setValue("user_id_zip_code", zipCode.label);
+  //   } catch (e) {
+  //     setValue("user_id_zip_code", "");
+  //     notifications.show({
+  //       message: "Something went wrong. Please try again later.",
+  //       color: "red",
+  //     });
+  //   }
+  // };
+
+  const renderActiveStep = (step: number) => {
+    switch (step) {
+      case 1:
+        return (
+          <FirstStep
+            activeStep={step}
+            totalSections={totalSections}
+            avatarFile={avatarFile}
+            setAvatarFile={setAvatarFile}
+            setActiveStep={setActiveStep}
+          />
+        );
+
+      case 2:
+        return (
+          <SecondStep
+            activeStep={step}
+            totalSections={totalSections}
+            idLabel={idLabel}
+            regionOptions={regionOptions}
+            provinceOptions={provinceOptions}
+            setActiveStep={setActiveStep}
+            setIdType={setIdType}
+            handleFetchProvinceOptions={handleFetchProvinceOptions}
+            handleFetchCityOptions={handleFetchCityOptions}
+          />
+        );
+
+      default:
         return;
-      }
-
-      const zipCode = zipCodeOptions.find((zipCode) => zipCode.value === value);
-      if (!zipCode) {
-        setValue("user_id_zip_code", "");
-        return;
-      }
-
-      setValue("user_id_zip_code", zipCode.label);
-    } catch (e) {
-      setValue("user_id_zip_code", "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
     }
   };
 
   return (
     <Container p={0} mih="100vh" fluid>
+      <Flex h="100%" w="100%" justify="center" mt={{ sm: 45, lg: 75 }}>
+        <Paper p={32} pb={64} shadow="sm" withBorder w={800} h={520}>
+          <FormProvider {...submitOnboardingMethods}>
+            <form onSubmit={handleSubmit(handleOnboardUser)}>
+              {renderActiveStep(activeStep)}
+            </form>
+          </FormProvider>
+        </Paper>
+      </Flex>
+
       <Container p="xl" maw={{ base: 450, xs: 750 }}>
         <Paper p="xl" shadow="sm" withBorder>
           <Title color="blue">Onboarding</Title>
@@ -390,7 +423,7 @@ const OnboardingPage = ({ user }: Props) => {
             />
           </Center>
 
-          <form onSubmit={handleSubmit(handleOnboardUser)}>
+          {/* <form onSubmit={handleSubmit(handleOnboardUser)}>
             <Grid columns={2} gutter="sm">
               <Grid.Col xs={2} sm={1}>
                 <TextInput
@@ -978,7 +1011,7 @@ const OnboardingPage = ({ user }: Props) => {
             <Button type="submit" mt="xl" fullWidth>
               Save and Continue
             </Button>
-          </form>
+          </form> */}
         </Paper>
       </Container>
     </Container>
