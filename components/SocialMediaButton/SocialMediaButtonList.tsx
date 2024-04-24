@@ -9,10 +9,14 @@ import { GoogleIcon } from "./GoogleIcon";
 type ButtonListProps = {
   flexprops?: FlexProps;
   buttonprops?: ButtonProps;
+  providerLabel: {
+    google: string;
+    azure: string;
+  };
 };
 
 const SocialMediaButtonList = (props: ButtonListProps) => {
-  const { flexprops, buttonprops } = props;
+  const { flexprops, buttonprops, providerLabel } = props;
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const handleSignin = async (provider: Provider) => {
@@ -61,7 +65,7 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
         {...buttonprops}
         onClick={() => handleSignin("google")}
       >
-        Google
+        {providerLabel.google}
       </Button>
       {/* <Button
         leftIcon={<TwitterIcon color="#00acee" />}
@@ -75,7 +79,7 @@ const SocialMediaButtonList = (props: ButtonListProps) => {
         {...buttonprops}
         onClick={() => handleSignInWithAzure()}
       >
-        Azure
+        {providerLabel.azure}
       </Button>
     </Flex>
   );

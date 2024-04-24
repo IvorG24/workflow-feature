@@ -10,8 +10,8 @@ export function AzureIcon(props: React.ComponentProps<"svg">) {
       viewBox="0 -28.5 256 256"
       version="1.1"
       xmlns="http://www.w3.org/2000/svg"
-      width={24}
-      height={24}
+      width={16}
+      height={16}
       {...props}
     >
       <title>path21</title>
