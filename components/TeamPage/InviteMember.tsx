@@ -2,11 +2,11 @@ import { getTeamInvitation } from "@/backend/api/get";
 import { cancelTeamInvitation, createTeamInvitation } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { JWT_SECRET_KEY } from "@/utils/constant";
+import { JWT_SECRET_KEY, ROW_PER_PAGE } from "@/utils/constant";
+import { getPagination } from "@/utils/functions";
 import { TeamMemberType } from "@/utils/types";
 import {
-  Accordion,
-  Box,
+  ActionIcon,
   Button,
   Container,
   Divider,
@@ -17,12 +17,14 @@ import {
   Paper,
   Stack,
   Text,
+  TextInput,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconMail, IconMailPlus, IconUsersPlus } from "@tabler/icons-react";
+import { IconMailPlus, IconSearch, IconUsersPlus } from "@tabler/icons-react";
 import jwt from "jsonwebtoken";
+import { DataTable } from "mantine-datatable";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import validator from "validator";
@@ -49,7 +51,7 @@ type ResendInviteTimeout = {
   invitation_resend_date_created: Date;
 }[];
 
-const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
+const InviteMember = ({ memberEmailList }: Props) => {
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
   const supabaseClient = useSupabaseClient();
@@ -59,12 +61,15 @@ const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
   const [pendingInviteList, setPendingInviteList] = useState<PendingInvite[]>(
     []
   );
+  const [pendingInviteCount, setPendingInviteCount] = useState(0);
   const [isResendingInvite, setIsResendingInvite] = useState(false);
   const [resendInviteTimeoutList, setResendInviteTimeoutList] =
     useLocalStorage<ResendInviteTimeout>({
       key: "formsly-resend-invite-timeout",
       defaultValue: [],
     });
+  const [activePage, setActivePage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
 
   const handleInvite = async () => {
     try {
@@ -78,7 +83,7 @@ const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
       });
 
       await sendEmailInvite(emailList);
-      await fetchPendingInviteList();
+      await handleFetchPendingInviteList({ page: 1 });
       setEmailList([]);
       notifications.show({
         message: "Team member/s invited.",
@@ -217,16 +222,46 @@ const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
     }
   };
 
-  const fetchPendingInviteList = async () => {
-    const { data } = await getTeamInvitation(supabaseClient, {
-      teamId: team.team_id,
-      status: "PENDING",
-    });
-    setPendingInviteList(data as unknown as PendingInvite[]);
+  const handleFetchPendingInviteList = async ({
+    search,
+    page,
+  }: {
+    search?: string;
+    page: number;
+  }) => {
+    try {
+      const { from, to } = getPagination(page - 1, ROW_PER_PAGE);
+      const { data, count } = await getTeamInvitation(supabaseClient, {
+        teamId: team.team_id,
+        status: "PENDING",
+        from,
+        to,
+        search,
+      });
+
+      setPendingInviteList(data as unknown as PendingInvite[]);
+      setPendingInviteCount(count);
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Error fetching pending invite list.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleSearchPendingInvite = async (search: string) => {
+    setActivePage(1);
+    handleFetchPendingInviteList({ search, page: 1 });
+  };
+
+  const handlePagination = async (page: number) => {
+    setActivePage(page);
+    handleFetchPendingInviteList({ search: searchInput, page });
   };
 
   useEffect(() => {
-    fetchPendingInviteList();
+    handleFetchPendingInviteList({ page: activePage });
   }, []);
 
   return (
@@ -310,79 +345,96 @@ const InviteMember = ({ memberEmailList, isOwnerOrAdmin }: Props) => {
             </Button>
           </Flex>
         </Stack>
+      </Paper>
+      <Paper mt="lg" p="lg" shadow="xs">
+        <Stack>
+          <LoadingOverlay visible={isResendingInvite} />
+          <Flex align="center" wrap="wrap" gap="lg">
+            <Text weight={600}>
+              {`Pending Invites (${pendingInviteCount})`}
+            </Text>
+            <TextInput
+              miw={250}
+              placeholder="Search by email"
+              value={searchInput}
+              onChange={async (e) => {
+                setSearchInput(e.target.value);
+              }}
+              onKeyUp={(e) => {
+                if (e.key === "Enter") {
+                  handleSearchPendingInvite(searchInput);
+                }
+              }}
+              rightSection={
+                <ActionIcon
+                  onClick={() => {
+                    handleSearchPendingInvite(searchInput);
+                  }}
+                >
+                  <IconSearch size={16} />
+                </ActionIcon>
+              }
+            />
+          </Flex>
 
-        <Box mt="lg">
-          <Accordion>
-            <Accordion.Item value="invites">
-              <Accordion.Control icon={<IconMail size={16} />}>
-                <Text
-                  weight={600}
-                >{`Pending Invites (${pendingInviteList.length})`}</Text>
-              </Accordion.Control>
-              <Accordion.Panel>
-                {pendingInviteList.length > 0 && (
-                  <Stack mt="sm" fz={14} spacing="xs" pos="relative">
-                    <LoadingOverlay visible={isResendingInvite} />
-                    {pendingInviteList.map((invite) => {
-                      const resendDateCreated =
-                        resendInviteTimeoutList.find(
-                          (resendInvite) =>
-                            resendInvite.invitation_email ===
-                            invite.invitation_to_email
-                        )?.invitation_resend_date_created || null;
+          <DataTable
+            idAccessor="invitation_id"
+            fw="bolder"
+            c="dimmed"
+            withBorder
+            minHeight={390}
+            records={pendingInviteList}
+            totalRecords={pendingInviteCount}
+            recordsPerPage={ROW_PER_PAGE}
+            page={activePage}
+            onPageChange={handlePagination}
+            columns={[
+              {
+                accessor: "invitation_to_email",
+                title: "Email",
+                render: ({ invitation_to_email }) => (
+                  <Text>{invitation_to_email}</Text>
+                ),
+              },
+              {
+                accessor: "action",
+                title: "Action",
+                textAlignment: "center",
+                width: 200,
+                render: ({ invitation_id, invitation_to_email }) => {
+                  const resendDateCreated =
+                    resendInviteTimeoutList.find(
+                      (resendInvite) =>
+                        resendInvite.invitation_email === invitation_to_email
+                    )?.invitation_resend_date_created || null;
 
-                      const dateNow = new Date();
-                      const isResendDisabled = resendDateCreated
-                        ? !(
-                            moment(dateNow).diff(resendDateCreated, "minutes") >
-                            1
-                          )
-                        : false;
+                  const dateNow = new Date();
+                  const isResendDisabled = resendDateCreated
+                    ? !(moment(dateNow).diff(resendDateCreated, "minutes") > 1)
+                    : false;
 
-                      return (
-                        <Box key={invite.invitation_id}>
-                          <Divider />
-                          <Flex
-                            px="sm"
-                            mt="sm"
-                            justify="space-between"
-                            align="center"
-                          >
-                            <Text>{invite.invitation_to_email}</Text>
-
-                            {isOwnerOrAdmin && (
-                              <Group position="right">
-                                <Button
-                                  variant="subtle"
-                                  onClick={() =>
-                                    handleCancelInvite(invite.invitation_id)
-                                  }
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  miw={84}
-                                  onClick={() =>
-                                    handleResendInvite(
-                                      invite.invitation_to_email
-                                    )
-                                  }
-                                  disabled={isResendDisabled}
-                                >
-                                  {isResendDisabled ? "Sent" : "Resend"}
-                                </Button>
-                              </Group>
-                            )}
-                          </Flex>
-                        </Box>
-                      );
-                    })}
-                  </Stack>
-                )}
-              </Accordion.Panel>
-            </Accordion.Item>
-          </Accordion>
-        </Box>
+                  return (
+                    <Group key={invitation_id} position="right">
+                      <Button
+                        variant="subtle"
+                        onClick={() => handleCancelInvite(invitation_id)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        miw={84}
+                        onClick={() => handleResendInvite(invitation_to_email)}
+                        disabled={isResendDisabled}
+                      >
+                        {isResendDisabled ? "Sent" : "Resend"}
+                      </Button>
+                    </Group>
+                  );
+                },
+              },
+            ]}
+          />
+        </Stack>
       </Paper>
     </Container>
   );

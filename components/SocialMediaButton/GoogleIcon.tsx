@@ -4,8 +4,8 @@ export function GoogleIcon(props: React.ComponentPropsWithoutRef<"svg">) {
       xmlns="http://www.w3.org/2000/svg"
       preserveAspectRatio="xMidYMid"
       viewBox="0 0 256 262"
-      width={24}
-      height={24}
+      width={16}
+      height={16}
       {...props}
     >
       <path

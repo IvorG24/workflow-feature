@@ -86,8 +86,7 @@ const PasswordInputWithStrengthMeter = ({
               placeholder="Enter your password"
               error={errors.password?.message}
               {...register("password", {
-                required:
-                  "Password field cannot be empty. Please enter your password.",
+                required: "Password field cannot be empty.",
                 minLength: {
                   value: 6,
                   message: "Password must have atleast 6 characters.",
