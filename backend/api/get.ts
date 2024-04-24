@@ -3153,21 +3153,33 @@ export const getTeamInvitation = async (
   params: {
     teamId: string;
     status: string;
+    from: number;
+    to: number;
+    search?: string;
   }
 ) => {
-  const { teamId, status } = params;
-  const { data, error } = await supabaseClient
+  const { teamId, status, search, from, to } = params;
+  let query = supabaseClient
     .from("invitation_table")
     .select(
-      "invitation_id, invitation_to_email, invitation_date_created, team_member: invitation_from_team_member_id!inner(team_member_team_id)"
+      "invitation_id, invitation_to_email, invitation_date_created, team_member: invitation_from_team_member_id!inner(team_member_team_id)",
+      { count: "exact" }
     )
     .eq("team_member.team_member_team_id", teamId)
     .eq("invitation_status", status)
-    .eq("invitation_is_disabled", false);
+    .eq("invitation_is_disabled", false)
+    .order("invitation_to_email")
+    .range(from, to);
+
+  if (search) {
+    query = query.ilike("invitation_to_email", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
 
   if (error) throw error;
 
-  return { data, error: null };
+  return { data, count: Number(count), error: null };
 };
 
 export const getRequestFormslyId = async (
