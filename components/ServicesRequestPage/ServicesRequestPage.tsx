@@ -165,7 +165,8 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string
+    jiraId?: string,
+    jiraLink?: string
   ) => {
     try {
       setIsLoading(true);
@@ -180,18 +181,6 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       }
       if (!teamMember) return;
 
-      let autoJiraLink = "";
-      const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
-      );
-
-      if (newJiraTicketData.ok) {
-        const jiraTicket = await newJiraTicketData.json();
-        const jiraTicketWebLink =
-          jiraTicket.fields["customfield_10010"]._links.web;
-        autoJiraLink = jiraTicketWebLink;
-      }
-
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -203,7 +192,7 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
-        jiraLink: autoJiraLink,
+        jiraLink,
         requestFormslyId: request.request_formsly_id,
       });
 
