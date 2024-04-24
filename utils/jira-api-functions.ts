@@ -5,6 +5,7 @@ import { Database } from "./database";
 import {
   formatJiraTicketPayload,
   generateJiraCommentPayload,
+  isEmpty,
 } from "./functions";
 import {
   JiraTicketData,
@@ -42,9 +43,16 @@ export const createJiraTicket = async ({
     const duplicateJiraTicketData = await duplicateJiraTicketResponse.json();
 
     if (duplicateJiraTicketData.total > 0) {
-      console.log(duplicateJiraTicketData.total);
-      console.error("Duplicate jira ticket");
-      return { success: false, data: null };
+      const duplicateTicket = duplicateJiraTicketData.issues[0];
+      const jiraTicketKey: string = duplicateTicket.key;
+      const jiraTicketWebLink: string =
+        duplicateTicket.fields["customfield_10010"]._links.web;
+
+      if (isEmpty(jiraTicketKey) || isEmpty(jiraTicketWebLink)) {
+        return { success: false, data: null };
+      } else {
+        return { success: true, data: { jiraTicketKey, jiraTicketWebLink } };
+      }
     }
 
     const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
