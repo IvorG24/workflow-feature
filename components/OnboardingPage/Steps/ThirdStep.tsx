@@ -87,7 +87,6 @@ const ThirdStep = ({
                     value={value}
                     error={errors.user_id_city?.message}
                     disabled={cityOptions.length === 0}
-                    mt="sm"
                     {...defaultInputProps}
                   />
                 )}
@@ -111,7 +110,6 @@ const ThirdStep = ({
                     value={value}
                     error={errors.user_id_barangay?.message}
                     disabled={barangayOptions.length === 0}
-                    mt="sm"
                     {...defaultInputProps}
                   />
                 )}
@@ -142,7 +140,6 @@ const ThirdStep = ({
                 label="Street"
                 error={errors.user_id_street?.message}
                 disabled={!watchBarangay}
-                mt="sm"
                 placeholder="123 Joze Rizal Street"
                 {...defaultInputProps}
               />
@@ -159,7 +156,6 @@ const ThirdStep = ({
                 placeholder="1300"
                 error={errors.user_id_zip_code?.message}
                 variant="filled"
-                mt="sm"
                 {...defaultInputProps}
               />
               <TextInput
