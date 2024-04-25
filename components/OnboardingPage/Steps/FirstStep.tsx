@@ -11,19 +11,20 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import UploadAvatar from "../UploadAvatar/UploadAvatar";
-import { OnboardUserParams } from "./OnboardingPage";
-import SubmitSection from "./SubmitSection";
+import UploadAvatar from "../../UploadAvatar/UploadAvatar";
+import { OnboardUserParams } from "../OnboardingPage";
+import SubmitSection from "../SubmitSection";
 
 type Props = {
   activeStep: number;
   totalSections: number;
   avatarFile: File | null;
   setAvatarFile: Dispatch<SetStateAction<File | null>>;
-  setActiveStep: Dispatch<SetStateAction<number>>;
+  handleChangeStep: (action: "PREVIOUS" | "NEXT") => Promise<void>;
 };
 
 const FirstStep = ({
@@ -31,8 +32,9 @@ const FirstStep = ({
   totalSections,
   avatarFile,
   setAvatarFile,
-  setActiveStep,
+  handleChangeStep,
 }: Props) => {
+  const isMobileScreen = useMediaQuery("(max-width: 475px)");
   const supabaseClient = createPagesBrowserClient<Database>();
   const {
     register,
@@ -42,19 +44,14 @@ const FirstStep = ({
     setError,
   } = useFormContext<OnboardUserParams>();
 
-  const inputList = [
-    "user_employee_number",
-    "user_username",
-    "user_first_name",
-    "user_last_name",
-    "user_phone_number",
-    "user_job_title",
-  ];
-
-  const defaultInputProps = { h: 80, styles: { required: { color: "red" } } };
+  const defaultInputProps = {
+    w: "100%",
+    styles: { required: { color: "red" } },
+    h: { sm: 80 },
+  };
 
   return (
-    <Stack h="100%" mah={334} spacing={32}>
+    <Stack h="100%" spacing={32}>
       <Flex justify="space-between">
         <Box>
           <Text size={20} weight={700}>
@@ -67,33 +64,61 @@ const FirstStep = ({
         </Box>
         <Text weight={600}>{`${activeStep}/${totalSections}`}</Text>
       </Flex>
-      <Flex h="100%" gap={32}>
-        <Stack
+      <Flex
+        h="fit-content"
+        gap={{ base: 16, sm: 32 }}
+        direction={{ base: "column", sm: "row" }}
+      >
+        <Flex
+          gap={16}
+          direction={{ base: "row", sm: "column" }}
           align="center"
-          justify="center"
+          justify={{ base: "space-between", sm: "center" }}
           p="md"
-          w={300}
+          w={{ base: "100%", sm: 300 }}
           sx={{ border: "1px dashed #CED4DA", borderRadius: 8 }}
         >
-          <Text size={14} weight={600}>
-            Profile Picture
-          </Text>
+          {!isMobileScreen && (
+            <Text size={14} weight={600}>
+              Profile Picture
+            </Text>
+          )}
           <UploadAvatar
             value={avatarFile}
             onChange={setAvatarFile}
             onError={(error: string) =>
               setError("user_avatar", { message: error })
             }
-            size={140}
+            size={isMobileScreen ? 100 : 140}
           />
-          <Box sx={{ textAlign: "center", color: "#495057", fontSize: 14 }}>
-            <Text>Allowed *.jpg, *jpeg, *.png</Text>
-            <Text>Max allowed of 5 MB</Text>
+          <Box>
+            {isMobileScreen && (
+              <Text size={14} weight={600}>
+                Profile Picture
+              </Text>
+            )}
+            <Text
+              align={isMobileScreen ? "left" : "center"}
+              color="#495057"
+              size={14}
+            >
+              Allowed *.jpg, *jpeg, *.png
+            </Text>
+            <Text
+              align={isMobileScreen ? "left" : "center"}
+              color="#495057"
+              size={14}
+            >
+              Max allowed of 5 MB
+            </Text>
           </Box>
-        </Stack>
-        <Box sx={{ flex: 1 }}>
+        </Flex>
+        <Box h="100%" sx={{ flex: 1 }}>
           <Stack spacing={36}>
-            <SimpleGrid cols={2}>
+            <SimpleGrid
+              cols={2}
+              breakpoints={[{ maxWidth: "sm", cols: 1, spacing: "sm" }]}
+            >
               <Controller
                 control={control}
                 name="user_employee_number"
@@ -175,6 +200,27 @@ const FirstStep = ({
                 {...defaultInputProps}
               />
               <TextInput
+                label="Middle Name"
+                {...register("user_id_middle_name", {
+                  onChange: (e) => {
+                    const format = toTitleCase(
+                      removeMultipleSpaces(e.currentTarget.value)
+                    );
+                    setValue("user_id_middle_name", format);
+                  },
+                  minLength: {
+                    value: 2,
+                    message: "Middle name must have at least 2 characters",
+                  },
+                  maxLength: {
+                    value: 100,
+                    message: "Middle name must be shorter than 100 characters",
+                  },
+                })}
+                placeholder="Rizal"
+                error={errors.user_id_middle_name?.message}
+              />
+              <TextInput
                 label="Last Name"
                 placeholder="Dela Cruz"
                 {...register("user_last_name", {
@@ -219,7 +265,7 @@ const FirstStep = ({
                         : "Mobile number must start with 9",
                   },
                 }}
-                render={({ field: { onChange } }) => (
+                render={({ field: { onChange, value } }) => (
                   <NumberInput
                     label="Mobile Number"
                     placeholder="9123456789"
@@ -229,6 +275,7 @@ const FirstStep = ({
                     icon="+63"
                     min={0}
                     max={9999999999}
+                    value={Number(value) || ""}
                     onChange={onChange}
                     error={errors.user_phone_number?.message}
                     required
@@ -236,31 +283,10 @@ const FirstStep = ({
                   />
                 )}
               />
-              <TextInput
-                label="Job Title"
-                placeholder="Office Staff"
-                {...register("user_job_title", {
-                  onChange: (e) => {
-                    const format = removeMultipleSpaces(e.currentTarget.value);
-                    setValue("user_job_title", format);
-                  },
-                  minLength: {
-                    value: 2,
-                    message: "Job title must have at least 2 characters",
-                  },
-                  maxLength: {
-                    value: 100,
-                    message: "Job title must be shorter than 100 characters",
-                  },
-                })}
-                error={errors.user_job_title?.message}
-                {...defaultInputProps}
-              />
             </SimpleGrid>
             <SubmitSection
               activeStep={activeStep}
-              setActiveStep={setActiveStep}
-              inputList={inputList}
+              handleChangeStep={handleChangeStep}
             />
           </Stack>
         </Box>

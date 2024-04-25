@@ -1,41 +1,52 @@
-import { Button, Group } from "@mantine/core";
-import { Dispatch, SetStateAction } from "react";
-import { useFormContext } from "react-hook-form";
-import { OnboardUserParams } from "./OnboardingPage";
+import { Button, Flex } from "@mantine/core";
 
 type Props = {
   activeStep: number;
-  setActiveStep: Dispatch<SetStateAction<number>>;
-  inputList: string[];
+  handleChangeStep: (action: "PREVIOUS" | "NEXT") => Promise<void>;
+  disableSubmit?: boolean;
 };
 
-const SubmitSection = ({ activeStep, setActiveStep, inputList }: Props) => {
-  const {
-    // trigger,
-    // formState: { errors },
-  } = useFormContext<OnboardUserParams>();
-  console.log(inputList);
+const SubmitSection = ({
+  activeStep,
+  handleChangeStep,
+  disableSubmit,
+}: Props) => {
   return (
-    <Group spacing="md" position="right">
+    <Flex
+      gap={{ base: "sm", sm: "md" }}
+      direction={{ base: "column-reverse", sm: "row" }}
+      justify={{ sm: "flex-end" }}
+      mb={{ base: 24, sm: 0 }}
+    >
       {activeStep > 1 && (
         <Button
           variant="outline"
-          w={120}
+          w={{ base: "100%", sm: 120 }}
           sx={{ fontSize: 16 }}
-          onClick={() => setActiveStep((prev) => prev - 1)}
+          onClick={() => handleChangeStep("PREVIOUS")}
         >
           Go Back
         </Button>
       )}
-      <Button
-        w={120}
-        sx={{ fontSize: 16 }}
-        type="submit"
-        onClick={() => setActiveStep((prev) => prev + 1)}
-      >
-        Next
-      </Button>
-    </Group>
+      {activeStep < 3 ? (
+        <Button
+          w={{ base: "100%", sm: 120 }}
+          sx={{ fontSize: 16 }}
+          onClick={() => handleChangeStep("NEXT")}
+        >
+          Next
+        </Button>
+      ) : (
+        <Button
+          w={{ base: "100%", sm: 120 }}
+          sx={{ fontSize: 16 }}
+          type="submit"
+          disabled={disableSubmit}
+        >
+          Submit
+        </Button>
+      )}
+    </Flex>
   );
 };
 

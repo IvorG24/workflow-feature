@@ -4,6 +4,7 @@ import { OptionType } from "@/utils/types";
 import {
   Box,
   Flex,
+  Group,
   Select,
   SimpleGrid,
   Stack,
@@ -12,8 +13,9 @@ import {
 } from "@mantine/core";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { OnboardUserParams } from "./OnboardingPage";
-import SubmitSection from "./SubmitSection";
+import { OnboardUserParams } from "../OnboardingPage";
+import SubmitSection from "../SubmitSection";
+import UploadId from "../UploadId";
 
 type Props = {
   activeStep: number;
@@ -21,7 +23,7 @@ type Props = {
   idLabel: string;
   regionOptions: OptionType[];
   provinceOptions: OptionType[];
-  setActiveStep: Dispatch<SetStateAction<number>>;
+  handleChangeStep: (action: "PREVIOUS" | "NEXT") => Promise<void>;
   setIdType: Dispatch<SetStateAction<string | null>>;
   handleFetchProvinceOptions: (value: string | null) => Promise<void>;
   handleFetchCityOptions: (value: string | null) => Promise<void>;
@@ -33,7 +35,7 @@ const SecondStep = ({
   idLabel,
   regionOptions,
   provinceOptions,
-  setActiveStep,
+  handleChangeStep,
   setIdType,
   handleFetchProvinceOptions,
   handleFetchCityOptions,
@@ -43,20 +45,16 @@ const SecondStep = ({
     control,
     formState: { errors },
     setValue,
+    setError,
   } = useFormContext<OnboardUserParams>();
 
-  const inputList = [
-    "user_id_type",
-    "user_id_number",
-    "user_id_gender",
-    "user_id_nationality",
-    "user_id_region",
-  ];
-
-  const defaultInputProps = { h: 80, styles: { required: { color: "red" } } };
+  const defaultInputProps = {
+    styles: { required: { color: "red" } },
+    h: { sm: 80 },
+  };
 
   return (
-    <Stack h="100%" mah={334} spacing={32}>
+    <Flex h="100%" direction="column" gap={{ base: 24, sm: 32 }}>
       <Flex justify="space-between">
         <Box>
           <Text size={20} weight={700}>
@@ -66,25 +64,93 @@ const SecondStep = ({
         </Box>
         <Text weight={600}>{`${activeStep}/${totalSections}`}</Text>
       </Flex>
-      <Flex h="100%" gap={32}>
-        <Stack
-          align="center"
-          justify="center"
-          p="md"
-          w={300}
-          sx={{ border: "1px dashed #CED4DA", borderRadius: 8 }}
-        >
-          <Text size={14} weight={600}>
-            ID
-          </Text>
-          <Box ta="center" c="#495057">
-            <Text size={14}>Allowed *.jpg, *jpeg, *.png</Text>
-            <Text size={14}>Max allowed of 5 MB</Text>
-          </Box>
-        </Stack>
-        <Box sx={{ flex: 1 }}>
-          <Stack spacing={36}>
-            <SimpleGrid cols={2}>
+      <Flex h="fit-content" gap={32} direction={{ base: "column", sm: "row" }}>
+        <Flex direction="column" justify="space-between" gap={24} mih="100%">
+          <Group
+            align="center"
+            p={18}
+            w="100%"
+            mah={300}
+            h="100%"
+            sx={{ border: "1px dashed #CED4DA", borderRadius: 8 }}
+          >
+            <Controller
+              control={control}
+              name={"user_id_front_image"}
+              rules={{
+                required: "Front ID image is required",
+              }}
+              render={({
+                field: { value, onChange },
+                fieldState: { error },
+              }) => (
+                <UploadId
+                  value={value}
+                  onChange={onChange}
+                  onError={(error: string) =>
+                    setError("user_id_front_image", { message: error })
+                  }
+                  fieldError={error?.message}
+                  size={90}
+                />
+              )}
+            />
+            <Stack spacing={0}>
+              <Text size={14} weight={600}>
+                Front ID
+              </Text>
+              <Box c="#495057">
+                <Text size={12}>Allowed *.jpg, *jpeg, *.png</Text>
+                <Text size={12}>Max allowed of 5 MB</Text>
+              </Box>
+            </Stack>
+          </Group>
+          <Group
+            align="center"
+            p={18}
+            w="100%"
+            mah={300}
+            h="100%"
+            sx={{ border: "1px dashed #CED4DA", borderRadius: 8 }}
+          >
+            <Controller
+              control={control}
+              name={"user_id_back_image"}
+              rules={{
+                required: "Back ID image is required",
+              }}
+              render={({
+                field: { value, onChange },
+                fieldState: { error },
+              }) => (
+                <UploadId
+                  value={value}
+                  onChange={onChange}
+                  onError={(error: string) =>
+                    setError("user_id_back_image", { message: error })
+                  }
+                  fieldError={error?.message}
+                  size={90}
+                />
+              )}
+            />
+            <Stack spacing={0}>
+              <Text size={14} weight={600}>
+                Back ID
+              </Text>
+              <Box c="#495057">
+                <Text size={12}>Allowed *.jpg, *jpeg, *.png</Text>
+                <Text size={12}>Max allowed of 5 MB</Text>
+              </Box>
+            </Stack>
+          </Group>
+        </Flex>
+        <Box h="100%" sx={{ flex: 1 }}>
+          <Stack justify="space-between" spacing={36}>
+            <SimpleGrid
+              cols={2}
+              breakpoints={[{ maxWidth: "sm", cols: 1, spacing: "sm" }]}
+            >
               <Controller
                 control={control}
                 name={"user_id_type"}
@@ -92,6 +158,7 @@ const SecondStep = ({
                 render={({ field: { value, onChange } }) => (
                   <Select
                     label="ID type"
+                    placeholder="Select ID type"
                     value={value}
                     onChange={(value) => {
                       onChange(value);
@@ -106,6 +173,7 @@ const SecondStep = ({
               />
               <TextInput
                 label={idLabel}
+                placeholder="00000111-111"
                 {...register("user_id_number", {
                   required: `${idLabel} is required`,
                   minLength: {
@@ -119,6 +187,7 @@ const SecondStep = ({
                 })}
                 error={errors.user_id_number?.message}
                 required
+                {...defaultInputProps}
               />
               <Controller
                 control={control}
@@ -127,6 +196,7 @@ const SecondStep = ({
                 render={({ field: { value, onChange } }) => (
                   <Select
                     label="Gender"
+                    placeholder="Select a gender"
                     value={value}
                     onChange={onChange}
                     data={[
@@ -141,11 +211,13 @@ const SecondStep = ({
                     ]}
                     error={errors.user_id_type?.message}
                     required
+                    {...defaultInputProps}
                   />
                 )}
               />
               <TextInput
                 label="Nationality"
+                placeholder="Filipino"
                 {...register("user_id_nationality", {
                   onChange: (e) => {
                     const format = toTitleCase(
@@ -165,6 +237,7 @@ const SecondStep = ({
                 })}
                 error={errors.user_id_nationality?.message}
                 required
+                {...defaultInputProps}
               />
               <Controller
                 control={control}
@@ -172,6 +245,7 @@ const SecondStep = ({
                 render={({ field: { onChange, value } }) => (
                   <Select
                     label="Region"
+                    placeholder="Select a region"
                     data={regionOptions}
                     required
                     clearable
@@ -182,6 +256,7 @@ const SecondStep = ({
                     }}
                     value={value}
                     error={errors.user_id_region?.message}
+                    {...defaultInputProps}
                   />
                 )}
                 rules={{
@@ -208,6 +283,7 @@ const SecondStep = ({
                     value={value}
                     error={errors.user_id_province?.message}
                     disabled={provinceOptions.length === 0}
+                    {...defaultInputProps}
                   />
                 )}
                 rules={{
@@ -220,13 +296,12 @@ const SecondStep = ({
             </SimpleGrid>
             <SubmitSection
               activeStep={activeStep}
-              setActiveStep={setActiveStep}
-              inputList={inputList}
+              handleChangeStep={handleChangeStep}
             />
           </Stack>
         </Box>
       </Flex>
-    </Stack>
+    </Flex>
   );
 };
 
