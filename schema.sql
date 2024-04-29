@@ -1463,6 +1463,8 @@ RETURNS JSON AS $$
         endId = `TR`;
       } else if(formName==='Request For Payment') {
         endId = `RFP`;
+      } else if(formName === 'IT Asset'){
+        endId = `ITA`;
       } else {
         endId = ``;
       }
@@ -3487,7 +3489,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && request.form_name === "Request For Payment") {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && ['Request For Payment', 'IT Asset'].includes(request.form_name)) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -5112,6 +5114,52 @@ RETURNS JSON as $$
         }
         return;
       } else if (form.form_name === "Request For Payment") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+                team_project_table.team_project_id,
+                team_project_table.team_project_name
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(1),
+                ],
+              },
+              {
+                ...form.form_section[1]
+              }
+            ],
+          },
+
+          projectOptions,
+        }
+        return;
+      } else if (form.form_name === "IT Asset") {
         const projects = plv8.execute(
           `
             SELECT 

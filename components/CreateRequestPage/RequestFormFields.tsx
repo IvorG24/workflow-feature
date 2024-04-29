@@ -125,6 +125,9 @@ type RequestFormFieldsProps = {
   };
   isEdit?: boolean;
   isLoading: boolean | undefined;
+  itAssetRequestFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -139,6 +142,7 @@ const RequestFormFields = ({
   otherExpensesMethods,
   pedItemFormMethods,
   paymentRequestFormMethods,
+  itAssetRequestFormMethods,
   isEdit,
   isLoading,
 }: RequestFormFieldsProps) => {
@@ -395,6 +399,7 @@ const RequestFormFields = ({
                       pedEquipmentFormMethods?.onProjectNameChange(value);
                       pedItemFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
+                      itAssetRequestFormMethods?.onProjectNameChange(value);
                       break;
                     case "CSI Division":
                       servicesFormMethods?.onCSIDivisionChange(

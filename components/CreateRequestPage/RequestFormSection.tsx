@@ -100,6 +100,9 @@ type RequestFormSectionProps = {
   };
   isEdit?: boolean;
   loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
+  itAssetRequestFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -116,6 +119,7 @@ const RequestFormSection = ({
   paymentRequestFormMethods,
   isEdit,
   loadingFieldList,
+  itAssetRequestFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -169,6 +173,7 @@ const RequestFormSection = ({
               otherExpensesMethods={otherExpensesMethods}
               pedItemFormMethods={pedItemFormMethods}
               paymentRequestFormMethods={paymentRequestFormMethods}
+              itAssetRequestFormMethods={itAssetRequestFormMethods}
               isEdit={isEdit}
               isLoading={isLoading}
             />
