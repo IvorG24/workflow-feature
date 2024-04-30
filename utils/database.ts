@@ -2698,6 +2698,27 @@ export type Database = {
           }
         ];
       };
+      team_department_table: {
+        Row: {
+          team_department_date_created: string;
+          team_department_id: string;
+          team_department_is_disabled: boolean;
+          team_department_name: string;
+        };
+        Insert: {
+          team_department_date_created?: string;
+          team_department_id?: string;
+          team_department_is_disabled?: boolean;
+          team_department_name: string;
+        };
+        Update: {
+          team_department_date_created?: string;
+          team_department_id?: string;
+          team_department_is_disabled?: boolean;
+          team_department_name?: string;
+        };
+        Relationships: [];
+      };
       team_group_member_table: {
         Row: {
           team_group_id: string;

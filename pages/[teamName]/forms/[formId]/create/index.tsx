@@ -47,7 +47,6 @@ type Props = {
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
   requestingProject?: string;
-
   categoryOptions?: OptionTableRow[];
 };
 
