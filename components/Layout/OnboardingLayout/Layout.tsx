@@ -12,6 +12,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <AppShell
+      padding={0}
       styles={{
         main: {
           background:
