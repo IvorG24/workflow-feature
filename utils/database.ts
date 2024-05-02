@@ -1246,6 +1246,7 @@ export type Database = {
           item_id: string;
           item_is_available: boolean;
           item_is_disabled: boolean;
+          item_is_it_asset_item: boolean;
           item_is_ped_item: boolean;
           item_team_id: string;
           item_unit: string;
@@ -1259,6 +1260,7 @@ export type Database = {
           item_id?: string;
           item_is_available?: boolean;
           item_is_disabled?: boolean;
+          item_is_it_asset_item?: boolean;
           item_is_ped_item?: boolean;
           item_team_id: string;
           item_unit: string;
@@ -1272,6 +1274,7 @@ export type Database = {
           item_id?: string;
           item_is_available?: boolean;
           item_is_disabled?: boolean;
+          item_is_it_asset_item?: boolean;
           item_is_ped_item?: boolean;
           item_team_id?: string;
           item_unit?: string;

@@ -102,6 +102,8 @@ type RequestFormSectionProps = {
   loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
+    onGeneralNameChange: (index: number, value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
   };
 };
 

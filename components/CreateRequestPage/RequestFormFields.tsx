@@ -127,6 +127,8 @@ type RequestFormFieldsProps = {
   isLoading: boolean | undefined;
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
+    onGeneralNameChange: (index: number, value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
   };
 };
 
@@ -374,6 +376,10 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+                      itAssetRequestFormMethods?.onGeneralNameChange(
+                        sectionIndex,
+                        value
+                      );
                       break;
 
                     case "CSI Code Description":
@@ -389,6 +395,10 @@ const RequestFormFields = ({
                           sectionIndex,
                           value
                         );
+                      itAssetRequestFormMethods?.onCSICodeChange(
+                        sectionIndex,
+                        value
+                      );
                       break;
 
                     case "Requesting Project":

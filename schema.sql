@@ -1664,7 +1664,8 @@ RETURNS JSON AS $$
         item_encoder_team_member_id,
         item_level_three_description,
         item_is_ped_item,
-        item_category_id
+        item_category_id,
+        item_is_it_asset_item
       },
       itemDescription
     } = input_data;
@@ -1680,7 +1681,8 @@ RETURNS JSON AS $$
           item_team_id,
           item_encoder_team_member_id, 
           item_is_ped_item, 
-          item_category_id
+          item_category_id,
+          item_is_it_asset_item
         ) 
         VALUES 
         (
@@ -1690,8 +1692,9 @@ RETURNS JSON AS $$
           '${item_gl_account}',
           '${item_team_id}',
           '${item_encoder_team_member_id}',
-          ${item_is_ped_item},
-          ${item_category_id ? `'${item_category_id}'` : null}
+          '${Boolean(item_is_ped_item)}',
+          ${item_category_id ? `'${item_category_id}'` : null},
+          '${Boolean(item_is_it_asset_item)}'
         ) RETURNING *
       `
     )[0];

@@ -1786,3 +1786,20 @@ export type InitialFormType = FormTableRow & {
     };
   })[];
 };
+
+export type ITAssetForm = {
+  generalName: string;
+  descriptions: {
+    description: string;
+    withUoM: boolean;
+    descriptionId?: string;
+    fieldId?: string;
+    order?: number;
+  }[];
+  unit: string;
+  isAvailable: boolean;
+  glAccount: string;
+  division: string[];
+  divisionDescription: string;
+  isITAsset: boolean;
+};

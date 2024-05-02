@@ -66,6 +66,8 @@ const ITAssetRequestPage = ({ request }: Props) => {
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
 
+  console.log(originalSectionList);
+
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
     jiraId?: string
