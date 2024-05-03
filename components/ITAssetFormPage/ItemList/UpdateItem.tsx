@@ -1,7 +1,6 @@
 import {
   checkItemName,
   getCSIDescriptionOptionBasedOnDivisionId,
-  getItemCategoryOption,
   getItemDivisionOption,
   getItemUnitOfMeasurementOption,
 } from "@/backend/api/get";
@@ -12,6 +11,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { GL_ACCOUNT_CHOICES } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
+  ITAssetForm,
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemWithDescriptionType,
@@ -59,9 +59,6 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
     { label: string; value: string }[]
   >([]);
   const [unitOfMeasurementOption, setUnitOfMeasurementOption] = useState<
-    { label: string; value: string }[]
-  >([]);
-  const [itemCategoryOption, setItemCategoryOption] = useState<
     { label: string; value: string }[]
   >([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(true);
@@ -113,17 +110,6 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             "divisionDescription",
             editItem.item_level_three_description
           );
-
-        const itemCategoryOption = await getItemCategoryOption(supabaseClient);
-        itemCategoryOption &&
-          setItemCategoryOption(
-            itemCategoryOption.map((category) => {
-              return {
-                label: `${category.item_category}`,
-                value: `${category.item_category_id}`,
-              };
-            })
-          );
       } catch {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -137,7 +123,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
   }, []);
 
   const { register, getValues, formState, handleSubmit, control, setValue } =
-    useForm<ItemForm>({
+    useForm<ITAssetForm>({
       defaultValues: {
         descriptions: editItem.item_description.map((description) => {
           return {
@@ -153,12 +139,11 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
         glAccount: editItem.item_gl_account,
         division: editItem.item_division_id_list,
         divisionDescription: editItem.item_level_three_description,
-        isPedItem: editItem.item_is_ped_item,
-        itemCategory: editItem.item_category_id ?? "",
+        isITAsset: editItem.item_is_it_asset_item,
       },
     });
 
-  const { append, remove, fields, swap } = useFieldArray<ItemForm>({
+  const { append, remove, fields, swap } = useFieldArray<ITAssetForm>({
     control,
     name: "descriptions",
     rules: { minLength: 1, maxLength: 20 },
@@ -166,7 +151,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
 
   const onAddInput = () => append({ description: "", withUoM: false });
 
-  const onSubmit = async (data: ItemForm) => {
+  const onSubmit = async (data: ITAssetForm) => {
     try {
       const toUpdate: ItemDescriptionTableUpdate[] = [];
       const toAdd: ItemForm["descriptions"] = [];
@@ -206,8 +191,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             item_team_id: activeTeam.team_id,
             item_division_id_list: data.division.map((id) => `'${id}'`),
             item_level_three_description: data.divisionDescription,
-            item_is_ped_item: data.isPedItem,
-            item_category_id: data.itemCategory,
+            item_is_it_asset_item: data.isITAsset,
           },
           formId: formId,
         }
@@ -233,6 +217,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
       });
       setEditItem(null);
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -411,22 +396,8 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             />
             <Controller
               control={control}
-              name="itemCategory"
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  value={value}
-                  onChange={onChange}
-                  data={itemCategoryOption}
-                  error={formState.errors.itemCategory?.message}
-                  searchable
-                  clearable
-                  label="Category"
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="isPedItem"
+              name="isITAsset"
+              defaultValue={true}
               render={({ field: { value, onChange } }) => (
                 <Checkbox
                   sx={{
@@ -434,7 +405,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                       cursor: "pointer",
                     },
                   }}
-                  label={"PED Item"}
+                  label={"IT Asset"}
                   checked={value}
                   onChange={onChange}
                 />

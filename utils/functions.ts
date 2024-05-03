@@ -4,6 +4,7 @@ import moment from "moment";
 import dynamic from "next/dynamic";
 import { formatDate } from "./constant";
 import {
+  JiraITAssetTicketPayloadProps,
   JiraItemUserTableData,
   JiraTicketPayloadProps,
   RequestCommentType,
@@ -324,4 +325,45 @@ export const formatJiraItemUserTableData = (
   };
 
   return { success: true, data: formattedData, error: null };
+};
+
+export const formatJiraITAssetPayload = ({
+  requestId,
+  requestUrl,
+  requestTypeId,
+  jiraProjectSiteId,
+  employeeName,
+  purpose,
+  item,
+}: JiraITAssetTicketPayloadProps) => {
+  const jiraTicketPayload = {
+    form: {
+      answers: {
+        "1": {
+          choices: [item], // IT Asset Item
+        },
+        "2": {
+          choices: [purpose], // Purpose
+        },
+        "3": {
+          text: employeeName, // Employee Name
+        },
+        "4": {
+          choices: [jiraProjectSiteId], // Requesting Project
+        },
+        "5": {
+          text: requestUrl, // Formsly URL
+        },
+        "6": {
+          text: requestId, // Formsly Id
+        },
+      },
+    },
+    isAdfRequest: false,
+    requestFieldValues: {},
+    requestTypeId: requestTypeId,
+    serviceDeskId: "3",
+  };
+
+  return jiraTicketPayload;
 };

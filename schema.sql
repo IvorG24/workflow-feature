@@ -1795,7 +1795,8 @@ RETURNS JSON AS $$
         item_division_id_list,
         item_level_three_description,
         item_is_ped_item,
-        item_category_id
+        item_category_id,
+        item_is_it_asset_item
       },
       toAdd,
       toUpdate,
@@ -1812,8 +1813,9 @@ RETURNS JSON AS $$
           item_unit = '${item_unit}',
           item_gl_account = '${item_gl_account}',
           item_team_id = '${item_team_id}',
-          item_is_ped_item = ${item_is_ped_item},
-          item_category_id = ${item_category_id ? `'${item_category_id}'` : null}
+          item_is_ped_item = '${Boolean(item_is_ped_item)}',
+          item_category_id = ${item_category_id ? `'${item_category_id}'` : null},
+          item_is_it_asset_item = '${Boolean(item_is_it_asset_item)}'
         WHERE item_id = '${item_id}'
         RETURNING *
       `

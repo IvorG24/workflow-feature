@@ -1713,6 +1713,16 @@ export type JiraTicketPayloadProps = {
   jiraItemCategoryLabel?: string;
 };
 
+export type JiraITAssetTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  requestTypeId: string;
+  jiraProjectSiteId: string;
+  employeeName: string;
+  purpose: string;
+  item: string;
+};
+
 export type JiraTicketData = {
   success: boolean;
   data: { jiraTicketKey: string; jiraTicketWebLink: string } | null;

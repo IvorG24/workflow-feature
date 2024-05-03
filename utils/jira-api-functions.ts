@@ -3,21 +3,24 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import { Database } from "./database";
 import {
+  formatJiraITAssetPayload,
   formatJiraTicketPayload,
   generateJiraCommentPayload,
   isEmpty,
 } from "./functions";
 import {
+  JiraITAssetTicketPayloadProps,
   JiraTicketData,
   JiraTicketPayloadProps,
   RequestCommentType,
 } from "./types";
 
 type CreateJiraTicketProps = {
-  jiraTicketPayload: JiraTicketPayloadProps;
+  jiraTicketPayload: JiraTicketPayloadProps | JiraITAssetTicketPayloadProps;
   jiraItemCategoryLabel: string;
   requestCommentList: RequestCommentType[];
   supabaseClient: SupabaseClient<Database>;
+  isITAsset?: boolean;
 };
 
 export const createJiraTicket = async ({
@@ -25,10 +28,20 @@ export const createJiraTicket = async ({
   jiraItemCategoryLabel,
   requestCommentList,
   supabaseClient,
+  isITAsset,
 }: CreateJiraTicketProps): Promise<JiraTicketData> => {
   try {
-    const formattedJiraTicketPayload =
-      formatJiraTicketPayload(jiraTicketPayload);
+    let formattedJiraTicketPayload = null;
+
+    if (isITAsset) {
+      formattedJiraTicketPayload = formatJiraITAssetPayload(
+        jiraTicketPayload as JiraITAssetTicketPayloadProps
+      );
+    } else {
+      formattedJiraTicketPayload = formatJiraTicketPayload(
+        jiraTicketPayload as JiraTicketPayloadProps
+      );
+    }
 
     const duplicateJiraTicketResponse = await fetch(
       `/api/check-jira-duplicate-ticket?formslyId=${jiraTicketPayload.requestId}`,

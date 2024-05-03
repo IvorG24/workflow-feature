@@ -1,4 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
+import { getJiraAutomationDataByProjectId } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -14,6 +15,8 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
+import { safeParse } from "@/utils/functions";
+import { createJiraTicket } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -51,6 +54,10 @@ const ITAssetRequestPage = ({ request }: Props) => {
   const [requestCommentList, setRequestCommentList] = useState(
     request.request_comment
   );
+  const [requestJira, setRequestJira] = useState({
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  });
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -65,8 +72,6 @@ const ITAssetRequestPage = ({ request }: Props) => {
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
-
-  console.log(originalSectionList);
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -264,8 +269,71 @@ const ITAssetRequestPage = ({ request }: Props) => {
 
   const onCreateJiraTicket = async () => {
     try {
-      console.log("create jira ticket");
-      return { success: false, data: null };
+      if (!request.request_project_id) {
+        notifications.show({
+          message: "Project id is not defined.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+      setIsLoading(true);
+      const jiraAutomationData = await getJiraAutomationDataByProjectId(
+        supabaseClient,
+        { teamProjectId: request.request_project_id }
+      );
+
+      if (!jiraAutomationData) {
+        notifications.show({
+          message: "Error fetching of Jira project and item category data.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
+      const { jiraProjectData } = jiraAutomationData;
+
+      if (!jiraProjectData) {
+        notifications.show({
+          message: "Jira project data is missing.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
+      const employeeName =
+        request.request_form.form_section[2].section_field[2].field_response[0]
+          .request_response;
+
+      const jiraTicketPayload = {
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestTypeId: "332",
+        jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
+        employeeName: safeParse(employeeName),
+        purpose: "11338",
+        item: "11347",
+      };
+
+      const jiraTicketData = await createJiraTicket({
+        jiraTicketPayload,
+        jiraItemCategoryLabel: "",
+        requestCommentList,
+        supabaseClient,
+        isITAsset: true,
+      });
+
+      if (!jiraTicketData.success) {
+        return { success: false, data: null };
+      }
+
+      if (jiraTicketData.data) {
+        setRequestJira({
+          id: jiraTicketData.data.jiraTicketKey,
+          link: jiraTicketData.data.jiraTicketWebLink,
+        });
+      }
+
+      return jiraTicketData;
     } catch (error) {
       console.log(error);
       return { success: false, data: null };
@@ -288,6 +356,7 @@ const ITAssetRequestPage = ({ request }: Props) => {
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
+          requestJira={requestJira}
         />
 
         {sectionWithDuplicateList.map((section, idx) => {

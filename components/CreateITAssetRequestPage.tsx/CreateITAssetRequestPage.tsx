@@ -250,7 +250,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
               };
             }),
           },
-          ...newSection.section_field.slice(5, 8).map((field) => {
+          ...newSection.section_field.slice(5, 9).map((field) => {
             if (isWithDescription) {
               switch (field.field_name) {
                 case "CSI Code":
@@ -290,6 +290,10 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
             }
           }),
         ];
+
+        if (value.toLowerCase() === "ink") {
+          generalField.push(form.form_section[1].section_field[9]);
+        }
 
         const newFields = item.item_description.map((description) => {
           const options = description.item_description_field.map(
@@ -476,7 +480,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
                 ...form.form_section[1].section_field[0],
                 field_option: itemOptionList,
               },
-              ...form.form_section[1].section_field.slice(1, 8),
+              ...form.form_section[1].section_field.slice(1, 9),
             ],
           },
           form.form_section[2],

@@ -380,7 +380,7 @@ const ITAssetFormPage = ({
       <Center>
         <Center>
           <SegmentedControl
-            data={FORM_SEGMENT_CHOCIES}
+            data={FORM_SEGMENT_CHOCIES.slice(0, 2)}
             value={segmentValue}
             onChange={(value) => setSegmentValue(value as FormSegmentType)}
           />

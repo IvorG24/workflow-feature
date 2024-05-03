@@ -280,7 +280,7 @@ const RequestFormFields = ({
             )}
             error={fieldError}
             withAsterisk={field.field_is_required}
-            readOnly={isLoading}
+            readOnly={isLoading || field.field_is_read_only}
             rightSection={isLoading && <Loader size={16} />}
           />
         );
