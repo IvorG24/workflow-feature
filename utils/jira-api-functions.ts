@@ -43,8 +43,12 @@ export const createJiraTicket = async ({
       );
     }
 
+    const requestType = isITAsset
+      ? "IT Requisition Form Test"
+      : "Send a Requisition Form for Notation";
+
     const duplicateJiraTicketResponse = await fetch(
-      `/api/check-jira-duplicate-ticket?formslyId=${jiraTicketPayload.requestId}`,
+      `/api/check-jira-duplicate-ticket?formslyId=${jiraTicketPayload.requestId}&requestType=${requestType}`,
       {
         method: "GET",
         headers: {

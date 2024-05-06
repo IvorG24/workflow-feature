@@ -28,7 +28,7 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 type Props = {
@@ -58,6 +58,7 @@ const ITAssetRequestPage = ({ request }: Props) => {
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
+  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -304,14 +305,55 @@ const ITAssetRequestPage = ({ request }: Props) => {
         request.request_form.form_section[2].section_field[2].field_response[0]
           .request_response;
 
+      const response = await fetch(
+        "/api/get-jira-automation-form?serviceDeskId=3&requestType=332",
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const { fields } = await response.json();
+      const purposeList = fields["2"].choices;
+      const itemList = fields["1"].choices;
+
+      const requestPurpose =
+        request.request_form.form_section[0].section_field.find(
+          (field) => field.field_name === "Purpose"
+        )?.field_response[0].request_response;
+      const requestItem =
+        request.request_form.form_section[1].section_field.find(
+          (field) => field.field_name === "General Name"
+        )?.field_response[0].request_response;
+
+      const purpose = purposeList.find(
+        (purpose: { id: string; name: string }) =>
+          purpose.name.toLowerCase() ===
+          safeParse(`${requestPurpose?.toLowerCase()}`)
+      );
+      const item = itemList.find(
+        (item: { id: string; name: string }) =>
+          item.name.toLowerCase() === safeParse(`${requestItem?.toLowerCase()}`)
+      );
+
+      if (!purpose || !item) {
+        notifications.show({
+          message: "Jira item or purpose is missing.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
       const jiraTicketPayload = {
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "332",
         jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
         employeeName: safeParse(employeeName),
-        purpose: "11338",
-        item: "11347",
+        purpose: purpose.id,
+        item: item.id,
       };
 
       const jiraTicketData = await createJiraTicket({
@@ -342,6 +384,28 @@ const ITAssetRequestPage = ({ request }: Props) => {
     }
   };
 
+  useEffect(() => {
+    const fetchJiraTicketStatus = async (requestJiraId: string) => {
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketStatus =
+          jiraTicket.fields["customfield_10010"].currentStatus.status;
+
+        setJiraTicketStatus(jiraTicketStatus);
+      } else {
+        setJiraTicketStatus("Ticket Not Found");
+      }
+    };
+
+    if (requestJira.id) {
+      fetchJiraTicketStatus(requestJira.id);
+    }
+  }, [requestJira.id]);
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -357,6 +421,7 @@ const ITAssetRequestPage = ({ request }: Props) => {
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
+          jiraTicketStatus={jiraTicketStatus}
         />
 
         {sectionWithDuplicateList.map((section, idx) => {
