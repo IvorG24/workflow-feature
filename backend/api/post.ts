@@ -27,6 +27,7 @@ import {
   JiraItemCategoryTableInsert,
   JiraItemCategoryUserTableInsert,
   JiraItemUserTableData,
+  JiraOrganizationTableInsert,
   JiraProjectTableInsert,
   JiraUserAccountTableInsert,
   MemoAgreementTableRow,
@@ -1845,4 +1846,56 @@ export const createItemCategory = async (
   });
 
   if (error) throw error;
+};
+
+// create jira organization
+export const createJiraOrganization = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraOrganizationTableInsert
+) => {
+  // check if duplicate
+  const { count, error: duplicateError } = await supabaseClient
+    .from("jira_organization_table")
+    .select("jira_organization_id", { count: "exact", head: true })
+    .eq("jira_organization_jira_id", params.jira_organization_jira_id);
+
+  if (duplicateError) throw duplicateError;
+
+  if (Number(count)) {
+    return { success: false, error: "Jira organization already exists." };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("jira_organization_table")
+    .insert(params)
+    .select();
+
+  if (error) throw error;
+
+  return { data, error: null };
+};
+
+// assign project organization
+export const assignJiraFormslyOrganization = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyProjectId: string;
+    jiraOrganizationId: string;
+  }
+) => {
+  const { formslyProjectId, jiraOrganizationId } = params;
+  console.log(params);
+
+  const { data, error } = await supabaseClient
+    .from("jira_organization_team_project_table")
+    .insert({
+      jira_organization_team_project_project_id: formslyProjectId,
+      jira_organization_team_project_organization_id: jiraOrganizationId,
+    })
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
 };

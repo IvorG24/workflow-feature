@@ -5,6 +5,7 @@ import { startCase } from "@/utils/string";
 import {
   JiraFormslyItemCategoryWithUserDataType,
   JiraFormslyProjectType,
+  JiraOrganizationTableRow,
   JiraProjectTableRow,
   JiraUserAccountTableRow,
   JiraUserRoleTableRow,
@@ -24,6 +25,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
 import JiraFormslyItemCategoryList from "./JiraFormslyItemCategoryList/JiraFormslyItemCategoryList";
 import JiraFormslyProjectList from "./JiraFormslyProjectList/JiraFormslyProjectList";
+import JiraOrganizationLookupTable from "./JiraOrganizationLookupTable/JiraOrganizationLookupTable";
 import JiraProjectLookupTable from "./JiraProjectLookupTable/JiraProjectLookupTable";
 import JiraUserAccountList from "./JiraUserAccountList/JiraUserAccountList";
 import JiraUserLookupTable from "./JiraUserLookupTable/JiraUserLookupTable";
@@ -43,6 +45,10 @@ type Props = {
   };
   jiraItemCategoryData: {
     data: JiraFormslyItemCategoryWithUserDataType[];
+    count: number;
+  };
+  jiraOrganizationData: {
+    data: JiraOrganizationTableRow[];
     count: number;
   };
 };
@@ -72,6 +78,7 @@ const JiraSettingsPage = ({
   jiraProjectData,
   jiraUserAccountData,
   jiraItemCategoryData,
+  jiraOrganizationData,
 }: Props) => {
   const initialJiraFormslyProjectList = jiraFormslyProjectData.data;
   const initialJiraFormslyProjectCount = jiraFormslyProjectData.count;
@@ -174,6 +181,7 @@ const JiraSettingsPage = ({
             jiraFormslyProjectList={jiraFormslyProjectList}
             jiraFormslyProjectCount={jiraFormslyProjectCount}
             jiraProjectList={jiraProjectData.data}
+            jiraOrganizationList={jiraOrganizationData.data}
             setIsManagingUserAccountList={setIsManagingUserAccountList}
             setSelectedFormslyProject={setSelectedFormslyProjectId}
             selectedFormslyProject={selectedFormslyProjectId}
@@ -206,6 +214,9 @@ const JiraSettingsPage = ({
             jiraAutomationFormData={jiraAutomationFormData}
           />
           <JiraUserLookupTable jiraUserAccountData={jiraUserAccountData} />
+          <JiraOrganizationLookupTable
+            jiraOrganizationData={jiraOrganizationData}
+          />
         </Stack>
       )}
     </Container>

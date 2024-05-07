@@ -1,11 +1,22 @@
 import { getJiraFormslyProjectList } from "@/backend/api/get";
-import { assignJiraFormslyProject } from "@/backend/api/post";
-import { updateJiraFormslyProject } from "@/backend/api/update";
+import {
+  assignJiraFormslyOrganization,
+  assignJiraFormslyProject,
+} from "@/backend/api/post";
+import {
+  updateJiraFormslyOrganization,
+  updateJiraFormslyProject,
+} from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getPagination } from "@/utils/functions";
-import { JiraFormslyProjectType, JiraProjectTableRow } from "@/utils/types";
+import {
+  JiraFormslyProjectType,
+  JiraOrganizationTableRow,
+  JiraOrganizationTeamProjectTableRow,
+  JiraProjectTableRow,
+} from "@/utils/types";
 import {
   ActionIcon,
   Badge,
@@ -19,6 +30,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
+  IconLine,
   IconPlugConnected,
   IconSearch,
   IconSettings,
@@ -27,12 +39,14 @@ import {
 import { DataTable } from "mantine-datatable";
 import { Dispatch, SetStateAction, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import JiraFormslyProjectOrganizationForm from "./JiraFormslyProjectOrganizationForm";
 import JiraProjectForm from "./JiraProjectForm";
 
 type Props = {
   jiraFormslyProjectList: JiraFormslyProjectType[];
   jiraFormslyProjectCount: number;
   jiraProjectList: JiraProjectTableRow[];
+  jiraOrganizationList: JiraOrganizationTableRow[];
   selectedFormslyProject: string | null;
   setIsManagingUserAccountList: Dispatch<SetStateAction<boolean>>;
   setSelectedFormslyProject: Dispatch<SetStateAction<string | null>>;
@@ -53,10 +67,15 @@ type AssignUpdateFormslyProjectResponseType = {
   } | null;
 };
 
+export type AssignJiraOrganizationForm = {
+  jiraOrganizationId: string;
+};
+
 const JiraFormslyProjectList = ({
   jiraFormslyProjectList,
   jiraFormslyProjectCount,
   jiraProjectList,
+  jiraOrganizationList,
   setIsManagingUserAccountList,
   setSelectedFormslyProject,
   selectedFormslyProject,
@@ -69,8 +88,12 @@ const JiraFormslyProjectList = ({
   const [isLoading, setIsLoading] = useState(false);
   const [openJiraProjectFormModal, setOpenJiraProjectFormModal] =
     useState(false);
+  const [openJiraOrganizationFormModal, setOpenJiraOrganizationFormModal] =
+    useState(false);
 
   const [isReassignJiraFormslyProject, setIsReassignJiraFormslyProject] =
+    useState(false);
+  const [isReassignJiraOrganization, setIsReassignJiraOrganization] =
     useState(false);
   const [projectActivePage, setProjectActivePage] = useState(1);
 
@@ -78,6 +101,13 @@ const JiraFormslyProjectList = ({
     value: project.jira_project_id,
     label: project.jira_project_jira_label,
   }));
+
+  const organizationSelectOptionList = jiraOrganizationList.map(
+    (organization) => ({
+      value: organization.jira_organization_id,
+      label: organization.jira_organization_jira_label,
+    })
+  );
 
   const assignFormslyProjectFormMethods = useForm<AssignFormslyProjectForm>({
     defaultValues: { jiraProjectId: "" },
@@ -87,6 +117,10 @@ const JiraFormslyProjectList = ({
     assignFormslyProjectFormMethods;
 
   const searchTeamProjectFormMethods = useForm<{ search: string }>();
+
+  const assignJiraOrganizationFormMethods = useForm<AssignJiraOrganizationForm>(
+    { defaultValues: { jiraOrganizationId: "" } }
+  );
 
   const handleAssignFormslyProject = async (data: AssignFormslyProjectForm) => {
     try {
@@ -187,12 +221,24 @@ const JiraFormslyProjectList = ({
           project.assigned_jira_project?.jira_project_id
       );
 
-      if (jiraProjectMatch) {
+      const jiraOrganizationMatch = jiraOrganizationList.find(
+        (organization) =>
+          organization.jira_organization_id ===
+          project.assigned_jira_organization
+            ?.jira_organization_team_project_organization_id
+      );
+
+      if (jiraProjectMatch || jiraOrganizationMatch) {
         return {
           ...project,
           assigned_jira_project: {
             ...project.assigned_jira_project,
-            jira_project: jiraProjectMatch,
+            jira_project: jiraProjectMatch ?? null,
+          },
+          assigned_jira_organization: {
+            ...project.assigned_jira_organization,
+            jira_organization_team_project_organization:
+              jiraOrganizationMatch ?? null,
           },
         };
       } else {
@@ -238,6 +284,83 @@ const JiraFormslyProjectList = ({
         color: "red",
       });
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAssignFormslyOrganization = async (
+    data: AssignJiraOrganizationForm
+  ) => {
+    try {
+      if (!selectedFormslyProject) {
+        notifications.show({
+          message: "Please select a formsly project.",
+          color: "orange",
+        });
+        return;
+      }
+      setIsLoading(true);
+
+      let newOrganization: JiraOrganizationTeamProjectTableRow | null;
+
+      if (isReassignJiraOrganization) {
+        newOrganization = await updateJiraFormslyOrganization(supabaseClient, {
+          formslyProjectId: selectedFormslyProject,
+          jiraOrganizationId: data.jiraOrganizationId,
+        });
+      } else {
+        newOrganization = await assignJiraFormslyOrganization(supabaseClient, {
+          formslyProjectId: selectedFormslyProject,
+          jiraOrganizationId: data.jiraOrganizationId,
+        });
+      }
+
+      const newJiraOrganizationData = jiraOrganizationList.find(
+        (organization) =>
+          organization.jira_organization_id ===
+          newOrganization?.jira_organization_team_project_organization_id
+      );
+
+      if (newJiraOrganizationData) {
+        const updatedJiraFormslyProjectList = jiraFormslyProjectList
+          .map((project) => {
+            if (
+              project.team_project_id === selectedFormslyProject &&
+              newOrganization
+            ) {
+              return {
+                ...project,
+                assigned_jira_organization: {
+                  ...newOrganization,
+                  jira_organization_team_project_organization:
+                    newJiraOrganizationData,
+                },
+              };
+            }
+
+            return project;
+          })
+          .sort((a, b) =>
+            a.team_project_name.localeCompare(b.team_project_name)
+          );
+        setJiraFormslyProjectList(updatedJiraFormslyProjectList);
+        setJiraFormslyProjectCount((prev) => prev + 1);
+      }
+
+      notifications.show({
+        message: "Successfully assigned to jira organization",
+        color: "green",
+      });
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Failed to assign to jira organization",
+        color: "red",
+      });
+    } finally {
+      assignJiraOrganizationFormMethods.reset();
+      setOpenJiraOrganizationFormModal(false);
+      setSelectedFormslyProject(null);
       setIsLoading(false);
     }
   };
@@ -297,14 +420,30 @@ const JiraFormslyProjectList = ({
                 "assigned_jira_project.jira_project.jira_project_jira_label",
               title: "Jira Project Name",
               render: ({ assigned_jira_project }) =>
-                assigned_jira_project?.jira_project.jira_project_jira_label ?? (
+                assigned_jira_project?.jira_project
+                  ?.jira_project_jira_label ?? (
+                  <Badge color="orange">UNASSIGNED</Badge>
+                ),
+            },
+            {
+              accessor:
+                "assigned_jira_organization.jira_organization_team_project_organization.jira_organization_jira_label",
+              title: "Jira Organization",
+              render: ({ assigned_jira_organization }) =>
+                assigned_jira_organization
+                  ?.jira_organization_team_project_organization
+                  ?.jira_organization_jira_label ?? (
                   <Badge color="orange">UNASSIGNED</Badge>
                 ),
             },
             {
               accessor: "assign_to_jira_project",
               title: "Action",
-              render: ({ team_project_id, assigned_jira_project }) => (
+              render: ({
+                team_project_id,
+                assigned_jira_project,
+                assigned_jira_organization,
+              }) => (
                 <Menu aria-label="project-menu">
                   <Menu.Target>
                     <ActionIcon>
@@ -331,6 +470,31 @@ const JiraFormslyProjectList = ({
                       {`${
                         assigned_jira_project ? "Reassign" : "Assign"
                       } to Jira Project`}
+                    </Menu.Item>
+
+                    <Menu.Item
+                      icon={<IconLine size={14} />}
+                      onClick={() => {
+                        setSelectedFormslyProject(team_project_id);
+                        setOpenJiraOrganizationFormModal(true);
+                        const isReassignOrganization =
+                          assigned_jira_organization !== null &&
+                          assigned_jira_organization.jira_organization_team_project_organization;
+
+                        if (isReassignOrganization) {
+                          setIsReassignJiraOrganization(true);
+                          assignJiraOrganizationFormMethods.setValue(
+                            "jiraOrganizationId",
+                            assigned_jira_organization.jira_organization_team_project_organization_id
+                          );
+                        }
+                      }}
+                    >
+                      {`${
+                        assigned_jira_organization?.jira_organization_team_project_organization
+                          ? "Reassign"
+                          : "Assign"
+                      } to Jira Organization`}
                     </Menu.Item>
 
                     <Menu.Divider />
@@ -362,6 +526,21 @@ const JiraFormslyProjectList = ({
           }}
           selectOptionList={jiraSelectOptionList}
           onSubmit={handleAssignFormslyProject}
+          isLoading={isLoading}
+        />
+      </FormProvider>
+
+      {/* Jira Organization Form */}
+      <FormProvider {...assignJiraOrganizationFormMethods}>
+        <JiraFormslyProjectOrganizationForm
+          opened={openJiraOrganizationFormModal}
+          close={() => {
+            assignJiraOrganizationFormMethods.reset();
+            setSelectedFormslyProject(null);
+            setOpenJiraOrganizationFormModal(false);
+          }}
+          selectOptionList={organizationSelectOptionList}
+          onSubmit={handleAssignFormslyOrganization}
           isLoading={isLoading}
         />
       </FormProvider>

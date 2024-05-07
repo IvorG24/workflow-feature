@@ -5,6 +5,7 @@ import { Database } from "./database";
 import {
   formatJiraTicketPayload,
   generateJiraCommentPayload,
+  getJiraTransitionId,
   isEmpty,
 } from "./functions";
 import {
@@ -15,14 +16,12 @@ import {
 
 type CreateJiraTicketProps = {
   jiraTicketPayload: JiraTicketPayloadProps;
-  jiraItemCategoryLabel: string;
   requestCommentList: RequestCommentType[];
   supabaseClient: SupabaseClient<Database>;
 };
 
 export const createJiraTicket = async ({
   jiraTicketPayload,
-  jiraItemCategoryLabel,
   requestCommentList,
   supabaseClient,
 }: CreateJiraTicketProps): Promise<JiraTicketData> => {
@@ -48,9 +47,7 @@ export const createJiraTicket = async ({
       const jiraTicketWebLink: string =
         duplicateTicket.fields["customfield_10010"]._links.web;
 
-      if (isEmpty(jiraTicketKey) || isEmpty(jiraTicketWebLink)) {
-        return { success: false, data: null };
-      } else {
+      if (!isEmpty(jiraTicketKey) || !isEmpty(jiraTicketWebLink)) {
         return { success: true, data: { jiraTicketKey, jiraTicketWebLink } };
       }
     }
@@ -60,7 +57,10 @@ export const createJiraTicket = async ({
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(formattedJiraTicketPayload),
+      body: JSON.stringify({
+        data: formattedJiraTicketPayload,
+        organizationId: jiraTicketPayload.jiraOrganizationId,
+      }),
     });
 
     const jiraTicketData = await jiraTicketResponse.json();
@@ -74,7 +74,7 @@ export const createJiraTicket = async ({
     const jiraTicketWebLink: string = jiraTicketData._links.web;
 
     // transition jira ticket
-    if (["Other Expenses", "Services"].includes(jiraItemCategoryLabel)) {
+    if (jiraTicketPayload.requestFormType !== "IT Asset") {
       await fetch("/api/transition-jira-ticket", {
         method: "POST",
         headers: {
@@ -82,7 +82,7 @@ export const createJiraTicket = async ({
         },
         body: JSON.stringify({
           jiraTicketKey: jiraTicketKey,
-          transitionId: "261",
+          transitionId: getJiraTransitionId(jiraTicketPayload.requestFormType),
         }),
       });
     }

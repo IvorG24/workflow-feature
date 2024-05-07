@@ -1246,6 +1246,7 @@ export type Database = {
           item_id: string;
           item_is_available: boolean;
           item_is_disabled: boolean;
+          item_is_it_asset_item: boolean;
           item_is_ped_item: boolean;
           item_team_id: string;
           item_unit: string;
@@ -1259,6 +1260,7 @@ export type Database = {
           item_id?: string;
           item_is_available?: boolean;
           item_is_disabled?: boolean;
+          item_is_it_asset_item?: boolean;
           item_is_ped_item?: boolean;
           item_team_id: string;
           item_unit: string;
@@ -1272,6 +1274,7 @@ export type Database = {
           item_id?: string;
           item_is_available?: boolean;
           item_is_disabled?: boolean;
+          item_is_it_asset_item?: boolean;
           item_is_ped_item?: boolean;
           item_team_id?: string;
           item_unit?: string;
@@ -1439,6 +1442,57 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "jira_user_role_table";
             referencedColumns: ["jira_user_role_id"];
+          }
+        ];
+      };
+      jira_organization_table: {
+        Row: {
+          jira_organization_id: string;
+          jira_organization_jira_id: string;
+          jira_organization_jira_label: string;
+        };
+        Insert: {
+          jira_organization_id?: string;
+          jira_organization_jira_id: string;
+          jira_organization_jira_label: string;
+        };
+        Update: {
+          jira_organization_id?: string;
+          jira_organization_jira_id?: string;
+          jira_organization_jira_label?: string;
+        };
+        Relationships: [];
+      };
+      jira_organization_team_project_table: {
+        Row: {
+          jira_organization_team_project_id: string;
+          jira_organization_team_project_organization_id: string;
+          jira_organization_team_project_project_id: string;
+        };
+        Insert: {
+          jira_organization_team_project_id?: string;
+          jira_organization_team_project_organization_id: string;
+          jira_organization_team_project_project_id: string;
+        };
+        Update: {
+          jira_organization_team_project_id?: string;
+          jira_organization_team_project_organization_id?: string;
+          jira_organization_team_project_project_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "jira_organization_team_proje_jira_organization_team_proje_fkey1";
+            columns: ["jira_organization_team_project_organization_id"];
+            isOneToOne: false;
+            referencedRelation: "jira_organization_table";
+            referencedColumns: ["jira_organization_id"];
+          },
+          {
+            foreignKeyName: "jira_organization_team_projec_jira_organization_team_proje_fkey";
+            columns: ["jira_organization_team_project_project_id"];
+            isOneToOne: false;
+            referencedRelation: "team_project_table";
+            referencedColumns: ["team_project_id"];
           }
         ];
       };
@@ -2697,6 +2751,27 @@ export type Database = {
             referencedColumns: ["team_id"];
           }
         ];
+      };
+      team_department_table: {
+        Row: {
+          team_department_date_created: string;
+          team_department_id: string;
+          team_department_is_disabled: boolean;
+          team_department_name: string;
+        };
+        Insert: {
+          team_department_date_created?: string;
+          team_department_id?: string;
+          team_department_is_disabled?: boolean;
+          team_department_name: string;
+        };
+        Update: {
+          team_department_date_created?: string;
+          team_department_id?: string;
+          team_department_is_disabled?: boolean;
+          team_department_name?: string;
+        };
+        Relationships: [];
       };
       team_group_member_table: {
         Row: {
