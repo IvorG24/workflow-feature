@@ -165,7 +165,6 @@ const RequestFormFields = ({
     label: field.field_name,
     description: field.field_description,
     required: field.field_is_required,
-    readOnly: field.field_is_read_only,
     variant: field.field_is_read_only ? "filled" : "default",
     error: fieldError,
   };
@@ -274,7 +273,7 @@ const RequestFormFields = ({
             )}
             error={fieldError}
             withAsterisk={field.field_is_required}
-            readOnly={isLoading}
+            readOnly={field.field_is_read_only || isLoading}
             rightSection={isLoading && <Loader size={16} />}
           />
         );
@@ -556,7 +555,7 @@ const RequestFormFields = ({
                 nothingFound="Nothing found. Try a different keyword"
                 limit={SELECT_OPTION_LIMIT}
                 disabled={isEdit && field.field_name === "Requesting Project"}
-                readOnly={isLoading}
+                readOnly={field.field_is_read_only || isLoading}
                 rightSection={isLoading && <Loader size={16} />}
               />
             )}
