@@ -147,6 +147,7 @@ export const formatJiraTicketPayload = ({
   requestId,
   requestUrl,
   requestTypeId,
+  requestFormType,
   jiraProjectSiteId,
   jiraItemCategoryId,
   warehouseCorporateLeadId,
@@ -167,6 +168,8 @@ export const formatJiraTicketPayload = ({
   const warehouseAreaLeadValue = itemCategoryDoesNotRequireWarehouseLead
     ? []
     : [warehouseAreaLeadId];
+
+  const jiraRequestType = getJiraRequestType(requestFormType);
 
   const jiraTicketPayload = {
     form: {
@@ -197,6 +200,9 @@ export const formatJiraTicketPayload = ({
         },
         "15": {
           choices: ["1"], // Origin of Request
+        },
+        "26": {
+          choices: [jiraRequestType],
         },
       },
     },
@@ -366,4 +372,46 @@ export const formatJiraITAssetPayload = ({
   };
 
   return jiraTicketPayload;
+};
+
+export const getJiraTransitionId = (requestFormType: string) => {
+  const matcher = [
+    {
+      categories: ["item", "ped part", "ped equipment", "ped item"],
+      id: "141",
+      name: "Material",
+    },
+    {
+      categories: ["other expenses", "services"],
+      id: "341",
+      name: "Other Expense/Service",
+    },
+  ];
+
+  const matchedItem = matcher.find((item) =>
+    item.categories.includes(requestFormType.toLowerCase())
+  );
+
+  return matchedItem ? matchedItem.id : null;
+};
+
+export const getJiraRequestType = (requestFormType: string) => {
+  const matcher = [
+    {
+      categories: ["item", "ped part", "ped equipment", "ped item"],
+      id: "11119",
+      name: "Material Notation",
+    },
+    {
+      categories: ["other expenses", "services"],
+      id: "11120",
+      name: "Other Services",
+    },
+  ];
+
+  const matchedItem = matcher.find((item) =>
+    item.categories.includes(requestFormType.toLowerCase())
+  );
+
+  return matchedItem ? matchedItem.id : null;
 };

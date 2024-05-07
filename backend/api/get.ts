@@ -44,6 +44,7 @@ import {
   ItemWithDescriptionType,
   JiraFormslyItemCategoryWithUserDataType,
   JiraItemCategoryDataType,
+  JiraOrganizationTableRow,
   JiraProjectDataType,
   MemoListItemType,
   MemoType,
@@ -6340,7 +6341,7 @@ export const getJiraFormslyProjectList = async (
   let query = supabaseClient
     .from("team_project_table")
     .select(
-      "team_project_id, team_project_name, assigned_jira_project: jira_formsly_project_table(jira_formsly_project_id, jira_project_id, formsly_project_id)",
+      "team_project_id, team_project_name, assigned_jira_project: jira_formsly_project_table(jira_formsly_project_id, jira_project_id, formsly_project_id), assigned_jira_organization: jira_organization_team_project_table(jira_organization_team_project_id, jira_organization_team_project_project_id, jira_organization_team_project_organization_id)",
       { count: "exact" }
     )
     .eq("team_project_team_id", teamId)
@@ -6355,18 +6356,31 @@ export const getJiraFormslyProjectList = async (
 
   if (error) throw error;
 
-  return {
-    data: data as unknown as {
-      team_project_id: string;
-      team_project_name: string;
-      assigned_jira_project: {
-        jira_formsly_project_id: string;
-        jira_project_id: string;
-        formsly_project_id: string;
-      } | null;
-    }[],
-    count: Number(count),
-  };
+  const formattedData = data.map((item) => {
+    const assignedJiraProject = item.assigned_jira_project
+      ? (item.assigned_jira_project as {
+          jira_formsly_project_id: string;
+          jira_project_id: string;
+          formsly_project_id: string;
+        })
+      : null;
+
+    const assignedOrganization = item.assigned_jira_organization as {
+      jira_organization_team_project_id: string;
+      jira_organization_team_project_project_id: string;
+      jira_organization_team_project_organization_id: string;
+    }[];
+
+    return {
+      team_project_id: item.team_project_id,
+      team_project_name: item.team_project_name,
+      assigned_jira_project: assignedJiraProject,
+      assigned_jira_organization: assignedOrganization
+        ? assignedOrganization[0]
+        : null,
+    };
+  });
+  return { data: formattedData, count: Number(count) };
 };
 
 export const getJiraUserAccountList = async (
@@ -6529,6 +6543,9 @@ export const getJiraAutomationDataByProjectId = async (
   return data as {
     jiraProjectData: JiraProjectDataType;
     jiraItemCategoryData: JiraItemCategoryDataType[];
+    jiraOrganizationData: {
+      jira_organization_team_project_project_id: string;
+    } & JiraOrganizationTableRow;
   };
 };
 
@@ -7081,4 +7098,35 @@ export const getITAssetItemOptions = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getJiraOrganizationList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    from: number;
+    to: number;
+    search?: string;
+  }
+) => {
+  const { from, to, search } = params;
+  let query = supabaseClient
+    .from("jira_organization_table")
+    .select("*", {
+      count: "exact",
+    })
+    .order("jira_organization_jira_label")
+    .range(from, to);
+
+  if (search) {
+    query = query.ilike("jira_organization_jira_label", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+
+  if (error) throw error;
+
+  return {
+    data,
+    count: Number(count),
+  };
 };

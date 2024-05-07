@@ -354,11 +354,11 @@ const ITAssetRequestPage = ({ request }: Props) => {
         employeeName: safeParse(employeeName),
         purpose: purpose.id,
         item: item.id,
+        requestFormType: request.request_form.form_name,
       };
 
       const jiraTicketData = await createJiraTicket({
         jiraTicketPayload,
-        jiraItemCategoryLabel: "",
         requestCommentList,
         supabaseClient,
         isITAsset: true,

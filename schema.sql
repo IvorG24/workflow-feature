@@ -1022,6 +1022,18 @@ CREATE TABLE jira_item_user_table (
   jira_item_user_item_category_id UUID REFERENCES jira_item_category_table(jira_item_category_id) NOT NULL,
   jira_item_user_role_id UUID REFERENCES jira_user_role_table(jira_user_role_id) NOT NULL
 );
+
+CREATE TABLE jira_organization_table (
+    jira_organization_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    jira_organization_jira_id VARCHAR(4000) NOT NULL,
+    jira_organization_jira_label VARCHAR(4000) NOT NULL
+);
+
+CREATE TABLE jira_organization_team_project_table (
+    jira_organization_team_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    jira_organization_team_project_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL,
+    jira_organization_team_project_organization_id UUID REFERENCES jira_organization_table(jira_organization_id) NOT NULL
+);
 -- End: Jira automation tables
 
 -- Start: Team department table
@@ -9985,7 +9997,22 @@ RETURNS JSON AS $$
       `
     );
 
-    jira_automation_data = {jiraProjectData, jiraItemCategoryData}
+    const jiraOrganizationData = plv8.execute(
+      `
+        SELECT
+          jira_organization_id,
+          jira_organization_jira_id,
+          jira_organization_jira_label,
+          jira_organization_team_project_project_id
+        FROM
+          jira_organization_team_project_table
+        INNER JOIN jira_organization_table jot ON jot.jira_organization_id = jira_organization_team_project_organization_id
+        WHERE
+          jira_organization_team_project_project_id = '${teamProjectId}'
+      `
+    )
+
+    jira_automation_data = {jiraProjectData, jiraItemCategoryData, jiraOrganizationData: jiraOrganizationData[0]}
  });
  return jira_automation_data;
 $$ LANGUAGE plv8;
@@ -10117,6 +10144,8 @@ ALTER TABLE jira_project_user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_item_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_item_user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_department_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_organization_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -10455,6 +10484,10 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_category
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_user_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_department_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_organization_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_organization_team_project_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -13214,6 +13247,48 @@ CREATE POLICY "Allow READ for anon users" ON "public"."team_department_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
+-- jira_organization_table
+CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_organization_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (true);
+
+-- jira_organization_team_project_table
+CREATE POLICY "Allow READ for anon users" ON "public"."jira_organization_team_project_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_organization_team_project_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_organization_team_project_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
 
 -------- End: POLICIES
 

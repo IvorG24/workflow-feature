@@ -1,5 +1,4 @@
 import {
-  checkUsername,
   getBarangay,
   getCity,
   getProvince,
@@ -12,40 +11,19 @@ import {
   createValidID,
   uploadImage,
 } from "@/backend/api/post";
-import { useLoadingActions } from "@/stores/useLoadingStore";
-import { ID_OPTIONS } from "@/utils/constant";
-import {
-  formatTeamNameToUrlKey,
-  isUUID,
-  removeMultipleSpaces,
-  toTitleCase,
-} from "@/utils/string";
-import { mobileNumberFormatter } from "@/utils/styling";
+import { formatTeamNameToUrlKey, isUUID } from "@/utils/string";
 import { OptionType } from "@/utils/types";
-import {
-  Button,
-  Center,
-  Container,
-  Divider,
-  FileInput,
-  Flex,
-  Grid,
-  NumberInput,
-  Paper,
-  Select,
-  Text,
-  TextInput,
-  Title,
-} from "@mantine/core";
+import { Container, Flex, LoadingOverlay, Paper } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { User, useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import UploadAvatar from "../UploadAvatar/UploadAvatar";
+import { FormProvider, useForm } from "react-hook-form";
+import FirstStep from "./Steps/FirstStep";
+import SecondStep from "./Steps/SecondStep";
+import ThirdStep from "./Steps/ThirdStep";
 
-type OnboardUserParams = {
+export type OnboardUserParams = {
   user_id: string;
   user_email: string;
   user_first_name: string;
@@ -79,7 +57,7 @@ type Props = {
 const OnboardingPage = ({ user }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
-  const { setIsLoading } = useLoadingActions();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [idType, setIdType] = useState<string | null>(null);
@@ -88,6 +66,9 @@ const OnboardingPage = ({ user }: Props) => {
   const [cityOptions, setCityOptions] = useState<OptionType[]>([]);
   const [barangayOptions, setBarangayOptions] = useState<OptionType[]>([]);
   const [zipCodeOptions, setZipCodeOptions] = useState<OptionType[]>([]);
+  const [activeStep, setActiveStep] = useState(1);
+
+  const totalSections = 3;
 
   useEffect(() => {
     try {
@@ -103,20 +84,12 @@ const OnboardingPage = ({ user }: Props) => {
     }
   }, []);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setError,
-    control,
-    setValue,
-    watch,
-  } = useForm<OnboardUserParams>({
+  const submitOnboardingMethods = useForm<OnboardUserParams>({
     defaultValues: { user_id: user.id, user_email: user.email },
-    reValidateMode: "onChange",
+    reValidateMode: "onBlur",
   });
 
-  const watchBarangay = watch("user_id_barangay");
+  const { handleSubmit, setValue, trigger } = submitOnboardingMethods;
 
   const handleOnboardUser = async (data: OnboardUserParams) => {
     setIsLoading(true);
@@ -182,7 +155,7 @@ const OnboardingPage = ({ user }: Props) => {
         user_valid_id_user_id: data.user_id,
         user_valid_id_type: data.user_id_type.replace(/'/g, "''"),
         user_valid_id_number: data.user_id_number.trim(),
-        user_valid_id_first_name: data.user_id_first_name.trim(),
+        user_valid_id_first_name: data.user_first_name.trim(),
         user_valid_id_middle_name: data.user_id_middle_name.trim(),
         user_valid_id_last_name: data.user_last_name.trim(),
         user_valid_id_gender: data.user_id_gender.trim(),
@@ -368,619 +341,90 @@ const OnboardingPage = ({ user }: Props) => {
     }
   };
 
+  const handleChangeStep = async (action: "PREVIOUS" | "NEXT") => {
+    setIsLoading(true);
+    switch (action) {
+      case "PREVIOUS":
+        setActiveStep((prev) => prev - 1);
+        break;
+
+      case "NEXT":
+        const isValid = await trigger();
+        if (isValid) {
+          setActiveStep((prev) => prev + 1);
+        }
+        break;
+
+      default:
+        break;
+    }
+    setIsLoading(false);
+  };
+
+  const renderActiveStep = (step: number) => {
+    switch (step) {
+      case 1:
+        return (
+          <FirstStep
+            activeStep={step}
+            totalSections={totalSections}
+            avatarFile={avatarFile}
+            setAvatarFile={setAvatarFile}
+            handleChangeStep={handleChangeStep}
+          />
+        );
+
+      case 2:
+        return (
+          <SecondStep
+            activeStep={step}
+            totalSections={totalSections}
+            idLabel={idLabel}
+            regionOptions={regionOptions}
+            provinceOptions={provinceOptions}
+            setIdType={setIdType}
+            handleFetchProvinceOptions={handleFetchProvinceOptions}
+            handleFetchCityOptions={handleFetchCityOptions}
+            handleChangeStep={handleChangeStep}
+          />
+        );
+
+      case 3:
+        return (
+          <ThirdStep
+            activeStep={step}
+            totalSections={totalSections}
+            cityOptions={cityOptions}
+            barangayOptions={barangayOptions}
+            handleFetchZipCode={handleFetchZipCode}
+            handleFetchBarangayOptions={handleFetchBarangayOptions}
+            handleChangeStep={handleChangeStep}
+          />
+        );
+
+      default:
+        return;
+    }
+  };
+
   return (
-    <Container p={0} mih="100vh" fluid>
-      <Container p="xl" maw={{ base: 450, xs: 750 }}>
-        <Paper p="xl" shadow="sm" withBorder>
-          <Title color="blue">Onboarding</Title>
-
-          <Text size="lg" mt="lg" fw="bold">
-            Complete your profile
-          </Text>
-
-          <Divider mt={4} />
-
-          <Center mt="lg">
-            <UploadAvatar
-              value={avatarFile}
-              onChange={setAvatarFile}
-              onError={(error: string) =>
-                setError("user_avatar", { message: error })
-              }
-            />
-          </Center>
-
-          <form onSubmit={handleSubmit(handleOnboardUser)}>
-            <Grid columns={2} gutter="sm">
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label="Email"
-                  {...register("user_email")}
-                  mt="sm"
-                  disabled
-                />
-              </Grid.Col>
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label="Username"
-                  {...register("user_username", {
-                    required: "Username is required",
-                    minLength: {
-                      value: 2,
-                      message: "Username must have at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: "Username must be shorter than 100 characters",
-                    },
-                    validate: {
-                      validCharacters: (value) =>
-                        /^[a-zA-Z0-9_.]+$/.test(value) ||
-                        "Username can only contain letters, numbers, underscore, and period",
-                      alreadyUsed: async (value) => {
-                        const isAlreadyUsed = await checkUsername(
-                          supabaseClient,
-                          {
-                            username: value,
-                          }
-                        );
-                        return isAlreadyUsed
-                          ? "Username is already used"
-                          : true;
-                      },
-                    },
-                  })}
-                  error={errors.user_username?.message}
-                  mt="sm"
-                  data-cy="onboarding-input-username"
-                  required
-                />
-              </Grid.Col>
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label="First name"
-                  {...register("user_first_name", {
-                    onChange: (e) => {
-                      const format = toTitleCase(
-                        removeMultipleSpaces(e.currentTarget.value)
-                      );
-                      setValue("user_first_name", format);
-                    },
-                    required: "First name is required",
-                    minLength: {
-                      value: 2,
-                      message: "First name must have at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: "First name must be shorter than 100 characters",
-                    },
-                  })}
-                  error={errors.user_first_name?.message}
-                  mt="sm"
-                  data-cy="onboarding-input-first-name"
-                  required
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label="Last name"
-                  {...register("user_last_name", {
-                    onChange: (e) => {
-                      const format = toTitleCase(
-                        removeMultipleSpaces(e.currentTarget.value)
-                      );
-                      setValue("user_last_name", format);
-                    },
-                    required: "Last name is required",
-                    minLength: {
-                      value: 2,
-                      message: "Last name must have at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: "Last name must be shorter than 100 characters",
-                    },
-                  })}
-                  error={errors.user_last_name?.message}
-                  mt="sm"
-                  data-cy="onboarding-input-last-name"
-                  required
-                />
-              </Grid.Col>
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name="user_phone_number"
-                  rules={{
-                    required: "Mobile Number is required.",
-                    validate: {
-                      valid: (value) =>
-                        !value
-                          ? true
-                          : `${value}`.length === 10
-                          ? true
-                          : "Invalid mobile number",
-                      startsWith: (value) =>
-                        !value
-                          ? true
-                          : `${value}`[0] === "9"
-                          ? true
-                          : "Mobile number must start with 9",
-                    },
-                  }}
-                  render={({ field: { onChange } }) => (
-                    <NumberInput
-                      label="Mobile Number"
-                      maxLength={10}
-                      hideControls
-                      formatter={(value) => mobileNumberFormatter(value)}
-                      icon="+63"
-                      min={0}
-                      max={9999999999}
-                      onChange={onChange}
-                      error={errors.user_phone_number?.message}
-                      mt="sm"
-                      required
-                    />
-                  )}
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name="user_employee_number"
-                  render={({ field: { onChange } }) => (
-                    <NumberInput
-                      label="Employee Number"
-                      onChange={onChange}
-                      hideControls
-                      error={errors.user_employee_number?.message}
-                      mt="sm"
-                      required
-                    />
-                  )}
-                  rules={{
-                    required: {
-                      value: true,
-                      message: "Employee number is required",
-                    },
-                  }}
-                />
-              </Grid.Col>
-
-              <Grid.Col span={2}>
-                <Text size="lg" mt="lg" fw="bold">
-                  Government-issued ID
-                </Text>
-                <Divider mt={4} />
-                <Flex align="center" gap={4} mt="xs">
-                  <IconAlertCircle size="1rem" color="#998e95" />
-                  <Text size="xs" color="dimmed">
-                    Please fill in the fields referring to the government-issued
-                    ID.
-                  </Text>
-                </Flex>
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name={"user_id_type"}
-                  rules={{ required: "ID Type is required" }}
-                  render={({ field: { value, onChange } }) => (
-                    <Select
-                      label="ID type"
-                      value={value}
-                      onChange={(value) => {
-                        onChange(value);
-                        setIdType(value);
-                      }}
-                      data={ID_OPTIONS}
-                      error={errors.user_id_type?.message}
-                      mt="sm"
-                      required
-                    />
-                  )}
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label={idLabel}
-                  {...register("user_id_number", {
-                    required: `${idLabel} is required`,
-                    minLength: {
-                      value: 3,
-                      message: `${idLabel} must have at least 3 characters`,
-                    },
-                    maxLength: {
-                      value: 16,
-                      message: `${idLabel} must be shorter than 16 characters`,
-                    },
-                  })}
-                  error={errors.user_id_number?.message}
-                  mt="sm"
-                  required
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label="First name"
-                  {...register("user_id_first_name", {
-                    onChange: (e) => {
-                      const format = toTitleCase(
-                        removeMultipleSpaces(e.currentTarget.value)
-                      );
-                      setValue("user_id_first_name", format);
-                    },
-                    required: "First name is required",
-                    minLength: {
-                      value: 2,
-                      message: "First name must have at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: "First name must be shorter than 100 characters",
-                    },
-                  })}
-                  error={errors.user_id_first_name?.message}
-                  mt="sm"
-                  required
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label="Middle name"
-                  {...register("user_id_middle_name", {
-                    onChange: (e) => {
-                      const format = toTitleCase(
-                        removeMultipleSpaces(e.currentTarget.value)
-                      );
-                      setValue("user_id_middle_name", format);
-                    },
-                    minLength: {
-                      value: 2,
-                      message: "Middle name must have at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message:
-                        "Middle name must be shorter than 100 characters",
-                    },
-                  })}
-                  error={errors.user_id_middle_name?.message}
-                  mt="sm"
-                  required
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label="Last name"
-                  {...register("user_id_last_name", {
-                    onChange: (e) => {
-                      const format = toTitleCase(
-                        removeMultipleSpaces(e.currentTarget.value)
-                      );
-                      setValue("user_id_last_name", format);
-                    },
-                    required: "Last name is required",
-                    minLength: {
-                      value: 2,
-                      message: "Last name must have at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: "Last name must be shorter than 100 characters",
-                    },
-                  })}
-                  error={errors.user_id_last_name?.message}
-                  mt="sm"
-                  required
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name={"user_id_gender"}
-                  rules={{ required: "Gender is required" }}
-                  render={({ field: { value, onChange } }) => (
-                    <Select
-                      label="Gender"
-                      value={value}
-                      onChange={onChange}
-                      data={[
-                        {
-                          value: "Male",
-                          label: "Male",
-                        },
-                        {
-                          value: "Female",
-                          label: "Female",
-                        },
-                      ]}
-                      error={errors.user_id_type?.message}
-                      mt="sm"
-                      required
-                    />
-                  )}
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  label="Nationality"
-                  {...register("user_id_nationality", {
-                    onChange: (e) => {
-                      const format = toTitleCase(
-                        removeMultipleSpaces(e.currentTarget.value)
-                      );
-                      setValue("user_id_nationality", format);
-                    },
-                    required: "Nationality is required",
-                    minLength: {
-                      value: 2,
-                      message: "Nationality must have at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message:
-                        "Nationality must be shorter than 100 characters",
-                    },
-                  })}
-                  error={errors.user_id_nationality?.message}
-                  mt="sm"
-                  required
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name="user_id_region"
-                  render={({ field: { onChange, value } }) => (
-                    <Select
-                      label="Region"
-                      data={regionOptions}
-                      required
-                      clearable
-                      searchable
-                      onChange={async (value) => {
-                        await handleFetchProvinceOptions(value);
-                        onChange(value);
-                      }}
-                      value={value}
-                      error={errors.user_id_region?.message}
-                      mt="sm"
-                    />
-                  )}
-                  rules={{
-                    required: {
-                      value: true,
-                      message: "Region is required",
-                    },
-                  }}
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name="user_id_province"
-                  render={({ field: { onChange, value } }) => (
-                    <Select
-                      label="Province"
-                      data={provinceOptions}
-                      required
-                      clearable
-                      searchable
-                      onChange={async (value) => {
-                        await handleFetchCityOptions(value);
-                        onChange(value);
-                      }}
-                      value={value}
-                      error={errors.user_id_province?.message}
-                      disabled={provinceOptions.length === 0}
-                      mt="sm"
-                    />
-                  )}
-                  rules={{
-                    required: {
-                      value: true,
-                      message: "Province is required",
-                    },
-                  }}
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name="user_id_city"
-                  render={({ field: { onChange, value } }) => (
-                    <Select
-                      label="City"
-                      data={cityOptions}
-                      required
-                      clearable
-                      searchable
-                      onChange={async (value) => {
-                        await handleFetchBarangayOptions(value);
-                        onChange(value);
-                      }}
-                      value={value}
-                      error={errors.user_id_city?.message}
-                      disabled={cityOptions.length === 0}
-                      mt="sm"
-                    />
-                  )}
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name="user_id_barangay"
-                  render={({ field: { onChange, value } }) => (
-                    <Select
-                      label="Barangay"
-                      data={barangayOptions}
-                      required
-                      clearable
-                      searchable
-                      onChange={(value) => {
-                        setValue("user_id_street", "");
-                        handleFetchZipCode(value);
-                        onChange(value);
-                      }}
-                      value={value}
-                      error={errors.user_id_barangay?.message}
-                      disabled={barangayOptions.length === 0}
-                      mt="sm"
-                    />
-                  )}
-                  rules={{
-                    required: {
-                      value: true,
-                      message: "Barangay is required",
-                    },
-                  }}
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  {...register("user_id_street", {
-                    validate: {
-                      required: (value) =>
-                        value.trim() ? true : "Street is required",
-                      minLength: (value) =>
-                        value.trim().length > 2
-                          ? true
-                          : "Street must have atleast 3 characters",
-                      maxLength: (value) =>
-                        value.trim().length < 500
-                          ? true
-                          : "Street must be shorter than 500 characters",
-                    },
-                  })}
-                  withAsterisk
-                  w="100%"
-                  label="Street"
-                  error={errors.user_id_street?.message}
-                  disabled={!watchBarangay}
-                  mt="sm"
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <TextInput
-                  {...register("user_id_zip_code", {
-                    validate: {
-                      required: (value) =>
-                        value.trim() ? true : "Zip Code is required",
-                    },
-                  })}
-                  withAsterisk
-                  w="100%"
-                  label="Zip Code"
-                  error={errors.user_id_zip_code?.message}
-                  variant="filled"
-                  mt="sm"
-                />
-              </Grid.Col>
-
-              <Grid.Col xs={2} sm={1}>
-                <Controller
-                  control={control}
-                  name={"user_id_front_image"}
-                  rules={{
-                    required: "Front ID image is required",
-                  }}
-                  render={({ field: { value, onChange } }) => (
-                    <FileInput
-                      value={value}
-                      onChange={onChange}
-                      label="Front ID image"
-                      accept="image/png,image/jpeg"
-                      error={errors.user_id_front_image?.message}
-                      mt="sm"
-                      required
-                    />
-                  )}
-                />
-              </Grid.Col>
-
-              {idType !== "Philippine Passport" && (
-                <Grid.Col xs={2} sm={1}>
-                  <Controller
-                    control={control}
-                    name={"user_id_back_image"}
-                    rules={{
-                      required:
-                        idType !== "Philippine Passport"
-                          ? "Back ID image is required"
-                          : false,
-                    }}
-                    render={({ field: { value, onChange } }) => (
-                      <FileInput
-                        value={value}
-                        onChange={onChange}
-                        label="Back ID image"
-                        accept="image/png,image/jpeg"
-                        error={errors.user_id_back_image?.message}
-                        mt="sm"
-                        required
-                      />
-                    )}
-                  />
-                </Grid.Col>
-              )}
-              <Grid.Col span={2}>
-                <Text size="lg" mt="lg" fw="bold">
-                  Optional
-                </Text>
-
-                <Divider mt={4} />
-              </Grid.Col>
-
-              <Grid.Col span={2}>
-                <TextInput
-                  label="Job Title"
-                  {...register("user_job_title", {
-                    onChange: (e) => {
-                      const format = removeMultipleSpaces(
-                        e.currentTarget.value
-                      );
-                      setValue("user_job_title", format);
-                    },
-                    minLength: {
-                      value: 2,
-                      message: "Job title must have at least 2 characters",
-                    },
-                    maxLength: {
-                      value: 100,
-                      message: "Job title must be shorter than 100 characters",
-                    },
-                  })}
-                  error={errors.user_job_title?.message}
-                  mt="sm"
-                />
-              </Grid.Col>
-            </Grid>
-
-            <Button type="submit" mt="xl" fullWidth>
-              Save and Continue
-            </Button>
-          </form>
+    <Container p={0} h="100%" fluid>
+      <Flex h="100%" w="100%" justify="center" mt={{ sm: 45, lg: 75 }}>
+        <Paper
+          p={{ base: 24, sm: 32 }}
+          shadow="sm"
+          w={{ base: "100%", sm: 800 }}
+          h={{ base: "100%", sm: 520 }}
+          pos="relative"
+        >
+          <LoadingOverlay visible={isLoading} overlayBlur={2} />
+          <FormProvider {...submitOnboardingMethods}>
+            <form onSubmit={handleSubmit(handleOnboardUser)}>
+              {renderActiveStep(activeStep)}
+            </form>
+          </FormProvider>
         </Paper>
-      </Container>
+      </Flex>
     </Container>
   );
 };
