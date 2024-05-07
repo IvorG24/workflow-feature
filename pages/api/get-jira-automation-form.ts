@@ -20,7 +20,7 @@ export default async function handler(
     }
     // https://developer.atlassian.com/cloud/forms/rest/api-group-forms-on-portal/#api-servicedesk-servicedeskid-requesttype-requesttypeid-form-get
     const response = await fetch(
-      `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/servicedesk/17/requesttype/189/form/externaldata`,
+      `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/servicedesk/17/requesttype/299/form/externaldata`,
       {
         method: "GET",
         headers: {

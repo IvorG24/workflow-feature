@@ -16,6 +16,7 @@ import {
   ItemTableInsert,
   JiraFormslyItemCategoryWithUserDataType,
   JiraItemCategoryTableUpdate,
+  JiraOrganizationTableUpdate,
   JiraProjectTableUpdate,
   JiraUserAccountTableUpdate,
   MemberRoleType,
@@ -1093,4 +1094,42 @@ export const updateJiraFormslyProject = async (
   if (error) throw error;
 
   return { success: true, data: data };
+};
+
+// update jira organization
+export const updateJiraOrganization = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JiraOrganizationTableUpdate
+) => {
+  const { error } = await supabaseClient
+    .from("jira_organization_table")
+    .update(params)
+    .eq("jira_organization_id", params.jira_organization_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
+};
+
+// re-assign jira formsly organization
+export const updateJiraFormslyOrganization = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyProjectId: string;
+    jiraOrganizationId: string;
+  }
+) => {
+  const { formslyProjectId, jiraOrganizationId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("jira_organization_team_project_table")
+    .update({
+      jira_organization_team_project_organization_id: jiraOrganizationId,
+    })
+    .eq("jira_organization_team_project_project_id", formslyProjectId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+
+  return data;
 };

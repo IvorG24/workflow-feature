@@ -442,6 +442,20 @@ export type ItemCategoryTableInsert =
 export type ItemCategoryTableUpdate =
   Database["public"]["Tables"]["item_category_table"]["Update"];
 
+export type JiraOrganizationTableRow =
+  Database["public"]["Tables"]["jira_organization_table"]["Row"];
+export type JiraOrganizationTableInsert =
+  Database["public"]["Tables"]["jira_organization_table"]["Insert"];
+export type JiraOrganizationTableUpdate =
+  Database["public"]["Tables"]["jira_organization_table"]["Update"];
+
+export type JiraOrganizationTeamProjectTableRow =
+  Database["public"]["Tables"]["jira_organization_team_project_table"]["Row"];
+export type JiraOrganizationTeamProjectTableInsert =
+  Database["public"]["Tables"]["jira_organization_team_project_table"]["Insert"];
+export type JiraOrganizationTeamProjectTableUpdate =
+  Database["public"]["Tables"]["jira_organization_team_project_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1638,7 +1652,13 @@ export type JiraFormslyProjectType = {
     jira_formsly_project_id: string;
     formsly_project_id: string;
     jira_project_id: string;
-    jira_project: JiraProjectTableRow;
+    jira_project: JiraProjectTableRow | null;
+  } | null;
+  assigned_jira_organization: {
+    jira_organization_team_project_id: string;
+    jira_organization_team_project_project_id: string;
+    jira_organization_team_project_organization_id: string;
+    jira_organization_team_project_organization: JiraOrganizationTableRow | null;
   } | null;
 };
 
@@ -1703,6 +1723,7 @@ export type JiraItemCategoryDataType = {
 export type JiraTicketPayloadProps = {
   requestId: string;
   requestUrl: string;
+  requestFormType: string;
   requestTypeId: string;
   jiraProjectSiteId: string;
   jiraItemCategoryId: string;
@@ -1711,6 +1732,7 @@ export type JiraTicketPayloadProps = {
   warehouseRepresentativeId: string;
   warehouseRequestParticipantIdList: string[];
   jiraItemCategoryLabel?: string;
+  jiraOrganizationId: string;
 };
 
 export type JiraTicketData = {

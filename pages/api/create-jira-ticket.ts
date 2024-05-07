@@ -30,13 +30,13 @@ export default async function handler(
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(req.body),
+        body: JSON.stringify(req.body.data),
       }
     );
 
     if (response.ok) {
       const responseData = await response.json();
-      // add apiSource = Formsly
+      // add organization
       await fetch(`${jiraConfig.api_url}/issue/${responseData.issueKey}`, {
         method: "PUT",
         headers: {
@@ -48,9 +48,7 @@ export default async function handler(
         },
         body: JSON.stringify({
           fields: {
-            customfield_10298: {
-              value: "Formsly",
-            },
+            customfield_10002: [req.body.organizationId],
           },
         }),
       });

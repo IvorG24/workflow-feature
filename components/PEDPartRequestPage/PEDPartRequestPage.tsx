@@ -348,7 +348,8 @@ const PEDPartRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         return { success: false, data: null };
       }
 
-      const { jiraProjectData, jiraItemCategoryData } = jiraAutomationData;
+      const { jiraProjectData, jiraItemCategoryData, jiraOrganizationData } =
+        jiraAutomationData;
 
       const itemCategory = "Spare Parts & Supplies";
 
@@ -377,7 +378,8 @@ const PEDPartRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       const jiraTicketPayload = {
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
-        requestTypeId: "189",
+        requestFormType: request.request_form.form_name,
+        requestTypeId: "299",
         jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
         jiraItemCategoryId: itemCategoryMatch.jira_item_category_jira_id,
 
@@ -388,11 +390,11 @@ const PEDPartRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         warehouseRequestParticipantIdList: warehouseRequestParticipant.map(
           (user) => user.jira_user_account_jira_id
         ),
+        jiraOrganizationId: jiraOrganizationData.jira_organization_jira_id,
       };
 
       const jiraTicketData = await createJiraTicket({
         jiraTicketPayload,
-        jiraItemCategoryLabel: itemCategory,
         requestCommentList,
         supabaseClient,
       });
