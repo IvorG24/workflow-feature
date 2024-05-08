@@ -18,6 +18,7 @@ import {
   Container,
   Divider,
   Flex,
+  Group,
   Loader,
   LoadingOverlay,
   MultiSelect,
@@ -122,6 +123,7 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
         unit: "",
         isAvailable: true,
         isPedItem: false,
+        isITAsset: false,
         itemCategory: "",
       },
     });
@@ -155,6 +157,7 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
           item_encoder_team_member_id: teamMember.team_member_id,
           item_level_three_description: data.divisionDescription,
           item_is_ped_item: data.isPedItem,
+          item_is_it_asset_item: data.isITAsset,
           item_category_id: data.itemCategory,
         },
         formId: formId,
@@ -350,22 +353,50 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
                 />
               )}
             />
-            <Controller
-              control={control}
-              name="isPedItem"
-              render={({ field: { value, onChange } }) => (
-                <Checkbox
-                  sx={{
-                    input: {
-                      cursor: "pointer",
-                    },
-                  }}
-                  label={"PED Item"}
-                  checked={value}
-                  onChange={onChange}
-                />
-              )}
-            />
+            <Group>
+              <Controller
+                control={control}
+                name="isPedItem"
+                render={({ field: { value, onChange } }) => (
+                  <Checkbox
+                    sx={{
+                      input: {
+                        cursor: "pointer",
+                      },
+                    }}
+                    label={"PED Item"}
+                    checked={value}
+                    onChange={(v) => {
+                      onChange(v);
+                      if (getValues("isITAsset")) {
+                        setValue("isITAsset", false);
+                      }
+                    }}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="isITAsset"
+                render={({ field: { value, onChange } }) => (
+                  <Checkbox
+                    sx={{
+                      input: {
+                        cursor: "pointer",
+                      },
+                    }}
+                    label={"IT Asset Item"}
+                    checked={value}
+                    onChange={(v) => {
+                      onChange(v);
+                      if (getValues("isPedItem")) {
+                        setValue("isPedItem", false);
+                      }
+                    }}
+                  />
+                )}
+              />
+            </Group>
             {fields.map((field, index) => {
               return (
                 <Flex key={field.id} gap="xs">

@@ -805,6 +805,7 @@ export type ItemForm = {
   division: string[];
   divisionDescription: string;
   isPedItem: boolean;
+  isITAsset: boolean;
   itemCategory: string;
 };
 
