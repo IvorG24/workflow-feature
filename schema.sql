@@ -299,6 +299,7 @@ CREATE TABLE item_table(
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
   item_is_ped_item BOOLEAN DEFAULT FALSE NOT NULL,
+  item_is_it_asset_item BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   item_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
@@ -5243,9 +5244,7 @@ RETURNS JSON as $$
                 ...form.form_section[0],
                 section_field: firstSectionFieldList,
               },
-              {
-                ...form.form_section[1]
-              }
+              ...form.form_section.slice(1)
             ],
           },
           projectOptions
