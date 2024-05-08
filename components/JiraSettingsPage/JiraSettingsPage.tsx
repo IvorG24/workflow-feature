@@ -120,13 +120,16 @@ const JiraSettingsPage = ({
 
         setJiraUserRoleList(jiraUserRoleList);
 
-        const response = await fetch("/api/get-jira-automation-form", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          "/api/get-jira-automation-form?serviceDeskId=17&requestType=189",
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }
+        );
         const data = await response.json();
         setJiraAutomationFormData(data.fields);
       } catch (error) {

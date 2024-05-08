@@ -18,9 +18,12 @@ export default async function handler(
     if (!jiraConfig.user || !jiraConfig.api_token || !jiraConfig.api_url) {
       return res.status(400).json({ error: "Jira env variables undefined" });
     }
+
+    const { serviceDeskId, requestType } = req.query;
+
     // https://developer.atlassian.com/cloud/forms/rest/api-group-forms-on-portal/#api-servicedesk-servicedeskid-requesttype-requesttypeid-form-get
     const response = await fetch(
-      `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/servicedesk/17/requesttype/299/form/externaldata`,
+      `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/servicedesk/${serviceDeskId}/requesttype/${requestType}/form/externaldata`,
       {
         method: "GET",
         headers: {

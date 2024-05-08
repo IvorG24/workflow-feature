@@ -3,34 +3,51 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import { Database } from "./database";
 import {
+  formatJiraITAssetPayload,
   formatJiraTicketPayload,
   generateJiraCommentPayload,
   getJiraTransitionId,
   isEmpty,
 } from "./functions";
 import {
+  JiraITAssetTicketPayloadProps,
   JiraTicketData,
   JiraTicketPayloadProps,
   RequestCommentType,
 } from "./types";
 
 type CreateJiraTicketProps = {
-  jiraTicketPayload: JiraTicketPayloadProps;
+  jiraTicketPayload: JiraTicketPayloadProps | JiraITAssetTicketPayloadProps;
   requestCommentList: RequestCommentType[];
   supabaseClient: SupabaseClient<Database>;
+  isITAsset?: boolean;
 };
 
 export const createJiraTicket = async ({
   jiraTicketPayload,
   requestCommentList,
   supabaseClient,
+  isITAsset,
 }: CreateJiraTicketProps): Promise<JiraTicketData> => {
   try {
-    const formattedJiraTicketPayload =
-      formatJiraTicketPayload(jiraTicketPayload);
+    let formattedJiraTicketPayload = null;
+
+    if (isITAsset) {
+      formattedJiraTicketPayload = formatJiraITAssetPayload(
+        jiraTicketPayload as JiraITAssetTicketPayloadProps
+      );
+    } else {
+      formattedJiraTicketPayload = formatJiraTicketPayload(
+        jiraTicketPayload as JiraTicketPayloadProps
+      );
+    }
+
+    const requestType = isITAsset
+      ? "IT Requisition Form Test"
+      : "Automated Requisition Form";
 
     const duplicateJiraTicketResponse = await fetch(
-      `/api/check-jira-duplicate-ticket?formslyId=${jiraTicketPayload.requestId}`,
+      `/api/check-jira-duplicate-ticket?formslyId=${jiraTicketPayload.requestId}&requestType=${requestType}`,
       {
         method: "GET",
         headers: {
@@ -52,6 +69,13 @@ export const createJiraTicket = async ({
       }
     }
 
+    let organizationId = "";
+
+    if (!isITAsset) {
+      const currentJiraPayload = jiraTicketPayload as JiraTicketPayloadProps;
+      organizationId = currentJiraPayload.jiraOrganizationId;
+    }
+
     const jiraTicketResponse = await fetch("/api/create-jira-ticket", {
       method: "POST",
       headers: {
@@ -59,7 +83,7 @@ export const createJiraTicket = async ({
       },
       body: JSON.stringify({
         data: formattedJiraTicketPayload,
-        organizationId: jiraTicketPayload.jiraOrganizationId,
+        organizationId: organizationId,
       }),
     });
 

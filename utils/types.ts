@@ -1735,6 +1735,17 @@ export type JiraTicketPayloadProps = {
   jiraOrganizationId: string;
 };
 
+export type JiraITAssetTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  requestTypeId: string;
+  jiraProjectSiteId: string;
+  employeeName: string;
+  purpose: string;
+  item: string;
+  requestFormType: string;
+};
+
 export type JiraTicketData = {
   success: boolean;
   data: { jiraTicketKey: string; jiraTicketWebLink: string } | null;
@@ -1807,4 +1818,21 @@ export type InitialFormType = FormTableRow & {
       };
     };
   })[];
+};
+
+export type ITAssetForm = {
+  generalName: string;
+  descriptions: {
+    description: string;
+    withUoM: boolean;
+    descriptionId?: string;
+    fieldId?: string;
+    order?: number;
+  }[];
+  unit: string;
+  isAvailable: boolean;
+  glAccount: string;
+  division: string[];
+  divisionDescription: string;
+  isITAsset: boolean;
 };

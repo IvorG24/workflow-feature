@@ -1,4 +1,5 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
+import EditITAssetRequestPage from "@/components/EditITAssetRequestPage/EditITAssetRequestPage";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
@@ -111,6 +112,14 @@ const Page = ({
       case "Request For Payment":
         return (
           <EditRequestForPaymentPage
+            form={form}
+            projectOptions={projectOptions}
+            requestId={requestId}
+          />
+        );
+      case "IT Asset":
+        return (
+          <EditITAssetRequestPage
             form={form}
             projectOptions={projectOptions}
             requestId={requestId}

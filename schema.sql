@@ -299,6 +299,7 @@ CREATE TABLE item_table(
   item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   item_gl_account VARCHAR(4000) NOT NULL,
   item_is_ped_item BOOLEAN DEFAULT FALSE NOT NULL,
+  item_is_it_asset_item BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   item_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
@@ -1036,6 +1037,15 @@ CREATE TABLE jira_organization_team_project_table (
 );
 -- End: Jira automation tables
 
+-- Start: Team department table
+CREATE TABLE team_department_table (
+  team_department_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_department_name VARCHAR(4000) NOT NULL,
+  team_department_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  team_department_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+-- End: Team department table
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -1475,6 +1485,8 @@ RETURNS JSON AS $$
         endId = `TR`;
       } else if(formName==='Request For Payment') {
         endId = `RFP`;
+      } else if(formName === 'IT Asset'){
+        endId = `ITA`;
       } else {
         endId = ``;
       }
@@ -1665,7 +1677,8 @@ RETURNS JSON AS $$
         item_encoder_team_member_id,
         item_level_three_description,
         item_is_ped_item,
-        item_category_id
+        item_category_id,
+        item_is_it_asset_item
       },
       itemDescription
     } = input_data;
@@ -1681,7 +1694,8 @@ RETURNS JSON AS $$
           item_team_id,
           item_encoder_team_member_id, 
           item_is_ped_item, 
-          item_category_id
+          item_category_id,
+          item_is_it_asset_item
         ) 
         VALUES 
         (
@@ -1691,8 +1705,9 @@ RETURNS JSON AS $$
           '${item_gl_account}',
           '${item_team_id}',
           '${item_encoder_team_member_id}',
-          ${item_is_ped_item},
-          ${item_category_id ? `'${item_category_id}'` : null}
+          '${Boolean(item_is_ped_item)}',
+          ${item_category_id ? `'${item_category_id}'` : null},
+          '${Boolean(item_is_it_asset_item)}'
         ) RETURNING *
       `
     )[0];
@@ -1793,7 +1808,8 @@ RETURNS JSON AS $$
         item_division_id_list,
         item_level_three_description,
         item_is_ped_item,
-        item_category_id
+        item_category_id,
+        item_is_it_asset_item
       },
       toAdd,
       toUpdate,
@@ -1810,8 +1826,9 @@ RETURNS JSON AS $$
           item_unit = '${item_unit}',
           item_gl_account = '${item_gl_account}',
           item_team_id = '${item_team_id}',
-          item_is_ped_item = ${item_is_ped_item},
-          item_category_id = ${item_category_id ? `'${item_category_id}'` : null}
+          item_is_ped_item = '${Boolean(item_is_ped_item)}',
+          item_category_id = ${item_category_id ? `'${item_category_id}'` : null},
+          item_is_it_asset_item = '${Boolean(item_is_it_asset_item)}'
         WHERE item_id = '${item_id}'
         RETURNING *
       `
@@ -3499,7 +3516,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && request.form_name === "Request For Payment") {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && ['Request For Payment', 'IT Asset'].includes(request.form_name)) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -5167,6 +5184,70 @@ RETURNS JSON as $$
           },
 
           projectOptions,
+        }
+        return;
+      } else if (form.form_name === "IT Asset") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+                team_project_table.team_project_id,
+                team_project_table.team_project_name
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_department_table WHERE team_department_is_disabled=FALSE`);
+
+        const departmentOptions = departments.map((department, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: department.team_department_id,
+            option_order: index,
+            option_value: department.team_department_name
+          }
+        });
+
+        const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
+          if (field.field_name === 'Requesting Project') {
+            return {
+              ...field,
+              field_option: projectOptions
+            }
+          } else if (field.field_name === 'Department') {
+            return {
+              ...field,
+              field_option: departmentOptions,
+            }
+          } else {
+            return field;
+          }
+        })
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: firstSectionFieldList,
+              },
+              ...form.form_section.slice(1)
+            ],
+          },
+          projectOptions
         }
         return;
       }
@@ -10061,6 +10142,7 @@ ALTER TABLE jira_user_account_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_project_user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_item_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_item_user_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_department_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_organization_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
 
@@ -10400,6 +10482,7 @@ DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_category_table;
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_user_table;
 
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_department_table;
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_organization_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
@@ -13158,6 +13241,11 @@ AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
+-- TEAM_DEPARTMENT_TABLE
+CREATE POLICY "Allow READ for anon users" ON "public"."team_department_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
 -- jira_organization_table
 CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_organization_table"
 AS PERMISSIVE FOR ALL
@@ -13200,7 +13288,6 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
-
 
 -------- End: POLICIES
 

@@ -1,12 +1,12 @@
+import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
 import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
+import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
-
-import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -47,7 +47,6 @@ type Props = {
   sourceProjectList?: Record<string, string>;
   requestProjectId: string;
   requestingProject?: string;
-
   categoryOptions?: OptionTableRow[];
 };
 
@@ -98,6 +97,14 @@ const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
       case "Request For Payment":
         return (
           <CreateRequestForPaymentPage
+            form={form}
+            projectOptions={projectOptions}
+          />
+        );
+
+      case "IT Asset":
+        return (
+          <CreateITAssetRequestPage
             form={form}
             projectOptions={projectOptions}
           />

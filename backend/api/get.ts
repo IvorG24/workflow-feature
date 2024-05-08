@@ -737,6 +737,7 @@ export const getItemList = async (
     sortColumn?: ItemOrderType;
     sortOrder?: string;
     isPedItem?: boolean;
+    isITAsset?: boolean;
   }
 ) => {
   const {
@@ -752,6 +753,7 @@ export const getItemList = async (
     sortColumn,
     sortOrder,
     isPedItem,
+    isITAsset,
   } = params;
 
   const start = (page - 1) * limit;
@@ -803,6 +805,10 @@ export const getItemList = async (
   }
   if (isPedItem !== undefined) {
     query = query.eq("item_is_ped_item ", isPedItem);
+  }
+
+  if (isITAsset !== undefined) {
+    query = query.eq("item_is_it_asset_item ", isITAsset);
   }
 
   if (sortColumn) {
@@ -7067,6 +7073,31 @@ export const getFormSection = async (
     });
 
   return sortedSection;
+};
+
+// Fetch it asset item options
+export const getITAssetItemOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("item_table")
+    .select("item_id, item_general_name")
+    .eq("item_team_id", teamId)
+    .eq("item_is_disabled", false)
+    .eq("item_is_available", true)
+    .eq("item_is_it_asset_item", true)
+    .order("item_general_name")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
 };
 
 export const getJiraOrganizationList = async (

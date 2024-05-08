@@ -125,6 +125,11 @@ type RequestFormFieldsProps = {
   };
   isEdit?: boolean;
   isLoading: boolean | undefined;
+  itAssetRequestFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onGeneralNameChange: (index: number, value: string | null) => void;
+    onCSICodeChange: (index: number, value: string | null) => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -139,6 +144,7 @@ const RequestFormFields = ({
   otherExpensesMethods,
   pedItemFormMethods,
   paymentRequestFormMethods,
+  itAssetRequestFormMethods,
   isEdit,
   isLoading,
 }: RequestFormFieldsProps) => {
@@ -369,6 +375,10 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+                      itAssetRequestFormMethods?.onGeneralNameChange(
+                        sectionIndex,
+                        value
+                      );
                       break;
 
                     case "CSI Code Description":
@@ -384,6 +394,10 @@ const RequestFormFields = ({
                           sectionIndex,
                           value
                         );
+                      itAssetRequestFormMethods?.onCSICodeChange(
+                        sectionIndex,
+                        value
+                      );
                       break;
 
                     case "Requesting Project":
@@ -394,6 +408,7 @@ const RequestFormFields = ({
                       pedEquipmentFormMethods?.onProjectNameChange(value);
                       pedItemFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
+                      itAssetRequestFormMethods?.onProjectNameChange(value);
                       break;
                     case "CSI Division":
                       servicesFormMethods?.onCSIDivisionChange(

@@ -1,4 +1,5 @@
 import { getForm } from "@/backend/api/get";
+import ITAssetFormPage from "@/components/ITAssetFormPage/ITAssetFormPage";
 import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesFormPage from "@/components/OtherExpensesFormPage/OtherExpensesFormPage";
@@ -118,6 +119,17 @@ const Page = ({
       case "PED Item":
         return (
           <PEDItemFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+
+      case "IT Asset":
+        return (
+          <ITAssetFormPage
             form={form}
             teamMemberList={teamMemberList}
             teamGroupList={teamGroupList}
