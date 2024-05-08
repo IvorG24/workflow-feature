@@ -1046,6 +1046,15 @@ CREATE TABLE team_department_table (
 );
 -- End: Team department table
 
+-- employee_job_title_table
+CREATE TABLE employee_job_title_table (
+    employee_job_title_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    employee_job_title_label VARCHAR(4000) NOT NULL,
+    employee_job_title_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    employee_job_title_date_updated TIMESTAMPTZ,
+    employee_job_title_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+);
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -10145,6 +10154,7 @@ ALTER TABLE jira_item_user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_department_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_organization_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_job_title_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -10487,6 +10497,9 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_organization_
 DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON employee_job_title_table;
+
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -13288,6 +13301,11 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
+
+-- employee_job_title_table
+CREATE POLICY "Allow READ for anon users" ON "public"."employee_job_title_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
 
 -------- End: POLICIES
 
