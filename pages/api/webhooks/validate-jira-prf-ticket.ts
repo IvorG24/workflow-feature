@@ -250,7 +250,7 @@ export default async function handler(
 
       // submit form
       const submitFormResponse = await fetch(
-        `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/c48e2408-5379-4aa5-b707-60c6eef8f992/action/submit`,
+        `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/submit`,
         {
           method: "PUT",
           headers: {
