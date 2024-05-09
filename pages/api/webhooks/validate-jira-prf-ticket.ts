@@ -164,9 +164,36 @@ export default async function handler(
         });
       }
 
+      // get form id
+
+      const getFormIdResponse = await fetch(
+        ` https://scic.atlassian.net/rest/api/3/issue/${issueKey}/properties/proforma.forms`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Basic ${Buffer.from(
+              `${jiraConfig.user}:${jiraConfig.api_token}`
+            ).toString("base64")}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!getFormIdResponse.ok) {
+        const getFormIdResponseData = await getFormIdResponse.json();
+        return res.status(404).json({
+          error: "Failed to reopen form",
+          response: getFormIdResponseData,
+        });
+      }
+
+      const { value } = await getFormIdResponse.json();
+      const formId = value.forms[0].uuid;
+
       // reopen form
       const reopenFormResponse = await fetch(
-        `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/c48e2408-5379-4aa5-b707-60c6eef8f992/action/reopen`,
+        `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/reopen`,
         {
           method: "PUT",
           headers: {
@@ -181,10 +208,10 @@ export default async function handler(
       );
 
       if (!reopenFormResponse.ok) {
-        const updateTicketResponseData = await reopenFormResponse.json();
+        const reopenFormResponseData = await reopenFormResponse.json();
         return res.status(404).json({
           error: "Failed to reopen form",
-          response: updateTicketResponseData,
+          response: reopenFormResponseData,
         });
       }
 
@@ -238,10 +265,10 @@ export default async function handler(
       );
 
       if (!submitFormResponse.ok) {
-        const updateTicketResponseData = await submitFormResponse.json();
+        const submitFormResponseData = await submitFormResponse.json();
         return res.status(404).json({
           error: "Failed to submit form",
-          response: updateTicketResponseData,
+          response: submitFormResponseData,
         });
       }
 
