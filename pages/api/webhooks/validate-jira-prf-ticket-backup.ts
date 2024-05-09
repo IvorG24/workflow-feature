@@ -71,44 +71,26 @@ export default async function handler(
 
     const { issueKey } = req.query;
 
-    const [response, formIdResponse] = await Promise.all([
-      fetch(`${jiraConfig.api_url}/issue/${issueKey}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `${jiraConfig.user}:${jiraConfig.api_token}`
-          ).toString("base64")}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-      }),
-      fetch(
-        ` https://scic.atlassian.net/rest/api/3/issue/${issueKey}/properties/proforma.forms`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${jiraConfig.user}:${jiraConfig.api_token}`
-            ).toString("base64")}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      ),
-    ]);
+    const response = await fetch(`${jiraConfig.api_url}/issue/${issueKey}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Basic ${Buffer.from(
+          `${jiraConfig.user}:${jiraConfig.api_token}`
+        ).toString("base64")}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+    });
 
-    const [responseData, formIdData] = await Promise.all([
-      response.json(),
-      formIdResponse.json(),
-    ]);
+    const { fields } = await response.json();
 
-    if (!responseData.fields) {
+    if (!fields) {
       return res.status(404).json({ error: "Fields value not found" });
     }
 
-    const jiraEmployeeFirstNameValue = responseData.fields["customfield_10380"];
-    const jiraEmployeeLastNameValue = responseData.fields["customfield_10381"];
-    const jiraEmployeeNumberValue = `${responseData.fields["customfield_10114"]}`; // sample value: 1054.0
+    const jiraEmployeeFirstNameValue = fields["customfield_10380"];
+    const jiraEmployeeLastNameValue = fields["customfield_10381"];
+    const jiraEmployeeNumberValue = `${fields["customfield_10114"]}`; // sample value: 1054.0
     const employeeNumber = jiraEmployeeNumberValue.split(".")[0]; // split to remove decimals
 
     const { data, error } = await supabase
@@ -190,62 +172,48 @@ export default async function handler(
       });
     }
 
-    const formId = formIdData.value.forms[0].uuid;
+    // get form id
+    const getFormIdResponse = await fetch(
+      ` https://scic.atlassian.net/rest/api/3/issue/${issueKey}/properties/proforma.forms`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    // parallelize remaining API requests to save execution time
-    const [reopenFormResponse, updateTicketResponse, submitFormResponse] =
-      await Promise.all([
-        fetch(
-          `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/reopen`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Basic ${Buffer.from(
-                `${jiraConfig.user}:${jiraConfig.api_token}`
-              ).toString("base64")}`,
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              "X-ExperimentalApi": "opt-in",
-            },
-          }
-        ),
-        fetch(`${jiraConfig.api_url}/issue/${issueKey}`, {
-          method: "PUT",
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${jiraConfig.user}:${jiraConfig.api_token}`
-            ).toString("base64")}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fields: {
-              customfield_10380: invalidFirstName
-                ? startCase(scic_employee_first_name)
-                : jiraEmployeeFirstNameValue,
-              customfield_10381: invalidLastName
-                ? startCase(scic_employee_last_name)
-                : jiraEmployeeLastNameValue,
-            },
-          }),
-        }),
-        fetch(
-          `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/submit`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Basic ${Buffer.from(
-                `${jiraConfig.user}:${jiraConfig.api_token}`
-              ).toString("base64")}`,
-              Accept: "application/json",
-              "Content-Type": "application/json",
-              "X-ExperimentalApi": "opt-in",
-            },
-          }
-        ),
-      ]);
+    if (!getFormIdResponse.ok) {
+      const getFormIdResponseData = await getFormIdResponse.json();
+      return res.status(404).json({
+        error: "Failed to reopen form",
+        response: getFormIdResponseData,
+      });
+    }
 
-    // Handle errors for each parallel request
+    const { value } = await getFormIdResponse.json();
+    const formId = value.forms[0].uuid;
+
+    // reopen form
+    const reopenFormResponse = await fetch(
+      `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/reopen`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-ExperimentalApi": "opt-in",
+        },
+      }
+    );
+
     if (!reopenFormResponse.ok) {
       const reopenFormResponseData = await reopenFormResponse.json();
       return res.status(404).json({
@@ -254,6 +222,31 @@ export default async function handler(
       });
     }
 
+    // update ticket
+    const updateTicketResponse = await fetch(
+      `${jiraConfig.api_url}/issue/${issueKey}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fields: {
+            customfield_10380: invalidFirstName
+              ? startCase(scic_employee_first_name)
+              : jiraEmployeeFirstNameValue,
+            customfield_10381: invalidLastName
+              ? startCase(scic_employee_last_name)
+              : jiraEmployeeLastNameValue,
+          },
+        }),
+      }
+    );
+
     if (!updateTicketResponse.ok) {
       const updateTicketResponseData = await updateTicketResponse.json();
       return res.status(404).json({
@@ -261,6 +254,22 @@ export default async function handler(
         response: updateTicketResponseData,
       });
     }
+
+    // submit form
+    const submitFormResponse = await fetch(
+      `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/submit`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-ExperimentalApi": "opt-in",
+        },
+      }
+    );
 
     if (!submitFormResponse.ok) {
       const submitFormResponseData = await submitFormResponse.json();
