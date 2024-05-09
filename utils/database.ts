@@ -278,6 +278,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      employee_job_title_table: {
+        Row: {
+          employee_job_title_date_created: string;
+          employee_job_title_date_updated: string | null;
+          employee_job_title_id: string;
+          employee_job_title_is_disabled: boolean;
+          employee_job_title_label: string;
+        };
+        Insert: {
+          employee_job_title_date_created?: string;
+          employee_job_title_date_updated?: string | null;
+          employee_job_title_id?: string;
+          employee_job_title_is_disabled?: boolean;
+          employee_job_title_label: string;
+        };
+        Update: {
+          employee_job_title_date_created?: string;
+          employee_job_title_date_updated?: string | null;
+          employee_job_title_id?: string;
+          employee_job_title_is_disabled?: boolean;
+          employee_job_title_label?: string;
+        };
+        Relationships: [];
+      };
       equipment_brand_table: {
         Row: {
           equipment_brand: string;
