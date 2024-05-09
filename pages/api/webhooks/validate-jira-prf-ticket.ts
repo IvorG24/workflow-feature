@@ -127,6 +127,9 @@ export default async function handler(
           type: "text",
           text: `Employee Number: ${jiraEmployeeNumberValue}`,
         },
+        {
+          type: "hardBreak",
+        },
       ];
 
       const invalidFirstName =
