@@ -3,6 +3,11 @@ import { startCase } from "@/utils/string";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextApiRequest, NextApiResponse } from "next";
 
+// set timeout to 1 minute
+export const config = {
+  maxDuration: 60,
+};
+
 type CommentType = {
   type: string;
   text?: string;
@@ -79,212 +84,36 @@ export default async function handler(
 
     const { fields } = await response.json();
 
-    if (fields) {
-      const jiraEmployeeFirstNameValue = fields["customfield_10380"];
-      const jiraEmployeeLastNameValue = fields["customfield_10381"];
-      const jiraEmployeeNumberValue = `${fields["customfield_10114"]}`; // sample value: 1054.0
-      const employeeNumber = jiraEmployeeNumberValue.split(".")[0]; // split to remove decimals
+    if (!fields) {
+      return res.status(404).json({ error: "Fields value not found" });
+    }
 
-      const { data, error } = await supabase
-        .from("scic_employee_table")
-        .select("*")
-        .eq("scic_employee_hris_id_number", employeeNumber)
-        .maybeSingle();
+    const jiraEmployeeFirstNameValue = fields["customfield_10380"];
+    const jiraEmployeeLastNameValue = fields["customfield_10381"];
+    const jiraEmployeeNumberValue = `${fields["customfield_10114"]}`; // sample value: 1054.0
+    const employeeNumber = jiraEmployeeNumberValue.split(".")[0]; // split to remove decimals
 
-      if (error) throw error;
+    const { data, error } = await supabase
+      .from("scic_employee_table")
+      .select("*")
+      .eq("scic_employee_hris_id_number", employeeNumber)
+      .maybeSingle();
 
-      if (!data) {
-        // add comment to jira ticket that id is not found
-        const commentBody = commentBodyTemplate([
-          {
-            type: "text",
-            text: "Employee ID number for validation of Jira Administrator and/or HR Representative.",
-          },
-        ]);
-        const jiraTicketCommentResponse = await fetch(
-          `${jiraConfig.api_url}/issue/${issueKey}/comment`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(commentBody),
-          }
-        );
+    if (error) throw error;
 
-        if (!jiraTicketCommentResponse.ok) {
-          console.error("Failed to add comment");
-          return res.status(404).json({ error: "Failed to add comment" });
-        }
-        return res.status(404).json({ error: "Employee ID not found." });
-      }
-
-      const { scic_employee_first_name, scic_employee_last_name } = data;
-
-      const changes: CommentType[] = [
+    if (!data) {
+      // add comment to jira ticket that id is not found
+      const commentBody = commentBodyTemplate([
         {
           type: "text",
-          text: `Employee Number: ${jiraEmployeeNumberValue}`,
+          text: "Employee ID number for validation of Jira Administrator and/or HR Representative.",
         },
-        {
-          type: "hardBreak",
-        },
-      ];
-
-      const invalidFirstName =
-        scic_employee_first_name.toLowerCase() !==
-        jiraEmployeeFirstNameValue.toLowerCase();
-      const invalidLastName =
-        scic_employee_last_name.toLowerCase() !==
-        jiraEmployeeLastNameValue.toLowerCase();
-
-      if (!invalidFirstName && !invalidLastName) {
-        return res.status(201).json({
-          message: "No update required.",
-        });
-      }
-
-      if (invalidFirstName) {
-        changes.push({
-          type: "text",
-          text: `First Name: old value - ${jiraEmployeeFirstNameValue}  ->  new value - ${scic_employee_first_name}`,
-        });
-        changes.push({
-          type: "hardBreak",
-        });
-      }
-
-      if (invalidLastName) {
-        changes.push({
-          type: "text",
-          text: `Last Name: old value - ${jiraEmployeeLastNameValue}  ->  new value - ${scic_employee_last_name}`,
-        });
-        changes.push({
-          type: "hardBreak",
-        });
-      }
-
-      // get form id
-
-      const getFormIdResponse = await fetch(
-        ` https://scic.atlassian.net/rest/api/3/issue/${issueKey}/properties/proforma.forms`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${jiraConfig.user}:${jiraConfig.api_token}`
-            ).toString("base64")}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!getFormIdResponse.ok) {
-        const getFormIdResponseData = await getFormIdResponse.json();
-        return res.status(404).json({
-          error: "Failed to reopen form",
-          response: getFormIdResponseData,
-        });
-      }
-
-      const { value } = await getFormIdResponse.json();
-      const formId = value.forms[0].uuid;
-
-      // reopen form
-      const reopenFormResponse = await fetch(
-        `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/reopen`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${jiraConfig.user}:${jiraConfig.api_token}`
-            ).toString("base64")}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "X-ExperimentalApi": "opt-in",
-          },
-        }
-      );
-
-      if (!reopenFormResponse.ok) {
-        const reopenFormResponseData = await reopenFormResponse.json();
-        return res.status(404).json({
-          error: "Failed to reopen form",
-          response: reopenFormResponseData,
-        });
-      }
-
-      // update ticket
-      const updateTicketResponse = await fetch(
-        `${jiraConfig.api_url}/issue/${issueKey}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${jiraConfig.user}:${jiraConfig.api_token}`
-            ).toString("base64")}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            fields: {
-              customfield_10380: invalidFirstName
-                ? startCase(scic_employee_first_name)
-                : jiraEmployeeFirstNameValue,
-              customfield_10381: invalidLastName
-                ? startCase(scic_employee_last_name)
-                : jiraEmployeeLastNameValue,
-            },
-          }),
-        }
-      );
-
-      if (!updateTicketResponse.ok) {
-        const updateTicketResponseData = await updateTicketResponse.json();
-        return res.status(404).json({
-          error: "Failed to update ticket",
-          response: updateTicketResponseData,
-        });
-      }
-
-      // submit form
-      const submitFormResponse = await fetch(
-        `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/submit`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${jiraConfig.user}:${jiraConfig.api_token}`
-            ).toString("base64")}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-            "X-ExperimentalApi": "opt-in",
-          },
-        }
-      );
-
-      if (!submitFormResponse.ok) {
-        const submitFormResponseData = await submitFormResponse.json();
-        return res.status(404).json({
-          error: "Failed to submit form",
-          response: submitFormResponseData,
-        });
-      }
-
-      // add comment
-      const commentContent = commentScript(changes);
-      const commentBody = commentBodyTemplate(commentContent);
-
+      ]);
       const jiraTicketCommentResponse = await fetch(
         `${jiraConfig.api_url}/issue/${issueKey}/comment`,
         {
           method: "POST",
           headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${jiraConfig.user}:${jiraConfig.api_token}`
-            ).toString("base64")}`,
-            Accept: "application/json",
             "Content-Type": "application/json",
           },
           body: JSON.stringify(commentBody),
@@ -292,19 +121,193 @@ export default async function handler(
       );
 
       if (!jiraTicketCommentResponse.ok) {
-        console.error(jiraTicketCommentResponse);
-        return res.status(404).json({
-          error: "Failed to add comment",
-          response: jiraTicketCommentResponse,
-        });
+        console.error("Failed to add comment");
+        return res.status(400).json({ error: "Failed to add comment" });
       }
-
-      return res
-        .status(200)
-        .json({ success: true, message: "Ticket updated." });
-    } else {
-      return res.status(404).json({ error: "Fields value not found" });
+      return res.status(404).json({ error: "Employee ID not found." });
     }
+
+    const { scic_employee_first_name, scic_employee_last_name } = data;
+
+    const changes: CommentType[] = [
+      {
+        type: "text",
+        text: `Employee Number: ${jiraEmployeeNumberValue}`,
+      },
+      {
+        type: "hardBreak",
+      },
+    ];
+
+    const invalidFirstName =
+      scic_employee_first_name.toLowerCase() !==
+      jiraEmployeeFirstNameValue.toLowerCase();
+    const invalidLastName =
+      scic_employee_last_name.toLowerCase() !==
+      jiraEmployeeLastNameValue.toLowerCase();
+
+    if (!invalidFirstName && !invalidLastName) {
+      return res.status(201).json({
+        message: "No update required.",
+      });
+    }
+
+    if (invalidFirstName) {
+      changes.push({
+        type: "text",
+        text: `First Name: old value - ${jiraEmployeeFirstNameValue}  ->  new value - ${scic_employee_first_name}`,
+      });
+      changes.push({
+        type: "hardBreak",
+      });
+    }
+
+    if (invalidLastName) {
+      changes.push({
+        type: "text",
+        text: `Last Name: old value - ${jiraEmployeeLastNameValue}  ->  new value - ${scic_employee_last_name}`,
+      });
+      changes.push({
+        type: "hardBreak",
+      });
+    }
+
+    // get form id
+
+    const getFormIdResponse = await fetch(
+      ` https://scic.atlassian.net/rest/api/3/issue/${issueKey}/properties/proforma.forms`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!getFormIdResponse.ok) {
+      const getFormIdResponseData = await getFormIdResponse.json();
+      return res.status(404).json({
+        error: "Failed to reopen form",
+        response: getFormIdResponseData,
+      });
+    }
+
+    const { value } = await getFormIdResponse.json();
+    const formId = value.forms[0].uuid;
+
+    // reopen form
+    const reopenFormResponse = await fetch(
+      `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/reopen`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-ExperimentalApi": "opt-in",
+        },
+      }
+    );
+
+    if (!reopenFormResponse.ok) {
+      const reopenFormResponseData = await reopenFormResponse.json();
+      return res.status(404).json({
+        error: "Failed to reopen form",
+        response: reopenFormResponseData,
+      });
+    }
+
+    // update ticket
+    const updateTicketResponse = await fetch(
+      `${jiraConfig.api_url}/issue/${issueKey}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fields: {
+            customfield_10380: invalidFirstName
+              ? startCase(scic_employee_first_name)
+              : jiraEmployeeFirstNameValue,
+            customfield_10381: invalidLastName
+              ? startCase(scic_employee_last_name)
+              : jiraEmployeeLastNameValue,
+          },
+        }),
+      }
+    );
+
+    if (!updateTicketResponse.ok) {
+      const updateTicketResponseData = await updateTicketResponse.json();
+      return res.status(404).json({
+        error: "Failed to update ticket",
+        response: updateTicketResponseData,
+      });
+    }
+
+    // submit form
+    const submitFormResponse = await fetch(
+      `https://api.atlassian.com/jira/forms/cloud/64381e1f-8232-47b7-92c4-caebc8a6d35a/issue/${issueKey}/form/${formId}/action/submit`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-ExperimentalApi": "opt-in",
+        },
+      }
+    );
+
+    if (!submitFormResponse.ok) {
+      const submitFormResponseData = await submitFormResponse.json();
+      return res.status(404).json({
+        error: "Failed to submit form",
+        response: submitFormResponseData,
+      });
+    }
+
+    // add comment
+    const commentContent = commentScript(changes);
+    const commentBody = commentBodyTemplate(commentContent);
+
+    const jiraTicketCommentResponse = await fetch(
+      `${jiraConfig.api_url}/issue/${issueKey}/comment`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(
+            `${jiraConfig.user}:${jiraConfig.api_token}`
+          ).toString("base64")}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(commentBody),
+      }
+    );
+
+    if (!jiraTicketCommentResponse.ok) {
+      console.error(jiraTicketCommentResponse);
+      return res.status(404).json({
+        error: "Failed to add comment",
+        response: jiraTicketCommentResponse,
+      });
+    }
+
+    return res.status(200).json({ success: true, message: "Ticket updated." });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: error });
