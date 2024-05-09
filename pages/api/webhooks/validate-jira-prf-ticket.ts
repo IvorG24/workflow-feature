@@ -94,7 +94,6 @@ export default async function handler(
       if (error) throw error;
 
       if (!data) {
-        // "Employee ID number for validation of Jira Administrator and/or HR Representative."
         // add comment to jira ticket that id is not found
         const commentBody = commentBodyTemplate([
           {
@@ -138,6 +137,12 @@ export default async function handler(
       const invalidLastName =
         scic_employee_last_name.toLowerCase() !==
         jiraEmployeeLastNameValue.toLowerCase();
+
+      if (!invalidFirstName && !invalidLastName) {
+        return res.status(201).json({
+          message: "No update required.",
+        });
+      }
 
       if (invalidFirstName) {
         changes.push({
