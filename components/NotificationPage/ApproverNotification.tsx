@@ -1,6 +1,9 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { ApproverUnresolvedRequestCountType } from "@/utils/types";
+import {
+  ApproverUnresolvedRequestCountType,
+  RequestListFilterValues,
+} from "@/utils/types";
 import {
   Badge,
   Box,
@@ -15,7 +18,6 @@ import {
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { useRouter } from "next/router";
-import { RequestListLocalFilter } from "../RequestListPage/RequestListPage";
 
 type Props = {
   approverUnresolvedRequestCount: ApproverUnresolvedRequestCountType;
@@ -25,22 +27,21 @@ const ApproverNotification = ({ approverUnresolvedRequestCount }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const { colorScheme } = useMantineTheme();
-  const [localFilter, setLocalFilter] = useLocalStorage<RequestListLocalFilter>(
-    {
+  const [localFilter, setLocalFilter] =
+    useLocalStorage<RequestListFilterValues>({
       key: "formsly-request-list-filter",
       defaultValue: {
         search: "",
-        requestorList: [],
-        approverList: [],
-        formList: [],
+        requestor: [],
+        approver: [],
+        form: [],
         status: undefined,
         isAscendingSort: false,
         isApproversView: false,
-        projectList: [],
-        idFilterList: [],
+        project: [],
+        idFilter: [],
       },
-    }
-  );
+    });
 
   const withJiraIdColor = "green";
   const withoutJiraIdColor = "yellow";

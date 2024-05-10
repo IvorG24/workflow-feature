@@ -4,12 +4,13 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   DEFAULT_REQUEST_LIST_LIMIT,
-  ROW_PER_PAGE,
   UNHIDEABLE_FORMLY_FORMS,
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { getJiraTicketStatusColor } from "@/utils/styling";
 import {
-  FormStatusType,
+  JiraStatus,
+  RequestListFilterValues,
   RequestListItemType,
   TeamMemberWithUserType,
   TeamProjectTableRow,
@@ -18,6 +19,7 @@ import {
   ActionIcon,
   Alert,
   Anchor,
+  Badge,
   Box,
   Button,
   Container,
@@ -25,6 +27,7 @@ import {
   Divider,
   Flex,
   Grid,
+  Group,
   Loader,
   LoadingOverlay,
   Pagination,
@@ -47,30 +50,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import RequestItemRow from "./RequestItemRow";
 import RequestListFilter from "./RequestListFilter";
 
-export type FilterFormValues = {
-  search: string;
-  requestorList: string[];
-  approverList: string[];
-  formList: string[];
-  projectList: string[];
-  status?: FormStatusType[];
-  isAscendingSort: boolean;
-  isApproversView: boolean;
-  idFilterList: string[];
-};
-
-export type RequestListLocalFilter = {
-  search: string;
-  requestorList: string[];
-  approverList: string[];
-  formList: string[];
-  status: FormStatusType[] | undefined;
-  isAscendingSort: boolean;
-  isApproversView: boolean;
-  projectList: string[];
-  idFilterList: string[];
-};
-
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
   isFormslyTeam: boolean;
@@ -90,50 +69,39 @@ const RequestListPage = ({
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
-  const [localFilter, setLocalFilter] = useLocalStorage<RequestListLocalFilter>(
-    {
+  const [jiraStatusList, setJiraStatusList] = useState<JiraStatus[]>([]);
+  const [localFilter, setLocalFilter] =
+    useLocalStorage<RequestListFilterValues>({
       key: "formsly-request-list-filter",
       defaultValue: {
         search: "",
-        requestorList: [],
-        approverList: [],
-        formList: [],
+        requestor: [],
+        approver: [],
+        form: [],
         status: undefined,
         isAscendingSort: false,
         isApproversView: false,
-        projectList: [],
-        idFilterList: [],
+        project: [],
+        idFilter: [],
       },
-    }
-  );
+    });
 
   const [requestListCount, setRequestListCount] = useState(0);
 
-  const filterFormMethods = useForm<FilterFormValues>({
+  const filterFormMethods = useForm<RequestListFilterValues>({
     defaultValues: localFilter,
     mode: "onChange",
   });
-
-  const { handleSubmit, getValues } = filterFormMethods;
 
   const filteredFormList = formList
     .filter(({ form_name }) => !UNHIDEABLE_FORMLY_FORMS.includes(form_name))
     .map(({ form_name: label, form_id: value }) => ({ label, value }));
 
-  const handleFilterForms = async (
-    {
-      search,
-      requestorList,
-      approverList,
-      formList,
-      status,
-      isAscendingSort,
-      isApproversView,
-      projectList,
-      idFilterList,
-    }: FilterFormValues = getValues()
-  ) => {
+  const { handleSubmit, getValues } = filterFormMethods;
+
+  const handleFetchRequestList = async (page: number) => {
     try {
+      setIsFetchingRequestList(true);
       if (!activeTeam.team_id) {
         console.warn(
           "RequestListPage handleFilterFormsError: active team_id not found"
@@ -145,92 +113,42 @@ const RequestListPage = ({
         );
         return;
       }
-
-      setActivePage(1);
-      setIsFetchingRequestList(true);
-
-      const params = {
-        teamId: activeTeam.team_id,
-        page: 1,
-        limit: DEFAULT_REQUEST_LIST_LIMIT,
-        requestor:
-          requestorList && requestorList.length > 0 ? requestorList : undefined,
-        approver:
-          approverList && approverList.length > 0 ? approverList : undefined,
-        form: formList && formList.length > 0 ? formList : undefined,
-        status: status && status.length > 0 ? status : undefined,
-        project:
-          projectList && projectList.length > 0 ? projectList : undefined,
-        idFilter:
-          idFilterList && idFilterList.length > 0 ? idFilterList : undefined,
-        search: search,
-        isApproversView,
-        teamMemberId: teamMember.team_member_id,
-      };
-
-      const { data, count } = await getRequestList(supabaseClient, {
-        ...params,
-        sort: isAscendingSort ? "ascending" : "descending",
-      });
-
-      setRequestList(data);
-      setRequestListCount(count || 0);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingRequestList(false);
-    }
-  };
-
-  const handlePagination = async () => {
-    try {
-      setIsFetchingRequestList(true);
-      if (!activeTeam.team_id) return;
-      if (!teamMember) return;
       const {
         search,
-        requestorList,
-        approverList,
-        formList,
+        requestor,
+        approver,
+        form,
         status,
         isAscendingSort,
         isApproversView,
-        projectList,
-        idFilterList,
+        project,
+        idFilter,
       } = getValues();
 
       const params = {
         teamId: activeTeam.team_id,
-        page: activePage,
+        page: page,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
-        requestor:
-          requestorList && requestorList.length > 0 ? requestorList : undefined,
-        approver:
-          approverList && approverList.length > 0 ? approverList : undefined,
-        form: formList && formList.length > 0 ? formList : undefined,
+        requestor: requestor && requestor.length > 0 ? requestor : undefined,
+        approver: approver && approver.length > 0 ? approver : undefined,
+        form: form && form.length > 0 ? form : undefined,
         status: status && status.length > 0 ? status : undefined,
-        project:
-          projectList && projectList.length > 0 ? projectList : undefined,
-        idFilter:
-          idFilterList && idFilterList.length < 0 ? idFilterList : undefined,
+        project: project && project.length > 0 ? project : undefined,
+        idFilter: idFilter && idFilter.length < 0 ? idFilter : undefined,
         search: search,
         isApproversView,
+        isAscendingSort,
         teamMemberId: teamMember.team_member_id,
       };
 
-      const { data, count } = await getRequestList(supabaseClient, {
-        ...params,
-        sort: isAscendingSort ? "ascending" : "descending",
-      });
+      const { data, count } = await getRequestList(supabaseClient, params);
 
       setRequestList(data);
       setRequestListCount(count || 0);
-    } catch (e) {
+    } catch (error) {
+      console.log(error);
       notifications.show({
-        message: "Something went wrong. Please try again later.",
+        message: "Failed to fetch request list.",
         color: "red",
       });
     } finally {
@@ -238,9 +156,27 @@ const RequestListPage = ({
     }
   };
 
-  useEffect(() => {
-    handlePagination();
-  }, [activePage]);
+  const handleFilterForms = async () => {
+    try {
+      await handleFetchRequestList(1);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsFetchingRequestList(false);
+    }
+  };
+
+  const handlePagination = async (page: number) => {
+    try {
+      setActivePage(page);
+
+      await handleFetchRequestList(page);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsFetchingRequestList(false);
+    }
+  };
 
   useEffect(() => {
     const localStorageFilter = localStorage.getItem(
@@ -248,9 +184,52 @@ const RequestListPage = ({
     );
 
     if (localStorageFilter) {
-      handleFilterForms(localFilter);
+      handleFilterForms();
     }
   }, [activeTeam.team_id, teamMember, localFilter]);
+
+  // fetch jira id status
+  useEffect(() => {
+    const fetchJiraStatusList = async () => {
+      let index = 0;
+      const currentJiraStatusList = jiraStatusList;
+      while (true) {
+        const currentRequest = requestList[index];
+        if (
+          currentRequest &&
+          currentRequest.request_jira_id &&
+          currentRequest.request_jira_id !== null
+        ) {
+          const requestJiraTicketData = await fetch(
+            `/api/get-jira-ticket?jiraTicketKey=${currentRequest.request_jira_id}`
+          );
+
+          if (!requestJiraTicketData.ok) {
+            currentJiraStatusList.push({
+              request_jira_id: currentRequest.request_jira_id,
+              request_jira_status: "Ticket Not Found",
+            });
+          } else {
+            const jiraTicket = await requestJiraTicketData.json();
+            const jiraTicketStatus =
+              jiraTicket.fields["customfield_10010"].currentStatus.status;
+
+            currentJiraStatusList.push({
+              request_jira_id: currentRequest.request_jira_id,
+              request_jira_status: jiraTicketStatus,
+            });
+          }
+        }
+
+        index += 1;
+
+        if (index > requestList.length) break;
+      }
+      setJiraStatusList(currentJiraStatusList);
+      index = 0;
+    };
+    fetchJiraStatusList();
+  }, [jiraStatusList, requestList, activePage]);
 
   return (
     <Container maw={3840} h="100%">
@@ -319,46 +298,122 @@ const RequestListPage = ({
           minHeight={390}
           fetching={isFetchingRequestList}
           totalRecords={requestListCount}
-          recordsPerPage={ROW_PER_PAGE}
+          recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
           page={activePage}
-          onPageChange={setActivePage}
+          onPageChange={(p) => {
+            handlePagination(p);
+          }}
           records={requestList}
           columns={[
             {
               accessor: "request_id",
               title: "Request ID",
-              render: ({ request_id, request_formsly_id }) => (
-                <Flex key={request_id} justify="space-between">
-                  <Anchor
-                    href={`/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/requests/${request_formsly_id}`}
-                    target="_blank"
-                  >
-                    {request_formsly_id}
-                  </Anchor>
-                  <CopyButton
-                    value={`${
-                      process.env.NEXT_PUBLIC_SITE_URL
-                    }/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/requests/${request_formsly_id}`}
-                  >
-                    {({ copied, copy }) => (
-                      <Tooltip
-                        label={
-                          copied
-                            ? "Copied"
-                            : `Copy ${request_formsly_id ?? request_id}`
-                        }
-                        onClick={copy}
+              render: ({ request_id, request_formsly_id }) => {
+                const requestId =
+                  request_formsly_id === "-" ? request_id : request_formsly_id;
+
+                return (
+                  <Flex key={request_id} justify="space-between">
+                    <Text truncate maw={150}>
+                      <Anchor
+                        href={`/${formatTeamNameToUrlKey(
+                          activeTeam.team_name ?? ""
+                        )}/requests/${requestId}`}
+                        target="_blank"
                       >
-                        <ActionIcon>
-                          <IconCopy size={16} />
-                        </ActionIcon>
-                      </Tooltip>
+                        {requestId}
+                      </Anchor>
+                    </Text>
+                    <CopyButton
+                      value={`${
+                        process.env.NEXT_PUBLIC_SITE_URL
+                      }/${formatTeamNameToUrlKey(
+                        activeTeam.team_name ?? ""
+                      )}/requests/${request_formsly_id}`}
+                    >
+                      {({ copied, copy }) => (
+                        <Tooltip
+                          label={copied ? "Copied" : `Copy ${requestId}`}
+                          onClick={copy}
+                        >
+                          <ActionIcon>
+                            <IconCopy size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      )}
+                    </CopyButton>
+                  </Flex>
+                );
+              },
+            },
+            {
+              accessor: "request_jira_id",
+              title: "JIRA ID",
+              render: ({ request_jira_id, request_jira_link }) => {
+                const jiraTicketStatus = jiraStatusList.find(
+                  (status) => status.request_jira_id === request_jira_id
+                )?.request_jira_status;
+
+                return (
+                  <Flex justify="space-between" key={request_jira_id}>
+                    <Group>
+                      <Text>
+                        <Anchor href={request_jira_link} target="_blank">
+                          {request_jira_id}
+                        </Anchor>
+                      </Text>
+                      {jiraTicketStatus && (
+                        <Badge
+                          color={getJiraTicketStatusColor(
+                            jiraTicketStatus.toLowerCase()
+                          )}
+                        >
+                          {jiraTicketStatus}
+                        </Badge>
+                      )}
+                    </Group>
+                    {request_jira_id && (
+                      <CopyButton value={request_jira_id}>
+                        {({ copied, copy }) => (
+                          <Tooltip
+                            label={
+                              copied ? "Copied" : `Copy ${request_jira_id}`
+                            }
+                            onClick={copy}
+                          >
+                            <ActionIcon>
+                              <IconCopy size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
+                      </CopyButton>
                     )}
-                  </CopyButton>
+                  </Flex>
+                );
+              },
+            },
+            {
+              accessor: "request_otp_id",
+              title: "OTP ID",
+              render: ({ request_otp_id }) => (
+                <Flex key={request_otp_id} justify="space-between">
+                  <Text truncate maw={150}>
+                    {request_otp_id}
+                  </Text>
+                  {request_otp_id && (
+                    <CopyButton value={request_otp_id}>
+                      {({ copied, copy }) => (
+                        <Tooltip
+                          label={copied ? "Copied" : `Copy ${request_otp_id}`}
+                          onClick={copy}
+                        >
+                          <ActionIcon>
+                            <IconCopy size={16} />
+                          </ActionIcon>
+                        </Tooltip>
+                      )}
+                    </CopyButton>
+                  )}
                 </Flex>
               ),
             },
