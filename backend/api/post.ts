@@ -1880,11 +1880,11 @@ export const assignJiraFormslyOrganization = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formslyProjectId: string;
-    jiraOrganizationId: string;
+    jiraOrganizationId?: string;
   }
 ) => {
   const { formslyProjectId, jiraOrganizationId } = params;
-  console.log(params);
+  if (!jiraOrganizationId) return null;
 
   const { data, error } = await supabaseClient
     .from("jira_organization_team_project_table")

@@ -10510,6 +10510,7 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_organization_
 DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON employee_job_title_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON scic_employee_table;
@@ -13301,6 +13302,22 @@ WITH CHECK (
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
 AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_organization_team_project_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
+AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   (

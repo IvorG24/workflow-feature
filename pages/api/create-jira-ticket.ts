@@ -37,21 +37,23 @@ export default async function handler(
     if (response.ok) {
       const responseData = await response.json();
       // add organization
-      await fetch(`${jiraConfig.api_url}/issue/${responseData.issueKey}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `${jiraConfig.user}:${jiraConfig.api_token}`
-          ).toString("base64")}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fields: {
-            customfield_10002: [req.body.organizationId],
+      if (req.body.organizationId) {
+        await fetch(`${jiraConfig.api_url}/issue/${responseData.issueKey}`, {
+          method: "PUT",
+          headers: {
+            Authorization: `Basic ${Buffer.from(
+              `${jiraConfig.user}:${jiraConfig.api_token}`
+            ).toString("base64")}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            fields: {
+              customfield_10002: [req.body.organizationId],
+            },
+          }),
+        });
+      }
 
       return res.status(200).json(responseData);
     } else {
