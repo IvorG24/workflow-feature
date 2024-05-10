@@ -1055,6 +1055,18 @@ CREATE TABLE employee_job_title_table (
     employee_job_title_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
 );
 
+-- scic_employee_table
+CREATE TABLE scic_employee_table (
+    scic_employee_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    scic_employee_hris_id_number VARCHAR(4000) NOT NULL,
+    scic_employee_first_name VARCHAR(4000) NOT NULL,
+    scic_employee_middle_name VARCHAR(4000),
+    scic_employee_last_name VARCHAR(4000) NOT NULL,
+    scic_employee_suffix VARCHAR(10),
+    scic_employee_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    scic_employee_date_updated TIMESTAMPTZ
+);
+
 ---------- End: TABLES
 
 ---------- Start: FUNCTIONS
@@ -10155,6 +10167,7 @@ ALTER TABLE team_department_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_organization_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE employee_job_title_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE scic_employee_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -10499,7 +10512,7 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON employee_job_title_table;
-
+DROP POLICY IF EXISTS "Allow READ for anon users" ON scic_employee_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -13304,6 +13317,11 @@ USING (
 
 -- employee_job_title_table
 CREATE POLICY "Allow READ for anon users" ON "public"."employee_job_title_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+-- scic_employee_table
+CREATE POLICY "Allow READ for anon users" ON "public"."scic_employee_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
