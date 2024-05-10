@@ -323,6 +323,10 @@ const RequestFormFields = ({
                   value === 0
                     ? "Quantity value is required"
                     : true,
+                checkIfPositiveInteger: (value) =>
+                  field.field_name === "Quantity" && Number(value) < 0
+                    ? "Quantity must be a positive integer."
+                    : true,
               },
             }}
           />

@@ -386,51 +386,53 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
         ]);
         const csiCode = await getCSICode(supabaseClient, { csiCode: value });
 
-        const generalField = [
-          ...newSection.section_field.slice(0, 5),
-          {
-            ...newSection.section_field[5],
-            field_response: csiCode?.csi_code_section,
-          },
-          {
-            ...newSection.section_field[6],
-            field_response: csiCode?.csi_code_division_description,
-          },
-          {
-            ...newSection.section_field[7],
-            field_response: csiCode?.csi_code_level_two_major_group_description,
-          },
-          {
-            ...newSection.section_field[8],
-            field_response: csiCode?.csi_code_level_two_minor_group_description,
-          },
-        ];
+        const generalFieldListWithUpdatedCsiField =
+          newSection.section_field.map((field, fieldIndex) => {
+            switch (fieldIndex) {
+              case 5:
+                field.field_response = csiCode?.csi_code_section;
+                break;
+
+              case 6:
+                field.field_response = csiCode?.csi_code_division_description;
+                break;
+
+              case 7:
+                field.field_response =
+                  csiCode?.csi_code_level_two_major_group_description;
+                break;
+
+              case 8:
+                field.field_response =
+                  csiCode?.csi_code_level_two_minor_group_description;
+                break;
+
+              default:
+                break;
+            }
+
+            return field;
+          });
 
         updateSection(index, {
           ...newSection,
-          section_field: [
-            ...generalField.map((field) => {
-              return {
-                ...field,
-                field_section_duplicatable_id: undefined,
-              };
-            }),
-          ],
+          section_field: generalFieldListWithUpdatedCsiField,
         });
       } else {
-        const generalField = [
-          ...newSection.section_field.slice(0, 4),
-          ...newSection.section_field.slice(4, 8).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          ...newSection.section_field.slice(8),
-        ];
+        const newSectionWithCsiFieldNoResponse = newSection.section_field.map(
+          (field, fieldIndex) => {
+            if (fieldIndex > 4 && fieldIndex <= 8) {
+              return {
+                ...field,
+                field_response: "",
+              };
+            }
+            return field;
+          }
+        );
         updateSection(index, {
           ...newSection,
-          section_field: generalField,
+          section_field: newSectionWithCsiFieldNoResponse,
         });
       }
     } catch (e) {
