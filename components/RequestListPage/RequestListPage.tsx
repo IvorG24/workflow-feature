@@ -4,6 +4,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   DEFAULT_REQUEST_LIST_LIMIT,
+  ROW_PER_PAGE,
   UNHIDEABLE_FORMLY_FORMS,
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -14,10 +15,13 @@ import {
   TeamProjectTableRow,
 } from "@/utils/types";
 import {
+  ActionIcon,
   Alert,
+  Anchor,
   Box,
   Button,
   Container,
+  CopyButton,
   Divider,
   Flex,
   Grid,
@@ -30,11 +34,13 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconAlertCircle, IconReload } from "@tabler/icons-react";
+import { IconAlertCircle, IconCopy, IconReload } from "@tabler/icons-react";
+import { DataTable } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -290,6 +296,75 @@ const RequestListPage = ({
         </form>
       </FormProvider>
       <Space h="sm" />
+      <Box h="fit-content">
+        <DataTable
+          fontSize={16}
+          idAccessor="request_id"
+          sx={{
+            thead: {
+              tr: {
+                backgroundColor: "transparent",
+              },
+            },
+          }}
+          styles={(theme) => ({
+            header: {
+              background:
+                theme.colorScheme === "dark"
+                  ? theme.colors.dark[5]
+                  : theme.colors.gray[1],
+            },
+          })}
+          withBorder
+          minHeight={390}
+          fetching={isFetchingRequestList}
+          totalRecords={requestListCount}
+          recordsPerPage={ROW_PER_PAGE}
+          page={activePage}
+          onPageChange={setActivePage}
+          records={requestList}
+          columns={[
+            {
+              accessor: "request_id",
+              title: "Request ID",
+              render: ({ request_id, request_formsly_id }) => (
+                <Flex key={request_id} justify="space-between">
+                  <Anchor
+                    href={`/${formatTeamNameToUrlKey(
+                      activeTeam.team_name ?? ""
+                    )}/requests/${request_formsly_id}`}
+                    target="_blank"
+                  >
+                    {request_formsly_id}
+                  </Anchor>
+                  <CopyButton
+                    value={`${
+                      process.env.NEXT_PUBLIC_SITE_URL
+                    }/${formatTeamNameToUrlKey(
+                      activeTeam.team_name ?? ""
+                    )}/requests/${request_formsly_id}`}
+                  >
+                    {({ copied, copy }) => (
+                      <Tooltip
+                        label={
+                          copied
+                            ? "Copied"
+                            : `Copy ${request_formsly_id ?? request_id}`
+                        }
+                        onClick={copy}
+                      >
+                        <ActionIcon>
+                          <IconCopy size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    )}
+                  </CopyButton>
+                </Flex>
+              ),
+            },
+          ]}
+        />
+      </Box>
 
       <Box h="fit-content" pos="relative">
         <LoadingOverlay
