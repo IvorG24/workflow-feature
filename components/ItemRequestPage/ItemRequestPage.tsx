@@ -401,7 +401,9 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         warehouseRequestParticipantIdList: warehouseRequestParticipant.map(
           (user) => user.jira_user_account_jira_id
         ),
-        jiraOrganizationId: jiraOrganizationData.jira_organization_jira_id,
+        jiraOrganizationId: jiraOrganizationData
+          ? jiraOrganizationData.jira_organization_jira_id
+          : "",
       };
 
       const jiraTicketData = await createJiraTicket({

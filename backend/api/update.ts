@@ -1116,10 +1116,21 @@ export const updateJiraFormslyOrganization = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formslyProjectId: string;
-    jiraOrganizationId: string;
+    jiraOrganizationId?: string;
   }
 ) => {
   const { formslyProjectId, jiraOrganizationId } = params;
+
+  if (!jiraOrganizationId) {
+    const { error } = await supabaseClient
+      .from("jira_organization_team_project_table")
+      .delete()
+      .eq("jira_organization_team_project_project_id", formslyProjectId);
+
+    if (error) throw error;
+
+    return null;
+  }
 
   const { data, error } = await supabaseClient
     .from("jira_organization_team_project_table")
