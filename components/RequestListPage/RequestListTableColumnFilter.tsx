@@ -1,4 +1,6 @@
-import { Button, Modal, MultiSelect, Stack } from "@mantine/core";
+import { Drawer, Group, Stack, Switch, Text, Title } from "@mantine/core";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
+
 import { Dispatch, SetStateAction } from "react";
 
 type Props = {
@@ -28,27 +30,47 @@ const RequestListTableColumnFilter = ({
   setRequestListTableColumnFilter,
 }: Props) => {
   return (
-    <Modal
+    <Drawer
       opened={showTableColumnFilter}
       onClose={() => {
         setShowTableColumnFilter(false);
       }}
-      title="Select columns you want to hide."
-      centered
+      position="right"
+      title={<Title order={5}>Show/Hide Request List Table Columns</Title>}
     >
-      <Stack>
-        <MultiSelect
-          label="Hidden Columns"
-          data={tableColumnList}
-          withinPortal={true}
-          value={requestListTableColumnFilter}
-          onChange={setRequestListTableColumnFilter}
-        />
-        <Button fullWidth onClick={() => setShowTableColumnFilter(false)}>
-          Done
-        </Button>
+      <Stack px="sm">
+        {tableColumnList.map((column, idx) => {
+          const isHidden =
+            requestListTableColumnFilter.find(
+              (filter) => filter === column.value
+            ) === undefined;
+          return (
+            <Group position="apart" key={column.value + idx}>
+              <Text weight={500}>{column.label}</Text>
+              <Switch
+                checked={isHidden}
+                onChange={(e) => {
+                  if (e.currentTarget.checked) {
+                    setRequestListTableColumnFilter((prev) =>
+                      prev.filter((prevItem) => prevItem !== column.value)
+                    );
+                  } else {
+                    setRequestListTableColumnFilter((prev) => [
+                      ...prev,
+                      column.value,
+                    ]);
+                  }
+                }}
+                styles={{ track: { cursor: "pointer" } }}
+                color="green"
+                onLabel={<IconEye size={16} />}
+                offLabel={<IconEyeOff size={16} />}
+              />
+            </Group>
+          );
+        })}
       </Stack>
-    </Modal>
+    </Drawer>
   );
 };
 

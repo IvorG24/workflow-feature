@@ -211,7 +211,7 @@ const RequestListPage = ({
           onClick={() => setShowTableColumnFilter(true)}
         >
           {" "}
-          Hide Columns
+          Show/Hide Table Columns
         </Button>
       </Flex>
       <Space h="sm" />
