@@ -3092,7 +3092,6 @@ RETURNS JSON AS $$
       zipCode
     } = input_data;
 
-    
     const projectInitialCount = plv8.execute(`
       SELECT COUNT(*) FROM team_project_table 
       WHERE team_project_team_id = $1 
@@ -3115,7 +3114,7 @@ RETURNS JSON AS $$
         INSERT INTO team_project_table 
           (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id, team_project_address_id) 
         VALUES 
-          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', '${siteMapId}', '${boqId}', '${addressData.address_id}')
+          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', ${siteMapId ? `'${siteMapId}'` : null},  ${boqId ? `'${boqId}'` : null}, '${addressData.address_id}')
         RETURNING *
       `
     )[0];
@@ -9182,7 +9181,7 @@ plv8.subtransaction(function(){
     withOption
   } = input_data;
 
-  const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa'];
+  const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa', '64f87323-ac4a-4fb5-9d64-0be89806fdf9'];
 
   if (!fieldData) {
     const fieldList = plv8.execute(
@@ -9193,7 +9192,7 @@ plv8.subtransaction(function(){
         WHERE 
           ${
             specialSection.includes(sectionId) ?
-            `field_section_id IN ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa')` :
+            `field_section_id IN ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa', '64f87323-ac4a-4fb5-9d64-0be89806fdf9')` :
             `field_section_id = '${sectionId}'`
           }
           AND request_response_request_id = '${requestId}'
@@ -10510,6 +10509,7 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_organization_
 DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON employee_job_title_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON scic_employee_table;
@@ -13301,6 +13301,22 @@ WITH CHECK (
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
 AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_project_team_id
+    FROM team_project_table
+    WHERE team_project_table.team_project_id = jira_organization_team_project_project_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
+AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   (

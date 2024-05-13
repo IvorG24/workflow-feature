@@ -148,7 +148,7 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
       });
       setIsCreatingItem(false);
     } catch (e) {
-      console.log(e);
+      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

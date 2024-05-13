@@ -45,9 +45,9 @@ const JiraFormslyProjectOrganizationForm = ({
                 value={value}
                 error={errors.jiraOrganizationId?.message}
                 onChange={onChange}
+                clearable
               />
             )}
-            rules={{ required: "This field is required." }}
           />
 
           <Button type="submit">Submit</Button>

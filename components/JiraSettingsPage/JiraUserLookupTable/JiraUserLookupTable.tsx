@@ -98,7 +98,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
       setJiraUserList(userList);
       setJiraUserCount(count);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to fetch jira user list",
       });
@@ -120,7 +120,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
       setJiraUserList(data);
       setJiraUserCount(count);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to fetch jira user list",
         color: "red",
@@ -189,7 +189,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
       setOpenJiraUserLookupFormModal(false);
       updateOrCreateJiraUserFormMethods.reset();
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to update or create jira user",
         color: "red",

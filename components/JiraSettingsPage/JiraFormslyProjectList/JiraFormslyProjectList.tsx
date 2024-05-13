@@ -68,7 +68,7 @@ type AssignUpdateFormslyProjectResponseType = {
 };
 
 export type AssignJiraOrganizationForm = {
-  jiraOrganizationId: string;
+  jiraOrganizationId?: string;
 };
 
 const JiraFormslyProjectList = ({
@@ -189,7 +189,7 @@ const JiraFormslyProjectList = ({
         color: "green",
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to assign to jira project",
         color: "red",
@@ -315,44 +315,44 @@ const JiraFormslyProjectList = ({
         });
       }
 
-      const newJiraOrganizationData = jiraOrganizationList.find(
-        (organization) =>
-          organization.jira_organization_id ===
-          newOrganization?.jira_organization_team_project_organization_id
-      );
+      let newJiraOrganizationData: JiraOrganizationTableRow | null = null;
 
-      if (newJiraOrganizationData) {
-        const updatedJiraFormslyProjectList = jiraFormslyProjectList
-          .map((project) => {
-            if (
-              project.team_project_id === selectedFormslyProject &&
-              newOrganization
-            ) {
-              return {
-                ...project,
-                assigned_jira_organization: {
-                  ...newOrganization,
-                  jira_organization_team_project_organization:
-                    newJiraOrganizationData,
-                },
-              };
-            }
-
-            return project;
-          })
-          .sort((a, b) =>
-            a.team_project_name.localeCompare(b.team_project_name)
-          );
-        setJiraFormslyProjectList(updatedJiraFormslyProjectList);
-        setJiraFormslyProjectCount((prev) => prev + 1);
+      if (newOrganization) {
+        newJiraOrganizationData =
+          jiraOrganizationList.find(
+            (organization) =>
+              organization.jira_organization_id ===
+              newOrganization?.jira_organization_team_project_organization_id
+          ) ?? null;
       }
+
+      const updatedJiraFormslyProjectList = jiraFormslyProjectList
+        .map((project) => {
+          if (project.team_project_id === selectedFormslyProject) {
+            return {
+              ...project,
+              assigned_jira_organization: newOrganization
+                ? {
+                    ...newOrganization,
+                    jira_organization_team_project_organization:
+                      newJiraOrganizationData,
+                  }
+                : null,
+            };
+          }
+
+          return project;
+        })
+        .sort((a, b) => a.team_project_name.localeCompare(b.team_project_name));
+      setJiraFormslyProjectList(updatedJiraFormslyProjectList);
+      setJiraFormslyProjectCount((prev) => prev + 1);
 
       notifications.show({
         message: "Successfully assigned to jira organization",
         color: "green",
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to assign to jira organization",
         color: "red",

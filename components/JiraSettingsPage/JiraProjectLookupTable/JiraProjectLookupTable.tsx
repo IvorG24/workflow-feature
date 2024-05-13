@@ -92,7 +92,7 @@ const JiraProjectLookupTable = ({
       setJiraProjectList(projectList);
       setJiraProjectCount(count);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to fetch jira project list",
       });
@@ -114,7 +114,7 @@ const JiraProjectLookupTable = ({
       setJiraProjectList(data);
       setJiraProjectCount(count);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to fetch jira project list",
         color: "red",
@@ -179,7 +179,7 @@ const JiraProjectLookupTable = ({
       setOpenJiraProjectLookupFormModal(false);
       updateOrCreateJiraProjectFormMethods.reset();
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to update or create jira project",
         color: "red",

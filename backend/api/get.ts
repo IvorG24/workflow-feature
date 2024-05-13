@@ -6523,7 +6523,7 @@ export const getJiraAutomationDataByProjectId = async (
   });
 
   if (error) {
-    console.log(error);
+    console.error(error);
     console.warn("Failed to fetch jira automation data");
     return null;
   }

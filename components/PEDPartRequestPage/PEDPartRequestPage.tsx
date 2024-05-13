@@ -390,7 +390,9 @@ const PEDPartRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         warehouseRequestParticipantIdList: warehouseRequestParticipant.map(
           (user) => user.jira_user_account_jira_id
         ),
-        jiraOrganizationId: jiraOrganizationData.jira_organization_jira_id,
+        jiraOrganizationId: jiraOrganizationData
+          ? jiraOrganizationData.jira_organization_jira_id
+          : "",
       };
 
       const jiraTicketData = await createJiraTicket({
@@ -412,7 +414,7 @@ const PEDPartRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
       return jiraTicketData;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return { success: false, data: null };
     } finally {
       setIsLoading(false);

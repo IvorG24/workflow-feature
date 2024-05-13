@@ -101,23 +101,32 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
         return;
       }
 
-      const { data: boqData } = await createAttachment(supabaseClient, {
-        file: data.boq,
-        attachmentData: {
-          attachment_bucket: "TEAM_PROJECT_ATTACHMENTS",
-          attachment_name: data.boq.name,
-          attachment_value: uuidv4(),
-        },
-      });
+      let boqAttachmentId = "";
+      let siteMapAttachmentId = "";
 
-      const { data: siteMapData } = await createAttachment(supabaseClient, {
-        file: data.site_map,
-        attachmentData: {
-          attachment_bucket: "TEAM_PROJECT_ATTACHMENTS",
-          attachment_name: data.site_map.name,
-          attachment_value: uuidv4(),
-        },
-      });
+      if (data.boq) {
+        const { data: boqData } = await createAttachment(supabaseClient, {
+          file: data.boq,
+          attachmentData: {
+            attachment_bucket: "TEAM_PROJECT_ATTACHMENTS",
+            attachment_name: data.boq.name,
+            attachment_value: uuidv4(),
+          },
+        });
+        boqAttachmentId = boqData.attachment_id;
+      }
+
+      if (data.site_map) {
+        const { data: siteMapData } = await createAttachment(supabaseClient, {
+          file: data.site_map,
+          attachmentData: {
+            attachment_bucket: "TEAM_PROJECT_ATTACHMENTS",
+            attachment_name: data.site_map.name,
+            attachment_value: uuidv4(),
+          },
+        });
+        siteMapAttachmentId = siteMapData.attachment_id;
+      }
 
       const region = regionOptions.find(
         (options) => options.value === data.region
@@ -138,8 +147,8 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
         teamProjectName: projectName,
         teamProjectInitials: projectInitials,
         teamProjectTeamId: activeTeam.team_id,
-        siteMapId: siteMapData.attachment_id,
-        boqId: boqData.attachment_id,
+        siteMapId: siteMapAttachmentId,
+        boqId: boqAttachmentId,
         region: region.replace(/'/g, "''"),
         province: province.replace(/'/g, "''"),
         city: city.replace(/'/g, "''"),
@@ -155,6 +164,7 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
       });
       setIsCreatingProject(false);
     } catch (e) {
+      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -353,7 +363,6 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
                 render={({ field }) => (
                   <FileInput
                     label="Site Map"
-                    required
                     icon={<IconFile size={16} />}
                     clearable
                     multiple={false}
@@ -362,10 +371,6 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
                   />
                 )}
                 rules={{
-                  required: {
-                    value: true,
-                    message: "Site map is required",
-                  },
                   validate: {
                     fileSize: (value) => {
                       if (!value) return true;
@@ -383,7 +388,6 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
                 render={({ field }) => (
                   <FileInput
                     label="BOQ"
-                    required
                     icon={<IconFile size={16} />}
                     clearable
                     multiple={false}
@@ -392,10 +396,6 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
                   />
                 )}
                 rules={{
-                  required: {
-                    value: true,
-                    message: "BOQ is required",
-                  },
                   validate: {
                     fileSize: (value) => {
                       if (!value) return true;

@@ -133,7 +133,7 @@ const JiraSettingsPage = ({
         const data = await response.json();
         setJiraAutomationFormData(data.fields);
       } catch (error) {
-        console.log(error);
+        console.error(error);
         notifications.show({
           message: "Failed to fetch client data",
           color: "red",

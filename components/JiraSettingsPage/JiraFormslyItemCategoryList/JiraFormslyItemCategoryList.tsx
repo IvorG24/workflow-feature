@@ -291,7 +291,7 @@ const JiraFormslyItemCategoryList = ({
       setJiraItemCategoryList(itemCategoryList);
       setJiraItemCategoryCount(count);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to fetch jira item category list",
       });
