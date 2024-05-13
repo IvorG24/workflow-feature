@@ -1838,11 +1838,6 @@ export type ITAssetForm = {
   isITAsset: boolean;
 };
 
-export type JiraStatus = {
-  request_jira_id: string;
-  request_jira_status: string;
-};
-
 export type FetchRequestListParams = {
   teamId: string;
   page: number;
