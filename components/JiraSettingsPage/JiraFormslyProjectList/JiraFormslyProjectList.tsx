@@ -189,7 +189,7 @@ const JiraFormslyProjectList = ({
         color: "green",
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to assign to jira project",
         color: "red",
@@ -352,7 +352,7 @@ const JiraFormslyProjectList = ({
         color: "green",
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to assign to jira organization",
         color: "red",

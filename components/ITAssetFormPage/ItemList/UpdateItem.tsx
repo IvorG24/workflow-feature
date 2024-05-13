@@ -217,7 +217,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
       });
       setEditItem(null);
     } catch (e) {
-      console.log(e);
+      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

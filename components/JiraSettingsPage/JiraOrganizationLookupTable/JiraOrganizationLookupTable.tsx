@@ -93,7 +93,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
       setJiraOrganizationList(organizationList);
       setJiraOrganizationCount(count);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to fetch jira organization list",
       });
@@ -115,7 +115,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
       setJiraOrganizationList(data);
       setJiraOrganizationCount(count);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to fetch jira user list",
         color: "red",
@@ -177,7 +177,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
       setOpenJiraOrganizationLookupFormModal(false);
       updateOrCreateJiraOrganization.reset();
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Failed to update or create jira user",
         color: "red",

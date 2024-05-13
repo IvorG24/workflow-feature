@@ -377,7 +377,7 @@ const ITAssetRequestPage = ({ request }: Props) => {
 
       return jiraTicketData;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return { success: false, data: null };
     } finally {
       setIsLoading(false);
