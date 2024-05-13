@@ -1837,3 +1837,22 @@ export type ITAssetForm = {
   divisionDescription: string;
   isITAsset: boolean;
 };
+
+export type FetchRequestListParams = {
+  teamId: string;
+  page: number;
+  limit: number;
+  teamMemberId?: string;
+} & RequestListFilterValues;
+
+export type RequestListFilterValues = {
+  search?: string;
+  requestor?: string[];
+  approver?: string[];
+  form?: string[];
+  project?: string[];
+  status?: FormStatusType[];
+  isAscendingSort: boolean;
+  isApproversView: boolean;
+  idFilter?: string[];
+};

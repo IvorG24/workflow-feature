@@ -32,8 +32,8 @@ import {
   EquipmentPartTableInsert,
   EquipmentPartType,
   EquipmentTableRow,
+  FetchRequestListParams,
   FieldTableRow,
-  FormStatusType,
   FormType,
   InitialFormType,
   ItemCategoryType,
@@ -198,21 +198,7 @@ export const getFormList = async (
 // Get request list
 export const getRequestList = async (
   supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    page: number;
-    limit: number;
-    requestor?: string[];
-    approver?: string[];
-    status?: FormStatusType[];
-    form?: string[];
-    sort?: "ascending" | "descending";
-    search?: string;
-    isApproversView: boolean;
-    teamMemberId?: string;
-    project?: string[];
-    idFilter?: string[];
-  }
+  params: FetchRequestListParams
 ) => {
   const {
     teamId,
@@ -222,13 +208,15 @@ export const getRequestList = async (
     approver,
     status,
     form,
-    sort = "descending",
+    isAscendingSort,
     search,
     isApproversView,
     teamMemberId,
     project,
     idFilter,
   } = params;
+
+  const sort = isAscendingSort ? "ASC" : "DESC";
 
   const requestorCondition = requestor
     ?.map((value) => `request_view.request_team_member_id = '${value}'`)
@@ -269,7 +257,7 @@ export const getRequestList = async (
       idFilter: idFilterCondition ? `AND (${idFilterCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: search ? `AND (${searchCondition})` : "",
-      sort: sort === "descending" ? "DESC" : "ASC",
+      sort,
       isApproversView,
       teamMemberId,
     },

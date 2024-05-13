@@ -8,62 +8,30 @@ import {
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
-  FormStatusType,
+  RequestListFilterValues,
   RequestListItemType,
   TeamMemberWithUserType,
   TeamProjectTableRow,
 } from "@/utils/types";
 import {
-  Alert,
   Box,
   Button,
   Container,
-  Divider,
   Flex,
-  Grid,
-  Loader,
-  LoadingOverlay,
-  Pagination,
-  Paper,
-  ScrollArea,
   Space,
-  Stack,
   Text,
   Title,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconAlertCircle, IconReload } from "@tabler/icons-react";
+import { IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import RequestItemRow from "./RequestItemRow";
 import RequestListFilter from "./RequestListFilter";
-
-export type FilterFormValues = {
-  search: string;
-  requestorList: string[];
-  approverList: string[];
-  formList: string[];
-  projectList: string[];
-  status?: FormStatusType[];
-  isAscendingSort: boolean;
-  isApproversView: boolean;
-  idFilterList: string[];
-};
-
-export type RequestListLocalFilter = {
-  search: string;
-  requestorList: string[];
-  approverList: string[];
-  formList: string[];
-  status: FormStatusType[] | undefined;
-  isAscendingSort: boolean;
-  isApproversView: boolean;
-  projectList: string[];
-  idFilterList: string[];
-};
+import RequestListTable from "./RequestListTable";
+import RequestListTableColumnFilter from "./RequestListTableColumnFilter";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
@@ -84,50 +52,44 @@ const RequestListPage = ({
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
-  const [localFilter, setLocalFilter] = useLocalStorage<RequestListLocalFilter>(
-    {
+  const [requestListCount, setRequestListCount] = useState(0);
+  const [localFilter, setLocalFilter] =
+    useLocalStorage<RequestListFilterValues>({
       key: "formsly-request-list-filter",
       defaultValue: {
         search: "",
-        requestorList: [],
-        approverList: [],
-        formList: [],
+        requestor: [],
+        approver: [],
+        form: [],
         status: undefined,
         isAscendingSort: false,
         isApproversView: false,
-        projectList: [],
-        idFilterList: [],
+        project: [],
+        idFilter: [],
       },
-    }
-  );
+    });
 
-  const [requestListCount, setRequestListCount] = useState(0);
+  const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
+  const [requestListTableColumnFilter, setRequestListTableColumnFilter] =
+    useLocalStorage<string[]>({
+      key: "request-list-table-column-filter",
+      defaultValue: [],
+    });
 
-  const filterFormMethods = useForm<FilterFormValues>({
+  const filterFormMethods = useForm<RequestListFilterValues>({
     defaultValues: localFilter,
     mode: "onChange",
   });
-
-  const { handleSubmit, getValues } = filterFormMethods;
 
   const filteredFormList = formList
     .filter(({ form_name }) => !UNHIDEABLE_FORMLY_FORMS.includes(form_name))
     .map(({ form_name: label, form_id: value }) => ({ label, value }));
 
-  const handleFilterForms = async (
-    {
-      search,
-      requestorList,
-      approverList,
-      formList,
-      status,
-      isAscendingSort,
-      isApproversView,
-      projectList,
-      idFilterList,
-    }: FilterFormValues = getValues()
-  ) => {
+  const { handleSubmit, getValues } = filterFormMethods;
+
+  const handleFetchRequestList = async (page: number) => {
     try {
+      setIsFetchingRequestList(true);
       if (!activeTeam.team_id) {
         console.warn(
           "RequestListPage handleFilterFormsError: active team_id not found"
@@ -139,92 +101,42 @@ const RequestListPage = ({
         );
         return;
       }
-
-      setActivePage(1);
-      setIsFetchingRequestList(true);
-
-      const params = {
-        teamId: activeTeam.team_id,
-        page: 1,
-        limit: DEFAULT_REQUEST_LIST_LIMIT,
-        requestor:
-          requestorList && requestorList.length > 0 ? requestorList : undefined,
-        approver:
-          approverList && approverList.length > 0 ? approverList : undefined,
-        form: formList && formList.length > 0 ? formList : undefined,
-        status: status && status.length > 0 ? status : undefined,
-        project:
-          projectList && projectList.length > 0 ? projectList : undefined,
-        idFilter:
-          idFilterList && idFilterList.length > 0 ? idFilterList : undefined,
-        search: search,
-        isApproversView,
-        teamMemberId: teamMember.team_member_id,
-      };
-
-      const { data, count } = await getRequestList(supabaseClient, {
-        ...params,
-        sort: isAscendingSort ? "ascending" : "descending",
-      });
-
-      setRequestList(data);
-      setRequestListCount(count || 0);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingRequestList(false);
-    }
-  };
-
-  const handlePagination = async () => {
-    try {
-      setIsFetchingRequestList(true);
-      if (!activeTeam.team_id) return;
-      if (!teamMember) return;
       const {
         search,
-        requestorList,
-        approverList,
-        formList,
+        requestor,
+        approver,
+        form,
         status,
         isAscendingSort,
         isApproversView,
-        projectList,
-        idFilterList,
+        project,
+        idFilter,
       } = getValues();
 
       const params = {
         teamId: activeTeam.team_id,
-        page: activePage,
+        page: page,
         limit: DEFAULT_REQUEST_LIST_LIMIT,
-        requestor:
-          requestorList && requestorList.length > 0 ? requestorList : undefined,
-        approver:
-          approverList && approverList.length > 0 ? approverList : undefined,
-        form: formList && formList.length > 0 ? formList : undefined,
+        requestor: requestor && requestor.length > 0 ? requestor : undefined,
+        approver: approver && approver.length > 0 ? approver : undefined,
+        form: form && form.length > 0 ? form : undefined,
         status: status && status.length > 0 ? status : undefined,
-        project:
-          projectList && projectList.length > 0 ? projectList : undefined,
-        idFilter:
-          idFilterList && idFilterList.length < 0 ? idFilterList : undefined,
+        project: project && project.length > 0 ? project : undefined,
+        idFilter: idFilter && idFilter.length < 0 ? idFilter : undefined,
         search: search,
         isApproversView,
+        isAscendingSort,
         teamMemberId: teamMember.team_member_id,
       };
 
-      const { data, count } = await getRequestList(supabaseClient, {
-        ...params,
-        sort: isAscendingSort ? "ascending" : "descending",
-      });
+      const { data, count } = await getRequestList(supabaseClient, params);
 
       setRequestList(data);
       setRequestListCount(count || 0);
-    } catch (e) {
+    } catch (error) {
+      console.log(error);
       notifications.show({
-        message: "Something went wrong. Please try again later.",
+        message: "Failed to fetch request list.",
         color: "red",
       });
     } finally {
@@ -232,19 +144,36 @@ const RequestListPage = ({
     }
   };
 
-  useEffect(() => {
-    handlePagination();
-  }, [activePage]);
-
-  useEffect(() => {
-    const localStorageFilter = localStorage.getItem(
-      "formsly-request-list-filter"
-    );
-
-    if (localStorageFilter) {
-      handleFilterForms(localFilter);
+  const handleFilterForms = async () => {
+    try {
+      setActivePage(1);
+      await handleFetchRequestList(1);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsFetchingRequestList(false);
     }
-  }, [activeTeam.team_id, teamMember, localFilter]);
+  };
+
+  const handlePagination = async (page: number) => {
+    try {
+      setActivePage(page);
+      await handleFetchRequestList(page);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsFetchingRequestList(false);
+    }
+  };
+
+  const checkIfColumnIsHidden = (column: string) => {
+    const isHidden = requestListTableColumnFilter.includes(column);
+    return isHidden;
+  };
+
+  useEffect(() => {
+    handlePagination(activePage);
+  }, [activeTeam.team_id, teamMember]);
 
   return (
     <Container maw={3840} h="100%">
@@ -271,9 +200,18 @@ const RequestListPage = ({
         <Button
           variant="light"
           leftIcon={<IconReload size={16} />}
-          onClick={() => handleFilterForms()}
+          onClick={() => {
+            handleFilterForms();
+          }}
         >
           Refresh
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => setShowTableColumnFilter(true)}
+        >
+          {" "}
+          Show/Hide Table Columns
         </Button>
       </Flex>
       <Space h="sm" />
@@ -290,93 +228,23 @@ const RequestListPage = ({
         </form>
       </FormProvider>
       <Space h="sm" />
-
-      <Box h="fit-content" pos="relative">
-        <LoadingOverlay
-          visible={isFetchingRequestList}
-          overlayBlur={0}
-          overlayOpacity={0.2}
-          loader={<Loader variant="dots" />}
+      <Box h="fit-content">
+        <RequestListTable
+          requestList={requestList}
+          requestListCount={requestListCount}
+          teamMemberList={teamMemberList}
+          activePage={activePage}
+          isFetchingRequestList={isFetchingRequestList}
+          handlePagination={handlePagination}
+          checkIfColumnIsHidden={checkIfColumnIsHidden}
         />
-        {requestList.length > 0 ? (
-          <Paper withBorder>
-            <ScrollArea h="fit-content" type="auto">
-              <Stack spacing={0} miw={1074}>
-                <Box
-                  sx={(theme) => ({
-                    backgroundColor:
-                      theme.colorScheme === "dark"
-                        ? theme.colors.dark[5]
-                        : theme.colors.gray[1],
-                  })}
-                >
-                  <Grid m={0} px="sm" justify="space-between">
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Request ID</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Jira ID</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>OTP ID</Text>
-                    </Grid.Col>
-                    <Grid.Col span={2}>
-                      <Text weight={600}>Form Name</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Status</Text>
-                    </Grid.Col>
-
-                    <Grid.Col span="auto" offset={0.5}>
-                      <Text weight={600} pl={8}>
-                        Requested By
-                      </Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Approver</Text>
-                    </Grid.Col>
-                    <Grid.Col span="content">
-                      <Text weight={600}>Date Created</Text>
-                    </Grid.Col>
-                    <Grid.Col span="content">
-                      <Text weight={600}>View</Text>
-                    </Grid.Col>
-                  </Grid>
-                  <Divider />
-                </Box>
-                {requestList.map((request, idx) => (
-                  <Box key={request.request_id}>
-                    <RequestItemRow
-                      request={request}
-                      teamMemberList={teamMemberList}
-                    />
-                    {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? <Divider /> : null}
-                  </Box>
-                ))}
-              </Stack>
-            </ScrollArea>
-          </Paper>
-        ) : (
-          <Text align="center" size={24} weight="bolder" color="dimmed">
-            <Alert
-              icon={<IconAlertCircle size="1rem" />}
-              color="orange"
-              mt="xs"
-            >
-              No request/s found.
-            </Alert>
-          </Text>
-        )}
       </Box>
-
-      <Flex justify="flex-end">
-        <Pagination
-          value={activePage}
-          onChange={setActivePage}
-          total={Math.ceil(requestListCount / DEFAULT_REQUEST_LIST_LIMIT)}
-          mt="xl"
-        />
-      </Flex>
+      <RequestListTableColumnFilter
+        showTableColumnFilter={showTableColumnFilter}
+        setShowTableColumnFilter={setShowTableColumnFilter}
+        requestListTableColumnFilter={requestListTableColumnFilter}
+        setRequestListTableColumnFilter={setRequestListTableColumnFilter}
+      />
     </Container>
   );
 };
