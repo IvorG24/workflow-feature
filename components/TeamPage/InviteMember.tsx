@@ -242,7 +242,7 @@ const InviteMember = ({ memberEmailList }: Props) => {
       setPendingInviteList(data as unknown as PendingInvite[]);
       setPendingInviteCount(count);
     } catch (error) {
-      console.log(error);
+      console.error(error);
       notifications.show({
         message: "Error fetching pending invite list.",
         color: "red",
