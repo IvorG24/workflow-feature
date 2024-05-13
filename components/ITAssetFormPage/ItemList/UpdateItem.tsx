@@ -340,7 +340,6 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                   searchable
                   clearable
                   label="GL Account"
-                  disabled
                 />
               )}
               rules={{

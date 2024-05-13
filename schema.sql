@@ -3092,7 +3092,6 @@ RETURNS JSON AS $$
       zipCode
     } = input_data;
 
-    
     const projectInitialCount = plv8.execute(`
       SELECT COUNT(*) FROM team_project_table 
       WHERE team_project_team_id = $1 
@@ -3115,7 +3114,7 @@ RETURNS JSON AS $$
         INSERT INTO team_project_table 
           (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id, team_project_address_id) 
         VALUES 
-          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', '${siteMapId}', '${boqId}', '${addressData.address_id}')
+          ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', ${siteMapId ? `'${siteMapId}'` : null},  ${boqId ? `'${boqId}'` : null}, '${addressData.address_id}')
         RETURNING *
       `
     )[0];
