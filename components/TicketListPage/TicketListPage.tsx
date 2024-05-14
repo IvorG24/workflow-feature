@@ -3,6 +3,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_TICKET_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   TeamMemberWithUserType,
   TicketCategoryTableRow,
@@ -29,7 +30,12 @@ import {
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconAlertCircle, IconReload } from "@tabler/icons-react";
+import {
+  IconAlertCircle,
+  IconReload,
+  IconReportAnalytics,
+} from "@tabler/icons-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import TicketListFilter from "./TicketListFilter";
@@ -69,6 +75,7 @@ const TicketListPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const router = useRouter();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingTicketList, setIsFetchingTicketList] = useState(false);
   const [ticketList, setTicketList] =
@@ -222,6 +229,20 @@ const TicketListPage = ({
         >
           Refresh
         </Button>
+        {["ADMIN", "OWNER"].includes(teamMember?.team_member_role ?? "") && (
+          <Button
+            leftIcon={<IconReportAnalytics size={16} />}
+            onClick={async () =>
+              await router.push(
+                `/${formatTeamNameToUrlKey(
+                  activeTeam.team_name ?? ""
+                )}/tickets/admin-analytics`
+              )
+            }
+          >
+            Ticket Admin Analytics
+          </Button>
+        )}
       </Flex>
       <Box my="sm">
         <FormProvider {...filterFormMethods}>

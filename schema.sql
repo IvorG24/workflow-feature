@@ -10078,6 +10078,73 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 -- End: Get approver unresolved request count
 
+-- Start: Get ticket list on load
+
+CREATE OR REPLACE FUNCTION get_admin_ticket_analytics(
+  input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      adminTeamMemberId,
+      intervalList,
+      ticketCategoryIdList
+    } = input_data;
+
+    const ticketCategoryCondition = ticketCategoryIdList.map(category => `'${category}'`).join(",");
+    
+    intervalList.forEach(interval => {
+      const condition = `
+        AND ticket_status_date_updated >= '${interval.startDate}'
+        AND ticket_status_date_updated < '${interval.endDate}'
+        AND ticket_approver_team_member_id = '${adminTeamMemberId}'
+        AND ticket_is_disabled = false
+        AND ticket_category_id IN (${ticketCategoryCondition})
+      `
+
+      const closedCount = plv8.execute(
+        `
+          SELECT COUNT(ticket_id)
+          FROM ticket_table
+          WHERE
+            ticket_status = 'CLOSED'
+            ${condition}
+        `
+      )[0].count;
+      const underReviewCount = plv8.execute(
+        `
+          SELECT COUNT(ticket_id)
+          FROM ticket_table
+          WHERE
+            ticket_status = 'UNDER REVIEW'
+            ${condition}
+        `
+      )[0].count;
+      const incorrectCount = plv8.execute(
+        `
+          SELECT COUNT(ticket_id)
+          FROM ticket_table
+          WHERE
+            ticket_status = 'INCORRECT'
+            ${condition}
+        `
+      )[0].count;
+
+      returnData.push({
+        startDate: interval.startDate,
+        endDate: interval.endDate,
+        closedCount: Number(closedCount),
+        underReviewCount: Number(underReviewCount),
+        incorrectCount: Number(incorrectCount)
+      });
+    });
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Get ticket list on load
+
 ---------- End: FUNCTIONS
 
 

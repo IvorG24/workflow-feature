@@ -31,7 +31,7 @@ const TABS = ["overview"];
 //   "Receiving Inspecting Report",
 //   "Quotation",
 // ];
-const DAYSDATA = [
+const DAYS_OPTIONS = [
   { value: "7", label: "Last 7 days" },
   { value: "14", label: "Last 14 days" },
   { value: "30", label: "Last 30 days" },
@@ -211,7 +211,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
             <Select
               label="Date Created"
               placeholder="Select days"
-              data={DAYSDATA}
+              data={DAYS_OPTIONS}
               value={selectedDays}
               onChange={setSelectedDays}
               searchable

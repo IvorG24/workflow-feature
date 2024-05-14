@@ -134,7 +134,6 @@ const RequestListPage = ({
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Failed to fetch request list.",
         color: "red",
@@ -149,7 +148,7 @@ const RequestListPage = ({
       setActivePage(1);
       await handleFetchRequestList(1);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     } finally {
       setIsFetchingRequestList(false);
     }
@@ -160,7 +159,7 @@ const RequestListPage = ({
       setActivePage(page);
       await handleFetchRequestList(page);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     } finally {
       setIsFetchingRequestList(false);
     }
