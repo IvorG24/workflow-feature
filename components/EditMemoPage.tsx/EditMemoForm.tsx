@@ -177,8 +177,6 @@ const EditMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
       memo_signer_id: uuidv4(),
       memo_signer_memo_id: getValues("memo_id"),
       memo_signer_order: selectedSignerList.length + 1,
-      memo_signer_date_created: `${new Date()}`,
-      memo_signer_date_signed: "",
       memo_signer_team_member: {
         team_member_id: selectedSigner.team_member_id,
         user: {

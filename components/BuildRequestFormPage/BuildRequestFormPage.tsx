@@ -1,8 +1,10 @@
 import { createRequestForm } from "@/backend/api/post";
 import { useFormActions } from "@/stores/useFormStore";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { defaultRequestFormBuilderSection } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   AppType,
   TeamGroupTableRow,
@@ -24,8 +26,6 @@ import { useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import FormBuilder, { FormBuilderData } from "../FormBuilder/FormBuilder";
-import { formatTeamNameToUrlKey } from "@/utils/string";
-import { useActiveTeam } from "@/stores/useTeamStore";
 
 const useStyles = createStyles((theme) => ({
   formNameInput: {
@@ -171,7 +171,11 @@ const BuildFormPage = ({ teamMemberList, formId, groupList }: Props) => {
         color: "green",
       });
 
-      await router.push(`/${formatTeamNameToUrlKey(team.team_name ?? "")}/forms/${createdForm.form_id}`);
+      await router.push(
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/forms/${
+          createdForm.form_id
+        }`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
