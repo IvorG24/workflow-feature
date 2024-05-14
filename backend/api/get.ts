@@ -7118,3 +7118,24 @@ export const getJiraOrganizationList = async (
     count: Number(count),
   };
 };
+
+export const getFieldResponseByRequestId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    fieldId: string;
+  }
+) => {
+  const { requestId, fieldId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response")
+    .eq("request_response_request_id", requestId)
+    .eq("request_response_field_id", fieldId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data?.request_response;
+};
