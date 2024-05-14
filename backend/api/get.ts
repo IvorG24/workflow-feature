@@ -5506,7 +5506,9 @@ export const getTicketCategoryList = async (
 ) => {
   const { data, error } = await supabaseClient
     .from("ticket_category_table")
-    .select("*");
+    .select("*")
+    .eq("ticket_category_is_disabled", false)
+    .eq("ticket_category_is_active", true);
   if (error) throw error;
 
   return data;
@@ -7138,4 +7140,58 @@ export const getFieldResponseByRequestId = async (
   if (error) throw error;
 
   return data?.request_response;
+};
+
+// Get team admin list
+export const getTeamAdminList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .from("team_member_table")
+    .select(
+      `
+        *,
+        team_member_user: team_member_user_id!inner(
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_username, 
+          user_avatar
+        )
+      `
+    )
+    .eq("team_member_team_id", teamId)
+    .eq("team_member_role", "ADMIN");
+  if (error) throw error;
+
+  const formattedData = data as unknown as TeamMemberType[];
+
+  return formattedData.sort((a, b) =>
+    `${a.team_member_user.user_first_name}` >
+    `${b.team_member_user.user_first_name}`
+      ? 1
+      : `${b.team_member_user.user_first_name}` >
+        `${a.team_member_user.user_first_name}`
+      ? -1
+      : 0
+  );
+};
+
+export const getAdminTicketAnalytics = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    adminTeamMemberId: string;
+    intervalList: { startDate: string; endDate: string }[];
+    ticketCategoryIdList: string[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_admin_ticket_analytics", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data;
 };

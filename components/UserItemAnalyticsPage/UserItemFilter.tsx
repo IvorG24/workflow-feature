@@ -1,5 +1,6 @@
 import { getUserIssuedItemList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { DAYS_OPTIONS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { TeamMemberType, UserIssuedItem } from "@/utils/types";
 import { Button, Group, Paper, Select } from "@mantine/core";
@@ -10,14 +11,6 @@ import { IconCalendarEvent } from "@tabler/icons-react";
 import moment from "moment";
 import { Dispatch, SetStateAction, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-
-const DAYSDATA = [
-  { value: "7", label: "Last 7 days" },
-  { value: "14", label: "Last 14 days" },
-  { value: "30", label: "Last 30 days" },
-  { value: "90", label: "Last 90 days" },
-  { value: "custom", label: "Custom" },
-];
 
 type UserItemFilter = {
   teamMemberId: string;
@@ -57,7 +50,7 @@ const UserItemFilter = ({
     formState: { errors },
   } = useForm<UserItemFilter>({
     defaultValues: {
-      dateCreated: DAYSDATA[0].value,
+      dateCreated: DAYS_OPTIONS[0].value,
       startDate: firstDayOfCurrentYear,
       endDate: currentDate,
     },
@@ -123,7 +116,7 @@ const UserItemFilter = ({
             }}
             render={({ field: { value, onChange } }) => (
               <Select
-                data={DAYSDATA}
+                data={DAYS_OPTIONS}
                 placeholder="Select days"
                 label="Date Created"
                 onChange={(payload) => {

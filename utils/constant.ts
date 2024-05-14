@@ -19,6 +19,7 @@ export const DEFAULT_ITEM_ANALYTICS_ROWS = 20;
 export const DEFAULT_ON_SCROLL_LIMIT = 10;
 export const FETCH_OPTION_LIMIT = 1000;
 export const SELECT_OPTION_LIMIT = 1000;
+export const TICKET_ADMIN_ANALYTICS_LIMIT = 10;
 
 export const READ_ONLY_TICKET_CATEGORY_LIST = [
   "Incident Report for Employees",
@@ -1312,4 +1313,19 @@ export const PED_ITEM_FIELD_ID_LIST = [
   "7971912e-bdea-4820-9e1d-ff501296a62c",
   "c81706d5-bebf-4ffd-813b-71f57b219de5",
   "137bbd25-2f65-4b65-86e7-7f5726857084",
+];
+
+export const DAYS_OPTIONS = [
+  { value: "7", label: "Last 7 days" },
+  { value: "14", label: "Last 14 days" },
+  { value: "30", label: "Last 30 days" },
+  { value: "90", label: "Last 90 days" },
+  { value: "custom", label: "Custom" },
+];
+
+export const INTERVAL_OPTIONS = [
+  { value: "daily", label: "Daily" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
 ];

@@ -177,8 +177,6 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
       memo_signer_id: uuidv4(),
       memo_signer_memo_id: getValues("memo_id"),
       memo_signer_order: selectedSignerList.length + 1,
-      memo_signer_date_created: `${Date.now()}`,
-      memo_signer_date_signed: null,
       memo_signer_team_member: {
         team_member_id: selectedSigner.team_member_id,
         user: {

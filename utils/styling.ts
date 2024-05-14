@@ -83,6 +83,12 @@ export const getStatusToColorForCharts = (status: string) => {
       return "#FA5252";
     case "canceled":
       return "#868E96";
+    case "under review":
+      return "#228BE6";
+    case "closed":
+      return "#40C057";
+    case "incorrect":
+      return "#FA5252";
   }
 };
 
