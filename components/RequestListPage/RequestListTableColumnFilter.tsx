@@ -1,4 +1,5 @@
-import { Drawer, Group, Stack, Switch, Text, Title } from "@mantine/core";
+import { useFormList } from "@/stores/useFormStore";
+import { Drawer, Group, Stack, Switch, Text } from "@mantine/core";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 
 import { Dispatch, SetStateAction } from "react";
@@ -8,6 +9,7 @@ type Props = {
   setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
   requestListTableColumnFilter: string[];
   setRequestListTableColumnFilter: Dispatch<SetStateAction<string[]>>;
+  selectedFormFilter: string[] | undefined;
 };
 
 const tableColumnList = [
@@ -16,6 +18,7 @@ const tableColumnList = [
   { value: "request_jira_status", label: "JIRA Status" },
   { value: "request_otp_id", label: "OTP ID" },
   { value: "request_form_name", label: "Form Name" },
+  { value: "request_ped_equipment_number", label: "PED Equipment Number" },
   { value: "request_status", label: "Status" },
   { value: "request_team_member_id", label: "Requested By" },
   { value: "request_signer", label: "Approver" },
@@ -28,7 +31,10 @@ const RequestListTableColumnFilter = ({
   setShowTableColumnFilter,
   requestListTableColumnFilter,
   setRequestListTableColumnFilter,
+  selectedFormFilter,
 }: Props) => {
+  const formList = useFormList();
+
   return (
     <Drawer
       opened={showTableColumnFilter}
@@ -36,7 +42,11 @@ const RequestListTableColumnFilter = ({
         setShowTableColumnFilter(false);
       }}
       position="right"
-      title={<Title order={5}>Show/Hide Request List Table Columns</Title>}
+      title={
+        <Text weight={600} fz={16}>
+          Show/Hide Request List Table Columns
+        </Text>
+      }
     >
       <Stack px="sm">
         {tableColumnList.map((column, idx) => {
@@ -44,6 +54,16 @@ const RequestListTableColumnFilter = ({
             requestListTableColumnFilter.find(
               (filter) => filter === column.value
             ) === undefined;
+
+          const selectedForm = selectedFormFilter
+            ? formList.find((form) => form.form_id === selectedFormFilter[0])
+            : undefined;
+
+          const showPedColumn = selectedForm?.form_name.includes("PED");
+          const isPedColumn = column.label.includes("PED");
+
+          if (isPedColumn && !showPedColumn) return null;
+
           return (
             <Group position="apart" key={column.value + idx}>
               <Text weight={500}>{column.label}</Text>

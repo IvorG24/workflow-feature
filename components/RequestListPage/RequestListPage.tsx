@@ -28,7 +28,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider, useForm, useWatch } from "react-hook-form";
 import RequestListFilter from "./RequestListFilter";
 import RequestListTable from "./RequestListTable";
 import RequestListTableColumnFilter from "./RequestListTableColumnFilter";
@@ -85,7 +85,9 @@ const RequestListPage = ({
     .filter(({ form_name }) => !UNHIDEABLE_FORMLY_FORMS.includes(form_name))
     .map(({ form_name: label, form_id: value }) => ({ label, value }));
 
-  const { handleSubmit, getValues } = filterFormMethods;
+  const { handleSubmit, getValues, control } = filterFormMethods;
+
+  const selectedFormFilter = useWatch({ name: "form", control });
 
   const handleFetchRequestList = async (page: number) => {
     try {
@@ -236,6 +238,7 @@ const RequestListPage = ({
           isFetchingRequestList={isFetchingRequestList}
           handlePagination={handlePagination}
           checkIfColumnIsHidden={checkIfColumnIsHidden}
+          selectedFormFilter={selectedFormFilter}
         />
       </Box>
       <RequestListTableColumnFilter
@@ -243,6 +246,7 @@ const RequestListPage = ({
         setShowTableColumnFilter={setShowTableColumnFilter}
         requestListTableColumnFilter={requestListTableColumnFilter}
         setRequestListTableColumnFilter={setRequestListTableColumnFilter}
+        selectedFormFilter={selectedFormFilter}
       />
     </Container>
   );
