@@ -4174,11 +4174,21 @@ export const getApproverRequestCount = async (
   let query = supabaseClient
     .from("request_signer_table")
     .select(
-      "request_signer_status, request_signer: request_signer_signer_id!inner(signer_team_member_id), request: request_signer_request_id!inner(request_jira_id)",
+      `
+        request_signer_status, 
+        request_signer: request_signer_signer_id!inner(
+          signer_team_member_id
+        ),
+        request: request_signer_request_id!inner(
+          request_jira_id
+        )
+      `,
       { count: "exact", head: true }
     )
     .eq("request_signer.signer_team_member_id", teamMemberId)
-    .eq("request_signer_status", status);
+    .eq("request_signer_status", status)
+    .eq("request.request_is_disabled", false)
+    .neq("request.request_status", "CANCELED");
 
   if (withJiraId !== undefined) {
     switch (withJiraId) {

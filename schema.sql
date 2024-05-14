@@ -3027,6 +3027,7 @@ RETURNS JSON AS $$
           `
             AND signer_team_member_id = '${teamMemberId}'
             AND request_signer_status = 'PENDING'
+            AND request_status != 'CANCELED'
           `;
         request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
         request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
@@ -10054,9 +10055,12 @@ RETURNS JSON AS $$
         FROM request_signer_table 
         INNER JOIN signer_table ON signer_id = request_signer_signer_id 
         INNER JOIN request_table ON request_id = request_signer_request_id 
-        WHERE signer_team_member_id = '${teamMemberId}' 
-        AND request_signer_status='${status}' 
-        ${jiraIdCondition}`
+        WHERE 
+          signer_team_member_id = '${teamMemberId}' 
+          AND request_signer_status = '${status}'
+          AND request_is_disabled = false
+          AND request_status != 'CANCELED'
+          ${jiraIdCondition}`
       )[0].count;
     };
 
