@@ -190,7 +190,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
       <Paper p="xl" shadow="xs" pos="relative">
         <Flex justify="space-between" align="center">
           <Group>
-            <Title order={3}>Jira Users</Title>
+            <Title order={3}>Jira Organization</Title>
 
             <TextInput
               miw={250}
