@@ -254,7 +254,7 @@ const NotificationPage = ({
           />
         )}
 
-      <Paper p="md">
+      <Paper p="md" mt="xl">
         <Tabs
           defaultValue={tab}
           onTabChange={(value) =>
