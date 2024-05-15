@@ -92,7 +92,12 @@ const Page = ({ request, duplicatableSectionIdList }: Props) => {
     } else if (request.request_form.form_name === "Request For Payment") {
       return <PaymentRequestPage request={request} />;
     } else if (request.request_form.form_name === "IT Asset") {
-      return <ITAssetRequestPage request={request} />;
+      return (
+        <ITAssetRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

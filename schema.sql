@@ -3537,7 +3537,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && ['Request For Payment', 'IT Asset'].includes(request.form_name)) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -8996,7 +8996,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    const isWithConditionalFields = requestData.form_is_formsly_form && (requestData.form_name === "Item" || requestData.form_name === "Subcon" || requestData.form_name === "PED Item")
+    const isWithConditionalFields = requestData.form_is_formsly_form && ["Item", "Subcon", "PED Item", "IT Asset"].includes(requestData.form_name);
 
     const sectionData = plv8.execute(
       `
@@ -9008,7 +9008,7 @@ RETURNS JSON as $$
     );
 
     const formSection = sectionData.map((section, index) => {
-      if (index === 0) {
+      if (index === 0 || (index === 2 && requestData.form_name === "IT Asset")) {
         const fieldData = plv8.execute(
           `
             SELECT *

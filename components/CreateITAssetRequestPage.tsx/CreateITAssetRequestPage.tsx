@@ -29,6 +29,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -68,6 +69,8 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
   const { handleSubmit, control, setValue, getValues } = requestFormMethods;
   const {
     fields: formSections,
+    insert: addSection,
+    remove: removeSection,
     replace: replaceSection,
     update: updateSection,
   } = useFieldArray({
@@ -76,6 +79,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
   });
 
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [itemOptions, setItemOptions] = useState<OptionTableRow[]>([]);
   const [signerList, setSignerList] = useState(
     form.form_signer.map((signer) => ({
       ...signer,
@@ -178,6 +182,53 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
       });
     } finally {
       setIsFetchingSigner(false);
+    }
+  };
+
+  const handleDuplicateSection = (sectionId: string) => {
+    const sectionLastIndex = formSections
+      .map((sectionItem) => sectionItem.section_id)
+      .lastIndexOf(sectionId);
+    const sectionMatch = form.form_section.find(
+      (section) => section.section_id === sectionId
+    );
+    if (sectionMatch) {
+      const sectionDuplicatableId = uuidv4();
+      const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
+        (field) => {
+          if (field.field_name === "General Name") {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+              field_option: itemOptions,
+            };
+          } else {
+            return {
+              ...field,
+              field_section_duplicatable_id: sectionDuplicatableId,
+            };
+          }
+        }
+      );
+      duplicatedFieldsWithDuplicatableId.splice(9, 1);
+      const newSection = {
+        ...sectionMatch,
+        section_field: duplicatedFieldsWithDuplicatableId,
+      };
+
+      addSection(sectionLastIndex + 1, newSection);
+      return;
+    }
+  };
+
+  const handleRemoveSection = (sectionDuplicatableId: string) => {
+    const sectionMatchIndex = formSections.findIndex(
+      (section) =>
+        section.section_field[0].field_section_duplicatable_id ===
+        sectionDuplicatableId
+    );
+    if (sectionMatchIndex) {
+      removeSection(sectionMatchIndex);
     }
   };
 
@@ -291,8 +342,13 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
           }),
         ];
 
+        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
+
         if (value.toLowerCase() === "ink") {
-          generalField.push(form.form_section[1].section_field[9]);
+          generalField.push({
+            ...form.form_section[1].section_field[9],
+            field_section_duplicatable_id: duplicatableSectionId,
+          });
         }
 
         const newFields = item.item_description.map((description) => {
@@ -322,7 +378,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
 
           return {
             ...description.item_field,
-            field_section_duplicatable_id: undefined,
+            field_section_duplicatable_id: duplicatableSectionId,
             field_option: options,
             field_response: index !== -1 ? "Any" : "",
           };
@@ -334,7 +390,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
             ...generalField.map((field) => {
               return {
                 ...field,
-                field_section_duplicatable_id: undefined,
+                field_section_duplicatable_id: duplicatableSectionId,
               };
             }),
             ...newFields,
@@ -472,7 +528,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
           if (itemData.length < FETCH_OPTION_LIMIT) break;
           index += FETCH_OPTION_LIMIT;
         }
-        index = 0;
+        setItemOptions(itemOptionList);
         replaceSection([
           form.form_section[0],
           {
@@ -510,20 +566,39 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {
+              const sectionIdToFind = section.section_id;
+              const sectionLastIndex = getValues("sections")
+                .map((sectionItem) => sectionItem.section_id)
+                .lastIndexOf(sectionIdToFind);
+
               return (
                 <Box key={section.id}>
                   <RequestFormSection
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    formslyFormName={form.form_name}
+                    onRemoveSection={handleRemoveSection}
                     itAssetRequestFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onGeneralNameChange: handleGeneralNameChange,
                       onCSICodeChange: handleCSICodeChange,
                     }}
+                    formslyFormName={form.form_name}
                     loadingFieldList={loadingFieldList}
                   />
+                  {section.section_is_duplicatable &&
+                    idx === sectionLastIndex && (
+                      <Button
+                        mt="md"
+                        variant="default"
+                        onClick={() =>
+                          handleDuplicateSection(section.section_id)
+                        }
+                        fullWidth
+                      >
+                        {section.section_name} +
+                      </Button>
+                    )}
                 </Box>
               );
             })}
