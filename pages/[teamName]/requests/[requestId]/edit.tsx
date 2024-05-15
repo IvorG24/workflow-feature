@@ -122,6 +122,7 @@ const Page = ({
           <EditITAssetRequestPage
             form={form}
             projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
             requestId={requestId}
           />
         );

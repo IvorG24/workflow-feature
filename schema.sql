@@ -9451,7 +9451,7 @@ RETURNS JSON as $$
         } : null,
         fieldList: section.fieldIdList.map(field => {
           let optionData = [];
-          if (field === 'a6266f0b-1339-4c50-910e-9bae73031df0') {
+          if (field === 'a6266f0b-1339-4c50-910e-9bae73031df0' || field === '8a14bffe-2672-4a99-9943-9d7e6a7a15fa') {
             const csiData = plv8.execute(
               `
                 SELECT
