@@ -109,6 +109,11 @@ export default async function handler(
     const jiraEmployeeFirstNameValue = responseData.fields["customfield_10380"];
     const jiraEmployeeLastNameValue = responseData.fields["customfield_10381"];
     const jiraEmployeeNumberValue = `${responseData.fields["customfield_10114"]}`; // sample value: 1054.0
+
+    if (jiraEmployeeNumberValue === "null") {
+      return res.status(201).json({ error: "No update required." });
+    }
+
     const employeeNumber = jiraEmployeeNumberValue.split(".")[0]; // split to remove decimals
 
     const { data, error } = await supabase
@@ -132,6 +137,10 @@ export default async function handler(
         {
           method: "POST",
           headers: {
+            Authorization: `Basic ${Buffer.from(
+              `${jiraConfig.user}:${jiraConfig.api_token}`
+            ).toString("base64")}`,
+            Accept: "application/json",
             "Content-Type": "application/json",
           },
           body: JSON.stringify(commentBody),
@@ -139,8 +148,10 @@ export default async function handler(
       );
 
       if (!jiraTicketCommentResponse.ok) {
-        console.error("Failed to add comment");
-        return res.status(400).json({ error: "Failed to add comment" });
+        return res.status(400).json({
+          error: "Failed to add comment",
+          body: commentBody,
+        });
       }
       return res.status(404).json({ error: "Employee ID not found." });
     }
