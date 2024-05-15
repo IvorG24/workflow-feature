@@ -50,6 +50,7 @@ import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import FormSectionList from "../RequestFormPage/FormSectionList";
 import ITAssetFormDetails from "./ITAssetFormDetails";
+import ITAssetLookup from "./ITAssetLookup/ITAssetLookup";
 
 type Props = {
   form: InitialFormType;
@@ -380,7 +381,7 @@ const ITAssetFormPage = ({
       <Center>
         <Center>
           <SegmentedControl
-            data={FORM_SEGMENT_CHOCIES.slice(0, 2)}
+            data={FORM_SEGMENT_CHOCIES}
             value={segmentValue}
             onChange={(value) => setSegmentValue(value as FormSegmentType)}
           />
@@ -406,6 +407,8 @@ const ITAssetFormPage = ({
           selectedItem={selectedItem}
         />
       ) : null}
+
+      {segmentValue === "Form Lookup" ? <ITAssetLookup /> : null}
 
       <Paper p="xl" shadow="xs" mt="xl">
         <Title order={3}>Requester Details</Title>

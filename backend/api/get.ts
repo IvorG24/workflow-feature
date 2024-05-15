@@ -5,6 +5,7 @@ import {
   FETCH_OPTION_LIMIT,
   FORMSLY_FORM_ORDER,
   ITEM_FIELD_ID_LIST,
+  IT_ASSET_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -7038,6 +7039,9 @@ export const getFormSection = async (
       break;
     case "PED Item":
       query = query.in("field_table.field_id", PED_ITEM_FIELD_ID_LIST);
+      break;
+    case "IT Asset":
+      query = query.in("field_table.field_id", IT_ASSET_FIELD_ID_LIST);
       break;
   }
 

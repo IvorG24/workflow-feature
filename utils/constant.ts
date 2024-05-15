@@ -1315,6 +1315,27 @@ export const PED_ITEM_FIELD_ID_LIST = [
   "137bbd25-2f65-4b65-86e7-7f5726857084",
 ];
 
+export const IT_ASSET_FIELD_ID_LIST = [
+  "e638e010-44e8-4060-b065-e624fc5f1ab9",
+  "7b0354fd-3f42-4c32-bed2-2f08231b168c",
+  "58de3cd4-4a3c-4422-9d27-c57f173a3a3e",
+  "f16c09d6-b9b7-4e77-a276-028537ec4e6a",
+  "5c903026-b913-4071-a7a3-cb7ee9ee907f",
+  "bbf26ed6-8e28-4249-b4ef-173a8255d231",
+  "20251c66-fa30-4fce-bb06-87c5e9a891ed",
+  "1a7001b7-e2d5-4469-9382-a49e74102ebb",
+  "8a14bffe-2672-4a99-9943-9d7e6a7a15fa",
+  "59c6b617-b0b5-4ecd-b9b5-7d7072098511",
+  "6cff0df1-aed7-4ecc-a40f-25371649581d",
+  "83556f5a-150d-473f-ae5a-bfe3c084a4eb",
+  "8e25ccba-eb60-4a8c-965b-c77f81b66795",
+  "85a78a9f-d0cd-45d5-b781-c909efab5769",
+  "60b17659-6f6e-4719-99f1-47bed94fe7a8",
+  "7313a52b-a131-4e93-ae97-f806acc1534f",
+  "f2ac0b86-c483-435c-abda-08bf310e570b",
+  "cfdba656-ad4f-4bec-9541-96d9fbfcf03f",
+];
+
 export const DAYS_OPTIONS = [
   { value: "7", label: "Last 7 days" },
   { value: "14", label: "Last 14 days" },

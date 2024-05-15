@@ -4529,60 +4529,39 @@ RETURNS JSON as $$
       `
     );
 
-    const sectionData = plv8.execute(
-      `
-        SELECT 
-            st.section_id,
-            st.section_name,
-            st.section_order,
-            st.section_is_duplicatable,
-            st.section_form_id,
-            jsonb_agg(
-                jsonb_build_object(
-                    'field_id', ft.field_id,
-                    'field_name', ft.field_name,
-                    'field_description', ft.field_description,
-                    'field_is_required', ft.field_is_required,
-                    'field_type', ft.field_type,
-                    'field_order', ft.field_order,
-                    'field_is_positive_metric', ft.field_is_positive_metric,
-                    'field_is_read_only', ft.field_is_read_only,
-                    'field_section_id', ft.field_section_id,
-                    'field_option', field_options.options
-                ) ORDER BY ft.field_order ASC
-            ) AS section_field
-        FROM 
-            section_table st
-        LEFT JOIN 
-            field_table ft ON ft.field_section_id = st.section_id
-        LEFT JOIN (
-            SELECT 
-                option_field_id,
-                jsonb_agg(
-                    jsonb_build_object(
-                        'option_id', option_id,
-                        'option_value', option_value,
-                        'option_order', option_order,
-                        'option_field_id', option_field_id
-                    ) ORDER BY option_value ASC
-                ) AS options
-            FROM 
-                option_table
-            GROUP BY 
-                option_field_id
-        ) AS field_options ON field_options.option_field_id = ft.field_id
-        WHERE 
-            st.section_form_id = '${formId}'
-        GROUP BY 
-            st.section_id,
-            st.section_name,
-            st.section_order,
-            st.section_is_duplicatable,
-            st.section_form_id
-        ORDER BY 
-            st.section_order ASC;
-      `
-    );
+    const sectionData = [];
+    const formSection = plv8.execute(`SELECT * FROM section_table WHERE section_form_id = '${formId}' ORDER BY section_order ASC`);
+    formSection.forEach(section => {
+      const fieldData = plv8.execute(
+        `
+          SELECT *
+          FROM field_table
+          WHERE field_section_id = '${section.section_id}'
+          ORDER BY field_order ASC
+          ${formData.form_name === 'Item' ? "LIMIT 10" : ""}
+          ${formData.form_name === 'PED Item' ? "LIMIT 7" : ""}
+          ${formData.form_name === 'IT Asset' ? "LIMIT 10" : ""}
+        `
+      );
+      const field = fieldData.map(field => {
+        const optionData = plv8.execute(
+          `
+            SELECT *
+            FROM option_table
+            WHERE option_field_id = '${field.field_id}'
+            ORDER BY option_order ASC
+          `
+        );
+        return {
+          ...field,
+          field_option: optionData
+        };
+      });
+      sectionData.push({
+        ...section,
+        section_field: field,
+      }) 
+    });
  
     const form = {
       form_id: formData.form_id,
@@ -4665,12 +4644,7 @@ RETURNS JSON as $$
                   ...form.form_section[0].section_field.slice(1),
                 ],
               },
-              {
-                ...form.form_section[1],
-                section_field: [
-                  ...form.form_section[1].section_field.slice(0, 10),
-                ],
-              },
+              form.form_section[1]
             ],
           },
           projectOptions
@@ -5150,12 +5124,7 @@ RETURNS JSON as $$
                   ...form.form_section[0].section_field.slice(1),
                 ],
               },
-              {
-                ...form.form_section[1],
-                section_field: [
-                  ...form.form_section[1].section_field.slice(0, 7)
-                ]
-              }
+              form.form_section[1]
             ],
           },
           projectOptions
@@ -5217,6 +5186,7 @@ RETURNS JSON as $$
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
             ORDER BY team_project_name;
           `
         );
