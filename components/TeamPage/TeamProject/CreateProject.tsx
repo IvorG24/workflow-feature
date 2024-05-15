@@ -521,9 +521,9 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
                     required: (value) =>
                       value.trim() ? true : "Street is required",
                     minLength: (value) =>
-                      value.trim().length > 2
+                      value.trim().length > 1
                         ? true
-                        : "Street must have atleast 3 characters",
+                        : "Street must have atleast 2 characters",
                     maxLength: (value) =>
                       value.trim().length < 500
                         ? true
