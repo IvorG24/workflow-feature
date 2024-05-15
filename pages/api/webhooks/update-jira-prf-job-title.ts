@@ -88,7 +88,7 @@ export default async function handler(
       },
       body: JSON.stringify({
         fields: {
-          customfield_10070: [positionFormAnswer],
+          customfield_10070: positionFormAnswer,
         },
       }),
     });
