@@ -912,17 +912,6 @@ CREATE TABLE capacity_unit_of_measurement_table(
 
 -- End: Capacity unit of measurement table
 
--- Start: Ped item field table
-
-CREATE TABLE ped_item_field_table (
-  ped_item_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-
-  ped_item_field_item_description_id UUID REFERENCES item_description_table(item_description_id) NOT NULL,
-  ped_item_field_field_id UUID REFERENCES field_table(field_id) NOT NULL
-);
-
--- End: Ped item field table
-
 -- Start: Region table
 
 CREATE TABLE region_table(
@@ -1687,7 +1676,6 @@ RETURNS JSON AS $$
   let item_data;
   plv8.subtransaction(function(){
     const {
-      formId,
       itemData: {
         item_general_name,
         item_is_available,
@@ -1742,10 +1730,8 @@ RETURNS JSON AS $$
     }
     const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
-    const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
     const itemDescriptionInput = [];
     const fieldInput= [];
-    const pedItemDescriptionFieldInput = [];
 
     itemDescription.forEach((description) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
@@ -1764,15 +1750,9 @@ RETURNS JSON AS $$
         field_name: description.description,
         field_type: "DROPDOWN",
         field_order: 15,
-        field_section_id: section_id,
+        field_section_id: '0672ef7d-849d-4bc7-81b1-7a5eefcc1451',
         field_is_required: true,
       });
-      if (item_is_ped_item) {
-        pedItemDescriptionFieldInput.push({
-          ped_item_field_item_description_id: descriptionId,
-          ped_item_field_field_id: fieldId
-        })
-      }
     });
 
     const itemDescriptionValues = itemDescriptionInput
@@ -1789,14 +1769,6 @@ RETURNS JSON AS $$
     plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
     
     const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
-
-    if(item_is_ped_item && pedItemDescriptionFieldInput.length){
-      const pedItemFieldValues = pedItemDescriptionFieldInput
-        .map((pedItem) =>
-          `('${pedItem.ped_item_field_item_description_id}','${pedItem.ped_item_field_field_id}')`
-        ).join(",");
-      plv8.execute(`INSERT INTO ped_item_field_table  (ped_item_field_item_description_id, ped_item_field_field_id) VALUES ${pedItemFieldValues}`);
-    }
 
     item_data = {
       ...item_result, 
@@ -1858,7 +1830,6 @@ RETURNS JSON AS $$
     const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
     const itemDescriptionInput = [];
     const fieldInput = [];
-    const pedItemDescriptionFieldInput = [];
 
     toAdd.forEach((description) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
@@ -1880,12 +1851,6 @@ RETURNS JSON AS $$
         field_section_id: section_id,
         field_is_required: true,
       });
-      if (item_is_ped_item) {
-        pedItemDescriptionFieldInput.push({
-          ped_item_field_item_description_id: descriptionId,
-          ped_item_field_field_id: fieldId
-        })
-      }
     });
 
     const itemDescriptionValues = itemDescriptionInput
@@ -1920,12 +1885,6 @@ RETURNS JSON AS $$
           WHERE field_id = '${description.item_description_field_id}'
         `
       );
-      if (item_is_ped_item) {
-        pedItemDescriptionFieldInput.push({
-          ped_item_field_item_description_id: description.item_description_id,
-          ped_item_field_field_id: description.item_description_field_id
-        })
-      }
       updatedItemDescription.push(updatedDescription);
     });
 
@@ -1952,23 +1911,6 @@ RETURNS JSON AS $$
       plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
 
       addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
-    }
-
-    if(item_is_ped_item && pedItemDescriptionFieldInput.length){
-      pedItemDescriptionFieldInput.map((pedItem) => {
-        plv8.execute(
-          `
-            INSERT INTO ped_item_field_table (ped_item_field_item_description_id, ped_item_field_field_id)
-            SELECT '${pedItem.ped_item_field_item_description_id}', '${pedItem.ped_item_field_field_id}'
-            WHERE NOT EXISTS (
-              SELECT 1 FROM ped_item_field_table
-              WHERE 
-                ped_item_field_item_description_id = '${pedItem.ped_item_field_item_description_id}'
-                AND ped_item_field_field_id = '${pedItem.ped_item_field_field_id}'
-            );
-          `
-        )
-      });
     }
 
     plv8.execute(`DELETE FROM item_division_table WHERE item_division_item_id='${item_id}'`);
@@ -9770,64 +9712,6 @@ $$ LANGUAGE plv8;
 
 -- End: Fetch ped equipment request conditional options
 
--- Start: Fetch PED item request conditional options
-
-CREATE OR REPLACE FUNCTION fetch_ped_item_request_conditional_options(
-  input_data JSON
-)
-RETURNS JSON as $$
-  let returnData = [];
-  plv8.subtransaction(function(){
-    const {
-      sectionList
-    } = input_data;
-
-    returnData = sectionList.map(section => {
-      return {
-        itemName: section.itemName,
-        fieldList: section.fieldIdList.map(field => {
-          let optionData = [];
-          const itemDescriptionData = plv8.execute(
-            `
-              SELECT
-                idft.item_description_field_id,
-                item_description_field_value,
-                item_description_field_uom
-              FROM item_table
-              INNER JOIN item_description_table ON item_description_item_id = item_id
-              INNER JOIN field_table ON field_id = item_description_field_id
-              INNER JOIN item_description_field_table AS idft ON idft.item_description_field_item_description_id = item_description_id
-              INNER JOIN ped_item_field_table ON ped_item_field_item_description_id = item_description_id
-              LEFT JOIN item_description_field_uom_table ON item_description_field_uom_item_description_field_id = idft.item_description_field_id
-              WHERE
-                item_general_name = '${section.itemName}'
-                AND ped_item_field_field_id = '${field}'
-                AND item_is_disabled = false
-            `
-          );
-
-          optionData = itemDescriptionData.map((options, index) => {
-            return {
-              option_field_id: field,
-              option_id: options.item_description_field_id,
-              option_order: index + 1,
-              option_value: `${options.item_description_field_value}${options.item_description_field_uom ? ` ${options.item_description_field_uom}`: ''}`,
-            }
-          });
-
-          return {
-            fieldId: field,
-            optionList: optionData
-          }
-        })
-      }
-    });
- });
- return returnData;
-$$ LANGUAGE plv8;
-
--- End: Fetch PED item request conditional options
-
 -- Start: Create item category
 
 CREATE OR REPLACE FUNCTION create_item_category(
@@ -10190,7 +10074,6 @@ ALTER TABLE equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_general_name_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_part_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ped_item_field_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE region_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE province_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE city_table ENABLE ROW LEVEL SECURITY;
@@ -10516,11 +10399,6 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON capacity_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON ped_item_field_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ped_item_field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON ped_item_field_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON ped_item_field_table;
 
 DROP POLICY IF EXISTS "Allow READ for authenticated users" ON region_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users" ON province_table;
@@ -13077,68 +12955,6 @@ USING (
     FROM team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
     AND team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
-  )
-);
-
---- PED_ITEM_FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."ped_item_field_table"
-AS PERMISSIVE FOR INSERT
-TO authenticated
-WITH CHECK ( 
-  (
-    SELECT team_member_team_id
-    FROM field_table
-    INNER JOIN section_table ON section_id = field_section_id
-    INNER JOIN form_table ON form_id = section_form_id
-    INNER JOIN team_member_table ON team_member_id = form_team_member_id
-    WHERE field_id = ped_item_field_field_id
-  ) IN (
-    SELECT team_member_team_id
-    FROM team_member_table
-    WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
-  )
-);
-
-CREATE POLICY "Allow READ access for anon users" ON "public"."ped_item_field_table"
-AS PERMISSIVE FOR SELECT
-USING (true);
-
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."ped_item_field_table"
-AS PERMISSIVE FOR UPDATE
-TO authenticated
-USING ( 
-  (
-    SELECT team_member_team_id
-    FROM field_table
-    INNER JOIN section_table ON section_id = field_section_id
-    INNER JOIN form_table ON form_id = section_form_id
-    INNER JOIN team_member_table ON team_member_id = form_team_member_id
-    WHERE field_id = ped_item_field_field_id
-  ) IN (
-    SELECT team_member_team_id
-    FROM team_member_table
-    WHERE team_member_user_id = auth.uid()
-    AND team_member_role IN ('OWNER', 'ADMIN')
-  )
-);
-
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."ped_item_field_table"
-AS PERMISSIVE FOR DELETE
-TO authenticated
-USING ( 
-  (
-    SELECT team_member_team_id
-    FROM field_table
-    INNER JOIN section_table ON section_id = field_section_id
-    INNER JOIN form_table ON form_id = section_form_id
-    INNER JOIN team_member_table ON team_member_id = form_team_member_id
-    WHERE field_id = ped_item_field_field_id
-  ) IN (
-    SELECT team_member_team_id
-    FROM team_member_table
-    WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );

@@ -1,9 +1,9 @@
 import {
   getEquipmentDescription,
+  getItem,
+  getItemRequestConditionalOptions,
   getNonDuplictableSectionResponse,
-  getPEDItemRequestConditionalOptions,
-  getPedItem,
-  getPedItemGeneralNameOptions,
+  getPedItemOptions,
   getProjectSignerWithTeamMember,
   getPropertyNumberOptions,
   getSectionInRequestPage,
@@ -97,9 +97,7 @@ const EditPEDItemRequestPage = ({
   const [propertyNumberOptions, setPropertyNumberOptions] = useState<
     OptionTableRow[]
   >([]);
-  const [generalNameOptions, setGeneralNameOptions] = useState<
-    OptionTableRow[]
-  >([]);
+  const [itemOptions, setItemOptions] = useState<OptionTableRow[]>([]);
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
@@ -165,32 +163,27 @@ const EditPEDItemRequestPage = ({
 
         // Fetch general name option
         index = 0;
-        const generalNameOptionlist: OptionTableRow[] = [];
+        const itemOptionList: OptionTableRow[] = [];
         while (1) {
-          const generalNameData = await getPedItemGeneralNameOptions(
-            supabaseClient,
-            {
-              teamId: team.team_id,
-              index,
-              limit: FETCH_OPTION_LIMIT,
-            }
-          );
-          const generalNameOptions = generalNameData.map(
-            (generalName, index) => {
-              return {
-                option_field_id: form.form_section[1].section_field[5].field_id,
-                option_id: generalName.item_id,
-                option_order: index,
-                option_value: generalName.item_general_name,
-              };
-            }
-          );
-          generalNameOptionlist.push(...generalNameOptions);
+          const itemData = await getPedItemOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const itemOptions = itemData.map((item, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: item.item_id,
+              option_order: index,
+              option_value: item.item_general_name,
+            };
+          });
+          itemOptionList.push(...itemOptions);
 
-          if (generalNameOptions.length < FETCH_OPTION_LIMIT) break;
+          if (itemData.length < FETCH_OPTION_LIMIT) break;
           index += FETCH_OPTION_LIMIT;
         }
-        setGeneralNameOptions(generalNameOptionlist);
+        setItemOptions(itemOptionList);
 
         // Fetch response
         // Non duplicatable section response
@@ -280,13 +273,13 @@ const EditPEDItemRequestPage = ({
 
             if (isBulk) {
               if (fieldIndex === 0) {
-                option = generalNameOptionlist;
+                option = itemOptionList;
               }
             } else {
               if (fieldIndex === 0) {
                 option = propertyNumberOptionList;
               } else if (fieldIndex === 4) {
-                option = generalNameOptionlist;
+                option = itemOptionList;
               }
             }
 
@@ -332,7 +325,7 @@ const EditPEDItemRequestPage = ({
 
         index = 0;
         while (1) {
-          const optionData = await getPEDItemRequestConditionalOptions(
+          const optionData = await getItemRequestConditionalOptions(
             supabaseClient,
             {
               sectionList: filteredSection
@@ -478,8 +471,8 @@ const EditPEDItemRequestPage = ({
   };
 
   const handleDuplicateSection = (sectionId: string) => {
-    // const isBulk =
-    //   getValues(`sections.0.section_field.2.field_response`) === "Bulk";
+    const isBulk =
+      getValues(`sections.0.section_field.2.field_response`) === "Bulk";
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
       .lastIndexOf(sectionId);
@@ -500,7 +493,7 @@ const EditPEDItemRequestPage = ({
             return {
               ...field,
               field_section_duplicatable_id: sectionDuplicatableId,
-              field_option: generalNameOptions,
+              field_option: itemOptions,
             };
           }
 
@@ -512,7 +505,9 @@ const EditPEDItemRequestPage = ({
       );
       const newSection = {
         ...sectionMatch,
-        section_field: duplicatedFieldsWithDuplicatableId,
+        section_field: isBulk
+          ? duplicatedFieldsWithDuplicatableId.slice(4)
+          : duplicatedFieldsWithDuplicatableId,
       };
       addSection(sectionLastIndex + 1, newSection);
       return;
@@ -692,7 +687,7 @@ const EditPEDItemRequestPage = ({
         setLoadingFieldList([
           { sectionIndex: index, fieldIndex: isBulk ? 1 : 5 },
         ]);
-        const item = await getPedItem(supabaseClient, {
+        const item = await getItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
         });

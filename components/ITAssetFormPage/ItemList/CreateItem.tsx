@@ -29,7 +29,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 
@@ -39,8 +38,7 @@ type Props = {
 
 const CreateItem = ({ setIsCreatingItem }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const router = useRouter();
-  const formId = router.query.formId as string;
+
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
 
@@ -140,7 +138,6 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
           item_level_three_description: data.divisionDescription,
           item_is_it_asset_item: data.isITAsset,
         },
-        formId: formId,
       });
       notifications.show({
         message: "Item created.",

@@ -1,6 +1,6 @@
 import {
   getEquipmentDescription,
-  getPedItem,
+  getItem,
   getPedItemOptions,
   getProjectSignerWithTeamMember,
   getPropertyNumberOptions,
@@ -455,7 +455,7 @@ const CreatePEDItemRequestPage = ({ form, projectOptions }: Props) => {
         setLoadingFieldList([
           { sectionIndex: index, fieldIndex: isBulk ? 1 : 5 },
         ]);
-        const item = await getPedItem(supabaseClient, {
+        const item = await getItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
         });

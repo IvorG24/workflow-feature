@@ -341,7 +341,6 @@ export const createItem = async (
       withUoM: boolean;
       order: number;
     }[];
-    formId: string;
   }
 ) => {
   const { data, error } = await supabaseClient
