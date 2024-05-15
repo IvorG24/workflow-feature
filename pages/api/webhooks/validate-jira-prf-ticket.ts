@@ -110,7 +110,7 @@ export default async function handler(
     const jiraEmployeeLastNameValue = responseData.fields["customfield_10381"];
     const jiraEmployeeNumberValue = `${responseData.fields["customfield_10114"]}`; // sample value: 1054.0
 
-    if (!jiraEmployeeNumberValue) {
+    if (jiraEmployeeNumberValue === "null") {
       return res.status(201).json({ error: "No update required." });
     }
 
