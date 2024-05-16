@@ -61,15 +61,15 @@ const Footer = () => {
             </Flex>
             <Flex gap="xs">
               <IconPhone color={textColor} />
-              <Text color={textColor}>(+63) 917 807 4806</Text>
+              <Text color={textColor}>(+63) 931 056 1583</Text>
             </Flex>
             <Flex gap="xs">
               <Box>
                 <IconMap color={textColor} />
               </Box>
               <Text color={textColor}>
-                Sta. Clara International Corporation Highway 54 Plaza 986 EDSA
-                Wack-Wack Mandaluyong City 1550 Philippines
+                Unit 115 Gold Annapolis Building, San Juan City, Metro Manila,
+                Philippines
               </Text>
             </Flex>
             <Group spacing="xs">
