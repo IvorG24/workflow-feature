@@ -60,7 +60,8 @@ const TicketRequestPEDEquipmentPartForm = ({
         partName:
           `${data.ticket_sections[0].ticket_section_fields[1].ticket_field_response}`
             .trim()
-            .toUpperCase(),
+            .toUpperCase()
+            .replace(/'/g, "''"),
         partNumber:
           `${data.ticket_sections[0].ticket_section_fields[2].ticket_field_response}`
             .trim()
@@ -69,17 +70,20 @@ const TicketRequestPEDEquipmentPartForm = ({
         brand:
           `${data.ticket_sections[0].ticket_section_fields[3].ticket_field_response}`
             .trim()
-            .toUpperCase(),
+            .toUpperCase()
+            .replace(/'/g, "''"),
         model:
           `${data.ticket_sections[0].ticket_section_fields[4].ticket_field_response}`
             .trim()
-            .toUpperCase(),
+            .toUpperCase()
+            .replace(/'/g, "''"),
         unitOfMeasure:
           `${data.ticket_sections[0].ticket_section_fields[5].ticket_field_response}`.trim(),
         category:
           `${data.ticket_sections[0].ticket_section_fields[6].ticket_field_response}`
             .trim()
-            .toUpperCase(),
+            .toUpperCase()
+            .replace(/'/g, "''"),
       });
 
       if (pedPartExists) {
