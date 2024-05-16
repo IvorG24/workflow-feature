@@ -5,6 +5,7 @@ import {
   FETCH_OPTION_LIMIT,
   FORMSLY_FORM_ORDER,
   ITEM_FIELD_ID_LIST,
+  IT_ASSET_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -39,7 +40,6 @@ import {
   ItemCategoryType,
   ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
-  ItemTableRow,
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
   JiraFormslyItemCategoryWithUserDataType,
@@ -5952,66 +5952,6 @@ export const getEquipmentSectionChoices = async (
   }
 };
 
-export const getPedItem = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamId: string; itemName: string }
-) => {
-  const { teamId, itemName } = params;
-
-  const { data, error } = await supabaseClient
-    .from("item_table")
-    .select(
-      `
-        *, 
-        item_description: item_description_table(
-          *, 
-          item_description_field: item_description_field_table(
-            *, 
-            item_description_field_uom: item_description_field_uom_table(
-              item_description_field_uom
-            )
-          ),
-          item_field: ped_item_field_table(
-            ped_item_field: ped_item_field_field_id(*)
-          )
-        )
-      `
-    )
-    .eq("item_team_id", teamId)
-    .eq("item_general_name", itemName)
-    .eq("item_is_disabled", false)
-    .eq("item_is_available", true)
-    .eq("item_description.item_description_is_disabled", false)
-    .eq("item_description.item_description_is_available", true)
-    .eq(
-      "item_description.item_description_field.item_description_field_is_disabled",
-      false
-    )
-    .eq(
-      "item_description.item_description_field.item_description_field_is_available",
-      true
-    )
-    .single();
-  if (error) throw error;
-
-  const formattedData = data as unknown as ItemTableRow & {
-    item_description: {
-      item_field: { ped_item_field: FieldTableRow }[];
-    }[];
-  };
-
-  return {
-    ...formattedData,
-    item_description: formattedData.item_description.map((description) => {
-      const itemField = description.item_field[0].ped_item_field;
-      return {
-        ...description,
-        item_field: itemField,
-      };
-    }),
-  } as unknown as ItemWithDescriptionAndField;
-};
-
 // Check if ped part already exists
 export const pedPartCheck = async (
   supabaseClient: SupabaseClient<Database>,
@@ -6855,25 +6795,6 @@ export const getPedItemGeneralNameOptions = async (
   return data;
 };
 
-// Fetch ped item request conditional options
-export const getPEDItemRequestConditionalOptions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    sectionList: {
-      itemName: string;
-      fieldIdList: string[];
-    }[];
-  }
-) => {
-  const { data, error } = await supabaseClient
-    .rpc("fetch_ped_item_request_conditional_options", {
-      input_data: params,
-    })
-    .select("*");
-  if (error) throw error;
-  return data;
-};
-
 // Fetch all item category option
 export const getItemCategoryOption = async (
   supabaseClient: SupabaseClient<Database>
@@ -7038,6 +6959,9 @@ export const getFormSection = async (
       break;
     case "PED Item":
       query = query.in("field_table.field_id", PED_ITEM_FIELD_ID_LIST);
+      break;
+    case "IT Asset":
+      query = query.in("field_table.field_id", IT_ASSET_FIELD_ID_LIST);
       break;
   }
 

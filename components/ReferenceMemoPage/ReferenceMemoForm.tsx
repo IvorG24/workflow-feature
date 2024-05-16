@@ -172,6 +172,8 @@ const ReferenceMemoForm = ({ onSubmit, teamMemoSignerList }: Props) => {
 
     const newMemoSigner: ReferenceMemoType["memo_signer_list"][0] = {
       memo_signer_status: "PENDING",
+      memo_signer_date_created: new Date().toLocaleDateString(),
+      memo_signer_date_signed: new Date().toLocaleDateString(),
       memo_signer_team_member_id: selectedSigner.team_member_id,
       memo_signer_is_primary: isSelectedSignerPrimary,
       memo_signer_id: uuidv4(),
