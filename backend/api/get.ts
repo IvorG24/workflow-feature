@@ -82,6 +82,13 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
+import {
+  Database as OneOfficeDatabase,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+} from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
@@ -1224,7 +1231,7 @@ export const getNotificationList = async (
 
 // Get list of db that only have name column
 export const getNameList = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     table: string;
     teamId: string;
@@ -1265,7 +1272,7 @@ export const getNameList = async (
 
 // Get all db that only have name column
 export const getAllNames = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: { table: string; teamId: string }
 ) => {
   const { table, teamId } = params;
@@ -1284,7 +1291,7 @@ export const getAllNames = async (
 
 // check if db that only have name column's name already exists
 export const checkName = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: { table: string; name: string; teamId: string }
 ) => {
   const { table, name, teamId } = params;
@@ -1302,7 +1309,7 @@ export const checkName = async (
 
 // Get processor list
 export const getProcessorList = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     processor: string;
     teamId: string;
@@ -1345,7 +1352,7 @@ export const getProcessorList = async (
 
 // Get processors
 export const getAllProcessors = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: { processor: string; teamId: string }
 ) => {
   const { processor, teamId } = params;
@@ -1364,7 +1371,7 @@ export const getAllProcessors = async (
 
 // check if procesor already exists
 export const checkProcessor = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     processor: string;
     firstName: string;
@@ -1390,7 +1397,7 @@ export const checkProcessor = async (
 
 // Get receiver list
 export const getReceiverList = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     receiver: string;
     teamId: string;
@@ -1433,7 +1440,7 @@ export const getReceiverList = async (
 
 // Get receivers
 export const getAllReceivers = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: { receiver: string; teamId: string }
 ) => {
   const { receiver, teamId } = params;
@@ -1452,7 +1459,7 @@ export const getAllReceivers = async (
 
 // check if receiver already exists
 export const checkReceiver = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     receiver: string;
     firstName: string;
@@ -3250,7 +3257,7 @@ export const getProjectSignerWithTeamMember = async (
 
   if (error) throw error;
 
-  return data as FormType["form_signer"];
+  return data as unknown as FormType["form_signer"];
 };
 
 // Fetch request project id
@@ -4628,7 +4635,7 @@ export const getEquipmentCategoryList = async (
 
 // check if equipment lookup table value already exists
 export const checkEquipmentLookupTable = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: { lookupTableName: string; value: string; teamId: string }
 ) => {
   const { lookupTableName, value, teamId } = params;
@@ -4694,30 +4701,6 @@ export const getEquipmentLookupList = async (
     }),
     count,
   };
-};
-
-// Get onboard list
-export const getOnboardList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    userId: string;
-    onboardName?: string;
-  }
-) => {
-  const { userId, onboardName } = params;
-
-  const query = supabaseClient
-    .from("user_onboard_table")
-    .select("*")
-    .eq("user_onboard_user_id", userId)
-    .order("user_onboard_date_created", { ascending: false });
-
-  if (onboardName) query.eq("user_onboard_name", onboardName);
-  const { data, error } = await query;
-
-  if (error) throw error;
-
-  return data;
 };
 
 // check if email list are onboarded
@@ -4791,7 +4774,7 @@ export const getCSIDescriptionOption = async (
 
 // Get lookup list
 export const getLookupList = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     lookup: string;
     teamId: string;
@@ -4844,7 +4827,7 @@ export const getLookupList = async (
 
 // check if lookup table value already exists
 export const checkLookupTable = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: { lookupTableName: string; value: string; teamId: string }
 ) => {
   const { lookupTableName, value, teamId } = params;
@@ -5719,7 +5702,7 @@ export const getEquipmentDescription = async (
     equipment_description_model: { equipment_model: string };
   };
 
-  const formattedData = data as ReturnDataType;
+  const formattedData = data as unknown as ReturnDataType;
 
   return {
     ...data,
@@ -5973,66 +5956,55 @@ export const pedPartCheck = async (
 };
 
 // Get region
-export const getRegion = async (supabaseClient: SupabaseClient<Database>) => {
-  const { data, error } = await supabaseClient
-    .from("region_table")
-    .select("*")
-    .eq("region_is_available", true)
-    .eq("region_is_disabled", false);
+export const fetchRegion = async (
+  supabaseClient: SupabaseClient<OneOfficeDatabase["address_schema"]>
+) => {
+  const { data, error } = await getRegion({ supabaseClient: supabaseClient });
   if (error) throw error;
   return data;
 };
 
 // Get province
-export const getProvince = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    regionId: string;
-  }
+export const fetchProvince = async (
+  supabaseClient: SupabaseClient<OneOfficeDatabase["address_schema"]>,
+  params: { regionId: string }
 ) => {
   const { regionId } = params;
-  const { data, error } = await supabaseClient
-    .from("province_table")
-    .select("*")
-    .eq("province_region_id", regionId)
-    .eq("province_is_available", true)
-    .eq("province_is_disabled", false);
+
+  const { data, error } = await getProvince({
+    supabaseClient,
+    regionId,
+  });
   if (error) throw error;
   return data;
 };
 
 // Get city
-export const getCity = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    provinceId: string;
-  }
+export const fetchCity = async (
+  supabaseClient: SupabaseClient<OneOfficeDatabase["address_schema"]>,
+  params: { provinceId: string }
 ) => {
   const { provinceId } = params;
-  const { data, error } = await supabaseClient
-    .from("city_table")
-    .select("*")
-    .eq("city_province_id", provinceId)
-    .eq("city_is_available", true)
-    .eq("city_is_disabled", false);
+
+  const { data, error } = await getCity({
+    supabaseClient: supabaseClient,
+    provinceId,
+  });
   if (error) throw error;
   return data;
 };
 
 // Get barangay
-export const getBarangay = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    cityId: string;
-  }
+export const fetchBarangay = async (
+  supabaseClient: SupabaseClient<OneOfficeDatabase["address_schema"]>,
+  params: { cityId: string }
 ) => {
   const { cityId } = params;
-  const { data, error } = await supabaseClient
-    .from("barangay_table")
-    .select("*")
-    .eq("barangay_city_id", cityId)
-    .eq("barangay_is_available", true)
-    .eq("barangay_is_disabled", false);
+
+  const { data, error } = await getBarangay({
+    supabaseClient: supabaseClient,
+    cityId,
+  });
   if (error) throw error;
   return data;
 };
@@ -6434,7 +6406,7 @@ export const getJiraItemCategoryList = async (
   if (error) throw error;
 
   const formattedData = data.map((item) => {
-    const assignedUser = item.assigned_jira_user as {
+    const assignedUser = item.assigned_jira_user as unknown as {
       jira_item_user_id: string;
       jira_item_user_account_id: {
         jira_user_account_jira_id: string;
@@ -6504,7 +6476,7 @@ export const getUserCurrentSignature = async (
     )
     .eq("user_id", userId)
     .maybeSingle();
-  const formattedData = data as {
+  const formattedData = data as unknown as {
     user_signature_attachment: {
       attachment_value: string;
       attachment_bucket: string;
@@ -6844,7 +6816,7 @@ export const getItemFormApprover = async (
 
   if (error) throw error;
 
-  const formattedData = data as {
+  const formattedData = data as unknown as {
     team_member_id: string;
     team_member_user: {
       user_first_name: string;

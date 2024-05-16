@@ -912,57 +912,6 @@ CREATE TABLE capacity_unit_of_measurement_table(
 
 -- End: Capacity unit of measurement table
 
--- Start: Region table
-
-CREATE TABLE region_table(
-  region_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  region VARCHAR(4000) NOT NULL,
-  region_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  region_is_available BOOLEAN DEFAULT true NOT NULL
-);
-
--- End: Region table
-
--- Start: Province table
-
-CREATE TABLE province_table(
-  province_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  province VARCHAR(4000) NOT NULL,
-  province_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  province_is_available BOOLEAN DEFAULT true NOT NULL,
-
-  province_region_id UUID REFERENCES region_table(region_id) NOT NULL
-);
-
--- End: Province table
-
--- Start: City table
-
-CREATE TABLE city_table(
-  city_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  city VARCHAR(4000) NOT NULL,
-  city_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  city_is_available BOOLEAN DEFAULT true NOT NULL,
-
-  city_province_id UUID REFERENCES province_table(province_id) NOT NULL
-);
-
--- End: City table
-
--- Start: Barangay table
-
-CREATE TABLE barangay_table(
-  barangay_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  barangay VARCHAR(4000) NOT NULL,
-  barangay_zip_code VARCHAR(4000) NOT NULL,
-  barangay_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  barangay_is_available BOOLEAN DEFAULT true NOT NULL,
-
-  barangay_city_id UUID REFERENCES city_table(city_id) NOT NULL
-);
-
--- End: Barangay table
-
 -- Start: Jira automation tables
 CREATE TABLE jira_project_table (
   jira_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -10074,10 +10023,6 @@ ALTER TABLE equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_general_name_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_part_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE region_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE province_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE city_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE barangay_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
@@ -10399,11 +10344,6 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON capacity_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
-
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON region_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON province_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON city_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON barangay_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users" ON address_table;
@@ -12958,30 +12898,6 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
-
---- region_table
-CREATE POLICY "Allow READ for authenticated users" ON "public"."region_table"
-AS PERMISSIVE FOR SELECT
-TO authenticated
-USING (true);
-
--- province_table
-CREATE POLICY "Allow READ for authenticated users" ON "public"."province_table"
-AS PERMISSIVE FOR SELECT
-TO authenticated
-USING (true);
-
--- city_table
-CREATE POLICY "Allow READ for authenticated users" ON "public"."city_table"
-AS PERMISSIVE FOR SELECT
-TO authenticated
-USING (true);
-
--- barangay_table
-CREATE POLICY "Allow READ for authenticated users" ON "public"."barangay_table"
-AS PERMISSIVE FOR SELECT
-TO authenticated
-USING (true);
 
 -- address_table
 CREATE POLICY "Allow CREATE for authenticated users" ON "public"."address_table"

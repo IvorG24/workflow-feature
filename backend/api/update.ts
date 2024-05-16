@@ -203,7 +203,7 @@ export const updateTeamOwner = async (
 
 // Update status
 export const toggleStatus = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     id: string;
     status: boolean;
@@ -500,6 +500,7 @@ export const updateEquipment = async (
   }
 ) => {
   const { equipmentData, category } = params;
+  if (!equipmentData.equipment_id) throw new Error();
 
   const { data, error } = await supabaseClient
     .from("equipment_table")
@@ -525,6 +526,7 @@ export const updateEquipmentDescription = async (
   }
 ) => {
   const { equipmentDescriptionData, brand, model } = params;
+  if (!equipmentDescriptionData.equipment_description_id) throw new Error();
 
   const { data, error } = await supabaseClient
     .from("equipment_description_table")
@@ -557,6 +559,7 @@ export const updateEquipmentPart = async (
   }
 ) => {
   const { equipmentPartData, name, brand, model, uom, category } = params;
+  if (!equipmentPartData.equipment_part_id) throw new Error();
 
   const { data, error } = await supabaseClient
     .from("equipment_part_table")
@@ -578,7 +581,7 @@ export const updateEquipmentPart = async (
 
 // Update equipment lookup
 export const updateEquipmentLookup = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     equipmentLookupData: EquipmentLookupTableUpdate;
     tableName: EquipmentLookupChoices;
@@ -612,7 +615,7 @@ export const updateEquipmentLookup = async (
 
 // Update lookup
 export const updateLookup = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     lookupData: JSON;
     tableName: string;
@@ -992,6 +995,8 @@ export const updateJiraItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraItemCategoryTableUpdate
 ) => {
+  if (!params.jira_item_category_id) throw new Error();
+
   const { data, error } = await supabaseClient
     .from("jira_item_category_table")
     .update(params)
@@ -1003,7 +1008,7 @@ export const updateJiraItemCategory = async (
 
   if (error) throw error;
 
-  const assignedUser = data?.assigned_jira_user as {
+  const assignedUser = data?.assigned_jira_user as unknown as {
     jira_item_user_id: string;
     jira_item_user_account_id: {
       jira_user_account_jira_id: string;
@@ -1034,6 +1039,7 @@ export const updateJiraProject = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraProjectTableUpdate
 ) => {
+  if (!params.jira_project_id) throw new Error();
   const { error } = await supabaseClient
     .from("jira_project_table")
     .update(params)
@@ -1049,6 +1055,7 @@ export const updateJiraUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraUserAccountTableUpdate
 ) => {
+  if (!params.jira_user_account_jira_id) throw new Error();
   const { error } = await supabaseClient
     .from("jira_user_account_table")
     .update(params)
@@ -1101,6 +1108,7 @@ export const updateJiraOrganization = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraOrganizationTableUpdate
 ) => {
+  if (!params.jira_organization_id) throw new Error();
   const { error } = await supabaseClient
     .from("jira_organization_table")
     .update(params)

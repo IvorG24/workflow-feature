@@ -1,8 +1,8 @@
 import {
-  getBarangay,
-  getCity,
-  getProvince,
-  getRegion,
+  fetchBarangay,
+  fetchCity,
+  fetchProvince,
+  fetchRegion,
   getUserPendingInvitation,
 } from "@/backend/api/get";
 import {
@@ -12,11 +12,17 @@ import {
   uploadImage,
 } from "@/backend/api/post";
 import { formatTeamNameToUrlKey, isUUID } from "@/utils/string";
+import supabaseClientAddress from "@/utils/supabase/address";
 import { OptionType } from "@/utils/types";
 import { Container, Flex, LoadingOverlay, Paper } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { User, useSupabaseClient } from "@supabase/auth-helpers-react";
+import {
+  SupabaseClient,
+  User,
+  useSupabaseClient,
+} from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
+import { Database as OneOfficeDatabase } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import FirstStep from "./Steps/FirstStep";
@@ -211,15 +217,19 @@ const OnboardingPage = ({ user }: Props) => {
   const idLabel = idType === "Company ID" ? "Employee Number" : "ID Number";
 
   const handleFetchRegionOptions = async () => {
-    const data = await getRegion(supabaseClient);
+    const data = await fetchRegion(
+      supabaseClientAddress as unknown as SupabaseClient<
+        OneOfficeDatabase["address_schema"]
+      >
+    );
 
     setRegionOptions(
-      data.map((region) => {
+      data?.map((region) => {
         return {
           label: region.region,
           value: region.region_id,
         };
-      })
+      }) ?? []
     );
   };
 
@@ -237,15 +247,20 @@ const OnboardingPage = ({ user }: Props) => {
         return;
       }
 
-      const data = await getProvince(supabaseClient, { regionId: value });
+      const data = await fetchProvince(
+        supabaseClientAddress as unknown as SupabaseClient<
+          OneOfficeDatabase["address_schema"]
+        >,
+        { regionId: value }
+      );
 
       setProvinceOptions(
-        data.map((province) => {
+        data?.map((province) => {
           return {
             label: province.province,
             value: province.province_id,
           };
-        })
+        }) ?? []
       );
     } catch (e) {
       setValue("user_id_region", "");
@@ -266,14 +281,19 @@ const OnboardingPage = ({ user }: Props) => {
       setValue("user_id_zip_code", "");
       if (!value) return;
 
-      const data = await getCity(supabaseClient, { provinceId: value });
+      const data = await fetchCity(
+        supabaseClientAddress as unknown as SupabaseClient<
+          OneOfficeDatabase["address_schema"]
+        >,
+        { provinceId: value }
+      );
       setCityOptions(
-        data.map((city) => {
+        data?.map((city) => {
           return {
             label: city.city,
             value: city.city_id,
           };
-        })
+        }) ?? []
       );
     } catch (e) {
       setValue("user_id_province", "");
@@ -292,22 +312,27 @@ const OnboardingPage = ({ user }: Props) => {
       setValue("user_id_zip_code", "");
       if (!value) return;
 
-      const data = await getBarangay(supabaseClient, { cityId: value });
+      const data = await fetchBarangay(
+        supabaseClientAddress as unknown as SupabaseClient<
+          OneOfficeDatabase["address_schema"]
+        >,
+        { cityId: value }
+      );
       setBarangayOptions(
-        data.map((barangay) => {
+        data?.map((barangay) => {
           return {
             label: barangay.barangay,
             value: barangay.barangay_id,
           };
-        })
+        }) ?? []
       );
       setZipCodeOptions(
-        data.map((barangay) => {
+        data?.map((barangay) => {
           return {
             label: barangay.barangay_zip_code,
             value: barangay.barangay_id,
           };
-        })
+        }) ?? []
       );
     } catch (e) {
       setValue("user_id_city", "");
