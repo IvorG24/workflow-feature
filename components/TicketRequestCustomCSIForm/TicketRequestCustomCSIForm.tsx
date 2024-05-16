@@ -65,7 +65,7 @@ const TicketRequestCustomCSIForm = ({
 
       const csiValid = await checkIfCSIValid(
         `${csiCode}`,
-        `${csiCodeDescription}`
+        `${csiCodeDescription}`.trim().replace(/'/g, "''")
       );
 
       if (!csiValid) return;
