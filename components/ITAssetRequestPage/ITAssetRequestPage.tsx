@@ -18,7 +18,7 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
+import { mostOccurringElement, safeParse } from "@/utils/functions";
 import { createJiraTicket } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -389,16 +389,24 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         request.request_form.form_section[0].section_field.find(
           (field) => field.field_name === "Purpose"
         )?.field_response[0].request_response;
-      const requestItem =
-        request.request_form.form_section[1].section_field.find(
-          (field) => field.field_name === "General Name"
-        )?.field_response[0].request_response;
+
+      const requestItem = safeParse(
+        mostOccurringElement(
+          formSection
+            .slice(3)
+            .map(
+              (section) =>
+                section.section_field[0].field_response?.request_response ?? ""
+            )
+        )
+      );
 
       const purpose = purposeList.find(
         (purpose: { id: string; name: string }) =>
           purpose.name.toLowerCase() ===
           safeParse(`${requestPurpose?.toLowerCase()}`)
       );
+
       const item = itemList.find(
         (item: { id: string; name: string }) =>
           item.name.toLowerCase() === safeParse(`${requestItem?.toLowerCase()}`)

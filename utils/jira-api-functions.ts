@@ -43,7 +43,7 @@ export const createJiraTicket = async ({
     }
 
     const requestType = isITAsset
-      ? "IT Requisition Form Test"
+      ? "IT Requisition Form"
       : "Automated Requisition Form";
 
     const duplicateJiraTicketResponse = await fetch(
