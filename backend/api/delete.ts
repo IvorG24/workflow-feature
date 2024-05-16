@@ -50,7 +50,7 @@ export const deleteComment = async (
 
 // Delete row
 export const deleteRow = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     rowId: string[];
     table: string;

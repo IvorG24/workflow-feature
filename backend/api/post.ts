@@ -972,7 +972,7 @@ export const createTicketComment = async (
 
 // Create row in lookup table
 export const createRowInLookupTable = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient,
   params: {
     inputData: JSON;
     tableName: string;
@@ -1685,6 +1685,7 @@ const updateJiraItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: { data: JiraItemCategoryUserTableInsert }
 ) => {
+  if (!params.data.jira_item_user_id) throw new Error();
   const { data, error } = await supabaseClient
     .from("jira_item_user_table")
     .update(params.data)
@@ -1701,7 +1702,7 @@ const updateJiraItemCategory = async (
 
   if (error) throw error;
 
-  return formatJiraItemUserTableData(data as JiraItemUserTableData);
+  return formatJiraItemUserTableData(data as unknown as JiraItemUserTableData);
 };
 
 const insertJiraItemCategory = async (
@@ -1735,7 +1736,7 @@ const insertJiraItemCategory = async (
 
   if (error) throw error;
 
-  return formatJiraItemUserTableData(data as JiraItemUserTableData);
+  return formatJiraItemUserTableData(data as unknown as JiraItemUserTableData);
 };
 
 // create jira project
@@ -1806,7 +1807,7 @@ export const createJiraFormslyItemCategory = async (
 
   if (error) throw error;
 
-  const assignedUser = data?.assigned_jira_user as {
+  const assignedUser = data?.assigned_jira_user as unknown as {
     jira_item_user_id: string;
     jira_item_user_account_id: {
       jira_user_account_jira_id: string;

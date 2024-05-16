@@ -1,14 +1,15 @@
 import {
   checkIfTeamProjectExists,
-  getBarangay,
-  getCity,
-  getProvince,
-  getRegion,
+  fetchBarangay,
+  fetchCity,
+  fetchProvince,
+  fetchRegion,
 } from "@/backend/api/get";
 import { createAttachment, createTeamProject } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import supabaseClientAddress from "@/utils/supabase/address";
 import { OptionType } from "@/utils/types";
 import {
   Button,
@@ -22,8 +23,12 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import {
+  SupabaseClient,
+  createPagesBrowserClient,
+} from "@supabase/auth-helpers-nextjs";
 import { IconFile } from "@tabler/icons-react";
+import { Database as OneOfficeDatabase } from "oneoffice-api";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -190,15 +195,19 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
   }, [setIsCreatingProject]);
 
   const handleFetchRegionOptions = async () => {
-    const data = await getRegion(supabaseClient);
+    const data = await fetchRegion(
+      supabaseClientAddress as unknown as SupabaseClient<
+        OneOfficeDatabase["address_schema"]
+      >
+    );
 
     setRegionOptions(
-      data.map((region) => {
+      data?.map((region) => {
         return {
           label: region.region,
           value: region.region_id,
         };
-      })
+      }) ?? []
     );
   };
 
@@ -216,15 +225,20 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
         return;
       }
 
-      const data = await getProvince(supabaseClient, { regionId: value });
+      const data = await fetchProvince(
+        supabaseClientAddress as unknown as SupabaseClient<
+          OneOfficeDatabase["address_schema"]
+        >,
+        { regionId: value }
+      );
 
       setProvinceOptions(
-        data.map((province) => {
+        data?.map((province) => {
           return {
             label: province.province,
             value: province.province_id,
           };
-        })
+        }) ?? []
       );
     } catch (e) {
       setValue("region", "");
@@ -245,14 +259,19 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
       setValue("zipCode", "");
       if (!value) return;
 
-      const data = await getCity(supabaseClient, { provinceId: value });
+      const data = await fetchCity(
+        supabaseClientAddress as unknown as SupabaseClient<
+          OneOfficeDatabase["address_schema"]
+        >,
+        { provinceId: value }
+      );
       setCityOptions(
-        data.map((city) => {
+        data?.map((city) => {
           return {
             label: city.city,
             value: city.city_id,
           };
-        })
+        }) ?? []
       );
     } catch (e) {
       setValue("province", "");
@@ -271,22 +290,27 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
       setValue("zipCode", "");
       if (!value) return;
 
-      const data = await getBarangay(supabaseClient, { cityId: value });
+      const data = await fetchBarangay(
+        supabaseClientAddress as unknown as SupabaseClient<
+          OneOfficeDatabase["address_schema"]
+        >,
+        { cityId: value }
+      );
       setBarangayOptions(
-        data.map((barangay) => {
+        data?.map((barangay) => {
           return {
             label: barangay.barangay,
             value: barangay.barangay_id,
           };
-        })
+        }) ?? []
       );
       setZipCodeOptions(
-        data.map((barangay) => {
+        data?.map((barangay) => {
           return {
             label: barangay.barangay_zip_code,
             value: barangay.barangay_id,
           };
-        })
+        }) ?? []
       );
     } catch (e) {
       setValue("city", "");

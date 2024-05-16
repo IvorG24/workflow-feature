@@ -85,7 +85,7 @@ const ItemCategoryList = ({
         limit: ROW_PER_PAGE,
         page,
       });
-      setItemCategoryList(data as ItemCategoryWithSigner[]);
+      setItemCategoryList(data as unknown as ItemCategoryWithSigner[]);
       setItemCategoryCount(Number(count));
     } catch (e) {
       notifications.show({
