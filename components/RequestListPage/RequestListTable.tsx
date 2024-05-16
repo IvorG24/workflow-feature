@@ -1,4 +1,7 @@
-import { getFieldResponseByRequestId } from "@/backend/api/get";
+import {
+  getFieldResponseByRequestId,
+  getRequestTypeFieldResponse,
+} from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { DEFAULT_REQUEST_LIST_LIMIT, formatDate } from "@/utils/constant";
@@ -22,11 +25,16 @@ import {
   Box,
   CopyButton,
   Flex,
+  Group,
   Loader,
+  Menu,
+  Stack,
   Text,
   Tooltip,
+  UnstyledButton,
   createStyles,
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
@@ -75,9 +83,12 @@ const RequestListTable = ({
   const [jiraTicketStatusList, setJiraTicketStatusList] = useState<
     { jira_id: string; status: string }[]
   >([]);
-  const [pedEquipmentNumberList, setPedEquipmentNumberList] = useState<
-    { request_id: string; equipment_number: string }[]
-  >([]);
+  const [pedEquipmentNumberList, setPedEquipmentNumberList] = useLocalStorage<
+    { request_id: string; equipment_number: string[] }[]
+  >({
+    key: "formsly-ped-equipment-number-list",
+    defaultValue: [],
+  });
   const [isFetchingJiraTicketStatus, setIsFetchingJiraTicketStatus] =
     useState(false);
   const [
@@ -85,11 +96,11 @@ const RequestListTable = ({
     setIsFetchingPedEquipmentNumberList,
   ] = useState(false);
 
-  const selectedForm = selectedFormFilter
-    ? formList.find((form) => form.form_id === selectedFormFilter[0])
+  const selectedFormList = selectedFormFilter
+    ? formList.filter((form) => selectedFormFilter.includes(form.form_id))
     : undefined;
-  const isPEDForm = selectedForm
-    ? selectedForm?.form_name.includes("PED")
+  const isPEDForm = selectedFormList
+    ? selectedFormList.some((form) => form.form_name.includes("PED"))
     : undefined;
 
   const getPedRequestTypeId = (formName: string) => {
@@ -99,7 +110,7 @@ const RequestListTable = ({
       case "PED Part":
         return "fec1de43-c4bc-4c0d-9f6d-41f8146b14a5";
       default:
-        return null;
+        return "";
     }
   };
 
@@ -111,7 +122,7 @@ const RequestListTable = ({
         return "e35835b4-c107-4710-86d5-11b6059e221c";
 
       default:
-        return null;
+        return "";
     }
   };
 
@@ -180,61 +191,85 @@ const RequestListTable = ({
       requestList: RequestListItemType[]
     ) => {
       try {
-        if (!selectedFormFilter) return;
+        if (!selectedFormFilter || requestList.length <= 0) return;
         const requestListIsAlreadyFetched = pedEquipmentNumberList.find(
           (ped) => ped.request_id === requestList[0].request_id
         );
-
         // does not fetch if filter is not ped
         // does not fetch if request list has been fetched
-        if (!selectedForm || !isPEDForm || requestListIsAlreadyFetched) return;
+        if (!selectedFormList || !isPEDForm || requestListIsAlreadyFetched)
+          return;
 
-        const requestTypeId = getPedRequestTypeId(selectedForm.form_name);
-        const pedEquipmentFieldId = getPedEquipmentNumberFieldId(
-          selectedForm.form_name
-        );
+        const requestTypeIdList = selectedFormList.map((form) => ({
+          formId: form.form_id,
+          requestTypeId: getPedRequestTypeId(form.form_name),
+        }));
+
+        const pedEquipmentFieldIdList = selectedFormList.map((form) => ({
+          formId: form.form_id,
+          requestTypeId: getPedEquipmentNumberFieldId(form.form_name),
+        }));
 
         const currentPedEquipmentNumberList = pedEquipmentNumberList;
         setIsFetchingPedEquipmentNumberList(true);
         const newPedEquipmentNumberList = await Promise.all(
           requestList.map(async (request) => {
+            const requestType = requestTypeIdList.find(
+              (id) => request.request_form_id === id.formId
+            );
+            const pedEquipmentField = pedEquipmentFieldIdList.find(
+              (id) => request.request_form_id === id.formId
+            );
+
             let pedEquipmentNumber = {
               request_id: request.request_id,
-              equipment_number: "N/A",
+              equipment_number: ["N/A"],
             };
-            if (!requestTypeId || !pedEquipmentFieldId)
-              return pedEquipmentNumber;
 
-            const requestTypeResponse = await getFieldResponseByRequestId(
+            if (
+              !requestType?.requestTypeId ||
+              !pedEquipmentField?.requestTypeId
+            ) {
+              return pedEquipmentNumber;
+            }
+
+            const requestTypeResponse = await getRequestTypeFieldResponse(
               supabaseClient,
               {
                 requestId: request.request_id,
-                fieldId: requestTypeId,
+                fieldId: requestType.requestTypeId,
               }
             );
 
-            if (
+            const isRequestTypeBulk =
               requestTypeResponse &&
-              safeParse(requestTypeResponse).toLowerCase() === "bulk"
-            ) {
+              safeParse(requestTypeResponse.request_response).toLowerCase() ===
+                "bulk";
+
+            if (isRequestTypeBulk) {
               pedEquipmentNumber = {
                 request_id: request.request_id,
-                equipment_number: "Bulk",
+                equipment_number: ["Bulk"],
               };
             } else {
-              const equipmentNumber = await getFieldResponseByRequestId(
+              const equipmentNumberList = await getFieldResponseByRequestId(
                 supabaseClient,
                 {
                   requestId: request.request_id,
-                  fieldId: pedEquipmentFieldId,
+                  fieldId: pedEquipmentField.requestTypeId,
                 }
               );
 
+              const equipmentNumberListResponse: string[] =
+                equipmentNumberList.map((equipment) =>
+                  safeParse(equipment.request_response)
+                );
+
               pedEquipmentNumber = {
                 request_id: request.request_id,
-                equipment_number: equipmentNumber
-                  ? safeParse(equipmentNumber)
-                  : "N/A",
+                equipment_number: equipmentNumberList
+                  ? equipmentNumberListResponse
+                  : ["N/A"],
               };
             }
 
@@ -259,7 +294,7 @@ const RequestListTable = ({
     isPEDForm,
     pedEquipmentNumberList,
     requestList,
-    selectedForm,
+    selectedFormList,
     selectedFormFilter,
   ]);
 
@@ -439,26 +474,65 @@ const RequestListTable = ({
         {
           accessor: "request_ped_equipment_number",
           title: "PED Equipment Number",
+          width: 220,
           hidden:
             !isPEDForm || checkIfColumnIsHidden("request_ped_equipment_number"),
           render: ({ request_id }) => {
             const pedEquipmentNumberMatch = pedEquipmentNumberList.find(
               (ped) => ped.request_id === request_id
             );
+            const shouldTruncate =
+              pedEquipmentNumberMatch &&
+              pedEquipmentNumberMatch.equipment_number.length >= 3;
+
+            const renderEquipmentNumbers = () => {
+              if (!pedEquipmentNumberMatch) return null;
+
+              if (shouldTruncate) {
+                return (
+                  <Group>
+                    <Text maw={80} truncate>
+                      {pedEquipmentNumberMatch.equipment_number.join(", ")}
+                    </Text>
+                    <Menu shadow="md" withArrow withinPortal={true}>
+                      <Menu.Target>
+                        <UnstyledButton>
+                          <Text color="blue">Show All</Text>
+                        </UnstyledButton>
+                      </Menu.Target>
+                      <Menu.Dropdown p="md">
+                        <Stack spacing={8}>
+                          {pedEquipmentNumberMatch.equipment_number.map(
+                            (equipment, idx) => (
+                              <Text key={equipment + idx}>{equipment}</Text>
+                            )
+                          )}
+                        </Stack>
+                      </Menu.Dropdown>
+                    </Menu>
+                  </Group>
+                );
+              }
+
+              return (
+                <Text>
+                  {pedEquipmentNumberMatch.equipment_number.join(", ")}
+                </Text>
+              );
+            };
 
             return (
               <Box>
-                {isFetchingPedEquipmentNumberList && <Loader size={16} />}
-                {!isFetchingPedEquipmentNumberList &&
-                pedEquipmentNumberMatch ? (
-                  <Text>{pedEquipmentNumberMatch.equipment_number}</Text>
+                {isFetchingPedEquipmentNumberList ? (
+                  <Loader size={16} />
                 ) : (
-                  <></>
+                  renderEquipmentNumbers()
                 )}
               </Box>
             );
           },
         },
+
         {
           accessor: "request_status",
           title: "Formsly Status",

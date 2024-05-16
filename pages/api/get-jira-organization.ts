@@ -20,7 +20,7 @@ export default async function handler(
     }
 
     const response = await fetch(
-      `${jiraConfig.api_url}/rest/servicedeskapi/organization/${req.query.organizationId}`,
+      `https://scic.atlassian.net/rest/servicedeskapi/organization/${req.query.organizationId}`,
       {
         method: "GET",
         headers: {

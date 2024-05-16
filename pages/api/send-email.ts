@@ -42,7 +42,7 @@ export default async function handler(
     });
 
     await transporter.sendMail({
-      from: "Test Formsly",
+      from: "help@formsly.io",
       to,
       subject,
       html,
