@@ -21,11 +21,13 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 type Props = {
+  formId: string;
   setEditItemCategory: Dispatch<SetStateAction<ItemCategoryWithSigner | null>>;
   editItemCategory: ItemCategoryWithSigner;
 };
 
 const UpdateItemCategory = ({
+  formId,
   setEditItemCategory,
   editItemCategory,
 }: Props) => {
@@ -72,6 +74,7 @@ const UpdateItemCategory = ({
     try {
       if (!teamMember) throw new Error("Team member not found");
       await updateItemCategory(supabaseClient, {
+        formId: formId,
         categoryId: editItemCategory.item_category_id,
         category: data.category.trim(),
         teamMemberId: data.signer,

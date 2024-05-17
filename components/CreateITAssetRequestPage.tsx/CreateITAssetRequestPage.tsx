@@ -20,6 +20,7 @@ import {
   CSICodeTableRow,
   FormType,
   FormWithResponseType,
+  ItemCategoryType,
   OptionTableRow,
   RequestResponseTableRow,
 } from "@/utils/types";
@@ -89,6 +90,9 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
+  const [itemCategoryList, setItemCategoryList] = useState<
+    (ItemCategoryType["item_category"] | null)[]
+  >([null]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
@@ -111,11 +115,30 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
         (option) => option.option_value === response
       )?.option_id as string;
 
+      const additionalSignerList: FormType["form_signer"] = [];
+      const alreadyAddedAdditionalSigner: string[] = signerList.map(
+        (signer) => signer.signer_team_member.team_member_id
+      );
+
+      itemCategoryList.forEach((itemCategory) => {
+        if (!itemCategory) return;
+        if (
+          alreadyAddedAdditionalSigner.includes(
+            itemCategory.item_category_signer.signer_team_member.team_member_id
+          )
+        )
+          return;
+        alreadyAddedAdditionalSigner.push(
+          itemCategory.item_category_signer.signer_team_member.team_member_id
+        );
+        additionalSignerList.push(itemCategory.item_category_signer);
+      });
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId,
         teamMemberId: teamMember.team_member_id,
-        signers: signerList,
+        signers: [...signerList, ...additionalSignerList],
         teamId: teamMember.team_member_team_id,
         requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
         formName: form.form_name,
@@ -229,6 +252,10 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
     );
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
+      const newItemCategoryList = itemCategoryList.filter(
+        (_, index) => index !== sectionMatchIndex
+      );
+      setItemCategoryList(newItemCategoryList);
     }
   };
 
@@ -248,6 +275,10 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
         const item = await getItem(supabaseClient, {
           teamId: activeTeam.team_id,
           itemName: value,
+        });
+        setItemCategoryList((prev) => {
+          prev[index] = item.item_category;
+          return prev;
         });
         const isWithDescription = Boolean(item.item_level_three_description);
         let csiCodeList: CSICodeTableRow[] = [];
@@ -413,6 +444,10 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
           }),
           newSection.section_field[8],
         ];
+        setItemCategoryList((prev) => {
+          prev[index] = null;
+          return prev;
+        });
         updateSection(index, {
           ...newSection,
           section_field: generalField,

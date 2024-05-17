@@ -9670,6 +9670,7 @@ RETURNS VOID AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
+      formId,
       category,
       teamMemberId
     } = input_data;
@@ -9680,7 +9681,7 @@ RETURNS VOID AS $$
         SELECT signer_id FROM signer_table 
         WHERE
           signer_is_primary_signer = false
-          AND signer_form_id = 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'
+          AND signer_form_id = '${formId}'
           AND signer_team_member_id = '${teamMemberId}'
           AND signer_team_project_id IS NULL
       `
@@ -9692,7 +9693,7 @@ RETURNS VOID AS $$
           INSERT INTO signer_table 
           (signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_form_id, signer_team_member_id, signer_team_project_id)
           VALUES
-          (false, 'Approved', 5, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '${teamMemberId}', null)
+          (false, 'Approved', 5, true, '${formId}', '${teamMemberId}', null)
           RETURNING signer_id
         `
       )[0]; 
@@ -9731,7 +9732,7 @@ RETURNS VOID AS $$
         SELECT signer_id FROM signer_table 
         WHERE
           signer_is_primary_signer = false
-          AND signer_form_id = 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829'
+          AND signer_form_id = '${formId}'
           AND signer_team_member_id = '${teamMemberId}'
           AND signer_team_project_id IS NULL
       `
@@ -9743,7 +9744,7 @@ RETURNS VOID AS $$
           INSERT INTO signer_table 
           (signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_form_id, signer_team_member_id, signer_team_project_id)
           VALUES
-          (false, 'Approved', 5, true, 'd13b3b0f-14df-4277-b6c1-7c80f7e7a829', '${teamMemberId}', null)
+          (false, 'Approved', 5, true, '${formId}', '${teamMemberId}', null)
           RETURNING signer_id
         `
       )[0]; 

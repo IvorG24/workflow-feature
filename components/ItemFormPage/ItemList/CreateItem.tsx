@@ -35,10 +35,11 @@ import InputAddRemove from "../InputAddRemove";
 import MoveUpAndDown from "../MoveUpAndDown";
 
 type Props = {
+  formId: string;
   setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
 };
 
-const CreateItem = ({ setIsCreatingItem }: Props) => {
+const CreateItem = ({ formId, setIsCreatingItem }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const teamMember = useUserTeamMember();
@@ -91,7 +92,9 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
             })
           );
 
-        const itemCategoryOption = await getItemCategoryOption(supabaseClient);
+        const itemCategoryOption = await getItemCategoryOption(supabaseClient, {
+          formId: formId,
+        });
         itemCategoryOption &&
           setItemCategoryOption(
             itemCategoryOption.map((category) => {

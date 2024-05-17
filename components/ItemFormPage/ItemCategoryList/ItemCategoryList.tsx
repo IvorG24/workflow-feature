@@ -44,6 +44,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
+  formId: string;
   itemCategoryList: ItemCategoryWithSigner[];
   setItemCategoryList: Dispatch<SetStateAction<ItemCategoryWithSigner[]>>;
   itemCategoryCount: number;
@@ -53,6 +54,7 @@ type Props = {
 };
 
 const ItemCategoryList = ({
+  formId,
   itemCategoryList,
   setItemCategoryList,
   itemCategoryCount,
@@ -81,6 +83,7 @@ const ItemCategoryList = ({
     try {
       if (!team.team_id) return;
       const { data, count } = await getItemCategoryList(supabaseClient, {
+        formId,
         search,
         limit: ROW_PER_PAGE,
         page,

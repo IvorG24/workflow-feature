@@ -1070,6 +1070,7 @@ export const updateJiraUser = async (
 export const updateItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
+    formId: string;
     categoryId: string;
     category: string;
     teamMemberId: string;

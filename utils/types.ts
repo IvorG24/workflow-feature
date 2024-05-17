@@ -1836,6 +1836,7 @@ export type ITAssetForm = {
   division: string[];
   divisionDescription: string;
   isITAsset: boolean;
+  itemCategory: string;
 };
 
 export type FetchRequestListParams = {

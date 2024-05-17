@@ -1837,6 +1837,7 @@ export const createJiraFormslyItemCategory = async (
 export const createItemCategory = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
+    formId: string;
     category: string;
     teamMemberId: string;
   }

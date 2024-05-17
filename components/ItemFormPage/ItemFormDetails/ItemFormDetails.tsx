@@ -10,6 +10,7 @@ import ItemList from "../ItemList/ItemList";
 import UpdateItem from "../ItemList/UpdateItem";
 
 type Props = {
+  formId: string;
   isCreatingItem: boolean;
   editItem: ItemWithDescriptionType | null;
   itemList: ItemWithDescriptionType[];
@@ -31,6 +32,7 @@ type Props = {
 };
 
 const ItemFormDetails = ({
+  formId,
   isCreatingItem,
   editItem,
   itemList,
@@ -66,10 +68,11 @@ const ItemFormDetails = ({
           />
         ) : null}
         {isCreatingItem ? (
-          <CreateItem setIsCreatingItem={setIsCreatingItem} />
+          <CreateItem formId={formId} setIsCreatingItem={setIsCreatingItem} />
         ) : null}
         {editItem ? (
           <UpdateItem
+            formId={formId}
             setItemList={setItemList}
             setEditItem={setEditItem}
             editItem={editItem}
@@ -94,6 +97,7 @@ const ItemFormDetails = ({
       <Paper p="xl" shadow="xs">
         {!isCreatingItemCategory && !editItemCategory ? (
           <ItemCategoryList
+            formId={formId}
             itemCategoryList={itemCategoryList}
             itemCategoryCount={itemCategoryCount}
             setItemCategoryCount={setItemCategoryCount}
@@ -104,11 +108,13 @@ const ItemFormDetails = ({
         ) : null}
         {isCreatingItemCategory ? (
           <CreateItemCategory
+            formId={formId}
             setIsCreatingItemCategory={setIsCreatingItemCategory}
           />
         ) : null}
         {editItemCategory ? (
           <UpdateItemCategory
+            formId={formId}
             setEditItemCategory={setEditItemCategory}
             editItemCategory={editItemCategory}
           />

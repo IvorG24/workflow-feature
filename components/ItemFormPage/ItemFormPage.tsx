@@ -404,6 +404,7 @@ const ItemFormPage = ({
 
       {segmentValue === "Form Details" ? (
         <ItemFormDetails
+          formId={form.form_id}
           isCreatingItem={isCreatingItem}
           editItem={editItem}
           itemList={itemList}

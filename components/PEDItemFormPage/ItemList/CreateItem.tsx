@@ -1,7 +1,6 @@
 import {
   checkItemName,
   getCSIDescriptionOptionBasedOnDivisionId,
-  getItemCategoryOption,
   getItemDivisionOption,
   getItemUnitOfMeasurementOption,
 } from "@/backend/api/get";
@@ -49,9 +48,6 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
   const [unitOfMeasurementOption, setUnitOfMeasurementOption] = useState<
     { label: string; value: string }[]
   >([]);
-  const [itemCategoryOption, setItemCategoryOption] = useState<
-    { label: string; value: string }[]
-  >([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(true);
   const [divisionDescriptionOption, setDivisionDescriptionOption] = useState<
     { label: string; value: string }[]
@@ -89,17 +85,6 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
               };
             })
           );
-
-        const itemCategoryOption = await getItemCategoryOption(supabaseClient);
-        itemCategoryOption &&
-          setItemCategoryOption(
-            itemCategoryOption.map((category) => {
-              return {
-                label: `${category.item_category}`,
-                value: `${category.item_category_id}`,
-              };
-            })
-          );
       } catch {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -121,7 +106,6 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
         glAccount: "",
         isAvailable: true,
         isPedItem: true,
-        itemCategory: "",
       },
     });
 
@@ -154,7 +138,6 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
           item_encoder_team_member_id: teamMember.team_member_id,
           item_level_three_description: data.divisionDescription,
           item_is_ped_item: data.isPedItem,
-          item_category_id: data.itemCategory,
         },
       });
 
@@ -331,21 +314,6 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
                   rightSection={
                     isFetchingDivisionDescriptionOption && <Loader size={16} />
                   }
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="itemCategory"
-              render={({ field: { value, onChange } }) => (
-                <Select
-                  value={value}
-                  onChange={onChange}
-                  data={itemCategoryOption}
-                  error={formState.errors.itemCategory?.message}
-                  searchable
-                  clearable
-                  label="Category"
                 />
               )}
             />
