@@ -1,6 +1,7 @@
 import {
   checkItemName,
   getCSIDescriptionOptionBasedOnDivisionId,
+  getItemCategoryOption,
   getItemDivisionOption,
   getItemUnitOfMeasurementOption,
 } from "@/backend/api/get";
@@ -33,10 +34,11 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 
 type Props = {
+  formId: string;
   setIsCreatingItem: Dispatch<SetStateAction<boolean>>;
 };
 
-const CreateItem = ({ setIsCreatingItem }: Props) => {
+const CreateItem = ({ formId, setIsCreatingItem }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const teamMember = useUserTeamMember();
@@ -46,6 +48,9 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
     { label: string; value: string }[]
   >([]);
   const [unitOfMeasurementOption, setUnitOfMeasurementOption] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [itemCategoryOption, setItemCategoryOption] = useState<
     { label: string; value: string }[]
   >([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(true);
@@ -85,6 +90,18 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
               };
             })
           );
+        const itemCategoryOption = await getItemCategoryOption(supabaseClient, {
+          formId: formId,
+        });
+        itemCategoryOption &&
+          setItemCategoryOption(
+            itemCategoryOption.map((category) => {
+              return {
+                label: `${category.item_category}`,
+                value: `${category.item_category_id}`,
+              };
+            })
+          );
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -105,6 +122,7 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
         unit: "",
         isAvailable: true,
         isITAsset: true,
+        itemCategory: "",
       },
     });
 
@@ -137,6 +155,7 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
           item_encoder_team_member_id: teamMember.team_member_id,
           item_level_three_description: data.divisionDescription,
           item_is_it_asset_item: data.isITAsset,
+          item_category_id: data.itemCategory,
         },
       });
       notifications.show({
@@ -313,6 +332,21 @@ const CreateItem = ({ setIsCreatingItem }: Props) => {
                   rightSection={
                     isFetchingDivisionDescriptionOption && <Loader size={16} />
                   }
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="itemCategory"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value}
+                  onChange={onChange}
+                  data={itemCategoryOption}
+                  error={formState.errors.itemCategory?.message}
+                  searchable
+                  clearable
+                  label="Category"
                 />
               )}
             />

@@ -1011,7 +1011,9 @@ export const getItem = async (
       "item_description.item_description_field.item_description_field_is_available",
       true
     )
+    .eq("item_category.item_category_is_disabled", false)
     .single();
+
   if (error) throw error;
   const formattedData = data as unknown as ItemWithDescriptionAndField & {
     item_division_table: { item_division_value: string }[];
@@ -6769,16 +6771,23 @@ export const getPedItemGeneralNameOptions = async (
 
 // Fetch all item category option
 export const getItemCategoryOption = async (
-  supabaseClient: SupabaseClient<Database>
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+  }
 ) => {
+  const { formId } = params;
   const { data, error } = await supabaseClient
     .from("item_category_table")
-    .select("item_category_id, item_category")
+    .select(
+      "item_category_id, item_category, item_category_signer: item_category_signer_id!inner(signer_form_id)"
+    )
     .eq("item_category_is_available", true)
     .eq("item_category_is_disabled", false)
+    .eq("item_category_signer.signer_form_id", formId)
     .order("item_category", { ascending: true });
-  if (error) throw error;
 
+  if (error) throw error;
   return data;
 };
 
@@ -6853,12 +6862,13 @@ export const checkItemCategory = async (
 export const getItemCategoryList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
+    formId: string;
     limit: number;
     page: number;
     search?: string;
   }
 ) => {
-  const { search, limit, page } = params;
+  const { formId, search, limit, page } = params;
 
   const start = (page - 1) * limit;
 
@@ -6867,8 +6877,9 @@ export const getItemCategoryList = async (
     .select(
       `
         *,
-        item_category_signer: item_category_signer_id(
+        item_category_signer: item_category_signer_id!inner(
           signer_id,
+          signer_form_id,
           signer_team_member: signer_team_member_id(
             team_member_id,
             team_member_user: team_member_user_id(
@@ -6882,7 +6893,8 @@ export const getItemCategoryList = async (
       `,
       { count: "exact" }
     )
-    .eq("item_category_is_disabled", false);
+    .eq("item_category_is_disabled", false)
+    .eq("item_category_signer.signer_form_id", formId);
 
   if (search) {
     query = query.ilike("item_category", `%${search}%`);

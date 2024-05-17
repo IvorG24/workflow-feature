@@ -34,22 +34,20 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import InputAddRemove from "../InputAddRemove";
 import MoveUpAndDown from "../MoveUpAndDown";
 
 type Props = {
+  formId: string;
   setItemList: Dispatch<SetStateAction<ItemWithDescriptionType[]>>;
   setEditItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
   editItem: ItemWithDescriptionType;
 };
 
-const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
+const UpdateItem = ({ formId, setItemList, setEditItem, editItem }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const router = useRouter();
-  const formId = router.query.formId as string;
   const [toRemoveDescription, setToRemoveDescription] = useState<
     { descriptionId: string; fieldId: string }[]
   >([]);
@@ -115,7 +113,9 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             editItem.item_level_three_description
           );
 
-        const itemCategoryOption = await getItemCategoryOption(supabaseClient);
+        const itemCategoryOption = await getItemCategoryOption(supabaseClient, {
+          formId,
+        });
         itemCategoryOption &&
           setItemCategoryOption(
             itemCategoryOption.map((category) => {

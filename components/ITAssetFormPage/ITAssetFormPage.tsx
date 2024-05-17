@@ -10,6 +10,7 @@ import { Database } from "@/utils/database";
 import {
   FormSegmentType,
   InitialFormType,
+  ItemCategoryWithSigner,
   ItemWithDescriptionType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
@@ -85,6 +86,14 @@ const ITAssetFormPage = ({
   );
   const [itemList, setItemList] = useState<ItemWithDescriptionType[]>([]);
   const [itemCount, setItemCount] = useState(0);
+
+  const [isCreatingItemCategory, setIsCreatingItemCategory] = useState(false);
+  const [editItemCategory, setEditItemCategory] =
+    useState<ItemCategoryWithSigner | null>(null);
+  const [itemCategoryList, setItemCategoryList] = useState<
+    ItemCategoryWithSigner[]
+  >([]);
+  const [itemCategoryCount, setItemCategoryCount] = useState(0);
 
   const [isSavingSigners, setIsSavingSigners] = useState(false);
   const [initialSigners, setIntialSigners] = useState(
@@ -395,6 +404,7 @@ const ITAssetFormPage = ({
 
       {segmentValue === "Form Details" ? (
         <ITAssetFormDetails
+          formId={form.form_id}
           isCreatingItem={isCreatingItem}
           editItem={editItem}
           itemList={itemList}
@@ -405,6 +415,14 @@ const ITAssetFormPage = ({
           setSelectedItem={setSelectedItem}
           setEditItem={setEditItem}
           selectedItem={selectedItem}
+          isCreatingItemCategory={isCreatingItemCategory}
+          editItemCategory={editItemCategory}
+          itemCategoryList={itemCategoryList}
+          setItemCategoryList={setItemCategoryList}
+          itemCategoryCount={itemCategoryCount}
+          setItemCategoryCount={setItemCategoryCount}
+          setIsCreatingItemCategory={setIsCreatingItemCategory}
+          setEditItemCategory={setEditItemCategory}
         />
       ) : null}
 

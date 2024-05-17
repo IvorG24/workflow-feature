@@ -1,6 +1,7 @@
 import {
   checkItemName,
   getCSIDescriptionOptionBasedOnDivisionId,
+  getItemCategoryOption,
   getItemDivisionOption,
   getItemUnitOfMeasurementOption,
 } from "@/backend/api/get";
@@ -35,20 +36,18 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 
 type Props = {
+  formId: string;
   setItemList: Dispatch<SetStateAction<ItemWithDescriptionType[]>>;
   setEditItem: Dispatch<SetStateAction<ItemWithDescriptionType | null>>;
   editItem: ItemWithDescriptionType;
 };
 
-const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
+const UpdateItem = ({ formId, setItemList, setEditItem, editItem }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const router = useRouter();
-  const formId = router.query.formId as string;
   const [toRemoveDescription, setToRemoveDescription] = useState<
     { descriptionId: string; fieldId: string }[]
   >([]);
@@ -59,6 +58,9 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
     { label: string; value: string }[]
   >([]);
   const [unitOfMeasurementOption, setUnitOfMeasurementOption] = useState<
+    { label: string; value: string }[]
+  >([]);
+  const [itemCategoryOption, setItemCategoryOption] = useState<
     { label: string; value: string }[]
   >([]);
   const [isFetchingOptions, setIsFetchingOptions] = useState(true);
@@ -110,6 +112,19 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             "divisionDescription",
             editItem.item_level_three_description
           );
+
+        const itemCategoryOption = await getItemCategoryOption(supabaseClient, {
+          formId,
+        });
+        itemCategoryOption &&
+          setItemCategoryOption(
+            itemCategoryOption.map((category) => {
+              return {
+                label: `${category.item_category}`,
+                value: `${category.item_category_id}`,
+              };
+            })
+          );
       } catch {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -140,6 +155,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
         division: editItem.item_division_id_list,
         divisionDescription: editItem.item_level_three_description,
         isITAsset: editItem.item_is_it_asset_item,
+        itemCategory: editItem.item_category_id ?? "",
       },
     });
 
@@ -192,6 +208,7 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
             item_division_id_list: data.division.map((id) => `'${id}'`),
             item_level_three_description: data.divisionDescription,
             item_is_it_asset_item: data.isITAsset,
+            item_category_id: data.itemCategory,
           },
           formId: formId,
         }
@@ -390,6 +407,21 @@ const UpdateItem = ({ setItemList, setEditItem, editItem }: Props) => {
                   rightSection={
                     isFetchingDivisionDescriptionOption && <Loader size={16} />
                   }
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="itemCategory"
+              render={({ field: { value, onChange } }) => (
+                <Select
+                  value={value}
+                  onChange={onChange}
+                  data={itemCategoryOption}
+                  error={formState.errors.itemCategory?.message}
+                  searchable
+                  clearable
+                  label="Category"
                 />
               )}
             />

@@ -21,10 +21,11 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 type Props = {
+  formId: string;
   setIsCreatingItemCategory: Dispatch<SetStateAction<boolean>>;
 };
 
-const CreateItemCategory = ({ setIsCreatingItemCategory }: Props) => {
+const CreateItemCategory = ({ formId, setIsCreatingItemCategory }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
@@ -65,6 +66,7 @@ const CreateItemCategory = ({ setIsCreatingItemCategory }: Props) => {
     try {
       if (!teamMember) throw new Error("Team member not found");
       await createItemCategory(supabaseClient, {
+        formId: formId,
         category: data.category.trim(),
         teamMemberId: data.signer,
       });
