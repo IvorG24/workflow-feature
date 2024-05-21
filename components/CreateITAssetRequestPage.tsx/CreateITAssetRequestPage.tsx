@@ -375,7 +375,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
 
         const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
-        if (value.toLowerCase() === "ink") {
+        if (value.toLowerCase().includes("ink")) {
           generalField.push({
             ...form.form_section[1].section_field[9],
             field_section_duplicatable_id: duplicatableSectionId,

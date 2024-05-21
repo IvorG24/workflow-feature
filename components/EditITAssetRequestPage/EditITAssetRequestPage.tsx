@@ -701,7 +701,7 @@ const EditITAssetRequestPage = ({
         ];
         const duplicatableSectionId = index === 1 ? undefined : uuidv4();
 
-        if (value.toLowerCase() === "ink") {
+        if (value.toLowerCase().includes("ink")) {
           generalField.push(form.form_section[1].section_field[9]);
         }
         const newFields = item.item_description.map((description) => {
