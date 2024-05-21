@@ -25,6 +25,7 @@ import {
   CSICodeTableRow,
   FormType,
   FormWithResponseType,
+  ItemCategoryType,
   ItemWithDescriptionAndField,
   OptionTableRow,
   RequestResponseTableRow,
@@ -92,6 +93,9 @@ const EditITAssetRequestPage = ({
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
+  const [itemCategoryList, setItemCategoryList] = useState<
+    (ItemCategoryType["item_category"] | null)[]
+  >([null]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -292,6 +296,7 @@ const EditITAssetRequestPage = ({
         // Fetch conditional options
         const conditionalOptionList: {
           itemName: string;
+          category: ItemCategoryType["item_category"] | null;
           fieldList: {
             fieldId: string;
             optionList: OptionTableRow[];
@@ -323,6 +328,10 @@ const EditITAssetRequestPage = ({
           index += 5;
         }
 
+        const initialCategoryList: (
+          | ItemCategoryType["item_category"]
+          | null
+        )[] = [null];
         // Insert option to section list
         formattedSection.forEach((section, sectionIndex) => {
           const itemIndex = conditionalOptionList.findIndex(
@@ -330,6 +339,10 @@ const EditITAssetRequestPage = ({
               value.itemName === section.section_field[0].field_response
           );
           if (itemIndex === -1) return;
+
+          initialCategoryList.push(
+            conditionalOptionList[itemIndex].category ?? null
+          );
 
           conditionalOptionList[itemIndex].fieldList.forEach((field) => {
             const fieldIndex = section.section_field.findIndex(
@@ -342,6 +355,8 @@ const EditITAssetRequestPage = ({
             ].field_option = field.optionList;
           });
         });
+
+        setItemCategoryList(initialCategoryList);
 
         // Add duplicatable section id
         const sectionWithDuplicatableId = formattedSection.map(
@@ -410,13 +425,32 @@ const EditITAssetRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
+      const additionalSignerList: FormType["form_signer"] = [];
+      const alreadyAddedAdditionalSigner: string[] = signerList.map(
+        (signer) => signer.signer_team_member.team_member_id
+      );
+
+      itemCategoryList.forEach((itemCategory) => {
+        if (!itemCategory) return;
+        if (
+          alreadyAddedAdditionalSigner.includes(
+            itemCategory.item_category_signer.signer_team_member.team_member_id
+          )
+        )
+          return;
+        alreadyAddedAdditionalSigner.push(
+          itemCategory.item_category_signer.signer_team_member.team_member_id
+        );
+        additionalSignerList.push(itemCategory.item_category_signer);
+      });
+
       let request: RequestTableRow;
       if (isReferenceOnly) {
         request = await createRequest(supabaseClient, {
           requestFormValues: data,
           formId: form.form_id,
           teamMemberId: teamMember.team_member_id,
-          signers: signerList,
+          signers: [...signerList, ...additionalSignerList],
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
@@ -428,7 +462,7 @@ const EditITAssetRequestPage = ({
         request = await editRequest(supabaseClient, {
           requestId,
           requestFormValues: data,
-          signers: signerList,
+          signers: [...signerList, ...additionalSignerList],
           teamId: teamMember.team_member_team_id,
           requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
           formName: form.form_name,
@@ -621,6 +655,10 @@ const EditITAssetRequestPage = ({
     );
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
+      const newItemCategoryList = itemCategoryList.filter(
+        (_, index) => index !== sectionMatchIndex
+      );
+      setItemCategoryList(newItemCategoryList);
     }
   };
 
@@ -639,6 +677,10 @@ const EditITAssetRequestPage = ({
         const item = await getItem(supabaseClient, {
           teamId: team.team_id,
           itemName: value,
+        });
+        setItemCategoryList((prev) => {
+          prev[index] = item.item_category;
+          return prev;
         });
         const isWithDescription = Boolean(item.item_level_three_description);
         const csiCodeList = await fetchCSIOptions({
@@ -754,6 +796,10 @@ const EditITAssetRequestPage = ({
           })),
           newSection.section_field[8],
         ];
+        setItemCategoryList((prev) => {
+          prev[index] = null;
+          return prev;
+        });
         updateSection(index, {
           ...newSection,
           section_field: generalField,
