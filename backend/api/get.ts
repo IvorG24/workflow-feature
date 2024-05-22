@@ -7133,3 +7133,18 @@ export const getAdminTicketAnalytics = async (
   if (error) throw error;
   return data;
 };
+
+export const getTicket = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    ticketId: string;
+  }
+) => {
+  const { data } = await supabaseClient
+    .from("ticket_table")
+    .select("*")
+    .eq("ticket_id", params.ticketId)
+    .maybeSingle();
+
+  return data;
+};

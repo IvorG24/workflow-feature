@@ -407,11 +407,30 @@ export const assignTicket = async (
   params: {
     ticketId: string;
     teamMemberId: string;
+    currentTicketStatus: string;
   }
 ) => {
+  const { ticketId, teamMemberId, currentTicketStatus } = params;
+  const { count } = await supabaseClient
+    .from("ticket_table")
+    .select("", { count: "exact", head: true })
+    .eq("ticket_id", ticketId)
+    .is("ticket_approver_team_member_id", null);
+
+  // validation in case admin ui is not updated
+  const ticketIsAlreadyAssigned =
+    Number(count) === 0 && currentTicketStatus === "PENDING";
+
+  if (ticketIsAlreadyAssigned) {
+    return null;
+  }
+
   const { data, error } = await supabaseClient
     .rpc("assign_ticket", {
-      input_data: params,
+      input_data: {
+        ticketId,
+        teamMemberId,
+      },
     })
     .select()
     .single();
