@@ -3,6 +3,7 @@ import {
   checkCSICodeItemExists,
   checkCustomCSICodeValidity,
   getItem,
+  getTicket,
 } from "@/backend/api/get";
 import {
   createCustomCSI,
@@ -181,6 +182,32 @@ const TicketActionSection = ({
     });
 
   const handleTicketClosing = async () => {
+    const currentTicket = await getTicket(supabaseClient, {
+      ticketId: ticket.ticket_id,
+    });
+
+    if (!currentTicket) {
+      notifications.show({
+        message: "Ticket is undefined.",
+        color: "red",
+      });
+      return;
+    }
+
+    const isAdminCurrentApprover =
+      currentTicket.ticket_approver_team_member_id ===
+      teamMember?.team_member_id;
+
+    if (!isAdminCurrentApprover) {
+      notifications.show({
+        message:
+          "This ticket has been reassigned. Please refresh the page to see the updated changes.",
+        color: "red",
+        autoClose: false,
+      });
+      return;
+    }
+
     switch (ticket.ticket_category) {
       case "Request Custom CSI":
         return handleCustomCSIClosing();

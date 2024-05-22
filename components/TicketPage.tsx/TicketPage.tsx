@@ -95,7 +95,18 @@ const TicketPage = ({
       const updatedTicket = await assignTicket(supabaseClient, {
         teamMemberId: user.team_member_id,
         ticketId: ticket.ticket_id,
+        currentTicketStatus: ticketStatus,
       });
+
+      if (!updatedTicket) {
+        notifications.show({
+          message:
+            "Ticket is already assigned. Please refresh the page to see the updated changes.",
+          color: "orange",
+        });
+        return;
+      }
+
       setTicket(updatedTicket);
 
       const newCommentId = uuidv4();
