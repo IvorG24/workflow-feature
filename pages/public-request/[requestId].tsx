@@ -1,5 +1,6 @@
 import { getTeam, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
+import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
@@ -151,6 +152,13 @@ const Page = ({ request, duplicatableSectionIdList }: Props) => {
       );
     } else if (request.request_form.form_name === "Request For Payment") {
       return <PaymentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "IT Asset") {
+      return (
+        <ITAssetRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }
