@@ -1,4 +1,5 @@
 import { Database } from "@/utils/database";
+import { Database as OneOfficeDatabase } from "oneoffice-api";
 
 // Start: Database Table Types
 export type AttachmentTableRow =
@@ -480,6 +481,9 @@ export type SpecialFieldTableInsert =
   Database["public"]["Tables"]["special_field_table"]["Insert"];
 export type SpecialFieldTableUpdate =
   Database["public"]["Tables"]["special_field_table"]["Update"];
+
+export type TransactionTableRow =
+  OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 
 // End: Database Table Types
 

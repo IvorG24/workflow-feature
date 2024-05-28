@@ -3111,6 +3111,7 @@ export type Database = {
       team_table: {
         Row: {
           team_date_created: string;
+          team_expiration: string | null;
           team_id: string;
           team_is_disabled: boolean;
           team_is_request_signature_required: boolean;
@@ -3120,6 +3121,7 @@ export type Database = {
         };
         Insert: {
           team_date_created?: string;
+          team_expiration?: string | null;
           team_id?: string;
           team_is_disabled?: boolean;
           team_is_request_signature_required?: boolean;
@@ -3129,6 +3131,7 @@ export type Database = {
         };
         Update: {
           team_date_created?: string;
+          team_expiration?: string | null;
           team_id?: string;
           team_is_disabled?: boolean;
           team_is_request_signature_required?: boolean;
@@ -4224,6 +4227,12 @@ export type Database = {
           user_id: string;
         };
         Returns: string;
+      };
+      handle_formsly_payment: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: undefined;
       };
       insert_group_member: {
         Args: {

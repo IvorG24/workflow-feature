@@ -11,6 +11,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   MemberRoleType,
   TeamGroupTableRow,
@@ -19,7 +20,15 @@ import {
   TeamTableRow,
   UserValidIDTableRow,
 } from "@/utils/types";
-import { Box, Container, Paper, Space, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Group,
+  Paper,
+  Space,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
@@ -330,7 +339,19 @@ const TeamPage = ({
 
   return (
     <Container>
-      <Title order={2}>Manage Team</Title>
+      <Group>
+        <Title order={2}>Manage Team</Title>
+        {isOwner ? (
+          <Button
+            variant="light"
+            onClick={() =>
+              router.push(`/${formatTeamNameToUrlKey(team.team_name)}/invoice`)
+            }
+          >
+            Invoice History
+          </Button>
+        ) : null}
+      </Group>
 
       <FormProvider {...updateTeamMethods}>
         <TeamInfoForm

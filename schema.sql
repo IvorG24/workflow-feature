@@ -74,6 +74,7 @@ CREATE TABLE user_table (
 CREATE TABLE team_table (
   team_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_expiration DATE,
   team_name VARCHAR(4000) NOT NULL,
   team_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   team_is_request_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
@@ -10012,6 +10013,23 @@ $$ LANGUAGE plv8;
 
 -- End: Get ticket list on load
 
+-- Start: Handle formsly payment
+
+CREATE OR REPLACE FUNCTION handle_formsly_payment(
+  input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      newExpiryDate
+    } = input_data;
+    plv8.execute(`UPDATE team_table SET team_expiration = '${newExpiryDate}' WHERE team_id = '${teamId}'`);
+ });
+$$ LANGUAGE plv8;
+
+-- End: Handle formsly payment
+
 ---------- End: FUNCTIONS
 
 
@@ -13199,7 +13217,7 @@ DROP PUBLICATION if exists supabase_realtime;
 CREATE PUBLICATION supabase_realtime;
 COMMIT;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table, ticket_table;
+ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table, ticket_table, team_table;
 
 -------- End: SUBSCRIPTION
 
