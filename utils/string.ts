@@ -166,3 +166,16 @@ export const formatCSICode = (inputString: string) => {
   numericString = numericString.substring(0, 8);
   return numericString.replace(/(\d{2})(?=\d)/g, "$1 ");
 };
+
+export const pesoFormatter = (value: string | undefined) =>
+  !Number.isNaN(parseFloat(`${value}`))
+    ? `₱ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    : "₱ ";
+
+export const capitalizeEachWord = (value: string) => {
+  const words = value.split(" ");
+  for (let i = 0; i < words.length; i++) {
+    words[i] = words[i][0].toUpperCase() + words[i].substr(1);
+  }
+  return words.join(" ");
+};

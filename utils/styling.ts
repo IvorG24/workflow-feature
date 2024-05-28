@@ -154,8 +154,24 @@ export const getJiraTicketStatusColor = (status: string) => {
       return "red";
     case "canceled":
       return "gray";
-
     default:
       return "dark";
+  }
+};
+
+export const getPaymayaStatusColor = (status: string) => {
+  switch (status) {
+    case "PENDING_TOKEN":
+      return "blue";
+    case "PENDING_PAYMENT":
+      return "blue";
+    case "PAYMENT_SUCCESS":
+      return "green";
+    case "PAYMENT_FAILED":
+      return "red";
+    case "PAYMENT_EXPIRED":
+      return "red";
+    case "PAYMENT_CANCELLED":
+      return "gray";
   }
 };
