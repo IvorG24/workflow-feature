@@ -1,4 +1,5 @@
 import { Database } from "@/utils/database";
+import { Database as OneOfficeDatabase } from "oneoffice-api";
 
 // Start: Database Table Types
 export type AttachmentTableRow =
@@ -455,6 +456,9 @@ export type JiraOrganizationTeamProjectTableInsert =
   Database["public"]["Tables"]["jira_organization_team_project_table"]["Insert"];
 export type JiraOrganizationTeamProjectTableUpdate =
   Database["public"]["Tables"]["jira_organization_team_project_table"]["Update"];
+
+export type TransactionTableRow =
+  OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 
 // End: Database Table Types
 

@@ -7,6 +7,7 @@ import {
   ITEM_FIELD_ID_LIST,
   IT_ASSET_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
+  formatDate,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
@@ -77,6 +78,7 @@ import {
   TicketPageOnLoad,
   TicketStatusType,
   TicketType,
+  TransactionTableRow,
   UserIssuedItem,
   UserTableRow,
 } from "@/utils/types";
@@ -88,6 +90,7 @@ import {
   getCity,
   getProvince,
   getRegion,
+  getTransactionList,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -119,6 +122,19 @@ export const getCurrentDate = async (
   if (error) throw error;
   if (!data) throw error;
   return new Date(data);
+};
+
+// Get server's current date string
+export const getCurrentDateString = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_current_date")
+    .select("*")
+    .single();
+  if (error) throw error;
+  if (!data) throw error;
+  return formatDate(data);
 };
 
 // Get all the user's team
@@ -7147,4 +7163,31 @@ export const getTicket = async (
     .maybeSingle();
 
   return data;
+};
+
+// Fetch formsly invoice history list
+export const fetchFormslyInvoiceHistoryList = async (
+  supabaseClient: SupabaseClient<OneOfficeDatabase["transaction_schema"]>,
+  params: {
+    userId: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { userId, page, limit } = params;
+
+  const start = (page - 1) * limit;
+  const { data, count, error } = await getTransactionList({
+    supabaseClient,
+    pagination: {
+      from: start,
+      to: start + limit,
+    },
+    filter: {
+      appSourceUserId: userId,
+      appSource: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
+    },
+  });
+  if (error) throw error;
+  return { data: data as TransactionTableRow[], count };
 };
