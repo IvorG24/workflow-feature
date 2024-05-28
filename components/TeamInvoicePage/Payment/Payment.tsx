@@ -4,7 +4,6 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { FORMSLY_PRICE_PER_MONTH, formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey, pesoFormatter } from "@/utils/string";
-import supabaseClientTransaction from "@/utils/supabase/transaction";
 import {
   Alert,
   Button,
@@ -20,14 +19,11 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { IconCalendarDollar, IconReportMoney } from "@tabler/icons-react";
 import moment from "moment";
-import {
-  Database,
-  Database as OneOfficeDatabase,
-  createMayaCheckoutWithTransaction,
-} from "oneoffice-api";
+
+import { useRouter } from "next/router";
+import { Database } from "oneoffice-api";
 import { Controller, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 
@@ -45,6 +41,7 @@ const Payment = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const { setIsLoading } = useLoadingActions();
   const activeTeam = useActiveTeam();
+  const router = useRouter();
 
   const [opened, { open, close }] = useDisclosure(false);
 
@@ -84,7 +81,7 @@ const Payment = ({
 
       if (
         !process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID ||
-        !process.env.NEXT_PUBLIC_PAYMAYA_API_KEY
+        !process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL
       )
         throw new Error("Env variables are undefined");
 
@@ -92,54 +89,29 @@ const Payment = ({
       const transactionId = uuidv4();
       const currentDate = await getCurrentDateString(supabaseClient);
       const newExpiryDate = getNewExpirationDate(currentDate);
+      const quantity = Math.floor(outstandingBalance / FORMSLY_PRICE_PER_MONTH);
 
-      await createMayaCheckoutWithTransaction({
-        supabaseClient: supabaseClientTransaction as unknown as SupabaseClient<
-          OneOfficeDatabase["transaction_schema"]
-        >,
-        publicKey: process.env.NEXT_PUBLIC_PAYMAYA_API_KEY,
-        paymentDetails: {
-          totalAmount: {
-            value: outstandingBalance,
-            currency: "PHP",
-          },
-          items: [
-            {
-              name: "Formsly Subscription",
-              quantity: Math.floor(
-                outstandingBalance / FORMSLY_PRICE_PER_MONTH
-              ),
-              totalAmount: {
-                value: outstandingBalance,
-              },
-            },
-          ],
-          redirectUrl: {
-            success: `${url}?status=success&referenceNumber=${referenceNumber}`,
-            failure: `${url}?status=failed&referenceNumber=${referenceNumber}`,
-            cancel: `${url}?status=canceled&referenceNumber=${referenceNumber}`,
-          },
-          requestReferenceNumber: referenceNumber,
-          metadata: {
-            transactionServiceName: "formsly_subscription",
-            teamId: activeTeam.team_id,
-            transactionId: transactionId,
-            appSourceId: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
-            newExpiryDate: newExpiryDate,
-          },
-        },
-        transactionData: {
-          transaction_id: transactionId,
-          transaction_reference_id: referenceNumber,
-          transaction_service_name: "formsly_subscription",
-          transaction_payment_channel: "paymaya",
-          transaction_total_amount: Number(outstandingBalance),
-          transaction_app_source_user_id: activeTeam.team_user_id,
-          transaction_app_source:
-            process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
-          transaction_service_id: referenceNumber,
-        },
-      });
+      const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          totalAmount: outstandingBalance,
+          url,
+          referenceNumber,
+          teamId: activeTeam.team_id,
+          transactionId,
+          newExpiryDate,
+          userId: activeTeam.team_user_id,
+          appSourceId: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
+          quantity,
+        }),
+      };
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL}/api/maya/formsly-create-maya-checkout-transaction`,
+        requestOptions
+      );
+      const { url: mayaUrl } = await response.json();
+      await router.push(mayaUrl);
     } catch (e) {
       notifications.show({
         title: "Error!",
@@ -157,61 +129,38 @@ const Payment = ({
 
       if (
         !process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID ||
-        !process.env.NEXT_PUBLIC_PAYMAYA_API_KEY
+        !process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL
       )
         throw new Error("Env variables are undefined");
 
       const referenceNumber = uuidv4();
       const transactionId = uuidv4();
-      const newExpiryDate = await getNewExpirationDate(expirationDate, months);
+      const newExpiryDate = getNewExpirationDate(expirationDate, months);
       const totalAmount = months * FORMSLY_PRICE_PER_MONTH;
 
-      await createMayaCheckoutWithTransaction({
-        supabaseClient: supabaseClientTransaction as unknown as SupabaseClient<
-          OneOfficeDatabase["transaction_schema"]
-        >,
-        publicKey: process.env.NEXT_PUBLIC_PAYMAYA_API_KEY,
-        paymentDetails: {
-          totalAmount: {
-            value: totalAmount,
-            currency: "PHP",
-          },
-          items: [
-            {
-              name: "Formsly Subscription",
-              quantity: months,
-              totalAmount: {
-                value: totalAmount,
-              },
-            },
-          ],
-          redirectUrl: {
-            success: `${url}?status=success&referenceNumber=${referenceNumber}`,
-            failure: `${url}?status=failed&referenceNumber=${referenceNumber}`,
-            cancel: `${url}?status=canceled&referenceNumber=${referenceNumber}`,
-          },
-          requestReferenceNumber: referenceNumber,
-          metadata: {
-            transactionServiceName: "formsly_subscription",
-            teamId: activeTeam.team_id,
-            transactionId: transactionId,
-            appSourceId: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
-            newExpiryDate: newExpiryDate,
-          },
-        },
-        transactionData: {
-          transaction_id: transactionId,
-          transaction_reference_id: referenceNumber,
-          transaction_service_name: "formsly_subscription",
-          transaction_payment_channel: "paymaya",
-          transaction_total_amount: Number(totalAmount),
-          transaction_app_source_user_id: activeTeam.team_user_id,
-          transaction_app_source:
-            process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
-          transaction_service_id: referenceNumber,
-        },
-      });
+      const requestOptions = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          totalAmount,
+          url,
+          referenceNumber,
+          teamId: activeTeam.team_id,
+          transactionId,
+          newExpiryDate,
+          userId: activeTeam.team_user_id,
+          appSourceId: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
+          quantity: months,
+        }),
+      };
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL}/api/maya/formsly-create-maya-checkout-transaction`,
+        requestOptions
+      );
+      const { url: mayaUrl } = await response.json();
+      await router.push(mayaUrl);
     } catch (e) {
+      console.log(e);
       notifications.show({
         title: "Error!",
         message: "Failed to advance pay for formsly subscription",
