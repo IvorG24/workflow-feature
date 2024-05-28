@@ -14,7 +14,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -58,6 +58,10 @@ const CreateRequestPage = ({
       key: `${router.query.formId}`,
       defaultValue: form,
     });
+
+  const [currencyOptionList, setCurrencyOptionList] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   const formDetails = {
     form_name: form.form_name,
@@ -173,6 +177,20 @@ const CreateRequestPage = ({
     setLocalFormState(formWithResponse);
   });
 
+  // fetch currency option list
+  useEffect(() => {
+    const fetchCurrencyOptionList = async () => {
+      const { data } = await supabaseClient.from("currency_table").select("*");
+      if (!data) return;
+      const optionList = data.map((item) => ({
+        value: item.currnecy_alphabetic_code,
+        label: item.currnecy_alphabetic_code,
+      }));
+      setCurrencyOptionList(optionList);
+    };
+    fetchCurrencyOptionList();
+  }, []);
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -199,6 +217,7 @@ const CreateRequestPage = ({
                     sectionIndex={idx}
                     onRemoveSection={handleRemoveSection}
                     formslyFormName={formslyFormName}
+                    currencyOptionList={currencyOptionList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

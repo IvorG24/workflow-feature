@@ -6,6 +6,7 @@ export type SectionWithFieldArrayId = {
 
 export type FieldWithFieldArrayId = {
   id: string;
+  field_special_field_template_id?: string;
 } & FieldWithChoices;
 
 export type OptionWithFieldArrayId = {

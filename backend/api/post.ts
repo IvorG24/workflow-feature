@@ -513,12 +513,12 @@ export const createRequest = async (
             field.field_section_duplicatable_id ?? null,
           request_response_field_id: field.field_id,
           request_response_request_id: requestId,
+          request_response_prefix: field.field_prefix ?? null,
         };
         requestResponseInput.push(response);
       }
     }
   }
-
   // get request signers
   const requestSignerInput: RequestSignerTableInsert[] = [];
   const signerIdList: string[] = [];
@@ -554,6 +554,10 @@ export const createRequest = async (
           : "NULL"
       },'${response.request_response_field_id}','${
         response.request_response_request_id
+      }', '${
+        response.request_response_prefix
+          ? `${response.request_response_prefix}`
+          : "NULL"
       }')`;
     })
     .join(",");
@@ -654,6 +658,7 @@ export const editRequest = async (
           request_response_duplicatable_section_id: duplicatableSectionId,
           request_response_field_id: field.field_id,
           request_response_request_id: requestId,
+          request_response_prefix: field.field_prefix ?? null,
         };
         requestResponseInput.push(response);
       }
@@ -695,6 +700,10 @@ export const editRequest = async (
           : "NULL"
       },'${response.request_response_field_id}','${
         response.request_response_request_id
+      }', '${
+        response.request_response_prefix
+          ? `${response.request_response_prefix}`
+          : "NULL"
       }')`;
     })
     .join(",");

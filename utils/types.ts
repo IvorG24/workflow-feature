@@ -15,7 +15,12 @@ export type CommentTableInsert =
 export type CommentTableUpdate =
   Database["public"]["Tables"]["comment_table"]["Update"];
 
-export type FieldTableRow = Database["public"]["Tables"]["field_table"]["Row"];
+export type DefaultFieldTableRow =
+  Database["public"]["Tables"]["field_table"]["Row"];
+export type FieldTableRow = Omit<
+  DefaultFieldTableRow,
+  "field_special_field_template_id"
+> & { field_special_field_template_id?: string | null };
 export type FieldTableInsert =
   Database["public"]["Tables"]["field_table"]["Insert"];
 export type FieldTableUpdate =
@@ -48,8 +53,14 @@ export type OptionTableInsert =
 export type OptionTableUpdate =
   Database["public"]["Tables"]["option_table"]["Update"];
 
-export type RequestResponseTableRow =
+export type DefaultRequestResponseTableRow =
   Database["public"]["Tables"]["request_response_table"]["Row"];
+export type RequestResponseTableRow = Omit<
+  DefaultRequestResponseTableRow,
+  "request_response_prefix"
+> & {
+  request_response_prefix?: string | null;
+};
 export type RequestResponseTableInsert =
   Database["public"]["Tables"]["request_response_table"]["Insert"];
 export type RequestResponseTableUpdate =
@@ -456,6 +467,20 @@ export type JiraOrganizationTeamProjectTableInsert =
 export type JiraOrganizationTeamProjectTableUpdate =
   Database["public"]["Tables"]["jira_organization_team_project_table"]["Update"];
 
+export type SpecialFieldTemplateTableRow =
+  Database["public"]["Tables"]["special_field_template_table"]["Row"];
+export type SpecialFieldTemplateTableInsert =
+  Database["public"]["Tables"]["special_field_template_table"]["Insert"];
+export type SpecialFieldTemplateTableUpdate =
+  Database["public"]["Tables"]["special_field_template_table"]["Update"];
+
+export type SpecialFieldTableRow =
+  Database["public"]["Tables"]["special_field_table"]["Row"];
+export type SpecialFieldTableInsert =
+  Database["public"]["Tables"]["special_field_table"]["Insert"];
+export type SpecialFieldTableUpdate =
+  Database["public"]["Tables"]["special_field_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -764,6 +789,7 @@ export type FormWithResponseType = {
     } & {
       field_option: OptionTableRow[];
       field_response?: unknown;
+      field_prefix?: string;
     })[];
   })[];
   form_team_group: {

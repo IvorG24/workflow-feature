@@ -1458,7 +1458,7 @@ RETURNS JSON AS $$
       request_data = plv8.execute(`INSERT INTO request_table (request_id,request_form_id,request_team_member_id,request_formsly_id_prefix,request_formsly_id_serial,request_project_id) VALUES ('${requestId}','${formId}','${teamMemberId}','${formslyIdPrefix}','${formslyIdSerial}','${projectId}') RETURNING *;`)[0];
     }
 
-    plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id) VALUES ${responseValues};`);
+    plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id,request_response_prefix) VALUES ${responseValues};`);
 
     plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
@@ -1508,7 +1508,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`DELETE FROM request_signer_table WHERE request_signer_request_id='${requestId}';`);
 
-    plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id) VALUES ${responseValues};`);
+    plv8.execute(`INSERT INTO request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id, request_response_prefix) VALUES ${responseValues};`);
 
     plv8.execute(`INSERT INTO request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
@@ -2228,7 +2228,7 @@ RETURNS JSON AS $$
         (field) =>
           `('${field.field_id}','${field.field_name}','${field.field_type}',${
             field.field_description ? `'${field.field_description}'` : "NULL"
-          },'${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}')`
+          },'${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}', ${field.field_special_field_template_id ? `'${field.field_special_field_template_id}'` : "NULL"})`
       )
       .join(",");
 
@@ -2256,7 +2256,7 @@ RETURNS JSON AS $$
     
     const section_query = `INSERT INTO section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
 
-    const field_query = `INSERT INTO field_table (field_id,field_name,field_type,field_description,field_is_positive_metric,field_is_required,field_order,field_section_id) VALUES ${fieldValues}`;
+    const field_query = `INSERT INTO field_table (field_id,field_name,field_type,field_description,field_is_positive_metric,field_is_required,field_order,field_section_id,field_special_field_template_id) VALUES ${fieldValues}`;
 
     const option_query = `INSERT INTO option_table (option_id,option_value,option_order,option_field_id) VALUES ${optionValues}`;
 
@@ -4435,14 +4435,39 @@ RETURNS JSON as $$
         `
       );
       const field = fieldData.map(field => {
-        const optionData = plv8.execute(
-          `
-            SELECT *
-            FROM option_table
-            WHERE option_field_id = '${field.field_id}'
-            ORDER BY option_order ASC
-          `
-        );
+        let optionData = [];
+ 
+        if (field.field_special_field_template_id) {
+          switch(field.field_special_field_template_id){
+                case "c3a2ab64-de3c-450f-8631-05f4cc7db890": 
+                    const teamMemberList = plv8.execute(`SELECT user_id, user_first_name, user_last_name FROM team_member_table INNER JOIN user_table ON user_id = team_member_user_id WHERE team_member_team_id = '${teamId}' ORDER BY user_last_name`); 
+                    optionData = teamMemberList.map((item, index) => ({
+                        option_id: item.user_id,
+                        option_value: item.user_last_name + ', ' + item.user_first_name,
+                        option_order: index,
+                        option_field_id: field.field_id
+                    }));
+                    break;
+
+                case "ff007180-4367-4cf2-b259-7804867615a7":
+                    const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM csi_code_table`); 
+                    optionData = csiCodeList.map((item, index) => ({
+                        option_id: item.csi_code_id,
+                        option_value: item.csi_code_section,
+                        option_order: index,
+                        option_field_id: field.field_id
+                    }));
+                    break;
+            }
+        } else {
+            optionData = plv8.execute( `
+              SELECT *
+              FROM option_table
+              WHERE option_field_id = '${field.field_id}'
+              ORDER BY option_order ASC
+            `);
+        }
+
         return {
           ...field,
           field_option: optionData
@@ -9033,7 +9058,7 @@ CREATE OR REPLACE FUNCTION fetch_request_page_section(
 )
 RETURNS JSON AS $$
 let returnData = [];
-plv8.subtransaction(function(){
+plv8.subtransaction(function() {
   const {
     index,
     requestId,
@@ -9043,53 +9068,92 @@ plv8.subtransaction(function(){
     withOption
   } = input_data;
 
-  const specialSection = ['0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa', '64f87323-ac4a-4fb5-9d64-0be89806fdf9'];
+  const specialSection = [
+    '0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 
+    'b232d5a5-6212-405e-8d35-5f9127dca1aa', 
+    '64f87323-ac4a-4fb5-9d64-0be89806fdf9'
+  ];
+
+  const teamId = plv8.execute(`
+    SELECT team_member_team_id
+    FROM request_table
+    INNER JOIN team_member_table ON team_member_id = request_team_member_id
+    WHERE request_id = '${requestId}'
+    LIMIT 1
+  `)[0].team_member_team_id;
+
+
+  if (!teamId) throw new Error("No team found");
 
   if (!fieldData) {
-    const fieldList = plv8.execute(
-      `
-        SELECT DISTINCT field_table.*
-        FROM field_table
-        INNER JOIN request_response_table ON request_response_field_id = field_id
-        WHERE 
-          ${
-            specialSection.includes(sectionId) ?
-            `field_section_id IN ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa', '64f87323-ac4a-4fb5-9d64-0be89806fdf9')` :
-            `field_section_id = '${sectionId}'`
-          }
-          AND request_response_request_id = '${requestId}'
-          AND (
-            request_response_duplicatable_section_id IN (${duplicatableSectionIdCondition})
-            ${index === 0 ? "OR request_response_duplicatable_section_id IS NULL" : ""}
-          )
-        ORDER BY field_order ASC
-      `
-    );
-    let fieldWithResponse = []
-    
-    fieldWithResponse = fieldList.map(field => {
-      const requestResponseData = plv8.execute(
-        `
-          SELECT *
-          FROM request_response_table
-          WHERE request_response_request_id = '${requestId}'
-          AND request_response_field_id = '${field.field_id}'
-          AND (
-            request_response_duplicatable_section_id IN (${duplicatableSectionIdCondition})
-            ${index === 0 ? "OR request_response_duplicatable_section_id IS NULL" : ""}
-          )
-        `
-      );
+    const fieldList = plv8.execute(`
+      SELECT DISTINCT field_table.*
+      FROM field_table
+      INNER JOIN request_response_table ON request_response_field_id = field_id
+      WHERE ${specialSection.includes(sectionId) ? `
+        field_section_id IN ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa', '64f87323-ac4a-4fb5-9d64-0be89806fdf9')` : `
+        field_section_id = '${sectionId}'`
+      }
+      AND request_response_request_id = '${requestId}'
+      AND (
+        request_response_duplicatable_section_id IN (${duplicatableSectionIdCondition})
+        ${index === 0 ? "OR request_response_duplicatable_section_id IS NULL" : ""}
+      )
+      ORDER BY field_order ASC
+    `);
+
+    let fieldWithResponse = fieldList.map(field => {
+      const requestResponseData = plv8.execute(`
+        SELECT *
+        FROM request_response_table
+        WHERE request_response_request_id = '${requestId}'
+        AND request_response_field_id = '${field.field_id}'
+        AND (
+          request_response_duplicatable_section_id IN (${duplicatableSectionIdCondition})
+          ${index === 0 ? "OR request_response_duplicatable_section_id IS NULL" : ""}
+        )
+      `);
 
       let requestOptionData = [];
-      if (withOption) { 
-        requestOptionData = plv8.execute(
-          `
+      if (withOption) {
+        if (field.field_special_field_template_id) {
+          switch (field.field_special_field_template_id) {
+            case "c3a2ab64-de3c-450f-8631-05f4cc7db890":
+              const teamMemberList = plv8.execute(`
+                SELECT user_id, user_first_name, user_last_name 
+                FROM team_member_table 
+                INNER JOIN user_table ON user_id = team_member_user_id 
+                WHERE team_member_team_id = '${teamId}' 
+                ORDER BY user_last_name
+              `);
+              requestOptionData = teamMemberList.map((item, index) => ({
+                option_id: item.user_id,
+                option_value: item.user_last_name + ', ' + item.user_first_name,
+                option_order: index,
+                option_field_id: field.field_id
+              }));
+              break;
+
+            case "ff007180-4367-4cf2-b259-7804867615a7":
+              const csiCodeList = plv8.execute(`
+                SELECT csi_code_id, csi_code_section 
+                FROM csi_code_table
+              `);
+              requestOptionData = csiCodeList.map((item, index) => ({
+                option_id: item.csi_code_id,
+                option_value: item.csi_code_section,
+                option_order: index,
+                option_field_id: field.field_id
+              }));
+              break;
+          }
+        } else {
+          requestOptionData = plv8.execute(`
             SELECT *
             FROM option_table
             WHERE option_field_id = '${field.field_id}'
-          `
-        );
+          `);
+        }
       }
 
       return {
@@ -9101,31 +9165,25 @@ plv8.subtransaction(function(){
 
     returnData = fieldWithResponse;
   } else {
-    let fieldWithResponse = []
-    
-    fieldWithResponse = fieldData.map(field => {
-      const requestResponseData = plv8.execute(
-        `
-          SELECT *
-          FROM request_response_table
-          WHERE request_response_request_id = '${requestId}'
-          AND request_response_field_id = '${field.field_id}'
-          AND (
-            request_response_duplicatable_section_id IN (${duplicatableSectionIdCondition})
-            ${index === 0 ? "OR request_response_duplicatable_section_id IS NULL" : ""}
-          )
-        `
-      );
+    let fieldWithResponse = fieldData.map(field => {
+      const requestResponseData = plv8.execute(`
+        SELECT *
+        FROM request_response_table
+        WHERE request_response_request_id = '${requestId}'
+        AND request_response_field_id = '${field.field_id}'
+        AND (
+          request_response_duplicatable_section_id IN (${duplicatableSectionIdCondition})
+          ${index === 0 ? "OR request_response_duplicatable_section_id IS NULL" : ""}
+        )
+      `);
 
       let requestOptionData = [];
-      if (withOption) { 
-        requestOptionData = plv8.execute(
-          `
-            SELECT *
-            FROM option_table
-            WHERE option_field_id = '${field.field_id}'
-          `
-        );
+      if (withOption) {
+        requestOptionData = plv8.execute(`
+          SELECT *
+          FROM option_table
+          WHERE option_field_id = '${field.field_id}'
+        `);
       }
 
       return {
@@ -9140,6 +9198,7 @@ plv8.subtransaction(function(){
 });
 return returnData;
 $$ LANGUAGE plv8;
+
 
 -- End: Fetch request page section
 

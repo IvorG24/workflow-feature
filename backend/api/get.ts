@@ -6502,7 +6502,9 @@ export const getNonDuplictableSectionResponse = async (
   const { fieldIdList, requestId } = params;
   const { data, error } = await supabaseClient
     .from("request_response_table")
-    .select("request_response_field_id, request_response")
+    .select(
+      "request_response_field_id, request_response, request_response_prefix"
+    )
     .eq("request_response_request_id", requestId)
     .in("request_response_field_id", fieldIdList);
   if (error) throw error;

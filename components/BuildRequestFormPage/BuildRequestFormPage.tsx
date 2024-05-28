@@ -111,7 +111,8 @@ const BuildFormPage = ({ teamMemberList, formId, groupList }: Props) => {
           if (
             (field.field_type === "MULTISELECT" ||
               field.field_type === "DROPDOWN") &&
-            field.options.length <= 0
+            field.options.length <= 0 &&
+            field.field_special_field_template_id === null
           )
             hasNoChoices = true;
         });
@@ -177,6 +178,7 @@ const BuildFormPage = ({ teamMemberList, formId, groupList }: Props) => {
         }`
       );
     } catch (error) {
+      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
