@@ -29,6 +29,14 @@ UPDATE storage.buckets SET public = true;
 
 ---------- Start: TABLES
 
+-- Start: formsly_price_table
+CREATE TABLE formsly_price_table (
+  formsly_price_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  formsly_price_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  formsly_price INT NOT NULL
+);
+-- End: address_table
+
 -- Start: address_table
 CREATE TABLE address_table (
   address_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -81,6 +89,15 @@ CREATE TABLE team_table (
   team_logo VARCHAR(4000),
   
   team_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+CREATE TABLE team_transaction_table (
+  team_transaction_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_transaction_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_transaction_price INT NOT NULL,
+  team_transaction_number_of_months INT NOT NULL,
+  team_transaction_team_expiration_date DATE NOT NULL,
+  
+  team_transaction_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 CREATE TABLE team_member_table(
   team_member_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -10022,9 +10039,38 @@ RETURNS VOID AS $$
   plv8.subtransaction(function(){
     const {
       teamId,
-      newExpiryDate
+      newExpiryDate,
+      numberOfMonths,
+      price
     } = input_data;
-    plv8.execute(`UPDATE team_table SET team_expiration = '${newExpiryDate}' WHERE team_id = '${teamId}'`);
+    const existingData = plv8.execute(
+      `
+        SELECT * FROM team_transaction_table
+        WHERE
+          team_transaction_price = ${price}
+          AND team_transaction_number_of_months = ${numberOfMonths}
+          AND team_transaction_team_expiration_date = '${newExpiryDate}'
+          AND team_transaction_team_id = '${teamId}'
+      `
+    );
+    if(existingData.lenght) return;
+    
+    plv8.execute(`
+      INSERT INTO team_transaction_table
+      (
+        team_transaction_price,
+        team_transaction_number_of_months,
+        team_transaction_team_expiration_date,
+        team_transaction_team_id 
+      )
+      VALUES
+      (
+        ${price},
+        ${numberOfMonths},
+        '${newExpiryDate}',
+        '${teamId}'
+      )
+    `);
  });
 $$ LANGUAGE plv8;
 

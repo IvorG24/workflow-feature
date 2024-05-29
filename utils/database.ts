@@ -1002,6 +1002,24 @@ export type Database = {
           }
         ];
       };
+      formsly_price_table: {
+        Row: {
+          formsly_price: number;
+          formsly_price_date_created: string;
+          formsly_price_id: string;
+        };
+        Insert: {
+          formsly_price: number;
+          formsly_price_date_created?: string;
+          formsly_price_id?: string;
+        };
+        Update: {
+          formsly_price?: number;
+          formsly_price_date_created?: string;
+          formsly_price_id?: string;
+        };
+        Relationships: [];
+      };
       general_unit_of_measurement_table: {
         Row: {
           general_unit_of_measurement: string;
@@ -3146,6 +3164,41 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "user_table";
             referencedColumns: ["user_id"];
+          }
+        ];
+      };
+      team_transaction_table: {
+        Row: {
+          team_transaction_date_created: string;
+          team_transaction_id: string;
+          team_transaction_number_of_months: number;
+          team_transaction_price: number;
+          team_transaction_team_expiration_date: string;
+          team_transaction_team_id: string;
+        };
+        Insert: {
+          team_transaction_date_created?: string;
+          team_transaction_id?: string;
+          team_transaction_number_of_months: number;
+          team_transaction_price: number;
+          team_transaction_team_expiration_date: string;
+          team_transaction_team_id: string;
+        };
+        Update: {
+          team_transaction_date_created?: string;
+          team_transaction_id?: string;
+          team_transaction_number_of_months?: number;
+          team_transaction_price?: number;
+          team_transaction_team_expiration_date?: string;
+          team_transaction_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "team_transaction_table_team_transaction_team_id_fkey";
+            columns: ["team_transaction_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
           }
         ];
       };

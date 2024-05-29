@@ -7230,3 +7230,38 @@ export const getCsiTableSpecialFieldOption = async (
 
   return optionData;
 };
+
+// Fetch team latest transaction
+export const fetchTeamLatestTransaction = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+
+  const { data, error } = await supabaseClient
+    .from("team_transaction_table")
+    .select("*")
+    .eq("team_transaction_team_id", teamId)
+    .order("team_transaction_date_created", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch latest formsly price
+export const fetchFormslyLatestPrice = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .from("formsly_price_table")
+    .select("formsly_price")
+    .order("formsly_price_date_created", { ascending: false })
+    .limit(1)
+    .single();
+  if (error) throw error;
+  return data.formsly_price;
+};
