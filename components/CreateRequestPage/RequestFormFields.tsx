@@ -166,6 +166,10 @@ const RequestFormFields = ({
   } = useFormContext<RequestFormValues>();
 
   const team = useActiveTeam();
+  const dropdownOptionValue = useWatch({
+    control,
+    name: `sections.${sectionIndex}.section_field.${fieldIndex}.field_option`,
+  });
 
   const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
@@ -175,11 +179,6 @@ const RequestFormFields = ({
   const [currencyFieldValue, setCurrencyFieldValue] = useState<string | null>(
     field.field_prefix ?? "PHP"
   );
-
-  const dropdownOptionValue = useWatch({
-    control,
-    name: `sections.${sectionIndex}.section_field.${fieldIndex}.field_option`,
-  });
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
