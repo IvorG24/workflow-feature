@@ -3,7 +3,6 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import { useEffect, useState } from "react";
 import useRouteChange from "./useRouteChange";
-import { FORMSLY_PRICE_PER_MONTH } from "@/utils/constant";
 
 const useRealtimeTeamExpiration = (
   supabaseClient: SupabaseClient<Database>,
@@ -12,6 +11,7 @@ const useRealtimeTeamExpiration = (
     initialOutstandingBalance: number;
     initialExpirationDate: string;
     currentDate: string;
+    price: number;
   }
 ) => {
   const {
@@ -19,6 +19,7 @@ const useRealtimeTeamExpiration = (
     initialOutstandingBalance,
     initialExpirationDate,
     currentDate,
+    price,
   } = params;
   const [outstandingBalance, setOutstandingBalance] = useState(
     initialOutstandingBalance
@@ -32,18 +33,18 @@ const useRealtimeTeamExpiration = (
 
   useEffect(() => {
     const channel = supabaseClient
-      .channel("realtime team-expiration")
+      .channel("realtime team-transaction")
       .on(
         "postgres_changes",
         {
-          event: "UPDATE",
+          event: "INSERT",
           schema: "public",
-          table: "team_table",
-          filter: `team_id=eq.${teamId}`,
+          table: "team_transaction_table",
+          filter: `team_transaction_team_id=eq.${teamId}`,
         },
         (payload) => {
           const difference = moment(currentDate).diff(
-            moment(payload.new.team_expiration),
+            moment(payload.new.team_transaction_team_expiration_date),
             "months",
             true
           );
@@ -51,9 +52,9 @@ const useRealtimeTeamExpiration = (
           if (difference <= 0) {
             setOutstandingBalance(0);
           } else {
-            setOutstandingBalance(Math.ceil(difference) * FORMSLY_PRICE_PER_MONTH);
+            setOutstandingBalance(Math.ceil(difference) * price);
           }
-          setExpirationDate(payload.new.team_expiration);
+          setExpirationDate(payload.new.team_transaction_team_expiration_date);
         }
       )
       .subscribe();
@@ -61,7 +62,7 @@ const useRealtimeTeamExpiration = (
     return () => {
       supabaseClient.removeChannel(channel);
     };
-  }, [supabaseClient, teamId, currentDate]);
+  }, [supabaseClient, teamId, currentDate, price]);
 
   return { outstandingBalance, expirationDate };
 };

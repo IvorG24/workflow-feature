@@ -6,12 +6,14 @@ type Props = {
   outstandingBalance: number;
   expirationDate: string;
   currentDate: string;
+  price: number;
 };
 
 const TeamInvoicePage = ({
   outstandingBalance,
   expirationDate,
   currentDate,
+  price,
 }: Props) => {
   return (
     <Container>
@@ -19,6 +21,7 @@ const TeamInvoicePage = ({
         outstandingBalance={outstandingBalance}
         expirationDate={expirationDate}
         currentDate={currentDate}
+        price={price}
       />
       <InvoiceHistory />
     </Container>
