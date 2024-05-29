@@ -33,7 +33,7 @@ import {
   IconLink,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 import isURL from "validator/lib/isURL";
 import { RequestFormValues } from "./CreateRequestPage";
 import CurrencyFormField from "./SpecialField/CurrencyFormField";
@@ -166,11 +166,9 @@ const RequestFormFields = ({
   } = useFormContext<RequestFormValues>();
 
   const team = useActiveTeam();
-  const defaultDropdownOption = field.options.map((option) => {
-    return {
-      value: option.option_value,
-      label: option.option_value,
-    };
+  const dropdownOptionValue = useWatch({
+    control,
+    name: `sections.${sectionIndex}.section_field.${fieldIndex}.field_option`,
   });
 
   const supabaseClient = useSupabaseClient();
@@ -181,7 +179,6 @@ const RequestFormFields = ({
   const [currencyFieldValue, setCurrencyFieldValue] = useState<string | null>(
     field.field_prefix ?? "PHP"
   );
-  const [dropdownOption, setDropdownOption] = useState(defaultDropdownOption);
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
@@ -451,6 +448,12 @@ const RequestFormFields = ({
         );
 
       case "DROPDOWN":
+        const dropdownOption = dropdownOptionValue.map((option) => {
+          return {
+            value: option.option_value,
+            label: option.option_value,
+          };
+        });
         return (
           <Controller
             control={control}
@@ -682,13 +685,9 @@ const RequestFormFields = ({
                         search: value,
                       });
 
-                    setDropdownOption(
-                      newCsiOptionList.map((option) => {
-                        return {
-                          value: option.option_value,
-                          label: option.option_value,
-                        };
-                      })
+                    setValue(
+                      `sections.${sectionIndex}.section_field.${fieldIndex}.field_option`,
+                      newCsiOptionList
                     );
                   }
                 }}
