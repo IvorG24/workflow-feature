@@ -1,4 +1,7 @@
-import { getRequestFormslyId } from "@/backend/api/get";
+import {
+  getCsiTableSpecialFieldOption,
+  getRequestFormslyId,
+} from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   MAX_FILE_SIZE,
@@ -163,6 +166,12 @@ const RequestFormFields = ({
   } = useFormContext<RequestFormValues>();
 
   const team = useActiveTeam();
+  const defaultDropdownOption = field.options.map((option) => {
+    return {
+      value: option.option_value,
+      label: option.option_value,
+    };
+  });
 
   const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
@@ -172,6 +181,7 @@ const RequestFormFields = ({
   const [currencyFieldValue, setCurrencyFieldValue] = useState<string | null>(
     field.field_prefix ?? "PHP"
   );
+  const [dropdownOption, setDropdownOption] = useState(defaultDropdownOption);
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
@@ -190,6 +200,25 @@ const RequestFormFields = ({
       value: field.field_is_required,
       message: "This field is required",
     },
+  };
+
+  const getCsiTableFieldDropdownOption = async ({
+    fieldId,
+    search,
+  }: {
+    fieldId: string;
+    search?: string;
+  }) => {
+    try {
+      const data = await getCsiTableSpecialFieldOption(supabaseClient, {
+        fieldId,
+        search,
+      });
+      return data;
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
   };
 
   useEffect(() => {
@@ -422,13 +451,6 @@ const RequestFormFields = ({
         );
 
       case "DROPDOWN":
-        const dropdownOption = field.options.map((option) => {
-          return {
-            value: option.option_value,
-            label: option.option_value,
-          };
-        });
-
         return (
           <Controller
             control={control}
@@ -647,6 +669,29 @@ const RequestFormFields = ({
                 readOnly={field.field_is_read_only || isLoading}
                 rightSection={isLoading && <Loader size={16} />}
                 dropdownPosition="bottom"
+                onSearchChange={async (value) => {
+                  // fetch options for csi table special field
+                  if (
+                    field.field_special_field_template_id &&
+                    field.field_special_field_template_id ===
+                      "ff007180-4367-4cf2-b259-7804867615a7"
+                  ) {
+                    const newCsiOptionList =
+                      await getCsiTableFieldDropdownOption({
+                        fieldId: field.field_id,
+                        search: value,
+                      });
+
+                    setDropdownOption(
+                      newCsiOptionList.map((option) => {
+                        return {
+                          value: option.option_value,
+                          label: option.option_value,
+                        };
+                      })
+                    );
+                  }
+                }}
               />
             )}
             rules={{ ...fieldRules }}

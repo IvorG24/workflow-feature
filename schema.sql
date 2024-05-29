@@ -4451,7 +4451,7 @@ RETURNS JSON as $$
                     break;
 
                 case "ff007180-4367-4cf2-b259-7804867615a7":
-                    const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM csi_code_table`); 
+                    const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM csi_code_table LIMIT 1000`); 
                     optionData = csiCodeList.map((item, index) => ({
                         option_id: item.csi_code_id,
                         option_value: item.csi_code_section,

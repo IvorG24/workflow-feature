@@ -1,4 +1,7 @@
-import { getSectionInRequestPage } from "@/backend/api/get";
+import {
+  getNonDuplictableSectionResponse,
+  getSectionInRequestPage,
+} from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
@@ -193,91 +196,140 @@ const EditRequestPage = ({
     if (!team.team_id) return;
     try {
       const fetchRequestDetails = async () => {
-        // Duplicatable section response
-        let index = 0;
-        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [];
+        const finalInitialRequestDetails: Section[] = [];
+        // non duplicatable section
+        let fieldIdList: string[] = [];
+        let nonDuplicatableSectionResponse: {
+          request_response_field_id: string;
+          request_response: string;
+          request_response_prefix: string | null;
+        }[] = [];
 
-        while (1) {
-          setIsLoading(true);
-          const duplicatableSectionIdCondition = duplicatableSectionIdList
-            .slice(index, index + 5)
-            .map((dupId) => `'${dupId}'`)
-            .join(",");
+        let sectionWithDuplicatableId: Section[] = [];
 
-          const data = await getSectionInRequestPage(supabaseClient, {
-            index,
-            requestId: requestId,
-            sectionId: form.form_section[0].section_id,
-            duplicatableSectionIdCondition:
-              duplicatableSectionIdCondition.length !== 0
-                ? duplicatableSectionIdCondition
-                : `'${uuidv4()}'`,
-            withOption: true,
-          });
-          newFields.push(...data);
-          index += 5;
+        form.form_section.forEach((section) => {
+          if (section.section_is_duplicatable) return;
 
-          if (index > duplicatableSectionIdList.length) break;
-        }
-        const uniqueFieldIdList: string[] = [];
-        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [];
-
-        newFields.forEach((field) => {
-          if (uniqueFieldIdList.includes(field.field_id)) {
-            const currentFieldIndex = combinedFieldList.findIndex(
-              (combinedField) => combinedField.field_id === field.field_id
-            );
-            combinedFieldList[currentFieldIndex].field_response.push(
-              ...field.field_response
-            );
-          } else {
-            uniqueFieldIdList.push(field.field_id);
-            combinedFieldList.push(field);
-          }
+          fieldIdList = section.section_field.map((field) => field.field_id);
         });
 
-        // Format section
-        const newSection = generateSectionWithDuplicateList([
-          {
-            ...form.form_section[0],
-            section_field: combinedFieldList,
-          },
-        ]);
+        if (fieldIdList.length > 0) {
+          nonDuplicatableSectionResponse =
+            await getNonDuplictableSectionResponse(supabaseClient, {
+              requestId,
+              fieldIdList,
+            });
 
-        // Input option to the sections
-        const formattedSection = newSection.map((section) => {
-          const fieldList: Section["section_field"] = [];
-          section.section_field.forEach((field) => {
-            const response = field.field_response?.request_response
-              ? safeParse(field.field_response?.request_response)
-              : "";
-            const option: OptionTableRow[] = field.field_option ?? [];
-
-            const prefix = field.field_response?.request_response_prefix
-              ? safeParse(field.field_response.request_response_prefix)
-              : "";
-
-            if (response) {
-              fieldList.push({
+          const nonDuplicatableSection = form.form_section.map((section) => {
+            const sectionField = section.section_field.map((field) => {
+              const response = nonDuplicatableSectionResponse.find(
+                (response) =>
+                  response.request_response_field_id === field.field_id
+              );
+              return {
                 ...field,
-                field_response: response,
-                field_option: option,
-                field_prefix: prefix,
-              });
+                field_response: response
+                  ? safeParse(response.request_response)
+                  : "",
+              };
+            });
+
+            return {
+              ...section,
+              section_field: sectionField,
+            };
+          });
+
+          finalInitialRequestDetails.push(...nonDuplicatableSection);
+        }
+
+        // duplicatable section response
+        if (duplicatableSectionIdList.length > 0) {
+          let index = 0;
+          const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+            [];
+
+          while (1) {
+            setIsLoading(true);
+            const duplicatableSectionIdCondition = duplicatableSectionIdList
+              .slice(index, index + 5)
+              .map((dupId) => `'${dupId}'`)
+              .join(",");
+
+            const data = await getSectionInRequestPage(supabaseClient, {
+              index,
+              requestId: requestId,
+              sectionId: form.form_section[0].section_id,
+              duplicatableSectionIdCondition:
+                duplicatableSectionIdCondition.length !== 0
+                  ? duplicatableSectionIdCondition
+                  : `'${uuidv4()}'`,
+              withOption: true,
+            });
+            newFields.push(...data);
+            index += 5;
+
+            if (index > duplicatableSectionIdList.length) break;
+          }
+          const uniqueFieldIdList: string[] = [];
+          const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+            [];
+
+          newFields.forEach((field) => {
+            if (uniqueFieldIdList.includes(field.field_id)) {
+              const currentFieldIndex = combinedFieldList.findIndex(
+                (combinedField) => combinedField.field_id === field.field_id
+              );
+              combinedFieldList[currentFieldIndex].field_response.push(
+                ...field.field_response
+              );
+            } else {
+              uniqueFieldIdList.push(field.field_id);
+              combinedFieldList.push(field);
             }
           });
 
-          return {
-            ...section,
-            section_field: fieldList,
-          };
-        });
+          // Format section
+          const newSection = generateSectionWithDuplicateList([
+            {
+              ...form.form_section[0],
+              section_field: combinedFieldList,
+            },
+          ]);
 
-        // Add duplicatable section id
-        const sectionWithDuplicatableId = formattedSection.map(
-          (section, index) => {
+          // Input option to the sections
+          const formattedSection = newSection
+            .map((section) => {
+              const fieldList: Section["section_field"] = [];
+              section.section_field.forEach((field) => {
+                const response = field.field_response?.request_response
+                  ? safeParse(field.field_response?.request_response)
+                  : "";
+                const option: OptionTableRow[] = field.field_option ?? [];
+
+                const prefix = field.field_response?.request_response_prefix
+                  ? safeParse(field.field_response.request_response_prefix)
+                  : "";
+
+                if (response) {
+                  fieldList.push({
+                    ...field,
+                    field_response: response,
+                    field_option: option,
+                    field_prefix: prefix,
+                  });
+                }
+              });
+
+              return {
+                ...section,
+                section_field: fieldList,
+              };
+            })
+            .sort((a, b) => a.section_order - b.section_order);
+
+          // Add duplicatable section id
+          sectionWithDuplicatableId = formattedSection.map((section, index) => {
             const dupId = index ? uuidv4() : undefined;
             return {
               ...section,
@@ -288,10 +340,12 @@ const EditRequestPage = ({
                 };
               }),
             };
-          }
-        );
-        replaceSection(sectionWithDuplicatableId);
-        setInitialRequestDetails({ sections: sectionWithDuplicatableId });
+          });
+        }
+
+        finalInitialRequestDetails.push(...sectionWithDuplicatableId);
+        replaceSection(finalInitialRequestDetails);
+        setInitialRequestDetails({ sections: finalInitialRequestDetails });
         setIsLoading(false);
       };
       fetchRequestDetails();

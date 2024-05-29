@@ -7,6 +7,7 @@ import {
   ITEM_FIELD_ID_LIST,
   IT_ASSET_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
+  SELECT_OPTION_LIMIT,
   formatDate,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -7192,4 +7193,40 @@ export const fetchFormslyInvoiceHistoryList = async (
   });
   if (error) throw error;
   return { data: data as TransactionTableRow[], count };
+};
+
+// Fetch formsly invoice history list
+export const getCsiTableSpecialFieldOption = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    fieldId: string;
+    search?: string;
+  }
+) => {
+  const { search, fieldId } = params;
+
+  let query = supabaseClient
+    .from("csi_code_table")
+    .select("csi_code_id, csi_code_section");
+
+  if (search) {
+    query = query.ilike("csi_code_section", `%${search}%`);
+  }
+
+  query.limit(SELECT_OPTION_LIMIT);
+  const { data, error } = await query;
+
+  if (error || !data) {
+    console.log(error);
+    throw new Error("Failed to fetch csi code table");
+  }
+
+  const optionData = data.map((item, index) => ({
+    option_id: item.csi_code_id,
+    option_value: item.csi_code_section,
+    option_order: index,
+    option_field_id: fieldId,
+  }));
+
+  return optionData;
 };

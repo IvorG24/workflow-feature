@@ -236,6 +236,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
       duplicatedFieldsWithDuplicatableId.splice(9, 1);
       const newSection = {
         ...sectionMatch,
+        section_order: sectionLastIndex + 1,
         section_field: duplicatedFieldsWithDuplicatableId,
       };
 
