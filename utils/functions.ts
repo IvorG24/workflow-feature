@@ -468,7 +468,7 @@ export const sendEmailTeamInvite = async ({
 }) => {
   const subject = `You have been invited to join ${teamName} on Formsly.`;
 
-  const response = await fetch("/api/resend/send-team-invite", {
+  const response = await fetch("/api/team-invite/send", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

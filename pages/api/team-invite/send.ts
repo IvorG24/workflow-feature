@@ -40,8 +40,13 @@ export default async function handler(
     });
     const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/team-invite/verify?token=${inviteToken}`;
 
+    const domain =
+      process.env.NODE_ENV === "production"
+        ? "<help@formsly.io>"
+        : "<help@jctest.shop>";
+
     const { data, error } = await resend.emails.send({
-      from: "Formsly Team <help@jctest.shop>",
+      from: `Formsly Team ${domain}`,
       to: to,
       subject: subject,
       react: TeamInviteEmailTemplate({ teamName: teamName, inviteUrl }),
