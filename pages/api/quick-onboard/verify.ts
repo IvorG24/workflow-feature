@@ -1,29 +1,41 @@
 import { getInvitationId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
-import { CREATE_PASSWORD_PAGE_PATH, JWT_SECRET_KEY } from "@/utils/constant";
+import { CREATE_PASSWORD_PAGE_PATH } from "@/utils/constant";
+import { TeamInviteJwtPayload } from "@/utils/types";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import jwt from "jsonwebtoken";
 import { NextApiRequest, NextApiResponse } from "next";
-
-export type JwtPayload = {
-  teamId: string;
-  teamName: string;
-  invitedEmail: string;
-};
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   try {
+    if (req.method !== "GET") {
+      return res.status(405).json({ error: "Method not allowed" });
+    }
+
+    if (!process.env.JWT_SECRET_KEY) {
+      return res.status(405).json({ error: "Jwt secret key is undefined" });
+    }
+
+    const { token } = req.query;
+    if (!token) {
+      console.error("Jwt token is undefined");
+      res.redirect("/500");
+    }
+
     const supabaseClient = createPagesServerClient({ req, res });
 
     const {
       data: { user },
     } = await supabaseClient.auth.getUser();
 
-    const { token } = req.query;
-    const decodedToken = jwt.verify(`${token}`, JWT_SECRET_KEY) as JwtPayload;
+    const decodedToken = jwt.verify(
+      `${token}`,
+      process.env.JWT_SECRET_KEY
+    ) as TeamInviteJwtPayload;
+
     const { teamId, invitedEmail } = decodedToken;
 
     if (!user) {

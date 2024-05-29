@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import jwt from "jsonwebtoken";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import { formatDate } from "./constant";
@@ -414,4 +415,72 @@ export const getJiraRequestType = (requestFormType: string) => {
   );
 
   return matchedItem ? matchedItem.id : null;
+};
+
+export const verifyJwtToken = async ({
+  token,
+  secretKey,
+}: {
+  token: string;
+  secretKey: string;
+}) => {
+  try {
+    const decodedToken = jwt.verify(token, secretKey);
+    return decodedToken;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+export const generateEmailInviteToken = ({
+  teamId,
+  teamName,
+  invitedEmail,
+  secretKey,
+}: {
+  teamId: string;
+  teamName: string;
+  invitedEmail: string;
+  secretKey: string;
+}) => {
+  const inviteParameter = {
+    teamId,
+    teamName,
+    invitedEmail,
+  };
+
+  const jwtInviteToken = jwt.sign(inviteParameter, secretKey, {
+    expiresIn: "48h",
+  });
+
+  return jwtInviteToken;
+};
+
+export const sendEmailTeamInvite = async ({
+  emailList,
+  teamName,
+  teamId,
+}: {
+  emailList: string[];
+  teamId: string;
+  teamName: string;
+}) => {
+  const subject = `You have been invited to join ${teamName} on Formsly.`;
+
+  const response = await fetch("/api/resend/send-team-invite", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      to: emailList,
+      subject,
+      teamId: teamId,
+      teamName: teamName,
+    }),
+  });
+
+  const responseData = await response.json();
+  return responseData;
 };

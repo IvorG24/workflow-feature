@@ -1,5 +1,5 @@
 import { createTeamInvitation } from "@/backend/api/post";
-import { JWT_SECRET_KEY } from "@/utils/constant";
+import { sendEmailTeamInvite } from "@/utils/functions";
 import {
   InvitationTableRow,
   TeamMemberTableRow,
@@ -28,7 +28,6 @@ import {
   IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
-import jwt from "jsonwebtoken";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import validator from "validator";
@@ -78,7 +77,11 @@ const InviteForm = ({ changeStep, ownerData, team }: Props) => {
         teamName: team.team_name,
       });
 
-      await sendEmailInvite(emailList);
+      await sendEmailTeamInvite({
+        emailList,
+        teamId: team.team_id,
+        teamName: team.team_name,
+      });
 
       if (invitationData.length > 0) {
         setInvitationList((prev) => [...prev, ...invitationData]);
@@ -96,62 +99,6 @@ const InviteForm = ({ changeStep, ownerData, team }: Props) => {
     } finally {
       setIsSendingInvites(false);
     }
-  };
-
-  // send email invite notification
-  const sendEmailInvite = async (emailList: string[]) => {
-    const subject = `You have been invited to join ${team.team_name} on Formsly.`;
-
-    for (const email of emailList) {
-      try {
-        const inviteToken = generateEmailInviteToken(email);
-        const inviteUrl = `${window.location.origin}/api/team-invite?token=${inviteToken}`;
-        const html = generateEmailHtml(inviteUrl);
-
-        const response = await fetch("/api/send-email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            to: email,
-            subject,
-            html,
-          }),
-        });
-
-        const responseData = await response.json();
-        return responseData;
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  };
-
-  const generateEmailInviteToken = (email: string) => {
-    const inviteParameter = {
-      teamId: team.team_id,
-      teamName: team.team_name,
-      invitedEmail: email,
-    };
-
-    const jwtInviteToken = jwt.sign(inviteParameter, JWT_SECRET_KEY, {
-      expiresIn: "48h",
-    });
-
-    return jwtInviteToken;
-  };
-
-  const generateEmailHtml = (inviteUrl: string) => {
-    const html = `<p>Hi,</p>
-  <p>Please click the link below to accept the invitation. This invite is only valid for 48 hours.</p>
-  &nbsp;
-  <p><a href="${inviteUrl}">Join ${team.team_name} on Formsly.io</a></p>
-  &nbsp;
-  <p>Thank you,</p>
-  <p>Formsly Team</p>`;
-
-    return html;
   };
 
   const handleRemoveInvite = (index: number) => {

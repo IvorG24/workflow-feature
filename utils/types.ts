@@ -1880,3 +1880,8 @@ export type RequestListFilterValues = {
   isApproversView: boolean;
   idFilter?: string[];
 };
+
+export type TeamInviteJwtPayload = {
+  teamId: string;
+  invitedEmail: string;
+};

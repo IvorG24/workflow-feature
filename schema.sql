@@ -37,6 +37,15 @@ CREATE TABLE formsly_price_table (
 );
 -- End: address_table
 
+-- Start: special_field_template_table
+CREATE TABLE special_field_template_table (
+  special_field_template_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  special_field_template_name VARCHAR(4000) NOT NULL,
+  special_field_template_description VARCHAR(4000),
+  special_field_template_type VARCHAR(4000) NOT NULL
+);
+-- End: special_field_template_table
+
 -- Start: address_table
 CREATE TABLE address_table (
   address_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -1023,13 +1032,6 @@ CREATE TABLE scic_employee_table (
     scic_employee_suffix VARCHAR(10),
     scic_employee_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     scic_employee_date_updated TIMESTAMPTZ
-);
-
-CREATE TABLE special_field_template_table (
-  special_field_template_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  special_field_template_name VARCHAR(4000) NOT NULL,
-  special_field_template_description VARCHAR(4000),
-  special_field_template_type VARCHAR(4000) NOT NULL
 );
 
 CREATE TABLE currency_table (

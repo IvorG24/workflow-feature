@@ -1,7 +1,6 @@
 import { checkIfEmailsOnboarded } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { JWT_SECRET_KEY } from "@/utils/constant";
 import {
   Box,
   Button,
@@ -18,7 +17,6 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconMailPlus, IconUsersPlus } from "@tabler/icons-react";
-import jwt from "jsonwebtoken";
 import { useState } from "react";
 import validator from "validator";
 
@@ -71,7 +69,11 @@ const QuickOnboarding = ({ memberEmailList }: Props) => {
       }
 
       if (emailToInvite.length <= 0) return;
-      await sendEmailInvite(emailToInvite);
+      await sendEmailTeamInvite({
+        emailList: emailToInvite,
+        teamId: team.team_id,
+        teamName: team.team_name,
+      });
 
       setEmailList([]);
       notifications.show({
@@ -89,35 +91,29 @@ const QuickOnboarding = ({ memberEmailList }: Props) => {
   };
 
   // send email invite notification
-  const sendEmailInvite = async (emailList: string[]) => {
-    for (const email of emailList) {
-      try {
-        const inviteToken = generateEmailInviteToken(email);
-        const inviteUrl = `${window.location.origin}/api/quick-onboard?token=${inviteToken}`;
-
-        await supabaseClient.auth.signUp({
-          email,
-          password: team.team_id,
-          options: { emailRedirectTo: inviteUrl },
-        });
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  };
-
-  const generateEmailInviteToken = (email: string) => {
-    const inviteParameter = {
-      teamId: team.team_id,
-      teamName: team.team_name,
-      invitedEmail: email,
-    };
-
-    const jwtInviteToken = jwt.sign(inviteParameter, JWT_SECRET_KEY, {
-      expiresIn: "48h",
+  const sendEmailTeamInvite = async ({
+    emailList,
+    teamName,
+    teamId,
+  }: {
+    emailList: string[];
+    teamId: string;
+    teamName: string;
+  }) => {
+    const response = await fetch("/api/quick-onboard/invite", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        emailList,
+        teamName,
+        teamId,
+      }),
     });
 
-    return jwtInviteToken;
+    const responseData = await response.json();
+    return responseData;
   };
 
   return (
