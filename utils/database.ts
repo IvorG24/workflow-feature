@@ -4330,6 +4330,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      team_invoice_on_load: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       transfer_ownership: {
         Args: {
           owner_id: string;
