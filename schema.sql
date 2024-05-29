@@ -9155,7 +9155,7 @@ plv8.subtransaction(function() {
             case "ff007180-4367-4cf2-b259-7804867615a7":
               const csiCodeList = plv8.execute(`
                 SELECT csi_code_id, csi_code_section 
-                FROM csi_code_table
+                FROM csi_code_table LIMIT 1000
               `);
               requestOptionData = csiCodeList.map((item, index) => ({
                 option_id: item.csi_code_id,
