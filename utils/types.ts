@@ -475,13 +475,6 @@ export type SpecialFieldTemplateTableInsert =
 export type SpecialFieldTemplateTableUpdate =
   Database["public"]["Tables"]["special_field_template_table"]["Update"];
 
-export type SpecialFieldTableRow =
-  Database["public"]["Tables"]["special_field_table"]["Row"];
-export type SpecialFieldTableInsert =
-  Database["public"]["Tables"]["special_field_table"]["Insert"];
-export type SpecialFieldTableUpdate =
-  Database["public"]["Tables"]["special_field_table"]["Update"];
-
 export type TransactionTableRow =
   OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 

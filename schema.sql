@@ -216,7 +216,8 @@ CREATE TABLE field_table (
   field_is_positive_metric BOOLEAN DEFAULT TRUE NOT NULL,
   field_is_read_only BOOLEAN DEFAULT FALSE NOT NULL,
 
-  field_section_id UUID REFERENCES section_table(section_id) NOT NULL
+  field_section_id UUID REFERENCES section_table(section_id) NOT NULL,
+  field_special_field_template_id UUID REFERENCES special_field_template_table(special_field_template_id)
 );
 CREATE TABLE option_table (
   option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -255,6 +256,7 @@ CREATE TABLE request_response_table(
   request_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   request_response VARCHAR(4000) NOT NULL,
   request_response_duplicatable_section_id UUID,
+  request_response_prefix VARCHAR(4000),
 
   request_response_request_id UUID REFERENCES request_table(request_id) NOT NULL,
   request_response_field_id UUID REFERENCES field_table(field_id) NOT NULL
@@ -1021,6 +1023,21 @@ CREATE TABLE scic_employee_table (
     scic_employee_suffix VARCHAR(10),
     scic_employee_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     scic_employee_date_updated TIMESTAMPTZ
+);
+
+CREATE TABLE special_field_template_table (
+  special_field_template_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  special_field_template_name VARCHAR(4000) NOT NULL,
+  special_field_template_description VARCHAR(4000),
+  special_field_template_type VARCHAR(4000) NOT NULL
+);
+
+CREATE TABLE currency_table (
+  currency_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  currency_entity VARCHAR(4000) NOT NULL,
+  currency_label VARCHAR(4000) NOT NULL,
+  currnecy_alphabetic_code VARCHAR(10) NOT NULL,
+  currency_numeric_code VARCHAR(10) NOT NULL
 );
 
 ---------- End: TABLES
