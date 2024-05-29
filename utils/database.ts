@@ -69,41 +69,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      barangay_table: {
-        Row: {
-          barangay: string;
-          barangay_city_id: string;
-          barangay_id: string;
-          barangay_is_available: boolean;
-          barangay_is_disabled: boolean;
-          barangay_zip_code: string;
-        };
-        Insert: {
-          barangay: string;
-          barangay_city_id: string;
-          barangay_id?: string;
-          barangay_is_available?: boolean;
-          barangay_is_disabled?: boolean;
-          barangay_zip_code: string;
-        };
-        Update: {
-          barangay?: string;
-          barangay_city_id?: string;
-          barangay_id?: string;
-          barangay_is_available?: boolean;
-          barangay_is_disabled?: boolean;
-          barangay_zip_code?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "barangay_table_barangay_city_id_fkey";
-            columns: ["barangay_city_id"];
-            isOneToOne: false;
-            referencedRelation: "city_table";
-            referencedColumns: ["city_id"];
-          }
-        ];
-      };
       capacity_unit_of_measurement_table: {
         Row: {
           capacity_unit_of_measurement: string;
@@ -146,38 +111,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
-          }
-        ];
-      };
-      city_table: {
-        Row: {
-          city: string;
-          city_id: string;
-          city_is_available: boolean;
-          city_is_disabled: boolean;
-          city_province_id: string;
-        };
-        Insert: {
-          city: string;
-          city_id?: string;
-          city_is_available?: boolean;
-          city_is_disabled?: boolean;
-          city_province_id: string;
-        };
-        Update: {
-          city?: string;
-          city_id?: string;
-          city_is_available?: boolean;
-          city_is_disabled?: boolean;
-          city_province_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "city_table_city_province_id_fkey";
-            columns: ["city_province_id"];
-            isOneToOne: false;
-            referencedRelation: "province_table";
-            referencedColumns: ["province_id"];
           }
         ];
       };
@@ -2235,38 +2168,6 @@ export type Database = {
           }
         ];
       };
-      province_table: {
-        Row: {
-          province: string;
-          province_id: string;
-          province_is_available: boolean;
-          province_is_disabled: boolean;
-          province_region_id: string;
-        };
-        Insert: {
-          province: string;
-          province_id?: string;
-          province_is_available?: boolean;
-          province_is_disabled?: boolean;
-          province_region_id: string;
-        };
-        Update: {
-          province?: string;
-          province_id?: string;
-          province_is_available?: boolean;
-          province_is_disabled?: boolean;
-          province_region_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "province_table_province_region_id_fkey";
-            columns: ["province_region_id"];
-            isOneToOne: false;
-            referencedRelation: "region_table";
-            referencedColumns: ["region_id"];
-          }
-        ];
-      };
       query_table: {
         Row: {
           query_id: string;
@@ -2282,27 +2183,6 @@ export type Database = {
           query_id?: string;
           query_name?: string;
           query_sql?: string;
-        };
-        Relationships: [];
-      };
-      region_table: {
-        Row: {
-          region: string;
-          region_id: string;
-          region_is_available: boolean;
-          region_is_disabled: boolean;
-        };
-        Insert: {
-          region: string;
-          region_id?: string;
-          region_is_available?: boolean;
-          region_is_disabled?: boolean;
-        };
-        Update: {
-          region?: string;
-          region_id?: string;
-          region_is_available?: boolean;
-          region_is_disabled?: boolean;
         };
         Relationships: [];
       };
@@ -2783,54 +2663,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "team_project_table";
             referencedColumns: ["team_project_id"];
-          }
-        ];
-      };
-      special_field_table: {
-        Row: {
-          special_field_id: string;
-          special_field_is_positive_metric: boolean;
-          special_field_is_read_only: boolean;
-          special_field_is_required: boolean;
-          special_field_name: string | null;
-          special_field_order: number;
-          special_field_section_id: string | null;
-          special_field_template_id: string | null;
-        };
-        Insert: {
-          special_field_id?: string;
-          special_field_is_positive_metric?: boolean;
-          special_field_is_read_only?: boolean;
-          special_field_is_required?: boolean;
-          special_field_name?: string | null;
-          special_field_order: number;
-          special_field_section_id?: string | null;
-          special_field_template_id?: string | null;
-        };
-        Update: {
-          special_field_id?: string;
-          special_field_is_positive_metric?: boolean;
-          special_field_is_read_only?: boolean;
-          special_field_is_required?: boolean;
-          special_field_name?: string | null;
-          special_field_order?: number;
-          special_field_section_id?: string | null;
-          special_field_template_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "special_field_table_special_field_section_id_fkey";
-            columns: ["special_field_section_id"];
-            isOneToOne: false;
-            referencedRelation: "section_table";
-            referencedColumns: ["section_id"];
-          },
-          {
-            foreignKeyName: "special_field_table_special_field_template_id_fkey";
-            columns: ["special_field_template_id"];
-            isOneToOne: false;
-            referencedRelation: "special_field_template_table";
-            referencedColumns: ["special_field_template_id"];
           }
         ];
       };
