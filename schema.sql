@@ -10016,6 +10016,51 @@ $$ LANGUAGE plv8;
 
 -- End: Handle formsly payment
 
+-- Start: Team invoice onload
+
+CREATE OR REPLACE FUNCTION team_invoice_on_load(
+  input_data JSON
+)
+RETURNS JSON AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      teamDateCreated,
+      userId
+    } = input_data;
+   
+    const currentDate = plv8.execute(`SELECT get_current_date()`)[0].get_current_date.toLocaleDateString();
+    let expirationDate = teamDateCreated;
+
+    const latestTransaction = plv8.execute(
+      `
+        SELECT team_transaction_team_expiration_date 
+        FROM team_transaction_table 
+        WHERE 
+          team_transaction_team_id = '${teamId}'
+        ORDER BY team_transaction_date_created DESC
+        LIMIT 1
+      `
+    );
+
+    const price = plv8.execute(`SELECT formsly_price FROM formsly_price_table ORDER BY formsly_price_date_created DESC LIMIT 1`)[0].formsly_price;
+
+    if (latestTransaction.length) {
+      expirationDate =
+        new Date(latestTransaction[0].team_transaction_team_expiration_date).toLocaleDateString();
+    }
+    returnData = {
+      currentDate,
+      expirationDate,
+      price
+    }
+ });
+ return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Handle formsly payment
+
 ---------- End: FUNCTIONS
 
 
