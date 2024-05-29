@@ -20,7 +20,6 @@ export const DEFAULT_ON_SCROLL_LIMIT = 10;
 export const FETCH_OPTION_LIMIT = 1000;
 export const SELECT_OPTION_LIMIT = 1000;
 export const TICKET_ADMIN_ANALYTICS_LIMIT = 10;
-export const FORMSLY_PRICE_PER_MONTH = 35000;
 
 export const READ_ONLY_TICKET_CATEGORY_LIST = [
   "Incident Report for Employees",

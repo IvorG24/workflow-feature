@@ -2,7 +2,7 @@ import { getCurrentDateString } from "@/backend/api/get";
 import useRealtimeTeamExpiration from "@/hooks/useRealtimeTeamExpiration";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { FORMSLY_PRICE_PER_MONTH, formatDate } from "@/utils/constant";
+import { formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey, pesoFormatter } from "@/utils/string";
 import {
   Alert,
@@ -31,12 +31,14 @@ type Props = {
   outstandingBalance: number;
   expirationDate: string;
   currentDate: string;
+  price: number;
 };
 
 const Payment = ({
   outstandingBalance: initialOustandingBalance,
   expirationDate: initialExpirationDate,
   currentDate,
+  price,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const { setIsLoading } = useLoadingActions();
@@ -56,6 +58,7 @@ const Payment = ({
       initialOutstandingBalance: initialOustandingBalance,
       initialExpirationDate: initialExpirationDate,
       currentDate: currentDate,
+      price: price,
     }
   );
 
@@ -89,7 +92,7 @@ const Payment = ({
       const transactionId = uuidv4();
       const currentDate = await getCurrentDateString(supabaseClient);
       const newExpiryDate = getNewExpirationDate(currentDate);
-      const quantity = Math.floor(outstandingBalance / FORMSLY_PRICE_PER_MONTH);
+      const quantity = Math.floor(outstandingBalance / price);
 
       const requestOptions = {
         method: "POST",
@@ -136,7 +139,7 @@ const Payment = ({
       const referenceNumber = uuidv4();
       const transactionId = uuidv4();
       const newExpiryDate = getNewExpirationDate(expirationDate, months);
-      const totalAmount = months * FORMSLY_PRICE_PER_MONTH;
+      const totalAmount = months * price;
 
       const requestOptions = {
         method: "POST",
@@ -160,7 +163,6 @@ const Payment = ({
       const { url: mayaUrl } = await response.json();
       await router.push(mayaUrl);
     } catch (e) {
-      console.log(e);
       notifications.show({
         title: "Error!",
         message: "Failed to advance pay for formsly subscription",
@@ -194,7 +196,7 @@ const Payment = ({
           <Group mt="xs">
             <Text>Total Price: </Text>
             <Title order={6}>
-              {pesoFormatter(`${monthsWatch * FORMSLY_PRICE_PER_MONTH}`)}.00
+              {pesoFormatter(`${monthsWatch * price}`)}.00
             </Title>
           </Group>
           <Group>
