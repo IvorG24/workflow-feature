@@ -1,4 +1,7 @@
-import { getRequestFormslyId } from "@/backend/api/get";
+import {
+  getCsiTableSpecialFieldOption,
+  getRequestFormslyId,
+} from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   MAX_FILE_SIZE,
@@ -33,11 +36,15 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import isURL from "validator/lib/isURL";
 import { RequestFormValues } from "./CreateRequestPage";
+import CurrencyFormField from "./SpecialField/CurrencyFormField";
 
 type RequestFormFieldsProps = {
   field: FieldTableRow & {
     options: OptionTableRow[];
-  } & { field_section_duplicatable_id: string | undefined };
+  } & {
+    field_section_duplicatable_id: string | undefined;
+    field_prefix?: string | null;
+  };
   sectionIndex: number;
   fieldIndex: number;
   itemFormMethods?: {
@@ -130,6 +137,7 @@ type RequestFormFieldsProps = {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
   };
+  currencyOptionList?: { value: string; label: string }[];
 };
 
 const RequestFormFields = ({
@@ -147,6 +155,7 @@ const RequestFormFields = ({
   itAssetRequestFormMethods,
   isEdit,
   isLoading,
+  currencyOptionList,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -155,13 +164,24 @@ const RequestFormFields = ({
     getValues,
     setValue,
   } = useFormContext<RequestFormValues>();
+
   const team = useActiveTeam();
+  const defaultDropdownOption = field.options.map((option) => {
+    return {
+      value: option.option_value,
+      label: option.option_value,
+    };
+  });
 
   const supabaseClient = useSupabaseClient();
   const timeInputRef = useRef<HTMLInputElement>(null);
 
   const [linkToDisplay, setLinkToDisplay] = useState<string | null>(null);
   const [prevFileLink, setPrevFileLink] = useState<string | null>(null);
+  const [currencyFieldValue, setCurrencyFieldValue] = useState<string | null>(
+    field.field_prefix ?? "PHP"
+  );
+  const [dropdownOption, setDropdownOption] = useState(defaultDropdownOption);
 
   const fieldError =
     errors.sections?.[sectionIndex]?.section_field?.[fieldIndex]?.field_response
@@ -180,6 +200,25 @@ const RequestFormFields = ({
       value: field.field_is_required,
       message: "This field is required",
     },
+  };
+
+  const getCsiTableFieldDropdownOption = async ({
+    fieldId,
+    search,
+  }: {
+    fieldId: string;
+    search?: string;
+  }) => {
+    try {
+      const data = await getCsiTableSpecialFieldOption(supabaseClient, {
+        fieldId,
+        search,
+      });
+      return data;
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
   };
 
   useEffect(() => {
@@ -228,6 +267,18 @@ const RequestFormFields = ({
       fetchFile();
     }
   }, []);
+
+  useEffect(() => {
+    if (
+      field.field_type === "NUMBER" &&
+      field.field_special_field_template_id
+    ) {
+      setValue(
+        `sections.${sectionIndex}.section_field.${fieldIndex}.field_prefix`,
+        field.field_prefix ?? "PHP"
+      );
+    }
+  }, [field]);
 
   const renderField = (field: RequestFormFieldsProps["field"]) => {
     switch (field.field_type) {
@@ -300,37 +351,85 @@ const RequestFormFields = ({
         );
 
       case "NUMBER":
-        return (
-          <Controller
-            control={control}
-            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-            render={({ field: { value, onChange } }) => (
-              <NumberInput
-                value={value as number}
-                onChange={onChange}
-                withAsterisk={field.field_is_required}
-                {...inputProps}
-                error={fieldError}
-                precision={2}
-              />
-            )}
-            rules={{
-              ...fieldRules,
-              validate: {
-                checkIfZero: (value) =>
-                  itemFormMethods &&
-                  field.field_name === "Quantity" &&
-                  value === 0
-                    ? "Quantity value is required"
-                    : true,
-                checkIfPositiveInteger: (value) =>
-                  field.field_name === "Quantity" && Number(value) < 0
-                    ? "Quantity must be a positive integer."
-                    : true,
-              },
-            }}
-          />
-        );
+        if (field.field_special_field_template_id) {
+          return (
+            <Controller
+              control={control}
+              name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+              render={({ field: { value, onChange } }) => (
+                <CurrencyFormField
+                  label={inputProps.label}
+                  description={inputProps.description ?? undefined}
+                  selectInputProps={{
+                    data: currencyOptionList ?? [],
+                    value: currencyFieldValue,
+                    onChange: (value) => {
+                      setCurrencyFieldValue(value);
+                      setValue(
+                        `sections.${sectionIndex}.section_field.${fieldIndex}.field_prefix`,
+                        value ?? ""
+                      );
+                    },
+                  }}
+                  numberInputProps={{
+                    value: value as number,
+                    onChange: onChange,
+                    withAsterisk: inputProps.required,
+                    required: inputProps.required,
+                    error: inputProps.error,
+                  }}
+                />
+              )}
+              rules={{
+                ...fieldRules,
+                validate: {
+                  checkIfZero: (value) =>
+                    itemFormMethods &&
+                    field.field_name === "Quantity" &&
+                    value === 0
+                      ? "Quantity value is required"
+                      : true,
+                  checkIfPositiveInteger: (value) =>
+                    field.field_name === "Quantity" && Number(value) < 0
+                      ? "Quantity must be a positive integer."
+                      : true,
+                },
+              }}
+            />
+          );
+        } else {
+          return (
+            <Controller
+              control={control}
+              name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+              render={({ field: { value, onChange } }) => (
+                <NumberInput
+                  value={value as number}
+                  onChange={onChange}
+                  withAsterisk={field.field_is_required}
+                  {...inputProps}
+                  error={fieldError}
+                  precision={2}
+                />
+              )}
+              rules={{
+                ...fieldRules,
+                validate: {
+                  checkIfZero: (value) =>
+                    itemFormMethods &&
+                    field.field_name === "Quantity" &&
+                    value === 0
+                      ? "Quantity value is required"
+                      : true,
+                  checkIfPositiveInteger: (value) =>
+                    field.field_name === "Quantity" && Number(value) < 0
+                      ? "Quantity must be a positive integer."
+                      : true,
+                },
+              }}
+            />
+          );
+        }
 
       case "SWITCH":
         return (
@@ -352,13 +451,6 @@ const RequestFormFields = ({
         );
 
       case "DROPDOWN":
-        const dropdownOption = field.options.map((option) => {
-          return {
-            value: option.option_value,
-            label: option.option_value,
-          };
-        });
-
         return (
           <Controller
             control={control}
@@ -576,6 +668,30 @@ const RequestFormFields = ({
                 disabled={isEdit && field.field_name === "Requesting Project"}
                 readOnly={field.field_is_read_only || isLoading}
                 rightSection={isLoading && <Loader size={16} />}
+                dropdownPosition="bottom"
+                onSearchChange={async (value) => {
+                  // fetch options for csi table special field
+                  if (
+                    field.field_special_field_template_id &&
+                    field.field_special_field_template_id ===
+                      "ff007180-4367-4cf2-b259-7804867615a7"
+                  ) {
+                    const newCsiOptionList =
+                      await getCsiTableFieldDropdownOption({
+                        fieldId: field.field_id,
+                        search: value,
+                      });
+
+                    setDropdownOption(
+                      newCsiOptionList.map((option) => {
+                        return {
+                          value: option.option_value,
+                          label: option.option_value,
+                        };
+                      })
+                    );
+                  }
+                }}
               />
             )}
             rules={{ ...fieldRules }}

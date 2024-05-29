@@ -22,6 +22,7 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { validate } from "uuid";
+import CurrencyFormField from "../CreateRequestPage/SpecialField/CurrencyFormField";
 
 type RequestReponseProps = {
   response: {
@@ -30,6 +31,8 @@ type RequestReponseProps = {
     type: FieldType;
     value: string;
     options: OptionTableRow[];
+    prefix?: string | null;
+    isSpecialField?: boolean;
   };
   isFormslyForm?: boolean;
   isAnon?: boolean;
@@ -120,14 +123,34 @@ const RequestResponse = ({
           />
         );
       case "NUMBER":
-        return (
-          <NumberInput
-            label={response.label}
-            value={parsedValue}
-            {...inputProps}
-            precision={2}
-          />
-        );
+        if (response.isSpecialField && response.prefix) {
+          return (
+            <CurrencyFormField
+              label={response.label}
+              selectInputProps={{
+                data: [`${response.prefix}`],
+                value: response.prefix,
+                variant: "filled",
+                readOnly: true,
+              }}
+              numberInputProps={{
+                value: parsedValue,
+                variant: "filled",
+                readOnly: true,
+              }}
+            />
+          );
+        } else {
+          return (
+            <NumberInput
+              label={response.label}
+              value={parsedValue}
+              {...inputProps}
+              precision={2}
+            />
+          );
+        }
+
       case "SWITCH":
         return (
           <Switch
@@ -144,7 +167,7 @@ const RequestResponse = ({
           label: option.option_value,
         }));
 
-        return isFormslyForm ? (
+        return isFormslyForm || Boolean(response.isSpecialField) ? (
           <TextInput
             label={response.label}
             value={parsedValue}

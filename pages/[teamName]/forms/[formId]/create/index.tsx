@@ -120,7 +120,9 @@ const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
       />
 
       {form.form_is_formsly_form ? formslyForm() : null}
-      {!form.form_is_formsly_form ? <CreateRequestPage form={form} /> : null}
+      {!form.form_is_formsly_form ? (
+        <CreateRequestPage form={form} formslyFormName={form.form_name} />
+      ) : null}
     </>
   );
 };

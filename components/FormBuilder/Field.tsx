@@ -36,6 +36,7 @@ import {
 import { useRef, useState } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import CurrencyFieldInput from "./CurrencyFieldInput";
 import { FormBuilderData } from "./FormBuilder";
 import Option from "./Option";
 import OptionContainer from "./OptionContainer";
@@ -50,6 +51,8 @@ type Props = {
   mode: Mode;
   isActive: boolean;
   onNotActive: () => void;
+  isSpecialField?: boolean;
+  currencyOptionList?: { value: string; label: string }[];
 };
 
 type UseStylesProps = {
@@ -111,6 +114,8 @@ const Field = ({
   mode = "edit",
   isActive,
   onNotActive,
+  isSpecialField = false,
+  currencyOptionList,
 }: Props) => {
   const timeInputRef = useRef<HTMLInputElement>(null);
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
@@ -191,7 +196,8 @@ const Field = ({
 
     if (
       options.length <= 0 &&
-      (fieldType === "DROPDOWN" || fieldType === "MULTISELECT")
+      (fieldType === "DROPDOWN" || fieldType === "MULTISELECT") &&
+      !Boolean(field.field_special_field_template_id)
     ) {
       notifications.show({
         message: "At least 1 option is required.",
@@ -279,16 +285,31 @@ const Field = ({
           />
         )}
 
-        {fieldType === "NUMBER" && (
-          <NumberInput
-            {...field}
-            label={label}
-            className={classes.previewField}
-            withAsterisk={isFieldRequired}
-            min={0}
-            max={999999999999}
-          />
-        )}
+        {fieldType === "NUMBER" &&
+          (isSpecialField ? (
+            <CurrencyFieldInput
+              field={field}
+              className={classes.previewField}
+              numberInputProps={{
+                withAsterisk: isFieldRequired,
+                m: 0,
+                sx: { flex: 1 },
+              }}
+              selectInputProps={{
+                data: currencyOptionList ?? [],
+                defaultValue: "PHP",
+              }}
+            />
+          ) : (
+            <NumberInput
+              {...field}
+              label={label}
+              className={classes.previewField}
+              withAsterisk={isFieldRequired}
+              min={0}
+              max={999999999999}
+            />
+          ))}
 
         {fieldType === "TEXTAREA" && (
           <Textarea
@@ -528,6 +549,7 @@ const Field = ({
               })
             }
             leftIcon={<IconCirclePlus height={16} />}
+            disabled={isSpecialField}
           >
             Add Option
           </Button>

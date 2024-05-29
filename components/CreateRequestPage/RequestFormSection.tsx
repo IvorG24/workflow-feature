@@ -105,6 +105,7 @@ type RequestFormSectionProps = {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onCSICodeChange: (index: number, value: string | null) => void;
   };
+  currencyOptionList?: { value: string; label: string }[];
 };
 
 const RequestFormSection = ({
@@ -122,6 +123,7 @@ const RequestFormSection = ({
   isEdit,
   loadingFieldList,
   itAssetRequestFormMethods,
+  currencyOptionList,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -156,6 +158,7 @@ const RequestFormSection = ({
                 loadingField.fieldIndex === idx
             )
           );
+
           return (
             <RequestFormFields
               key={field.field_id + section.section_id}
@@ -178,6 +181,7 @@ const RequestFormSection = ({
               itAssetRequestFormMethods={itAssetRequestFormMethods}
               isEdit={isEdit}
               isLoading={isLoading}
+              currencyOptionList={currencyOptionList}
             />
           );
         })}

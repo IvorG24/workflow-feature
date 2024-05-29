@@ -58,6 +58,9 @@ const RequestSection = ({
                       ? field.field_response.request_response
                       : "",
                     options: field.field_option ? field.field_option : [],
+                    prefix: field.field_response?.request_response_prefix,
+                    isSpecialField:
+                      field.field_special_field_template_id !== null,
                   }}
                   isFormslyForm={isFormslyForm}
                   isAnon={isAnon}

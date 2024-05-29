@@ -1,16 +1,22 @@
-import { getNonDuplictableSectionResponse } from "@/backend/api/get";
+import {
+  getNonDuplictableSectionResponse,
+  getSectionInRequestPage,
+} from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
+  OptionTableRow,
   RequestResponseTableRow,
   RequestTableRow,
+  RequestWithResponseType,
 } from "@/utils/types";
 import {
   Box,
@@ -55,6 +61,7 @@ const EditRequestPage = ({
   requestId,
   formslyFormName = "",
   requestProjectId,
+  duplicatableSectionIdList,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -68,6 +75,10 @@ const EditRequestPage = ({
 
   const [initialRequestDetails, setInitialRequestDetails] =
     useState<RequestFormValues>();
+
+  const [currencyOptionList, setCurrencyOptionList] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   const formDetails = {
     form_name: form.form_name,
@@ -185,43 +196,156 @@ const EditRequestPage = ({
     if (!team.team_id) return;
     try {
       const fetchRequestDetails = async () => {
-        // Fetch response
-        const fieldIdList: string[] = [];
+        const finalInitialRequestDetails: Section[] = [];
+        // non duplicatable section
+        let fieldIdList: string[] = [];
+        let nonDuplicatableSectionResponse: {
+          request_response_field_id: string;
+          request_response: string;
+          request_response_prefix: string | null;
+        }[] = [];
+
+        let sectionWithDuplicatableId: Section[] = [];
+
         form.form_section.forEach((section) => {
           if (section.section_is_duplicatable) return;
-          section.section_field.map((field) => {
-            fieldIdList.push(field.field_id);
-          });
-        });
-        const sectionResponse = await getNonDuplictableSectionResponse(
-          supabaseClient,
-          {
-            requestId,
-            fieldIdList,
-          }
-        );
 
-        const requestDetailsSection = form.form_section.map((section) => {
-          const sectionField = section.section_field.map((field) => {
-            const response = sectionResponse.find(
-              (response) =>
-                response.request_response_field_id === field.field_id
-            );
+          fieldIdList = section.section_field.map((field) => field.field_id);
+        });
+
+        if (fieldIdList.length > 0) {
+          nonDuplicatableSectionResponse =
+            await getNonDuplictableSectionResponse(supabaseClient, {
+              requestId,
+              fieldIdList,
+            });
+
+          const nonDuplicatableSection = form.form_section.map((section) => {
+            const sectionField = section.section_field.map((field) => {
+              const response = nonDuplicatableSectionResponse.find(
+                (response) =>
+                  response.request_response_field_id === field.field_id
+              );
+              return {
+                ...field,
+                field_response: response
+                  ? safeParse(response.request_response)
+                  : "",
+              };
+            });
+
             return {
-              ...field,
-              field_response: response
-                ? safeParse(response.request_response)
-                : "",
+              ...section,
+              section_field: sectionField,
             };
           });
-          return {
-            ...section,
-            section_field: sectionField,
-          };
-        });
 
-        replaceSection(requestDetailsSection);
-        setInitialRequestDetails({ sections: requestDetailsSection });
+          finalInitialRequestDetails.push(...nonDuplicatableSection);
+        }
+
+        // duplicatable section response
+        if (duplicatableSectionIdList.length > 0) {
+          let index = 0;
+          const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+            [];
+
+          while (1) {
+            setIsLoading(true);
+            const duplicatableSectionIdCondition = duplicatableSectionIdList
+              .slice(index, index + 5)
+              .map((dupId) => `'${dupId}'`)
+              .join(",");
+
+            const data = await getSectionInRequestPage(supabaseClient, {
+              index,
+              requestId: requestId,
+              sectionId: form.form_section[0].section_id,
+              duplicatableSectionIdCondition:
+                duplicatableSectionIdCondition.length !== 0
+                  ? duplicatableSectionIdCondition
+                  : `'${uuidv4()}'`,
+              withOption: true,
+            });
+            newFields.push(...data);
+            index += 5;
+
+            if (index > duplicatableSectionIdList.length) break;
+          }
+          const uniqueFieldIdList: string[] = [];
+          const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+            [];
+
+          newFields.forEach((field) => {
+            if (uniqueFieldIdList.includes(field.field_id)) {
+              const currentFieldIndex = combinedFieldList.findIndex(
+                (combinedField) => combinedField.field_id === field.field_id
+              );
+              combinedFieldList[currentFieldIndex].field_response.push(
+                ...field.field_response
+              );
+            } else {
+              uniqueFieldIdList.push(field.field_id);
+              combinedFieldList.push(field);
+            }
+          });
+
+          // Format section
+          const newSection = generateSectionWithDuplicateList([
+            {
+              ...form.form_section[0],
+              section_field: combinedFieldList,
+            },
+          ]);
+
+          // Input option to the sections
+          const formattedSection = newSection
+            .map((section) => {
+              const fieldList: Section["section_field"] = [];
+              section.section_field.forEach((field) => {
+                const response = field.field_response?.request_response
+                  ? safeParse(field.field_response?.request_response)
+                  : "";
+                const option: OptionTableRow[] = field.field_option ?? [];
+
+                const prefix = field.field_response?.request_response_prefix
+                  ? safeParse(field.field_response.request_response_prefix)
+                  : "";
+
+                if (response) {
+                  fieldList.push({
+                    ...field,
+                    field_response: response,
+                    field_option: option,
+                    field_prefix: prefix,
+                  });
+                }
+              });
+
+              return {
+                ...section,
+                section_field: fieldList,
+              };
+            })
+            .sort((a, b) => a.section_order - b.section_order);
+
+          // Add duplicatable section id
+          sectionWithDuplicatableId = formattedSection.map((section, index) => {
+            const dupId = index ? uuidv4() : undefined;
+            return {
+              ...section,
+              section_field: section.section_field.map((field) => {
+                return {
+                  ...field,
+                  field_section_duplicatable_id: dupId,
+                };
+              }),
+            };
+          });
+        }
+
+        finalInitialRequestDetails.push(...sectionWithDuplicatableId);
+        replaceSection(finalInitialRequestDetails);
+        setInitialRequestDetails({ sections: finalInitialRequestDetails });
         setIsLoading(false);
       };
       fetchRequestDetails();
@@ -238,6 +362,20 @@ const EditRequestPage = ({
   const handleResetRequest = () => {
     replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
   };
+
+  // fetch currency option list
+  useEffect(() => {
+    const fetchCurrencyOptionList = async () => {
+      const { data } = await supabaseClient.from("currency_table").select("*");
+      if (!data) return;
+      const optionList = data.map((item) => ({
+        value: item.currnecy_alphabetic_code,
+        label: item.currnecy_alphabetic_code,
+      }));
+      setCurrencyOptionList(optionList);
+    };
+    fetchCurrencyOptionList();
+  }, []);
 
   return (
     <Container>
@@ -266,6 +404,7 @@ const EditRequestPage = ({
                     onRemoveSection={handleRemoveSection}
                     formslyFormName={formslyFormName}
                     isEdit={!isReferenceOnly}
+                    currencyOptionList={currencyOptionList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

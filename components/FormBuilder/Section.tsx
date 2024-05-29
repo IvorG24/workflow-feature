@@ -1,11 +1,17 @@
 // todo: Create deleteField query
 // import deleteField from "@/services/field/deleteField";
 
+import { useActiveTeam } from "@/stores/useTeamStore";
+import { Database } from "@/utils/database";
 import {
   FieldWithFieldArrayId,
   SectionWithFieldArrayId,
 } from "@/utils/react-hook-form";
-import { AppType, FieldWithChoices } from "@/utils/types";
+import {
+  AppType,
+  FieldWithChoices,
+  SpecialFieldTemplateTableRow,
+} from "@/utils/types";
 import {
   ActionIcon,
   Box,
@@ -15,12 +21,17 @@ import {
   ContainerProps,
   Divider,
   Flex,
+  Modal,
+  Select,
+  Stack,
   TextInput,
   createStyles,
   useMantineTheme,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCirclePlus, IconSettings } from "@tabler/icons-react";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { v4 as uuidv4 } from "uuid";
@@ -79,8 +90,24 @@ const Section = ({
   ...props
 }: Props) => {
   const { classes } = useStyles({ mode });
+  const team = useActiveTeam();
+  const supabaseClient = createPagesBrowserClient<Database>();
   const methods = useFormContext();
   const { colorScheme } = useMantineTheme();
+
+  const [specialFieldTemplateList, setSpecialFieldTemplateList] = useState<
+    SpecialFieldTemplateTableRow[]
+  >([]);
+  const [selectedSpecialFieldTemplateId, setSelectedSpecialFieldTemplateId] =
+    useState<string | null>(null);
+  const [
+    isOpenSpecialFieldSelect,
+    { open: openSpecialFieldSelect, close: closeSpecialFieldSelect },
+  ] = useDisclosure(false);
+  const [currencyOptionList, setCurrencyOptionList] = useState<
+    { value: string; label: string }[]
+  >([]);
+
   const {
     fields: fields,
     append: appendField,
@@ -95,6 +122,34 @@ const Section = ({
     defaultValue: section,
   });
 
+  const handleSelectSpecialField = (specialFieldId: string | null) => {
+    if (!specialFieldId) return;
+    const fieldId = uuidv4();
+    const specialFieldTemplate = specialFieldTemplateList.find(
+      (field) => field.special_field_template_id === specialFieldId
+    );
+
+    if (!specialFieldTemplate) return;
+
+    const specialField = {
+      field_id: fieldId,
+      field_name: specialFieldTemplate.special_field_template_name,
+      field_type: specialFieldTemplate.special_field_template_type,
+      field_description:
+        specialFieldTemplate.special_field_template_description,
+      field_section_id: section.section_id,
+      field_is_required: false,
+      field_is_positive_metric: true,
+      field_order: fields.length + 1,
+      field_special_field_template_id: specialFieldId,
+    };
+
+    appendField(specialField);
+    onSetActiveField(fieldId);
+    setSelectedSpecialFieldTemplateId(null);
+    closeSpecialFieldSelect();
+  };
+
   // this is to update the field order when a field is removed
   useDeepCompareEffect(() => {
     fields.forEach((field, index) => {
@@ -104,6 +159,30 @@ const Section = ({
       );
     });
   }, [watchedData]);
+
+  useEffect(() => {
+    const fetchSpecialFieldList = async () => {
+      const { data } = await supabaseClient
+        .from("special_field_template_table")
+        .select("*");
+      setSpecialFieldTemplateList(data ?? []);
+    };
+    fetchSpecialFieldList();
+  }, [team]);
+
+  // fetch currency option list
+  useEffect(() => {
+    const fetchCurrencyOptionList = async () => {
+      const { data } = await supabaseClient.from("currency_table").select("*");
+      if (!data) return;
+      const optionList = data.map((item) => ({
+        value: item.currnecy_alphabetic_code,
+        label: item.currnecy_alphabetic_code,
+      }));
+      setCurrencyOptionList(optionList);
+    };
+    fetchCurrencyOptionList();
+  }, []);
 
   return (
     <Container
@@ -131,6 +210,8 @@ const Section = ({
           const field_id = methods.getValues(
             `sections.${sectionIndex}.fields.${fieldIndex}.field_id`
           );
+          const fieldWithType = field as FieldWithFieldArrayId;
+
           return (
             <Flex
               align="center"
@@ -143,12 +224,16 @@ const Section = ({
                 <Field
                   formType={formType}
                   fieldIndex={fieldIndex}
-                  field={field as FieldWithFieldArrayId}
+                  field={fieldWithType}
                   sectionIndex={sectionIndex}
                   onDelete={() => removeField(fieldIndex)}
                   mode={mode}
                   isActive={activeField === field_id}
                   onNotActive={() => onSetActiveField(null)}
+                  isSpecialField={
+                    fieldWithType.field_special_field_template_id !== null
+                  }
+                  currencyOptionList={currencyOptionList}
                 />
               </Box>
               {activeField === null && (
@@ -173,27 +258,43 @@ const Section = ({
 
       {mode === "edit" && (
         <>
-          <Button
-            onClick={() => {
-              const fieldId = uuidv4();
-              appendField({
-                field_id: fieldId,
-                field_name: "",
-                field_type: formType === "REQUEST" ? "TEXT" : "SLIDER",
-                field_section_id: section.section_id,
-                field_is_required: false,
-                field_is_positive_metric: true,
-                field_order: fields.length + 1,
-              });
-              onSetActiveField(fieldId);
-            }}
-            disabled={activeField !== null}
-            size="xs"
-            mt={fields.length > 0 ? 32 : 64}
-            leftIcon={<IconCirclePlus height={16} />}
-          >
-            Add a Field
-          </Button>
+          <Flex gap="sm" w="100%">
+            <Button
+              onClick={() => {
+                const fieldId = uuidv4();
+                appendField({
+                  field_id: fieldId,
+                  field_name: "",
+                  field_type: formType === "REQUEST" ? "TEXT" : "SLIDER",
+                  field_section_id: section.section_id,
+                  field_is_required: false,
+                  field_is_positive_metric: true,
+                  field_order: fields.length + 1,
+                });
+                onSetActiveField(fieldId);
+              }}
+              disabled={activeField !== null}
+              size="sm"
+              mt={fields.length > 0 ? 32 : 64}
+              leftIcon={<IconCirclePlus height={16} />}
+              fullWidth
+            >
+              Add new field
+            </Button>
+            {specialFieldTemplateList.length > 0 && (
+              <Button
+                onClick={openSpecialFieldSelect}
+                disabled={activeField !== null}
+                size="sm"
+                mt={fields.length > 0 ? 32 : 64}
+                leftIcon={<IconCirclePlus height={16} />}
+                fullWidth
+                variant="outline"
+              >
+                Add specialized field
+              </Button>
+            )}
+          </Flex>
 
           <Divider mt={24} />
 
@@ -224,6 +325,37 @@ const Section = ({
             </Button>
           </Flex>
         </>
+      )}
+
+      {specialFieldTemplateList.length > 0 && (
+        <Modal
+          opened={isOpenSpecialFieldSelect}
+          onClose={closeSpecialFieldSelect}
+          title="Special Field List"
+          centered
+        >
+          <Stack>
+            <Select
+              label="Select a special field"
+              data={specialFieldTemplateList.map((field) => ({
+                value: field.special_field_template_id,
+                label: field.special_field_template_name,
+              }))}
+              placeholder="Special Field"
+              value={selectedSpecialFieldTemplateId}
+              onChange={setSelectedSpecialFieldTemplateId}
+              withinPortal={true}
+            />
+            <Button
+              onClick={() =>
+                handleSelectSpecialField(selectedSpecialFieldTemplateId)
+              }
+              disabled={!selectedSpecialFieldTemplateId}
+            >
+              Submit
+            </Button>
+          </Stack>
+        </Modal>
       )}
     </Container>
   );
