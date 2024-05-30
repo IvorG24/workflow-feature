@@ -7217,7 +7217,6 @@ export const getCsiTableSpecialFieldOption = async (
   const { data, error } = await query;
 
   if (error || !data) {
-    console.log(error);
     throw new Error("Failed to fetch csi code table");
   }
 

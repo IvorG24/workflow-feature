@@ -178,7 +178,6 @@ const BuildFormPage = ({ teamMemberList, formId, groupList }: Props) => {
         }`
       );
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
