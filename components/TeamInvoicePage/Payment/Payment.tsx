@@ -98,6 +98,7 @@ const Payment = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "formsly_transaction",
           totalAmount: outstandingBalance,
           url,
           referenceNumber,
@@ -110,7 +111,7 @@ const Payment = ({
         }),
       };
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL}/api/maya/formsly-create-maya-checkout-transaction`,
+        `${process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL}/api/maya/formsly-transaction`,
         requestOptions
       );
       const { url: mayaUrl } = await response.json();
@@ -145,6 +146,7 @@ const Payment = ({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          action: "formsly_transaction",
           totalAmount,
           url,
           referenceNumber,
@@ -157,7 +159,7 @@ const Payment = ({
         }),
       };
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL}/api/maya/formsly-create-maya-checkout-transaction`,
+        `${process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL}/api/maya/formsly-transaction`,
         requestOptions
       );
       const { url: mayaUrl } = await response.json();
