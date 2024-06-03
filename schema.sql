@@ -206,6 +206,13 @@ CREATE TABLE section_table (
 
   section_form_id UUID REFERENCES form_table(form_id) NOT NULL
 );
+CREATE TABLE special_field_template_table (
+  special_field_template_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  special_field_template_name VARCHAR(4000) NOT NULL,
+  special_field_template_description VARCHAR(4000),
+  special_field_template_type VARCHAR(4000) NOT NULL
+);
+
 CREATE TABLE field_table (
   field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   field_name VARCHAR(4000) NOT NULL,
@@ -1025,13 +1032,6 @@ CREATE TABLE scic_employee_table (
     scic_employee_date_updated TIMESTAMPTZ
 );
 
-CREATE TABLE special_field_template_table (
-  special_field_template_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  special_field_template_name VARCHAR(4000) NOT NULL,
-  special_field_template_description VARCHAR(4000),
-  special_field_template_type VARCHAR(4000) NOT NULL
-);
-
 CREATE TABLE currency_table (
   currency_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   currency_entity VARCHAR(4000) NOT NULL,
@@ -1717,7 +1717,7 @@ RETURNS JSON AS $$
     const itemDescriptionInput = [];
     const fieldInput= [];
 
-    itemDescription.forEach((description) => {
+    itemDescription.forEach((description, index) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
       const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
@@ -1733,7 +1733,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description.description,
         field_type: "DROPDOWN",
-        field_order: 15,
+        field_order: index + 15,
         field_section_id: '0672ef7d-849d-4bc7-81b1-7a5eefcc1451',
         field_is_required: true,
       });
@@ -1831,7 +1831,7 @@ RETURNS JSON AS $$
         field_id: fieldId,
         field_name: description.description,
         field_type: "DROPDOWN",
-        field_order: 15,
+        field_order: description.order + 15,
         field_section_id: section_id,
         field_is_required: true,
       });
@@ -1865,7 +1865,8 @@ RETURNS JSON AS $$
       plv8.execute(
         `
           UPDATE field_table SET 
-            field_name = '${description.item_description_label}'
+            field_name = '${description.item_description_label}',
+            field_order = ${description.item_description_order + 15}
           WHERE field_id = '${description.item_description_field_id}'
         `
       );
