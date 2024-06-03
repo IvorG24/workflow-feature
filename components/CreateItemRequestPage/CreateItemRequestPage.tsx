@@ -203,7 +203,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
       const toBeCheckedSections = data.sections.slice(1);
       const newSections: RequestFormValues["sections"] = [];
       toBeCheckedSections.forEach((section) => {
-        // if new section if empty
+        // if new section is empty
         if (newSections.length === 0) {
           newSections.push(section);
         } else {
@@ -292,7 +292,7 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

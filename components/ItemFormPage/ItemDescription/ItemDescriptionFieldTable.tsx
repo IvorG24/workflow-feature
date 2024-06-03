@@ -64,6 +64,28 @@ const ItemDescriptionFieldTable = ({
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
 
+  const sortRecords = (arr: ItemDescriptionFieldTableRow[]) => {
+    return arr.sort((a, b) => {
+      if (
+        a["item_description_field_value"] === "None" ||
+        a["item_description_field_value"] === "Any"
+      )
+        return -1;
+      if (
+        b["item_description_field_value"] === "None" ||
+        b["item_description_field_value"] === "Any"
+      )
+        return 1;
+      if (a["item_description_field_value"] < b["item_description_field_value"])
+        return -1;
+      if (a["item_description_field_value"] > b["item_description_field_value"])
+        return 1;
+      return 0;
+    });
+  };
+
+  const sortedRecords = sortRecords(records);
+
   const headerCheckboxKey = generateRandomId();
 
   useEffect(() => {
@@ -253,7 +275,7 @@ const ItemDescriptionFieldTable = ({
         c="dimmed"
         minHeight={390}
         fetching={isLoading}
-        records={records}
+        records={sortedRecords}
         columns={[
           {
             accessor: "checkbox",
