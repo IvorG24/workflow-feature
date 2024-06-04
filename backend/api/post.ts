@@ -2,7 +2,11 @@ import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestP
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/TeamGroups/GroupMembers";
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
-import { formslyPremadeFormsData } from "@/utils/constant";
+import {
+  APP_SOURCE_ID,
+  BASE_URL,
+  formslyPremadeFormsData,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatJiraItemUserTableData } from "@/utils/functions";
 import { escapeQuotes } from "@/utils/string";
@@ -254,7 +258,7 @@ export const sendResetPasswordEmail = async (
   email: string
 ) => {
   await supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+    redirectTo: `${BASE_URL}/reset-password`,
   });
 };
 
@@ -1908,4 +1912,21 @@ export const assignJiraFormslyOrganization = async (
   if (error) throw error;
 
   return data;
+};
+
+// Ecrypt app source id
+export const encryptAppSourceId = async () => {
+  const response = await fetch("/api/jwt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "encrypt",
+      value: APP_SOURCE_ID,
+    }),
+  });
+
+  if (response.status !== 200) throw new Error("Encryption Error");
+  const { data } = await response.json();
+
+  return data as string;
 };

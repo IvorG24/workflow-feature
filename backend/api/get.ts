@@ -94,6 +94,7 @@ import {
   getTransactionList,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
+import { encryptAppSourceId } from "./post";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
@@ -7179,6 +7180,8 @@ export const fetchFormslyInvoiceHistoryList = async (
 ) => {
   const { userId, page, limit } = params;
 
+  const encryptedAppSourceId = await encryptAppSourceId();
+
   const start = (page - 1) * limit;
   const { data, count, error } = await getTransactionList({
     supabaseClient,
@@ -7188,7 +7191,7 @@ export const fetchFormslyInvoiceHistoryList = async (
     },
     filter: {
       appSourceUserId: userId,
-      appSource: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
+      appSource: encryptedAppSourceId,
     },
   });
   if (error) throw error;

@@ -1,5 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { TicketListType } from "@/utils/types";
@@ -72,7 +72,7 @@ const TicketListItem = ({ ticket }: Props) => {
             </Anchor>
           </Text>
           <CopyButton
-            value={`${process.env.NEXT_PUBLIC_SITE_URL}/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`}
+            value={`${BASE_URL}/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`}
           >
             {({ copied, copy }) => (
               <Tooltip

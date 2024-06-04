@@ -1,6 +1,6 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import {
@@ -88,9 +88,7 @@ const RequestItemRow = ({ request, teamMemberList }: Props) => {
           </Text>
 
           <CopyButton
-            value={`${
-              process.env.NEXT_PUBLIC_SITE_URL
-            }/${formatTeamNameToUrlKey(
+            value={`${BASE_URL}/${formatTeamNameToUrlKey(
               activeTeam.team_name ?? ""
             )}/requests/${requestId}`}
           >

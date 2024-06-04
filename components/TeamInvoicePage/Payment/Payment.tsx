@@ -1,8 +1,9 @@
 import { getCurrentDateString } from "@/backend/api/get";
+import { encryptAppSourceId } from "@/backend/api/post";
 import useRealtimeTeamExpiration from "@/hooks/useRealtimeTeamExpiration";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, ONE_OFFICE_URL, formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey, pesoFormatter } from "@/utils/string";
 import {
   Alert,
@@ -47,7 +48,7 @@ const Payment = ({
 
   const [opened, { open, close }] = useDisclosure(false);
 
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/${formatTeamNameToUrlKey(
+  const url = `${BASE_URL}/${formatTeamNameToUrlKey(
     activeTeam.team_name ?? ""
   )}/invoice?`;
 
@@ -82,17 +83,13 @@ const Payment = ({
     try {
       setIsLoading(true);
 
-      if (
-        !process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID ||
-        !process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL
-      )
-        throw new Error("Env variables are undefined");
-
       const referenceNumber = uuidv4();
       const transactionId = uuidv4();
       const currentDate = await getCurrentDateString(supabaseClient);
       const newExpiryDate = getNewExpirationDate(currentDate);
       const quantity = Math.floor(outstandingBalance / price);
+
+      const encryptedAppSourceId = await encryptAppSourceId();
 
       const requestOptions = {
         method: "POST",
@@ -106,12 +103,12 @@ const Payment = ({
           transactionId,
           newExpiryDate,
           userId: activeTeam.team_user_id,
-          appSourceId: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
+          appSourceId: encryptedAppSourceId,
           quantity,
         }),
       };
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL}/api/maya/formsly-transaction`,
+        `${ONE_OFFICE_URL}/api/maya/formsly-transaction`,
         requestOptions
       );
       const { url: mayaUrl } = await response.json();
@@ -131,16 +128,12 @@ const Payment = ({
     try {
       setIsLoading(true);
 
-      if (
-        !process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID ||
-        !process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL
-      )
-        throw new Error("Env variables are undefined");
-
       const referenceNumber = uuidv4();
       const transactionId = uuidv4();
       const newExpiryDate = getNewExpirationDate(expirationDate, months);
       const totalAmount = months * price;
+
+      const encryptedAppSourceId = await encryptAppSourceId();
 
       const requestOptions = {
         method: "POST",
@@ -154,12 +147,12 @@ const Payment = ({
           transactionId,
           newExpiryDate,
           userId: activeTeam.team_user_id,
-          appSourceId: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
+          appSourceId: encryptedAppSourceId,
           quantity: months,
         }),
       };
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_ONEOFFICE_SITE_URL}/api/maya/formsly-transaction`,
+        `${ONE_OFFICE_URL}/api/maya/formsly-transaction`,
         requestOptions
       );
       const { url: mayaUrl } = await response.json();
