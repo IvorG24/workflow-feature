@@ -1481,6 +1481,8 @@ RETURNS JSON AS $$
         endId = `RFP`;
       } else if(formName === 'IT Asset'){
         endId = `ITA`;
+      } else if(formName === 'Liquidation/Reimbursement'){
+        endId = `LR`;
       } else {
         endId = ``;
       }
@@ -5129,6 +5131,71 @@ RETURNS JSON as $$
         }
         return;
       } else if (form.form_name === "IT Asset") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+                team_project_table.team_project_id,
+                team_project_table.team_project_name
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_department_table WHERE team_department_is_disabled=FALSE`);
+
+        const departmentOptions = departments.map((department, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: department.team_department_id,
+            option_order: index,
+            option_value: department.team_department_name
+          }
+        });
+
+        const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
+          if (field.field_name === 'Requesting Project') {
+            return {
+              ...field,
+              field_option: projectOptions
+            }
+          } else if (field.field_name === 'Department') {
+            return {
+              ...field,
+              field_option: departmentOptions,
+            }
+          } else {
+            return field;
+          }
+        })
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: firstSectionFieldList,
+              },
+              ...form.form_section.slice(1)
+            ],
+          },
+          projectOptions
+        }
+        return;
+      } else if (form.form_name === "Liquidation/Reimbursement") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -8918,7 +8985,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    const isWithConditionalFields = requestData.form_is_formsly_form && ["Item", "Subcon", "PED Item", "IT Asset"].includes(requestData.form_name);
+    const isWithConditionalFields = requestData.form_is_formsly_form && ["Item", "Subcon", "PED Item", "IT Asset", "Liquidation/Reimbursement"].includes(requestData.form_name);
 
     const sectionData = plv8.execute(
       `

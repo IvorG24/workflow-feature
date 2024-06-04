@@ -138,6 +138,10 @@ type RequestFormFieldsProps = {
     onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
+  liquidationReimbursementFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onRequestTypeChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -156,6 +160,7 @@ const RequestFormFields = ({
   isEdit,
   isLoading,
   currencyOptionList,
+  liquidationReimbursementFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -507,6 +512,9 @@ const RequestFormFields = ({
                       pedItemFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
                       itAssetRequestFormMethods?.onProjectNameChange(value);
+                      liquidationReimbursementFormMethods?.onProjectNameChange(
+                        value
+                      );
                       break;
                     case "CSI Division":
                       servicesFormMethods?.onCSIDivisionChange(
@@ -582,6 +590,9 @@ const RequestFormFields = ({
                       paymentRequestFormMethods?.onRequestTypeChange(
                         value,
                         sectionIndex
+                      );
+                      liquidationReimbursementFormMethods?.onRequestTypeChange(
+                        value
                       );
                       break;
                   }

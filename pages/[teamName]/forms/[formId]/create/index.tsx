@@ -1,5 +1,6 @@
 import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
+import CreateLiquidationReimbursementRequestPage from "@/components/CreateLiquidationReimbursementRequestPage/CreateLiquidationReimbursementRequestPage";
 import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
 import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
@@ -105,6 +106,13 @@ const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
       case "IT Asset":
         return (
           <CreateITAssetRequestPage
+            form={form}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Liquidation/Reimbursement":
+        return (
+          <CreateLiquidationReimbursementRequestPage
             form={form}
             projectOptions={projectOptions}
           />

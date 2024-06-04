@@ -106,6 +106,10 @@ type RequestFormSectionProps = {
     onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
+  liquidationReimbursementFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onRequestTypeChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -124,6 +128,7 @@ const RequestFormSection = ({
   loadingFieldList,
   itAssetRequestFormMethods,
   currencyOptionList,
+  liquidationReimbursementFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -182,6 +187,9 @@ const RequestFormSection = ({
               isEdit={isEdit}
               isLoading={isLoading}
               currencyOptionList={currencyOptionList}
+              liquidationReimbursementFormMethods={
+                liquidationReimbursementFormMethods
+              }
             />
           );
         })}
