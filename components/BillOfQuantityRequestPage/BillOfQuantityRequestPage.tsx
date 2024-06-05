@@ -39,14 +39,13 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import RequestCommentList from "../RequestPage/RequestCommentList";
-import LiquidationReimbursementSummary from "../SummarySection/LiquidationReimbursementSummary";
 
 type Props = {
   request: RequestWithResponseType;
   duplicatableSectionIdList: string[];
 };
 
-const LiquidationReimbursementRequestPage = ({
+const BillOfQuantityRequestPage = ({
   request,
   duplicatableSectionIdList,
 }: Props) => {
@@ -309,13 +308,10 @@ const LiquidationReimbursementRequestPage = ({
         const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
 
-        const sortedDuplicatableSectionIdList = duplicatableSectionIdList
-          .sort()
-          .reverse();
         let index = 0;
         while (1) {
           setIsLoading(true);
-          const duplicatableSectionIdCondition = sortedDuplicatableSectionIdList
+          const duplicatableSectionIdCondition = duplicatableSectionIdList
             .slice(index, index + 5)
             .map((dupId) => `'${dupId}'`)
             .join(",");
@@ -367,7 +363,7 @@ const LiquidationReimbursementRequestPage = ({
                 ?.request_response_duplicatable_section_id;
 
             if (sectionDuplicatableId) {
-              const sectionIndex = sortedDuplicatableSectionIdList.findIndex(
+              const sectionIndex = duplicatableSectionIdList.findIndex(
                 (id) => id === sectionDuplicatableId
               );
 
@@ -375,14 +371,15 @@ const LiquidationReimbursementRequestPage = ({
             } else {
               sectionOrder = 0;
             }
+
             return {
               ...section,
               section_order: sectionOrder,
             };
           })
           .sort((a, b) => a.section_order - b.section_order);
-
         const newFormSection = [...formSection, ...formattedSection];
+
         setFormSection(newFormSection);
         setIsLoading(false);
       };
@@ -456,8 +453,8 @@ const LiquidationReimbursementRequestPage = ({
           </Accordion.Item>
         </Accordion>
 
-        {/* todo: add LiquidationReimbursement Summary */}
-        {formSection.length > 3 && (
+        {/* todo: add BOQ Summary */}
+        {/* {formSection.length > 3 && (
           <LiquidationReimbursementSummary
             summaryData={formSection
               .slice(1)
@@ -471,7 +468,7 @@ const LiquidationReimbursementRequestPage = ({
                   : 0
               )}
           />
-        )}
+        )} */}
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
@@ -509,4 +506,4 @@ const LiquidationReimbursementRequestPage = ({
   );
 };
 
-export default LiquidationReimbursementRequestPage;
+export default BillOfQuantityRequestPage;

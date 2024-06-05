@@ -288,16 +288,17 @@ const RequestFormFields = ({
           <Controller
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-            render={({ field: { value } }) => {
+            render={({ field: { value, onChange } }) => {
               return (
                 <Flex w="100%" align="flex-end" gap="xs">
                   <TextInput
                     {...inputProps}
                     error={fieldError}
                     withAsterisk={field.field_is_required}
-                    value={`${linkToDisplay || value}`}
+                    value={`${linkToDisplay || value || ""}`}
                     icon={<IconLink size={16} />}
                     style={{ flex: 1 }}
+                    onChange={onChange}
                   />
                   <ActionIcon
                     mb={4}
@@ -316,7 +317,18 @@ const RequestFormFields = ({
                 </Flex>
               );
             }}
-            rules={{ ...fieldRules }}
+            rules={{
+              ...fieldRules,
+              validate: {
+                isUrl: (value) => {
+                  if (linkToDisplay) {
+                    return true;
+                  }
+
+                  return isURL(`${value}`) || "Link is invalid";
+                },
+              },
+            }}
           />
         );
       case "TEXT":

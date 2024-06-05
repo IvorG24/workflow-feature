@@ -1,6 +1,7 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
 import EditITAssetRequestPage from "@/components/EditITAssetRequestPage/EditITAssetRequestPage";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
+import EditLiquidReimbursementRequestPage from "@/components/EditLiquidReimbursementRequestPage/EditLiquidReimbursementRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
@@ -120,6 +121,16 @@ const Page = ({
       case "IT Asset":
         return (
           <EditITAssetRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
+
+      case "Liquidation Reimbursement":
+        return (
+          <EditLiquidReimbursementRequestPage
             form={form}
             projectOptions={projectOptions}
             duplicatableSectionIdList={duplicatableSectionIdList}

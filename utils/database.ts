@@ -750,6 +750,24 @@ export type Database = {
           }
         ];
       };
+      expense_type_table: {
+        Row: {
+          expense_type_id: string;
+          expense_type_is_disabled: boolean;
+          expense_type_label: string;
+        };
+        Insert: {
+          expense_type_id?: string;
+          expense_type_is_disabled?: boolean;
+          expense_type_label: string;
+        };
+        Update: {
+          expense_type_id?: string;
+          expense_type_is_disabled?: boolean;
+          expense_type_label?: string;
+        };
+        Relationships: [];
+      };
       field_table: {
         Row: {
           field_description: string | null;

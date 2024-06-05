@@ -1,3 +1,4 @@
+import CreateBillOfQuantityRequestPage from "@/components/CreateBillOfQuantityRequestPage/CreateBillOfQuantityRequestPage";
 import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateLiquidationReimbursementRequestPage from "@/components/CreateLiquidationReimbursementRequestPage/CreateLiquidationReimbursementRequestPage";
@@ -10,18 +11,26 @@ import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage"
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { FormWithResponseType, OptionTableRow } from "@/utils/types";
+import {
+  ConnectedRequestFormProps,
+  FormWithResponseType,
+  OptionTableRow,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
+      const connectedRequestFormslyId = context.query.lrf;
       const { data, error } = await supabaseClient.rpc(
         "create_request_page_on_load",
         {
           input_data: {
             formId: context.query.formId,
             userId: user.id,
+            connectedRequestFormslyId: connectedRequestFormslyId
+              ? connectedRequestFormslyId
+              : null,
           },
         }
       );
@@ -49,9 +58,15 @@ type Props = {
   requestProjectId: string;
   requestingProject?: string;
   categoryOptions?: OptionTableRow[];
+  connectedRequest?: ConnectedRequestFormProps;
 };
 
-const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
+const Page = ({
+  form,
+  projectOptions = [],
+  categoryOptions = [],
+  connectedRequest,
+}: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Item":
@@ -110,11 +125,19 @@ const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
             projectOptions={projectOptions}
           />
         );
-      case "Liquidation/Reimbursement":
+      case "Liquidation Reimbursement":
         return (
           <CreateLiquidationReimbursementRequestPage
             form={form}
             projectOptions={projectOptions}
+          />
+        );
+
+      case "Bill of Quantity":
+        return (
+          <CreateBillOfQuantityRequestPage
+            form={form}
+            connectedRequest={connectedRequest}
           />
         );
     }

@@ -180,30 +180,35 @@ const CreateLiquidationReimbursementRequestPage = ({
   const handleRequestTypeChange = async (value: string | null) => {
     try {
       const currentRequestDetails = getValues(`sections.${0}`);
-      const liquidationAdditionalFieldsExists =
-        currentRequestDetails.section_field.find(
-          (field) => field.field_name === "Working Advances"
-        );
+      const sectionFields = currentRequestDetails.section_field;
+      const conditionalFieldExists = sectionFields.some(
+        (field) => field.field_name === "Working Advances"
+      );
+      const valueIsLiquidationType = value
+        ?.toLowerCase()
+        .includes("liquidation");
 
-      if (
-        value?.toLowerCase().includes("liquidation") &&
-        !liquidationAdditionalFieldsExists
-      ) {
+      const addConditionalFields =
+        valueIsLiquidationType && !conditionalFieldExists;
+      const removeConditionalFields =
+        !valueIsLiquidationType && conditionalFieldExists;
+
+      if (addConditionalFields) {
         const liquidationAdditionalFields =
           form.form_section[0].section_field.slice(5, 7);
         updateSection(0, {
           ...currentRequestDetails,
-          section_field: [
-            ...currentRequestDetails.section_field,
-            ...liquidationAdditionalFields,
-          ],
+          section_field: [...sectionFields, ...liquidationAdditionalFields],
         });
-      } else if (liquidationAdditionalFieldsExists) {
-        console.log(liquidationAdditionalFieldsExists);
+        return;
+      }
+
+      if (removeConditionalFields) {
         updateSection(0, {
           ...currentRequestDetails,
-          section_field: currentRequestDetails.section_field.slice(0, 5),
+          section_field: sectionFields.slice(0, 5),
         });
+        return;
       }
     } catch (e) {
       setValue(`sections.0.section_field.5.field_response`, "");
