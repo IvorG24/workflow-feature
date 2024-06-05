@@ -2,6 +2,7 @@ import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
+  APP_SOURCE_ID,
   FETCH_OPTION_LIMIT,
   FORMSLY_FORM_ORDER,
   ITEM_FIELD_ID_LIST,
@@ -94,7 +95,6 @@ import {
   getTransactionList,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
-import { encryptAppSourceId } from "./post";
 
 const REQUEST_STATUS_LIST = ["PENDING", "APPROVED", "REJECTED"];
 
@@ -7180,8 +7180,6 @@ export const fetchFormslyInvoiceHistoryList = async (
 ) => {
   const { userId, page, limit } = params;
 
-  const encryptedAppSourceId = await encryptAppSourceId();
-
   const start = (page - 1) * limit;
   const { data, count, error } = await getTransactionList({
     supabaseClient,
@@ -7191,7 +7189,7 @@ export const fetchFormslyInvoiceHistoryList = async (
     },
     filter: {
       appSourceUserId: userId,
-      appSource: encryptedAppSourceId,
+      appSource: APP_SOURCE_ID,
     },
   });
   if (error) throw error;
