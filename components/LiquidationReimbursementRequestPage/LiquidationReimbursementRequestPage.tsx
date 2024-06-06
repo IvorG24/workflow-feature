@@ -1,5 +1,9 @@
 import { deleteRequest } from "@/backend/api/delete";
-import { getRequestComment, getSectionInRequestPage } from "@/backend/api/get";
+import {
+  getExistingBOQRequest,
+  getRequestComment,
+  getSectionInRequestPage,
+} from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
@@ -24,17 +28,21 @@ import {
 } from "@/utils/types";
 import {
   Accordion,
+  Alert,
   Button,
   Container,
   Flex,
+  Group,
   Paper,
   Stack,
   Text,
+  ThemeIcon,
   Title,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -69,9 +77,17 @@ const LiquidationReimbursementRequestPage = ({
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
+  const requestJira = {
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  };
+  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [formSection, setFormSection] = useState(
     generateSectionWithDuplicateList([request.request_form.form_section[0]])
   );
+  const [boqRequestRedirectUrl, setBOQRequestRedirectUrl] = useState<
+    string | null
+  >(null);
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -239,8 +255,26 @@ const LiquidationReimbursementRequestPage = ({
     }
   };
 
+  const openRedirectToBOQRequestModal = (redirectUrl: string) =>
+    modals.openConfirmModal({
+      title: <Text weight={600}>Bill of Quantity request already exists.</Text>,
+      children: (
+        <Text size="sm">
+          Would you like to be redirected to the Bill of Quantity request page?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      centered: true,
+      onConfirm: () => router.push(redirectUrl),
+    });
+
   const handleCreateBOQRequest = async () => {
     try {
+      if (boqRequestRedirectUrl) {
+        openRedirectToBOQRequestModal(boqRequestRedirectUrl);
+        return;
+      }
+
       const boqForm = forms.find(
         (form) => form.form_name === "Bill of Quantity"
       );
@@ -257,6 +291,7 @@ const LiquidationReimbursementRequestPage = ({
         }/create?lrf=${request.request_formsly_id}`
       );
     } catch (error) {
+      console.log(error);
       notifications.show({
         message:
           "Failed to create Bill of Quantity request. Please contact the IT team.",
@@ -404,6 +439,50 @@ const LiquidationReimbursementRequestPage = ({
     }
   }, []);
 
+  useEffect(() => {
+    const fetchBOQRequest = async () => {
+      // check if boq request exists
+      const boqRequest = await getExistingBOQRequest(
+        supabaseClient,
+        request.request_id
+      );
+
+      if (boqRequest) {
+        const { request_formsly_id_prefix, request_formsly_id_serial } =
+          boqRequest;
+        const redirectUrl = `/${formatTeamNameToUrlKey(
+          activeTeam.team_name
+        )}/requests/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
+        setBOQRequestRedirectUrl(redirectUrl);
+      }
+    };
+    if (requestStatus === "APPROVED" && activeTeam.team_name) {
+      fetchBOQRequest();
+    }
+  }, [requestStatus, activeTeam.team_name]);
+
+  useEffect(() => {
+    const fetchJiraTicketStatus = async (requestJiraId: string) => {
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketStatus =
+          jiraTicket.fields["customfield_10010"].currentStatus.status;
+
+        setJiraTicketStatus(jiraTicketStatus);
+      } else {
+        setJiraTicketStatus("Ticket Not Found");
+      }
+    };
+
+    if (requestJira.id) {
+      fetchJiraTicketStatus(requestJira.id);
+    }
+  }, [requestJira.id]);
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -420,8 +499,33 @@ const LiquidationReimbursementRequestPage = ({
           requestor={requestor}
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus}
+          requestJira={requestJira}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
+          jiraTicketStatus={jiraTicketStatus}
         />
+
+        {/* connected BOQ request */}
+        {boqRequestRedirectUrl && (
+          <Alert variant="light" color="blue">
+            <Flex align="center" gap="sm">
+              <Group spacing={4}>
+                <ThemeIcon variant="light">
+                  <IconAlertCircle size={16} />
+                </ThemeIcon>
+                <Text color="blue" weight={600}>
+                  A BOQ request has been created for this request.
+                </Text>
+              </Group>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => router.push(boqRequestRedirectUrl)}
+              >
+                View BOQ
+              </Button>
+            </Flex>
+          </Alert>
+        )}
 
         <RequestSection
           section={formSection[0]}
@@ -456,8 +560,7 @@ const LiquidationReimbursementRequestPage = ({
           </Accordion.Item>
         </Accordion>
 
-        {/* todo: add LiquidationReimbursement Summary */}
-        {formSection.length > 3 && (
+        {formSection.length > 0 && (
           <LiquidationReimbursementSummary
             summaryData={formSection
               .slice(1)

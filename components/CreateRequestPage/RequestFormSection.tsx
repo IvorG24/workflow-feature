@@ -147,6 +147,7 @@ const RequestFormSection = ({
               }
               variant="light"
               color="red"
+              disabled={onRemoveSection === undefined}
             >
               <IconTrash size={16} />
             </ActionIcon>

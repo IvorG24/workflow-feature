@@ -5278,8 +5278,9 @@ RETURNS JSON as $$
           projectOptions
         }
         return;
-      } else if (form.form_name === "Bill of Quantity" && connectedRequestFormslyId) {
-        const splitFormslyId = connectedRequestFormslyId.split('-');
+      } else if (form.form_name === "Bill of Quantity") {
+        if (connectedRequestFormslyId) {
+          const splitFormslyId = connectedRequestFormslyId.split('-');
         const connectedRequest = plv8.execute(`
           SELECT 
             request_id, 
@@ -5323,6 +5324,11 @@ RETURNS JSON as $$
             duplicatableSectionIdList
           }
         };
+        } else {
+          returnData = {
+            form
+          }
+        }
       }
     }else {
       returnData = {

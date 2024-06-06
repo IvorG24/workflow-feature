@@ -1172,3 +1172,25 @@ export const updateJiraFormslyOrganization = async (
 
   return data;
 };
+
+// add jira id and link to request
+export const updateRequestJiraId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    jiraId: string;
+    jiraLink: string;
+  }
+) => {
+  const { requestId, jiraId, jiraLink } = params;
+
+  const { error } = await supabaseClient
+    .from("request_table")
+    .update({
+      request_jira_id: jiraId,
+      request_jira_link: jiraLink,
+    })
+    .eq("request_id", requestId);
+  if (error) throw error;
+  console.log(error);
+};

@@ -4,6 +4,7 @@ import moment from "moment";
 import dynamic from "next/dynamic";
 import { formatDate } from "./constant";
 import {
+  JiraBOQTicketPayloadProps,
   JiraITAssetTicketPayloadProps,
   JiraItemUserTableData,
   JiraTicketPayloadProps,
@@ -414,4 +415,65 @@ export const getJiraRequestType = (requestFormType: string) => {
   );
 
   return matchedItem ? matchedItem.id : null;
+};
+
+export const formatJiraBOQPayload = ({
+  requestId,
+  requestUrl,
+  jiraProjectSiteId,
+  department,
+  purpose,
+  typeOfRequest,
+  workingAdvances,
+  ticketUrl,
+  requestor,
+}: JiraBOQTicketPayloadProps) => {
+  const jiraTicketPayload = {
+    form: {
+      answers: {
+        "471": {
+          text: requestor, // Requestor Name
+        },
+        "469": {
+          choices: [department], // Department
+        },
+        "468": {
+          choices: [jiraProjectSiteId], // Requesting Project
+        },
+        "15": {
+          text: purpose,
+        },
+        "442": {
+          choices: [typeOfRequest], // Type
+        },
+        "445": {
+          choices: [workingAdvances], // Working Advances
+        },
+        "444": {
+          text: addHttpsToUrlIfMissing(ticketUrl),
+        },
+        "473": {
+          text: requestId, // Formsly Id
+        },
+        "472": {
+          text: requestUrl, // Formsly URL
+        },
+      },
+    },
+    isAdfRequest: false,
+    requestFieldValues: {},
+    requestTypeId: "367",
+    serviceDeskId: "23",
+  };
+
+  return jiraTicketPayload;
+};
+
+export const addHttpsToUrlIfMissing = (url: string) => {
+  // Check if the URL starts with "http://" or "https://"
+  if (!/^https?:\/\//i.test(url)) {
+    // If not, prepend "https://"
+    url = "https://" + url;
+  }
+  return url;
 };

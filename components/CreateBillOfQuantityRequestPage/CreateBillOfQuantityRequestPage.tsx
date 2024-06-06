@@ -3,6 +3,7 @@ import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
@@ -20,7 +21,7 @@ import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 
@@ -60,29 +61,18 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
     mode: "onChange",
   });
   const { handleSubmit, control } = requestFormMethods;
-  const {
-    fields: formSections,
-    remove: removeSection,
-    replace: replaceSection,
-  } = useFieldArray({
+  const { fields: formSections, replace: replaceSection } = useFieldArray({
     control,
     name: "sections",
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const { setIsLoading } = useLoadingActions();
   const signerList = form.form_signer.map((signer) => ({
     ...signer,
     signer_action: signer.signer_action.toUpperCase(),
   }));
 
   const handleCreateRequest = async (data: RequestFormValues) => {
-    if (isLoading) {
-      notifications.show({
-        message: "Wait until all signers are fetched before submitting.",
-        color: "orange",
-      });
-      return;
-    }
     try {
       if (!requestorProfile) return;
       if (!teamMember || !connectedRequest) return;
@@ -119,17 +109,6 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleRemoveSection = (sectionDuplicatableId: string) => {
-    const sectionMatchIndex = formSections.findIndex(
-      (section) =>
-        section.section_field[0].field_section_duplicatable_id ===
-        sectionDuplicatableId
-    );
-    if (sectionMatchIndex) {
-      removeSection(sectionMatchIndex);
     }
   };
 
@@ -344,7 +323,6 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    onRemoveSection={handleRemoveSection}
                     formslyFormName={form.form_name}
                   />
                 </Box>

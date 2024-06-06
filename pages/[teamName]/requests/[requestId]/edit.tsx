@@ -1,4 +1,5 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
+import EditBillOfQuantityRequestPage from "@/components/EditBillOfQuantityRequestPage/EditBillOfQuantityRequestPage";
 import EditITAssetRequestPage from "@/components/EditITAssetRequestPage/EditITAssetRequestPage";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
 import EditLiquidReimbursementRequestPage from "@/components/EditLiquidReimbursementRequestPage/EditLiquidReimbursementRequestPage";
@@ -23,6 +24,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         requestId: `${context.query.requestId}`,
         referenceOnly,
       });
+
       return {
         props: {
           ...editRequestOnLoad,
@@ -133,6 +135,15 @@ const Page = ({
           <EditLiquidReimbursementRequestPage
             form={form}
             projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
+
+      case "Bill of Quantity":
+        return (
+          <EditBillOfQuantityRequestPage
+            form={form}
             duplicatableSectionIdList={duplicatableSectionIdList}
             requestId={requestId}
           />

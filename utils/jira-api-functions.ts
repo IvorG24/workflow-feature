@@ -3,6 +3,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import { Database } from "./database";
 import {
+  formatJiraBOQPayload,
   formatJiraITAssetPayload,
   formatJiraTicketPayload,
   generateJiraCommentPayload,
@@ -10,6 +11,7 @@ import {
   isEmpty,
 } from "./functions";
 import {
+  JiraBOQTicketPayloadProps,
   JiraITAssetTicketPayloadProps,
   JiraTicketData,
   JiraTicketPayloadProps,
@@ -17,7 +19,10 @@ import {
 } from "./types";
 
 type CreateJiraTicketProps = {
-  jiraTicketPayload: JiraTicketPayloadProps | JiraITAssetTicketPayloadProps;
+  jiraTicketPayload:
+    | JiraTicketPayloadProps
+    | JiraITAssetTicketPayloadProps
+    | JiraBOQTicketPayloadProps;
   requestCommentList: RequestCommentType[];
   supabaseClient: SupabaseClient<Database>;
   isITAsset?: boolean;
@@ -27,24 +32,44 @@ export const createJiraTicket = async ({
   jiraTicketPayload,
   requestCommentList,
   supabaseClient,
-  isITAsset,
 }: CreateJiraTicketProps): Promise<JiraTicketData> => {
   try {
     let formattedJiraTicketPayload = null;
 
-    if (isITAsset) {
-      formattedJiraTicketPayload = formatJiraITAssetPayload(
-        jiraTicketPayload as JiraITAssetTicketPayloadProps
-      );
-    } else {
-      formattedJiraTicketPayload = formatJiraTicketPayload(
-        jiraTicketPayload as JiraTicketPayloadProps
-      );
+    switch (jiraTicketPayload.requestFormType) {
+      case "IT Asset":
+        formattedJiraTicketPayload = formatJiraITAssetPayload(
+          jiraTicketPayload as JiraITAssetTicketPayloadProps
+        );
+        break;
+
+      case "BOQ":
+        formattedJiraTicketPayload = formatJiraBOQPayload(
+          jiraTicketPayload as JiraBOQTicketPayloadProps
+        );
+        break;
+
+      default:
+        formattedJiraTicketPayload = formatJiraTicketPayload(
+          jiraTicketPayload as JiraTicketPayloadProps
+        );
+        break;
     }
 
-    const requestType = isITAsset
-      ? "IT Requisition Form"
-      : "Automated Requisition Form";
+    let requestType = "Automated Requisition Form";
+
+    switch (jiraTicketPayload.requestFormType) {
+      case "IT Asset":
+        requestType = "IT Requisition Form";
+        break;
+
+      case "BOQ":
+        requestType = "Request for Liquidation/Reimbursement v2";
+        break;
+
+      default:
+        break;
+    }
 
     const duplicateJiraTicketResponse = await fetch(
       `/api/check-jira-duplicate-ticket?formslyId=${jiraTicketPayload.requestId}&requestType=${requestType}`,
@@ -70,8 +95,7 @@ export const createJiraTicket = async ({
     }
 
     let organizationId = "";
-
-    if (!isITAsset) {
+    if (!["IT Asset", "BOQ"].includes(jiraTicketPayload.requestFormType)) {
       const currentJiraPayload = jiraTicketPayload as JiraTicketPayloadProps;
       organizationId = currentJiraPayload.jiraOrganizationId;
     }
@@ -88,7 +112,6 @@ export const createJiraTicket = async ({
     });
 
     const jiraTicketData = await jiraTicketResponse.json();
-
     if (!jiraTicketResponse.ok) {
       console.error(jiraTicketData.error);
       return { success: false, data: null };
@@ -98,7 +121,7 @@ export const createJiraTicket = async ({
     const jiraTicketWebLink: string = jiraTicketData._links.web;
 
     // transition jira ticket
-    if (jiraTicketPayload.requestFormType !== "IT Asset") {
+    if (!["IT Asset", "BOQ"].includes(jiraTicketPayload.requestFormType)) {
       await fetch("/api/transition-jira-ticket", {
         method: "POST",
         headers: {

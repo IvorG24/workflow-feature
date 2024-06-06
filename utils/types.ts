@@ -1890,3 +1890,16 @@ export type ConnectedRequestFormProps = {
   form_section: string[];
   duplicatableSectionIdList: string[];
 };
+
+export type JiraBOQTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  department: string;
+  purpose: string;
+  typeOfRequest: string;
+  requestFormType: string;
+  workingAdvances: string;
+  ticketUrl: string;
+  requestor: string;
+};

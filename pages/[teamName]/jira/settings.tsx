@@ -57,6 +57,15 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
 
       const jiraFormslyProjectList = initialJiraFormslyProjectList.map(
         (project) => {
+          project.assigned_jira_project = {
+            ...project.assigned_jira_project,
+            jira_project: null,
+          } as JiraFormslyProjectType["assigned_jira_project"];
+          project.assigned_jira_organization = {
+            ...project.assigned_jira_organization,
+            jira_organization_team_project_organization: null,
+          } as JiraFormslyProjectType["assigned_jira_organization"];
+
           const jiraProjectMatch = jiraProjectData.data.find(
             (jiraProject) =>
               jiraProject.jira_project_id ===
@@ -70,22 +79,20 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
                 ?.jira_organization_team_project_organization_id
           );
 
-          if (jiraProjectMatch || jiraOrganizationMatch) {
-            return {
-              ...project,
-              assigned_jira_project: {
-                ...project.assigned_jira_project,
-                jira_project: jiraProjectMatch ?? null,
-              },
-              assigned_jira_organization: {
-                ...project.assigned_jira_organization,
-                jira_organization_team_project_organization:
-                  jiraOrganizationMatch ?? null,
-              },
-            };
-          } else {
-            return project;
+          if (jiraProjectMatch) {
+            project.assigned_jira_project = {
+              ...project.assigned_jira_project,
+              jira_project: jiraProjectMatch,
+            } as JiraFormslyProjectType["assigned_jira_project"];
+          } else if (jiraOrganizationMatch) {
+            project.assigned_jira_organization = {
+              ...project.assigned_jira_organization,
+              jira_organization_team_project_organization:
+                jiraOrganizationMatch,
+            } as JiraFormslyProjectType["assigned_jira_organization"];
           }
+
+          return project;
         }
       );
 
