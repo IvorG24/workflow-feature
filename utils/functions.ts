@@ -428,6 +428,9 @@ export const formatJiraBOQPayload = ({
   ticketUrl,
   requestor,
 }: JiraBOQTicketPayloadProps) => {
+  // if department = plants and equipment, use PED jira form
+  const requestTypeId = department === "10164" ? 406 : 367;
+  const serviceDeskId = department === "10164" ? 27 : 23;
   const jiraTicketPayload = {
     form: {
       answers: {
@@ -462,8 +465,8 @@ export const formatJiraBOQPayload = ({
     },
     isAdfRequest: false,
     requestFieldValues: {},
-    requestTypeId: "367",
-    serviceDeskId: "23",
+    requestTypeId,
+    serviceDeskId,
   };
 
   return jiraTicketPayload;
