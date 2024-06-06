@@ -41,13 +41,6 @@ export type FieldWithResponseArray = Field & {
   field_response: RequestResponseTableRow[];
 };
 
-type LimitedSectionType =
-  | "Equipment"
-  | "Employee"
-  | "Asset Information"
-  | "Replacement / Reliever"
-  | "Employee with Equipment";
-
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
@@ -96,7 +89,6 @@ const CreatePersonnelTransferRequisition = ({
   const [equipmentUnitOptions, setEquipmentUnitOptions] = useState<
     OptionTableRow[]
   >([]);
-  const [hrisIdOptions, sethrisIdOptions] = useState<OptionTableRow[]>([]);
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
   const [signerList, setSignerList] = useState(
     form.form_signer.map((signer) => ({
@@ -170,13 +162,6 @@ const CreatePersonnelTransferRequisition = ({
       (section) => section.section_id === sectionId
     );
     if (!sectionMatch) return;
-    const limitMap = {
-      Equipment: 5,
-      Employee: 5,
-      "Asset Information": 5,
-      "Replacement / Reliever": 15,
-      "Employee with Equipment": 5,
-    };
 
     if (
       [
@@ -190,7 +175,7 @@ const CreatePersonnelTransferRequisition = ({
       const isLimit =
         formSections.filter(
           (section) => section.section_name === sectionMatch.section_name
-        ).length === limitMap[sectionMatch.section_name as LimitedSectionType];
+        ).length === 15;
       if (isLimit) {
         notifications.show({
           message: `The ${sectionMatch.section_name} section has reached its limit.`,
@@ -287,7 +272,7 @@ const CreatePersonnelTransferRequisition = ({
         initialProjectOption.forEach((project) => {
           if (project.option_value.includes("CENTRAL OFFICE")) {
             teamDepartmentOptionList.push(project);
-          } else {
+          } else if (!project.option_value.includes("YARD")) {
             teamProjectOptionList.push(project);
           }
         });
@@ -621,14 +606,16 @@ const CreatePersonnelTransferRequisition = ({
         const fromOption =
           splittedValue[0] === "Project"
             ? projectOptions
-            : splittedValue[0] === "Central Office"
+            : splittedValue[0] === "Central Office" ||
+              splittedValue[0] === "Department"
             ? departmentOptions
             : initialProjectOption;
 
         const toOptions =
           splittedValue[1] === "Project"
             ? projectOptions
-            : splittedValue[1] === "Central Office"
+            : splittedValue[1] === "Central Office" ||
+              splittedValue[0] === "Department"
             ? departmentOptions
             : initialProjectOption;
 
