@@ -5132,8 +5132,8 @@ RETURNS JSON as $$
         const projects = plv8.execute(
           `
             SELECT 
-                team_project_table.team_project_id,
-                team_project_table.team_project_name
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
             FROM team_project_member_table
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
@@ -5190,6 +5190,33 @@ RETURNS JSON as $$
               ...form.form_section.slice(1)
             ],
           },
+          projectOptions
+        }
+        return;
+      } else if (form.form_name === "Personnel Transfer Requisition") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_project_table
+            WHERE
+              team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form,
           projectOptions
         }
         return;

@@ -7264,3 +7264,130 @@ export const fetchFormslyLatestPrice = async (
   if (error) throw error;
   return data.formsly_price;
 };
+
+// Fetch team department options
+export const getTeamDepartmentOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("team_department_table")
+    .select("team_department_id, team_department_name")
+    .eq("team_department_is_disabled", false)
+    .order("team_department_name")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch equipment code options
+export const getEquipmentCodeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_view")
+    .select(
+      "equipment_description_id, equipment_description_property_number_with_prefix"
+    )
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_is_available", true)
+    .order("equipment_description_property_number_with_prefix")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch equipment unit options
+export const getEquipmentUnitOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_unit_of_measurement_table")
+    .select("equipment_unit_of_measurement_id, equipment_unit_of_measurement")
+    .eq("equipment_unit_of_measurement_is_disabled", false)
+    .order("equipment_unit_of_measurement")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch employee position options
+export const getEmployeePositionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("employee_job_title_table")
+    .select("employee_job_title_id, employee_job_title_label")
+    .eq("employee_job_title_is_disabled", false)
+    .order("employee_job_title_label")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch employee options
+export const getEmployeeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+    search: string;
+  }
+) => {
+  const { index, limit, search } = params;
+  const { data, error } = await supabaseClient
+    .from("scic_employee_table")
+    .select("scic_employee_id, scic_employee_hris_id_number")
+    .ilike("scic_employee_hris_id_number", `%${search}%`)
+    .order("scic_employee_hris_id_number")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch employee name based on id
+export const getEmployeeName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    employeeId: string;
+  }
+) => {
+  const { employeeId } = params;
+  const { data, error } = await supabaseClient
+    .from("scic_employee_table")
+    .select("*")
+    .eq("scic_employee_hris_id_number", employeeId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data;
+};

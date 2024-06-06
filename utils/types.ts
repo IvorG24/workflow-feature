@@ -475,6 +475,13 @@ export type SpecialFieldTemplateTableInsert =
 export type SpecialFieldTemplateTableUpdate =
   Database["public"]["Tables"]["special_field_template_table"]["Update"];
 
+export type SCICEmployeeTableRow =
+  Database["public"]["Tables"]["scic_employee_table"]["Row"];
+export type SCICEmployeeTableInsert =
+  Database["public"]["Tables"]["scic_employee_table"]["Insert"];
+export type SCICEmployeeTableUpdate =
+  Database["public"]["Tables"]["scic_employee_table"]["Update"];
+
 export type TransactionTableRow =
   OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 
