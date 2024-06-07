@@ -5,7 +5,7 @@ import { SectionWithField } from "./types";
 
 export const BASE_URL =
   process.env.NODE_ENV === "production"
-    ? "https://www.formsly.io"
+    ? "https://formsly.io"
     : "http://localhost:3000";
 
 export const ONE_OFFICE_URL =
