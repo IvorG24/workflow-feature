@@ -46,20 +46,24 @@ const RequestActionSection = ({
     onCreateJiraTicket: () => Promise<JiraTicketData>
   ) => {
     try {
-      const jiraTicketResponse = await onCreateJiraTicket();
-      if (!jiraTicketResponse.data) {
-        notifications.show({
-          message: "Failed to create jira ticket",
-          color: "red",
-        });
-        return;
+      if (process.env.NODE_ENV === "production") {
+        const jiraTicketResponse = await onCreateJiraTicket();
+        if (!jiraTicketResponse.data) {
+          notifications.show({
+            message: "Failed to create jira ticket",
+            color: "red",
+          });
+          return;
+        }
+
+        const {
+          data: { jiraTicketKey, jiraTicketWebLink },
+        } = jiraTicketResponse;
+
+        handleUpdateRequest("APPROVED", jiraTicketKey, jiraTicketWebLink);
+      } else if (process.env.NODE_ENV === "development") {
+        handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
       }
-
-      const {
-        data: { jiraTicketKey, jiraTicketWebLink },
-      } = jiraTicketResponse;
-
-      handleUpdateRequest("APPROVED", jiraTicketKey, jiraTicketWebLink);
     } catch (error) {
       notifications.show({
         message: "Failed to approve item request",
@@ -67,36 +71,6 @@ const RequestActionSection = ({
       });
     }
   };
-
-  // const handleApproveItemRequest = async (
-  //   onCreateJiraTicket: () => Promise<JiraTicketData>
-  // ) => {
-  //   try {
-  //     if (process.env.NODE_ENV === "production") {
-  //       const jiraTicketResponse = await onCreateJiraTicket();
-  //       if (!jiraTicketResponse.data) {
-  //         notifications.show({
-  //           message: "Failed to create jira ticket",
-  //           color: "red",
-  //         });
-  //         return;
-  //       }
-
-  //       const {
-  //         data: { jiraTicketKey, jiraTicketWebLink },
-  //       } = jiraTicketResponse;
-
-  //       handleUpdateRequest("APPROVED", jiraTicketKey, jiraTicketWebLink);
-  //     } else if (process.env.NODE_ENV === "development") {
-  //       handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
-  //     }
-  //   } catch (error) {
-  //     notifications.show({
-  //       message: "Failed to approve item request",
-  //       color: "red",
-  //     });
-  //   }
-  // };
 
   const handleAction = (action: string, color: string) => {
     if (isItemForm && action === "approve" && isUserPrimarySigner) {

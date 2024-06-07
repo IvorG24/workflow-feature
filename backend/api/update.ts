@@ -1078,6 +1078,7 @@ export const updateJiraUser = async (
   const { error } = await supabaseClient
     .from("jira_user_account_table")
     .update(params)
+    // todo: replace column with jira_user_account_id
     .eq("jira_user_account_jira_id", params.jira_user_account_jira_id);
 
   if (error) throw error;
