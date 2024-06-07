@@ -94,7 +94,6 @@ export default async function handler(
     });
 
     if (!response.ok) {
-      console.log(await response.json());
       return res.status(500).json({ error: "Failed to update ticket." });
     }
 

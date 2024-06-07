@@ -1,5 +1,6 @@
 "use client";
 
+import { BASE_URL } from "@/utils/constant";
 import { Button, Menu } from "@mantine/core";
 import { IconList, IconTable } from "@tabler/icons-react";
 
@@ -22,7 +23,7 @@ const ExportToPdfMenu = ({ isFormslyForm, formName, requestId }: Props) => {
             icon={<IconList size={16} />}
             onClick={() => {
               window.open(
-                `${process.env.NEXT_PUBLIC_SITE_URL}/export-to-pdf/${requestId}?type=table-view`,
+                `${BASE_URL}/export-to-pdf/${requestId}?type=table-view`,
                 "_blank"
               );
             }}
@@ -44,7 +45,7 @@ const ExportToPdfMenu = ({ isFormslyForm, formName, requestId }: Props) => {
               icon={<IconTable size={16} />}
               onClick={() => {
                 window.open(
-                  `${process.env.NEXT_PUBLIC_SITE_URL}/export-to-pdf/${requestId}?type=table-view`,
+                  `${BASE_URL}/export-to-pdf/${requestId}?type=table-view`,
                   "_blank"
                 );
               }}

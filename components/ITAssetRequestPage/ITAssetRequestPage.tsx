@@ -17,7 +17,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, formatDate } from "@/utils/constant";
 import { mostOccurringElement, safeParse } from "@/utils/functions";
 import { createJiraTicket } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -422,7 +422,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
       const jiraTicketPayload = {
         requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "332",
         jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
         employeeName: safeParse(employeeName),
