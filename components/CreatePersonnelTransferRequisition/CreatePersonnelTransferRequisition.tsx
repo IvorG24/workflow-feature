@@ -4,6 +4,7 @@ import {
   getEquipmentCodeOptions,
   getEquipmentDescription,
   getEquipmentUnitOptions,
+  getProjectSignerWithTeamMember,
   getTeamDepartmentOptions,
 } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
@@ -96,10 +97,28 @@ const CreatePersonnelTransferRequisition = ({
       signer_action: signer.signer_action.toUpperCase(),
     }))
   );
+  const [signerFromList, setSignerFromList] = useState<FormType["form_signer"]>(
+    []
+  );
+  const [signerToList, setSignerToList] = useState<FormType["form_signer"]>([]);
 
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
+
+  useEffect(() => {
+    const teamMemberIdList: string[] = [];
+    const newSignerList: FormType["form_signer"] = [];
+    [...signerFromList, ...signerToList].forEach((signer) => {
+      if (
+        !teamMemberIdList.includes(signer.signer_team_member.team_member_id)
+      ) {
+        newSignerList.push(signer);
+        teamMemberIdList.push(signer.signer_team_member.team_member_id);
+      }
+    });
+    setSignerList(newSignerList);
+  }, [signerFromList, signerToList]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
@@ -594,7 +613,8 @@ const CreatePersonnelTransferRequisition = ({
 
   const handleMannerOfTransferChange = async (value: string | null) => {
     const newSection = getValues(`sections.1`);
-
+    setSignerFromList([]);
+    setSignerToList([]);
     try {
       if (value) {
         setLoadingFieldList([
@@ -674,11 +694,39 @@ const CreatePersonnelTransferRequisition = ({
     const mannerOfTransferValue = getValues(
       `sections.1.section_field.0.field_response`
     );
-    if (mannerOfTransferValue !== "Department to Department") return;
-
+    const isDepartmentToDepartment =
+      mannerOfTransferValue === "Department to Department";
     try {
-      setValue("sections.1.section_field.2.field_response", value);
+      setIsFetchingSigner(true);
+      if (value) {
+        if (isDepartmentToDepartment) {
+          setValue("sections.1.section_field.2.field_response", value);
+        }
+        const projectId = initialProjectOption.find(
+          (option) => option.option_value === value
+        )?.option_id;
+        if (projectId) {
+          const data = await getProjectSignerWithTeamMember(supabaseClient, {
+            projectId,
+            formId,
+          });
+          const signerData = data as unknown as FormType["form_signer"];
+          if (data.length !== 0) {
+            setSignerFromList(signerData);
+            if (isDepartmentToDepartment) {
+              setSignerToList(signerData);
+            }
+          }
+        }
+      } else {
+        setSignerFromList([]);
+        if (isDepartmentToDepartment) {
+          setValue("sections.1.section_field.2.field_response", value);
+          setSignerToList([]);
+        }
+      }
     } catch (e) {
+      setSignerFromList([]);
       setValue(`sections.1.section_field.1.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -686,6 +734,40 @@ const CreatePersonnelTransferRequisition = ({
       });
     } finally {
       setLoadingFieldList([]);
+      setIsFetchingSigner(false);
+    }
+  };
+
+  const handleToChange = async (value: string | null) => {
+    try {
+      setIsFetchingSigner(true);
+      if (value) {
+        const projectId = initialProjectOption.find(
+          (option) => option.option_value === value
+        )?.option_id;
+        if (projectId) {
+          const data = await getProjectSignerWithTeamMember(supabaseClient, {
+            projectId,
+            formId,
+          });
+          const signerData = data as unknown as FormType["form_signer"];
+          if (data.length !== 0) {
+            setSignerToList(signerData);
+          }
+        }
+      } else {
+        setSignerToList([]);
+      }
+    } catch (e) {
+      setSignerToList([]);
+      setValue(`sections.1.section_field.2.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
+      setIsFetchingSigner(false);
     }
   };
 
@@ -1023,6 +1105,7 @@ const CreatePersonnelTransferRequisition = ({
                     personnelTransferRequisitionMethods={{
                       onMannerOfTransferChange: handleMannerOfTransferChange,
                       onFromChange: handleFromChange,
+                      onToChange: handleToChange,
                       onTypeOfTransferChange: handleTypeOfTransferChange,
                       onPurposeChange: handlePurposeChange,
                       onEquipmentCodeChange: handleEquipmentCodeChange,

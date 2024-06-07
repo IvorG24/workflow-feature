@@ -142,6 +142,7 @@ type RequestFormFieldsProps = {
     onTypeOfTransferChange: (value: string | null) => void;
     onMannerOfTransferChange: (value: string | null) => void;
     onFromChange: (value: string | null) => void;
+    onToChange: (value: string | null) => void;
     onPurposeChange: (value: string | null, prevValue: string | null) => void;
     onEquipmentCodeChange: (value: string | null, index: number) => void;
     onEmployeeNumberChange: (value: string | null, index: number) => void;
@@ -641,6 +642,9 @@ const RequestFormFields = ({
                       break;
                     case "From":
                       personnelTransferRequisitionMethods?.onFromChange(value);
+                      break;
+                    case "To":
+                      personnelTransferRequisitionMethods?.onToChange(value);
                       break;
                     case "Purpose":
                       personnelTransferRequisitionMethods?.onPurposeChange(

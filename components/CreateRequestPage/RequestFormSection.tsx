@@ -109,6 +109,7 @@ type RequestFormSectionProps = {
   personnelTransferRequisitionMethods?: {
     onMannerOfTransferChange: (value: string | null) => void;
     onFromChange: (value: string | null) => void;
+    onToChange: (value: string | null) => void;
     onTypeOfTransferChange: (value: string | null) => void;
     onPurposeChange: (value: string | null, prevValue: string | null) => void;
     onEquipmentCodeChange: (value: string | null, index: number) => void;
