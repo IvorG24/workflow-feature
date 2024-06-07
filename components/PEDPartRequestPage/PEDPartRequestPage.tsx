@@ -14,7 +14,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, formatDate } from "@/utils/constant";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -342,7 +342,7 @@ const PEDPartRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       );
       const jiraTicketPayload = formatJiraRequisitionPayload({
         requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
         requestFormType: request.request_form.form_name,
         requestTypeId: "299",
         ...requisitionAutomationData,
