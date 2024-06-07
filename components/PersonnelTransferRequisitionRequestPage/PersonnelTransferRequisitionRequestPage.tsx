@@ -12,11 +12,7 @@ import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  useUserProfile,
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
 import { mostOccurringElement, safeParse } from "@/utils/functions";
 import { createJiraTicket } from "@/utils/jira-api-functions";
@@ -91,7 +87,6 @@ const PersonnelTransferRequisitionRequestPage = ({
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
-  const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
 
   useEffect(() => {
