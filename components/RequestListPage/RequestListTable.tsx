@@ -149,7 +149,7 @@ const RequestListTable = ({
             let jiraStatus = { jira_id: "", status: "" };
             if (request.request_jira_id) {
               const requestJiraTicketData = await fetch(
-                `/api/get-jira-ticket?jiraTicketKey=${request.request_jira_id}`
+                `/api/jira/get-ticket?jiraTicketKey=${request.request_jira_id}`
               );
               if (!requestJiraTicketData.ok) {
                 jiraStatus = {
