@@ -7391,3 +7391,68 @@ export const getEmployeeName = async (
 
   return data;
 };
+
+// Fetch section in request page with multiple duplicatable section
+export const getSectionInRequestPageWithMultipleDuplicatableSection = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    requestId: string;
+    duplicatableSectionIdCondition: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_form_section_with_multiple_duplicatable_section", {
+      input_data: params,
+    })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Get all section
+export const getAllSection = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionIdList: string[];
+  }
+) => {
+  const { sectionIdList } = params;
+
+  const { data, error } = await supabaseClient
+    .from("section_table")
+    .select("*")
+    .in("section_id", sectionIdList)
+    .order("section_order");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch employee name based on id
+export const checkIfAllPrimaryApprovedTheRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    requestSignerId: string;
+  }
+) => {
+  const { requestId, requestSignerId } = params;
+  const { count, error } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      `
+        *, 
+        request_signer_signer: request_signer_signer_id!inner(
+          *
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("request_signer_request_id", requestId)
+    .eq("request_signer_signer.signer_is_primary_signer", true)
+    .neq("request_signer_id", requestSignerId)
+    .neq("request_signer_status", "APPROVED");
+  if (error) throw error;
+
+  return !Boolean(count);
+};

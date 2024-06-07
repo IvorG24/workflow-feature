@@ -1481,6 +1481,8 @@ RETURNS JSON AS $$
         endId = `RFP`;
       } else if(formName === 'IT Asset'){
         endId = `ITA`;
+      } else if(formName === 'Personnel Transfer Requisition'){
+        endId = `PTRF`;
       } else {
         endId = ``;
       }
@@ -1613,7 +1615,22 @@ RETURNS VOID AS $$
     }
     
     if(isPrimarySigner===true){
-      plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraLink ? `, request_jira_link = '${jiraLink}'` : ""} WHERE request_id='${requestId}';`);
+      const isAllPrimaryApprovedTheRequest = Boolean(
+        plv8.execute(
+          `
+            SELECT COUNT(*) FROM request_signer_table
+            INNER JOIN signer_table ON signer_id = request_signer_signer_id
+            WHERE
+              request_signer_request_id = '${requestId}'
+              AND signer_is_primary_signer = true
+              AND request_signer_id != '${requestSignerId}'
+              AND request_signer_status != 'APPROVED'
+          `
+        )[0].count
+      );
+      if(isAllPrimaryApprovedTheRequest){
+        plv8.execute(`UPDATE request_table SET request_status = '${requestAction}', request_status_date_updated = NOW() ${jiraId ? `, request_jira_id = '${jiraId}'` : ""} ${jiraLink ? `, request_jira_link = '${jiraLink}'` : ""} WHERE request_id='${requestId}';`);
+      }
     }
     
  });
@@ -3471,6 +3488,24 @@ RETURNS JSON as $$
         request: requestData
       };
       return;
+    } else if (request.form_is_formsly_form && request.form_name === 'Personnel Transfer Requisition') {
+      const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      if(!request) throw new Error('404');
+
+      const sectionIdWithDuplicatableSectionIdList = plv8.execute(
+        `
+          SELECT DISTINCT request_response_duplicatable_section_id, section_id, section_order FROM request_response_table
+          INNER JOIN field_table ON field_id = request_response_field_id
+          INNER JOIN section_table ON section_id = field_section_id
+          WHERE request_response_request_id = '${requestData.request_id}'
+          ORDER BY section_order
+        `
+      );
+
+      returnData =  {
+        request: requestData,
+        sectionIdWithDuplicatableSectionIdList
+      };
     } else {
       const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
       if (!teamId) throw new Error("No team found");
@@ -10165,6 +10200,58 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 -- End: Handle formsly payment
+
+-- Start: Fetch request page section for form with multiple duplicatable section
+
+CREATE OR REPLACE FUNCTION fetch_form_section_with_multiple_duplicatable_section(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    index,
+    requestId,
+    duplicatableSectionIdCondition
+  } = input_data;
+
+  const fieldList = plv8.execute(`
+    SELECT 
+      field_table.*,
+      request_response_duplicatable_section_id
+    FROM field_table
+    INNER JOIN request_response_table ON request_response_field_id = field_id
+    WHERE 
+      request_response_request_id = '${requestId}'
+      AND (${duplicatableSectionIdCondition})
+    ORDER BY field_order ASC
+  `);
+
+  let fieldWithResponse = fieldList.map(field => {
+    const requestResponseData = plv8.execute(`
+      SELECT *
+      FROM request_response_table
+      WHERE request_response_request_id = '${requestId}'
+      AND request_response_field_id = '${field.field_id}'
+      AND request_response_duplicatable_section_id 
+        ${field.request_response_duplicatable_section_id ? 
+          `= '${field.request_response_duplicatable_section_id}'` 
+          : "is NULL"
+        }
+    `);
+
+    return {
+      ...field,
+      field_response: requestResponseData[0]
+    };
+  });
+
+  returnData = fieldWithResponse;
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+-- End: Fetch request page section for form with multiple duplicatable section
 
 ---------- End: FUNCTIONS
 

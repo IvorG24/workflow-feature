@@ -6,6 +6,7 @@ import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEqu
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
 import PaymentRequestPage from "@/components/PaymentRequestPage/PaymentRequestPage";
+import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
@@ -43,9 +44,17 @@ export const getServerSideProps: GetServerSideProps =
 type Props = {
   request: RequestWithResponseType;
   duplicatableSectionIdList: string[];
+  sectionIdWithDuplicatableSectionIdList: {
+    request_response_duplicatable_section_id: string;
+    section_id: string;
+  }[];
 };
 
-const Page = ({ request, duplicatableSectionIdList }: Props) => {
+const Page = ({
+  request,
+  duplicatableSectionIdList,
+  sectionIdWithDuplicatableSectionIdList,
+}: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Item") {
       return (
@@ -98,6 +107,17 @@ const Page = ({ request, duplicatableSectionIdList }: Props) => {
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
+    } else if (
+      request.request_form.form_name === "Personnel Transfer Requisition"
+    ) {
+      return (
+        <PersonnelTransferRequisitionRequestPage
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }
@@ -106,6 +126,7 @@ const Page = ({ request, duplicatableSectionIdList }: Props) => {
   return (
     <>
       <Meta description="Request Page" url="/teamName/requests/[requestId]" />
+
       {request.request_form.form_is_formsly_form ? formslyForm() : null}
       {!request.request_form.form_is_formsly_form ? (
         <RequestPage request={request} />

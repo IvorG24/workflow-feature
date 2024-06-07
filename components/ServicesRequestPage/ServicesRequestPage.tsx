@@ -557,6 +557,7 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             requestId={request.request_id}
             isItemForm
             onCreateJiraTicket={onCreateJiraTicket}
+            requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
 

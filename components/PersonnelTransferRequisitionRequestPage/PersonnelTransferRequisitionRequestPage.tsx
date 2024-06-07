@@ -1,12 +1,12 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
+  getAllSection,
   getJiraAutomationDataByProjectId,
   getRequestComment,
-  getSectionInRequestPage,
+  getSectionInRequestPageWithMultipleDuplicatableSection,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
-import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
@@ -17,21 +17,23 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
-import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
+import { mostOccurringElement, safeParse } from "@/utils/functions";
 import { createJiraTicket } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
+  DuplicateSectionType,
+  FieldTableRow,
   ReceiverStatusType,
   RequestCommentType,
   RequestWithResponseType,
+  SectionTableRow,
 } from "@/utils/types";
 import {
   Accordion,
   Container,
   Flex,
-  Group,
   Paper,
   Stack,
   Text,
@@ -43,20 +45,23 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
-import OtherExpensesSummary from "../SummarySection/OtherExpensesSummary";
+import RequestCommentList from "../RequestPage/RequestCommentList";
 
 type Props = {
   request: RequestWithResponseType;
-  duplicatableSectionIdList: string[];
+  sectionIdWithDuplicatableSectionIdList: {
+    request_response_duplicatable_section_id: string;
+    section_id: string;
+  }[];
 };
 
-const OtherExpensesRequestPage = ({
+const PersonnelTransferRequisitionRequestPage = ({
   request,
-  duplicatableSectionIdList,
+  sectionIdWithDuplicatableSectionIdList,
 }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+  const { setIsLoading } = useLoadingActions();
 
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
@@ -74,16 +79,16 @@ const OtherExpensesRequestPage = ({
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
-  const [formSection, setFormSection] = useState(
-    generateSectionWithDuplicateList([request.request_form.form_section[0]])
-  );
-
   const [requestJira, setRequestJira] = useState({
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
+  const [uniqueSectionList, setUniqueSectionList] = useState<SectionTableRow[]>(
+    []
+  );
 
-  const { setIsLoading } = useLoadingActions();
+  const [formSection, setFormSection] = useState<DuplicateSectionType[]>([]);
+
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
   const teamMemberGroupList = useUserTeamMemberGroupList();
@@ -96,54 +101,76 @@ const OtherExpensesRequestPage = ({
           [];
         let index = 0;
         while (1) {
-          setIsLoading(true);
-          const duplicatableSectionIdCondition = duplicatableSectionIdList
-            .slice(index, index + 5)
-            .map((dupId) => `'${dupId}'`)
-            .join(",");
-          const data = await getSectionInRequestPage(supabaseClient, {
-            index,
-            requestId: request.request_id,
-            sectionId: request.request_form.form_section[1].section_id,
-            duplicatableSectionIdCondition:
-              duplicatableSectionIdCondition.length !== 0
-                ? duplicatableSectionIdCondition
-                : `'${uuidv4()}'`,
-            fieldData: request.request_form.form_section[1].section_field,
-          });
+          const duplicatableSectionIdCondition =
+            sectionIdWithDuplicatableSectionIdList
+              .slice(index, index + 5)
+              .map(
+                (dupId) =>
+                  `(${
+                    dupId.request_response_duplicatable_section_id
+                      ? `request_response_duplicatable_section_id = '${dupId.request_response_duplicatable_section_id}'`
+                      : `request_response_duplicatable_section_id IS NULL`
+                  } AND field_section_id = '${dupId.section_id}')`
+              )
+              .join(" OR ");
 
+          const data =
+            await getSectionInRequestPageWithMultipleDuplicatableSection(
+              supabaseClient,
+              {
+                index,
+                requestId: request.request_id,
+                duplicatableSectionIdCondition,
+              }
+            );
           newFields.push(...data);
           index += 5;
 
-          if (index > duplicatableSectionIdList.length) break;
+          if (index > sectionIdWithDuplicatableSectionIdList.length) break;
         }
-
-        const uniqueFieldIdList: string[] = [];
-        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [];
-        newFields.forEach((field) => {
-          if (uniqueFieldIdList.includes(field.field_id)) {
-            const currentFieldIndex = combinedFieldList.findIndex(
-              (combinedField) => combinedField.field_id === field.field_id
-            );
-            combinedFieldList[currentFieldIndex].field_response.push(
-              ...field.field_response
-            );
-          } else {
-            uniqueFieldIdList.push(field.field_id);
-            combinedFieldList.push(field);
+        const uniqueSectionIdList: string[] = [];
+        sectionIdWithDuplicatableSectionIdList.forEach((section) => {
+          if (!uniqueSectionIdList.includes(section.section_id)) {
+            uniqueSectionIdList.push(section.section_id);
           }
         });
+        const sectionList = await getAllSection(supabaseClient, {
+          sectionIdList: uniqueSectionIdList,
+        });
+        setUniqueSectionList(sectionList);
 
-        const newSection = generateSectionWithDuplicateList([
-          {
-            ...request.request_form.form_section[1],
-            section_field: combinedFieldList,
-          },
-        ]);
-        const newFormSection = [...formSection, ...newSection];
+        const newSection = sectionIdWithDuplicatableSectionIdList.map(
+          (section) => {
+            const sectionMatch = sectionList.find(
+              (thisSection) => thisSection.section_id === section.section_id
+            );
+            return {
+              ...sectionMatch,
+              section_duplicatable_section_id:
+                section.request_response_duplicatable_section_id,
+              section_field: [],
+            };
+          }
+        ) as unknown as (DuplicateSectionType & {
+          section_duplicatable_section_id: string;
+        })[];
 
-        setFormSection(newFormSection);
+        newFields.forEach((field) => {
+          const formattedField = field as unknown as FieldTableRow & {
+            request_response_duplicatable_section_id: string | null;
+          };
+          const sectionIndex = newSection.findIndex(
+            (section) =>
+              section.section_id === field.field_section_id &&
+              section.section_duplicatable_section_id ===
+                formattedField.request_response_duplicatable_section_id
+          );
+          newSection[sectionIndex].section_field.push(
+            field as unknown as DuplicateSectionType["section_field"][0]
+          );
+        });
+
+        setFormSection(newSection);
         setIsLoading(false);
       };
       const fetchComments = async () => {
@@ -170,8 +197,7 @@ const OtherExpensesRequestPage = ({
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string,
-    jiraLink?: string
+    jiraId?: string
   ) => {
     try {
       setIsLoading(true);
@@ -186,6 +212,18 @@ const OtherExpensesRequestPage = ({
       }
       if (!teamMember) return;
 
+      let autoJiraLink = "";
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketWebLink =
+          jiraTicket.fields["customfield_10010"]._links.web;
+        autoJiraLink = jiraTicketWebLink;
+      }
+
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -197,7 +235,7 @@ const OtherExpensesRequestPage = ({
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
-        jiraLink,
+        jiraLink: autoJiraLink,
         requestFormslyId: request.request_formsly_id,
       });
 
@@ -211,13 +249,10 @@ const OtherExpensesRequestPage = ({
           if (signer.signer_id === thisSigner.signer_id) {
             return {
               ...signer,
-
               request_signer_status: status,
-
               request_signer_status_date_updated: new Date().toISOString(),
             };
           }
-
           return thisSigner;
         })
       );
@@ -341,7 +376,6 @@ const OtherExpensesRequestPage = ({
         });
         return { success: false, data: null };
       }
-
       setIsLoading(true);
       const jiraAutomationData = await getJiraAutomationDataByProjectId(
         supabaseClient,
@@ -356,58 +390,85 @@ const OtherExpensesRequestPage = ({
         return { success: false, data: null };
       }
 
-      const { jiraProjectData, jiraItemCategoryData, jiraOrganizationData } =
-        jiraAutomationData;
+      const { jiraProjectData } = jiraAutomationData;
 
-      const itemCategory = "Other Expenses";
-
-      const itemCategoryMatch = jiraItemCategoryData.find(
-        (item) => item.jira_item_category_formsly_label === itemCategory
-      );
-
-      if (!jiraProjectData || !itemCategoryMatch) {
+      if (!jiraProjectData) {
         notifications.show({
-          message: "Jira project and item category data is missing.",
+          message: "Jira project data is missing.",
           color: "red",
         });
         return { success: false, data: null };
       }
 
-      const warehouseAreaLead = jiraProjectData.jira_user_list.filter(
-        (user) => user.jira_user_role_label === "WAREHOUSE AREA LEAD"
-      )[0];
-      const warehouseRepresentative = jiraProjectData.jira_user_list.filter(
-        (user) => user.jira_user_role_label === "WAREHOUSE REPRESENTATIVE"
-      )[0];
-      const warehouseRequestParticipant = jiraProjectData.jira_user_list.filter(
-        (user) => user.jira_user_role_label === "WAREHOUSE REQUEST PARTICIPANT"
+      const employeeName =
+        request.request_form.form_section[2].section_field[2].field_response[0]
+          .request_response;
+
+      const response = await fetch(
+        "/api/get-jira-automation-form?serviceDeskId=3&requestType=332",
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
       );
+      const { fields } = await response.json();
+      const purposeList = fields["2"].choices;
+      const itemList = fields["1"].choices;
+
+      const requestPurpose =
+        request.request_form.form_section[0].section_field.find(
+          (field) => field.field_name === "Purpose"
+        )?.field_response[0].request_response;
+
+      const requestItem = safeParse(
+        mostOccurringElement(
+          formSection
+            .slice(3)
+            .map(
+              (section) =>
+                section.section_field[0].field_response?.request_response ?? ""
+            )
+        )
+      );
+
+      const purpose = purposeList.find(
+        (purpose: { id: string; name: string }) =>
+          purpose.name.toLowerCase() ===
+          safeParse(`${requestPurpose?.toLowerCase()}`)
+      );
+
+      const item = itemList.find(
+        (item: { id: string; name: string }) =>
+          item.name.toLowerCase() === safeParse(`${requestItem?.toLowerCase()}`)
+      );
+
+      if (!purpose || !item) {
+        notifications.show({
+          message: "Jira item or purpose is missing.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
 
       const jiraTicketPayload = {
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
-        requestFormType: request.request_form.form_name,
-        requestTypeId: "299",
+        requestTypeId: "332",
         jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
-        jiraItemCategoryId: itemCategoryMatch.jira_item_category_jira_id,
-
-        warehouseCorporateLeadId: itemCategoryMatch.jira_user_account_jira_id,
-        warehouseAreaLeadId: warehouseAreaLead.jira_user_account_jira_id,
-        warehouseRepresentativeId:
-          warehouseRepresentative.jira_user_account_jira_id,
-        warehouseRequestParticipantIdList: warehouseRequestParticipant.map(
-          (user) => user.jira_user_account_jira_id
-        ),
-        jiraItemCategoryLabel: itemCategoryMatch.jira_item_category_jira_label,
-        jiraOrganizationId: jiraOrganizationData
-          ? jiraOrganizationData.jira_organization_jira_id
-          : "",
+        employeeName: safeParse(employeeName),
+        purpose: purpose.id,
+        item: item.id,
+        requestFormType: request.request_form.form_name,
       };
 
       const jiraTicketData = await createJiraTicket({
         jiraTicketPayload,
         requestCommentList,
         supabaseClient,
+        isITAsset: true,
       });
 
       if (!jiraTicketData.success) {
@@ -469,7 +530,7 @@ const OtherExpensesRequestPage = ({
     requestStatus === "PENDING";
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
-  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+  const isUserRequester = false;
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
@@ -480,13 +541,6 @@ const OtherExpensesRequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        <Group>
-          <ExportToPdfMenu
-            isFormslyForm={request.request_form.form_is_formsly_form}
-            formName={request.request_form.form_name}
-            requestId={request.request_formsly_id ?? request.request_id}
-          />
-        </Group>
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -499,52 +553,82 @@ const OtherExpensesRequestPage = ({
           jiraTicketStatus={jiraTicketStatus}
         />
 
-        <RequestSection
-          section={formSection[0]}
-          isFormslyForm={true}
-          isOnlyWithResponse
-        />
-
-        <Accordion>
-          <Accordion.Item key="item" value="item">
-            <Paper shadow="xs">
-              <Accordion.Control>
-                <Title order={4} color="dimmed">
-                  Request Section
-                </Title>
-              </Accordion.Control>
-            </Paper>
-            <Accordion.Panel>
-              <Stack spacing="xl" mt="lg">
-                {formSection.slice(1).map((section, idx) => {
-                  return (
+        {formSection.length ? (
+          <>
+            {uniqueSectionList.map((section, idx) => {
+              if (!section.section_is_duplicatable) {
+                const sectionMatch = formSection.find(
+                  (thisSection) => thisSection.section_id === section.section_id
+                );
+                return (
+                  sectionMatch && (
                     <RequestSection
-                      key={section.section_id + idx}
-                      section={section}
+                      key={section.section_id}
+                      section={sectionMatch}
                       isFormslyForm={true}
                       isOnlyWithResponse
                       index={idx + 1}
                     />
-                  );
-                })}
-              </Stack>
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
+                  )
+                );
+              } else {
+                const sectionMatch = formSection.filter(
+                  (thisSection) => thisSection.section_id === section.section_id
+                );
 
-        <OtherExpensesSummary
-          summaryData={formSection
-            .slice(1)
-            .sort((a, b) =>
-              `${a.section_field[0].field_response?.request_response}` >
-              `${b.section_field[0].field_response?.request_response}`
-                ? 1
-                : `${b.section_field[0].field_response?.request_response}` >
-                  `${a.section_field[0].field_response?.request_response}`
-                ? -1
-                : 0
-            )}
-        />
+                return (
+                  <Accordion key={section.section_id}>
+                    <Accordion.Item
+                      key={section.section_name}
+                      value={section.section_name}
+                    >
+                      <Paper shadow="xs">
+                        <Accordion.Control>
+                          <Title order={4} color="dimmed">
+                            {section.section_name}
+                          </Title>
+                        </Accordion.Control>
+                      </Paper>
+                      <Accordion.Panel>
+                        <Stack spacing="xl" mt="lg">
+                          {sectionMatch.map((section, sectionIndex) => {
+                            return (
+                              sectionMatch && (
+                                <RequestSection
+                                  key={section.section_id + sectionIndex}
+                                  section={section}
+                                  isFormslyForm={true}
+                                  isOnlyWithResponse
+                                  index={sectionIndex + 1}
+                                />
+                              )
+                            );
+                          })}
+                        </Stack>
+                      </Accordion.Panel>
+                    </Accordion.Item>
+                  </Accordion>
+                );
+              }
+            })}
+          </>
+        ) : null}
+
+        {/* {formSection.length > 3 && (
+          <ITAssetSummary
+            summaryData={formSection
+              .slice(3)
+              .sort((a, b) =>
+                `${a.section_field[0].field_response?.request_response}` >
+                `${b.section_field[0].field_response?.request_response}`
+                  ? 1
+                  : `${b.section_field[0].field_response?.request_response}` >
+                    `${a.section_field[0].field_response?.request_response}`
+                  ? -1
+                  : 0
+              )}
+          />
+        )} */}
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
@@ -556,7 +640,7 @@ const OtherExpensesRequestPage = ({
                 ? Boolean(isUserSigner.signer_is_primary_signer)
                 : false
             }
-            isEditable={isEditable}
+            isEditable={false}
             isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
@@ -584,4 +668,4 @@ const OtherExpensesRequestPage = ({
   );
 };
 
-export default OtherExpensesRequestPage;
+export default PersonnelTransferRequisitionRequestPage;
