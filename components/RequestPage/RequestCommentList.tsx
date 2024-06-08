@@ -245,16 +245,13 @@ const RequestCommentList = ({
         },
       };
 
-      await fetch(
-        `/api/add-comment-to-jira-ticket?jiraTicketKey=${jiraTicketKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(bodyData),
-        }
-      );
+      await fetch(`/api/jira/add-comment?jiraTicketKey=${jiraTicketKey}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bodyData),
+      });
     } catch (error) {
       console.error(error);
     }
