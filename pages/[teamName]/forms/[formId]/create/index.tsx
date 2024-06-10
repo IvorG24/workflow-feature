@@ -1,3 +1,4 @@
+import CreateEquipmentServiceReport from "@/components/CreateEquipmentServiceReport/CreateEquipmentServiceReport";
 import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
@@ -114,6 +115,14 @@ const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
           <CreatePersonnelTransferRequisition
             form={form}
             projectOptions={projectOptions}
+          />
+        );
+      case "Equipment Service Report":
+        return (
+          <CreateEquipmentServiceReport
+            form={form}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
           />
         );
     }

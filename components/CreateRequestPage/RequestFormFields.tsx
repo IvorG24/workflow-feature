@@ -158,6 +158,55 @@ type RequestFormFieldsProps = {
       fieldIndex: number
     ) => void;
   };
+  equipmentServiceReportMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCategoryChange: (value: string | null) => void;
+    onEquipmentTypeChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null) => void;
+    onActionTypeChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onActionPlanBlur: (value: string | null, index: number) => void;
+    onGeneralItemNameChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onComponentCategoryChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onBrandChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onModelChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onPartNumberChange: (value: string | null, index: number) => void;
+    onQuantityBlur: () => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -177,6 +226,7 @@ const RequestFormFields = ({
   isLoading,
   currencyOptionList,
   personnelTransferRequisitionMethods,
+  equipmentServiceReportMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -360,6 +410,12 @@ const RequestFormFields = ({
                       sectionIndex
                     );
                   break;
+                case "Action Plan":
+                  equipmentServiceReportMethods?.onActionPlanBlur(
+                    value,
+                    sectionIndex
+                  );
+                  break;
               }
             }}
           />
@@ -440,6 +496,13 @@ const RequestFormFields = ({
                   {...inputProps}
                   error={fieldError}
                   precision={2}
+                  onBlur={() => {
+                    switch (field.field_name) {
+                      case "Quantity":
+                        equipmentServiceReportMethods?.onQuantityBlur();
+                        break;
+                    }
+                  }}
                 />
               )}
               rules={{
@@ -499,6 +562,7 @@ const RequestFormFields = ({
             label: option.option_value,
           };
         });
+
         return (
           <Controller
             control={control}
@@ -553,6 +617,7 @@ const RequestFormFields = ({
                       pedItemFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
                       itAssetRequestFormMethods?.onProjectNameChange(value);
+                      equipmentServiceReportMethods?.onProjectNameChange(value);
                       break;
                     case "CSI Division":
                       servicesFormMethods?.onCSIDivisionChange(
@@ -583,6 +648,7 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+
                       break;
                     case "Equipment Name":
                       pedPartFormMethods?.onEquipmentNameChange(value);
@@ -596,10 +662,17 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
-
+                      equipmentServiceReportMethods?.onGeneralItemNameChange(
+                        value,
+                        sectionIndex
+                      );
                       break;
                     case "Component Category":
                       pedPartFormMethods?.onComponentCategoryChange(
+                        value,
+                        sectionIndex
+                      );
+                      equipmentServiceReportMethods?.onComponentCategoryChange(
                         value,
                         sectionIndex
                       );
@@ -610,12 +683,24 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+                      equipmentServiceReportMethods?.onBrandChange(
+                        value,
+                        sectionIndex
+                      );
                       break;
                     case "Model":
                       pedPartFormMethods?.onModelChange(value, sectionIndex);
+                      equipmentServiceReportMethods?.onModelChange(
+                        value,
+                        sectionIndex
+                      );
                       break;
                     case "Part Number":
                       pedPartFormMethods?.onPartNumberChange(
+                        value,
+                        sectionIndex
+                      );
+                      equipmentServiceReportMethods?.onPartNumberChange(
                         value,
                         sectionIndex
                       );
@@ -676,6 +761,25 @@ const RequestFormFields = ({
                         value,
                         sectionIndex,
                         fieldIndex
+                      );
+                      break;
+                    case "Equipment Category":
+                      equipmentServiceReportMethods?.onCategoryChange(value);
+                      break;
+                    case "Equipment Type":
+                      equipmentServiceReportMethods?.onEquipmentTypeChange(
+                        value
+                      );
+                      break;
+                    case "Property Number":
+                      equipmentServiceReportMethods?.onPropertyNumberChange(
+                        value
+                      );
+                      break;
+                    case "Action Type":
+                      equipmentServiceReportMethods?.onActionTypeChange(
+                        value,
+                        prevValue as string | null
                       );
                       break;
                   }
@@ -791,10 +895,12 @@ const RequestFormFields = ({
         );
 
       case "MULTISELECT":
-        const multiselectOption = field.options.map((option) => ({
-          value: option.option_value,
-          label: option.option_value,
-        }));
+        const multiselectOption = field.options
+          .map((option) => ({
+            value: option.option_value,
+            label: option.option_value,
+          }))
+          .filter((option) => option.value);
 
         return (
           <Controller

@@ -1,3 +1,4 @@
+import EquipmentServiceReport from "@/components/EquipmentServiceReport/EquipmentServiceReport";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import Meta from "@/components/Meta/Meta";
@@ -112,6 +113,15 @@ const Page = ({
     ) {
       return (
         <PersonnelTransferRequisitionRequestPage
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
+    } else if (request.request_form.form_name === "Equipment Service Report") {
+      return (
+        <EquipmentServiceReport
           request={request}
           sectionIdWithDuplicatableSectionIdList={
             sectionIdWithDuplicatableSectionIdList

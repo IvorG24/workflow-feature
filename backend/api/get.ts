@@ -5735,7 +5735,7 @@ export const getEquipmentDescription = async (
         ? formattedData.equipment_description_model.equipment_model
         : "",
     },
-  } as ReturnDataType;
+  } as unknown as ReturnDataType;
 };
 
 // Fetch item section choices based on given parameters
@@ -6162,9 +6162,10 @@ export const getPropertyNumberOptions = async (
     index: number;
     limit: number;
     equipmentId?: string;
+    isWithAcquisitionDate?: boolean;
   }
 ) => {
-  const { teamId, index, limit, equipmentId } = params;
+  const { teamId, index, limit, equipmentId, isWithAcquisitionDate } = params;
   let query = supabaseClient
     .from("equipment_description_view")
     .select(
@@ -6183,6 +6184,9 @@ export const getPropertyNumberOptions = async (
 
   if (equipmentId) {
     query.eq("equipment_description_equipment_id", equipmentId);
+  }
+  if (isWithAcquisitionDate) {
+    query.not("equipment_description_acquisition_date", "is", null);
   }
 
   query = query.limit(limit);
