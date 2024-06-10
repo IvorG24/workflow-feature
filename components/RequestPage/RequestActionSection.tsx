@@ -59,15 +59,17 @@ const RequestActionSection = ({
           requestId: requestId,
           requestSignerId: requestSignerId,
         });
-      if (
-        process.env.NODE_ENV === "production" &&
-        isAllPrimaryApprovedTheRequest
-      ) {
-        const { jiraTicketId, jiraTicketLink } = await onCreateJiraTicket();
-        if (!jiraTicketId) return;
-        handleUpdateRequest("APPROVED", jiraTicketId, jiraTicketLink);
-      } else if (process.env.NODE_ENV === "development") {
-        handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
+
+      if (isAllPrimaryApprovedTheRequest) {
+        if (process.env.NODE_ENV === "production") {
+          const { jiraTicketId, jiraTicketLink } = await onCreateJiraTicket();
+
+          handleUpdateRequest("APPROVED", jiraTicketId, jiraTicketLink);
+        } else {
+          handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
+        }
+      } else {
+        handleUpdateRequest("APPROVED");
       }
     } catch (error) {
       notifications.show({

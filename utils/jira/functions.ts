@@ -8,6 +8,7 @@ import { Database } from "oneoffice-api";
 import { formatDate } from "../constant";
 import {
   JiraITAssetTicketPayloadProps,
+  JiraPTRFTicketPayloadProps,
   JiraPayloadType,
   JiraTicketPayloadProps,
   RequestCommentType,
@@ -372,6 +373,55 @@ export const formatJiraRequisitionPayload = ({
     requestTypeId: requestTypeId,
     serviceDeskId: "17",
     raiseOnBehalfOf: warehouseRepresentativeId,
+  };
+
+  return jiraTicketPayload;
+};
+
+export const formatJiraPTRFPayload = ({
+  requestId,
+  requestUrl,
+  typeOfTransfer,
+  mannerOfTransfer,
+  department,
+  projectNameFrom,
+  projectNameTo,
+  purpose,
+}: JiraPTRFTicketPayloadProps) => {
+  const jiraTicketPayload = {
+    form: {
+      answers: {
+        "1": {
+          choices: [typeOfTransfer], // Type of Transfer
+        },
+        "34": {
+          choices: [mannerOfTransfer], // Manner of Transfer
+        },
+        "40": {
+          choices: [department], // Department
+        },
+        "36": {
+          choices: [projectNameFrom], // Project Name From
+        },
+        "38": {
+          choices: [projectNameTo], // Project Name From
+        },
+        "43": {
+          choices: [purpose], // Purpose
+        },
+        "53": {
+          text: requestUrl, // Formsly URL
+        },
+        "54": {
+          text: requestId, // FormslyId
+        },
+      },
+    },
+    isAdfRequest: false,
+    requestFieldValues: {},
+    requestParticipants: [],
+    requestTypeId: "405",
+    serviceDeskId: "4",
   };
 
   return jiraTicketPayload;

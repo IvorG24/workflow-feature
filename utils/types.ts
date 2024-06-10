@@ -1907,3 +1907,14 @@ export type JiraFormFieldChoice = {
   id: string;
   name: string;
 };
+
+export type JiraPTRFTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  typeOfTransfer: string;
+  mannerOfTransfer: string;
+  department: string;
+  projectNameFrom: string;
+  projectNameTo: string;
+  purpose: string;
+};
