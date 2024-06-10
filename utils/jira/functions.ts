@@ -397,14 +397,11 @@ export const formatJiraLRFRequisitionPayload = ({
   const requestTypeId = isPEDDepartment ? "406" : "367";
   const serviceDeskId = isPEDDepartment ? "27" : "23";
 
-  const jiraTicketPayload: JiraPayloadType = {
+  let jiraTicketPayload: JiraPayloadType = {
     form: {
       answers: {
         "471": {
           text: requestor, // Requestor Name
-        },
-        "15": {
-          text: purpose,
         },
         "442": {
           choices: [typeOfRequest], // Type
@@ -431,24 +428,46 @@ export const formatJiraLRFRequisitionPayload = ({
   };
 
   if (isPEDDepartment) {
-    jiraTicketPayload.form.answers["475"] = {
-      choices: [department], // Department
-    };
-    jiraTicketPayload.form.answers["476"] = {
-      choices: [jiraProjectSiteId], // Requesting Project
-    };
-    jiraTicketPayload.form.answers["479"] = {
-      text: costCode, // Cost code
-    };
-    jiraTicketPayload.form.answers["480"] = {
-      text: boqCode, // BOQ code
+    jiraTicketPayload = {
+      ...jiraTicketPayload,
+      form: {
+        answers: {
+          ...jiraTicketPayload.form.answers,
+          475: {
+            choices: [department], // Department
+          },
+          476: {
+            choices: [jiraProjectSiteId], // Requesting Project
+          },
+          479: {
+            text: costCode, // Cost code
+          },
+          480: {
+            text: boqCode, // BOQ code
+          },
+          15: {
+            text: purpose, // Purpose
+          },
+        },
+      },
     };
   } else {
-    jiraTicketPayload.form.answers["469"] = {
-      choices: [department], // Department
-    };
-    jiraTicketPayload.form.answers["468"] = {
-      choices: [jiraProjectSiteId], // Requesting Project
+    jiraTicketPayload = {
+      ...jiraTicketPayload,
+      form: {
+        answers: {
+          ...jiraTicketPayload.form.answers,
+          469: {
+            choices: [department], // Department
+          },
+          468: {
+            choices: [jiraProjectSiteId], // Requesting Project
+          },
+          475: {
+            text: purpose, // Purpose
+          },
+        },
+      },
     };
   }
 
