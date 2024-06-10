@@ -1,7 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   getAllSection,
-  getJiraAutomationDataByProjectId,
   getRequestComment,
   getSectionInRequestPageWithMultipleDuplicatableSection,
 } from "@/backend/api/get";
@@ -14,8 +13,6 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
-import { mostOccurringElement, safeParse } from "@/utils/functions";
-import { createJiraTicket } from "@/utils/jira-api-functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -75,10 +72,10 @@ const PersonnelTransferRequisitionRequestPage = ({
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
-  const [requestJira, setRequestJira] = useState({
+  const requestJira = {
     id: request.request_jira_id,
     link: request.request_jira_link,
-  });
+  };
   const [uniqueSectionList, setUniqueSectionList] = useState<SectionTableRow[]>(
     []
   );
@@ -362,129 +359,129 @@ const PersonnelTransferRequisitionRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const onCreateJiraTicket = async () => {
-    try {
-      if (!request.request_project_id) {
-        notifications.show({
-          message: "Project id is not defined.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-      setIsLoading(true);
-      const jiraAutomationData = await getJiraAutomationDataByProjectId(
-        supabaseClient,
-        { teamProjectId: request.request_project_id }
-      );
+  // const onCreateJiraTicket = async () => {
+  //   try {
+  //     if (!request.request_project_id) {
+  //       notifications.show({
+  //         message: "Project id is not defined.",
+  //         color: "red",
+  //       });
+  //       return { success: false, data: null };
+  //     }
+  //     setIsLoading(true);
+  //     const jiraAutomationData = await getJiraAutomationDataByProjectId(
+  //       supabaseClient,
+  //       { teamProjectId: request.request_project_id }
+  //     );
 
-      if (!jiraAutomationData) {
-        notifications.show({
-          message: "Error fetching of Jira project and item category data.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
+  //     if (!jiraAutomationData) {
+  //       notifications.show({
+  //         message: "Error fetching of Jira project and item category data.",
+  //         color: "red",
+  //       });
+  //       return { success: false, data: null };
+  //     }
 
-      const { jiraProjectData } = jiraAutomationData;
+  //     const { jiraProjectData } = jiraAutomationData;
 
-      if (!jiraProjectData) {
-        notifications.show({
-          message: "Jira project data is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
+  //     if (!jiraProjectData) {
+  //       notifications.show({
+  //         message: "Jira project data is missing.",
+  //         color: "red",
+  //       });
+  //       return { success: false, data: null };
+  //     }
 
-      const employeeName =
-        request.request_form.form_section[2].section_field[2].field_response[0]
-          .request_response;
+  //     const employeeName =
+  //       request.request_form.form_section[2].section_field[2].field_response[0]
+  //         .request_response;
 
-      const response = await fetch(
-        "/api/get-jira-automation-form?serviceDeskId=3&requestType=332",
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const { fields } = await response.json();
-      const purposeList = fields["2"].choices;
-      const itemList = fields["1"].choices;
+  //     const response = await fetch(
+  //       "/api/get-jira-automation-form?serviceDeskId=3&requestType=332",
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           Accept: "application/json",
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+  //     const { fields } = await response.json();
+  //     const purposeList = fields["2"].choices;
+  //     const itemList = fields["1"].choices;
 
-      const requestPurpose =
-        request.request_form.form_section[0].section_field.find(
-          (field) => field.field_name === "Purpose"
-        )?.field_response[0].request_response;
+  //     const requestPurpose =
+  //       request.request_form.form_section[0].section_field.find(
+  //         (field) => field.field_name === "Purpose"
+  //       )?.field_response[0].request_response;
 
-      const requestItem = safeParse(
-        mostOccurringElement(
-          formSection
-            .slice(3)
-            .map(
-              (section) =>
-                section.section_field[0].field_response?.request_response ?? ""
-            )
-        )
-      );
+  //     const requestItem = safeParse(
+  //       mostOccurringElement(
+  //         formSection
+  //           .slice(3)
+  //           .map(
+  //             (section) =>
+  //               section.section_field[0].field_response?.request_response ?? ""
+  //           )
+  //       )
+  //     );
 
-      const purpose = purposeList.find(
-        (purpose: { id: string; name: string }) =>
-          purpose.name.toLowerCase() ===
-          safeParse(`${requestPurpose?.toLowerCase()}`)
-      );
+  //     const purpose = purposeList.find(
+  //       (purpose: { id: string; name: string }) =>
+  //         purpose.name.toLowerCase() ===
+  //         safeParse(`${requestPurpose?.toLowerCase()}`)
+  //     );
 
-      const item = itemList.find(
-        (item: { id: string; name: string }) =>
-          item.name.toLowerCase() === safeParse(`${requestItem?.toLowerCase()}`)
-      );
+  //     const item = itemList.find(
+  //       (item: { id: string; name: string }) =>
+  //         item.name.toLowerCase() === safeParse(`${requestItem?.toLowerCase()}`)
+  //     );
 
-      if (!purpose || !item) {
-        notifications.show({
-          message: "Jira item or purpose is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
+  //     if (!purpose || !item) {
+  //       notifications.show({
+  //         message: "Jira item or purpose is missing.",
+  //         color: "red",
+  //       });
+  //       return { success: false, data: null };
+  //     }
 
-      const jiraTicketPayload = {
-        requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
-        requestTypeId: "332",
-        jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
-        employeeName: safeParse(employeeName),
-        purpose: purpose.id,
-        item: item.id,
-        requestFormType: request.request_form.form_name,
-      };
+  //     const jiraTicketPayload = {
+  //       requestId: request.request_formsly_id,
+  //       requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+  //       requestTypeId: "332",
+  //       jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
+  //       employeeName: safeParse(employeeName),
+  //       purpose: purpose.id,
+  //       item: item.id,
+  //       requestFormType: request.request_form.form_name,
+  //     };
 
-      const jiraTicketData = await createJiraTicket({
-        jiraTicketPayload,
-        requestCommentList,
-        supabaseClient,
-        isITAsset: true,
-      });
+  //     const jiraTicketData = await createJiraTicket({
+  //       jiraTicketPayload,
+  //       requestCommentList,
+  //       supabaseClient,
+  //       isITAsset: true,
+  //     });
 
-      if (!jiraTicketData.success) {
-        return { success: false, data: null };
-      }
+  //     if (!jiraTicketData.success) {
+  //       return { success: false, data: null };
+  //     }
 
-      if (jiraTicketData.data) {
-        setRequestJira({
-          id: jiraTicketData.data.jiraTicketKey,
-          link: jiraTicketData.data.jiraTicketWebLink,
-        });
-      }
+  //     if (jiraTicketData.data) {
+  //       setRequestJira({
+  //         id: jiraTicketData.data.jiraTicketKey,
+  //         link: jiraTicketData.data.jiraTicketWebLink,
+  //       });
+  //     }
 
-      return jiraTicketData;
-    } catch (error) {
-      console.error(error);
-      return { success: false, data: null };
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     return jiraTicketData;
+  //   } catch (error) {
+  //     console.error(error);
+  //     return { success: false, data: null };
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
@@ -642,7 +639,7 @@ const PersonnelTransferRequisitionRequestPage = ({
             isUserRequester={isUserRequester}
             requestId={request.request_id}
             isItemForm
-            onCreateJiraTicket={onCreateJiraTicket}
+            // onCreateJiraTicket={onCreateJiraTicket}
             requestSignerId={isUserSigner?.request_signer_id}
           />
         )}

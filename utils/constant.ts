@@ -3,6 +3,18 @@ import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
 import { SectionWithField } from "./types";
 
+export const BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://formsly.io"
+    : "http://localhost:3000";
+
+export const ONE_OFFICE_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://oneoffice.ph"
+    : "http://localhost:3001";
+
+export const APP_SOURCE_ID = "d513a2b5-c223-4f7b-a19f-165ad29655ec";
+
 export const DEFAULT_REQUEST_LIST_LIMIT = 13;
 export const DEFAULT_TICKET_LIST_LIMIT = 13;
 export const DEFAULT_FORM_LIST_LIMIT = 18;

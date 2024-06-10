@@ -4,7 +4,11 @@ import {
 } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { DEFAULT_REQUEST_LIST_LIMIT, formatDate } from "@/utils/constant";
+import {
+  BASE_URL,
+  DEFAULT_REQUEST_LIST_LIMIT,
+  formatDate,
+} from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -149,7 +153,7 @@ const RequestListTable = ({
             let jiraStatus = { jira_id: "", status: "" };
             if (request.request_jira_id) {
               const requestJiraTicketData = await fetch(
-                `/api/get-jira-ticket?jiraTicketKey=${request.request_jira_id}`
+                `/api/jira/get-ticket?jiraTicketKey=${request.request_jira_id}`
               );
               if (!requestJiraTicketData.ok) {
                 jiraStatus = {
@@ -350,9 +354,7 @@ const RequestListTable = ({
                   </Anchor>
                 </Text>
                 <CopyButton
-                  value={`${
-                    process.env.NEXT_PUBLIC_SITE_URL
-                  }/${formatTeamNameToUrlKey(
+                  value={`${BASE_URL}/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
                   )}/requests/${request_formsly_id}`}
                 >
