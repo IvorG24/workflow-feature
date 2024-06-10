@@ -1,9 +1,5 @@
 import { deleteRequest } from "@/backend/api/delete";
-import {
-  getJiraAutomationDataByProjectId,
-  getRequestComment,
-  getSectionInRequestPage,
-} from "@/backend/api/get";
+import { getRequestComment, getSectionInRequestPage } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -18,8 +14,13 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
-import { createJiraTicket } from "@/utils/jira-api-functions";
+import { BASE_URL, formatDate } from "@/utils/constant";
+import {
+  createJiraTicket,
+  formatJiraRequisitionPayload,
+  getJiraTransitionId,
+  getRequisitionAutomationData,
+} from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -327,96 +328,44 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const onCreateJiraTicket = async () => {
     try {
       if (!request.request_project_id) {
-        notifications.show({
-          message: "Project id is not defined.",
-          color: "red",
-        });
-        return { success: false, data: null };
+        throw new Error("Project id is not defined.");
       }
-
       setIsLoading(true);
-      const jiraAutomationData = await getJiraAutomationDataByProjectId(
-        supabaseClient,
-        { teamProjectId: request.request_project_id }
-      );
-
-      if (!jiraAutomationData) {
-        notifications.show({
-          message: "Error fetching of Jira project and item category data.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      const { jiraProjectData, jiraItemCategoryData, jiraOrganizationData } =
-        jiraAutomationData;
-
       const itemCategory = "Services";
-
-      const itemCategoryMatch = jiraItemCategoryData.find(
-        (item) => item.jira_item_category_formsly_label === itemCategory
+      const requisitionAutomationData = await getRequisitionAutomationData(
+        supabaseClient,
+        {
+          teamProjectId: request.request_project_id,
+          itemCategory,
+        }
       );
-
-      if (!jiraProjectData || !itemCategoryMatch) {
-        notifications.show({
-          message: "Jira project and item category data is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      const warehouseAreaLead = jiraProjectData.jira_user_list.filter(
-        (user) => user.jira_user_role_label === "WAREHOUSE AREA LEAD"
-      )[0];
-      const warehouseRepresentative = jiraProjectData.jira_user_list.filter(
-        (user) => user.jira_user_role_label === "WAREHOUSE REPRESENTATIVE"
-      )[0];
-      const warehouseRequestParticipant = jiraProjectData.jira_user_list.filter(
-        (user) => user.jira_user_role_label === "WAREHOUSE REQUEST PARTICIPANT"
-      );
-
-      const jiraTicketPayload = {
+      const jiraTicketPayload = formatJiraRequisitionPayload({
         requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
         requestFormType: request.request_form.form_name,
         requestTypeId: "299",
-        jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
-        jiraItemCategoryId: itemCategoryMatch.jira_item_category_jira_id,
-
-        warehouseCorporateLeadId: itemCategoryMatch.jira_user_account_jira_id,
-        warehouseAreaLeadId: warehouseAreaLead.jira_user_account_jira_id,
-        warehouseRepresentativeId:
-          warehouseRepresentative.jira_user_account_jira_id,
-        warehouseRequestParticipantIdList: warehouseRequestParticipant.map(
-          (user) => user.jira_user_account_jira_id
-        ),
-        jiraItemCategoryLabel: itemCategoryMatch.jira_item_category_jira_label,
-        jiraOrganizationId: jiraOrganizationData
-          ? jiraOrganizationData.jira_organization_jira_id
-          : "",
-      };
-
-      const jiraTicketData = await createJiraTicket({
-        jiraTicketPayload,
-        requestCommentList,
-        supabaseClient,
+        ...requisitionAutomationData,
       });
-
-      if (!jiraTicketData.success) {
-        return { success: false, data: null };
-      }
-
-      if (jiraTicketData.data) {
-        setRequestJira({
-          id: jiraTicketData.data.jiraTicketKey,
-          link: jiraTicketData.data.jiraTicketWebLink,
-        });
-      }
-
-      return jiraTicketData;
+      const jiraTicket = await createJiraTicket({
+        requestType: "Automated Requisition Form",
+        formslyId: request.request_formsly_id,
+        requestCommentList,
+        ticketPayload: jiraTicketPayload,
+        transitionId: getJiraTransitionId(request.request_form.form_name) ?? "",
+        organizationId: requisitionAutomationData.jiraOrganizationId,
+      });
+      setRequestJira({
+        id: jiraTicket.jiraTicketId,
+        link: jiraTicket.jiraTicketLink,
+      });
+      return jiraTicket;
     } catch (error) {
-      console.error(error);
-      return { success: false, data: null };
+      const errorMessage = (error as Error).message;
+      notifications.show({
+        message: `Error: ${errorMessage}`,
+        color: "red",
+      });
+      return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);
     }
@@ -425,7 +374,7 @@ const ServicesRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
       );
 
       if (newJiraTicketData.ok) {

@@ -19,7 +19,10 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
-import { createJiraTicket } from "@/utils/jira-api-functions";
+import {
+  createJiraTicket,
+  formatJiraLRFRequisitionPayload,
+} from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -321,26 +324,12 @@ const BillOfQuantityRequestPage = ({
         { teamProjectId: lrfRequest.request_project_id }
       );
 
-      if (!jiraAutomationData) {
-        notifications.show({
-          message: "Error fetching of Jira project and item category data.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      const { jiraProjectData } = jiraAutomationData;
-
-      if (!jiraProjectData) {
-        notifications.show({
-          message: "Jira project data is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
+      if (!jiraAutomationData?.jiraProjectData) {
+        throw new Error("Error fetching Jira project data.");
       }
 
       const response = await fetch(
-        "/api/get-jira-automation-form?serviceDeskId=23&requestType=367",
+        "/api/jira/get-form??serviceDeskId=23&requestType=367",
         {
           method: "GET",
           headers: {
@@ -370,6 +359,7 @@ const BillOfQuantityRequestPage = ({
       const typeOfRequest = safeParse(
         sortedLrfRequestDetails[4].field_response[0].request_response
       );
+
       let workingAdvances = "";
       let ticketUrl = "";
 
@@ -405,41 +395,43 @@ const BillOfQuantityRequestPage = ({
         return { success: false, data: null };
       }
 
-      const jiraTicketPayload = {
+      const jiraTicketPayload = formatJiraLRFRequisitionPayload({
         requestId: lrfRequest.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${lrfRequest.request_formsly_id}`,
         requestor: `${user.user_first_name} ${user.user_last_name}`,
-        jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
+        jiraProjectSiteId:
+          jiraAutomationData.jiraProjectData.jira_project_jira_id,
         department: departmentId.id,
         purpose,
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",
         workingAdvances,
         ticketUrl,
-      };
-
-      const jiraTicketData = await createJiraTicket({
-        jiraTicketPayload,
-        requestCommentList,
-        supabaseClient,
-        isITAsset: true,
       });
 
-      if (!jiraTicketData.success) {
-        return { success: false, data: null };
+      const jiraTicket = await createJiraTicket({
+        requestType: "Request for Liquidation/Reimbursement v2",
+        formslyId: request.request_formsly_id,
+        requestCommentList,
+        ticketPayload: jiraTicketPayload,
+      });
+
+      if (!jiraTicket.jiraTicketId) {
+        throw new Error("Failed to create jira ticket.");
       }
 
-      if (jiraTicketData.data) {
-        setRequestJira({
-          id: jiraTicketData.data.jiraTicketKey,
-          link: jiraTicketData.data.jiraTicketWebLink,
-        });
-      }
-
-      return jiraTicketData;
+      setRequestJira({
+        id: jiraTicket.jiraTicketId,
+        link: jiraTicket.jiraTicketLink,
+      });
+      return jiraTicket;
     } catch (error) {
-      console.error(error);
-      return { success: false, data: null };
+      const errorMessage = (error as Error).message;
+      notifications.show({
+        message: `Error: ${errorMessage}`,
+        color: "red",
+      });
+      return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);
     }

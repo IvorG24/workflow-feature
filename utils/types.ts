@@ -1772,10 +1772,7 @@ export type JiraITAssetTicketPayloadProps = {
   requestFormType: string;
 };
 
-export type JiraTicketData = {
-  success: boolean;
-  data: { jiraTicketKey: string; jiraTicketWebLink: string } | null;
-};
+export type JiraTicketData = { jiraTicketId: string; jiraTicketLink: string };
 
 export type ItemCategoryWithSigner = ItemCategoryTableRow & {
   item_category_signer: {
@@ -1883,15 +1880,30 @@ export type RequestListFilterValues = {
   idFilter?: string[];
 };
 
-export type ConnectedRequestFormProps = {
-  request_id: string;
-  request_form_id: string;
-  request_project_id: string;
-  form_section: string[];
-  duplicatableSectionIdList: string[];
+export type JiraPayloadType = {
+  form: {
+    answers: {
+      [key: string]: {
+        choices?: (string | null)[];
+        text?: string;
+        users?: string[];
+      };
+    };
+  };
+  isAdfRequest: boolean;
+  requestFieldValues: { [key: string]: string };
+  requestTypeId: string;
+  serviceDeskId: string;
+  requestParticipants: string[];
+  raiseOnBehalfOf?: string;
 };
 
-export type JiraBOQTicketPayloadProps = {
+export type JiraFormFieldChoice = {
+  id: string;
+  name: string;
+};
+
+export type JiraLRFTicketPayloadProps = {
   requestId: string;
   requestUrl: string;
   jiraProjectSiteId: string;
@@ -1902,4 +1914,12 @@ export type JiraBOQTicketPayloadProps = {
   workingAdvances: string;
   ticketUrl: string;
   requestor: string;
+};
+
+export type ConnectedRequestFormProps = {
+  request_id: string;
+  request_form_id: string;
+  request_project_id: string;
+  form_section: string[];
+  duplicatableSectionIdList: string[];
 };

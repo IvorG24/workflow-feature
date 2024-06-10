@@ -2,6 +2,7 @@ import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
+  APP_SOURCE_ID,
   FETCH_OPTION_LIMIT,
   FORMSLY_FORM_ORDER,
   ITEM_FIELD_ID_LIST,
@@ -7192,7 +7193,7 @@ export const fetchFormslyInvoiceHistoryList = async (
     },
     filter: {
       appSourceUserId: userId,
-      appSource: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
+      appSource: APP_SOURCE_ID,
     },
   });
   if (error) throw error;
