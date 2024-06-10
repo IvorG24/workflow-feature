@@ -734,6 +734,7 @@ export type FormType = {
   form_section: (SectionTableRow & {
     section_field: (FieldTableRow & {
       field_option: OptionTableRow[];
+      field_section_duplicatable_id?: string;
     })[];
   })[];
   form_team_group: {
@@ -1104,6 +1105,7 @@ export type DuplicateSectionType = SectionTableRow & {
   section_field: (FieldTableRow & {
     field_option?: OptionTableRow[];
     field_response: RequestResponseTableRow | null;
+    field_section_duplicatable_id?: string;
   })[];
 };
 
@@ -1899,4 +1901,27 @@ export type JiraPayloadType = {
 export type JiraFormFieldChoice = {
   id: string;
   name: string;
+};
+
+export type JiraLRFTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  department: string;
+  purpose: string;
+  typeOfRequest: string;
+  requestFormType: string;
+  workingAdvances: string;
+  ticketUrl: string;
+  requestor: string;
+  boqCode?: string;
+  costCode?: string;
+};
+
+export type ConnectedRequestFormProps = {
+  request_id: string;
+  request_form_id: string;
+  request_project_id: string;
+  form_section: string[];
+  duplicatableSectionIdList: string[];
 };

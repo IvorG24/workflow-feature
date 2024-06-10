@@ -49,6 +49,7 @@ import {
   JiraItemCategoryDataType,
   JiraOrganizationTableRow,
   JiraProjectDataType,
+  JiraProjectTableRow,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -62,6 +63,7 @@ import {
   RequestListOnLoad,
   RequestProjectSignerType,
   RequestResponseTableRow,
+  RequestTableRow,
   RequestWithResponseType,
   SSOTOnLoad,
   ServiceWithScopeAndChoice,
@@ -6294,6 +6296,7 @@ export const getJiraFormslyProjectList = async (
           jira_formsly_project_id: string;
           jira_project_id: string;
           formsly_project_id: string;
+          jira_project: JiraProjectTableRow | null;
         })
       : null;
 
@@ -6301,6 +6304,7 @@ export const getJiraFormslyProjectList = async (
       jira_organization_team_project_id: string;
       jira_organization_team_project_project_id: string;
       jira_organization_team_project_organization_id: string;
+      jira_organization_team_project_organization: JiraOrganizationTableRow | null
     }[];
 
     return {
@@ -7264,4 +7268,26 @@ export const fetchFormslyLatestPrice = async (
     .single();
   if (error) throw error;
   return data.formsly_price;
+};
+
+// Fetch existing BOQ request
+export const getExistingBOQRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  lrfRequestId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response, request: request_response_request_id!inner(*)")
+    .eq("request_response", JSON.stringify(lrfRequestId))
+    .in("request.request_status", ["PENDING", "APPROVED"])
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data
+    ? (data.request as unknown as Pick<
+        RequestTableRow,
+        "request_formsly_id_prefix" | "request_formsly_id_serial"
+      >)
+    : null;
 };
