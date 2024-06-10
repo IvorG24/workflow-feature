@@ -305,6 +305,53 @@ const EditLiquidReimbursementRequestPage = ({
     }
   };
 
+  const handleDepartmentChange = async (value: string | null) => {
+    try {
+      const currentRequestDetails = getValues(`sections.${0}`);
+      const sectionFields = currentRequestDetails.section_field;
+      const conditionalFieldExists = sectionFields.some(
+        (field) => field.field_name === "Cost Code"
+      );
+      const valueIsPED = value?.toLowerCase().includes("plants and equipment");
+
+      const addConditionalFields = valueIsPED && !conditionalFieldExists;
+      const removeConditionalFields = !valueIsPED && conditionalFieldExists;
+
+      if (addConditionalFields) {
+        const pedConditionalFields = form.form_section[0].section_field.slice(
+          7,
+          9
+        );
+        updateSection(0, {
+          ...currentRequestDetails,
+          section_field: [...sectionFields, ...pedConditionalFields],
+        });
+        return;
+      }
+
+      if (removeConditionalFields) {
+        const updatedSectionFields = sectionFields.filter(
+          (field) => !["Cost Code", "BOQ Code"].includes(field.field_name)
+        );
+
+        const requestDetailsSection = {
+          ...currentRequestDetails,
+          section_field: updatedSectionFields,
+        };
+
+        const payeeSection = getValues(`sections`).slice(1);
+        replaceSection([requestDetailsSection, ...payeeSection]);
+        return;
+      }
+    } catch (e) {
+      setValue(`sections.0.section_field.2.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
@@ -319,7 +366,7 @@ const EditLiquidReimbursementRequestPage = ({
               (field) => field.field_id
             ),
           });
-        const requestDetailsSectionFieldList =
+        let requestDetailsSectionFieldList =
           form.form_section[0].section_field.map((field) => {
             const response = requestDetailsSectionResponse.find(
               (response) =>
@@ -332,6 +379,19 @@ const EditLiquidReimbursementRequestPage = ({
                 : "",
             };
           });
+
+        const isPED = requestDetailsSectionFieldList.some(
+          (field) =>
+            field.field_name === "Department" &&
+            field.field_response === "Plants and Equipment"
+        );
+
+        if (!isPED) {
+          requestDetailsSectionFieldList =
+            requestDetailsSectionFieldList.filter(
+              (field) => !["Cost Code", "BOQ Code"].includes(field.field_name)
+            );
+        }
 
         // Payee Section
         let index = 0;
@@ -493,6 +553,7 @@ const EditLiquidReimbursementRequestPage = ({
                     liquidationReimbursementFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onRequestTypeChange: handleRequestTypeChange,
+                      onDepartmentChange: handleDepartmentChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}

@@ -1,6 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   getExistingBOQRequest,
+  getJiraAutomationDataByProjectId,
   getRequestComment,
   getSectionInRequestPage,
 } from "@/backend/api/get";
@@ -19,6 +20,11 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
+import { safeParse } from "@/utils/functions";
+import {
+  createJiraTicket,
+  formatJiraLRFRequisitionPayload,
+} from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -54,6 +60,9 @@ type Props = {
   duplicatableSectionIdList: string[];
 };
 
+type SectionField =
+  RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
+
 const LiquidationReimbursementRequestPage = ({
   request,
   duplicatableSectionIdList,
@@ -77,10 +86,6 @@ const LiquidationReimbursementRequestPage = ({
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
-  const requestJira = {
-    id: request.request_jira_id,
-    link: request.request_jira_link,
-  };
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [formSection, setFormSection] = useState(
     generateSectionWithDuplicateList([request.request_form.form_section[0]])
@@ -88,6 +93,10 @@ const LiquidationReimbursementRequestPage = ({
   const [boqRequestRedirectUrl, setBOQRequestRedirectUrl] = useState<
     string | null
   >(null);
+  const [requestJira, setRequestJira] = useState({
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  });
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -95,8 +104,37 @@ const LiquidationReimbursementRequestPage = ({
   const activeTeam = useActiveTeam();
 
   const requestor = request.request_team_member.team_member_user;
-
   const requestDateCreated = formatDate(new Date(request.request_date_created));
+  const selectedDepartment = safeParse(
+    request.request_form.form_section[0].section_field[2].field_response[0]
+      .request_response
+  );
+  const isUserOwner = requestor.user_id === user?.user_id;
+  const isUserSigner = signerList.find(
+    (signer) =>
+      signer.signer_team_member.team_member_id === teamMember?.team_member_id
+  );
+  const canSignerTakeAction =
+    isUserSigner &&
+    isUserSigner.request_signer_status === "PENDING" &&
+    requestStatus !== "CANCELED";
+  const isEditable =
+    signerList
+      .map((signer) => signer.request_signer_status)
+      .filter((status) => status !== "PENDING").length === 0 &&
+    isUserOwner &&
+    requestStatus === "PENDING";
+  const isCancelable = isUserOwner && requestStatus === "PENDING";
+  const isDeletable = isUserOwner && requestStatus === "CANCELED";
+  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+  const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
+  const canCreateBOQ =
+    requestStatus === "APPROVED" &&
+    isUserCostEngineer &&
+    selectedDepartment !== "Plants and Equipment";
+
+  const isRequestActionSectionVisible =
+    canSignerTakeAction || isEditable || isDeletable || isUserRequester;
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -315,28 +353,142 @@ const LiquidationReimbursementRequestPage = ({
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const isUserOwner = requestor.user_id === user?.user_id;
-  const isUserSigner = signerList.find(
-    (signer) =>
-      signer.signer_team_member.team_member_id === teamMember?.team_member_id
-  );
-  const canSignerTakeAction =
-    isUserSigner &&
-    isUserSigner.request_signer_status === "PENDING" &&
-    requestStatus !== "CANCELED";
-  const isEditable =
-    signerList
-      .map((signer) => signer.request_signer_status)
-      .filter((status) => status !== "PENDING").length === 0 &&
-    isUserOwner &&
-    requestStatus === "PENDING";
-  const isCancelable = isUserOwner && requestStatus === "PENDING";
-  const isDeletable = isUserOwner && requestStatus === "CANCELED";
-  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
-  const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
+  const onCreateJiraTicket = async () => {
+    try {
+      if (selectedDepartment !== "Plants and Equipment") {
+        return { jiraTicketId: "", jiraTicketLink: "" };
+      }
+      if (!user) throw new Error("User is not defined.");
+      if (!request.request_project_id) {
+        throw new Error("Project id is not defined.");
+      }
+      setIsLoading(true);
 
-  const isRequestActionSectionVisible =
-    canSignerTakeAction || isEditable || isDeletable || isUserRequester;
+      const jiraAutomationData = await getJiraAutomationDataByProjectId(
+        supabaseClient,
+        { teamProjectId: request.request_project_id }
+      );
+
+      if (!jiraAutomationData?.jiraProjectData) {
+        throw new Error("Error fetching Jira project data.");
+      }
+
+      const response = await fetch(
+        "/api/jira/get-form?serviceDeskId=27&requestType=406",
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const { fields } = await response.json();
+      if (!fields) {
+        throw new Error("Jira form is not defined.");
+      }
+      const departmentList = fields["475"].choices;
+      const typeList = fields["442"].choices;
+      const workingAdvanceList = fields["445"].choices;
+
+      const requestDetails = request.request_form.form_section[0]
+        .section_field as SectionField;
+
+      const sortedRequestDetails = requestDetails.sort(
+        (a, b) => a.field_order - b.field_order
+      );
+      const purpose = safeParse(
+        sortedRequestDetails[3].field_response[0].request_response
+      );
+      const typeOfRequest = safeParse(
+        sortedRequestDetails[4].field_response[0].request_response
+      );
+      const costCode = safeParse(
+        sortedRequestDetails[7].field_response[0].request_response
+      );
+      const boqCode = safeParse(
+        sortedRequestDetails[8].field_response[0].request_response
+      );
+
+      let workingAdvances = "";
+      let ticketUrl = "";
+
+      if (typeOfRequest.includes("Liquidation")) {
+        const requestWorkingAdvances = safeParse(
+          sortedRequestDetails[5].field_response[0].request_response
+        );
+        const choiceMatch = workingAdvanceList.find(
+          (workingAdvanceItem: { id: string; name: string }) =>
+            workingAdvanceItem.name.toLowerCase() ===
+            requestWorkingAdvances.toLowerCase()
+        );
+        workingAdvances = choiceMatch.id;
+        ticketUrl = safeParse(
+          sortedRequestDetails[6].field_response[0].request_response
+        );
+      }
+
+      const departmentId = departmentList.find(
+        (departmentItem: { id: string; name: string }) =>
+          departmentItem.name.toLowerCase() === selectedDepartment.toLowerCase()
+      );
+      const typeOfRequestId = typeList.find(
+        (typeOfRequestItem: { id: string; name: string }) =>
+          typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
+      );
+
+      if (!departmentId || !typeOfRequestId) {
+        notifications.show({
+          message: "Department or type of request is undefined.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
+      const jiraTicketPayload = formatJiraLRFRequisitionPayload({
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestor: `${user.user_first_name} ${user.user_last_name}`,
+        jiraProjectSiteId:
+          jiraAutomationData.jiraProjectData.jira_project_jira_id,
+        department: departmentId.id,
+        purpose,
+        typeOfRequest: typeOfRequestId.id,
+        requestFormType: "BOQ",
+        workingAdvances,
+        ticketUrl,
+        costCode,
+        boqCode,
+      });
+
+      const jiraTicket = await createJiraTicket({
+        requestType: "Request for Liquidation/Reimbursement v2",
+        formslyId: request.request_formsly_id,
+        requestCommentList,
+        ticketPayload: jiraTicketPayload,
+      });
+
+      if (!jiraTicket.jiraTicketId) {
+        throw new Error("Failed to create jira ticket.");
+      }
+
+      setRequestJira({
+        id: jiraTicket.jiraTicketId,
+        link: jiraTicket.jiraTicketLink,
+      });
+      return jiraTicket;
+    } catch (error) {
+      const errorMessage = (error as Error).message;
+      notifications.show({
+        message: `Error: ${errorMessage}`,
+        color: "red",
+      });
+      return { jiraTicketId: "", jiraTicketLink: "" };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -464,7 +616,7 @@ const LiquidationReimbursementRequestPage = ({
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
       );
 
       if (newJiraTicketData.ok) {
@@ -477,7 +629,6 @@ const LiquidationReimbursementRequestPage = ({
         setJiraTicketStatus("Ticket Not Found");
       }
     };
-
     if (requestJira.id) {
       fetchJiraTicketStatus(requestJira.id);
     }
@@ -489,7 +640,7 @@ const LiquidationReimbursementRequestPage = ({
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {requestStatus === "APPROVED" && isUserCostEngineer && (
+        {canCreateBOQ && (
           <Button onClick={() => handleCreateBOQRequest()}>Create BOQ</Button>
         )}
       </Flex>
@@ -593,6 +744,11 @@ const LiquidationReimbursementRequestPage = ({
             isUserRequester={isUserRequester}
             requestId={request.request_id}
             isItemForm
+            onCreateJiraTicket={
+              selectedDepartment === "Plants and Equipment"
+                ? onCreateJiraTicket
+                : undefined
+            }
           />
         )}
 

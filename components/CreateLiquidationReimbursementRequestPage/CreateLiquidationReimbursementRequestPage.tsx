@@ -219,6 +219,53 @@ const CreateLiquidationReimbursementRequestPage = ({
     }
   };
 
+  const handleDepartmentChange = async (value: string | null) => {
+    try {
+      const currentRequestDetails = getValues(`sections.${0}`);
+      const sectionFields = currentRequestDetails.section_field;
+      const conditionalFieldExists = sectionFields.some(
+        (field) => field.field_name === "Cost Code"
+      );
+      const valueIsPED = value?.toLowerCase().includes("plants and equipment");
+
+      const addConditionalFields = valueIsPED && !conditionalFieldExists;
+      const removeConditionalFields = !valueIsPED && conditionalFieldExists;
+
+      if (addConditionalFields) {
+        const pedConditionalFields = form.form_section[0].section_field.slice(
+          7,
+          9
+        );
+        updateSection(0, {
+          ...currentRequestDetails,
+          section_field: [...sectionFields, ...pedConditionalFields],
+        });
+        return;
+      }
+
+      if (removeConditionalFields) {
+        const updatedSectionFields = sectionFields.filter(
+          (field) => !["Cost Code", "BOQ Code"].includes(field.field_name)
+        );
+
+        const requestDetailsSection = {
+          ...currentRequestDetails,
+          section_field: updatedSectionFields,
+        };
+
+        const payeeSection = getValues(`sections`).slice(1);
+        replaceSection([requestDetailsSection, ...payeeSection]);
+        return;
+      }
+    } catch (e) {
+      setValue(`sections.0.section_field.2.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   const handleDuplicateSection = (sectionId: string) => {
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
@@ -308,6 +355,7 @@ const CreateLiquidationReimbursementRequestPage = ({
                     liquidationReimbursementFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
                       onRequestTypeChange: handleRequestTypeChange,
+                      onDepartmentChange: handleDepartmentChange,
                     }}
                     formslyFormName={form.form_name}
                   />

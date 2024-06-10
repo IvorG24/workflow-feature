@@ -389,21 +389,19 @@ export const formatJiraLRFRequisitionPayload = ({
   workingAdvances,
   ticketUrl,
   requestor,
+  boqCode,
+  costCode,
 }: JiraLRFTicketPayloadProps) => {
   // if department = plants and equipment, use PED jira form
-  const requestTypeId = department === "10164" ? "406" : "367";
-  const serviceDeskId = department === "10164" ? "27" : "23";
-  const jiraTicketPayload = {
+  const isPEDDepartment = department === "10164";
+  const requestTypeId = isPEDDepartment ? "406" : "367";
+  const serviceDeskId = isPEDDepartment ? "27" : "23";
+
+  const jiraTicketPayload: JiraPayloadType = {
     form: {
       answers: {
         "471": {
           text: requestor, // Requestor Name
-        },
-        "469": {
-          choices: [department], // Department
-        },
-        "468": {
-          choices: [jiraProjectSiteId], // Requesting Project
         },
         "15": {
           text: purpose,
@@ -431,6 +429,28 @@ export const formatJiraLRFRequisitionPayload = ({
     serviceDeskId,
     requestParticipants: [],
   };
+
+  if (isPEDDepartment) {
+    jiraTicketPayload.form.answers["475"] = {
+      choices: [department], // Department
+    };
+    jiraTicketPayload.form.answers["476"] = {
+      choices: [jiraProjectSiteId], // Requesting Project
+    };
+    jiraTicketPayload.form.answers["479"] = {
+      text: costCode, // Cost code
+    };
+    jiraTicketPayload.form.answers["480"] = {
+      text: boqCode, // BOQ code
+    };
+  } else {
+    jiraTicketPayload.form.answers["469"] = {
+      choices: [department], // Department
+    };
+    jiraTicketPayload.form.answers["468"] = {
+      choices: [jiraProjectSiteId], // Requesting Project
+    };
+  }
 
   return jiraTicketPayload;
 };

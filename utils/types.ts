@@ -1914,6 +1914,8 @@ export type JiraLRFTicketPayloadProps = {
   workingAdvances: string;
   ticketUrl: string;
   requestor: string;
+  boqCode?: string;
+  costCode?: string;
 };
 
 export type ConnectedRequestFormProps = {

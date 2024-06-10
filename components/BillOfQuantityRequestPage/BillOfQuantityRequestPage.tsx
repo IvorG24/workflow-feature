@@ -294,14 +294,9 @@ const BillOfQuantityRequestPage = ({
 
   const onCreateJiraTicket = async () => {
     try {
-      // TODO: refactor
-      if (!user) return { success: false, data: null };
+      if (!user) throw new Error("User is not defined.");
       if (!request.request_project_id) {
-        notifications.show({
-          message: "Project id is not defined.",
-          color: "red",
-        });
-        return { success: false, data: null };
+        throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
 
@@ -315,9 +310,7 @@ const BillOfQuantityRequestPage = ({
         },
       });
 
-      if (error) {
-        return { success: false, data: null };
-      }
+      if (error) throw new Error("Faild to fetch LRF request.");
 
       const jiraAutomationData = await getJiraAutomationDataByProjectId(
         supabaseClient,
@@ -329,7 +322,7 @@ const BillOfQuantityRequestPage = ({
       }
 
       const response = await fetch(
-        "/api/jira/get-form??serviceDeskId=23&requestType=367",
+        "/api/jira/get-form?serviceDeskId=23&requestType=367",
         {
           method: "GET",
           headers: {
@@ -340,6 +333,9 @@ const BillOfQuantityRequestPage = ({
       );
 
       const { fields } = await response.json();
+      if (!fields) {
+        throw new Error("Jira form is not defined.");
+      }
       const departmentList = fields["469"].choices;
       const typeList = fields["442"].choices;
       const workingAdvanceList = fields["445"].choices;
@@ -386,7 +382,7 @@ const BillOfQuantityRequestPage = ({
         (typeOfRequestItem: { id: string; name: string }) =>
           typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
       );
-
+      console.log(department);
       if (!departmentId || !typeOfRequestId) {
         notifications.show({
           message: "Department or type of request is undefined.",
@@ -539,7 +535,7 @@ const BillOfQuantityRequestPage = ({
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
       );
 
       if (newJiraTicketData.ok) {
