@@ -190,3 +190,12 @@ export const formatJiraItemUserTableData = (
 
   return { success: true, data: formattedData, error: null };
 };
+
+export const addHttpsToUrlIfMissing = (url: string) => {
+  // Check if the URL starts with "http://" or "https://"
+  if (!/^https?:\/\//i.test(url)) {
+    // If not, prepend "https://"
+    url = "https://" + url;
+  }
+  return url;
+};

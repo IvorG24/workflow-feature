@@ -138,6 +138,11 @@ type RequestFormFieldsProps = {
     onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
+  liquidationReimbursementFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onRequestTypeChange: (value: string | null) => void;
+    onDepartmentChange: (value: string | null) => void;
+  };
   personnelTransferRequisitionMethods?: {
     onTypeOfTransferChange: (value: string | null) => void;
     onMannerOfTransferChange: (value: string | null) => void;
@@ -176,6 +181,7 @@ const RequestFormFields = ({
   isEdit,
   isLoading,
   currencyOptionList,
+  liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
 }: RequestFormFieldsProps) => {
   const {
@@ -304,16 +310,17 @@ const RequestFormFields = ({
           <Controller
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-            render={({ field: { value } }) => {
+            render={({ field: { value, onChange } }) => {
               return (
                 <Flex w="100%" align="flex-end" gap="xs">
                   <TextInput
                     {...inputProps}
                     error={fieldError}
                     withAsterisk={field.field_is_required}
-                    value={`${linkToDisplay || value}`}
+                    value={`${linkToDisplay || value || ""}`}
                     icon={<IconLink size={16} />}
                     style={{ flex: 1 }}
+                    onChange={onChange}
                   />
                   <ActionIcon
                     mb={4}
@@ -332,7 +339,18 @@ const RequestFormFields = ({
                 </Flex>
               );
             }}
-            rules={{ ...fieldRules }}
+            rules={{
+              ...fieldRules,
+              validate: {
+                isUrl: (value) => {
+                  if (linkToDisplay) {
+                    return true;
+                  }
+
+                  return isURL(`${value}`) || "Link is invalid";
+                },
+              },
+            }}
           />
         );
 
@@ -553,6 +571,9 @@ const RequestFormFields = ({
                       pedItemFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
                       itAssetRequestFormMethods?.onProjectNameChange(value);
+                      liquidationReimbursementFormMethods?.onProjectNameChange(
+                        value
+                      );
                       break;
                     case "CSI Division":
                       servicesFormMethods?.onCSIDivisionChange(
@@ -628,6 +649,70 @@ const RequestFormFields = ({
                       paymentRequestFormMethods?.onRequestTypeChange(
                         value,
                         sectionIndex
+                      );
+                      liquidationReimbursementFormMethods?.onRequestTypeChange(
+                        value
+                      );
+                      break;
+                    case "Department":
+                      liquidationReimbursementFormMethods?.onDepartmentChange(
+                        value
+                      );
+                      liquidationReimbursementFormMethods?.onRequestTypeChange(
+                        value
+                      );
+                      break;
+                    case "Department":
+                      liquidationReimbursementFormMethods?.onDepartmentChange(
+                        value
+                      );
+                      break;
+                    case "Type of Transfer":
+                      personnelTransferRequisitionMethods?.onTypeOfTransferChange(
+                        value
+                      );
+                      break;
+                    case "Manner of Transfer":
+                      personnelTransferRequisitionMethods?.onMannerOfTransferChange(
+                        value
+                      );
+                      break;
+                    case "From":
+                      personnelTransferRequisitionMethods?.onFromChange(value);
+                      break;
+                    case "To":
+                      personnelTransferRequisitionMethods?.onToChange(value);
+                      break;
+                    case "Purpose":
+                      personnelTransferRequisitionMethods?.onPurposeChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Equipment Code":
+                      personnelTransferRequisitionMethods?.onEquipmentCodeChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Employee No. (HRIS)":
+                      personnelTransferRequisitionMethods?.onEmployeeNumberChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Employee Status":
+                      personnelTransferRequisitionMethods?.onEmployeeStatusChange(
+                        value,
+                        prevValue as string | null,
+                        sectionIndex
+                      );
+                      break;
+                    case "Phase of Work":
+                      personnelTransferRequisitionMethods?.onPhaseOfWorkChange(
+                        value,
+                        sectionIndex,
+                        fieldIndex
                       );
                       break;
                     case "Type of Transfer":

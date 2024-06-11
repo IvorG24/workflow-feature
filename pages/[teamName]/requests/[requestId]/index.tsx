@@ -1,5 +1,7 @@
+import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
+import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
@@ -103,6 +105,20 @@ const Page = ({
     } else if (request.request_form.form_name === "IT Asset") {
       return (
         <ITAssetRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "Liquidation Reimbursement") {
+      return (
+        <LiquidationReimbursementRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "Bill of Quantity") {
+      return (
+        <BillOfQuantityRequestPage
           request={request}
           duplicatableSectionIdList={duplicatableSectionIdList}
         />

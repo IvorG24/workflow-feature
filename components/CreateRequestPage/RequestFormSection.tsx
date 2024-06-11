@@ -106,6 +106,11 @@ type RequestFormSectionProps = {
     onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
+  liquidationReimbursementFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onRequestTypeChange: (value: string | null) => void;
+    onDepartmentChange: (value: string | null) => void;
+  };
   personnelTransferRequisitionMethods?: {
     onMannerOfTransferChange: (value: string | null) => void;
     onFromChange: (value: string | null) => void;
@@ -144,6 +149,7 @@ const RequestFormSection = ({
   loadingFieldList,
   itAssetRequestFormMethods,
   currencyOptionList,
+  liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
@@ -163,6 +169,7 @@ const RequestFormSection = ({
               }
               variant="light"
               color="red"
+              disabled={onRemoveSection === undefined}
             >
               <IconTrash size={16} />
             </ActionIcon>
@@ -203,6 +210,9 @@ const RequestFormSection = ({
               isEdit={isEdit}
               isLoading={isLoading}
               currencyOptionList={currencyOptionList}
+              liquidationReimbursementFormMethods={
+                liquidationReimbursementFormMethods
+              }
               personnelTransferRequisitionMethods={
                 personnelTransferRequisitionMethods
               }

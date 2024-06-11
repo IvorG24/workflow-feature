@@ -6,8 +6,10 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import { Database } from "oneoffice-api";
 import { formatDate } from "../constant";
+import { addHttpsToUrlIfMissing } from "../functions";
 import {
   JiraITAssetTicketPayloadProps,
+  JiraLRFTicketPayloadProps,
   JiraPTRFTicketPayloadProps,
   JiraPayloadType,
   JiraTicketPayloadProps,
@@ -374,6 +376,101 @@ export const formatJiraRequisitionPayload = ({
     serviceDeskId: "17",
     raiseOnBehalfOf: warehouseRepresentativeId,
   };
+
+  return jiraTicketPayload;
+};
+
+export const formatJiraLRFRequisitionPayload = ({
+  requestId,
+  requestUrl,
+  jiraProjectSiteId,
+  department,
+  purpose,
+  typeOfRequest,
+  workingAdvances,
+  ticketUrl,
+  requestor,
+  boqCode,
+  costCode,
+}: JiraLRFTicketPayloadProps) => {
+  // if department = plants and equipment, use PED jira form
+  const isPEDDepartment = department === "10164";
+  const requestTypeId = isPEDDepartment ? "406" : "367";
+  const serviceDeskId = isPEDDepartment ? "27" : "23";
+
+  let jiraTicketPayload: JiraPayloadType = {
+    form: {
+      answers: {
+        "471": {
+          text: requestor, // Requestor Name
+        },
+        "442": {
+          choices: [typeOfRequest], // Type
+        },
+        "445": {
+          choices: [workingAdvances], // Working Advances
+        },
+        "444": {
+          text: addHttpsToUrlIfMissing(ticketUrl),
+        },
+        "473": {
+          text: requestId, // Formsly Id
+        },
+        "472": {
+          text: requestUrl, // Formsly URL
+        },
+      },
+    },
+    isAdfRequest: false,
+    requestFieldValues: {},
+    requestTypeId,
+    serviceDeskId,
+    requestParticipants: [],
+  };
+
+  if (isPEDDepartment) {
+    jiraTicketPayload = {
+      ...jiraTicketPayload,
+      form: {
+        answers: {
+          ...jiraTicketPayload.form.answers,
+          475: {
+            choices: [department], // Department
+          },
+          476: {
+            choices: [jiraProjectSiteId], // Requesting Project
+          },
+          479: {
+            text: costCode, // Cost code
+          },
+          480: {
+            text: boqCode, // BOQ code
+          },
+          15: {
+            text: purpose, // Purpose
+          },
+        },
+      },
+    };
+  } else {
+    jiraTicketPayload = {
+      ...jiraTicketPayload,
+      form: {
+        answers: {
+          ...jiraTicketPayload.form.answers,
+          469: {
+            choices: [department], // Department
+          },
+          468: {
+            choices: [jiraProjectSiteId], // Requesting Project
+          },
+          475: {
+            text: purpose, // Purpose
+          },
+        },
+      },
+    };
+  }
 
   return jiraTicketPayload;
 };
