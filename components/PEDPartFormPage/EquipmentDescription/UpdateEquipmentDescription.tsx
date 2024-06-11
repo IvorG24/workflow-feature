@@ -20,8 +20,10 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { YearPickerInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import moment from "moment";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -98,6 +100,12 @@ const UpdateEquipmentDescription = ({
           editEquipmentDescription.equipment_description_serial_number,
         brand: editEquipmentDescription.equipment_description_brand_id,
         model: editEquipmentDescription.equipment_description_model_id,
+        acquisitionDate:
+          editEquipmentDescription.equipment_description_acquisition_date
+            ? new Date(
+                `01-01-${editEquipmentDescription.equipment_description_acquisition_date}`
+              )
+            : null,
         isAvailable:
           editEquipmentDescription.equipment_description_is_available,
       },
@@ -116,6 +124,9 @@ const UpdateEquipmentDescription = ({
             equipment_description_brand_id: data.brand,
             equipment_description_model_id: data.model,
             equipment_description_equipment_id: selectedEquipment.equipment_id,
+            equipment_description_acquisition_date: data.acquisitionDate
+              ? moment(data.acquisitionDate).year()
+              : null,
             equipment_description_is_available: data.isAvailable,
           },
           brand: brandOption.find((brand) => brand.value === data.brand)
@@ -261,6 +272,19 @@ const UpdateEquipmentDescription = ({
                   textTransform: "uppercase",
                 },
               }}
+            />
+            <Controller
+              control={control}
+              name="acquisitionDate"
+              render={({ field: { value, onChange } }) => (
+                <YearPickerInput
+                  value={value}
+                  onChange={onChange}
+                  error={formState.errors.acquisitionDate?.message}
+                  label="Acquisition Date"
+                  clearable
+                />
+              )}
             />
             <Checkbox
               label="Available"

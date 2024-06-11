@@ -1383,6 +1383,7 @@ export type EquipmentDescriptionForm = {
   serialNumber: string;
   brand: string;
   model: string;
+  acquisitionDate: Date | null;
   isAvailable: boolean;
 };
 
