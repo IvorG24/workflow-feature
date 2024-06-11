@@ -1488,6 +1488,8 @@ RETURNS JSON AS $$
         endId = `BOQ`;
       } else if(formName === 'Personnel Transfer Requisition'){
         endId = `PTRF`;
+      } else if(formName === 'Equipment Service Report'){
+        endId = `ESR`;
       } else {
         endId = ``;
       }
