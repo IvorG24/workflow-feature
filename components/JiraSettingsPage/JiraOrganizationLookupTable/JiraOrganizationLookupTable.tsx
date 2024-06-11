@@ -130,7 +130,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
   ) => {
     try {
       const response = await fetch(
-        `/api/get-jira-organization?organizationId=${data.jira_organization_jira_id}`,
+        `/api/jira/get-organization?organizationId=${data.jira_organization_jira_id}`,
         {
           method: "GET",
           headers: {

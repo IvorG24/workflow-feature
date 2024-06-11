@@ -135,7 +135,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
   ) => {
     try {
       const response = await fetch(
-        `/api/get-jira-user?approverEmail=${data.jira_user_account_email_address}`,
+        `/api/jira/get-user?approverEmail=${data.jira_user_account_email_address}`,
         {
           method: "GET",
           headers: {

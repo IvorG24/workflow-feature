@@ -2,13 +2,7 @@
 
 import moment from "moment";
 import dynamic from "next/dynamic";
-import { formatDate } from "./constant";
-import {
-  JiraITAssetTicketPayloadProps,
-  JiraItemUserTableData,
-  JiraTicketPayloadProps,
-  RequestCommentType,
-} from "./types";
+import { JiraItemUserTableData } from "./types";
 
 // check if a value is empty
 export const isEmpty = (value: any) => {
@@ -143,142 +137,6 @@ export const mostOccurringElement = (arr: string[]) => {
   return mostOccurringElement;
 };
 
-export const formatJiraTicketPayload = ({
-  requestId,
-  requestUrl,
-  requestTypeId,
-  requestFormType,
-  jiraProjectSiteId,
-  jiraItemCategoryId,
-  warehouseCorporateLeadId,
-  warehouseAreaLeadId,
-  warehouseRepresentativeId,
-  warehouseRequestParticipantIdList,
-  jiraItemCategoryLabel,
-}: JiraTicketPayloadProps) => {
-  const itemCategoryDoesNotRequireWarehouseLead = [
-    "Other Expenses",
-    "Services",
-  ].includes(`${jiraItemCategoryLabel}`);
-
-  const warehouseCorporateLeadValue = itemCategoryDoesNotRequireWarehouseLead
-    ? []
-    : [warehouseCorporateLeadId];
-
-  const warehouseAreaLeadValue = itemCategoryDoesNotRequireWarehouseLead
-    ? []
-    : [warehouseAreaLeadId];
-
-  const jiraRequestType = getJiraRequestType(requestFormType);
-
-  const jiraTicketPayload = {
-    form: {
-      answers: {
-        "21": {
-          choices: [jiraProjectSiteId], // Requesting Project Site
-        },
-        "23": {
-          choices: [jiraItemCategoryId], // Item Category
-        },
-        "3": {
-          text: requestId, // RF Number
-        },
-        "4": {
-          text: requestId, // Formsly ID
-        },
-        "20": {
-          text: requestUrl, // Formsly URL
-        },
-        "6": {
-          choices: [], // attachments
-        },
-        "11": {
-          users: warehouseCorporateLeadValue, // Warehouse Corporate Lead
-        },
-        "14": {
-          users: warehouseAreaLeadValue, // Warehouse Area Lead
-        },
-        "15": {
-          choices: ["1"], // Origin of Request
-        },
-        "26": {
-          choices: [jiraRequestType],
-        },
-      },
-    },
-    isAdfRequest: false,
-    requestFieldValues: {},
-    requestParticipants: warehouseRequestParticipantIdList,
-    requestTypeId: requestTypeId,
-    serviceDeskId: "17",
-    raiseOnBehalfOf: warehouseRepresentativeId,
-  };
-
-  return jiraTicketPayload;
-};
-
-export const generateJiraCommentPayload = (
-  commentList: RequestCommentType[]
-) => {
-  const commentListForJira = commentList.map((comment) => {
-    const commenter = comment.comment_team_member.team_member_user;
-    const attachmentContent = comment.comment_attachment.map((attachment) => {
-      const attachmentComment = {
-        type: "text",
-        text: attachment.attachment_name + " \n",
-        marks: [
-          {
-            type: "link",
-            attrs: {
-              href: attachment.attachment_public_url,
-              title: attachment.attachment_name,
-            },
-          },
-        ],
-      };
-      return attachmentComment;
-    });
-
-    const formattedDate = moment(comment.comment_date_created).format("LTS");
-
-    const jiraComment = {
-      type: "blockquote",
-      content: [
-        {
-          type: "paragraph",
-          content: [
-            {
-              type: "text",
-              text: `${commenter.user_first_name} ${
-                commenter.user_last_name
-              } ${formattedDate} ${formatDate(
-                new Date(comment.comment_date_created)
-              )}`,
-            },
-            {
-              type: "hardBreak",
-            },
-            {
-              type: "text",
-              text: comment.comment_content,
-            },
-          ],
-        },
-      ],
-    };
-
-    if (attachmentContent.length > 0) {
-      jiraComment.content.push({
-        type: "paragraph",
-        content: [...attachmentContent],
-      });
-    }
-
-    return jiraComment;
-  });
-
-  return commentListForJira;
-};
 export const JoyRideNoSSR = dynamic(() => import("react-joyride"), {
   ssr: false,
 });
@@ -333,85 +191,11 @@ export const formatJiraItemUserTableData = (
   return { success: true, data: formattedData, error: null };
 };
 
-export const formatJiraITAssetPayload = ({
-  requestId,
-  requestUrl,
-  requestTypeId,
-  jiraProjectSiteId,
-  employeeName,
-  purpose,
-  item,
-}: JiraITAssetTicketPayloadProps) => {
-  const jiraTicketPayload = {
-    form: {
-      answers: {
-        "1": {
-          choices: [item], // IT Asset Item
-        },
-        "2": {
-          choices: [purpose], // Purpose
-        },
-        "3": {
-          text: employeeName, // Employee Name
-        },
-        "4": {
-          choices: [jiraProjectSiteId], // Requesting Project
-        },
-        "5": {
-          text: requestUrl, // Formsly URL
-        },
-        "6": {
-          text: requestId, // Formsly Id
-        },
-      },
-    },
-    isAdfRequest: false,
-    requestFieldValues: {},
-    requestTypeId: requestTypeId,
-    serviceDeskId: "3",
-  };
-
-  return jiraTicketPayload;
-};
-
-export const getJiraTransitionId = (requestFormType: string) => {
-  const matcher = [
-    {
-      categories: ["item", "ped part", "ped equipment", "ped item"],
-      id: "141",
-      name: "Material",
-    },
-    {
-      categories: ["other expenses", "services"],
-      id: "341",
-      name: "Other Expense/Service",
-    },
-  ];
-
-  const matchedItem = matcher.find((item) =>
-    item.categories.includes(requestFormType.toLowerCase())
-  );
-
-  return matchedItem ? matchedItem.id : null;
-};
-
-export const getJiraRequestType = (requestFormType: string) => {
-  const matcher = [
-    {
-      categories: ["item", "ped part", "ped equipment", "ped item"],
-      id: "11119",
-      name: "Material Notation",
-    },
-    {
-      categories: ["other expenses", "services"],
-      id: "11120",
-      name: "Other Services",
-    },
-  ];
-
-  const matchedItem = matcher.find((item) =>
-    item.categories.includes(requestFormType.toLowerCase())
-  );
-
-  return matchedItem ? matchedItem.id : null;
+export const addHttpsToUrlIfMissing = (url: string) => {
+  // Check if the URL starts with "http://" or "https://"
+  if (!/^https?:\/\//i.test(url)) {
+    // If not, prepend "https://"
+    url = "https://" + url;
+  }
+  return url;
 };

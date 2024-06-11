@@ -1,5 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
+  getExistingBOQRequest,
   getJiraAutomationDataByProjectId,
   getRequestComment,
   getSectionInRequestPage,
@@ -9,6 +10,7 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
+import { useFormList } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -17,44 +19,55 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { BASE_URL, formatDate } from "@/utils/constant";
-import { mostOccurringElement, safeParse } from "@/utils/functions";
+import { formatDate } from "@/utils/constant";
+import { safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
-  formatJiraITAssetPayload,
+  formatJiraLRFRequisitionPayload,
 } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
-  JiraFormFieldChoice,
   ReceiverStatusType,
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
 import {
   Accordion,
+  Alert,
+  Button,
   Container,
   Flex,
+  Group,
   Paper,
   Stack,
   Text,
+  ThemeIcon,
   Title,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import RequestCommentList from "../RequestPage/RequestCommentList";
-import ITAssetSummary from "../SummarySection/ITAssetSummary";
+import LiquidationReimbursementSummary from "../SummarySection/LiquidationReimbursementSummary";
 
 type Props = {
   request: RequestWithResponseType;
   duplicatableSectionIdList: string[];
 };
 
-const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
+type SectionField =
+  RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
+
+const LiquidationReimbursementRequestPage = ({
+  request,
+  duplicatableSectionIdList,
+}: Props) => {
+  const forms = useFormList();
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { setIsLoading } = useLoadingActions();
@@ -68,20 +81,22 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       request_signer_id: signer.request_signer_id,
     };
   });
-
-  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
+  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
+  const [formSection, setFormSection] = useState(
+    generateSectionWithDuplicateList([request.request_form.form_section[0]])
+  );
+  const [boqRequestRedirectUrl, setBOQRequestRedirectUrl] = useState<
+    string | null
+  >(null);
   const [requestJira, setRequestJira] = useState({
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
-  const [formSection, setFormSection] = useState(
-    generateSectionWithDuplicateList(request.request_form.form_section)
-  );
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -90,7 +105,10 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
   const requestor = request.request_team_member.team_member_user;
   const requestDateCreated = formatDate(new Date(request.request_date_created));
-
+  const selectedDepartment = safeParse(
+    request.request_form.form_section[0].section_field[2].field_response[0]
+      .request_response
+  );
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
@@ -109,14 +127,18 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+  const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
+  const canCreateBOQ =
+    requestStatus === "APPROVED" &&
+    isUserCostEngineer &&
+    selectedDepartment !== "Plants and Equipment";
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string,
-    jiraLink?: string
+    jiraId?: string
   ) => {
     try {
       setIsLoading(true);
@@ -131,6 +153,18 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       }
       if (!teamMember) return;
 
+      let autoJiraLink = "";
+      const newJiraTicketData = await fetch(
+        `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketWebLink =
+          jiraTicket.fields["customfield_10010"]._links.web;
+        autoJiraLink = jiraTicketWebLink;
+      }
+
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -142,7 +176,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
-        jiraLink,
+        jiraLink: autoJiraLink,
         requestFormslyId: request.request_formsly_id,
       });
 
@@ -259,6 +293,51 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
     }
   };
 
+  const openRedirectToBOQRequestModal = (redirectUrl: string) =>
+    modals.openConfirmModal({
+      title: <Text weight={600}>Bill of Quantity request already exists.</Text>,
+      children: (
+        <Text size="sm">
+          Would you like to be redirected to the Bill of Quantity request page?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      centered: true,
+      onConfirm: () => router.push(redirectUrl),
+    });
+
+  const handleCreateBOQRequest = async () => {
+    try {
+      if (boqRequestRedirectUrl) {
+        openRedirectToBOQRequestModal(boqRequestRedirectUrl);
+        return;
+      }
+
+      const boqForm = forms.find(
+        (form) => form.form_name === "Bill of Quantity"
+      );
+      if (!boqForm) {
+        notifications.show({
+          message: "Bill of Quantity form is not available",
+          color: "red",
+        });
+        return;
+      }
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
+          boqForm.form_id
+        }/create?lrf=${request.request_formsly_id}`
+      );
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message:
+          "Failed to create Bill of Quantity request. Please contact the IT team.",
+        color: "red",
+      });
+    }
+  };
+
   const openPromptDeleteModal = () =>
     modals.openConfirmModal({
       title: "Are you sure you want to delete this request?",
@@ -276,6 +355,10 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
   const onCreateJiraTicket = async () => {
     try {
+      if (selectedDepartment !== "Plants and Equipment") {
+        return { jiraTicketId: "", jiraTicketLink: "" };
+      }
+      if (!user) throw new Error("User is not defined.");
       if (!request.request_project_id) {
         throw new Error("Project id is not defined.");
       }
@@ -283,21 +366,15 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
 
       const jiraAutomationData = await getJiraAutomationDataByProjectId(
         supabaseClient,
-        {
-          teamProjectId: request.request_project_id,
-        }
+        { teamProjectId: request.request_project_id }
       );
 
       if (!jiraAutomationData?.jiraProjectData) {
         throw new Error("Error fetching Jira project data.");
       }
 
-      const employeeName =
-        request.request_form.form_section[2].section_field[2].field_response[0]
-          .request_response;
-
       const response = await fetch(
-        "/api/jira/get-form?serviceDeskId=3&requestType=332",
+        "/api/jira/get-form?serviceDeskId=27&requestType=406",
         {
           method: "GET",
           headers: {
@@ -308,50 +385,85 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       );
 
       const { fields } = await response.json();
-      const purposeList = fields["2"].choices;
-      const itemList = fields["1"].choices;
-
-      const requestPurpose =
-        request.request_form.form_section[0].section_field.find(
-          (field) => field.field_name === "Purpose"
-        )?.field_response[0].request_response;
-      const requestItem = safeParse(
-        mostOccurringElement(
-          formSection
-            .slice(3)
-            .map(
-              (section) =>
-                section.section_field[0].field_response?.request_response ?? ""
-            )
-        )
-      );
-      const purpose = purposeList.find(
-        (p: JiraFormFieldChoice) =>
-          p.name.toLowerCase().trim() ===
-          safeParse(`${requestPurpose?.toLowerCase()}`)
-      );
-      const item = itemList.find(
-        (i: JiraFormFieldChoice) =>
-          i.name.toLowerCase().trim() ===
-          safeParse(`${requestItem?.toLowerCase()}`)
-      );
-      if (!purpose || !item) {
-        throw new Error("Jira item or purpose is missing.");
+      if (!fields) {
+        throw new Error("Jira form is not defined.");
       }
-      const jiraTicketPayload = formatJiraITAssetPayload({
+      const departmentList = fields["475"].choices;
+      const typeList = fields["442"].choices;
+      const workingAdvanceList = fields["445"].choices;
+
+      const requestDetails = request.request_form.form_section[0]
+        .section_field as SectionField;
+
+      const sortedRequestDetails = requestDetails.sort(
+        (a, b) => a.field_order - b.field_order
+      );
+      const purpose = safeParse(
+        sortedRequestDetails[3].field_response[0].request_response
+      );
+      const typeOfRequest = safeParse(
+        sortedRequestDetails[4].field_response[0].request_response
+      );
+      const costCode = safeParse(
+        sortedRequestDetails[7].field_response[0].request_response
+      );
+      const boqCode = safeParse(
+        sortedRequestDetails[8].field_response[0].request_response
+      );
+
+      let workingAdvances = "";
+      let ticketUrl = "";
+
+      if (typeOfRequest.includes("Liquidation")) {
+        const requestWorkingAdvances = safeParse(
+          sortedRequestDetails[5].field_response[0].request_response
+        );
+        const choiceMatch = workingAdvanceList.find(
+          (workingAdvanceItem: { id: string; name: string }) =>
+            workingAdvanceItem.name.toLowerCase() ===
+            requestWorkingAdvances.toLowerCase()
+        );
+        workingAdvances = choiceMatch.id;
+        ticketUrl = safeParse(
+          sortedRequestDetails[6].field_response[0].request_response
+        );
+      }
+
+      const departmentId = departmentList.find(
+        (departmentItem: { id: string; name: string }) =>
+          departmentItem.name.toLowerCase() === selectedDepartment.toLowerCase()
+      );
+      const typeOfRequestId = typeList.find(
+        (typeOfRequestItem: { id: string; name: string }) =>
+          typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
+      );
+
+      if (!departmentId || !typeOfRequestId) {
+        notifications.show({
+          message: "Department or type of request is undefined.",
+          color: "red",
+        });
+        return { success: false, data: null };
+      }
+
+      const jiraTicketPayload = formatJiraLRFRequisitionPayload({
         requestId: request.request_formsly_id,
-        requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
-        requestTypeId: "332",
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestor: `${user.user_first_name} ${user.user_last_name}`,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        employeeName: safeParse(employeeName),
-        purpose: purpose.id,
-        item: item.id,
-        requestFormType: request.request_form.form_name,
+        department: departmentId.id,
+        purpose,
+        typeOfRequest: typeOfRequestId.id,
+        requestFormType: "BOQ",
+        workingAdvances,
+        ticketUrl,
+        costCode,
+        boqCode,
       });
 
       const jiraTicket = await createJiraTicket({
-        requestType: "IT Requisition Form",
+        requestType: "Request for Liquidation/Reimbursement v2",
         formslyId: request.request_formsly_id,
         requestCommentList,
         ticketPayload: jiraTicketPayload,
@@ -379,36 +491,18 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   };
 
   useEffect(() => {
-    const fetchJiraTicketStatus = async (requestJiraId: string) => {
-      const newJiraTicketData = await fetch(
-        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
-      );
-
-      if (newJiraTicketData.ok) {
-        const jiraTicket = await newJiraTicketData.json();
-        const jiraTicketStatus =
-          jiraTicket.fields["customfield_10010"].currentStatus.status;
-
-        setJiraTicketStatus(jiraTicketStatus);
-      } else {
-        setJiraTicketStatus("Ticket Not Found");
-      }
-    };
-
-    if (requestJira.id) {
-      fetchJiraTicketStatus(requestJira.id);
-    }
-  }, [requestJira.id]);
-
-  useEffect(() => {
     try {
       const fetchSections = async () => {
         const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
+
+        const sortedDuplicatableSectionIdList = duplicatableSectionIdList
+          .sort()
+          .reverse();
         let index = 0;
         while (1) {
           setIsLoading(true);
-          const duplicatableSectionIdCondition = duplicatableSectionIdList
+          const duplicatableSectionIdCondition = sortedDuplicatableSectionIdList
             .slice(index, index + 5)
             .map((dupId) => `'${dupId}'`)
             .join(",");
@@ -429,7 +523,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         }
 
         const uniqueFieldIdList: string[] = [];
-        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][1]["section_field"] =
           [];
         newFields.forEach((field) => {
           if (uniqueFieldIdList.includes(field.field_id)) {
@@ -451,8 +545,31 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             section_field: combinedFieldList,
           },
         ]);
-        const newFormSection = [...formSection, ...newSection];
 
+        const formattedSection = newSection
+          .map((section) => {
+            let sectionOrder = section.section_order;
+            const sectionDuplicatableId =
+              section.section_field[0].field_response
+                ?.request_response_duplicatable_section_id;
+
+            if (sectionDuplicatableId) {
+              const sectionIndex = sortedDuplicatableSectionIdList.findIndex(
+                (id) => id === sectionDuplicatableId
+              );
+
+              sectionOrder = sectionIndex + 1;
+            } else {
+              sectionOrder = 0;
+            }
+            return {
+              ...section,
+              section_order: sectionOrder,
+            };
+          })
+          .sort((a, b) => a.section_order - b.section_order);
+
+        const newFormSection = [...formSection, ...formattedSection];
         setFormSection(newFormSection);
         setIsLoading(false);
       };
@@ -474,12 +591,58 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchBOQRequest = async () => {
+      // check if boq request exists
+      const boqRequest = await getExistingBOQRequest(
+        supabaseClient,
+        request.request_id
+      );
+
+      if (boqRequest) {
+        const { request_formsly_id_prefix, request_formsly_id_serial } =
+          boqRequest;
+        const redirectUrl = `/${formatTeamNameToUrlKey(
+          activeTeam.team_name
+        )}/requests/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
+        setBOQRequestRedirectUrl(redirectUrl);
+      }
+    };
+    if (requestStatus === "APPROVED" && activeTeam.team_name) {
+      fetchBOQRequest();
+    }
+  }, [requestStatus, activeTeam.team_name]);
+
+  useEffect(() => {
+    const fetchJiraTicketStatus = async (requestJiraId: string) => {
+      const newJiraTicketData = await fetch(
+        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
+      );
+
+      if (newJiraTicketData.ok) {
+        const jiraTicket = await newJiraTicketData.json();
+        const jiraTicketStatus =
+          jiraTicket.fields["customfield_10010"].currentStatus.status;
+
+        setJiraTicketStatus(jiraTicketStatus);
+      } else {
+        setJiraTicketStatus("Ticket Not Found");
+      }
+    };
+    if (requestJira.id) {
+      fetchJiraTicketStatus(requestJira.id);
+    }
+  }, [requestJira.id]);
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
         </Title>
+        {canCreateBOQ && (
+          <Button onClick={() => handleCreateBOQRequest()}>Create BOQ</Button>
+        )}
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -487,10 +650,33 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
           requestor={requestor}
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus}
-          isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
+          isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           jiraTicketStatus={jiraTicketStatus}
         />
+
+        {/* connected BOQ request */}
+        {boqRequestRedirectUrl && (
+          <Alert variant="light" color="blue">
+            <Flex align="center" gap="sm">
+              <Group spacing={4}>
+                <ThemeIcon variant="light">
+                  <IconAlertCircle size={16} />
+                </ThemeIcon>
+                <Text color="blue" weight={600}>
+                  A BOQ request has been created for this request.
+                </Text>
+              </Group>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => router.push(boqRequestRedirectUrl)}
+              >
+                View BOQ
+              </Button>
+            </Flex>
+          </Alert>
+        )}
 
         <RequestSection
           section={formSection[0]}
@@ -503,13 +689,13 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             <Paper shadow="xs">
               <Accordion.Control>
                 <Title order={4} color="dimmed">
-                  Item Section
+                  Payee Section
                 </Title>
               </Accordion.Control>
             </Paper>
             <Accordion.Panel>
               <Stack spacing="xl" mt="lg">
-                {formSection.slice(3).map((section, idx) => {
+                {formSection.slice(1).map((section, idx) => {
                   return (
                     <RequestSection
                       key={section.section_id + idx}
@@ -525,16 +711,10 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
           </Accordion.Item>
         </Accordion>
 
-        <RequestSection
-          section={formSection[2]}
-          isFormslyForm={true}
-          isOnlyWithResponse
-        />
-
-        {formSection.length > 3 && (
-          <ITAssetSummary
+        {formSection.length > 0 && (
+          <LiquidationReimbursementSummary
             summaryData={formSection
-              .slice(3)
+              .slice(1)
               .sort((a, b) =>
                 `${a.section_field[0].field_response?.request_response}` >
                 `${b.section_field[0].field_response?.request_response}`
@@ -564,8 +744,11 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             isUserRequester={isUserRequester}
             requestId={request.request_id}
             isItemForm
-            onCreateJiraTicket={onCreateJiraTicket}
-            requestSignerId={isUserSigner?.request_signer_id}
+            onCreateJiraTicket={
+              selectedDepartment === "Plants and Equipment"
+                ? onCreateJiraTicket
+                : undefined
+            }
           />
         )}
 
@@ -585,4 +768,4 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   );
 };
 
-export default ITAssetRequestPage;
+export default LiquidationReimbursementRequestPage;

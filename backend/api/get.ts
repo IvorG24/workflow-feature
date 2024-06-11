@@ -2,6 +2,7 @@ import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
+  APP_SOURCE_ID,
   FETCH_OPTION_LIMIT,
   FORMSLY_FORM_ORDER,
   ITEM_FIELD_ID_LIST,
@@ -48,6 +49,7 @@ import {
   JiraItemCategoryDataType,
   JiraOrganizationTableRow,
   JiraProjectDataType,
+  JiraProjectTableRow,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -61,6 +63,7 @@ import {
   RequestListOnLoad,
   RequestProjectSignerType,
   RequestResponseTableRow,
+  RequestTableRow,
   RequestWithResponseType,
   SSOTOnLoad,
   ServiceWithScopeAndChoice,
@@ -6297,6 +6300,7 @@ export const getJiraFormslyProjectList = async (
           jira_formsly_project_id: string;
           jira_project_id: string;
           formsly_project_id: string;
+          jira_project: JiraProjectTableRow | null;
         })
       : null;
 
@@ -6304,6 +6308,7 @@ export const getJiraFormslyProjectList = async (
       jira_organization_team_project_id: string;
       jira_organization_team_project_project_id: string;
       jira_organization_team_project_organization_id: string;
+      jira_organization_team_project_organization: JiraOrganizationTableRow | null
     }[];
 
     return {
@@ -7192,7 +7197,7 @@ export const fetchFormslyInvoiceHistoryList = async (
     },
     filter: {
       appSourceUserId: userId,
-      appSource: process.env.NEXT_PUBLIC_ONEOFFICE_APP_SOURCE_ID,
+      appSource: APP_SOURCE_ID,
     },
   });
   if (error) throw error;
@@ -7459,4 +7464,53 @@ export const checkIfAllPrimaryApprovedTheRequest = async (
   if (error) throw error;
 
   return !Boolean(count);
+};
+
+export const getJiraProjectByTeamProjectName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamProjectName: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("jira_formsly_project_table")
+    .select(
+      "jira_project_id!inner(jira_project_jira_id, jira_project_jira_label), formsly_project_id!inner(team_project_name)"
+    )
+    .eq("formsly_project_id.team_project_name", params.teamProjectName)
+    .maybeSingle();
+  if (error || !data) throw error;
+  const formattedData = data as unknown as {
+    jira_project_id: {
+      jira_project_jira_id: string;
+      jira_project_jira_label: string;
+    };
+    formsly_project_id: { team_project_name: string };
+  };
+  return {
+    jiraId: formattedData.jira_project_id.jira_project_jira_id,
+    jiraLabel: formattedData.jira_project_id.jira_project_jira_label,
+  };
+};
+
+// Fetch existing BOQ request
+export const getExistingBOQRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  lrfRequestId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response, request: request_response_request_id!inner(*)")
+    .eq("request_response", JSON.stringify(lrfRequestId))
+    .in("request.request_status", ["PENDING", "APPROVED"])
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data
+    ? (data.request as unknown as Pick<
+        RequestTableRow,
+        "request_formsly_id_prefix" | "request_formsly_id_serial"
+      >)
+    : null;
 };

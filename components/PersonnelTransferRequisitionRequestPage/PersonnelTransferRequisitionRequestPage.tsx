@@ -1,7 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   getAllSection,
-  getJiraAutomationDataByProjectId,
+  getJiraProjectByTeamProjectName,
   getRequestComment,
   getSectionInRequestPageWithMultipleDuplicatableSection,
 } from "@/backend/api/get";
@@ -14,13 +14,17 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
-import { mostOccurringElement, safeParse } from "@/utils/functions";
-import { createJiraTicket } from "@/utils/jira-api-functions";
+import { safeParse } from "@/utils/functions";
+import {
+  createJiraTicket,
+  formatJiraPTRFPayload,
+} from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
   DuplicateSectionType,
   FieldTableRow,
+  JiraFormFieldChoice,
   ReceiverStatusType,
   RequestCommentType,
   RequestWithResponseType,
@@ -108,7 +112,6 @@ const PersonnelTransferRequisitionRequestPage = ({
                   } AND field_section_id = '${dupId.section_id}')`
               )
               .join(" OR ");
-
           const data =
             await getSectionInRequestPageWithMultipleDuplicatableSection(
               supabaseClient,
@@ -192,7 +195,8 @@ const PersonnelTransferRequisitionRequestPage = ({
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string
+    jiraId?: string,
+    jiraLink?: string
   ) => {
     try {
       setIsLoading(true);
@@ -207,38 +211,29 @@ const PersonnelTransferRequisitionRequestPage = ({
       }
       if (!teamMember) return;
 
-      let autoJiraLink = "";
-      const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
+      const updatedRequestStatus = await approveOrRejectRequest(
+        supabaseClient,
+        {
+          requestAction: status,
+          requestId: request.request_id,
+          isPrimarySigner: signer.signer_is_primary_signer,
+          requestSignerId: signer.signer_id,
+          requestOwnerId: request.request_team_member.team_member_user.user_id,
+          signerFullName: signerFullName,
+          formName: request.request_form.form_name,
+          memberId: teamMember.team_member_id,
+          teamId: request.request_team_member.team_member_team_id,
+          jiraId,
+          jiraLink,
+          requestFormslyId: request.request_formsly_id,
+        }
       );
-
-      if (newJiraTicketData.ok) {
-        const jiraTicket = await newJiraTicketData.json();
-        const jiraTicketWebLink =
-          jiraTicket.fields["customfield_10010"]._links.web;
-        autoJiraLink = jiraTicketWebLink;
-      }
-
-      await approveOrRejectRequest(supabaseClient, {
-        requestAction: status,
-        requestId: request.request_id,
-        isPrimarySigner: signer.signer_is_primary_signer,
-        requestSignerId: signer.signer_id,
-        requestOwnerId: request.request_team_member.team_member_user.user_id,
-        signerFullName: signerFullName,
-        formName: request.request_form.form_name,
-        memberId: teamMember.team_member_id,
-        teamId: request.request_team_member.team_member_team_id,
-        jiraId,
-        jiraLink: autoJiraLink,
-        requestFormslyId: request.request_formsly_id,
-      });
 
       notifications.show({
         message: `Request ${status.toLowerCase()}.`,
         color: "green",
       });
-      setRequestStatus(status);
+      setRequestStatus(updatedRequestStatus);
       setSignerList((prev) =>
         prev.map((thisSigner) => {
           if (signer.signer_id === thisSigner.signer_id) {
@@ -365,122 +360,126 @@ const PersonnelTransferRequisitionRequestPage = ({
   const onCreateJiraTicket = async () => {
     try {
       if (!request.request_project_id) {
-        notifications.show({
-          message: "Project id is not defined.",
-          color: "red",
-        });
-        return { success: false, data: null };
+        throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
-      const jiraAutomationData = await getJiraAutomationDataByProjectId(
-        supabaseClient,
-        { teamProjectId: request.request_project_id }
-      );
 
-      if (!jiraAutomationData) {
-        notifications.show({
-          message: "Error fetching of Jira project and item category data.",
-          color: "red",
-        });
-        return { success: false, data: null };
+      const [projectNameFrom, projectNameTo, automationFormResponse] =
+        await Promise.all([
+          getJiraProjectByTeamProjectName(supabaseClient, {
+            teamProjectName: safeParse(
+              `${formSection[1].section_field[1].field_response?.request_response}`
+            ),
+          }),
+          getJiraProjectByTeamProjectName(supabaseClient, {
+            teamProjectName: safeParse(
+              `${formSection[1].section_field[2].field_response?.request_response}`
+            ),
+          }),
+          fetch("/api/jira/get-form?serviceDeskId=4&requestType=405", {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }),
+        ]);
+
+      if (!projectNameFrom.jiraId || !projectNameTo.jiraId) {
+        throw new Error("Project from and to is not defined.");
       }
 
-      const { jiraProjectData } = jiraAutomationData;
+      const { fields } = await automationFormResponse.json();
+      const typeOfTransferList = fields["1"].choices;
+      const mannerOfTransferList = fields["34"].choices;
+      const departmentList = fields["42"].choices;
+      const purposeList = fields["43"].choices;
+      const projectToList = fields["38"].choices;
 
-      if (!jiraProjectData) {
-        notifications.show({
-          message: "Jira project data is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      const employeeName =
-        request.request_form.form_section[2].section_field[2].field_response[0]
-          .request_response;
-
-      const response = await fetch(
-        "/api/get-jira-automation-form?serviceDeskId=3&requestType=332",
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
+      const headerSectionFieldList = formSection[1].section_field;
+      const requestTypeOfTransfer = safeParse(
+        `${formSection[0].section_field[0].field_response?.request_response}`
       );
-      const { fields } = await response.json();
-      const purposeList = fields["2"].choices;
-      const itemList = fields["1"].choices;
-
-      const requestPurpose =
-        request.request_form.form_section[0].section_field.find(
-          (field) => field.field_name === "Purpose"
-        )?.field_response[0].request_response;
-
-      const requestItem = safeParse(
-        mostOccurringElement(
-          formSection
-            .slice(3)
-            .map(
-              (section) =>
-                section.section_field[0].field_response?.request_response ?? ""
-            )
-        )
+      const requestMannerOfTransfer = safeParse(
+        `${headerSectionFieldList[0].field_response?.request_response}`
+      );
+      const requestDepartment = safeParse(
+        `${headerSectionFieldList[3].field_response?.request_response}`
+      );
+      const requestPurpose = safeParse(
+        `${headerSectionFieldList[4].field_response?.request_response}`
       );
 
+      const typeOfTransfer = typeOfTransferList.find(
+        (transfer: JiraFormFieldChoice) =>
+          transfer.name.trim().toLowerCase() ===
+          requestTypeOfTransfer.toLowerCase()
+      );
+
+      const mannerOfTransfer = mannerOfTransferList.find(
+        (transfer: JiraFormFieldChoice) =>
+          transfer.name.trim().toLowerCase() ===
+          requestMannerOfTransfer.toLowerCase()
+      );
+      const department = departmentList.find(
+        (dept: JiraFormFieldChoice) =>
+          dept.name.trim().toLowerCase() === requestDepartment.toLowerCase()
+      );
       const purpose = purposeList.find(
-        (purpose: { id: string; name: string }) =>
-          purpose.name.toLowerCase() ===
-          safeParse(`${requestPurpose?.toLowerCase()}`)
+        (purposeItem: JiraFormFieldChoice) =>
+          purposeItem.name.trim().toLowerCase() === requestPurpose.toLowerCase()
+      );
+      const projectTo = projectToList.find(
+        (project: JiraFormFieldChoice) =>
+          project.name.trim().toLowerCase() ===
+          projectNameTo.jiraLabel.toLowerCase()
       );
 
-      const item = itemList.find(
-        (item: { id: string; name: string }) =>
-          item.name.toLowerCase() === safeParse(`${requestItem?.toLowerCase()}`)
-      );
-
-      if (!purpose || !item) {
-        notifications.show({
-          message: "Jira item or purpose is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
+      if (
+        !purpose ||
+        !department ||
+        !mannerOfTransfer ||
+        !typeOfTransfer ||
+        !projectTo
+      ) {
+        throw new Error(
+          "Purpose, department, manner of transfer, or type of transfer might be undefined."
+        );
       }
 
-      const jiraTicketPayload = {
+      const jiraTicketPayload = formatJiraPTRFPayload({
         requestId: request.request_formsly_id,
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
-        requestTypeId: "332",
-        jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
-        employeeName: safeParse(employeeName),
+        typeOfTransfer: typeOfTransfer.id,
+        mannerOfTransfer: mannerOfTransfer.id,
+        department: department.id,
+        projectNameFrom: projectNameFrom.jiraId,
+        projectNameTo: projectTo.id,
         purpose: purpose.id,
-        item: item.id,
-        requestFormType: request.request_form.form_name,
-      };
-
-      const jiraTicketData = await createJiraTicket({
-        jiraTicketPayload,
+      });
+      const jiraTicket = await createJiraTicket({
+        requestType: "Personnel Transfer Requisition",
+        formslyId: request.request_formsly_id,
         requestCommentList,
-        supabaseClient,
-        isITAsset: true,
+        ticketPayload: jiraTicketPayload,
       });
 
-      if (!jiraTicketData.success) {
-        return { success: false, data: null };
+      if (!jiraTicket.jiraTicketId) {
+        throw new Error("Failed to create jira ticket.");
       }
 
-      if (jiraTicketData.data) {
-        setRequestJira({
-          id: jiraTicketData.data.jiraTicketKey,
-          link: jiraTicketData.data.jiraTicketWebLink,
-        });
-      }
-
-      return jiraTicketData;
+      setRequestJira({
+        id: jiraTicket.jiraTicketId,
+        link: jiraTicket.jiraTicketLink,
+      });
+      return jiraTicket;
     } catch (error) {
-      console.error(error);
-      return { success: false, data: null };
+      const errorMessage = (error as Error).message;
+      notifications.show({
+        message: `Error: ${errorMessage}`,
+        color: "red",
+      });
+      return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);
     }
@@ -489,7 +488,7 @@ const PersonnelTransferRequisitionRequestPage = ({
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
       );
 
       if (newJiraTicketData.ok) {
