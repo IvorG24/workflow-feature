@@ -397,14 +397,14 @@ export const formatJiraPTRFPayload = ({
         "34": {
           choices: [mannerOfTransfer], // Manner of Transfer
         },
-        "40": {
+        "42": {
           choices: [department], // Department
         },
         "36": {
           choices: [projectNameFrom], // Project Name From
         },
         "38": {
-          choices: [projectNameTo], // Project Name From
+          choices: [projectNameTo], // Project Name To
         },
         "43": {
           choices: [purpose], // Purpose

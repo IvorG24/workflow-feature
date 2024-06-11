@@ -364,41 +364,37 @@ const PersonnelTransferRequisitionRequestPage = ({
       }
       setIsLoading(true);
 
-      const [projectNameFrom, projectNameTo] = await Promise.all([
-        getJiraProjectByTeamProjectName(supabaseClient, {
-          teamProjectName: safeParse(
-            `${formSection[1].section_field[1].field_response?.request_response}`
-          ),
-        }),
-        getJiraProjectByTeamProjectName(supabaseClient, {
-          teamProjectName: safeParse(
-            `${formSection[1].section_field[2].field_response?.request_response}`
-          ),
-        }),
-      ]);
-
-      console.log(projectNameFrom, projectNameTo);
+      const [projectNameFrom, projectNameTo, automationFormResponse] =
+        await Promise.all([
+          getJiraProjectByTeamProjectName(supabaseClient, {
+            teamProjectName: safeParse(
+              `${formSection[1].section_field[1].field_response?.request_response}`
+            ),
+          }),
+          getJiraProjectByTeamProjectName(supabaseClient, {
+            teamProjectName: safeParse(
+              `${formSection[1].section_field[2].field_response?.request_response}`
+            ),
+          }),
+          fetch("/api/jira/get-form?serviceDeskId=4&requestType=405", {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }),
+        ]);
 
       if (!projectNameFrom.jiraId || !projectNameTo.jiraId) {
         throw new Error("Project from and to is not defined.");
       }
 
-      const response = await fetch(
-        "/api/jira/get-form?serviceDeskId=4&requestType=405",
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const { fields } = await response.json();
+      const { fields } = await automationFormResponse.json();
       const typeOfTransferList = fields["1"].choices;
       const mannerOfTransferList = fields["34"].choices;
-      const departmentList = fields["40"].choices;
+      const departmentList = fields["42"].choices;
       const purposeList = fields["43"].choices;
+      const projectToList = fields["38"].choices;
 
       const headerSectionFieldList = formSection[1].section_field;
       const requestTypeOfTransfer = safeParse(
@@ -433,8 +429,19 @@ const PersonnelTransferRequisitionRequestPage = ({
         (purposeItem: JiraFormFieldChoice) =>
           purposeItem.name.trim().toLowerCase() === requestPurpose.toLowerCase()
       );
+      const projectTo = projectToList.find(
+        (project: JiraFormFieldChoice) =>
+          project.name.trim().toLowerCase() ===
+          projectNameTo.jiraLabel.toLowerCase()
+      );
 
-      if (!purpose || !department || !mannerOfTransfer || !typeOfTransfer) {
+      if (
+        !purpose ||
+        !department ||
+        !mannerOfTransfer ||
+        !typeOfTransfer ||
+        !projectTo
+      ) {
         throw new Error(
           "Purpose, department, manner of transfer, or type of transfer might be undefined."
         );
@@ -447,7 +454,7 @@ const PersonnelTransferRequisitionRequestPage = ({
         mannerOfTransfer: mannerOfTransfer.id,
         department: department.id,
         projectNameFrom: projectNameFrom.jiraId,
-        projectNameTo: projectNameTo.jiraId,
+        projectNameTo: projectTo.id,
         purpose: purpose.id,
       });
       const jiraTicket = await createJiraTicket({

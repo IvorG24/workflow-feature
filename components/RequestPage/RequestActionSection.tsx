@@ -63,6 +63,13 @@ const RequestActionSection = ({
       if (isAllPrimaryApprovedTheRequest) {
         if (process.env.NODE_ENV === "production") {
           const { jiraTicketId, jiraTicketLink } = await onCreateJiraTicket();
+          if (!jiraTicketId) {
+            notifications.show({
+              message: "Failed to create jira ticket",
+              color: "red",
+            });
+            return;
+          }
 
           handleUpdateRequest("APPROVED", jiraTicketId, jiraTicketLink);
         } else {

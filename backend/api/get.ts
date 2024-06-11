@@ -7467,14 +7467,20 @@ export const getJiraProjectByTeamProjectName = async (
   const { data, error } = await supabaseClient
     .from("jira_formsly_project_table")
     .select(
-      "jira_project_id!inner(jira_project_jira_id), formsly_project_id!inner(team_project_name)"
+      "jira_project_id!inner(jira_project_jira_id, jira_project_jira_label), formsly_project_id!inner(team_project_name)"
     )
     .eq("formsly_project_id.team_project_name", params.teamProjectName)
     .maybeSingle();
   if (error || !data) throw error;
   const formattedData = data as unknown as {
-    jira_project_id: { jira_project_jira_id: string };
+    jira_project_id: {
+      jira_project_jira_id: string;
+      jira_project_jira_label: string;
+    };
     formsly_project_id: { team_project_name: string };
   };
-  return { jiraId: formattedData.jira_project_id.jira_project_jira_id };
+  return {
+    jiraId: formattedData.jira_project_id.jira_project_jira_id,
+    jiraLabel: formattedData.jira_project_id.jira_project_jira_label,
+  };
 };
