@@ -15,7 +15,10 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
 import { mostOccurringElement, safeParse } from "@/utils/functions";
-import { createJiraTicket } from "@/utils/jira-api-functions";
+import {
+  createJiraTicket,
+  formatJiraLRFRequisitionPayload,
+} from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -395,9 +398,9 @@ const EquipmentServiceReport = ({
         return { success: false, data: null };
       }
 
-      const employeeName =
-        request.request_form.form_section[2].section_field[2].field_response[0]
-          .request_response;
+      // const employeeName =
+      //   request.request_form.form_section[2].section_field[2].field_response[0]
+      //     .request_response;
 
       const response = await fetch(
         "/api/get-jira-automation-form?serviceDeskId=3&requestType=332",
@@ -448,22 +451,25 @@ const EquipmentServiceReport = ({
         return { success: false, data: null };
       }
 
-      const jiraTicketPayload = {
-        requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
-        requestTypeId: "332",
-        jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
-        employeeName: safeParse(employeeName),
-        purpose: purpose.id,
-        item: item.id,
-        requestFormType: request.request_form.form_name,
-      };
+      const jiraTicketPayload = formatJiraLRFRequisitionPayload({
+        requestId: ``,
+        requestUrl: ``,
+        requestor: ``,
+        jiraProjectSiteId:
+          jiraAutomationData.jiraProjectData.jira_project_jira_id,
+        department: ``,
+        purpose,
+        typeOfRequest: ``,
+        requestFormType: "BOQ",
+        workingAdvances: ``,
+        ticketUrl: ``,
+      });
 
       const jiraTicketData = await createJiraTicket({
-        jiraTicketPayload,
+        requestType: "Equipment Service Report",
+        formslyId: request.request_formsly_id,
         requestCommentList,
-        supabaseClient,
-        isITAsset: true,
+        ticketPayload: jiraTicketPayload,
       });
 
       if (!jiraTicketData.success) {
