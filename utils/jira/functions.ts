@@ -8,6 +8,7 @@ import { Database } from "oneoffice-api";
 import { formatDate } from "../constant";
 import { addHttpsToUrlIfMissing } from "../functions";
 import {
+  JiraESRTicketPayloadProps,
   JiraITAssetTicketPayloadProps,
   JiraLRFTicketPayloadProps,
   JiraPTRFTicketPayloadProps,
@@ -519,6 +520,51 @@ export const formatJiraPTRFPayload = ({
     requestParticipants: [],
     requestTypeId: "405",
     serviceDeskId: "4",
+  };
+
+  return jiraTicketPayload;
+};
+
+export const formatJiraESRPayload = ({
+  requestId,
+  requestUrl,
+  jiraProjectSiteId,
+  requestorName,
+  department,
+  workcode,
+  propertyNumber,
+}: JiraESRTicketPayloadProps) => {
+  const jiraTicketPayload = {
+    form: {
+      answers: {
+        "1": {
+          choices: [jiraProjectSiteId], // Requesting Project
+        },
+        "3": {
+          text: requestorName, // Requestor Name
+        },
+        "4": {
+          choices: [department], // Department
+        },
+        "7": {
+          choices: [workcode], // Workcode
+        },
+        "10": {
+          choices: [propertyNumber], // Property No.
+        },
+        "20": {
+          text: requestId, // FormslyId
+        },
+        "21": {
+          text: requestUrl, // Formsly URL
+        },
+      },
+    },
+    isAdfRequest: false,
+    requestFieldValues: {},
+    requestParticipants: [],
+    requestTypeId: "409",
+    serviceDeskId: "27",
   };
 
   return jiraTicketPayload;

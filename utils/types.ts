@@ -1944,3 +1944,13 @@ export type JiraPTRFTicketPayloadProps = {
   projectNameTo: string;
   purpose: string;
 };
+
+export type JiraESRTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  requestorName: string;
+  department: string;
+  workcode: string;
+  propertyNumber: string;
+};

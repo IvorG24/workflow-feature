@@ -121,7 +121,7 @@ const JiraSettingsPage = ({
         setJiraUserRoleList(jiraUserRoleList);
 
         const response = await fetch(
-          "/api/get-jira-automation-form?serviceDeskId=17&requestType=189",
+          "/api/jira/get-form?serviceDeskId=17&requestType=189",
           {
             method: "GET",
             headers: {
