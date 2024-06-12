@@ -111,6 +111,26 @@ type RequestFormSectionProps = {
     onRequestTypeChange: (value: string | null) => void;
     onDepartmentChange: (value: string | null) => void;
   };
+  personnelTransferRequisitionMethods?: {
+    onMannerOfTransferChange: (value: string | null) => void;
+    onFromChange: (value: string | null) => void;
+    onToChange: (value: string | null) => void;
+    onTypeOfTransferChange: (value: string | null) => void;
+    onPurposeChange: (value: string | null, prevValue: string | null) => void;
+    onEquipmentCodeChange: (value: string | null, index: number) => void;
+    onEmployeeNumberChange: (value: string | null, index: number) => void;
+    onITAssetBooleanChange: (value: boolean, index: number) => void;
+    onEmployeeStatusChange: (
+      value: string | null,
+      prevValue: string | null,
+      index: number
+    ) => void;
+    onPhaseOfWorkChange: (
+      value: string | null,
+      sectionIndex: number,
+      fieldIndex: number
+    ) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -130,6 +150,7 @@ const RequestFormSection = ({
   itAssetRequestFormMethods,
   currencyOptionList,
   liquidationReimbursementFormMethods,
+  personnelTransferRequisitionMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -191,6 +212,9 @@ const RequestFormSection = ({
               currencyOptionList={currencyOptionList}
               liquidationReimbursementFormMethods={
                 liquidationReimbursementFormMethods
+              }
+              personnelTransferRequisitionMethods={
+                personnelTransferRequisitionMethods
               }
             />
           );

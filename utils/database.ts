@@ -3663,7 +3663,7 @@ export type Database = {
         Args: {
           input_data: Json;
         };
-        Returns: undefined;
+        Returns: string;
       };
       assign_ticket: {
         Args: {
@@ -3876,6 +3876,12 @@ export type Database = {
         Returns: Json;
       };
       fetch_edit_request_section: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      fetch_form_section_with_multiple_duplicatable_section: {
         Args: {
           input_data: Json;
         };

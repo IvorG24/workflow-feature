@@ -7270,6 +7270,225 @@ export const fetchFormslyLatestPrice = async (
   return data.formsly_price;
 };
 
+// Fetch team department options
+export const getTeamDepartmentOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("team_department_table")
+    .select("team_department_id, team_department_name")
+    .eq("team_department_is_disabled", false)
+    .order("team_department_name")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch equipment code options
+export const getEquipmentCodeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_description_view")
+    .select(
+      "equipment_description_id, equipment_description_property_number_with_prefix"
+    )
+    .eq("equipment_description_is_disabled", false)
+    .eq("equipment_description_is_available", true)
+    .order("equipment_description_property_number_with_prefix")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch equipment unit options
+export const getEquipmentUnitOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("equipment_unit_of_measurement_table")
+    .select("equipment_unit_of_measurement_id, equipment_unit_of_measurement")
+    .eq("equipment_unit_of_measurement_is_disabled", false)
+    .order("equipment_unit_of_measurement")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch employee position options
+export const getEmployeePositionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+  }
+) => {
+  const { index, limit } = params;
+  const { data, error } = await supabaseClient
+    .from("employee_job_title_table")
+    .select("employee_job_title_id, employee_job_title_label")
+    .eq("employee_job_title_is_disabled", false)
+    .order("employee_job_title_label")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch employee options
+export const getEmployeeOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    limit: number;
+    search: string;
+  }
+) => {
+  const { index, limit, search } = params;
+  const { data, error } = await supabaseClient
+    .from("scic_employee_table")
+    .select("scic_employee_id, scic_employee_hris_id_number")
+    .ilike("scic_employee_hris_id_number", `%${search}%`)
+    .order("scic_employee_hris_id_number")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch employee name based on id
+export const getEmployeeName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    employeeId: string;
+  }
+) => {
+  const { employeeId } = params;
+  const { data, error } = await supabaseClient
+    .from("scic_employee_table")
+    .select("*")
+    .eq("scic_employee_hris_id_number", employeeId)
+    .maybeSingle();
+  if (error) throw error;
+
+  return data;
+};
+
+// Fetch section in request page with multiple duplicatable section
+export const getSectionInRequestPageWithMultipleDuplicatableSection = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    index: number;
+    requestId: string;
+    duplicatableSectionIdCondition: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("fetch_form_section_with_multiple_duplicatable_section", {
+      input_data: params,
+    })
+    .select("*");
+  if (error) throw error;
+  return data;
+};
+
+// Get all section
+export const getAllSection = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    sectionIdList: string[];
+  }
+) => {
+  const { sectionIdList } = params;
+
+  const { data, error } = await supabaseClient
+    .from("section_table")
+    .select("*")
+    .in("section_id", sectionIdList)
+    .order("section_order");
+  if (error) throw error;
+  return data;
+};
+
+// Fetch employee name based on id
+export const checkIfAllPrimaryApprovedTheRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    requestSignerId: string;
+  }
+) => {
+  const { requestId, requestSignerId } = params;
+  const { count, error } = await supabaseClient
+    .from("request_signer_table")
+    .select(
+      `
+        *, 
+        request_signer_signer: request_signer_signer_id!inner(
+          *
+        )
+      `,
+      { count: "exact" }
+    )
+    .eq("request_signer_request_id", requestId)
+    .eq("request_signer_signer.signer_is_primary_signer", true)
+    .neq("request_signer_id", requestSignerId)
+    .neq("request_signer_status", "APPROVED");
+  if (error) throw error;
+
+  return !Boolean(count);
+};
+
+export const getJiraProjectByTeamProjectName = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamProjectName: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("jira_formsly_project_table")
+    .select(
+      "jira_project_id!inner(jira_project_jira_id, jira_project_jira_label), formsly_project_id!inner(team_project_name)"
+    )
+    .eq("formsly_project_id.team_project_name", params.teamProjectName)
+    .maybeSingle();
+  if (error || !data) throw error;
+  const formattedData = data as unknown as {
+    jira_project_id: {
+      jira_project_jira_id: string;
+      jira_project_jira_label: string;
+    };
+    formsly_project_id: { team_project_name: string };
+  };
+  return {
+    jiraId: formattedData.jira_project_id.jira_project_jira_id,
+    jiraLabel: formattedData.jira_project_id.jira_project_jira_label,
+  };
+};
+
 // Fetch existing BOQ request
 export const getExistingBOQRequest = async (
   supabaseClient: SupabaseClient<Database>,

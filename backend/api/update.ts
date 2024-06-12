@@ -129,11 +129,16 @@ export const approveOrRejectRequest = async (
     requestFormslyId?: string;
   }
 ) => {
-  const { error } = await supabaseClient.rpc("approve_or_reject_request", {
-    input_data: { ...params },
-  });
+  const { data, error } = await supabaseClient
+    .rpc("approve_or_reject_request", {
+      input_data: { ...params },
+    })
+    .select("*")
+    .single();
 
   if (error) throw error;
+
+  return data as string;
 };
 
 // Update request status to canceled

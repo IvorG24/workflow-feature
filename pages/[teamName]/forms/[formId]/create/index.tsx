@@ -6,6 +6,7 @@ import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequ
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
 import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
+import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTransferRequisition/CreatePersonnelTransferRequisition";
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
@@ -117,7 +118,6 @@ const Page = ({
             projectOptions={projectOptions}
           />
         );
-
       case "IT Asset":
         return (
           <CreateITAssetRequestPage
@@ -138,6 +138,13 @@ const Page = ({
           <CreateBillOfQuantityRequestPage
             form={form}
             connectedRequest={connectedRequest}
+          />
+        );
+      case "Personnel Transfer Requisition":
+        return (
+          <CreatePersonnelTransferRequisition
+            form={form}
+            projectOptions={projectOptions}
           />
         );
     }

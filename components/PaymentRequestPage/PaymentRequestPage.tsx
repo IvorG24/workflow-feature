@@ -309,6 +309,7 @@ const PaymentRequestPage = ({ request }: Props) => {
             isUserRequester={isUserRequester}
             requestId={request.request_id}
             isItemForm
+            requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
 

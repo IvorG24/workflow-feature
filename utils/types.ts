@@ -475,6 +475,13 @@ export type SpecialFieldTemplateTableInsert =
 export type SpecialFieldTemplateTableUpdate =
   Database["public"]["Tables"]["special_field_template_table"]["Update"];
 
+export type SCICEmployeeTableRow =
+  Database["public"]["Tables"]["scic_employee_table"]["Row"];
+export type SCICEmployeeTableInsert =
+  Database["public"]["Tables"]["scic_employee_table"]["Insert"];
+export type SCICEmployeeTableUpdate =
+  Database["public"]["Tables"]["scic_employee_table"]["Update"];
+
 export type TransactionTableRow =
   OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 
@@ -1924,4 +1931,15 @@ export type ConnectedRequestFormProps = {
   request_project_id: string;
   form_section: string[];
   duplicatableSectionIdList: string[];
+};
+
+export type JiraPTRFTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  typeOfTransfer: string;
+  mannerOfTransfer: string;
+  department: string;
+  projectNameFrom: string;
+  projectNameTo: string;
+  purpose: string;
 };

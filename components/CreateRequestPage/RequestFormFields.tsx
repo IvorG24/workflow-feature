@@ -143,6 +143,26 @@ type RequestFormFieldsProps = {
     onRequestTypeChange: (value: string | null) => void;
     onDepartmentChange: (value: string | null) => void;
   };
+  personnelTransferRequisitionMethods?: {
+    onTypeOfTransferChange: (value: string | null) => void;
+    onMannerOfTransferChange: (value: string | null) => void;
+    onFromChange: (value: string | null) => void;
+    onToChange: (value: string | null) => void;
+    onPurposeChange: (value: string | null, prevValue: string | null) => void;
+    onEquipmentCodeChange: (value: string | null, index: number) => void;
+    onEmployeeNumberChange: (value: string | null, index: number) => void;
+    onITAssetBooleanChange: (value: boolean, index: number) => void;
+    onEmployeeStatusChange: (
+      value: string | null,
+      prevValue: string | null,
+      index: number
+    ) => void;
+    onPhaseOfWorkChange: (
+      value: string | null,
+      sectionIndex: number,
+      fieldIndex: number
+    ) => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -162,6 +182,7 @@ const RequestFormFields = ({
   isLoading,
   currencyOptionList,
   liquidationReimbursementFormMethods,
+  personnelTransferRequisitionMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -200,7 +221,7 @@ const RequestFormFields = ({
 
   const fieldRules = {
     required: {
-      value: field.field_is_required,
+      value: field.field_type !== "SWITCH" && field.field_is_required,
       message: "This field is required",
     },
   };
@@ -332,6 +353,7 @@ const RequestFormFields = ({
             }}
           />
         );
+
       case "TEXT":
         return (
           <TextInput
@@ -346,6 +368,18 @@ const RequestFormFields = ({
             withAsterisk={field.field_is_required}
             readOnly={field.field_is_read_only || isLoading}
             rightSection={isLoading && <Loader size={16} />}
+            onBlur={(e) => {
+              const value = e.currentTarget.value;
+              switch (field.field_name) {
+                case "Employee No. (HRIS)":
+                  personnelTransferRequisitionMethods &&
+                    personnelTransferRequisitionMethods.onEmployeeNumberChange(
+                      value,
+                      sectionIndex
+                    );
+                  break;
+              }
+            }}
           />
         );
 
@@ -453,7 +487,19 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => (
               <Switch
                 checked={value as boolean}
-                onChange={(e) => onChange(e.currentTarget.checked)}
+                onChange={(e) => {
+                  const value = e.currentTarget.checked;
+                  switch (field.field_name) {
+                    case "Do employees transferring to other projects have IT assets":
+                      personnelTransferRequisitionMethods &&
+                        personnelTransferRequisitionMethods.onITAssetBooleanChange(
+                          value,
+                          sectionIndex
+                        );
+                      break;
+                  }
+                  onChange(value);
+                }}
                 {...inputProps}
                 mt="xs"
                 sx={{ label: { cursor: "pointer" } }}
@@ -612,6 +658,110 @@ const RequestFormFields = ({
                       liquidationReimbursementFormMethods?.onDepartmentChange(
                         value
                       );
+                      liquidationReimbursementFormMethods?.onRequestTypeChange(
+                        value
+                      );
+                      break;
+                    case "Department":
+                      liquidationReimbursementFormMethods?.onDepartmentChange(
+                        value
+                      );
+                      break;
+                    case "Type of Transfer":
+                      personnelTransferRequisitionMethods?.onTypeOfTransferChange(
+                        value
+                      );
+                      break;
+                    case "Manner of Transfer":
+                      personnelTransferRequisitionMethods?.onMannerOfTransferChange(
+                        value
+                      );
+                      break;
+                    case "From":
+                      personnelTransferRequisitionMethods?.onFromChange(value);
+                      break;
+                    case "To":
+                      personnelTransferRequisitionMethods?.onToChange(value);
+                      break;
+                    case "Purpose":
+                      personnelTransferRequisitionMethods?.onPurposeChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Equipment Code":
+                      personnelTransferRequisitionMethods?.onEquipmentCodeChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Employee No. (HRIS)":
+                      personnelTransferRequisitionMethods?.onEmployeeNumberChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Employee Status":
+                      personnelTransferRequisitionMethods?.onEmployeeStatusChange(
+                        value,
+                        prevValue as string | null,
+                        sectionIndex
+                      );
+                      break;
+                    case "Phase of Work":
+                      personnelTransferRequisitionMethods?.onPhaseOfWorkChange(
+                        value,
+                        sectionIndex,
+                        fieldIndex
+                      );
+                      break;
+                    case "Type of Transfer":
+                      personnelTransferRequisitionMethods?.onTypeOfTransferChange(
+                        value
+                      );
+                      break;
+                    case "Manner of Transfer":
+                      personnelTransferRequisitionMethods?.onMannerOfTransferChange(
+                        value
+                      );
+                      break;
+                    case "From":
+                      personnelTransferRequisitionMethods?.onFromChange(value);
+                      break;
+                    case "To":
+                      personnelTransferRequisitionMethods?.onToChange(value);
+                      break;
+                    case "Purpose":
+                      personnelTransferRequisitionMethods?.onPurposeChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Equipment Code":
+                      personnelTransferRequisitionMethods?.onEquipmentCodeChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Employee No. (HRIS)":
+                      personnelTransferRequisitionMethods?.onEmployeeNumberChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Employee Status":
+                      personnelTransferRequisitionMethods?.onEmployeeStatusChange(
+                        value,
+                        prevValue as string | null,
+                        sectionIndex
+                      );
+                      break;
+                    case "Phase of Work":
+                      personnelTransferRequisitionMethods?.onPhaseOfWorkChange(
+                        value,
+                        sectionIndex,
+                        fieldIndex
+                      );
                       break;
                   }
                 }}
@@ -730,6 +880,7 @@ const RequestFormFields = ({
           value: option.option_value,
           label: option.option_value,
         }));
+
         return (
           <Controller
             control={control}
