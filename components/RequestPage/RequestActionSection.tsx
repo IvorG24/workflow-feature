@@ -1,4 +1,8 @@
-import { checkIfAllPrimaryApprovedTheRequest } from "@/backend/api/get";
+import {
+  checkIfAllPrimaryApprovedTheRequest,
+  getRequestStatus,
+} from "@/backend/api/get";
+import { updateRequestStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { JiraTicketData } from "@/utils/types";
@@ -48,10 +52,36 @@ const RequestActionSection = ({
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
 
+  const handleCheckIfRequestIsBeingProcessed = async (requestId: string) => {
+    const currentStatus = await getRequestStatus(supabaseClient, { requestId });
+
+    if (currentStatus === "PROCESSING") {
+      notifications.show({
+        message: "This request is being processed.",
+        color: "orange",
+      });
+
+      return true;
+    } else {
+      await updateRequestStatus(supabaseClient, {
+        requestId,
+        status: "PROCESSING",
+      });
+
+      return false;
+    }
+  };
+
   const handleApproveItemRequest = async (
     onCreateJiraTicket: () => Promise<JiraTicketData>
   ) => {
     try {
+      // check if request is being processed
+      const isBeingProcessed = await handleCheckIfRequestIsBeingProcessed(
+        requestId
+      );
+      if (isBeingProcessed) return;
+
       // check if all primary approver approves the request
       if (!requestSignerId) return;
       const isAllPrimaryApprovedTheRequest =
@@ -79,6 +109,10 @@ const RequestActionSection = ({
         handleUpdateRequest("APPROVED");
       }
     } catch (error) {
+      await updateRequestStatus(supabaseClient, {
+        requestId,
+        status: "PENDING",
+      });
       notifications.show({
         message: "Failed to approve item request",
         color: "red",
