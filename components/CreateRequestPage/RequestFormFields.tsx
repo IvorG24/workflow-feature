@@ -163,6 +163,9 @@ type RequestFormFieldsProps = {
       fieldIndex: number
     ) => void;
   };
+  workingAdvanceVoucherFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -183,6 +186,7 @@ const RequestFormFields = ({
   currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
+  workingAdvanceVoucherFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -394,6 +398,9 @@ const RequestFormFields = ({
               }
             )}
             error={fieldError}
+            autosize
+            minRows={4}
+            maxRows={12}
             withAsterisk={field.field_is_required}
           />
         );
@@ -572,6 +579,9 @@ const RequestFormFields = ({
                       paymentRequestFormMethods?.onProjectNameChange(value);
                       itAssetRequestFormMethods?.onProjectNameChange(value);
                       liquidationReimbursementFormMethods?.onProjectNameChange(
+                        value
+                      );
+                      workingAdvanceVoucherFormMethods?.onProjectNameChange(
                         value
                       );
                       break;

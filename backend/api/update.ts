@@ -1198,5 +1198,4 @@ export const updateRequestJiraId = async (
     })
     .eq("request_id", requestId);
   if (error) throw error;
-  console.log(error);
 };

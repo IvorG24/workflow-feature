@@ -1894,6 +1894,7 @@ export type JiraPayloadType = {
         choices?: (string | null)[];
         text?: string;
         users?: string[];
+        date?: string;
       };
     };
   };
@@ -1942,4 +1943,15 @@ export type JiraPTRFTicketPayloadProps = {
   projectNameFrom: string;
   projectNameTo: string;
   purpose: string;
+};
+
+export type JiraWAVTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  date: string;
+  payeeName: string;
+  amount: string;
+  amountInWord: string;
+  particulars: string;
 };

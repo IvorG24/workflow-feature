@@ -1487,6 +1487,8 @@ RETURNS JSON AS $$
         endId = `BOQ`;
       } else if(formName === 'Personnel Transfer Requisition'){
         endId = `PTRF`;
+      } else if(formName === 'Working Advance Voucher'){
+        endId = `WAV`;
       } else {
         endId = ``;
       }
@@ -5238,6 +5240,33 @@ RETURNS JSON as $$
           projectOptions
         }
         return;
+      } else if (form.form_name === "Personnel Transfer Requisition") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_project_table
+            WHERE
+              team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form,
+          projectOptions
+        }
+        return;
       } else if (form.form_name === "Liquidation Reimbursement") {
         const projects = plv8.execute(
           `
@@ -5294,14 +5323,20 @@ RETURNS JSON as $$
               ...field,
               field_option: departmentOptions,
             }
-          } else if (field.field_name === 'Type of Request') {
+          }  else {
+            return field;
+          }
+        });
+
+        const payeeSectionFieldList = form.form_section[1].section_field.map((field) => {
+          if (field.field_name === 'Type of Request') {
             return {
               ...field,
               field_option: expenseOptions,
             }
-          } else {
-            return field;
           }
+
+          return field;
         })
 
         returnData = {
@@ -5312,7 +5347,10 @@ RETURNS JSON as $$
                 ...form.form_section[0],
                 section_field: firstSectionFieldList,
               },
-              ...form.form_section.slice(1)
+              {
+                ...form.form_section[1],
+                section_field: payeeSectionFieldList,
+              }
             ],
           },
           projectOptions
@@ -5369,7 +5407,7 @@ RETURNS JSON as $$
             form
           }
         }
-      } else if (form.form_name === "Personnel Transfer Requisition") {
+      } else if (form.form_name === "Working Advance Voucher") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -5397,7 +5435,7 @@ RETURNS JSON as $$
         }
         return;
       }
-    } else {
+    }else {
       returnData = {
         form
       }
