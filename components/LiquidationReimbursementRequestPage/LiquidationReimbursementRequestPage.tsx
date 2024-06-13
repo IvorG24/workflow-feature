@@ -329,7 +329,6 @@ const LiquidationReimbursementRequestPage = ({
         }/create?lrf=${request.request_formsly_id}`
       );
     } catch (error) {
-      console.log(error);
       notifications.show({
         message:
           "Failed to create Bill of Quantity request. Please contact the IT team.",

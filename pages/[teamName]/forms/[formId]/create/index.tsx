@@ -9,6 +9,7 @@ import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/Crea
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTransferRequisition/CreatePersonnelTransferRequisition";
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
+import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv1Page/CreateRequestForPaymentv1Page";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
 import Meta from "@/components/Meta/Meta";
@@ -61,6 +62,7 @@ type Props = {
   requestingProject?: string;
   categoryOptions?: OptionTableRow[];
   connectedRequest?: ConnectedRequestFormProps;
+  departmentOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -68,6 +70,7 @@ const Page = ({
   projectOptions = [],
   categoryOptions = [],
   connectedRequest,
+  departmentOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -112,9 +115,9 @@ const Page = ({
             projectOptions={projectOptions}
           />
         );
-      case "Request For Payment":
+      case "Request For Payment v1":
         return (
-          <CreateRequestForPaymentPage
+          <CreateRequestForPaymentv1Page
             form={form}
             projectOptions={projectOptions}
           />
@@ -154,6 +157,14 @@ const Page = ({
             form={form}
             projectOptions={projectOptions}
             categoryOptions={categoryOptions}
+          />
+        );
+      case "Request For Payment":
+        return (
+          <CreateRequestForPaymentPage
+            form={form}
+            projectOptions={projectOptions}
+            departmentOptions={departmentOptions}
           />
         );
     }

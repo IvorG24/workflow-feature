@@ -1478,7 +1478,7 @@ RETURNS JSON AS $$
         endId = `RO`;
       } else if(formName==='Transfer Receipt') {
         endId = `TR`;
-      } else if(formName==='Request For Payment') {
+      } else if(formName.includes('Request For Payment')) {
         endId = `RFP`;
       } else if(formName === 'IT Asset'){
         endId = `ITA`;
@@ -3493,7 +3493,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment', 'Request For Payment v1'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -5130,7 +5130,7 @@ RETURNS JSON as $$
           projectOptions
         }
         return;
-      } else if (form.form_name === "Request For Payment") {
+      } else if (form.form_name === "Request For Payment v1") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -5501,6 +5501,75 @@ RETURNS JSON as $$
           },
           projectOptions,
           categoryOptions
+        }
+        return;
+      } else if (form.form_name === "Request For Payment") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+                team_project_table.team_project_id,
+                team_project_table.team_project_name
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const departments = plv8.execute(
+          `
+            SELECT 
+              team_department_id,
+              team_department_name
+            FROM team_department_table
+            WHERE 
+              team_department_is_disabled = false
+            ORDER BY team_department_name;
+          `
+        );
+
+        const departmentOptions = departments.map((department, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: department.team_department_id,
+            option_order: index,
+            option_value: department.team_department_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  {
+                    ...form.form_section[0].section_field[1],
+                    field_option: departmentOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(2),
+                ],
+              },
+              ...form.form_section.slice(1)
+            ],
+          },
+          projectOptions,
+          departmentOptions
         }
         return;
       }
@@ -9656,7 +9725,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && request.form_name === "Request For Payment") {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && request.form_name === "Request For Payment v1") {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {

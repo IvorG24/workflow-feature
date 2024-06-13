@@ -8,8 +8,8 @@ import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/Othe
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
-import PaymentRequestPage from "@/components/PaymentRequestPage/PaymentRequestPage";
 import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
+import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
@@ -101,8 +101,8 @@ const Page = ({
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
-    } else if (request.request_form.form_name === "Request For Payment") {
-      return <PaymentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Request For Payment v1") {
+      return <RequestForPaymentv1RequestPage request={request} />;
     } else if (request.request_form.form_name === "IT Asset") {
       return (
         <ITAssetRequestPage
