@@ -6311,7 +6311,7 @@ export const getJiraFormslyProjectList = async (
       jira_organization_team_project_id: string;
       jira_organization_team_project_project_id: string;
       jira_organization_team_project_organization_id: string;
-      jira_organization_team_project_organization: JiraOrganizationTableRow | null;;
+      jira_organization_team_project_organization: JiraOrganizationTableRow | null;
     }[];
 
     return {
