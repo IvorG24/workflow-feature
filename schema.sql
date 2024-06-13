@@ -13570,7 +13570,20 @@ CREATE INDEX request_response_idx ON request_response_table (request_response_re
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
 CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_table;
-CREATE VIEW equipment_description_view AS SELECT equipment_description_table.*, CONCAT(equipment_name_shorthand, '-', equipment_description_property_number) AS equipment_description_property_number_with_prefix FROM equipment_description_table INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id;
+CREATE VIEW equipment_description_view AS 
+SELECT 
+    equipment_description_table.*, 
+    CASE 
+        WHEN equipment_description_is_rental = true 
+        THEN CONCAT('REN-', equipment_name_shorthand, '-', equipment_description_property_number) 
+        ELSE CONCAT(equipment_name_shorthand, '-', equipment_description_property_number) 
+    END AS equipment_description_property_number_with_prefix 
+FROM 
+    equipment_description_table 
+INNER JOIN 
+    equipment_table 
+ON 
+    equipment_id = equipment_description_equipment_id;
 
 -------- End: VIEWS
 

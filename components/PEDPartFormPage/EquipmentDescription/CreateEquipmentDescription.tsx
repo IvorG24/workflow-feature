@@ -93,6 +93,7 @@ const CreateEquipmentDescription = ({
         brand: "",
         model: "",
         isAvailable: true,
+        isRental: false,
       },
     });
 
@@ -110,6 +111,7 @@ const CreateEquipmentDescription = ({
           equipment_description_encoder_team_member_id:
             teamMember?.team_member_id,
           equipment_description_is_available: data.isAvailable,
+          equipment_description_is_rental: data.isRental,
         },
         brand: brandOption.find((brand) => brand.value === data.brand)
           ?.label as string,
@@ -229,6 +231,11 @@ const CreateEquipmentDescription = ({
                   textTransform: "uppercase",
                 },
               }}
+            />
+            <Checkbox
+              label="Rental"
+              {...register("isRental")}
+              sx={{ input: { cursor: "pointer" } }}
             />
             <Checkbox
               label="Available"

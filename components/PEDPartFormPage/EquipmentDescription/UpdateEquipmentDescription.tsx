@@ -100,6 +100,7 @@ const UpdateEquipmentDescription = ({
         model: editEquipmentDescription.equipment_description_model_id,
         isAvailable:
           editEquipmentDescription.equipment_description_is_available,
+        isRental: editEquipmentDescription.equipment_description_is_rental,
       },
     });
 
@@ -117,6 +118,7 @@ const UpdateEquipmentDescription = ({
             equipment_description_model_id: data.model,
             equipment_description_equipment_id: selectedEquipment.equipment_id,
             equipment_description_is_available: data.isAvailable,
+            equipment_description_is_rental: data.isRental,
           },
           brand: brandOption.find((brand) => brand.value === data.brand)
             ?.label as string,
@@ -261,6 +263,11 @@ const UpdateEquipmentDescription = ({
                   textTransform: "uppercase",
                 },
               }}
+            />
+            <Checkbox
+              label="Rental"
+              {...register("isRental")}
+              sx={{ input: { cursor: "pointer" } }}
             />
             <Checkbox
               label="Available"

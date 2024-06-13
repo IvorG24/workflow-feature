@@ -4525,7 +4525,10 @@ export const checkPropertyNumber = async (
       "*, equipment_description_equipment: equipment_description_equipment_id(*)",
       { count: "exact", head: true }
     )
-    .eq("equipment_description_property_number_with_prefix", propertyNumber)
+    .in("equipment_description_property_number_with_prefix", [
+      propertyNumber,
+      `REN-${propertyNumber}`,
+    ])
     .eq("equipment_description_is_disabled", false)
     .eq("equipment_description_equipment.equipment_team_id", teamId);
   if (error) throw error;
@@ -6304,7 +6307,7 @@ export const getJiraFormslyProjectList = async (
       jira_organization_team_project_id: string;
       jira_organization_team_project_project_id: string;
       jira_organization_team_project_organization_id: string;
-      jira_organization_team_project_organization: JiraOrganizationTableRow | null
+      jira_organization_team_project_organization: JiraOrganizationTableRow | null;
     }[];
 
     return {
