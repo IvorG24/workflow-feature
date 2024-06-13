@@ -153,7 +153,7 @@ const AddTeamMember = ({
       });
       await fetchProjectMembers();
       notifications.show({
-        message: "Team memeber/s added.",
+        message: "Team member/s added.",
         color: "green",
       });
       setIsAddingMember(false);

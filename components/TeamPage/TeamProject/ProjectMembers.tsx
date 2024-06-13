@@ -119,7 +119,7 @@ const ProjectMembers = ({
   };
 
   useEffect(() => {
-    const fetchTeamMemeberChoiceList = async () => {
+    const fetchTeamMemberChoiceList = async () => {
       setIsFetchingMembers(true);
       const choices = await getAllTeamMembersWithoutProjectMembers(
         supabaseClient,
@@ -148,7 +148,7 @@ const ProjectMembers = ({
       setIsFetchingMembers(false);
     };
     if (isAddingMember) {
-      fetchTeamMemeberChoiceList();
+      fetchTeamMemberChoiceList();
     }
   }, [isAddingMember]);
 

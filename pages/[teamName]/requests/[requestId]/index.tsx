@@ -12,6 +12,7 @@ import PaymentRequestPage from "@/components/PaymentRequestPage/PaymentRequestPa
 import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
+import WorkingAdvanceVoucherRequestPage from "@/components/WorkingAdvanceVoucherRequestPage/WorkingAdvanceVoucherRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -135,6 +136,8 @@ const Page = ({
           }
         />
       );
+    } else if (request.request_form.form_name === "Working Advance Voucher") {
+      return <WorkingAdvanceVoucherRequestPage request={request} />;
     } else if (request.request_form.form_name === "Equipment Service Report") {
       return (
         <EquipmentServiceReport

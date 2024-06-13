@@ -39,6 +39,7 @@ import {
   createStyles,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
@@ -84,17 +85,20 @@ const RequestListTable = ({
   const formList = useFormList();
   const supabaseClient = createPagesBrowserClient();
 
-  const [jiraTicketStatusList, setJiraTicketStatusList] = useState<
+  const [jiraTicketStatusList, setJiraTicketStatusList] = useLocalStorage<
     { jira_id: string; status: string }[]
-  >([]);
+  >({ key: "formsly-jira-ticket-status-list", defaultValue: [] });
+
+  const [isFetchingJiraStatus, setIsFetchingJiraStatus] = useState<string[]>(
+    []
+  );
+
   const [pedEquipmentNumberList, setPedEquipmentNumberList] = useLocalStorage<
     { request_id: string; equipment_number: string[] }[]
   >({
     key: "formsly-ped-equipment-number-list",
     defaultValue: [],
   });
-  const [isFetchingJiraTicketStatus, setIsFetchingJiraTicketStatus] =
-    useState(false);
   const [
     isFetchingPedEquipmentNumberList,
     setIsFetchingPedEquipmentNumberList,
@@ -130,65 +134,58 @@ const RequestListTable = ({
     }
   };
 
-  useEffect(() => {
-    const fetchJiraTicketStatus = async (
-      requestList: RequestListItemType[]
-    ) => {
-      try {
-        const currentJiraTicketStatusList = jiraTicketStatusList;
-        const jiraStatusColumnIsHidden = checkIfColumnIsHidden(
-          "request_jira_status"
-        );
-        const requestListIsAlreadyFetched = currentJiraTicketStatusList.find(
-          (status) => status.jira_id === requestList[0].request_jira_id
-        );
-
-        // does not fetch if jira status column is hidden by user
-        // does not fetch if request list has been fetched
-        if (jiraStatusColumnIsHidden || requestListIsAlreadyFetched) return;
-
-        setIsFetchingJiraTicketStatus(true);
-        const newJiraTicketStatusList = await Promise.all(
-          requestList.map(async (request) => {
-            let jiraStatus = { jira_id: "", status: "" };
-            if (request.request_jira_id) {
-              const requestJiraTicketData = await fetch(
-                `/api/jira/get-ticket?jiraTicketKey=${request.request_jira_id}`
-              );
-              if (!requestJiraTicketData.ok) {
-                jiraStatus = {
-                  jira_id: request.request_jira_id,
-                  status: "Ticket Not Found",
-                };
-              } else {
-                const jiraTicket = await requestJiraTicketData.json();
-                const jiraTicketStatus =
-                  jiraTicket.fields["customfield_10010"].currentStatus.status;
-                jiraStatus = {
-                  jira_id: request.request_jira_id,
-                  status: jiraTicketStatus,
-                };
-              }
-            }
-
-            return jiraStatus;
-          })
-        );
-
-        const updatedJiraTicketStatusList = [
-          ...currentJiraTicketStatusList,
-          ...newJiraTicketStatusList,
-        ];
-        setJiraTicketStatusList(updatedJiraTicketStatusList);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsFetchingJiraTicketStatus(false);
+  const handleFetchJiraTicketStatus = async (jiraTicketKey: string) => {
+    try {
+      setIsFetchingJiraStatus((prev) => [...prev, jiraTicketKey]);
+      let jiraStatus = { jira_id: "", status: "" };
+      const requestJiraTicketData = await fetch(
+        `/api/jira/get-ticket?jiraTicketKey=${jiraTicketKey}`
+      );
+      if (!requestJiraTicketData.ok) {
+        jiraStatus = {
+          jira_id: jiraTicketKey,
+          status: "Ticket Not Found",
+        };
+      } else {
+        const jiraTicket = await requestJiraTicketData.json();
+        const jiraTicketStatus =
+          jiraTicket.fields["customfield_10010"].currentStatus.status;
+        jiraStatus = {
+          jira_id: jiraTicketKey,
+          status: jiraTicketStatus,
+        };
       }
-    };
 
-    fetchJiraTicketStatus(requestList);
-  }, [requestList]);
+      const isAlreadyFetched = jiraTicketStatusList.find(
+        (ticket) => ticket.jira_id === jiraTicketKey
+      );
+      let updatedJiraTicketStatusList = jiraTicketStatusList;
+
+      if (isAlreadyFetched) {
+        updatedJiraTicketStatusList = jiraTicketStatusList.map((ticket) => {
+          if (ticket.jira_id === jiraTicketKey) {
+            return jiraStatus;
+          } else {
+            return ticket;
+          }
+        });
+      } else {
+        updatedJiraTicketStatusList.push(jiraStatus);
+      }
+
+      setJiraTicketStatusList(updatedJiraTicketStatusList);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to fetch jira status",
+        color: "red",
+      });
+    } finally {
+      const updatedFetchingJiraStatus = isFetchingJiraStatus.filter(
+        (ticket) => ticket === jiraTicketKey
+      );
+      setIsFetchingJiraStatus(updatedFetchingJiraStatus);
+    }
+  };
 
   useEffect(() => {
     const fetchPedEquipmentNumberList = async (
@@ -413,22 +410,47 @@ const RequestListTable = ({
               (status) => status.jira_id === request_jira_id
             );
 
+            const isBeingFetched = isFetchingJiraStatus.includes(
+              `${request_jira_id}`
+            );
+
+            const badgeColor = jiraStatusMatch
+              ? getJiraTicketStatusColor(
+                  `${jiraStatusMatch.status.toLowerCase()}`
+                )
+              : "blue";
+
             return (
-              <Box>
-                {isFetchingJiraTicketStatus && <Loader size={16} />}
-                {!isFetchingJiraTicketStatus && jiraStatusMatch ? (
-                  <Badge
-                    key={request_jira_id}
-                    color={getJiraTicketStatusColor(
-                      jiraStatusMatch.status.toLowerCase()
-                    )}
-                  >
-                    {jiraStatusMatch.status}
-                  </Badge>
-                ) : (
-                  <></>
-                )}
-              </Box>
+              <Tooltip
+                disabled={!Boolean(jiraStatusMatch)}
+                label={jiraStatusMatch && jiraStatusMatch.status}
+              >
+                <Box maw={120} sx={{ cursor: "pointer" }}>
+                  {request_jira_id && (
+                    <Badge
+                      w={120}
+                      key={request_jira_id}
+                      variant={jiraStatusMatch ? "light" : "filled"}
+                      color={badgeColor}
+                      onClick={() =>
+                        handleFetchJiraTicketStatus(request_jira_id)
+                      }
+                    >
+                      {isBeingFetched ? (
+                        <Loader
+                          color={jiraStatusMatch ? "blue" : "white"}
+                          variant="dots"
+                          size={24}
+                        />
+                      ) : jiraStatusMatch ? (
+                        jiraStatusMatch.status
+                      ) : (
+                        "Show Status"
+                      )}
+                    </Badge>
+                  )}
+                </Box>
+              </Tooltip>
             );
           },
         },

@@ -29,6 +29,7 @@ import JiraOrganizationLookupTable from "./JiraOrganizationLookupTable/JiraOrgan
 import JiraProjectLookupTable from "./JiraProjectLookupTable/JiraProjectLookupTable";
 import JiraUserAccountList from "./JiraUserAccountList/JiraUserAccountList";
 import JiraUserLookupTable from "./JiraUserLookupTable/JiraUserLookupTable";
+import JobTitleLookupTable from "./JobTitleLookupTable/JobTitleLookupTable";
 
 type Props = {
   jiraFormslyProjectData: {
@@ -220,6 +221,7 @@ const JiraSettingsPage = ({
           <JiraOrganizationLookupTable
             jiraOrganizationData={jiraOrganizationData}
           />
+          <JobTitleLookupTable />
         </Stack>
       )}
     </Container>

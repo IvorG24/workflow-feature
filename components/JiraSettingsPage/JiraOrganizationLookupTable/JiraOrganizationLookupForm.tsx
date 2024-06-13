@@ -33,7 +33,7 @@ const JiraOrganizationLookupForm = ({
     <Modal
       opened={opened}
       onClose={close}
-      title={`${isUpdate ? "Update" : "Create"} Organization User`}
+      title={`${isUpdate ? "Update" : "Create"} Organization`}
       centered
       pos="relative"
       id="Jira Organization Lookup Form"

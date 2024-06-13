@@ -11,6 +11,7 @@ import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTran
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
+import CreateWorkingAdvanceRequestPage from "@/components/CreateWorkingAdvanceVoucheRequestPage/CreateWorkingAdvanceVoucheRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
@@ -144,6 +145,14 @@ const Page = ({
       case "Personnel Transfer Requisition":
         return (
           <CreatePersonnelTransferRequisition
+            form={form}
+            projectOptions={projectOptions}
+          />
+        );
+
+      case "Working Advance Voucher":
+        return (
+          <CreateWorkingAdvanceRequestPage
             form={form}
             projectOptions={projectOptions}
           />
