@@ -623,6 +623,7 @@ CREATE TABLE equipment_description_table(
   equipment_description_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_description_is_available BOOLEAN DEFAULT true NOT NULL,
   equipment_description_acquisition_date INT,
+  equipment_description_is_rental BOOLEAN DEFAULT false NOT NULL,
   
   equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
   equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
@@ -1488,6 +1489,8 @@ RETURNS JSON AS $$
         endId = `BOQ`;
       } else if(formName === 'Personnel Transfer Requisition'){
         endId = `PTRF`;
+      } else if(formName === 'Working Advance Voucher'){
+        endId = `WAV`;
       } else if(formName === 'Equipment Service Report'){
         endId = `ESR`;
       } else if(formName.includes('Request For Payment Code')) {
@@ -5243,6 +5246,33 @@ RETURNS JSON as $$
           projectOptions
         }
         return;
+      } else if (form.form_name === "Personnel Transfer Requisition") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_project_table
+            WHERE
+              team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        returnData = {
+          form,
+          projectOptions
+        }
+        return;
       } else if (form.form_name === "Liquidation Reimbursement") {
         const projects = plv8.execute(
           `
@@ -5299,14 +5329,20 @@ RETURNS JSON as $$
               ...field,
               field_option: departmentOptions,
             }
-          } else if (field.field_name === 'Type of Request') {
+          }  else {
+            return field;
+          }
+        });
+
+        const payeeSectionFieldList = form.form_section[1].section_field.map((field) => {
+          if (field.field_name === 'Type of Request') {
             return {
               ...field,
               field_option: expenseOptions,
             }
-          } else {
-            return field;
           }
+
+          return field;
         })
 
         returnData = {
@@ -5317,7 +5353,10 @@ RETURNS JSON as $$
                 ...form.form_section[0],
                 section_field: firstSectionFieldList,
               },
-              ...form.form_section.slice(1)
+              {
+                ...form.form_section[1],
+                section_field: payeeSectionFieldList,
+              }
             ],
           },
           projectOptions
@@ -5416,7 +5455,7 @@ RETURNS JSON as $$
             form
           }
         }
-      } else if (form.form_name === "Personnel Transfer Requisition") {
+      } else if (form.form_name === "Working Advance Voucher") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -11127,6 +11166,8 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON employee_job_title_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON employee_job_title_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON employee_job_title_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON scic_employee_table;
 
 --- ATTACHMENT_TABLE
@@ -13865,6 +13906,33 @@ CREATE POLICY "Allow READ for anon users" ON "public"."employee_job_title_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" 
+ON "public"."employee_job_title_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" 
+ON "public"."employee_job_title_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+
 -- scic_employee_table
 CREATE POLICY "Allow READ for anon users" ON "public"."scic_employee_table"
 AS PERMISSIVE FOR SELECT
@@ -13884,7 +13952,20 @@ CREATE INDEX request_response_idx ON request_response_table (request_response_re
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
 CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_table;
-CREATE VIEW equipment_description_view AS SELECT equipment_description_table.*, CONCAT(equipment_name_shorthand, '-', equipment_description_property_number) AS equipment_description_property_number_with_prefix FROM equipment_description_table INNER JOIN equipment_table ON equipment_id = equipment_description_equipment_id;
+CREATE VIEW equipment_description_view AS 
+SELECT 
+    equipment_description_table.*, 
+    CASE 
+        WHEN equipment_description_is_rental = true 
+        THEN CONCAT('REN-', equipment_name_shorthand, '-', equipment_description_property_number) 
+        ELSE CONCAT(equipment_name_shorthand, '-', equipment_description_property_number) 
+    END AS equipment_description_property_number_with_prefix 
+FROM 
+    equipment_description_table 
+INNER JOIN 
+    equipment_table 
+ON 
+    equipment_id = equipment_description_equipment_id;
 
 -------- End: VIEWS
 

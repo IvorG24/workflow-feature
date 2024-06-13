@@ -19,6 +19,7 @@ import {
   JiraOrganizationTableUpdate,
   JiraProjectTableUpdate,
   JiraUserAccountTableUpdate,
+  JobTitleTableUpdate,
   MemberRoleType,
   MemoAgreementTableRow,
   MemoFormatAttachmentTableInsert,
@@ -1198,4 +1199,33 @@ export const updateRequestJiraId = async (
     })
     .eq("request_id", requestId);
   if (error) throw error;
+};
+
+export const updateRequestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string; status: string }
+) => {
+  const { requestId, status } = params;
+  const { error } = await supabaseClient
+    .from("request_table")
+    .update({ request_status: status })
+    .eq("request_id", requestId);
+
+  if (error) throw error;
+};
+
+// update jira project
+export const updateJobTitle = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JobTitleTableUpdate
+) => {
+  if (!params.employee_job_title_id) throw new Error();
+  const { error } = await supabaseClient
+    .from("employee_job_title_table")
+    .update(params)
+    .eq("employee_job_title_id", params.employee_job_title_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
 };

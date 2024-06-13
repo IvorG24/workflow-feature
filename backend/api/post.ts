@@ -34,6 +34,7 @@ import {
   JiraOrganizationTableInsert,
   JiraProjectTableInsert,
   JiraUserAccountTableInsert,
+  JobTitleTableInsert,
   MemoAgreementTableRow,
   MemoLineItem,
   MemoTableRow,
@@ -1929,4 +1930,30 @@ export const encryptAppSourceId = async () => {
   const { data } = await response.json();
 
   return data as string;
+};
+
+export const createJobTitle = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JobTitleTableInsert
+) => {
+  // check if duplicate
+  const { count, error: duplicateError } = await supabaseClient
+    .from("employee_job_title_table")
+    .select("employee_job_title_id", { count: "exact" })
+    .eq("employee_job_title_label", params.employee_job_title_label);
+
+  if (duplicateError) throw duplicateError;
+
+  if (Number(count)) {
+    return { data: null, error: "Job title already exists." };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("employee_job_title_table")
+    .insert(params)
+    .select("*");
+
+  if (error) throw error;
+
+  return { data, error: null };
 };

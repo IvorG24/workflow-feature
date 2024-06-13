@@ -163,6 +163,9 @@ type RequestFormFieldsProps = {
       fieldIndex: number
     ) => void;
   };
+  workingAdvanceVoucherFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCategoryChange: (value: string | null) => void;
@@ -248,6 +251,7 @@ const RequestFormFields = ({
   currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
+  workingAdvanceVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
 }: RequestFormFieldsProps) => {
@@ -469,6 +473,9 @@ const RequestFormFields = ({
               }
             )}
             error={fieldError}
+            autosize
+            minRows={4}
+            maxRows={12}
             withAsterisk={field.field_is_required}
           />
         );
@@ -661,6 +668,9 @@ const RequestFormFields = ({
                       paymentRequestFormMethods?.onProjectNameChange(value);
                       itAssetRequestFormMethods?.onProjectNameChange(value);
                       liquidationReimbursementFormMethods?.onProjectNameChange(
+                        value
+                      );
+                      workingAdvanceVoucherFormMethods?.onProjectNameChange(
                         value
                       );
                       equipmentServiceReportMethods?.onProjectNameChange(value);

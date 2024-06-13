@@ -485,6 +485,13 @@ export type SCICEmployeeTableUpdate =
 export type TransactionTableRow =
   OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 
+export type JobTitleTableRow =
+  Database["public"]["Tables"]["employee_job_title_table"]["Row"];
+export type JobTitleTableInsert =
+  Database["public"]["Tables"]["employee_job_title_table"]["Insert"];
+export type JobTitleTableUpdate =
+  Database["public"]["Tables"]["employee_job_title_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1385,6 +1392,7 @@ export type EquipmentDescriptionForm = {
   model: string;
   acquisitionDate: Date | null;
   isAvailable: boolean;
+  isRental: boolean;
 };
 
 export type EquipmentPartType = EquipmentPartTableRow & {
@@ -1895,6 +1903,7 @@ export type JiraPayloadType = {
         choices?: (string | null)[];
         text?: string;
         users?: string[];
+        date?: string;
       };
     };
   };
@@ -1943,4 +1952,25 @@ export type JiraPTRFTicketPayloadProps = {
   projectNameFrom: string;
   projectNameTo: string;
   purpose: string;
+};
+
+export type JiraWAVTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  date: string;
+  payeeName: string;
+  amount: string;
+  amountInWord: string;
+  particulars: string;
+};
+
+export type JiraESRTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  requestorName: string;
+  department: string;
+  workcode: string;
+  propertyNumber: string;
 };

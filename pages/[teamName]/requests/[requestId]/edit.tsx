@@ -10,6 +10,7 @@ import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDP
 import EditRequestForPaymentPage from "@/components/EditRequestForPaymentv1Page/EditRequestForPaymentv1Page";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
+import EditWorkingAdvanceVoucherRequestPage from "@/components/EditWorkingAdvanceVoucherRequestPage/EditWorkingAdvanceVoucherRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -144,6 +145,16 @@ const Page = ({
         return (
           <EditBillOfQuantityRequestPage
             form={form}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
+
+      case "Working Advance Voucher":
+        return (
+          <EditWorkingAdvanceVoucherRequestPage
+            form={form}
+            projectOptions={projectOptions}
             duplicatableSectionIdList={duplicatableSectionIdList}
             requestId={requestId}
           />

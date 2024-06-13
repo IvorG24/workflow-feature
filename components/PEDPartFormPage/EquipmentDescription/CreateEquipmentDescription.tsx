@@ -96,6 +96,7 @@ const CreateEquipmentDescription = ({
         model: "",
         acquisitionDate: null,
         isAvailable: true,
+        isRental: false,
       },
     });
 
@@ -116,6 +117,7 @@ const CreateEquipmentDescription = ({
             ? moment(data.acquisitionDate).year()
             : null,
           equipment_description_is_available: data.isAvailable,
+          equipment_description_is_rental: data.isRental,
         },
         brand: brandOption.find((brand) => brand.value === data.brand)
           ?.label as string,
@@ -248,6 +250,11 @@ const CreateEquipmentDescription = ({
                   clearable
                 />
               )}
+            />
+            <Checkbox
+              label="Rental"
+              {...register("isRental")}
+              sx={{ input: { cursor: "pointer" } }}
             />
             <Checkbox
               label="Available"

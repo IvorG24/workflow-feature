@@ -131,6 +131,9 @@ type RequestFormSectionProps = {
       fieldIndex: number
     ) => void;
   };
+  workingAdvanceVoucherFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onCategoryChange: (value: string | null) => void;
@@ -216,6 +219,7 @@ const RequestFormSection = ({
   currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
+  workingAdvanceVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
 }: RequestFormSectionProps) => {
@@ -282,6 +286,9 @@ const RequestFormSection = ({
               }
               personnelTransferRequisitionMethods={
                 personnelTransferRequisitionMethods
+              }
+              workingAdvanceVoucherFormMethods={
+                workingAdvanceVoucherFormMethods
               }
               equipmentServiceReportMethods={equipmentServiceReportMethods}
               requestForPaymentFormMethods={requestForPaymentFormMethods}

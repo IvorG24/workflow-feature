@@ -4525,7 +4525,10 @@ export const checkPropertyNumber = async (
       "*, equipment_description_equipment: equipment_description_equipment_id(*)",
       { count: "exact", head: true }
     )
-    .eq("equipment_description_property_number_with_prefix", propertyNumber)
+    .in("equipment_description_property_number_with_prefix", [
+      propertyNumber,
+      `REN-${propertyNumber}`,
+    ])
     .eq("equipment_description_is_disabled", false)
     .eq("equipment_description_equipment.equipment_team_id", teamId);
   if (error) throw error;
@@ -6308,7 +6311,7 @@ export const getJiraFormslyProjectList = async (
       jira_organization_team_project_id: string;
       jira_organization_team_project_project_id: string;
       jira_organization_team_project_organization_id: string;
-      jira_organization_team_project_organization: JiraOrganizationTableRow | null;
+      jira_organization_team_project_organization: JiraOrganizationTableRow | null;;
     }[];
 
     return {
@@ -7513,6 +7516,46 @@ export const getExistingBOQRequest = async (
         "request_formsly_id_prefix" | "request_formsly_id_serial"
       >)
     : null;
+};
+
+export const getRequestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select("request_status")
+    .eq("request_id", params.requestId)
+    .maybeSingle();
+
+  if (error || !data) throw error;
+
+  return data.request_status;
+};
+
+export const getJobTitleList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    from: number;
+    to: number;
+    search?: string;
+  }
+) => {
+  const { from, to, search } = params;
+  let query = supabaseClient
+    .from("employee_job_title_table")
+    .select("*", { count: "exact" })
+    .order("employee_job_title_label")
+    .range(from, to);
+
+  if (search) {
+    query = query.ilike("employee_job_title_label", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return { data, count: Number(count) };
 };
 
 // Fetch existing RFP Code request

@@ -108,6 +108,7 @@ const UpdateEquipmentDescription = ({
             : null,
         isAvailable:
           editEquipmentDescription.equipment_description_is_available,
+        isRental: editEquipmentDescription.equipment_description_is_rental,
       },
     });
 
@@ -128,6 +129,7 @@ const UpdateEquipmentDescription = ({
               ? moment(data.acquisitionDate).year()
               : null,
             equipment_description_is_available: data.isAvailable,
+            equipment_description_is_rental: data.isRental,
           },
           brand: brandOption.find((brand) => brand.value === data.brand)
             ?.label as string,
@@ -285,6 +287,11 @@ const UpdateEquipmentDescription = ({
                   clearable
                 />
               )}
+            />
+            <Checkbox
+              label="Rental"
+              {...register("isRental")}
+              sx={{ input: { cursor: "pointer" } }}
             />
             <Checkbox
               label="Available"

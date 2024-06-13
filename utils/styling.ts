@@ -145,6 +145,9 @@ export const getFileTypeColor = (filename: string) => {
 };
 
 export const getJiraTicketStatusColor = (status: string) => {
+  if (status.includes("waiting for")) {
+    return "blue";
+  }
   switch (status.toLowerCase()) {
     case "in progress":
       return "cyan";
