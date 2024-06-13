@@ -13,6 +13,7 @@ import {
   JiraPTRFTicketPayloadProps,
   JiraPayloadType,
   JiraTicketPayloadProps,
+  JiraWAVTicketPayloadProps,
   RequestCommentType,
 } from "../types";
 
@@ -519,6 +520,55 @@ export const formatJiraPTRFPayload = ({
     requestParticipants: [],
     requestTypeId: "405",
     serviceDeskId: "4",
+  };
+
+  return jiraTicketPayload;
+};
+
+export const formatJiraWAVPayload = ({
+  requestId,
+  requestUrl,
+  jiraProjectSiteId,
+  date,
+  payeeName,
+  amount,
+  amountInWord,
+  particulars,
+}: JiraWAVTicketPayloadProps) => {
+  const jiraTicketPayload = {
+    form: {
+      answers: {
+        "6": {
+          text: payeeName, // Payee Name
+        },
+        "5": {
+          date: date, // Date
+        },
+        "13": {
+          choices: [jiraProjectSiteId], // Requesting Project
+        },
+        "16": {
+          text: amount, // Amount
+        },
+        "17": {
+          text: amountInWord, // Amount in Words
+        },
+        "11": {
+          text: particulars, // Particulars
+        },
+        "20": {
+          text: requestId, // Formsly Id
+        },
+        "21": {
+          text: requestUrl, // Formsly URL
+        },
+      },
+    },
+    isAdfRequest: false,
+    requestFieldValues: {},
+    requestParticipants: [],
+    requestTypeId: "407",
+    serviceDeskId: "23",
   };
 
   return jiraTicketPayload;

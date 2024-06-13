@@ -749,6 +749,7 @@ const LiquidationReimbursementRequestPage = ({
                 ? onCreateJiraTicket
                 : undefined
             }
+            requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
 

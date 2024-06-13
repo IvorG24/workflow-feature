@@ -2,27 +2,24 @@ import { deleteRequest } from "@/backend/api/delete";
 import {
   getJiraAutomationDataByProjectId,
   getRequestComment,
-  getSectionInRequestPage,
 } from "@/backend/api/get";
-import {
-  approveOrRejectRequest,
-  cancelRequest,
-  updateRequestJiraId,
-} from "@/backend/api/update";
+import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
+import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
-import {
-  createJiraTicket,
-  formatJiraLRFRequisitionPayload,
-} from "@/utils/jira/functions";
+import { createJiraTicket, formatJiraWAVPayload } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -30,39 +27,22 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import {
-  Accordion,
-  Container,
-  Flex,
-  Paper,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Container, Flex, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import RequestCommentList from "../RequestPage/RequestCommentList";
-import BillOfQuantitySummary from "../SummarySection/BillOfQuantitySummary";
 
 type Props = {
   request: RequestWithResponseType;
-  duplicatableSectionIdList: string[];
 };
 
-type SectionField =
-  RequestWithResponseType["request_form"]["form_section"][0]["section_field"];
-
-const BillOfQuantityRequestPage = ({
-  request,
-  duplicatableSectionIdList,
-}: Props) => {
+const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
-  const { setIsLoading } = useLoadingActions();
 
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
@@ -73,30 +53,32 @@ const BillOfQuantityRequestPage = ({
       request_signer_id: signer.request_signer_id,
     };
   });
+
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
-  const [formSection, setFormSection] = useState(
-    generateSectionWithDuplicateList([request.request_form.form_section[0]])
-  );
-  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [requestJira, setRequestJira] = useState({
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
-  const parentLrfRequestId = `${safeParse(
-    request.request_form.form_section[0].section_field[0].field_response[0]
-      .request_response
-  )}`;
+  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
 
+  const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
 
   const requestor = request.request_team_member.team_member_user;
+
   const requestDateCreated = formatDate(new Date(request.request_date_created));
+
+  const originalSectionList = request.request_form.form_section;
+  const sectionWithDuplicateList =
+    generateSectionWithDuplicateList(originalSectionList);
+
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
@@ -114,9 +96,10 @@ const BillOfQuantityRequestPage = ({
     requestStatus === "PENDING";
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
+  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
 
   const isRequestActionSectionVisible =
-    canSignerTakeAction || isEditable || isDeletable;
+    canSignerTakeAction || isEditable || isDeletable || isUserRequester;
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -135,13 +118,7 @@ const BillOfQuantityRequestPage = ({
         return;
       }
       if (!teamMember) return;
-      if (!jiraId || !jiraLink) {
-        notifications.show({
-          message: "Jira id or jira link is undefined",
-          color: "orange",
-        });
-        return;
-      }
+
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -155,13 +132,6 @@ const BillOfQuantityRequestPage = ({
         jiraId,
         jiraLink,
         requestFormslyId: request.request_formsly_id,
-      });
-
-      // update parent lrf jira id and jira link
-      await updateRequestJiraId(supabaseClient, {
-        requestId: parentLrfRequestId,
-        jiraId,
-        jiraLink,
       });
 
       notifications.show({
@@ -255,7 +225,6 @@ const BillOfQuantityRequestPage = ({
       setIsLoading(false);
     }
   };
-
   const handleDeleteRequest = async () => {
     try {
       setIsLoading(true);
@@ -294,119 +263,53 @@ const BillOfQuantityRequestPage = ({
 
   const onCreateJiraTicket = async () => {
     try {
-      if (!user) throw new Error("User is not defined.");
       if (!request.request_project_id) {
         throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
 
-      const {
-        data: { request: lrfRequest },
-        error,
-      } = await supabaseClient.rpc("request_page_on_load", {
-        input_data: {
-          requestId: parentLrfRequestId,
-          userId: user.user_id,
-        },
-      });
-
-      if (error) throw new Error("Faild to fetch LRF request.");
-
       const jiraAutomationData = await getJiraAutomationDataByProjectId(
         supabaseClient,
-        { teamProjectId: lrfRequest.request_project_id }
+        { teamProjectId: request.request_project_id }
       );
 
       if (!jiraAutomationData?.jiraProjectData) {
         throw new Error("Error fetching Jira project data.");
       }
 
-      const response = await fetch(
-        "/api/jira/get-form?serviceDeskId=23&requestType=367",
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }
+      const requestSectionFieldList =
+        request.request_form.form_section[0].section_field;
+      const date = moment(
+        `${safeParse(
+          requestSectionFieldList[1].field_response[0].request_response
+        )}`
+      ).format("YYYY-MM-DD");
+      const payeeName = safeParse(
+        requestSectionFieldList[2].field_response[0].request_response
+      );
+      const amount = safeParse(
+        requestSectionFieldList[3].field_response[0].request_response
+      );
+      const amountInWord = safeParse(
+        requestSectionFieldList[4].field_response[0].request_response
+      );
+      const particulars = safeParse(
+        requestSectionFieldList[5].field_response[0].request_response
       );
 
-      const { fields } = await response.json();
-      if (!fields) {
-        throw new Error("Jira form is not defined.");
-      }
-      const departmentList = fields["469"].choices;
-      const typeList = fields["442"].choices;
-      const workingAdvanceList = fields["445"].choices;
-
-      const lrfRequestDetails = lrfRequest.request_form.form_section[0]
-        .section_field as SectionField;
-
-      const sortedLrfRequestDetails = lrfRequestDetails.sort(
-        (a, b) => a.field_order - b.field_order
-      );
-      const department = safeParse(
-        sortedLrfRequestDetails[2].field_response[0].request_response
-      );
-      const purpose = safeParse(
-        sortedLrfRequestDetails[3].field_response[0].request_response
-      );
-      const typeOfRequest = safeParse(
-        sortedLrfRequestDetails[4].field_response[0].request_response
-      );
-
-      let workingAdvances = "";
-      let ticketUrl = "";
-
-      if (typeOfRequest.includes("Liquidation")) {
-        const requestWorkingAdvances = safeParse(
-          sortedLrfRequestDetails[5].field_response[0].request_response
-        );
-        const choiceMatch = workingAdvanceList.find(
-          (workingAdvanceItem: { id: string; name: string }) =>
-            workingAdvanceItem.name.toLowerCase() ===
-            requestWorkingAdvances.toLowerCase()
-        );
-        workingAdvances = choiceMatch.id;
-        ticketUrl = safeParse(
-          sortedLrfRequestDetails[6].field_response[0].request_response
-        );
-      }
-
-      const departmentId = departmentList.find(
-        (departmentItem: { id: string; name: string }) =>
-          departmentItem.name.toLowerCase() === department.toLowerCase()
-      );
-      const typeOfRequestId = typeList.find(
-        (typeOfRequestItem: { id: string; name: string }) =>
-          typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
-      );
-      console.log(department);
-      if (!departmentId || !typeOfRequestId) {
-        notifications.show({
-          message: "Department or type of request is undefined.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      const jiraTicketPayload = formatJiraLRFRequisitionPayload({
-        requestId: lrfRequest.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${lrfRequest.request_formsly_id}`,
-        requestor: `${user.user_first_name} ${user.user_last_name}`,
+      const jiraTicketPayload = formatJiraWAVPayload({
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        department: departmentId.id,
-        purpose,
-        typeOfRequest: typeOfRequestId.id,
-        requestFormType: "BOQ",
-        workingAdvances,
-        ticketUrl,
+        date,
+        payeeName,
+        amount,
+        amountInWord,
+        particulars,
       });
-
       const jiraTicket = await createJiraTicket({
-        requestType: "Request for Liquidation/Reimbursement v2",
+        requestType: "Working Advance Voucher",
         formslyId: request.request_formsly_id,
         requestCommentList,
         ticketPayload: jiraTicketPayload,
@@ -435,92 +338,13 @@ const BillOfQuantityRequestPage = ({
 
   useEffect(() => {
     try {
-      const fetchSections = async () => {
-        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [];
-
-        let index = 0;
-        while (1) {
-          setIsLoading(true);
-          const duplicatableSectionIdCondition = duplicatableSectionIdList
-            .slice(index, index + 5)
-            .map((dupId) => `'${dupId}'`)
-            .join(",");
-
-          const data = await getSectionInRequestPage(supabaseClient, {
-            index,
-            requestId: request.request_id,
-            sectionId: request.request_form.form_section[1].section_id,
-            duplicatableSectionIdCondition:
-              duplicatableSectionIdCondition.length !== 0
-                ? duplicatableSectionIdCondition
-                : `'${uuidv4()}'`,
-          });
-          newFields.push(...data);
-          index += 5;
-
-          if (index > duplicatableSectionIdList.length) break;
-        }
-
-        const uniqueFieldIdList: string[] = [];
-        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][1]["section_field"] =
-          [];
-        newFields.forEach((field) => {
-          if (uniqueFieldIdList.includes(field.field_id)) {
-            const currentFieldIndex = combinedFieldList.findIndex(
-              (combinedField) => combinedField.field_id === field.field_id
-            );
-            combinedFieldList[currentFieldIndex].field_response.push(
-              ...field.field_response
-            );
-          } else {
-            uniqueFieldIdList.push(field.field_id);
-            combinedFieldList.push(field);
-          }
-        });
-
-        const newSection = generateSectionWithDuplicateList([
-          {
-            ...request.request_form.form_section[1],
-            section_field: combinedFieldList,
-          },
-        ]);
-
-        const formattedSection = newSection
-          .map((section) => {
-            let sectionOrder = section.section_order;
-            const sectionDuplicatableId =
-              section.section_field[0].field_response
-                ?.request_response_duplicatable_section_id;
-
-            if (sectionDuplicatableId) {
-              const sectionIndex = duplicatableSectionIdList.findIndex(
-                (id) => id === sectionDuplicatableId
-              );
-
-              sectionOrder = sectionIndex + 1;
-            } else {
-              sectionOrder = 0;
-            }
-
-            return {
-              ...section,
-              section_order: sectionOrder,
-            };
-          })
-          .sort((a, b) => a.section_order - b.section_order);
-        const newFormSection = [...formSection, ...formattedSection];
-
-        setFormSection(newFormSection);
-        setIsLoading(false);
-      };
       const fetchComments = async () => {
         const data = await getRequestComment(supabaseClient, {
           request_id: request.request_id,
         });
         setRequestCommentList(data);
       };
-      fetchSections();
+
       fetchComments();
     } catch (e) {
       notifications.show({
@@ -548,7 +372,6 @@ const BillOfQuantityRequestPage = ({
         setJiraTicketStatus("Ticket Not Found");
       }
     };
-
     if (requestJira.id) {
       fetchJiraTicketStatus(requestJira.id);
     }
@@ -572,54 +395,23 @@ const BillOfQuantityRequestPage = ({
           jiraTicketStatus={jiraTicketStatus}
         />
 
-        <RequestSection
-          section={formSection[0]}
-          isFormslyForm={true}
-          isOnlyWithResponse
-        />
+        {sectionWithDuplicateList.map((section, idx) => {
+          if (
+            idx === 0 &&
+            section.section_field[0].field_response?.request_response ===
+              '"null"'
+          )
+            return;
 
-        <Accordion>
-          <Accordion.Item key="item" value="item">
-            <Paper shadow="xs">
-              <Accordion.Control>
-                <Title order={4} color="dimmed">
-                  Payee Section
-                </Title>
-              </Accordion.Control>
-            </Paper>
-            <Accordion.Panel>
-              <Stack spacing="xl" mt="lg">
-                {formSection.slice(1).map((section, idx) => {
-                  return (
-                    <RequestSection
-                      key={section.section_id + idx}
-                      section={section}
-                      isFormslyForm={true}
-                      isOnlyWithResponse
-                      index={idx + 1}
-                    />
-                  );
-                })}
-              </Stack>
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
-
-        {formSection.length > 0 && (
-          <BillOfQuantitySummary
-            summaryData={formSection
-              .slice(1)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        )}
+          return (
+            <RequestSection
+              key={section.section_id + idx}
+              section={section}
+              isFormslyForm={true}
+              isOnlyWithResponse
+            />
+          );
+        })}
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
@@ -635,11 +427,11 @@ const BillOfQuantityRequestPage = ({
             isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
-            isUserRequester={false} // referencing BOQ is not allowed
+            isUserRequester={isUserRequester}
             requestId={request.request_id}
             isItemForm
-            onCreateJiraTicket={onCreateJiraTicket}
             requestSignerId={isUserSigner?.request_signer_id}
+            onCreateJiraTicket={onCreateJiraTicket}
           />
         )}
 
@@ -659,4 +451,4 @@ const BillOfQuantityRequestPage = ({
   );
 };
 
-export default BillOfQuantityRequestPage;
+export default WorkingAdvanceVoucherRequestPage;

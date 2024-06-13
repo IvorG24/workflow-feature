@@ -131,6 +131,9 @@ type RequestFormSectionProps = {
       fieldIndex: number
     ) => void;
   };
+  workingAdvanceVoucherFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -151,6 +154,7 @@ const RequestFormSection = ({
   currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
+  workingAdvanceVoucherFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -215,6 +219,9 @@ const RequestFormSection = ({
               }
               personnelTransferRequisitionMethods={
                 personnelTransferRequisitionMethods
+              }
+              workingAdvanceVoucherFormMethods={
+                workingAdvanceVoucherFormMethods
               }
             />
           );
