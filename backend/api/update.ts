@@ -1199,3 +1199,16 @@ export const updateRequestJiraId = async (
     .eq("request_id", requestId);
   if (error) throw error;
 };
+
+export const updateRequestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string; status: string }
+) => {
+  const { requestId, status } = params;
+  const { error } = await supabaseClient
+    .from("request_table")
+    .update({ request_status: status })
+    .eq("request_id", requestId);
+
+  if (error) throw error;
+};

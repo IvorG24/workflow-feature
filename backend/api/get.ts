@@ -6304,7 +6304,7 @@ export const getJiraFormslyProjectList = async (
       jira_organization_team_project_id: string;
       jira_organization_team_project_project_id: string;
       jira_organization_team_project_organization_id: string;
-      jira_organization_team_project_organization: JiraOrganizationTableRow | null
+      jira_organization_team_project_organization: JiraOrganizationTableRow | null;
     }[];
 
     return {
@@ -7509,4 +7509,19 @@ export const getExistingBOQRequest = async (
         "request_formsly_id_prefix" | "request_formsly_id_serial"
       >)
     : null;
+};
+
+export const getRequestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select("request_status")
+    .eq("request_id", params.requestId)
+    .maybeSingle();
+
+  if (error || !data) throw error;
+
+  return data.request_status;
 };
