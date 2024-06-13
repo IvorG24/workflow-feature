@@ -29,6 +29,7 @@ import JiraOrganizationLookupTable from "./JiraOrganizationLookupTable/JiraOrgan
 import JiraProjectLookupTable from "./JiraProjectLookupTable/JiraProjectLookupTable";
 import JiraUserAccountList from "./JiraUserAccountList/JiraUserAccountList";
 import JiraUserLookupTable from "./JiraUserLookupTable/JiraUserLookupTable";
+import JobTitleLookupTable from "./JobTitleLookupTable/JobTitleLookupTable";
 
 type Props = {
   jiraFormslyProjectData: {
@@ -121,7 +122,7 @@ const JiraSettingsPage = ({
         setJiraUserRoleList(jiraUserRoleList);
 
         const response = await fetch(
-          "/api/get-jira-automation-form?serviceDeskId=17&requestType=189",
+          "/api/jira/get-form?serviceDeskId=17&requestType=189",
           {
             method: "GET",
             headers: {
@@ -220,6 +221,7 @@ const JiraSettingsPage = ({
           <JiraOrganizationLookupTable
             jiraOrganizationData={jiraOrganizationData}
           />
+          <JobTitleLookupTable />
         </Stack>
       )}
     </Container>

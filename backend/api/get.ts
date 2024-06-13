@@ -6304,7 +6304,7 @@ export const getJiraFormslyProjectList = async (
       jira_organization_team_project_id: string;
       jira_organization_team_project_project_id: string;
       jira_organization_team_project_organization_id: string;
-      jira_organization_team_project_organization: JiraOrganizationTableRow | null
+      jira_organization_team_project_organization: JiraOrganizationTableRow | null;
     }[];
 
     return {
@@ -7509,4 +7509,29 @@ export const getExistingBOQRequest = async (
         "request_formsly_id_prefix" | "request_formsly_id_serial"
       >)
     : null;
+};
+
+export const getJobTitleList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    from: number;
+    to: number;
+    search?: string;
+  }
+) => {
+  const { from, to, search } = params;
+  let query = supabaseClient
+    .from("employee_job_title_table")
+    .select("*", { count: "exact" })
+    .order("employee_job_title_label")
+    .range(from, to);
+
+  if (search) {
+    query = query.ilike("employee_job_title_label", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return { data, count: Number(count) };
 };
