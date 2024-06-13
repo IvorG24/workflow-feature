@@ -396,6 +396,7 @@ export type Database = {
       };
       equipment_description_table: {
         Row: {
+          equipment_description_acquisition_date: number | null;
           equipment_description_brand_id: string;
           equipment_description_date_created: string;
           equipment_description_encoder_team_member_id: string | null;
@@ -403,11 +404,13 @@ export type Database = {
           equipment_description_id: string;
           equipment_description_is_available: boolean;
           equipment_description_is_disabled: boolean;
+          equipment_description_is_rental: boolean;
           equipment_description_model_id: string;
           equipment_description_property_number: string;
           equipment_description_serial_number: string;
         };
         Insert: {
+          equipment_description_acquisition_date?: number | null;
           equipment_description_brand_id: string;
           equipment_description_date_created?: string;
           equipment_description_encoder_team_member_id?: string | null;
@@ -415,11 +418,13 @@ export type Database = {
           equipment_description_id?: string;
           equipment_description_is_available?: boolean;
           equipment_description_is_disabled?: boolean;
+          equipment_description_is_rental?: boolean;
           equipment_description_model_id: string;
           equipment_description_property_number: string;
           equipment_description_serial_number: string;
         };
         Update: {
+          equipment_description_acquisition_date?: number | null;
           equipment_description_brand_id?: string;
           equipment_description_date_created?: string;
           equipment_description_encoder_team_member_id?: string | null;
@@ -427,6 +432,7 @@ export type Database = {
           equipment_description_id?: string;
           equipment_description_is_available?: boolean;
           equipment_description_is_disabled?: boolean;
+          equipment_description_is_rental?: boolean;
           equipment_description_model_id?: string;
           equipment_description_property_number?: string;
           equipment_description_serial_number?: string;
@@ -3521,6 +3527,7 @@ export type Database = {
       };
       equipment_description_view: {
         Row: {
+          equipment_description_acquisition_date: number | null;
           equipment_description_brand_id: string | null;
           equipment_description_date_created: string | null;
           equipment_description_encoder_team_member_id: string | null;
@@ -3528,6 +3535,7 @@ export type Database = {
           equipment_description_id: string | null;
           equipment_description_is_available: boolean | null;
           equipment_description_is_disabled: boolean | null;
+          equipment_description_is_rental: boolean | null;
           equipment_description_model_id: string | null;
           equipment_description_property_number: string | null;
           equipment_description_property_number_with_prefix: string | null;
