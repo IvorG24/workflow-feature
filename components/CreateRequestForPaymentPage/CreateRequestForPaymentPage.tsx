@@ -288,6 +288,7 @@ const CreateRequestForPaymentPage = ({
           fieldIndex: 0,
         },
       ]);
+      removeSection(0);
       if (value) {
         if (value.includes("CENTRAL OFFICE")) {
           const department = value.split(" - ")[1];
@@ -297,7 +298,7 @@ const CreateRequestForPaymentPage = ({
             ];
           const isPed = department === "PED";
 
-          updateSection(0, {
+          insertSection(0, {
             ...form.form_section[0],
             section_field: [
               {
@@ -325,6 +326,29 @@ const CreateRequestForPaymentPage = ({
               ...form.form_section[0].section_field.slice(isPed ? 3 : 5, 9),
             ],
           });
+          setTimeout(
+            () =>
+              setFocus(
+                `sections.0.section_field.${isPed ? 3 : 2}.field_response`
+              ),
+            0
+          );
+        } else {
+          insertSection(0, {
+            ...form.form_section[0],
+            section_field: [
+              {
+                ...form.form_section[0].section_field[0],
+                field_response: value,
+              },
+              form.form_section[0].section_field[1],
+              ...form.form_section[0].section_field.slice(5, 9),
+            ],
+          });
+          setTimeout(
+            () => setFocus(`sections.0.section_field.0.field_response`),
+            0
+          );
         }
 
         const projectId = projectOptions.find(

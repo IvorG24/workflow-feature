@@ -8,6 +8,7 @@ import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentReques
 import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTransferRequisition/CreatePersonnelTransferRequisition";
+import CreateRequestForPaymentCodePage from "@/components/CreateRequestForPaymentCodePage/CreateRequestForPaymentCodePage";
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv1Page/CreateRequestForPaymentv1Page";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
@@ -24,7 +25,7 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
-      const connectedRequestFormslyId = context.query.lrf;
+      const connectedRequestFormslyId = context.query.lrf ?? context.query.rfp;
       const { data, error } = await supabaseClient.rpc(
         "create_request_page_on_load",
         {
@@ -136,7 +137,6 @@ const Page = ({
             projectOptions={projectOptions}
           />
         );
-
       case "Bill of Quantity":
         return (
           <CreateBillOfQuantityRequestPage
@@ -165,6 +165,14 @@ const Page = ({
             form={form}
             projectOptions={projectOptions}
             departmentOptions={departmentOptions}
+          />
+        );
+
+      case "Request For Payment Code":
+        return (
+          <CreateRequestForPaymentCodePage
+            form={form}
+            connectedRequest={connectedRequest}
           />
         );
     }

@@ -1,5 +1,5 @@
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
-import EquipmentServiceReport from "@/components/EquipmentServiceReport/EquipmentServiceReport";
+import { default as EquipmentServiceReportRequestPage } from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
@@ -9,6 +9,8 @@ import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEqu
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
 import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
+import RequestForPaymentCodeRequestPage from "@/components/RequestForPaymentCodeRequestPage/RequestForPaymentCodeRequestPage";
+import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestPage/RequestForPaymentRequestPage";
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
@@ -137,11 +139,27 @@ const Page = ({
       );
     } else if (request.request_form.form_name === "Equipment Service Report") {
       return (
-        <EquipmentServiceReport
+        <EquipmentServiceReportRequestPage
           request={request}
           sectionIdWithDuplicatableSectionIdList={
             sectionIdWithDuplicatableSectionIdList
           }
+        />
+      );
+    } else if (request.request_form.form_name === "Request For Payment") {
+      return (
+        <RequestForPaymentRequestPage
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
+    } else if (request.request_form.form_name === "Request For Payment Code") {
+      return (
+        <RequestForPaymentCodeRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
     } else {
