@@ -1479,22 +1479,22 @@ RETURNS JSON AS $$
         endId = `RO`;
       } else if(formName==='Transfer Receipt') {
         endId = `TR`;
+      } else if(formName === 'IT Asset') {
+        endId = `ITA`;
+      } else if(formName === 'Liquidation Reimbursement') {
+        endId = `LR`;
+      } else if(formName === 'Bill of Quantity') {
+        endId = `BOQ`;
+      } else if(formName === 'Personnel Transfer Requisition') {
+        endId = `PTRF`;
+      } else if(formName === 'Working Advance Voucher') {
+        endId = `WAV`;
+      } else if(formName === 'Equipment Service Report') {
+        endId = `ESR`;
+      } else if(formName === 'Request For Payment Code') {
+        endId = `RFPC`;
       } else if(formName.includes('Request For Payment')) {
         endId = `RFP`;
-      } else if(formName === 'IT Asset'){
-        endId = `ITA`;
-      } else if(formName === 'Liquidation Reimbursement'){
-        endId = `LR`;
-      } else if(formName === 'Bill of Quantity'){
-        endId = `BOQ`;
-      } else if(formName === 'Personnel Transfer Requisition'){
-        endId = `PTRF`;
-      } else if(formName === 'Working Advance Voucher'){
-        endId = `WAV`;
-      } else if(formName === 'Equipment Service Report'){
-        endId = `ESR`;
-      } else if(formName.includes('Request For Payment Code')) {
-        endId = `RFPC`;
       } else {
         endId = ``;
       }
