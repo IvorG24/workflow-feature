@@ -623,6 +623,7 @@ CREATE TABLE equipment_description_table(
   equipment_description_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_description_is_available BOOLEAN DEFAULT true NOT NULL,
   equipment_description_acquisition_date INT,
+  equipment_description_is_rental BOOLEAN DEFAULT false NOT NULL,
   
   equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
   equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
