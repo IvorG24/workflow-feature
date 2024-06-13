@@ -7518,6 +7518,21 @@ export const getExistingBOQRequest = async (
     : null;
 };
 
+export const getRequestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_table")
+    .select("request_status")
+    .eq("request_id", params.requestId)
+    .maybeSingle();
+
+  if (error || !data) throw error;
+
+  return data.request_status;
+};
+
 export const getJobTitleList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
