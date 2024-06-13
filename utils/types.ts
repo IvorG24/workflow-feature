@@ -1384,6 +1384,7 @@ export type EquipmentDescriptionForm = {
   brand: string;
   model: string;
   isAvailable: boolean;
+  isRental: boolean;
 };
 
 export type EquipmentPartType = EquipmentPartTableRow & {
