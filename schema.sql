@@ -10813,6 +10813,8 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON employee_job_title_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON employee_job_title_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON employee_job_title_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON scic_employee_table;
 
 --- ATTACHMENT_TABLE
@@ -13550,6 +13552,33 @@ USING (
 CREATE POLICY "Allow READ for anon users" ON "public"."employee_job_title_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" 
+ON "public"."employee_job_title_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" 
+ON "public"."employee_job_title_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
 
 -- scic_employee_table
 CREATE POLICY "Allow READ for anon users" ON "public"."scic_employee_table"

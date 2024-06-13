@@ -58,7 +58,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
   );
   const [activePage, setActivePage] = useState(1);
 
-  const searchJiraUserFormMethods = useForm<{ search: string }>();
+  const searchJiraOrganizationFormMethods = useForm<{ search: string }>();
   const updateOrCreateJiraOrganization = useForm<
     JiraOrganizationTableInsert | JiraOrganizationTableUpdate
   >();
@@ -71,13 +71,13 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
     search?: string;
   }) => {
     const { from, to } = getPagination(index, ROW_PER_PAGE);
-    const jiraUserData = await getJiraOrganizationList(supabaseClient, {
+    const jiraOrganizationData = await getJiraOrganizationList(supabaseClient, {
       from,
       to,
       search,
     });
 
-    return jiraUserData;
+    return jiraOrganizationData;
   };
 
   const handleSearchJiraOrganization = async (data: { search: string }) => {
@@ -109,7 +109,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
 
       const { data, count } = await handleFetchJiraOrganizationList({
         index: page - 1,
-        search: searchJiraUserFormMethods.getValues().search,
+        search: searchJiraOrganizationFormMethods.getValues().search,
       });
 
       setJiraOrganizationList(data);
@@ -117,7 +117,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
     } catch (error) {
       console.error(error);
       notifications.show({
-        message: "Failed to fetch jira user list",
+        message: "Failed to fetch jira organization list",
         color: "red",
       });
     } finally {
@@ -179,7 +179,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
     } catch (error) {
       console.error(error);
       notifications.show({
-        message: "Failed to update or create jira user",
+        message: "Failed to update or create jira organization",
         color: "red",
       });
     }
@@ -195,19 +195,19 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
             <TextInput
               miw={250}
               maxLength={4000}
-              placeholder="User Name"
+              placeholder="Organization"
               rightSection={
                 <ActionIcon
                   onClick={() =>
                     handleSearchJiraOrganization(
-                      searchJiraUserFormMethods.getValues()
+                      searchJiraOrganizationFormMethods.getValues()
                     )
                   }
                 >
                   <IconSearch size={16} />
                 </ActionIcon>
               }
-              {...searchJiraUserFormMethods.register("search")}
+              {...searchJiraOrganizationFormMethods.register("search")}
             />
             <Button
               variant="light"
@@ -226,7 +226,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
               setIsUpdatingJiraOrganization(false);
             }}
           >
-            Add Users
+            Add Organization
           </Button>
         </Flex>
         <DataTable

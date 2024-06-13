@@ -485,6 +485,13 @@ export type SCICEmployeeTableUpdate =
 export type TransactionTableRow =
   OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 
+export type JobTitleTableRow =
+  Database["public"]["Tables"]["employee_job_title_table"]["Row"];
+export type JobTitleTableInsert =
+  Database["public"]["Tables"]["employee_job_title_table"]["Insert"];
+export type JobTitleTableUpdate =
+  Database["public"]["Tables"]["employee_job_title_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums

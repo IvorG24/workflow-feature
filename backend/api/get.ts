@@ -7513,3 +7513,28 @@ export const getExistingBOQRequest = async (
       >)
     : null;
 };
+
+export const getJobTitleList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    from: number;
+    to: number;
+    search?: string;
+  }
+) => {
+  const { from, to, search } = params;
+  let query = supabaseClient
+    .from("employee_job_title_table")
+    .select("*", { count: "exact" })
+    .order("employee_job_title_label")
+    .range(from, to);
+
+  if (search) {
+    query = query.ilike("employee_job_title_label", `%${search}%`);
+  }
+
+  const { data, count, error } = await query;
+  if (error) throw error;
+
+  return { data, count: Number(count) };
+};
