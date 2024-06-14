@@ -46,6 +46,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import RequestCommentList from "../RequestPage/RequestCommentList";
+import PersonnelTransferRequisitionSummary from "../SummarySection/PersonnelTransferRequisitionSummary";
 
 type Props = {
   request: RequestWithResponseType;
@@ -124,7 +125,7 @@ const PersonnelTransferRequisitionRequestPage = ({
           newFields.push(...data);
           index += 5;
 
-          if (index > sectionIdWithDuplicatableSectionIdList.length) break;
+          if (index >= sectionIdWithDuplicatableSectionIdList.length) break;
         }
         const uniqueSectionIdList: string[] = [];
         sectionIdWithDuplicatableSectionIdList.forEach((section) => {
@@ -615,21 +616,7 @@ const PersonnelTransferRequisitionRequestPage = ({
           </>
         ) : null}
 
-        {/* {formSection.length > 3 && (
-          <ITAssetSummary
-            summaryData={formSection
-              .slice(3)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        )} */}
+        <PersonnelTransferRequisitionSummary summaryData={formSection} />
 
         {isRequestActionSectionVisible && (
           <RequestActionSection

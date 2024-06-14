@@ -10,9 +10,13 @@ import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/Othe
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
+import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
+import RequestForPaymentCodeRequestPage from "@/components/RequestForPaymentCodeRequestPage/RequestForPaymentCodeRequestPage";
+import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestPage/RequestForPaymentRequestPage";
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
+import WorkingAdvanceVoucherRequestPage from "@/components/WorkingAdvanceVoucherRequestPage/WorkingAdvanceVoucherRequestPage";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { RequestWithResponseType } from "@/utils/types";
 import { Space } from "@mantine/core";
@@ -184,6 +188,19 @@ const Page = ({
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
+    } else if (
+      request.request_form.form_name === "Personnel Transfer Requisition"
+    ) {
+      return (
+        <PersonnelTransferRequisitionRequestPage
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
+    } else if (request.request_form.form_name === "Working Advance Voucher") {
+      return <WorkingAdvanceVoucherRequestPage request={request} />;
     } else if (request.request_form.form_name === "Equipment Service Report") {
       return (
         <EquipmentServiceReportRequestPage
@@ -191,6 +208,22 @@ const Page = ({
           sectionIdWithDuplicatableSectionIdList={
             sectionIdWithDuplicatableSectionIdList
           }
+        />
+      );
+    } else if (request.request_form.form_name === "Request For Payment") {
+      return (
+        <RequestForPaymentRequestPage
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
+    } else if (request.request_form.form_name === "Request For Payment Code") {
+      return (
+        <RequestForPaymentCodeRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
     } else {

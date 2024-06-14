@@ -157,7 +157,7 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
           newFields.push(...data);
           index += 5;
 
-          if (index > duplicatableSectionIdList.length) break;
+          if (index >= duplicatableSectionIdList.length) break;
         }
 
         const filteredNewFields = newFields.filter((field) =>

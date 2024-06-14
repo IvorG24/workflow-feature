@@ -507,7 +507,7 @@ const LiquidationReimbursementRequestPage = ({
           newFields.push(...data);
           index += 5;
 
-          if (index > duplicatableSectionIdList.length) break;
+          if (index >= duplicatableSectionIdList.length) break;
         }
 
         const uniqueFieldIdList: string[] = [];

@@ -50,6 +50,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import RequestCommentList from "../RequestPage/RequestCommentList";
+import RequestForPaymentSummary from "../SummarySection/RequestForPaymentSummary";
 
 type Props = {
   request: RequestWithResponseType;
@@ -208,7 +209,7 @@ const RequestForPaymentRequestPage = ({
         supabaseClient,
         request.request_id
       );
-      console.log(rfpCodeRequest);
+
       if (rfpCodeRequest) {
         const { request_formsly_id_prefix, request_formsly_id_serial } =
           rfpCodeRequest;
@@ -712,21 +713,13 @@ const RequestForPaymentRequestPage = ({
           </>
         ) : null}
 
-        {/* {formSection.length > 3 && (
-          <ITAssetSummary
-            summaryData={formSection
-              .slice(3)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
+        {formSection.length > 3 && (
+          <RequestForPaymentSummary
+            summaryData={formSection.filter(
+              (section) => section.section_name === "Request"
+            )}
           />
-        )} */}
+        )}
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
