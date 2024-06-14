@@ -622,6 +622,8 @@ CREATE TABLE equipment_description_table(
   equipment_description_serial_number VARCHAR(4000) NOT NULL,
   equipment_description_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_description_is_available BOOLEAN DEFAULT true NOT NULL,
+  equipment_description_acquisition_date INT,
+  equipment_description_is_rental BOOLEAN DEFAULT false NOT NULL,
   
   equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
   equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
@@ -1489,6 +1491,8 @@ RETURNS JSON AS $$
         endId = `PTRF`;
       } else if(formName === 'Working Advance Voucher'){
         endId = `WAV`;
+      } else if(formName === 'Equipment Service Report'){
+        endId = `ESR`;
       } else {
         endId = ``;
       }
@@ -3499,7 +3503,7 @@ RETURNS JSON as $$
         request: requestData
       };
       return;
-    } else if (request.form_is_formsly_form && request.form_name === 'Personnel Transfer Requisition') {
+    } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report'].includes(request.form_name)) {
       const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
@@ -5434,8 +5438,112 @@ RETURNS JSON as $$
           projectOptions
         }
         return;
+      } else if (form.form_name === "Equipment Service Report") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+              AND team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const departments = plv8.execute(
+          `
+            SELECT 
+              team_department_id,
+              team_department_name
+            FROM team_department_table
+            WHERE 
+              team_department_is_disabled = false
+            ORDER BY team_department_name;
+          `
+        );
+
+        const departmentOptions = departments.map((department, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: department.team_department_id,
+            option_order: index,
+            option_value: department.team_department_name,
+          };
+        });
+
+        const categories = plv8.execute(
+          `
+            SELECT 
+              equipment_category_id,
+              equipment_category
+            FROM equipment_category_table
+            WHERE 
+              equipment_category_team_id = '${teamMember.team_member_team_id}'
+              AND equipment_category_is_disabled = false
+              AND equipment_category_is_available = true
+            ORDER BY equipment_category;
+          `
+        );
+
+        const categoryOptions = categories.map((category, index) => {
+          return {
+            option_field_id: form.form_section[1].section_field[1].field_id,
+            option_id: category.equipment_category_id,
+            option_order: index,
+            option_value: category.equipment_category,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions
+                  },
+                  form.form_section[0].section_field[1],
+                  {
+                    ...form.form_section[0].section_field[2],
+                    field_option: departmentOptions
+                  },
+                ]
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  form.form_section[1].section_field[0],
+                  {
+                    ...form.form_section[1].section_field[1],
+                    field_option: categoryOptions
+                  },
+                  ...form.form_section[1].section_field.slice(2)
+                ]
+              },
+              ...form.form_section.slice(2)
+            ]
+          },
+          projectOptions,
+          categoryOptions
+        }
+        return;
       }
-    }else {
+    } else {
       returnData = {
         form
       }
@@ -9594,6 +9702,24 @@ RETURNS JSON as $$
         request: requestData
       };
       return;
+    } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report'].includes(request.form_name)) {
+      const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      if(!request) throw new Error('404');
+
+      const sectionIdWithDuplicatableSectionIdList = plv8.execute(
+        `
+          SELECT DISTINCT request_response_duplicatable_section_id, section_id, section_order FROM request_response_table
+          INNER JOIN field_table ON field_id = request_response_field_id
+          INNER JOIN section_table ON section_id = field_section_id
+          WHERE request_response_request_id = '${requestData.request_id}'
+          ORDER BY section_order
+        `
+      );
+
+      returnData =  {
+        request: requestData,
+        sectionIdWithDuplicatableSectionIdList
+      };
     } else {
       const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
@@ -10059,7 +10185,8 @@ RETURNS VOID AS $$
     const {
       category,
       teamMemberId,
-      categoryId
+      categoryId,
+      formId
     } = input_data;
     
     let signerData;

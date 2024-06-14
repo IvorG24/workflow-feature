@@ -1390,6 +1390,7 @@ export type EquipmentDescriptionForm = {
   serialNumber: string;
   brand: string;
   model: string;
+  acquisitionDate: Date | null;
   isAvailable: boolean;
   isRental: boolean;
 };
@@ -1962,4 +1963,14 @@ export type JiraWAVTicketPayloadProps = {
   amount: string;
   amountInWord: string;
   particulars: string;
+};
+
+export type JiraESRTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  requestorName: string;
+  department: string;
+  workcode: string;
+  propertyNumber: string;
 };

@@ -1,6 +1,7 @@
 import { getTeam, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
+import EquipmentServiceReport from "@/components/EquipmentServiceReport/EquipmentServiceReport";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
@@ -106,9 +107,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 type Props = {
   request: RequestWithResponseType;
   duplicatableSectionIdList: string[];
+  sectionIdWithDuplicatableSectionIdList: {
+    request_response_duplicatable_section_id: string;
+    section_id: string;
+  }[];
 };
 
-const Page = ({ request, duplicatableSectionIdList }: Props) => {
+const Page = ({
+  request,
+  duplicatableSectionIdList,
+  sectionIdWithDuplicatableSectionIdList,
+}: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Item") {
       return (
@@ -173,6 +182,15 @@ const Page = ({ request, duplicatableSectionIdList }: Props) => {
         <BillOfQuantityRequestPage
           request={request}
           duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "Equipment Service Report") {
+      return (
+        <EquipmentServiceReport
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
         />
       );
     } else {

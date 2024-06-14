@@ -1,4 +1,5 @@
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
+import EquipmentServiceReport from "@/components/EquipmentServiceReport/EquipmentServiceReport";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
@@ -58,6 +59,7 @@ const Page = ({
   duplicatableSectionIdList,
   sectionIdWithDuplicatableSectionIdList,
 }: Props) => {
+
   const formslyForm = () => {
     if (request.request_form.form_name === "Item") {
       return (
@@ -137,6 +139,15 @@ const Page = ({
       );
     } else if (request.request_form.form_name === "Working Advance Voucher") {
       return <WorkingAdvanceVoucherRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Equipment Service Report") {
+      return (
+        <EquipmentServiceReport
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

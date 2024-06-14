@@ -234,9 +234,7 @@ const EditWorkingAdvanceVoucherRequestPage = ({
                 response.request_response_field_id === field.field_id
             );
             let field_option = field.field_option ?? [];
-            if (field.field_name === "Particulars") {
-              console.log(field.field_type);
-            }
+
             if (field.field_name === "Requesting Project") {
               field_option = projectOptions;
             }

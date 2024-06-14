@@ -134,6 +134,55 @@ type RequestFormSectionProps = {
   workingAdvanceVoucherFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
   };
+  equipmentServiceReportMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCategoryChange: (value: string | null) => void;
+    onEquipmentTypeChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null) => void;
+    onActionTypeChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onActionPlanBlur: (value: string | null, index: number) => void;
+    onGeneralItemNameChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onComponentCategoryChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onBrandChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onModelChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onPartNumberChange: (value: string | null, index: number) => void;
+    onQuantityBlur: () => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -155,6 +204,7 @@ const RequestFormSection = ({
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
   workingAdvanceVoucherFormMethods,
+  equipmentServiceReportMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -223,6 +273,7 @@ const RequestFormSection = ({
               workingAdvanceVoucherFormMethods={
                 workingAdvanceVoucherFormMethods
               }
+              equipmentServiceReportMethods={equipmentServiceReportMethods}
             />
           );
         })}
