@@ -1952,6 +1952,7 @@ export type JiraPTRFTicketPayloadProps = {
   projectNameFrom: string;
   projectNameTo: string;
   purpose: string;
+  withITAsset: boolean;
 };
 
 export type JiraWAVTicketPayloadProps = {
