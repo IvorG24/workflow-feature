@@ -145,7 +145,10 @@ type RequestFormFieldsProps = {
   };
   personnelTransferRequisitionMethods?: {
     onTypeOfTransferChange: (value: string | null) => void;
-    onMannerOfTransferChange: (value: string | null) => void;
+    onMannerOfTransferChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
     onFromChange: (value: string | null) => void;
     onToChange: (value: string | null) => void;
     onPurposeChange: (value: string | null, prevValue: string | null) => void;
@@ -769,55 +772,8 @@ const RequestFormFields = ({
                       break;
                     case "Manner of Transfer":
                       personnelTransferRequisitionMethods?.onMannerOfTransferChange(
-                        value
-                      );
-                      break;
-                    case "From":
-                      personnelTransferRequisitionMethods?.onFromChange(value);
-                      break;
-                    case "To":
-                      personnelTransferRequisitionMethods?.onToChange(value);
-                      break;
-                    case "Purpose":
-                      personnelTransferRequisitionMethods?.onPurposeChange(
                         value,
                         prevValue as string | null
-                      );
-                      break;
-                    case "Equipment Code":
-                      personnelTransferRequisitionMethods?.onEquipmentCodeChange(
-                        value,
-                        sectionIndex
-                      );
-                      break;
-                    case "Employee No. (HRIS)":
-                      personnelTransferRequisitionMethods?.onEmployeeNumberChange(
-                        value,
-                        sectionIndex
-                      );
-                      break;
-                    case "Employee Status":
-                      personnelTransferRequisitionMethods?.onEmployeeStatusChange(
-                        value,
-                        prevValue as string | null,
-                        sectionIndex
-                      );
-                      break;
-                    case "Phase of Work":
-                      personnelTransferRequisitionMethods?.onPhaseOfWorkChange(
-                        value,
-                        sectionIndex,
-                        fieldIndex
-                      );
-                      break;
-                    case "Type of Transfer":
-                      personnelTransferRequisitionMethods?.onTypeOfTransferChange(
-                        value
-                      );
-                      break;
-                    case "Manner of Transfer":
-                      personnelTransferRequisitionMethods?.onMannerOfTransferChange(
-                        value
                       );
                       break;
                     case "From":
@@ -983,6 +939,12 @@ const RequestFormFields = ({
                     );
                   }
                 }}
+                description={
+                  personnelTransferRequisitionMethods &&
+                  field.field_name === "Department"
+                    ? "Which department will this employee go to?"
+                    : ""
+                }
               />
             )}
             rules={{ ...fieldRules }}

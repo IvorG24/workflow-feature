@@ -80,6 +80,9 @@ const CreatePersonnelTransferRequisition = ({
     name: "sections",
   });
 
+  const [projectDepartmentOptions, setProjectDepartmentOptions] = useState<
+    OptionTableRow[]
+  >([]);
   const [projectOptions, setProjectOptions] = useState<OptionTableRow[]>([]);
   const [departmentOptions, setDepartmentOptions] = useState<OptionTableRow[]>(
     []
@@ -284,6 +287,7 @@ const CreatePersonnelTransferRequisition = ({
           if (departmentData.length < FETCH_OPTION_LIMIT) break;
           index += FETCH_OPTION_LIMIT;
         }
+        setProjectDepartmentOptions(departmentOptionList);
 
         // separate project to department
         const teamProjectOptionList: OptionTableRow[] = [];
@@ -610,12 +614,36 @@ const CreatePersonnelTransferRequisition = ({
     }
   };
 
-  const handleMannerOfTransferChange = async (value: string | null) => {
+  const handleMannerOfTransferChange = async (
+    value: string | null,
+    prevValue: string | null
+  ) => {
     const newSection = getValues(`sections.1`);
     setSignerFromList([]);
     setSignerToList([]);
     try {
+      if (prevValue) {
+        const splittedValue = prevValue.split(" to ");
+        const newFields = [
+          ...newSection.section_field.slice(0, 3),
+          ...(["Department", "Central Office"].includes(splittedValue[1])
+            ? [
+                {
+                  ...form.form_section[1].section_field[3],
+                  field_option: projectDepartmentOptions,
+                },
+              ]
+            : []),
+          ...newSection.section_field.slice(3),
+        ];
+        updateSection(1, {
+          ...newSection,
+          section_field: newFields,
+        });
+      }
+
       if (value) {
+        const newSection = getValues(`sections.1`);
         setLoadingFieldList([
           { sectionIndex: 1, fieldIndex: 1 },
           { sectionIndex: 1, fieldIndex: 2 },
@@ -648,12 +676,11 @@ const CreatePersonnelTransferRequisition = ({
           {
             ...newSection.section_field[2],
             field_option: toOptions,
-            field_is_read_only:
-              splittedValue[0] === "Department" &&
-              splittedValue[1] === "Department",
             field_response: "",
           },
-          ...newSection.section_field.slice(3),
+          ...newSection.section_field.slice(
+            ["Department", "Central Office"].includes(splittedValue[1]) ? 4 : 3
+          ),
         ];
 
         updateSection(1, {
@@ -698,9 +725,6 @@ const CreatePersonnelTransferRequisition = ({
     try {
       setIsFetchingSigner(true);
       if (value) {
-        if (isDepartmentToDepartment) {
-          setValue("sections.1.section_field.2.field_response", value);
-        }
         const projectId = initialProjectOption.find(
           (option) => option.option_value === value
         )?.option_id;
