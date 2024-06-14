@@ -49,7 +49,7 @@ type Props = {
   categoryOptions: OptionTableRow[];
 };
 
-const CreateEquipmentServiceReport = ({
+const CreateEquipmentServiceReportRequestPage = ({
   form,
   projectOptions,
   categoryOptions,
@@ -1116,4 +1116,4 @@ const CreateEquipmentServiceReport = ({
   );
 };
 
-export default CreateEquipmentServiceReport;
+export default CreateEquipmentServiceReportRequestPage;

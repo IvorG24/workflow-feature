@@ -1975,3 +1975,17 @@ export type JiraESRTicketPayloadProps = {
   workcode: string;
   propertyNumber: string;
 };
+
+export type JiraRFPTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  department: string;
+  purpose: string;
+  urgency: string;
+  chargeTo: string;
+  payeeType: string;
+  departmentCode?: string;
+  costCode?: string;
+  boqCode?: string;
+};

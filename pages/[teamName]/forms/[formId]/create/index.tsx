@@ -1,5 +1,5 @@
 import CreateBillOfQuantityRequestPage from "@/components/CreateBillOfQuantityRequestPage/CreateBillOfQuantityRequestPage";
-import CreateEquipmentServiceReport from "@/components/CreateEquipmentServiceReport/CreateEquipmentServiceReport";
+import CreateEquipmentServiceReportRequestPage from "@/components/CreateEquipmentServiceReportRequestPage/CreateEquipmentServiceReportRequestPage";
 import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateLiquidationReimbursementRequestPage from "@/components/CreateLiquidationReimbursementRequestPage/CreateLiquidationReimbursementRequestPage";
@@ -8,7 +8,9 @@ import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentReques
 import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTransferRequisition/CreatePersonnelTransferRequisition";
+import CreateRequestForPaymentCodePage from "@/components/CreateRequestForPaymentCodePage/CreateRequestForPaymentCodePage";
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
+import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv1Page/CreateRequestForPaymentv1Page";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
 import CreateWorkingAdvanceRequestPage from "@/components/CreateWorkingAdvanceVoucheRequestPage/CreateWorkingAdvanceVoucheRequestPage";
@@ -24,7 +26,7 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
-      const connectedRequestFormslyId = context.query.lrf;
+      const connectedRequestFormslyId = context.query.lrf ?? context.query.rfp;
       const { data, error } = await supabaseClient.rpc(
         "create_request_page_on_load",
         {
@@ -62,6 +64,7 @@ type Props = {
   requestingProject?: string;
   categoryOptions?: OptionTableRow[];
   connectedRequest?: ConnectedRequestFormProps;
+  departmentOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -69,6 +72,7 @@ const Page = ({
   projectOptions = [],
   categoryOptions = [],
   connectedRequest,
+  departmentOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -113,9 +117,9 @@ const Page = ({
             projectOptions={projectOptions}
           />
         );
-      case "Request For Payment":
+      case "Request For Payment v1":
         return (
-          <CreateRequestForPaymentPage
+          <CreateRequestForPaymentv1Page
             form={form}
             projectOptions={projectOptions}
           />
@@ -134,7 +138,6 @@ const Page = ({
             projectOptions={projectOptions}
           />
         );
-
       case "Bill of Quantity":
         return (
           <CreateBillOfQuantityRequestPage
@@ -159,10 +162,26 @@ const Page = ({
         );
       case "Equipment Service Report":
         return (
-          <CreateEquipmentServiceReport
+          <CreateEquipmentServiceReportRequestPage
             form={form}
             projectOptions={projectOptions}
             categoryOptions={categoryOptions}
+          />
+        );
+      case "Request For Payment":
+        return (
+          <CreateRequestForPaymentPage
+            form={form}
+            projectOptions={projectOptions}
+            departmentOptions={departmentOptions}
+          />
+        );
+
+      case "Request For Payment Code":
+        return (
+          <CreateRequestForPaymentCodePage
+            form={form}
+            connectedRequest={connectedRequest}
           />
         );
     }

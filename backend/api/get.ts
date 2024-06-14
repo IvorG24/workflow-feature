@@ -7557,3 +7557,43 @@ export const getJobTitleList = async (
 
   return { data, count: Number(count) };
 };
+
+// Fetch existing RFP Code request
+export const getExistingRFPCodeRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  rfpRequestId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response, request: request_response_request_id!inner(*)")
+    .eq("request_response", JSON.stringify(rfpRequestId))
+    .in("request.request_status", ["PENDING", "APPROVED"])
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data
+    ? (data.request as unknown as Pick<
+        RequestTableRow,
+        "request_formsly_id_prefix" | "request_formsly_id_serial"
+      >)
+    : null;
+};
+
+export const getRequestFieldResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    fieldId: string[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response, request_response_field_id")
+    .eq("request_response_request_id", params.requestId)
+    .in("request_response_field_id", params.fieldId);
+
+  if (error) throw error;
+
+  return data;
+};

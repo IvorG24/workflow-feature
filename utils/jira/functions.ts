@@ -13,6 +13,7 @@ import {
   JiraLRFTicketPayloadProps,
   JiraPTRFTicketPayloadProps,
   JiraPayloadType,
+  JiraRFPTicketPayloadProps,
   JiraTicketPayloadProps,
   JiraWAVTicketPayloadProps,
   RequestCommentType,
@@ -620,6 +621,85 @@ export const formatJiraESRPayload = ({
     requestTypeId: "409",
     serviceDeskId: "27",
   };
+
+  return jiraTicketPayload;
+};
+
+export const formatJiraRFPPayload = ({
+  requestId,
+  requestUrl,
+  jiraProjectSiteId,
+  department,
+  purpose,
+  urgency,
+  departmentCode,
+  chargeTo,
+  payeeType,
+  boqCode,
+  costCode,
+}: JiraRFPTicketPayloadProps) => {
+  // if department = plants and equipment, use PED jira form
+  const isPEDDepartment = department === "10164";
+  const requestTypeId = isPEDDepartment ? "333" : "337";
+  const serviceDeskId = isPEDDepartment ? "27" : "23";
+
+  const jiraTicketPayload: JiraPayloadType = {
+    form: {
+      answers: {
+        "5": {
+          choices: [urgency],
+        },
+        "1": {
+          choices: [jiraProjectSiteId],
+        },
+        "6": {
+          choices: [department],
+        },
+        "8": {
+          choices: [payeeType],
+        },
+        "13": {
+          choices: [purpose],
+        },
+        "18": {
+          choices: [chargeTo],
+        },
+      },
+    },
+    isAdfRequest: false,
+    requestFieldValues: {},
+    requestTypeId,
+    serviceDeskId,
+    requestParticipants: [],
+  };
+
+  if (jiraProjectSiteId === "10172") {
+    jiraTicketPayload.form.answers["12"] = {
+      text: departmentCode,
+    };
+  }
+
+  if (isPEDDepartment) {
+    jiraTicketPayload.form.answers["21"] = {
+      text: costCode,
+    };
+    jiraTicketPayload.form.answers["22"] = {
+      text: boqCode,
+    };
+    jiraTicketPayload.form.answers["23"] = {
+      text: requestId,
+    };
+    jiraTicketPayload.form.answers["24"] = {
+      text: requestUrl,
+    };
+  } else {
+    jiraTicketPayload.form.answers["19"] = {
+      text: requestId,
+    };
+    jiraTicketPayload.form.answers["20"] = {
+      text: requestUrl,
+    };
+  }
 
   return jiraTicketPayload;
 };

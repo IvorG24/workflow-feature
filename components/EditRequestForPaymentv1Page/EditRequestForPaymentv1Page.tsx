@@ -49,14 +49,12 @@ type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
   requestId: string;
-
 };
 
-const EditRequestForPaymentPage = ({
+const EditRequestForPaymentv1Page = ({
   form,
   projectOptions,
   requestId,
-
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -372,4 +370,4 @@ const EditRequestForPaymentPage = ({
   );
 };
 
-export default EditRequestForPaymentPage;
+export default EditRequestForPaymentv1Page;

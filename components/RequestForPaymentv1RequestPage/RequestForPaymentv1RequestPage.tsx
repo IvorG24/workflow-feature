@@ -32,7 +32,7 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-const PaymentRequestPage = ({ request }: Props) => {
+const RequestForPaymentv1RequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
@@ -329,4 +329,4 @@ const PaymentRequestPage = ({ request }: Props) => {
   );
 };
 
-export default PaymentRequestPage;
+export default RequestForPaymentv1RequestPage;

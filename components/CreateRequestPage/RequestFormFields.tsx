@@ -218,6 +218,22 @@ type RequestFormFieldsProps = {
     onPartNumberChange: (value: string | null, index: number) => void;
     onQuantityBlur: () => void;
   };
+  requestForPaymentFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onDepartmentChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onPayeeTypeChange: (value: string | null, prevValue: string | null) => void;
+    onEmployeeNumberChange: (value: string | null) => void;
+    onPurposePlanChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onChargeToChange: (value: string | null) => void;
+    onAmountBlur: (value: string | null, index: number) => void;
+    onModeOfPaymentChange: (value: string | null, index: number) => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -240,6 +256,7 @@ const RequestFormFields = ({
   personnelTransferRequisitionMethods,
   workingAdvanceVoucherFormMethods,
   equipmentServiceReportMethods,
+  requestForPaymentFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -434,6 +451,8 @@ const RequestFormFields = ({
                       value,
                       sectionIndex
                     );
+                  requestForPaymentFormMethods &&
+                    requestForPaymentFormMethods.onEmployeeNumberChange(value);
                   break;
                 case "Action Plan":
                   equipmentServiceReportMethods?.onActionPlanBlur(
@@ -528,6 +547,12 @@ const RequestFormFields = ({
                     switch (field.field_name) {
                       case "Quantity":
                         equipmentServiceReportMethods?.onQuantityBlur();
+                        break;
+                      case "Amount":
+                        requestForPaymentFormMethods?.onAmountBlur(
+                          value as string | null,
+                          sectionIndex
+                        );
                         break;
                     }
                   }}
@@ -652,6 +677,7 @@ const RequestFormFields = ({
                         value
                       );
                       equipmentServiceReportMethods?.onProjectNameChange(value);
+                      requestForPaymentFormMethods?.onProjectNameChange(value);
                       break;
                     case "CSI Division":
                       servicesFormMethods?.onCSIDivisionChange(
@@ -759,10 +785,9 @@ const RequestFormFields = ({
                       liquidationReimbursementFormMethods?.onRequestTypeChange(
                         value
                       );
-                      break;
-                    case "Department":
-                      liquidationReimbursementFormMethods?.onDepartmentChange(
-                        value
+                      requestForPaymentFormMethods?.onDepartmentChange(
+                        value,
+                        prevValue as string | null
                       );
                       break;
                     case "Type of Transfer":
@@ -831,6 +856,27 @@ const RequestFormFields = ({
                       equipmentServiceReportMethods?.onActionTypeChange(
                         value,
                         prevValue as string | null
+                      );
+                      break;
+                    case "Payee Type":
+                      requestForPaymentFormMethods?.onPayeeTypeChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Purpose of Payment":
+                      requestForPaymentFormMethods?.onPurposePlanChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Charge To":
+                      requestForPaymentFormMethods?.onChargeToChange(value);
+                      break;
+                    case "Mode of Payment":
+                      requestForPaymentFormMethods?.onModeOfPaymentChange(
+                        value,
+                        sectionIndex
                       );
                       break;
                   }

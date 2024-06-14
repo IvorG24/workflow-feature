@@ -12,6 +12,8 @@ import { modals, openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
+import { useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
 
 type Props = {
   handleCancelRequest: () => void;
@@ -51,24 +53,28 @@ const RequestActionSection = ({
   const router = useRouter();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleCheckIfRequestIsBeingProcessed = async (requestId: string) => {
     const currentStatus = await getRequestStatus(supabaseClient, { requestId });
-
-    if (currentStatus === "PROCESSING") {
-      notifications.show({
-        message: "This request is being processed.",
-        color: "orange",
-      });
-
-      return true;
-    } else {
+    if (currentStatus === "PENDING") {
       await updateRequestStatus(supabaseClient, {
         requestId,
         status: "PROCESSING",
       });
+    }
+    return currentStatus === "PROCESSING";
+  };
 
-      return false;
+  const handleRevertStatusToPendingIfStillProcessing = async () => {
+    const isBeingProcessed = await handleCheckIfRequestIsBeingProcessed(
+      requestId
+    );
+    if (isBeingProcessed) {
+      await updateRequestStatus(supabaseClient, {
+        requestId,
+        status: "PENDING",
+      });
     }
   };
 
@@ -76,11 +82,18 @@ const RequestActionSection = ({
     onCreateJiraTicket: () => Promise<JiraTicketData>
   ) => {
     try {
+      setIsLoading(true);
       // check if request is being processed
       const isBeingProcessed = await handleCheckIfRequestIsBeingProcessed(
         requestId
       );
-      if (isBeingProcessed) return;
+      if (isBeingProcessed) {
+        notifications.show({
+          message: "This request is being processed.",
+          color: "orange",
+        });
+        return;
+      }
 
       // check if all primary approver approves the request
       if (!requestSignerId) return;
@@ -109,16 +122,19 @@ const RequestActionSection = ({
         handleUpdateRequest("APPROVED");
       }
     } catch (error) {
-      await updateRequestStatus(supabaseClient, {
-        requestId,
-        status: "PENDING",
-      });
       notifications.show({
         message: "Failed to approve item request",
         color: "red",
       });
+    } finally {
+      await handleRevertStatusToPendingIfStillProcessing();
+      setIsLoading(false);
     }
   };
+
+  useBeforeunload(async () => {
+    await handleRevertStatusToPendingIfStillProcessing();
+  });
 
   const handleAction = (action: string, color: string) => {
     if (isItemForm && action === "approve" && isUserPrimarySigner) {
@@ -297,6 +313,7 @@ const RequestActionSection = ({
                 )}/requests/${router.query.requestId}/edit?referenceOnly=true`
               )
             }
+            disabled={isLoading}
           >
             Reference this Request
           </Button>
@@ -308,6 +325,7 @@ const RequestActionSection = ({
               color="green"
               fullWidth
               onClick={() => handleAction("approve", "green")}
+              disabled={isLoading}
             >
               Approve Request
             </Button>
@@ -315,6 +333,7 @@ const RequestActionSection = ({
               color="red"
               fullWidth
               onClick={() => handleAction("reject", "red")}
+              disabled={isLoading}
             >
               Reject Request
             </Button>
@@ -332,6 +351,7 @@ const RequestActionSection = ({
                 )}/requests/${router.query.requestId}/edit`
               )
             }
+            disabled={isLoading}
           >
             Edit Request
           </Button>
@@ -341,12 +361,18 @@ const RequestActionSection = ({
             variant="default"
             fullWidth
             onClick={() => handleAction("cancel", "blue")}
+            disabled={isLoading}
           >
             Cancel Request
           </Button>
         )}
         {isDeletable && (
-          <Button color="red" fullWidth onClick={openPromptDeleteModal}>
+          <Button
+            color="red"
+            fullWidth
+            onClick={openPromptDeleteModal}
+            disabled={isLoading}
+          >
             Delete Request
           </Button>
         )}
