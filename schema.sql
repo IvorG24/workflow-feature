@@ -9908,6 +9908,24 @@ RETURNS JSON as $$
         request: requestData
       };
       return;
+    } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report'].includes(request.form_name)) {
+      const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      if(!request) throw new Error('404');
+
+      const sectionIdWithDuplicatableSectionIdList = plv8.execute(
+        `
+          SELECT DISTINCT request_response_duplicatable_section_id, section_id, section_order FROM request_response_table
+          INNER JOIN field_table ON field_id = request_response_field_id
+          INNER JOIN section_table ON section_id = field_section_id
+          WHERE request_response_request_id = '${requestData.request_id}'
+          ORDER BY section_order
+        `
+      );
+
+      returnData =  {
+        request: requestData,
+        sectionIdWithDuplicatableSectionIdList
+      };
     } else {
       const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
