@@ -57,22 +57,13 @@ const RequestActionSection = ({
 
   const handleCheckIfRequestIsBeingProcessed = async (requestId: string) => {
     const currentStatus = await getRequestStatus(supabaseClient, { requestId });
-
-    if (currentStatus === "PROCESSING") {
-      notifications.show({
-        message: "This request is being processed.",
-        color: "orange",
-      });
-
-      return true;
-    } else {
+    if (currentStatus === "PENDING") {
       await updateRequestStatus(supabaseClient, {
         requestId,
         status: "PROCESSING",
       });
-
-      return false;
     }
+    return currentStatus === "PROCESSING";
   };
 
   const handleRevertStatusToPendingIfStillProcessing = async () => {
@@ -96,7 +87,13 @@ const RequestActionSection = ({
       const isBeingProcessed = await handleCheckIfRequestIsBeingProcessed(
         requestId
       );
-      if (isBeingProcessed) return;
+      if (isBeingProcessed) {
+        notifications.show({
+          message: "This request is being processed.",
+          color: "orange",
+        });
+        return;
+      }
 
       // check if all primary approver approves the request
       if (!requestSignerId) return;
