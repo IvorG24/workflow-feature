@@ -20,16 +20,14 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
-import { mostOccurringElement, safeParse } from "@/utils/functions";
-import {
-  createJiraTicket,
-  formatJiraLRFRequisitionPayload,
-} from "@/utils/jira/functions";
+import { safeParse } from "@/utils/functions";
+import { createJiraTicket, formatJiraRFPPayload } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
   DuplicateSectionType,
   FieldTableRow,
+  JiraFormFieldChoice,
   ReceiverStatusType,
   RequestCommentType,
   RequestWithResponseType,
@@ -210,7 +208,7 @@ const RequestForPaymentRequestPage = ({
         supabaseClient,
         request.request_id
       );
-
+      console.log(rfpCodeRequest);
       if (rfpCodeRequest) {
         const { request_formsly_id_prefix, request_formsly_id_serial } =
           rfpCodeRequest;
@@ -448,125 +446,124 @@ const RequestForPaymentRequestPage = ({
   const onCreateJiraTicket = async () => {
     try {
       if (!request.request_project_id) {
-        notifications.show({
-          message: "Project id is not defined.",
-          color: "red",
-        });
-        return { success: false, data: null };
+        throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
-      const jiraAutomationData = await getJiraAutomationDataByProjectId(
-        supabaseClient,
-        { teamProjectId: request.request_project_id }
-      );
 
-      if (!jiraAutomationData) {
-        notifications.show({
-          message: "Error fetching of Jira project and item category data.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      const { jiraProjectData } = jiraAutomationData;
-
-      if (!jiraProjectData) {
-        notifications.show({
-          message: "Jira project data is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      // const employeeName =
-      //   request.request_form.form_section[2].section_field[2].field_response[0]
-      //     .request_response;
-
-      const response = await fetch(
-        "/api/get-jira-automation-form?serviceDeskId=3&requestType=332",
-        {
+      const [jiraAutomationData, automationFormResponse] = await Promise.all([
+        getJiraAutomationDataByProjectId(supabaseClient, {
+          teamProjectId: request.request_project_id,
+        }),
+        fetch("/api/jira/get-form?serviceDeskId=27&requestType=333", {
           method: "GET",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
           },
-        }
-      );
-      const { fields } = await response.json();
-      const purposeList = fields["2"].choices;
-      const itemList = fields["1"].choices;
+        }),
+      ]);
 
-      const requestPurpose =
-        request.request_form.form_section[0].section_field.find(
-          (field) => field.field_name === "Purpose"
-        )?.field_response[0].request_response;
-
-      const requestItem = safeParse(
-        mostOccurringElement(
-          formSection
-            .slice(3)
-            .map(
-              (section) =>
-                section.section_field[0].field_response?.request_response ?? ""
-            )
-        )
-      );
-
-      const purpose = purposeList.find(
-        (purpose: { id: string; name: string }) =>
-          purpose.name.toLowerCase() ===
-          safeParse(`${requestPurpose?.toLowerCase()}`)
-      );
-
-      const item = itemList.find(
-        (item: { id: string; name: string }) =>
-          item.name.toLowerCase() === safeParse(`${requestItem?.toLowerCase()}`)
-      );
-
-      if (!purpose || !item) {
-        notifications.show({
-          message: "Jira item or purpose is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
+      if (!jiraAutomationData?.jiraProjectData || !automationFormResponse.ok) {
+        throw new Error("Error fetching of jira automation data.");
       }
 
-      const jiraTicketPayload = formatJiraLRFRequisitionPayload({
-        requestId: ``,
-        requestUrl: ``,
-        requestor: ``,
+      const { fields } = await automationFormResponse.json();
+      const urgencyList = fields["5"].choices;
+      const departmentList = fields["6"].choices;
+      const payeeTypeList = fields["8"].choices;
+      const purposeList = fields["13"].choices;
+      const chargeToList = fields["18"].choices;
+
+      const headerSectionFieldList = formSection[0].section_field;
+      const requestUrgency = headerSectionFieldList.find(
+        (field) => field.field_name === "Urgency"
+      )?.field_response?.request_response;
+      const requestDepartment =
+        headerSectionFieldList[1].field_response?.request_response;
+      const requestPayeeType = headerSectionFieldList.find(
+        (field) => field.field_name === "Payee Type"
+      )?.field_response?.request_response;
+      const requestPurpose = formSection[1].section_field.find(
+        (field) => field.field_name === "Purpose of Payment"
+      )?.field_response?.request_response;
+      const requestChargeTo = formSection[1].section_field.find(
+        (field) => field.field_name === "Charge To"
+      )?.field_response?.request_response;
+
+      const costCode = safeParse(
+        `${headerSectionFieldList[2].field_response?.request_response}`
+      );
+      const boqCode = safeParse(
+        `${headerSectionFieldList[3].field_response?.request_response}`
+      );
+
+      const urgency = urgencyList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestUrgency}`).toLowerCase()
+      );
+      const department = departmentList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestDepartment}`).toLowerCase()
+      );
+      const payeeType = payeeTypeList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestPayeeType}`).toLowerCase()
+      );
+      const purpose = purposeList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestPurpose}`).toLowerCase()
+      );
+      const chargeTo = chargeToList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestChargeTo}`).toLowerCase()
+      );
+
+      if (!urgency || !department || !payeeType || !purpose || !chargeTo) {
+        throw new Error("Missing data in jira payload");
+      }
+
+      const jiraTicketPayload = formatJiraRFPPayload({
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        department: ``,
-        purpose,
-        typeOfRequest: ``,
-        requestFormType: "BOQ",
-        workingAdvances: ``,
-        ticketUrl: ``,
+        department: department.id,
+        purpose: purpose.id,
+        urgency: urgency.id,
+        payeeType: payeeType.id,
+        chargeTo: chargeTo.id,
+        costCode,
+        boqCode,
       });
 
-      const jiraTicketData = await createJiraTicket({
-        requestType: "Equipment Service Report",
+      const jiraTicket = await createJiraTicket({
+        requestType: "Request for Payment Form",
         formslyId: request.request_formsly_id,
         requestCommentList,
         ticketPayload: jiraTicketPayload,
       });
 
-      if (!jiraTicketData.success) {
-        return { success: false, data: null };
+      if (!jiraTicket.jiraTicketId) {
+        throw new Error("Failed to create jira ticket.");
       }
 
-      if (jiraTicketData.data) {
-        setRequestJira({
-          id: jiraTicketData.data.jiraTicketKey,
-          link: jiraTicketData.data.jiraTicketWebLink,
-        });
-      }
-
-      return jiraTicketData;
+      setRequestJira({
+        id: jiraTicket.jiraTicketId,
+        link: jiraTicket.jiraTicketLink,
+      });
+      return jiraTicket;
     } catch (error) {
-      console.error(error);
-      return { success: false, data: null };
+      const errorMessage = (error as Error).message;
+      notifications.show({
+        message: `Error: ${errorMessage}`,
+        color: "red",
+      });
+      return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);
     }
@@ -575,7 +572,7 @@ const RequestForPaymentRequestPage = ({
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
       );
 
       if (newJiraTicketData.ok) {
@@ -748,7 +745,11 @@ const RequestForPaymentRequestPage = ({
             isUserRequester={isUserRequester}
             requestId={request.request_id}
             isItemForm
-            onCreateJiraTicket={onCreateJiraTicket}
+            onCreateJiraTicket={
+              selectedDepartment === "Plants and Equipment"
+                ? onCreateJiraTicket
+                : undefined
+            }
             requestSignerId={isUserSigner?.request_signer_id}
           />
         )}

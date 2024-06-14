@@ -7579,3 +7579,21 @@ export const getExistingRFPCodeRequest = async (
       >)
     : null;
 };
+
+export const getRequestFieldResponse = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    fieldId: string[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response, request_response_field_id")
+    .eq("request_response_request_id", params.requestId)
+    .in("request_response_field_id", params.fieldId);
+
+  if (error) throw error;
+
+  return data;
+};

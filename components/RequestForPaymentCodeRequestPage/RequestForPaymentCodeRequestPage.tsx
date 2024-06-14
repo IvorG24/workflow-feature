@@ -2,6 +2,7 @@ import { deleteRequest } from "@/backend/api/delete";
 import {
   getJiraAutomationDataByProjectId,
   getRequestComment,
+  getRequestFieldResponse,
   getSectionInRequestPage,
 } from "@/backend/api/get";
 import {
@@ -19,13 +20,11 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
-import {
-  createJiraTicket,
-  formatJiraLRFRequisitionPayload,
-} from "@/utils/jira/functions";
+import { createJiraTicket, formatJiraRFPPayload } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
+  JiraFormFieldChoice,
   ReceiverStatusType,
   RequestCommentType,
   RequestWithResponseType,
@@ -294,119 +293,139 @@ const RequestForPaymentCodeRequestPage = ({
 
   const onCreateJiraTicket = async () => {
     try {
-      if (!user) throw new Error("User is not defined.");
       if (!request.request_project_id) {
         throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
 
-      const {
-        data: { request: lrfRequest },
-        error,
-      } = await supabaseClient.rpc("request_page_on_load", {
-        input_data: {
-          requestId: parentLrfRequestId,
-          userId: user.user_id,
-        },
-      });
+      const [jiraAutomationData, automationFormResponse, rfpRequest] =
+        await Promise.all([
+          getJiraAutomationDataByProjectId(supabaseClient, {
+            teamProjectId: request.request_project_id,
+          }),
+          fetch("/api/jira/get-form?serviceDeskId=23&requestType=337", {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }),
+          supabaseClient.rpc("request_page_on_load", {
+            input_data: {
+              requestId: parentLrfRequestId,
+              userId: user?.user_id,
+            },
+          }),
+        ]);
 
-      if (error) throw new Error("Faild to fetch LRF request.");
-
-      const jiraAutomationData = await getJiraAutomationDataByProjectId(
-        supabaseClient,
-        { teamProjectId: lrfRequest.request_project_id }
-      );
-
-      if (!jiraAutomationData?.jiraProjectData) {
-        throw new Error("Error fetching Jira project data.");
+      if (
+        !jiraAutomationData?.jiraProjectData ||
+        !automationFormResponse.ok ||
+        rfpRequest.error
+      ) {
+        throw new Error("Error fetching of jira automation data.");
       }
 
-      const response = await fetch(
-        "/api/jira/get-form?serviceDeskId=23&requestType=367",
+      const rfpHeaderSectionFieldList = rfpRequest.data.request.request_form
+        .form_section[0].section_field as SectionField;
+
+      const rfpPayeeSectionFieldList = rfpRequest.data.request.request_form
+        .form_section[1].section_field as SectionField;
+
+      const purposeFieldId = rfpPayeeSectionFieldList.find(
+        (field) => field.field_name === "Purpose of Payment"
+      )?.field_id;
+
+      const chargeToFieldId = rfpPayeeSectionFieldList.find(
+        (field) => field.field_name === "Charge To"
+      )?.field_id;
+
+      const payeeSectionFieldResponse = await getRequestFieldResponse(
+        supabaseClient,
         {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
+          requestId: rfpRequest.data.request.request_id,
+          fieldId: [`${purposeFieldId}`, `${chargeToFieldId}`],
         }
       );
 
-      const { fields } = await response.json();
-      if (!fields) {
-        throw new Error("Jira form is not defined.");
+      const { fields } = await automationFormResponse.json();
+      const urgencyList = fields["5"].choices;
+      const departmentList = fields["6"].choices;
+      const payeeTypeList = fields["8"].choices;
+      const purposeList = fields["13"].choices;
+      const chargeToList = fields["18"].choices;
+
+      const requestUrgency = rfpHeaderSectionFieldList.find(
+        (field) => field.field_name === "Urgency"
+      )?.field_response[0].request_response;
+
+      const requestDepartment =
+        rfpHeaderSectionFieldList[1].field_response[0].request_response;
+
+      const requestPayeeType = rfpHeaderSectionFieldList.find(
+        (field) => field.field_name === "Payee Type"
+      )?.field_response[0].request_response;
+
+      const requestPurpose = payeeSectionFieldResponse.find(
+        (field) => field.request_response_field_id === purposeFieldId
+      )?.request_response;
+      const requestChargeTo = payeeSectionFieldResponse.find(
+        (field) => field.request_response_field_id === chargeToFieldId
+      )?.request_response;
+
+      const costCode = safeParse(
+        `${formSection[1].section_field[3].field_response?.request_response}`
+      );
+      const boqCode = safeParse(
+        `${formSection[1].section_field[4].field_response?.request_response}`
+      );
+
+      const urgency = urgencyList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestUrgency}`).toLowerCase()
+      );
+      const department = departmentList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestDepartment}`).toLowerCase()
+      );
+      const payeeType = payeeTypeList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestPayeeType}`).toLowerCase()
+      );
+      const purpose = purposeList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestPurpose}`).toLowerCase()
+      );
+      const chargeTo = chargeToList.find(
+        (item: JiraFormFieldChoice) =>
+          item.name.trim().toLowerCase() ===
+          safeParse(`${requestChargeTo}`).toLowerCase()
+      );
+
+      if (!urgency || !department || !payeeType || !purpose || !chargeTo) {
+        throw new Error("Missing data in jira payload");
       }
-      const departmentList = fields["469"].choices;
-      const typeList = fields["442"].choices;
-      const workingAdvanceList = fields["445"].choices;
 
-      const lrfRequestDetails = lrfRequest.request_form.form_section[0]
-        .section_field as SectionField;
-
-      const sortedLrfRequestDetails = lrfRequestDetails.sort(
-        (a, b) => a.field_order - b.field_order
-      );
-      const department = safeParse(
-        sortedLrfRequestDetails[2].field_response[0].request_response
-      );
-      const purpose = safeParse(
-        sortedLrfRequestDetails[3].field_response[0].request_response
-      );
-      const typeOfRequest = safeParse(
-        sortedLrfRequestDetails[4].field_response[0].request_response
-      );
-
-      let workingAdvances = "";
-      let ticketUrl = "";
-
-      if (typeOfRequest.includes("Liquidation")) {
-        const requestWorkingAdvances = safeParse(
-          sortedLrfRequestDetails[5].field_response[0].request_response
-        );
-        const choiceMatch = workingAdvanceList.find(
-          (workingAdvanceItem: { id: string; name: string }) =>
-            workingAdvanceItem.name.toLowerCase() ===
-            requestWorkingAdvances.toLowerCase()
-        );
-        workingAdvances = choiceMatch.id;
-        ticketUrl = safeParse(
-          sortedLrfRequestDetails[6].field_response[0].request_response
-        );
-      }
-
-      const departmentId = departmentList.find(
-        (departmentItem: { id: string; name: string }) =>
-          departmentItem.name.toLowerCase() === department.toLowerCase()
-      );
-      const typeOfRequestId = typeList.find(
-        (typeOfRequestItem: { id: string; name: string }) =>
-          typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
-      );
-
-      if (!departmentId || !typeOfRequestId) {
-        notifications.show({
-          message: "Department or type of request is undefined.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      const jiraTicketPayload = formatJiraLRFRequisitionPayload({
-        requestId: lrfRequest.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${lrfRequest.request_formsly_id}`,
-        requestor: `${user.user_first_name} ${user.user_last_name}`,
+      const jiraTicketPayload = formatJiraRFPPayload({
+        requestId: request.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        department: departmentId.id,
-        purpose,
-        typeOfRequest: typeOfRequestId.id,
-        requestFormType: "BOQ",
-        workingAdvances,
-        ticketUrl,
+        department: department.id,
+        purpose: purpose.id,
+        urgency: urgency.id,
+        payeeType: payeeType.id,
+        chargeTo: chargeTo.id,
+        costCode,
+        boqCode,
       });
 
       const jiraTicket = await createJiraTicket({
-        requestType: "Request for Liquidation/Reimbursement v2",
+        requestType: "Request for Payment",
         formslyId: request.request_formsly_id,
         requestCommentList,
         ticketPayload: jiraTicketPayload,
@@ -639,6 +658,7 @@ const RequestForPaymentCodeRequestPage = ({
             requestId={request.request_id}
             isItemForm
             onCreateJiraTicket={onCreateJiraTicket}
+            requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
 
