@@ -47,7 +47,7 @@ const CreateRequestForPaymentCodePage = ({ form, connectedRequest }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
-  console.log(form.form_signer);
+
   const requestorProfile = useUserProfile();
 
   const formDetails = {

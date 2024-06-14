@@ -67,10 +67,8 @@ const RequestActionSection = ({
   };
 
   const handleRevertStatusToPendingIfStillProcessing = async () => {
-    const isBeingProcessed = await handleCheckIfRequestIsBeingProcessed(
-      requestId
-    );
-    if (isBeingProcessed) {
+    const currentStatus = await getRequestStatus(supabaseClient, { requestId });
+    if (currentStatus === "PROCESSING") {
       await updateRequestStatus(supabaseClient, {
         requestId,
         status: "PENDING",

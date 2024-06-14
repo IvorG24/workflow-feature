@@ -61,7 +61,6 @@ const Page = ({
   duplicatableSectionIdList,
   sectionIdWithDuplicatableSectionIdList,
 }: Props) => {
-
   const formslyForm = () => {
     if (request.request_form.form_name === "Item") {
       return (
