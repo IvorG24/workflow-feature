@@ -487,6 +487,7 @@ export const formatJiraPTRFPayload = ({
   projectNameFrom,
   projectNameTo,
   purpose,
+  withITAsset,
 }: JiraPTRFTicketPayloadProps) => {
   const jiraTicketPayload = {
     form: {
@@ -514,6 +515,9 @@ export const formatJiraPTRFPayload = ({
         },
         "54": {
           text: requestId, // FormslyId
+        },
+        "55": {
+          choices: [withITAsset ? "11129" : "11130"],
         },
       },
     },

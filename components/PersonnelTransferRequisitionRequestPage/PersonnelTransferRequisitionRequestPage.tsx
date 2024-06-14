@@ -410,6 +410,12 @@ const PersonnelTransferRequisitionRequestPage = ({
         `${headerSectionFieldList[4].field_response?.request_response}`
       );
 
+      const contentSectionFieldList =
+        formSection[formSection.length - 1].section_field;
+      const withITAsset = safeParse(
+        `${contentSectionFieldList[2].field_response?.request_response}`
+      );
+
       const typeOfTransfer = typeOfTransferList.find(
         (transfer: JiraFormFieldChoice) =>
           transfer.name.trim().toLowerCase() ===
@@ -456,6 +462,7 @@ const PersonnelTransferRequisitionRequestPage = ({
         projectNameFrom: projectNameFrom.jiraId,
         projectNameTo: projectTo.id,
         purpose: purpose.id,
+        withITAsset: Boolean(withITAsset),
       });
       const jiraTicket = await createJiraTicket({
         requestType: "Personnel Transfer Requisition",
