@@ -1,5 +1,5 @@
 import CreateBillOfQuantityRequestPage from "@/components/CreateBillOfQuantityRequestPage/CreateBillOfQuantityRequestPage";
-import CreateEquipmentServiceReport from "@/components/CreateEquipmentServiceReport/CreateEquipmentServiceReport";
+import CreateEquipmentServiceReportRequestPage from "@/components/CreateEquipmentServiceReportRequestPage/CreateEquipmentServiceReportRequestPage";
 import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
 import CreateLiquidationReimbursementRequestPage from "@/components/CreateLiquidationReimbursementRequestPage/CreateLiquidationReimbursementRequestPage";
@@ -162,7 +162,7 @@ const Page = ({
         );
       case "Equipment Service Report":
         return (
-          <CreateEquipmentServiceReport
+          <CreateEquipmentServiceReportRequestPage
             form={form}
             projectOptions={projectOptions}
             categoryOptions={categoryOptions}

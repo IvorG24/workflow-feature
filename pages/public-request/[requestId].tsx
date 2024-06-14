@@ -1,7 +1,7 @@
 import { getTeam, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
-import EquipmentServiceReport from "@/components/EquipmentServiceReport/EquipmentServiceReport";
+import EquipmentServiceReportRequestPage from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
@@ -186,7 +186,7 @@ const Page = ({
       );
     } else if (request.request_form.form_name === "Equipment Service Report") {
       return (
-        <EquipmentServiceReport
+        <EquipmentServiceReportRequestPage
           request={request}
           sectionIdWithDuplicatableSectionIdList={
             sectionIdWithDuplicatableSectionIdList
