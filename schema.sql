@@ -1479,20 +1479,22 @@ RETURNS JSON AS $$
         endId = `RO`;
       } else if(formName==='Transfer Receipt') {
         endId = `TR`;
-      } else if(formName==='Request For Payment') {
-        endId = `RFP`;
-      } else if(formName === 'IT Asset'){
+      } else if(formName === 'IT Asset') {
         endId = `ITA`;
-      } else if(formName === 'Liquidation Reimbursement'){
+      } else if(formName === 'Liquidation Reimbursement') {
         endId = `LR`;
-      } else if(formName === 'Bill of Quantity'){
+      } else if(formName === 'Bill of Quantity') {
         endId = `BOQ`;
-      } else if(formName === 'Personnel Transfer Requisition'){
+      } else if(formName === 'Personnel Transfer Requisition') {
         endId = `PTRF`;
-      } else if(formName === 'Working Advance Voucher'){
+      } else if(formName === 'Working Advance Voucher') {
         endId = `WAV`;
-      } else if(formName === 'Equipment Service Report'){
+      } else if(formName === 'Equipment Service Report') {
         endId = `ESR`;
+      } else if(formName === 'Request For Payment Code') {
+        endId = `RFPC`;
+      } else if(formName.includes('Request For Payment')) {
+        endId = `RFP`;
       } else {
         endId = ``;
       }
@@ -3496,14 +3498,14 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
         request: requestData
       };
       return;
-    } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report'].includes(request.form_name)) {
+    } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report', 'Request For Payment'].includes(request.form_name)) {
       const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
@@ -5133,7 +5135,7 @@ RETURNS JSON as $$
           projectOptions
         }
         return;
-      } else if (form.form_name === "Request For Payment") {
+      } else if (form.form_name === "Request For Payment v1") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -5363,43 +5365,85 @@ RETURNS JSON as $$
       } else if (form.form_name === "Bill of Quantity") {
         if (connectedRequestFormslyId) {
           const splitFormslyId = connectedRequestFormslyId.split('-');
-        const connectedRequest = plv8.execute(`
-          SELECT 
-            request_id, 
-            request_form_id,
-            request_project_id 
-          FROM 
-            request_table 
-          WHERE 
-            request_formsly_id_prefix = '${splitFormslyId[0]}' 
-            AND request_formsly_id_serial = '${splitFormslyId[1]}' 
-          LIMIT 1;
-        `)[0];
+          const connectedRequest = plv8.execute(`
+            SELECT 
+              request_id, 
+              request_form_id,
+              request_project_id 
+            FROM 
+              request_table 
+            WHERE 
+              request_formsly_id_prefix = '${splitFormslyId[0]}' 
+              AND request_formsly_id_serial = '${splitFormslyId[1]}' 
+            LIMIT 1;
+          `)[0];
 
-        if (!connectedRequest) {
-          throw new Error('Request id not found');
-        }
+          if (!connectedRequest) {
+            throw new Error('Request id not found');
+          }
 
-        const duplicatableSectionIdList = plv8.execute(`
-          SELECT DISTINCT(request_response_duplicatable_section_id)
-          FROM request_response_table
-          WHERE 
-            request_response_request_id = '${connectedRequest.request_id}'
-            AND request_response_duplicatable_section_id IS NOT NULL
-        `).map(response => response.request_response_duplicatable_section_id);
+          const duplicatableSectionIdList = plv8.execute(`
+            SELECT DISTINCT(request_response_duplicatable_section_id)
+            FROM request_response_table
+            WHERE 
+              request_response_request_id = '${connectedRequest.request_id}'
+              AND request_response_duplicatable_section_id IS NOT NULL
+          `).map(response => response.request_response_duplicatable_section_id);
 
-        const connectedRequestSectionId = plv8.execute(`
-          SELECT 
-            section_id 
-          FROM 
-            section_table 
-          WHERE 
-            section_form_id = '${connectedRequest.request_form_id}' 
-            AND section_name = 'Payee'
-        `)[0].section_id;
+          const connectedRequestSectionId = plv8.execute(`
+            SELECT 
+              section_id 
+            FROM 
+              section_table 
+            WHERE 
+              section_form_id = '${connectedRequest.request_form_id}' 
+              AND section_name = 'Payee'
+          `)[0].section_id;
+
+          const signerList = plv8.execute(`
+            SELECT
+              signer_id,
+              signer_is_primary_signer,
+              signer_action,
+              signer_order,
+              team_member_id,
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            FROM signer_table
+            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_table ON user_id = team_member_user_id
+            WHERE
+              signer_is_disabled = false
+              AND signer_form_id = '${form.form_id}'
+              AND signer_team_project_id = '${connectedRequest.request_project_id}'
+            ORDER BY signer_order
+          `);
+
+          const formattedSignerList = signerList.map(signer => {
+            return {
+              signer_id: signer.signer_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer,
+              signer_action: signer.signer_action,
+              signer_order: signer.signer_order,
+              signer_team_member: {
+                team_member_id: signer.team_member_id,
+                team_member_user: {
+                  user_id: signer.user_id,
+                  user_first_name: signer.user_first_name,
+                  user_last_name: signer.user_last_name,
+                  user_avatar: signer.user_avatar,
+                }
+              }
+            }
+          })
 
         returnData = {
-          form,
+          form: {
+            ...form,
+            form_signer: formattedSignerList
+          },
           connectedRequest: {
             ...connectedRequest,
             form_section: [connectedRequestSectionId],
@@ -5542,6 +5586,168 @@ RETURNS JSON as $$
           categoryOptions
         }
         return;
+      } else if (form.form_name === "Request For Payment") {
+        const projects = plv8.execute(
+          `
+            SELECT 
+                team_project_table.team_project_id,
+                team_project_table.team_project_name
+            FROM team_project_member_table
+            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            WHERE
+              team_member_id = '${teamMember.team_member_id}'
+            ORDER BY team_project_name;
+          `
+        );
+
+        const projectOptions = projects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
+        const departments = plv8.execute(
+          `
+            SELECT 
+              team_department_id,
+              team_department_name
+            FROM team_department_table
+            WHERE 
+              team_department_is_disabled = false
+            ORDER BY team_department_name;
+          `
+        );
+
+        const departmentOptions = departments.map((department, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: department.team_department_id,
+            option_order: index,
+            option_value: department.team_department_name,
+          };
+        });
+
+        returnData = {
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_option: projectOptions,
+                  },
+                  {
+                    ...form.form_section[0].section_field[1],
+                    field_option: departmentOptions,
+                  },
+                  ...form.form_section[0].section_field.slice(2),
+                ],
+              },
+              ...form.form_section.slice(1)
+            ],
+          },
+          projectOptions,
+          departmentOptions
+        }
+        return;
+      } else if (form.form_name === "Request For Payment Code") {
+        if (connectedRequestFormslyId) {
+          const splitFormslyId = connectedRequestFormslyId.split('-');
+          const connectedRequest = plv8.execute(`
+            SELECT 
+              request_id, 
+              request_form_id,
+              request_project_id 
+            FROM 
+              request_table 
+            WHERE 
+              request_formsly_id_prefix = '${splitFormslyId[0]}' 
+              AND request_formsly_id_serial = '${splitFormslyId[1]}' 
+            LIMIT 1;
+          `)[0];
+
+          if (!connectedRequest) {
+            throw new Error('Request id not found');
+          }
+
+          const duplicatableSectionIdList = plv8.execute(`
+            SELECT DISTINCT(request_response_duplicatable_section_id)
+            FROM request_response_table
+            WHERE 
+              request_response_request_id = '${connectedRequest.request_id}'
+              AND request_response_duplicatable_section_id IS NOT NULL
+          `).map(response => response.request_response_duplicatable_section_id);
+
+          const connectedRequestSectionId = plv8.execute(`
+            SELECT 
+              section_id 
+            FROM 
+              section_table 
+            WHERE 
+              section_form_id = '${connectedRequest.request_form_id}' 
+              AND section_name = 'Request'
+          `)[0].section_id;
+
+          const signerList = plv8.execute(`
+            SELECT
+              signer_id,
+              signer_is_primary_signer,
+              signer_action,
+              signer_order,
+              team_member_id,
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            FROM signer_table
+            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_table ON user_id = team_member_user_id
+            WHERE
+              signer_is_disabled = false
+              AND signer_form_id = '${form.form_id}'
+              AND signer_team_project_id = '${connectedRequest.request_project_id}'
+            ORDER BY signer_order
+          `);
+
+          const formattedSignerList = signerList.map(signer => {
+            return {
+              signer_id: signer.signer_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer,
+              signer_action: signer.signer_action,
+              signer_order: signer.signer_order,
+              signer_team_member: {
+                team_member_id: signer.team_member_id,
+                team_member_user: {
+                  user_id: signer.user_id,
+                  user_first_name: signer.user_first_name,
+                  user_last_name: signer.user_last_name,
+                  user_avatar: signer.user_avatar,
+                }
+              }
+            }
+          })
+
+          returnData = {
+            form: {
+              ...form,
+              form_signer: formattedSignerList
+            },
+            connectedRequest: {
+              ...connectedRequest,
+              form_section: [connectedRequestSectionId],
+              duplicatableSectionIdList
+            }
+          };
+        } else {
+          returnData = {
+            form
+          }
+        }
       }
     } else {
       returnData = {
@@ -9695,7 +9901,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && request.form_name === "Request For Payment") {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && request.form_name === "Subcon") || request.form_is_formsly_form && request.form_name === "Request For Payment v1") {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -10532,7 +10738,7 @@ plv8.subtransaction(function() {
       AND (${duplicatableSectionIdCondition})
     ORDER BY field_order ASC
   `);
-
+  
   let fieldWithResponse = fieldList.map(field => {
     const requestResponseData = plv8.execute(`
       SELECT *

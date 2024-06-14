@@ -186,6 +186,22 @@ type RequestFormSectionProps = {
     onPartNumberChange: (value: string | null, index: number) => void;
     onQuantityBlur: () => void;
   };
+  requestForPaymentFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onDepartmentChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onPayeeTypeChange: (value: string | null, prevValue: string | null) => void;
+    onEmployeeNumberChange: (value: string | null) => void;
+    onPurposePlanChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onChargeToChange: (value: string | null) => void;
+    onAmountBlur: (value: string | null, index: number) => void;
+    onModeOfPaymentChange: (value: string | null, index: number) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -208,6 +224,7 @@ const RequestFormSection = ({
   personnelTransferRequisitionMethods,
   workingAdvanceVoucherFormMethods,
   equipmentServiceReportMethods,
+  requestForPaymentFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -277,6 +294,7 @@ const RequestFormSection = ({
                 workingAdvanceVoucherFormMethods
               }
               equipmentServiceReportMethods={equipmentServiceReportMethods}
+              requestForPaymentFormMethods={requestForPaymentFormMethods}
             />
           );
         })}
