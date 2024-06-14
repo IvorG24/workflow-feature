@@ -347,7 +347,7 @@ const PEDPartRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         requestTypeId: "299",
         ...requisitionAutomationData,
       });
-      console.log(jiraTicketPayload);
+
       const jiraTicket = await createJiraTicket({
         requestType: "Automated Requisition Form",
         formslyId: request.request_formsly_id,

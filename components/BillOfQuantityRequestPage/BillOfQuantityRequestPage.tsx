@@ -382,7 +382,7 @@ const BillOfQuantityRequestPage = ({
         (typeOfRequestItem: { id: string; name: string }) =>
           typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
       );
-      console.log(department);
+
       if (!departmentId || !typeOfRequestId) {
         notifications.show({
           message: "Department or type of request is undefined.",

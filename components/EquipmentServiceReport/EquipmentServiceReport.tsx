@@ -43,6 +43,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import RequestCommentList from "../RequestPage/RequestCommentList";
+import EquipmentServiceReportSummary from "../SummarySection/EquipmentServiceReportSummary";
 
 type Props = {
   request: RequestWithResponseType;
@@ -577,21 +578,7 @@ const EquipmentServiceReport = ({
           </>
         ) : null}
 
-        {/* {formSection.length > 3 && (
-          <ITAssetSummary
-            summaryData={formSection
-              .slice(3)
-              .sort((a, b) =>
-                `${a.section_field[0].field_response?.request_response}` >
-                `${b.section_field[0].field_response?.request_response}`
-                  ? 1
-                  : `${b.section_field[0].field_response?.request_response}` >
-                    `${a.section_field[0].field_response?.request_response}`
-                  ? -1
-                  : 0
-              )}
-          />
-        )} */}
+        <EquipmentServiceReportSummary summaryData={formSection} />
 
         {isRequestActionSectionVisible && (
           <RequestActionSection
