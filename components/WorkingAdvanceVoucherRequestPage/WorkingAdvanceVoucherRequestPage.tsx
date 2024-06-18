@@ -279,22 +279,25 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
 
       const requestSectionFieldList =
         request.request_form.form_section[0].section_field;
+      const department = safeParse(
+        requestSectionFieldList[1].field_response[0].request_response
+      );
       const date = moment(
         `${safeParse(
-          requestSectionFieldList[1].field_response[0].request_response
+          requestSectionFieldList[2].field_response[0].request_response
         )}`
       ).format("YYYY-MM-DD");
       const payeeName = safeParse(
-        requestSectionFieldList[2].field_response[0].request_response
-      );
-      const amount = safeParse(
         requestSectionFieldList[3].field_response[0].request_response
       );
-      const amountInWord = safeParse(
+      const amount = safeParse(
         requestSectionFieldList[4].field_response[0].request_response
       );
-      const particulars = safeParse(
+      const amountInWord = safeParse(
         requestSectionFieldList[5].field_response[0].request_response
+      );
+      const particulars = safeParse(
+        requestSectionFieldList[6].field_response[0].request_response
       );
 
       const jiraTicketPayload = formatJiraWAVPayload({
@@ -307,6 +310,7 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
         amount,
         amountInWord,
         particulars,
+        department,
       });
       const jiraTicket = await createJiraTicket({
         requestType: "Working Advance Voucher",

@@ -540,7 +540,12 @@ export const formatJiraWAVPayload = ({
   amount,
   amountInWord,
   particulars,
+  department,
 }: JiraWAVTicketPayloadProps) => {
+  const isPEDDepartment = department === "Plants and Equipment";
+  const requestTypeId = isPEDDepartment ? "410" : "407";
+  const serviceDeskId = isPEDDepartment ? "27" : "23";
+
   const jiraTicketPayload = {
     form: {
       answers: {
@@ -573,8 +578,8 @@ export const formatJiraWAVPayload = ({
     isAdfRequest: false,
     requestFieldValues: {},
     requestParticipants: [],
-    requestTypeId: "407",
-    serviceDeskId: "23",
+    requestTypeId: requestTypeId,
+    serviceDeskId: serviceDeskId,
   };
 
   return jiraTicketPayload;
@@ -595,17 +600,17 @@ export const formatJiraESRPayload = ({
         "1": {
           choices: [jiraProjectSiteId], // Requesting Project
         },
-        "3": {
+        "25": {
           text: requestorName, // Requestor Name
         },
-        "4": {
+        "24": {
           choices: [department], // Department
         },
         "7": {
           choices: [workcode], // Workcode
         },
         "10": {
-          choices: [propertyNumber], // Property No.
+          text: propertyNumber, // Property No.
         },
         "20": {
           text: requestId, // FormslyId

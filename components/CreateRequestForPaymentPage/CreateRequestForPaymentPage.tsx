@@ -506,10 +506,7 @@ const CreateRequestForPaymentPage = ({
               ...paymentInformationSection.section_field,
             ],
           });
-          setTimeout(() => {
-            handleRemoveFocus();
-            setFocus(`sections.0.section_field.0.field_response`);
-          }, 0);
+          setTimeout(() => handleRemoveFocus(), 0);
         }
       }
     } catch (e) {
