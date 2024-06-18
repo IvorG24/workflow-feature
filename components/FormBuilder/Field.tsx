@@ -18,7 +18,6 @@ import {
   Switch,
   TextInput,
   Textarea,
-  Tooltip,
   createStyles,
 } from "@mantine/core";
 import { DatePickerInput, TimeInput } from "@mantine/dates";
@@ -30,7 +29,6 @@ import {
   IconCirclePlus,
   IconClock,
   IconFile,
-  IconInfoCircle,
   IconTrash,
 } from "@tabler/icons-react";
 import { useRef, useState } from "react";
@@ -119,9 +117,6 @@ const Field = ({
 }: Props) => {
   const timeInputRef = useRef<HTMLInputElement>(null);
   const [fieldPrompt, setFieldPrompt] = useState(field.field_name);
-  const [fieldDescription, setFieldDescription] = useState(
-    field.field_description || ""
-  );
   const [isFieldRequired, setIsFieldRequired] = useState<boolean>(
     field.field_is_required
   );
@@ -266,7 +261,6 @@ const Field = ({
       <FieldLabel
         formType={formType}
         isFieldPositive={isFieldPositive}
-        fieldDescription={fieldDescription}
         fieldPrompt={fieldPrompt}
         fieldType={fieldType as FieldType}
       />
@@ -459,17 +453,6 @@ const Field = ({
             }
           />
 
-          <TextInput
-            label="Description"
-            mt={16}
-            {...register(
-              `sections.${sectionIndex}.fields.${fieldIndex}.field_description`,
-              {
-                onChange: (e) => setFieldDescription(e.target.value),
-              }
-            )}
-          />
-
           {fieldType !== "SWITCH" && (
             <Checkbox
               label="Required"
@@ -554,17 +537,6 @@ const Field = ({
             Add Option
           </Button>
 
-          <TextInput
-            label="Description"
-            mt={16}
-            {...register(
-              `sections.${sectionIndex}.fields.${fieldIndex}.field_description`,
-              {
-                onChange: (e) => setFieldDescription(e.target.value),
-              }
-            )}
-          />
-
           <Checkbox
             label="Required"
             mt={24}
@@ -606,17 +578,6 @@ const Field = ({
               errors.sections?.[sectionIndex]?.fields?.[fieldIndex]?.field_name
                 ?.message
             }
-          />
-
-          <TextInput
-            label="Description"
-            mt={16}
-            {...register(
-              `sections.${sectionIndex}.fields.${fieldIndex}.field_description`,
-              {
-                onChange: (e) => setFieldDescription(e.target.value),
-              }
-            )}
           />
 
           <Flex mt="md" gap="md">
@@ -682,17 +643,6 @@ const Field = ({
             }
           />
 
-          <TextInput
-            label="Description"
-            mt={16}
-            {...register(
-              `sections.${sectionIndex}.fields.${fieldIndex}.field_description`,
-              {
-                onChange: (e) => setFieldDescription(e.target.value),
-              }
-            )}
-          />
-
           <Checkbox
             label="Field is positive"
             mt={24}
@@ -752,7 +702,6 @@ export function FieldTypeDropdown({
 type FieldLabelProps = {
   fieldPrompt: string;
   isFieldPositive: boolean;
-  fieldDescription: string;
   formType: AppType;
   fieldType: FieldType;
 };
@@ -760,7 +709,6 @@ type FieldLabelProps = {
 export const FieldLabel = ({
   fieldPrompt,
   isFieldPositive,
-  fieldDescription,
   fieldType,
   formType,
 }: FieldLabelProps) => {
@@ -789,18 +737,6 @@ export const FieldLabel = ({
                 : "none"
             }
           />
-        )}
-
-        {fieldDescription.length > 0 && (
-          <Tooltip label={fieldDescription} withArrow multiline miw={250}>
-            <Box>
-              <IconInfoCircle
-                height={16}
-                color="#495057"
-                display={fieldDescription.length > 0 ? "block" : "none"}
-              />
-            </Box>
-          </Tooltip>
         )}
       </Group>
     </Flex>

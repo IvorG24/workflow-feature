@@ -4,7 +4,6 @@ import {
 } from "@/backend/api/get";
 import { createEquipment } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { EquipmentForm } from "@/utils/types";
 import {
@@ -32,7 +31,6 @@ const CreateEquipment = ({ setIsCreatingEquipment }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
 
   const activeTeam = useActiveTeam();
-  const teamMember = useUserTeamMember();
 
   const [categoryOption, setCategoryOption] = useState<
     { label: string; value: string }[]
@@ -82,7 +80,6 @@ const CreateEquipment = ({ setIsCreatingEquipment }: Props) => {
           equipment_is_available: data.isAvailable,
           equipment_equipment_category_id: data.category,
           equipment_team_id: activeTeam.team_id,
-          equipment_encoder_team_member_id: teamMember?.team_member_id,
           equipment_name_shorthand: data.shorthand.toUpperCase().trim(),
         },
         category: categoryOption.find((value) => value.value === data.category)

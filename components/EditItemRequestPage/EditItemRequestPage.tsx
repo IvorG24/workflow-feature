@@ -295,7 +295,6 @@ const EditItemRequestPage = ({
           formattedSection[index].section_field.splice(9, 0, {
             field_id: "159c86c3-dda6-4c8a-919f-50e1674659bd",
             field_name: "Preferred Supplier",
-            field_description: "",
             field_is_required: false,
             field_type: "DROPDOWN",
             field_order: 14,

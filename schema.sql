@@ -216,7 +216,6 @@ CREATE TABLE special_field_template_table (
 CREATE TABLE field_table (
   field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   field_name VARCHAR(4000) NOT NULL,
-  field_description VARCHAR(4000),
   field_is_required  BOOLEAN DEFAULT FALSE NOT NULL,
   field_type VARCHAR(4000) NOT NULL,
   field_order INT NOT NULL,
@@ -300,8 +299,7 @@ CREATE TABLE item_unit_of_measurement_table(
   item_unit_of_measurement VARCHAR(4000) NOT NULL,
   item_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   item_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  item_unit_of_measurement_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+
   item_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 -- End: Item unit of measurement
@@ -329,7 +327,6 @@ CREATE TABLE item_table(
   item_is_it_asset_item BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
-  item_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   item_category_id UUID REFERENCES item_category_table(item_category_id)
 );
 
@@ -360,8 +357,7 @@ CREATE TABLE item_description_field_table(
   item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL,
-  item_description_field_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+  item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
 );
 
 -- End: Item Form
@@ -375,7 +371,6 @@ CREATE TABLE supplier_table(
   supplier_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   supplier_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   
-  supplier_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   supplier_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -545,7 +540,6 @@ CREATE TABLE equipment_category_table(
   equipment_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_category_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  equipment_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   equipment_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -559,8 +553,7 @@ CREATE TABLE equipment_brand_table(
   equipment_brand VARCHAR(4000) NOT NULL,
   equipment_brand_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_brand_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  equipment_brand_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+
   equipment_brand_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -575,7 +568,6 @@ CREATE TABLE equipment_model_table(
   equipment_model_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_model_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  equipment_model_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   equipment_model_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -589,8 +581,7 @@ CREATE TABLE equipment_component_category_table(
   equipment_component_category VARCHAR(4000) NOT NULL,
   equipment_component_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_component_category_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  equipment_component_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+
   equipment_component_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -607,7 +598,6 @@ CREATE TABLE equipment_table(
   equipment_is_available BOOLEAN DEFAULT true NOT NULL,
   
   equipment_equipment_category_id UUID REFERENCES equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
-  equipment_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   equipment_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -627,8 +617,7 @@ CREATE TABLE equipment_description_table(
   
   equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
   equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
-  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL,
-  equipment_description_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
 );
 
 -- End: Equipment description
@@ -641,8 +630,7 @@ CREATE TABLE equipment_unit_of_measurement_table(
   equipment_unit_of_measurement VARCHAR(4000) NOT NULL,
   equipment_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  equipment_unit_of_measurement_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+
   equipment_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -657,8 +645,7 @@ CREATE TABLE equipment_general_name_table(
   equipment_general_name_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   equipment_general_name_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  equipment_general_name_team_id UUID REFERENCES team_table(team_id) NOT NULL,
-  equipment_general_name_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+  equipment_general_name_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
 -- End: Equipment part general name
@@ -677,8 +664,7 @@ CREATE TABLE equipment_part_table(
   equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
   equipment_part_unit_of_measurement_id UUID REFERENCES equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
   equipment_part_component_category_id UUID REFERENCES equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
 );
 
 -- End: Equipment part
@@ -704,8 +690,7 @@ CREATE TABLE service_category_table(
   service_category VARCHAR(4000) NOT NULL,
   service_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   service_category_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  service_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
+
   service_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -720,7 +705,6 @@ CREATE TABLE general_unit_of_measurement_table(
   general_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   general_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  general_unit_of_measurement_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   general_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -851,7 +835,6 @@ CREATE TABLE other_expenses_category_table(
   other_expenses_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   other_expenses_category_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  other_expenses_category_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   other_expenses_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -866,8 +849,7 @@ CREATE TABLE other_expenses_type_table(
   other_expenses_type_is_disabled BOOLEAN DEFAULT false NOT NULL,
   other_expenses_type_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  other_expenses_type_category_id UUID REFERENCES other_expenses_category_table(other_expenses_category_id),
-  other_expenses_type_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id)
+  other_expenses_type_category_id UUID REFERENCES other_expenses_category_table(other_expenses_category_id)
 );
 
 -- End: Other expenses type table
@@ -935,7 +917,6 @@ CREATE TABLE capacity_unit_of_measurement_table(
   capacity_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   capacity_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  capacity_unit_of_measurement_encoder_team_member_id UUID REFERENCES team_member_table(team_member_id),
   capacity_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
@@ -1018,7 +999,6 @@ CREATE TABLE employee_job_title_table (
     employee_job_title_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
     employee_job_title_label VARCHAR(4000) NOT NULL,
     employee_job_title_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    employee_job_title_date_updated TIMESTAMPTZ,
     employee_job_title_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
 );
 
@@ -1030,8 +1010,7 @@ CREATE TABLE scic_employee_table (
     scic_employee_middle_name VARCHAR(4000),
     scic_employee_last_name VARCHAR(4000) NOT NULL,
     scic_employee_suffix VARCHAR(10),
-    scic_employee_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    scic_employee_date_updated TIMESTAMPTZ
+    scic_employee_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
 CREATE TABLE currency_table (
@@ -1701,7 +1680,6 @@ RETURNS JSON AS $$
         item_gl_account,
         item_team_id,
         item_division_id_list,
-        item_encoder_team_member_id,
         item_level_three_description,
         item_is_ped_item,
         item_category_id,
@@ -1719,7 +1697,6 @@ RETURNS JSON AS $$
           item_unit,
           item_gl_account,
           item_team_id,
-          item_encoder_team_member_id, 
           item_is_ped_item, 
           item_category_id,
           item_is_it_asset_item
@@ -1731,7 +1708,6 @@ RETURNS JSON AS $$
           '${item_unit}',
           '${item_gl_account}',
           '${item_team_id}',
-          '${item_encoder_team_member_id}',
           '${Boolean(item_is_ped_item)}',
           ${item_category_id ? `'${item_category_id}'` : null},
           '${Boolean(item_is_it_asset_item)}'
@@ -2296,9 +2272,7 @@ RETURNS JSON AS $$
     const fieldValues = fieldInput
       .map(
         (field) =>
-          `('${field.field_id}','${field.field_name}','${field.field_type}',${
-            field.field_description ? `'${field.field_description}'` : "NULL"
-          },'${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}', ${field.field_special_field_template_id ? `'${field.field_special_field_template_id}'` : "NULL"})`
+          `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_is_positive_metric}','${field.field_is_required}','${field.field_order}','${field.field_section_id}', ${field.field_special_field_template_id ? `'${field.field_special_field_template_id}'` : "NULL"})`
       )
       .join(",");
 
@@ -2326,7 +2300,7 @@ RETURNS JSON AS $$
     
     const section_query = `INSERT INTO section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
 
-    const field_query = `INSERT INTO field_table (field_id,field_name,field_type,field_description,field_is_positive_metric,field_is_required,field_order,field_section_id,field_special_field_template_id) VALUES ${fieldValues}`;
+    const field_query = `INSERT INTO field_table (field_id,field_name,field_type,field_is_positive_metric,field_is_required,field_order,field_section_id,field_special_field_template_id) VALUES ${fieldValues}`;
 
     const option_query = `INSERT INTO option_table (option_id,option_value,option_order,option_field_id) VALUES ${optionValues}`;
 
@@ -9210,7 +9184,6 @@ RETURNS VOID AS $$
       model,
       unitOfMeasure,
       category,
-      teamMemberId,
       teamId
     } = input_data;
     
@@ -9225,9 +9198,9 @@ RETURNS VOID AS $$
       generalNameId = plv8.execute(
         `
           INSERT INTO equipment_general_name_table 
-          (equipment_general_name, equipment_general_name_team_id, equipment_general_name_encoder_team_member_id) 
+          (equipment_general_name, equipment_general_name_team_id) 
           VALUES 
-          ('${partName}', '${teamId}', '${teamMemberId}')
+          ('${partName}', '${teamId}')
           RETURNING *
         `
       );
@@ -9236,9 +9209,9 @@ RETURNS VOID AS $$
       brandId = plv8.execute(
         `
           INSERT INTO equipment_brand_table 
-          (equipment_brand, equipment_brand_team_id, equipment_brand_encoder_team_member_id) 
+          (equipment_brand, equipment_brand_team_id) 
           VALUES 
-          ('${brand}', '${teamId}', '${teamMemberId}')
+          ('${brand}', '${teamId}')
           RETURNING *
         `
       );
@@ -9247,9 +9220,9 @@ RETURNS VOID AS $$
       modelId = plv8.execute(
         `
           INSERT INTO equipment_model_table 
-          (equipment_model, equipment_model_team_id, equipment_model_encoder_team_member_id) 
+          (equipment_model, equipment_model_team_id) 
           VALUES 
-          ('${model}', '${teamId}', '${teamMemberId}')
+          ('${model}', '${teamId}')
           RETURNING *
         `
       );
@@ -9258,9 +9231,9 @@ RETURNS VOID AS $$
       uomId = plv8.execute(
         `
           INSERT INTO equipment_unit_of_measurement_table 
-          (equipment_unit_of_measurement, equipment_unit_of_measurement_team_id, equipment_unit_of_measurement_encoder_team_member_id) 
+          (equipment_unit_of_measurement, equipment_unit_of_measurement_team_id) 
           VALUES 
-          ('${unitOfMeasure}', '${teamId}', '${teamMemberId}')
+          ('${unitOfMeasure}', '${teamId}')
           RETURNING *
         `
       );
@@ -9269,9 +9242,9 @@ RETURNS VOID AS $$
       categoryId = plv8.execute(
         `
           INSERT INTO equipment_component_category_table 
-          (equipment_component_category, equipment_component_category_team_id, equipment_component_category_encoder_team_member_id) 
+          (equipment_component_category, equipment_component_category_team_id) 
           VALUES 
-          ('${category}', '${teamId}', '${teamMemberId}')
+          ('${category}', '${teamId}')
           RETURNING *
         `
       );
@@ -9298,9 +9271,9 @@ RETURNS VOID AS $$
     plv8.execute(
       `
         INSERT INTO equipment_part_table
-          (equipment_part_number, equipment_part_general_name_id, equipment_part_brand_id, equipment_part_model_id, equipment_part_unit_of_measurement_id, equipment_part_component_category_id, equipment_part_equipment_id, equipment_part_encoder_team_member_id)
+          (equipment_part_number, equipment_part_general_name_id, equipment_part_brand_id, equipment_part_model_id, equipment_part_unit_of_measurement_id, equipment_part_component_category_id, equipment_part_equipment_id)
         VALUES
-          ('${partNumber}', '${generalNameId[0].equipment_general_name_id}', '${brandId[0].equipment_brand_id}', '${modelId[0].equipment_model_id}', '${uomId[0].equipment_unit_of_measurement_id}', '${categoryId[0].equipment_component_category_id}', '${equipmentId}', '${teamMemberId}')
+          ('${partNumber}', '${generalNameId[0].equipment_general_name_id}', '${brandId[0].equipment_brand_id}', '${modelId[0].equipment_model_id}', '${uomId[0].equipment_unit_of_measurement_id}', '${categoryId[0].equipment_component_category_id}', '${equipmentId}')
       `
     );
  });
