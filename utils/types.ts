@@ -1964,6 +1964,7 @@ export type JiraWAVTicketPayloadProps = {
   amount: string;
   amountInWord: string;
   particulars: string;
+  department: string;
 };
 
 export type JiraESRTicketPayloadProps = {
