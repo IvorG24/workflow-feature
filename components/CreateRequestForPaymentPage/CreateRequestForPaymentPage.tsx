@@ -10,6 +10,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { handleRemoveFocus } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -83,12 +84,14 @@ type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
   departmentOptions: OptionTableRow[];
+  allProjectOptions: OptionTableRow[];
 };
 
 const CreateRequestForPaymentPage = ({
   form,
   projectOptions,
   departmentOptions,
+  allProjectOptions,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -220,13 +223,6 @@ const CreateRequestForPaymentPage = ({
     };
 
     insertSection(sectionLastIndex + 1, newSection);
-    setTimeout(
-      () =>
-        setFocus(
-          `sections.${sectionLastIndex + 1}.section_field.0.field_response`
-        ),
-      0
-    );
     return;
   };
 
@@ -441,19 +437,26 @@ const CreateRequestForPaymentPage = ({
 
       if (prevValue) {
         if (prevValue === "Employee") {
-          updateSection(1, {
+          removeSection(1);
+          insertSection(1, {
             ...paymentInformationSection,
             section_field: paymentInformationSection.section_field.slice(2),
           });
         } else if (prevValue === "Individual") {
-          updateSection(1, {
+          removeSection(1);
+          insertSection(1, {
             ...paymentInformationSection,
             section_field: paymentInformationSection.section_field.slice(1),
           });
         } else if (prevValue === "Business") {
-          updateSection(0, {
+          removeSection([0, 1]);
+          insertSection(0, {
             ...headerSection,
             section_field: headerSection.section_field.slice(0, -1),
+          });
+          insertSection(1, {
+            ...paymentInformationSection,
+            section_field: paymentInformationSection.section_field.slice(1),
           });
         }
       }
@@ -462,29 +465,51 @@ const CreateRequestForPaymentPage = ({
         const headerSection = getValues("sections.0");
         const paymentInformationSection = getValues("sections.1");
         if (value === "Employee") {
-          updateSection(1, {
+          removeSection(1);
+          insertSection(1, {
             ...paymentInformationSection,
             section_field: [
               ...form.form_section[1].section_field.slice(0, 2),
               ...paymentInformationSection.section_field,
             ],
           });
+          setTimeout(
+            () => setFocus(`sections.1.section_field.0.field_response`),
+            0
+          );
         } else if (value === "Individual") {
-          updateSection(1, {
+          removeSection(1);
+          insertSection(1, {
             ...paymentInformationSection,
             section_field: [
               form.form_section[1].section_field[2],
               ...paymentInformationSection.section_field,
             ],
           });
+          setTimeout(
+            () => setFocus(`sections.1.section_field.0.field_response`),
+            0
+          );
         } else if (value === "Business") {
-          updateSection(0, {
+          removeSection([0, 1]);
+          insertSection(0, {
             ...headerSection,
             section_field: [
               ...headerSection.section_field,
               form.form_section[0].section_field[9],
             ],
           });
+          insertSection(1, {
+            ...paymentInformationSection,
+            section_field: [
+              form.form_section[1].section_field[2],
+              ...paymentInformationSection.section_field,
+            ],
+          });
+          setTimeout(() => {
+            handleRemoveFocus();
+            setFocus(`sections.0.section_field.0.field_response`);
+          }, 0);
         }
       }
     } catch (e) {
@@ -606,7 +631,7 @@ const CreateRequestForPaymentPage = ({
         if (section.section_name !== "Request") return;
         let newOption: OptionTableRow[] = [];
         if (value === "Project") {
-          newOption = projectOptions.filter(
+          newOption = allProjectOptions.filter(
             (project) => !project.option_value.includes("CENTRAL OFFICE")
           );
         } else if (value === "Various Department") {

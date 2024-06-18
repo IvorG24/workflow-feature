@@ -65,6 +65,7 @@ type Props = {
   categoryOptions?: OptionTableRow[];
   connectedRequest?: ConnectedRequestFormProps;
   departmentOptions?: OptionTableRow[];
+  allProjectOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -73,6 +74,7 @@ const Page = ({
   categoryOptions = [],
   connectedRequest,
   departmentOptions = [],
+  allProjectOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -174,6 +176,7 @@ const Page = ({
             form={form}
             projectOptions={projectOptions}
             departmentOptions={departmentOptions}
+            allProjectOptions={allProjectOptions}
           />
         );
 
