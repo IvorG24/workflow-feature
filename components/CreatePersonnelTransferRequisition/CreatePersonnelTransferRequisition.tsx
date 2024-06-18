@@ -1020,9 +1020,10 @@ const CreatePersonnelTransferRequisition = ({
     const currentSection = getValues(`sections.${index}`);
     try {
       setLoadingFieldList([{ sectionIndex: index, fieldIndex: 3 }]);
-      removeSection(index);
+
       if (value === "Contractual") {
-        updateSection(index, {
+        removeSection(index);
+        addSection(index, {
           ...currentSection,
           section_field: [
             ...currentSection.section_field.slice(0, 4),
@@ -1031,7 +1032,8 @@ const CreatePersonnelTransferRequisition = ({
           ],
         });
       } else if (prevValue === "Contractual") {
-        updateSection(index, {
+        removeSection(index);
+        addSection(index, {
           ...currentSection,
           section_field: [
             ...currentSection.section_field.slice(0, 4),
@@ -1058,15 +1060,17 @@ const CreatePersonnelTransferRequisition = ({
     const currentSection = getValues(`sections.${sectionIndex}`);
     try {
       setLoadingFieldList([{ sectionIndex, fieldIndex }]);
-      removeSection(sectionIndex);
+
       const newSectionField = currentSection.section_field.filter(
         (field) =>
           !["Area of Assignment", "Specific Work Assignment"].includes(
             field.field_name
           )
       );
+
+      removeSection(sectionIndex);
       if (value === "Area of Assignment") {
-        updateSection(sectionIndex, {
+        addSection(sectionIndex, {
           ...currentSection,
           section_field: [
             ...newSectionField,
@@ -1074,7 +1078,7 @@ const CreatePersonnelTransferRequisition = ({
           ],
         });
       } else if (value === "Specific Work Assignment") {
-        updateSection(sectionIndex, {
+        addSection(sectionIndex, {
           ...currentSection,
           section_field: [
             ...newSectionField,
@@ -1082,7 +1086,7 @@ const CreatePersonnelTransferRequisition = ({
           ],
         });
       } else {
-        updateSection(sectionIndex, {
+        addSection(sectionIndex, {
           ...currentSection,
           section_field: newSectionField,
         });
