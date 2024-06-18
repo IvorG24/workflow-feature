@@ -1020,6 +1020,7 @@ const CreatePersonnelTransferRequisition = ({
     const currentSection = getValues(`sections.${index}`);
     try {
       setLoadingFieldList([{ sectionIndex: index, fieldIndex: 3 }]);
+      removeSection(index);
       if (value === "Contractual") {
         updateSection(index, {
           ...currentSection,
@@ -1057,7 +1058,7 @@ const CreatePersonnelTransferRequisition = ({
     const currentSection = getValues(`sections.${sectionIndex}`);
     try {
       setLoadingFieldList([{ sectionIndex, fieldIndex }]);
-
+      removeSection(sectionIndex);
       const newSectionField = currentSection.section_field.filter(
         (field) =>
           !["Area of Assignment", "Specific Work Assignment"].includes(
