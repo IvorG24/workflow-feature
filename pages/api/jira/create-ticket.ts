@@ -116,7 +116,7 @@ export default async function handler(
       );
     }
 
-    if (req.body.requestCommentList) {
+    if (req.body.requestCommentList && req.body.requestCommentList.length > 0) {
       const requestBody = await createJiraCommentRequestBody(
         supabaseClient,
         req.body.requestCommentList
