@@ -204,7 +204,7 @@ const RequestForPaymentRequestPage = ({
 
   useEffect(() => {
     const fetchRFPCodeRequest = async () => {
-      // check if boq request exists
+      // check if rfp code request exists
       const rfpCodeRequest = await getExistingRFPCodeRequest(
         supabaseClient,
         request.request_id
@@ -615,16 +615,19 @@ const RequestForPaymentRequestPage = ({
     request.request_form.form_section[0].section_field[1].field_response[0]
       .request_response
   );
-  const selectedProject = safeParse(
-    request.request_form.form_section[0].section_field[0].field_response[0]
-      .request_response
+  const chargeTo = safeParse(
+    formSection.length
+      ? formSection[1].section_field.find(
+          (field) => field.field_name === "Charge To"
+        )?.field_response?.request_response ?? ""
+      : ""
   );
+
   const canCreateRFPCode =
     requestStatus === "APPROVED" &&
     isUserCostEngineer &&
-    selectedDepartment !== "PED" &&
-    selectedDepartment !== "Plants and Equipment" &&
-    !selectedProject.includes("CENTRAL OFFICE");
+    !["PED", "Plants and Equipment"].includes(selectedDepartment) &&
+    chargeTo === "Project";
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
@@ -739,7 +742,8 @@ const RequestForPaymentRequestPage = ({
             requestId={request.request_id}
             isItemForm
             onCreateJiraTicket={
-              selectedDepartment === "Plants and Equipment"
+              ["Plants and Equipment", "PED"].includes(selectedDepartment) ||
+              chargeTo === "Department"
                 ? onCreateJiraTicket
                 : undefined
             }
