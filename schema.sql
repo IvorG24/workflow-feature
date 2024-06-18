@@ -5564,8 +5564,8 @@ RETURNS JSON as $$
         const projects = plv8.execute(
           `
             SELECT 
-                team_project_table.team_project_id,
-                team_project_table.team_project_name
+              team_project_table.team_project_id,
+              team_project_table.team_project_name
             FROM team_project_member_table
             INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
@@ -5604,6 +5604,27 @@ RETURNS JSON as $$
           };
         });
 
+        const allProjects = plv8.execute(
+          `
+            SELECT 
+              team_project_id,
+              team_project_name
+            FROM team_project_table
+            WHERE
+              team_project_is_disabled = false
+            ORDER BY team_project_name;
+          `
+        );
+
+        const allProjectOptions = allProjects.map((project, index) => {
+          return {
+            option_field_id: form.form_section[2].section_field[2].field_id,
+            option_id: project.team_project_id,
+            option_order: index,
+            option_value: project.team_project_name,
+          };
+        });
+
         returnData = {
           form: {
             ...form,
@@ -5626,7 +5647,8 @@ RETURNS JSON as $$
             ],
           },
           projectOptions,
-          departmentOptions
+          departmentOptions,
+          allProjectOptions
         }
         return;
       } else if (form.form_name === "Request For Payment Code") {

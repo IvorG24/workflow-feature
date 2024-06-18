@@ -199,3 +199,10 @@ export const addHttpsToUrlIfMissing = (url: string) => {
   }
   return url;
 };
+
+export const handleRemoveFocus = () => {
+  const focusedElement = document.activeElement;
+  if (focusedElement instanceof HTMLElement) {
+    focusedElement.blur();
+  }
+};
