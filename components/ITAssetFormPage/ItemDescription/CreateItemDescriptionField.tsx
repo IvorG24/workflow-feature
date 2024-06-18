@@ -129,8 +129,6 @@ const CreateItemDescriptionField = ({
             item_description_field_is_available: descriptionField.isAvailable,
             item_description_field_item_description_id: descriptionId,
             item_description_field_uom: descriptionField.unitOfMeasurement,
-            item_description_field_encoder_team_member_id:
-              teamMember.team_member_id,
           };
         })
       );

@@ -111,8 +111,6 @@ const CreateEquipmentDescription = ({
           equipment_description_brand_id: data.brand,
           equipment_description_model_id: data.model,
           equipment_description_equipment_id: selectedEquipment.equipment_id,
-          equipment_description_encoder_team_member_id:
-            teamMember?.team_member_id,
           equipment_description_acquisition_date: data.acquisitionDate
             ? moment(data.acquisitionDate).year()
             : null,

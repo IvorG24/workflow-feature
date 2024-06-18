@@ -135,8 +135,6 @@ const Section = ({
       field_id: fieldId,
       field_name: specialFieldTemplate.special_field_template_name,
       field_type: specialFieldTemplate.special_field_template_type,
-      field_description:
-        specialFieldTemplate.special_field_template_description,
       field_section_id: section.section_id,
       field_is_required: false,
       field_is_positive_metric: true,

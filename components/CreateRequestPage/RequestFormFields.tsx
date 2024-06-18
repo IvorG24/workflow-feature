@@ -287,7 +287,6 @@ const RequestFormFields = ({
 
   const inputProps = {
     label: field.field_name,
-    description: field.field_description,
     required: field.field_is_required,
     variant: field.field_is_read_only ? "filled" : "default",
     error: fieldError,
@@ -492,7 +491,6 @@ const RequestFormFields = ({
               render={({ field: { value, onChange } }) => (
                 <CurrencyFormField
                   label={inputProps.label}
-                  description={inputProps.description ?? undefined}
                   selectInputProps={{
                     data: currencyOptionList ?? [],
                     value: currencyFieldValue,

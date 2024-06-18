@@ -402,8 +402,6 @@ export const createItemDescriptionField = async (
         field.item_description_field_is_available,
       item_description_field_item_description_id:
         field.item_description_field_item_description_id,
-      item_description_field_encoder_team_member_id:
-        field.item_description_field_encoder_team_member_id,
     };
   });
   const { data: item, error: itemError } = await supabaseClient
@@ -1577,7 +1575,6 @@ export const createPedPartFromTicketRequest = async (
     model: string;
     unitOfMeasure: string;
     category: string;
-    teamMemberId: string;
     teamId: string;
   }
 ) => {

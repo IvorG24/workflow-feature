@@ -1,7 +1,6 @@
 import { checkLookupTable } from "@/backend/api/get";
 import { createRowInLookupTable } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { LookupForm } from "@/utils/types";
 
@@ -35,7 +34,6 @@ const CreateCategoryLookup = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
-  const teamMember = useUserTeamMember();
 
   const { register, formState, handleSubmit } = useForm<LookupForm>({
     defaultValues: {
@@ -48,7 +46,6 @@ const CreateCategoryLookup = ({
     try {
       const lookupValue = lookup.table;
       const isAvaialble = `${lookup.table}_is_available`;
-      const encoder = `${lookup.table}_encoder_team_member_id`;
       const team = `${lookup.table}_team_id`;
 
       await createRowInLookupTable(supabaseClient, {
@@ -58,7 +55,6 @@ const CreateCategoryLookup = ({
               ? data.value
               : data.value.toUpperCase().trim(),
           [isAvaialble]: data.isAvailable,
-          [encoder]: teamMember?.team_member_id,
           [team]: activeTeam.team_id,
         } as unknown as JSON,
         tableName: lookup.table,

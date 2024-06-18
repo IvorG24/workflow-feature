@@ -1,7 +1,6 @@
 import { checkEquipmentLookupTable } from "@/backend/api/get";
 import { createRowInLookupTable } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { EquipmentLookupChoices, LookupForm } from "@/utils/types";
 import {
@@ -34,7 +33,6 @@ const CreateEquipmentLookup = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
-  const teamMember = useUserTeamMember();
 
   const { register, formState, handleSubmit } = useForm<LookupForm>({
     defaultValues: {
@@ -47,7 +45,6 @@ const CreateEquipmentLookup = ({
     try {
       const lookupValue = lookup.table;
       const isAvaialble = `${lookup.table}_is_available`;
-      const encoder = `${lookup.table}_encoder_team_member_id`;
       const team = `${lookup.table}_team_id`;
 
       await createRowInLookupTable(supabaseClient, {
@@ -57,7 +54,6 @@ const CreateEquipmentLookup = ({
               ? data.value.trim()
               : data.value.toUpperCase().trim(),
           [isAvaialble]: data.isAvailable,
-          [encoder]: teamMember?.team_member_id,
           [team]: activeTeam.team_id,
         } as unknown as JSON,
         tableName: lookup.table,
