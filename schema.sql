@@ -5451,8 +5451,38 @@ RETURNS JSON as $$
           };
         });
 
+        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_department_table WHERE team_department_is_disabled=FALSE`);
+
+        const departmentOptions = departments.map((department, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_id: department.team_department_id,
+            option_order: index,
+            option_value: department.team_department_name
+          }
+        });
+
+        const requestDetailsSectionFieldList = form.form_section[0].section_field.map((field) => {
+          if (field.field_name === 'Department') {
+            return {
+              ...field,
+              field_option: departmentOptions,
+            }
+          }  else {
+            return field;
+          }
+        });
+
         returnData = {
-          form,
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: requestDetailsSectionFieldList,
+              }
+            ],
+          },
           projectOptions
         }
         return;

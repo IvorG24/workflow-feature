@@ -381,9 +381,8 @@ const EquipmentServiceReportRequestPage = ({
       }
 
       const { fields } = await automationFormResponse.json();
-      const departmentList = fields["4"].choices;
+      const departmentList = fields["24"].choices;
       const workcodeList = fields["7"].choices;
-      const propertyNumberList = fields["10"].choices;
 
       const requestDepartment = safeParse(
         `${formSection[0].section_field[2].field_response?.request_response}`
@@ -403,13 +402,8 @@ const EquipmentServiceReportRequestPage = ({
         (code: JiraFormFieldChoice) =>
           code.name.trim().toLowerCase() === requestWorkcode.toLowerCase()
       );
-      const propertyNumber = propertyNumberList.find(
-        (property: JiraFormFieldChoice) =>
-          property.name.trim().toLowerCase() ===
-          requestPropertyNumber.toLowerCase()
-      );
 
-      if (!department || !workcode || !propertyNumber) {
+      if (!department || !workcode) {
         throw new Error(
           "Jira department, workcode, and property number might be undefined."
         );
@@ -423,7 +417,7 @@ const EquipmentServiceReportRequestPage = ({
         requestorName,
         department: department.id,
         workcode: workcode.id,
-        propertyNumber: propertyNumber.id,
+        propertyNumber: requestPropertyNumber,
       });
 
       const jiraTicket = await createJiraTicket({
