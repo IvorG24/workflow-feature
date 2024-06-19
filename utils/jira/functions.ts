@@ -644,7 +644,7 @@ export const formatJiraRFPPayload = ({
   costCode,
 }: JiraRFPTicketPayloadProps) => {
   // if department = plants and equipment, use PED jira form
-  const isPEDDepartment = department === "10164";
+  const isPEDDepartment = ["Plants and Equipment", "PED"].includes(department);
   const requestTypeId = isPEDDepartment ? "333" : "337";
   const serviceDeskId = isPEDDepartment ? "27" : "23";
 
@@ -656,12 +656,6 @@ export const formatJiraRFPPayload = ({
         },
         "1": {
           choices: [jiraProjectSiteId],
-        },
-        "6": {
-          choices: [department],
-        },
-        "8": {
-          choices: [payeeType],
         },
         "13": {
           choices: [purpose],
@@ -679,7 +673,7 @@ export const formatJiraRFPPayload = ({
   };
 
   if (jiraProjectSiteId === "10172") {
-    jiraTicketPayload.form.answers["12"] = {
+    jiraTicketPayload.form.answers["23"] = {
       text: departmentCode,
     };
   }
@@ -697,12 +691,18 @@ export const formatJiraRFPPayload = ({
     jiraTicketPayload.form.answers["24"] = {
       text: requestUrl,
     };
+    jiraTicketPayload.form.answers["25"] = {
+      choices: [payeeType],
+    };
   } else {
     jiraTicketPayload.form.answers["19"] = {
       text: requestId,
     };
     jiraTicketPayload.form.answers["20"] = {
       text: requestUrl,
+    };
+    jiraTicketPayload.form.answers["24"] = {
+      choices: [payeeType],
     };
   }
 
