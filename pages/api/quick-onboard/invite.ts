@@ -1,4 +1,3 @@
-import { generateEmailInviteToken } from "@/utils/functions";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -25,12 +24,27 @@ export default async function handler(
 
     for (const email of emailList) {
       try {
-        const inviteToken = generateEmailInviteToken({
+        const inviteProps = {
           teamId,
           teamName,
           invitedEmail: email,
           secretKey: process.env.JWT_SECRET_KEY,
-        });
+        };
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/api/jwt`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "encrypt",
+              value: inviteProps,
+            }),
+          }
+        );
+        const { data: inviteToken } = await response.json();
+        if (!inviteToken) throw new Error("Jwt decoded token is null");
+
         const inviteUrl = `${window.location.origin}/api/quick-onboard?token=${inviteToken}`;
 
         await supabaseClient.auth.signUp({

@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import jwt from "jsonwebtoken";
 import moment from "moment";
 import dynamic from "next/dynamic";
 import { JiraItemUserTableData } from "./types";
@@ -206,46 +205,6 @@ export const handleRemoveFocus = () => {
   if (focusedElement instanceof HTMLElement) {
     focusedElement.blur();
   }
-};
-
-export const verifyJwtToken = async ({
-  token,
-  secretKey,
-}: {
-  token: string;
-  secretKey: string;
-}) => {
-  try {
-    const decodedToken = jwt.verify(token, secretKey);
-    return decodedToken;
-  } catch (error) {
-    console.log(error);
-    return null;
-  }
-};
-
-export const generateEmailInviteToken = ({
-  teamId,
-  teamName,
-  invitedEmail,
-  secretKey,
-}: {
-  teamId: string;
-  teamName: string;
-  invitedEmail: string;
-  secretKey: string;
-}) => {
-  const inviteParameter = {
-    teamId,
-    teamName,
-    invitedEmail,
-  };
-
-  const jwtInviteToken = jwt.sign(inviteParameter, secretKey, {
-    expiresIn: "48h",
-  });
-
-  return jwtInviteToken;
 };
 
 export const sendEmailTeamInvite = async ({

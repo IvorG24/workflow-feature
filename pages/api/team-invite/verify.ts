@@ -1,6 +1,5 @@
 import { getInvitationId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
-import { verifyJwtToken } from "@/utils/functions";
 import { TeamInviteJwtPayload } from "@/utils/types";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextApiRequest, NextApiResponse } from "next";
@@ -31,16 +30,24 @@ export default async function handler(
       data: { user },
     } = await supabaseClient.auth.getUser();
 
-    const decodedToken = await verifyJwtToken({
-      token: `${token}`,
-      secretKey: process.env.JWT_SECRET_KEY,
-    });
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/jwt`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "decrypt",
+          value: `${token}`,
+        }),
+      }
+    );
+    const { data } = await response.json();
 
-    if (!decodedToken) {
+    if (!data) {
       return res.status(405).json({ error: "Jwt decoded token is null" });
     }
 
-    const { teamId, invitedEmail } = decodedToken as TeamInviteJwtPayload;
+    const { teamId, invitedEmail } = data as TeamInviteJwtPayload;
 
     if (!user) {
       res.redirect(`/sign-in?inviteToken=${token}`);
