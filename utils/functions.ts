@@ -206,3 +206,35 @@ export const handleRemoveFocus = () => {
     focusedElement.blur();
   }
 };
+
+export const sendEmailTeamInvite = async ({
+  emailList,
+  teamName,
+  teamId,
+}: {
+  emailList: string[];
+  teamId: string;
+  teamName: string;
+}) => {
+  const subject = `You have been invited to join ${teamName} on Formsly.`;
+  try {
+    await Promise.all(
+      emailList.map((email) =>
+        fetch("/api/team-invite/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: email,
+            subject,
+            teamId: teamId,
+            teamName: teamName,
+          }),
+        })
+      )
+    );
+  } catch (error) {
+    console.log(error);
+  }
+};

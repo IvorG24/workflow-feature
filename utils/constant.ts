@@ -46,6 +46,8 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Sourced Item",
   "Transfer Receipt",
   "Subcon",
+  "Request For Payment Code",
+  "Bill of Quantity",
 ];
 
 export const SLA_LIST = [
@@ -1164,9 +1166,6 @@ export const FORMSLY_FORM_ORDER = [
   "Quotation",
   "Receiving Inspecting Report",
 ];
-
-export const JWT_SECRET_KEY =
-  "6B03E2CAE99D0C9DEE49BAC2E6B0427E5BE90C34222E845A624904C1CA84D48A";
 
 // Common image file extensions
 export const imageExtensions = [
