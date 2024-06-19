@@ -1896,6 +1896,11 @@ export type RequestListFilterValues = {
   idFilter?: string[];
 };
 
+export type TeamInviteJwtPayload = {
+  teamId: string;
+  invitedEmail: string;
+};
+
 export type JiraPayloadType = {
   form: {
     answers: {

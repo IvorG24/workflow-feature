@@ -1,7 +1,5 @@
 import { getInvitationId } from "@/backend/api/get";
 import { checkIfEmailExists, signInUser } from "@/backend/api/post";
-import { JwtPayload } from "@/pages/api/team-invite";
-import { JWT_SECRET_KEY } from "@/utils/constant";
 import {
   Anchor,
   Box,
@@ -21,7 +19,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import jwt from "jsonwebtoken";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useState } from "react";
@@ -102,11 +99,18 @@ const SignInPage = () => {
         const { inviteToken } = router.query;
 
         if (inviteToken) {
-          const decodedToken = jwt.verify(
-            `${inviteToken}`,
-            JWT_SECRET_KEY
-          ) as JwtPayload;
-          const { teamId, invitedEmail } = decodedToken;
+          const response = await fetch("/api/jwt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "decrypt",
+              value: inviteToken,
+            }),
+          });
+          const { data } = await response.json();
+          if (!data) throw new Error("Jwt decoded token is null");
+
+          const { teamId, invitedEmail } = data;
           const invitationId = await getInvitationId(supabaseClient, {
             teamId: `${teamId}`,
             userEmail: `${invitedEmail}`,
