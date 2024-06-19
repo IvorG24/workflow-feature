@@ -45,7 +45,7 @@ export default async function handler(
         const { data: inviteToken } = await response.json();
         if (!inviteToken) throw new Error("Jwt decoded token is null");
 
-        const inviteUrl = `${window.location.origin}/api/quick-onboard?token=${inviteToken}`;
+        const inviteUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/quick-onboard?token=${inviteToken}`;
 
         await supabaseClient.auth.signUp({
           email,
