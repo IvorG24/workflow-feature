@@ -1,8 +1,3 @@
-DROP SCHEMA IF EXISTS public CASCADE;
-
-CREATE SCHEMA public
-  AUTHORIZATION postgres;
-
 -- Remove all policies for files
 DROP POLICY IF EXISTS objects_policy ON storage.objects;
 DROP POLICY IF EXISTS buckets_policy ON storage.buckets;
@@ -27,17 +22,31 @@ INSERT INTO storage.buckets (id, name) VALUES ('TICKET_ATTACHMENTS', 'TICKET_ATT
 
 UPDATE storage.buckets SET public = true;
 
----------- Start: TABLES
+----- START: EXTENSIONS
 
--- Start: formsly_price_table
-CREATE TABLE formsly_price_table (
-  formsly_price_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  formsly_price_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  formsly_price INT NOT NULL
+CREATE EXTENSION IF NOT EXISTS plv8;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
+
+----- END: EXTENSIONS
+
+----- START: SCHEMA
+
+DROP SCHEMA IF EXISTS public CASCADE;
+CREATE SCHEMA public AUTHORIZATION postgres;
+
+----- END: SCHEMA
+
+----- START: TABLES
+
+CREATE TABLE attachment_table (
+  attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  attachment_name VARCHAR(4000) NOT NULL,
+  attachment_value VARCHAR(4000) NOT NULL,
+  attachment_bucket VARCHAR(4000) NOT NULL,
+  attachment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  attachment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
 );
--- End: address_table
 
--- Start: address_table
 CREATE TABLE address_table (
   address_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   address_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -48,37 +57,24 @@ CREATE TABLE address_table (
   address_street VARCHAR(4000) NOT NULL,
   address_zip_code VARCHAR(4000) NOT NULL
 );
--- End: address_table
 
--- Start: Attachments
-CREATE TABLE attachment_table (
-    attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    attachment_name VARCHAR(4000) NOT NULL,
-    attachment_value VARCHAR(4000) NOT NULL,
-    attachment_bucket VARCHAR(4000) NOT NULL,
-    attachment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    attachment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
-);
--- End: Attachments
-
--- Start: User and Teams
 CREATE TABLE user_table (
-    -- temporary
-    user_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    user_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    user_username VARCHAR(4000) UNIQUE NOT NULL,
-    user_first_name VARCHAR(4000) NOT NULL,
-    user_last_name VARCHAR(4000) NOT NULL,
-    user_email VARCHAR(4000) UNIQUE NOT NULL,
-    user_job_title VARCHAR(4000),
-    user_phone_number VARCHAR(4000),
-    user_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-    user_active_team_id UUID,
-    user_active_app VARCHAR(4000) DEFAULT 'REQUEST' NOT NULL,
-    user_avatar VARCHAR(4000),
+  user_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_username VARCHAR(4000) UNIQUE NOT NULL,
+  user_first_name VARCHAR(4000) NOT NULL,
+  user_last_name VARCHAR(4000) NOT NULL,
+  user_email VARCHAR(4000) UNIQUE NOT NULL,
+  user_job_title VARCHAR(4000),
+  user_phone_number VARCHAR(4000),
+  user_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  user_active_team_id UUID,
+  user_active_app VARCHAR(4000) DEFAULT 'REQUEST' NOT NULL,
+  user_avatar VARCHAR(4000),
 
-    user_signature_attachment_id UUID REFERENCES attachment_table(attachment_id)
+  user_signature_attachment_id UUID REFERENCES attachment_table(attachment_id)
 );
+
 CREATE TABLE team_table (
   team_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -90,6 +86,7 @@ CREATE TABLE team_table (
   
   team_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
+
 CREATE TABLE team_transaction_table (
   team_transaction_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_transaction_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -99,7 +96,8 @@ CREATE TABLE team_transaction_table (
   
   team_transaction_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
-CREATE TABLE team_member_table(
+
+CREATE TABLE team_member_table (
   team_member_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_member_role VARCHAR(4000) DEFAULT 'MEMBER' NOT NULL,
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
@@ -109,7 +107,8 @@ CREATE TABLE team_member_table(
   team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   UNIQUE (team_member_team_id, team_member_user_id)
 );
-CREATE TABLE team_group_table(
+
+CREATE TABLE team_group_table (
   team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   team_group_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   team_group_name VARCHAR(4000) NOT NULL,
@@ -117,7 +116,8 @@ CREATE TABLE team_group_table(
 
   team_group_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
-CREATE TABLE team_project_table(
+
+CREATE TABLE team_project_table (
   team_project_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   team_project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   team_project_name VARCHAR(4000) NOT NULL,
@@ -129,14 +129,16 @@ CREATE TABLE team_project_table(
   team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   team_project_address_id UUID REFERENCES address_table(address_id)
 );
-CREATE TABLE team_group_member_table(
+
+CREATE TABLE team_group_member_table (
   team_group_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   team_member_id UUID REFERENCES team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
   team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
 
   UNIQUE(team_group_id, team_member_id) 
 );
-CREATE TABLE team_project_member_table(
+
+CREATE TABLE team_project_member_table (
   team_project_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   team_member_id UUID REFERENCES team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
   team_project_id UUID REFERENCES team_project_table(team_project_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
@@ -144,227 +146,14 @@ CREATE TABLE team_project_member_table(
   UNIQUE(team_project_id, team_member_id) 
 );
 
--- End: User and Teams
-
--- Start: Notification and Invitation
-CREATE TABLE notification_table (
-  notification_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  notification_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  notification_content VARCHAR(4000) NOT NULL,
-  notification_is_read  BOOLEAN DEFAULT FALSE NOT NULL,
-  notification_redirect_url VARCHAR(4000),
-  notification_type VARCHAR(4000) NOT NULL,
-  notification_app VARCHAR(4000) NOT NULL,
-
-  notification_team_id UUID REFERENCES team_table(team_id),
-  notification_user_id UUID REFERENCES user_table(user_id) NOT NULL
-);
-CREATE TABLE invitation_table (
-  invitation_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  invitation_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  invitation_to_email VARCHAR(4000) NOT NULL,
-  invitation_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  invitation_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
-
-  invitation_from_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
-);
--- End: Notification and Invitation
-
--- Start: Form
-CREATE TABLE form_table(
-  form_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  form_name VARCHAR(4000) NOT NULL,
-  form_description VARCHAR(4000) NOT NULL,
-  form_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  form_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  form_is_hidden BOOLEAN DEFAULT FALSE NOT NULL,
-  form_is_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
-  form_is_formsly_form BOOLEAN DEFAULT FALSE NOT NULL,
-  form_app VARCHAR(4000) NOT NULL,
-  form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
-  form_type VARCHAR(4000),
-  form_sub_type VARCHAR(4000),
-
-  form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
-);
-CREATE TABLE signer_table (
-  signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  signer_is_primary_signer BOOLEAN DEFAULT FALSE NOT NULL,
-  signer_action VARCHAR(4000) NOT NULL,
-  signer_order INT NOT NULL,
-  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-
-  signer_form_id UUID REFERENCES form_table(form_id) NOT NULL,
-  signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  signer_team_project_id UUID REFERENCES team_project_table(team_project_id)
-);
-CREATE TABLE section_table (
-  section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  section_name VARCHAR(4000) NOT NULL,
-  section_order INT NOT NULL,
-  section_is_duplicatable BOOLEAN DEFAULT FALSE NOT NULL,
-
-  section_form_id UUID REFERENCES form_table(form_id) NOT NULL
-);
-CREATE TABLE special_field_template_table (
-  special_field_template_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  special_field_template_name VARCHAR(4000) NOT NULL,
-  special_field_template_description VARCHAR(4000),
-  special_field_template_type VARCHAR(4000) NOT NULL
+CREATE TABLE team_department_table (
+  team_department_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_department_name VARCHAR(4000) NOT NULL,
+  team_department_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  team_department_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE field_table (
-  field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  field_name VARCHAR(4000) NOT NULL,
-  field_is_required  BOOLEAN DEFAULT FALSE NOT NULL,
-  field_type VARCHAR(4000) NOT NULL,
-  field_order INT NOT NULL,
-  field_is_positive_metric BOOLEAN DEFAULT TRUE NOT NULL,
-  field_is_read_only BOOLEAN DEFAULT FALSE NOT NULL,
-
-  field_section_id UUID REFERENCES section_table(section_id) NOT NULL,
-  field_special_field_template_id UUID REFERENCES special_field_template_table(special_field_template_id)
-);
-CREATE TABLE option_table (
-  option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  option_value VARCHAR(4000) NOT NULL,
-  option_order INT NOT NULL,
-
-  option_field_id UUID REFERENCES field_table(field_id) NOT NULL
-);
-CREATE TABLE form_team_group_table(
-  form_team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  form_id UUID REFERENCES form_table(form_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-  team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-
-  UNIQUE(form_id, team_group_id) 
-);
--- End: Form
-
--- Start: Request
-CREATE TABLE request_table(
-  request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  request_formsly_id_prefix VARCHAR(4000),
-  request_formsly_id_serial VARCHAR(4000),
-  request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  request_status_date_updated TIMESTAMPTZ,
-  request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
-  request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  request_jira_id VARCHAR(4000),
-  request_jira_link VARCHAR(4000),
-  request_otp_id VARCHAR(4000),
-
-  request_team_member_id UUID REFERENCES team_member_table(team_member_id),
-  request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
-  request_project_id UUID REFERENCES team_project_table(team_project_id)
-);
-CREATE TABLE request_response_table(
-  request_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  request_response VARCHAR(4000) NOT NULL,
-  request_response_duplicatable_section_id UUID,
-  request_response_prefix VARCHAR(4000),
-
-  request_response_request_id UUID REFERENCES request_table(request_id) NOT NULL,
-  request_response_field_id UUID REFERENCES field_table(field_id) NOT NULL
-);
-CREATE TABLE request_signer_table(
-  request_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  request_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
-  request_signer_status_date_updated TIMESTAMPTZ,
-
-  request_signer_request_id UUID REFERENCES request_table(request_id) NOT NULL,
-  request_signer_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
-);
--- End: Request
-
--- Start: Comments
-CREATE TABLE comment_table(
-  comment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  comment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  comment_content VARCHAR(4000),
-  comment_is_edited  BOOLEAN DEFAULT FALSE,
-  comment_last_updated TIMESTAMPTZ,
-  comment_is_disabled  BOOLEAN DEFAULT FALSE NOT NULL,
-  comment_type VARCHAR(4000) NOT NULL,
-
-  comment_request_id UUID REFERENCES request_table(request_id) NOT NULL,
-  comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
-);
--- End: Comments
-
--- Start: Item unit of measurement
-CREATE TABLE item_unit_of_measurement_table(
-  item_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  item_unit_of_measurement VARCHAR(4000) NOT NULL,
-  item_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  item_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
-
-  item_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
--- End: Item unit of measurement
-
--- Start: Item Form
-CREATE TABLE item_category_table(
-  item_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  item_category VARCHAR(4000) NOT NULL,
-  item_category_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  item_category_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-
-  item_category_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
-);
-
-CREATE TABLE item_table(
-  item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  item_general_name VARCHAR(4000) NOT NULL,
-  item_unit VARCHAR(4000) NOT NULL,
-  item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  item_gl_account VARCHAR(4000) NOT NULL,
-  item_is_ped_item BOOLEAN DEFAULT FALSE NOT NULL,
-  item_is_it_asset_item BOOLEAN DEFAULT FALSE NOT NULL,
-
-  item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
-  item_category_id UUID REFERENCES item_category_table(item_category_id)
-);
-
-CREATE TABLE item_division_table(
-  item_division_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_division_value VARCHAR(4000) NOT NULL,
-
-  item_division_item_id UUID REFERENCES item_table(item_id) NOT NULL
-);
-
-CREATE TABLE item_description_table(
-  item_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  item_description_label VARCHAR(4000) NOT NULL,
-  item_description_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  item_description_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  item_description_is_with_uom BOOLEAN DEFAULT FALSE NOT NULL,
-  item_description_order INT NOT NULL,
-
-  item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
-  item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
-);
-
-CREATE TABLE item_description_field_table(
-  item_description_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_description_field_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  item_description_field_value VARCHAR(4000) NOT NULL,
-  item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-
-  item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
-);
-
--- End: Item Form
-
--- Start: Quotation Form
-
-CREATE TABLE supplier_table(
+CREATE TABLE supplier_table (
   supplier_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   supplier_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   supplier VARCHAR(4000) NOT NULL,
@@ -374,487 +163,6 @@ CREATE TABLE supplier_table(
   supplier_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
--- End: Quotation Form
-
--- Start: Subcon Form
-
-CREATE TABLE service_table(
-  service_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  service_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  service_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  service_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  service_name VARCHAR(4000) NOT NULL,
-
-  service_team_id UUID REFERENCES team_table(team_id) ON DELETE CASCADE NOT NULL
-);
-
-CREATE TABLE service_scope_table(
-  service_scope_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  service_scope_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  service_scope_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  service_scope_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  service_scope_name VARCHAR(4000) NOT NULL,
-  service_scope_type VARCHAR(4000) NOT NULL,
-  service_scope_is_with_other BOOLEAN NOT NULL,
-
-  service_scope_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
-  service_scope_service_id UUID REFERENCES service_table(service_id) ON DELETE CASCADE NOT NULL
-);
-
-CREATE TABLE service_scope_choice_table(
-  service_scope_choice_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  service_scope_choice_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  service_scope_choice_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  service_scope_choice_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  service_scope_choice_name VARCHAR(4000) NOT NULL,
-
-  service_scope_choice_service_scope_id UUID REFERENCES service_scope_table(service_scope_id) ON DELETE CASCADE NOT NULL
-);
-
--- End: Subcon Form
-
-CREATE TABLE csi_code_table(
-  csi_code_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  csi_code_section VARCHAR(4000) NOT NULL,
-  csi_code_division_id VARCHAR(4000) NOT NULL,
-  csi_code_division_description VARCHAR(4000) NOT NULL,
-  csi_code_level_two_major_group_id VARCHAR(4000) NOT NULL,
-  csi_code_level_two_major_group_description VARCHAR(4000) NOT NULL,
-  csi_code_level_two_minor_group_id VARCHAR(4000) NOT NULL,
-  csi_code_level_two_minor_group_description VARCHAR(4000) NOT NULL,
-  csi_code_level_three_id VARCHAR(4000) NOT NULL,
-  csi_code_level_three_description VARCHAR(4000) NOT NULL
-);
-
--- Start: Ticket Category
-
-CREATE TABLE ticket_category_table(
-  ticket_category_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  ticket_category VARCHAR(4000) NOT NULL, 
-  ticket_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  ticket_category_is_active BOOLEAN DEFAULT true NOT NULL
-);
-
--- END: Ticket Category
-
--- Start: Ticket Section
-
-CREATE TABLE ticket_section_table(
-  ticket_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  ticket_section_name VARCHAR(4000) NOT NULL,
-  ticket_section_is_duplicatable BOOLEAN DEFAULT false NOT NULL,
-  
-  ticket_section_category_id UUID REFERENCES ticket_category_table(ticket_category_id) NOT NULL
-);
-
--- END: Ticket Section
-
--- Start: Ticket Field
-
-CREATE TABLE ticket_field_table(
-  ticket_field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  ticket_field_name VARCHAR(4000) NOT NULL,
-  ticket_field_type VARCHAR(4000) NOT NULL,
-  ticket_field_is_required BOOLEAN DEFAULT true NOT NULL,
-  ticket_field_is_read_only BOOLEAN DEFAULT false NOT NULL,
-  ticket_field_order INT NOT NULL,
-  
-  ticket_field_section_id UUID REFERENCES ticket_section_table(ticket_section_id) NOT NULL
-);
-
--- END: Ticket Field
-
--- Start: Ticket Option
-
-CREATE TABLE ticket_option_table(
-  ticket_option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  ticket_option_value VARCHAR(4000) NOT NULL,
-  ticket_option_order INT NOT NULL,
-  
-  ticket_option_field_id UUID REFERENCES ticket_field_table(ticket_field_id) NOT NULL
-);
-
--- END: Ticket Option
-
--- Start: Ticket
-
-CREATE TABLE ticket_table(
-  ticket_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  ticket_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
-  ticket_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  ticket_status_date_updated TIMESTAMPTZ,
-  ticket_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  
-  ticket_category_id UUID REFERENCES ticket_category_table(ticket_category_id) NOT NULL,
-  ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
-);
-
--- End: Ticket
-
--- Start: Ticket Response
-
-CREATE TABLE ticket_response_table(
-  ticket_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  ticket_response_value VARCHAR(4000) NOT NULL,
-  ticket_response_duplicatable_section_id UUID,
-  
-  ticket_response_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
-  ticket_response_field_id UUID REFERENCES ticket_field_table(ticket_field_id) NOT NULL
-);
-
--- END: Ticket Response
-
--- Start: Ticket comment
-
-CREATE TABLE ticket_comment_table(
-  ticket_comment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  ticket_comment_content VARCHAR(4000) NOT NULL,
-  ticket_comment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  ticket_comment_is_edited BOOLEAN DEFAULT FALSE NOT NULL,
-  ticket_comment_type VARCHAR(4000) NOT NULL,
-  ticket_comment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  ticket_comment_last_updated TIMESTAMPTZ,
-
-  ticket_comment_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
-  ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
-);
-
--- End: Ticket comment
-
--- Start: Item Description Field UOM
-CREATE TABLE item_description_field_uom_table(
-  item_description_field_uom_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  item_description_field_uom VARCHAR(4000) NOT NULL,
-
-  item_description_field_uom_item_description_field_id UUID REFERENCES item_description_field_table(item_description_field_id) ON DELETE CASCADE NOT NULL
-);
--- End: Item Description Field UOM
-
--- Start: Equipment category
-
-CREATE TABLE equipment_category_table(
-  equipment_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_category VARCHAR(4000) NOT NULL,
-  equipment_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  equipment_category_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  equipment_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Equipment category
-
--- Start: Equipment brand
-
-CREATE TABLE equipment_brand_table(
-  equipment_brand_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_brand_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_brand VARCHAR(4000) NOT NULL,
-  equipment_brand_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  equipment_brand_is_available BOOLEAN DEFAULT true NOT NULL,
-
-  equipment_brand_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Equipment brand
-
--- Start: Equipment model
-
-CREATE TABLE equipment_model_table(
-  equipment_model_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_model_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_model VARCHAR(4000) NOT NULL,
-  equipment_model_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  equipment_model_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  equipment_model_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Equipment model
-
--- Start: Equipment component category model
-
-CREATE TABLE equipment_component_category_table(
-  equipment_component_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_component_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_component_category VARCHAR(4000) NOT NULL,
-  equipment_component_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  equipment_component_category_is_available BOOLEAN DEFAULT true NOT NULL,
-
-  equipment_component_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Equipment component category model
-
--- Start: Equipment
-
-CREATE TABLE equipment_table(
-  equipment_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_name VARCHAR(4000) NOT NULL,
-  equipment_name_shorthand VARCHAR(4000) NOT NULL,
-  equipment_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  equipment_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  equipment_equipment_category_id UUID REFERENCES equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
-  equipment_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Equipment 
-
--- Start: Equipment description
-
-CREATE TABLE equipment_description_table(
-  equipment_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_description_property_number VARCHAR(4000) NOT NULL,
-  equipment_description_serial_number VARCHAR(4000) NOT NULL,
-  equipment_description_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  equipment_description_is_available BOOLEAN DEFAULT true NOT NULL,
-  equipment_description_acquisition_date INT,
-  equipment_description_is_rental BOOLEAN DEFAULT false NOT NULL,
-  
-  equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
-  equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
-  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
-);
-
--- End: Equipment description
-
--- Start: Equipment unit of measurement
-
-CREATE TABLE equipment_unit_of_measurement_table(
-  equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_unit_of_measurement VARCHAR(4000) NOT NULL,
-  equipment_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  equipment_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
-
-  equipment_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Equipment unit of measurement
-
--- Start: Equipment part general name
-
-CREATE TABLE equipment_general_name_table(
-  equipment_general_name_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_general_name_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_general_name VARCHAR(4000) NOT NULL,
-  equipment_general_name_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  equipment_general_name_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-
-  equipment_general_name_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Equipment part general name
-
--- Start: Equipment part
-
-CREATE TABLE equipment_part_table(
-  equipment_part_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  equipment_part_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  equipment_part_number VARCHAR(4000) NOT NULL,
-  equipment_part_is_available BOOLEAN DEFAULT TRUE NOT NULL,
-  equipment_part_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-
-  equipment_part_general_name_id UUID REFERENCES equipment_general_name_table(equipment_general_name_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_unit_of_measurement_id UUID REFERENCES equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_component_category_id UUID REFERENCES equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
-);
-
--- End: Equipment part
-
--- Start: User employee number table
-
-CREATE TABLE user_employee_number_table (
-    user_employee_number_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    user_employee_number_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    user_employee_number_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-    user_employee_number VARCHAR(4000) NOT NULL,
-
-    user_employee_number_user_id UUID REFERENCES user_table(user_id)
-);
-
--- END: User employee number table
-
--- Start: Service category table
-
-CREATE TABLE service_category_table(
-  service_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  service_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  service_category VARCHAR(4000) NOT NULL,
-  service_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  service_category_is_available BOOLEAN DEFAULT true NOT NULL,
-
-  service_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Service category table
-
--- Start: General unit of measurement table
-
-CREATE TABLE general_unit_of_measurement_table(
-  general_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  general_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  general_unit_of_measurement VARCHAR(4000) NOT NULL,
-  general_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  general_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  general_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: General unit of measurement table
-
--- Start: Memo feature table
-
-CREATE TABLE memo_table (
-    memo_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_subject VARCHAR(4000) NOT NULL,
-    memo_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
-    memo_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-    memo_author_user_id UUID REFERENCES user_table(user_id) NOT NULL,
-    memo_team_id UUID REFERENCES team_table(team_id) NOT NULL,
-    memo_version VARCHAR(4000) NOT NULL,
-    memo_reference_number UUID DEFAULT uuid_generate_v4() NOT NULL
-);
-
-CREATE TABLE memo_signer_table (
-    memo_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
-    memo_signer_is_primary BOOLEAN DEFAULT FALSE NOT NULL,
-    memo_signer_order INT NOT NULL,
-    memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-    memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL,
-    memo_signer_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    memo_signer_date_signed TIMESTAMPTZ(0)
-);
-
-CREATE TABLE memo_line_item_table (
-    memo_line_item_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_line_item_content VARCHAR(4000) NOT NULL,
-    memo_line_item_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
-    memo_line_item_date_updated TIMESTAMPTZ(0),
-    memo_line_item_order INT NOT NULL,
-    memo_line_item_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
-);
-
-CREATE TABLE memo_line_item_attachment_table (
-    memo_line_item_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_line_item_attachment_name VARCHAR(4000) NOT NULL,
-    memo_line_item_attachment_caption VARCHAR(4000),
-    memo_line_item_attachment_storage_bucket VARCHAR(4000) NOT NULL,
-    memo_line_item_attachment_public_url VARCHAR(4000) NOT NULL,
-    memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) ON DELETE CASCADE NOT NULL
-);
-
-CREATE TABLE memo_date_updated_table (
-    memo_date_updated_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_date_updated TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
-    memo_date_updated_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
-);
-
-CREATE TABLE memo_status_table (
-    memo_status_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
-    memo_status_date_updated TIMESTAMPTZ(0),
-    memo_status_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
-);
-
-CREATE TABLE memo_read_receipt_table (
-    memo_read_receipt_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_read_receipt_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
-    memo_read_receipt_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-    memo_read_receipt_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
-);
-
-CREATE TABLE memo_agreement_table (
-    memo_agreement_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_agreement_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
-    memo_agreement_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-    memo_agreement_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
-);
-
-CREATE TABLE memo_format_section_table(
-    memo_format_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_format_section_margin_top VARCHAR(20),
-    memo_format_section_margin_right VARCHAR(20),
-    memo_format_section_margin_bottom VARCHAR(20),
-    memo_format_section_margin_left VARCHAR(20),
-    memo_format_section_name VARCHAR(100)
-);
-
-CREATE TABLE memo_format_subsection_table(
-    memo_format_subsection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_format_subsection_name VARCHAR(100),
-    memo_format_subsection_text VARCHAR(4000),
-    memo_format_subsection_text_font_size VARCHAR(20),
-    memo_format_subsection_section_id UUID REFERENCES memo_format_section_table(memo_format_section_id)
-);
-
-CREATE TABLE memo_format_attachment_table(
-    memo_format_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    memo_format_attachment_name VARCHAR(4000) NOT NULL,
-    memo_format_attachment_url VARCHAR(4000) NOT NULL,
-    memo_format_attachment_order VARCHAR(20) NOT NULL,
-    memo_format_attachment_subsection_id UUID REFERENCES memo_format_subsection_table(memo_format_subsection_id)
-);
-
--- End: Memo feature table
-
--- Start: Username history table
-
-CREATE TABLE user_name_history_table(
-  user_name_history_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  user_name_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  user_name_history_value VARCHAR(4000) NOT NULL,
-
-  user_name_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
-);
-
-CREATE TABLE signature_history_table(
-  signature_history_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  signature_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  signature_history_value VARCHAR(4000) NOT NULL,
-
-  signature_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
-);
-
--- End: Username history table
-
--- Start: Other expenses category table
-
-CREATE TABLE other_expenses_category_table(
-  other_expenses_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  other_expenses_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  other_expenses_category VARCHAR(4000) NOT NULL,
-  other_expenses_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  other_expenses_category_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  other_expenses_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Other expenses category table
-
--- Start: Other expenses type table
-
-CREATE TABLE other_expenses_type_table(
-  other_expenses_type_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  other_expenses_type_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  other_expenses_type VARCHAR(4000) NOT NULL,
-  other_expenses_type_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  other_expenses_type_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  other_expenses_type_category_id UUID REFERENCES other_expenses_category_table(other_expenses_category_id)
-);
-
--- End: Other expenses type table
-
--- Start: Valid ID
 CREATE TABLE user_valid_id_table (
   user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -874,9 +182,410 @@ CREATE TABLE user_valid_id_table (
   user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL,
   user_valid_id_address_id UUID REFERENCES address_table(address_id) NOT NULL
 );
--- End: Valid ID
 
--- Start: Item Level Three Description
+CREATE TABLE user_employee_number_table (
+  user_employee_number_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  user_employee_number_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_employee_number_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  user_employee_number VARCHAR(4000) NOT NULL,
+
+  user_employee_number_user_id UUID REFERENCES user_table(user_id)
+);
+
+CREATE TABLE invitation_table (
+  invitation_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  invitation_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  invitation_to_email VARCHAR(4000) NOT NULL,
+  invitation_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  invitation_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+
+  invitation_from_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+);
+
+CREATE TABLE notification_table (
+  notification_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  notification_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  notification_content VARCHAR(4000) NOT NULL,
+  notification_is_read  BOOLEAN DEFAULT FALSE NOT NULL,
+  notification_redirect_url VARCHAR(4000),
+  notification_type VARCHAR(4000) NOT NULL,
+  notification_app VARCHAR(4000) NOT NULL,
+
+  notification_team_id UUID REFERENCES team_table(team_id),
+  notification_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+
+CREATE TABLE form_table (
+  form_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  form_name VARCHAR(4000) NOT NULL,
+  form_description VARCHAR(4000) NOT NULL,
+  form_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  form_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  form_is_hidden BOOLEAN DEFAULT FALSE NOT NULL,
+  form_is_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
+  form_is_formsly_form BOOLEAN DEFAULT FALSE NOT NULL,
+  form_app VARCHAR(4000) NOT NULL,
+  form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
+  form_type VARCHAR(4000),
+  form_sub_type VARCHAR(4000),
+
+  form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+);
+
+CREATE TABLE signer_table (
+  signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  signer_is_primary_signer BOOLEAN DEFAULT FALSE NOT NULL,
+  signer_action VARCHAR(4000) NOT NULL,
+  signer_order INT NOT NULL,
+  signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  signer_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+  signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  signer_team_project_id UUID REFERENCES team_project_table(team_project_id)
+);
+
+CREATE TABLE section_table (
+  section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  section_name VARCHAR(4000) NOT NULL,
+  section_order INT NOT NULL,
+  section_is_duplicatable BOOLEAN DEFAULT FALSE NOT NULL,
+
+  section_form_id UUID REFERENCES form_table(form_id) NOT NULL
+);
+
+CREATE TABLE special_field_template_table (
+  special_field_template_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  special_field_template_name VARCHAR(4000) NOT NULL,
+  special_field_template_description VARCHAR(4000),
+  special_field_template_type VARCHAR(4000) NOT NULL
+);
+
+CREATE TABLE field_table (
+  field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  field_name VARCHAR(4000) NOT NULL,
+  field_is_required  BOOLEAN DEFAULT FALSE NOT NULL,
+  field_type VARCHAR(4000) NOT NULL,
+  field_order INT NOT NULL,
+  field_is_positive_metric BOOLEAN DEFAULT TRUE NOT NULL,
+  field_is_read_only BOOLEAN DEFAULT FALSE NOT NULL,
+
+  field_section_id UUID REFERENCES section_table(section_id) NOT NULL,
+  field_special_field_template_id UUID REFERENCES special_field_template_table(special_field_template_id)
+);
+
+CREATE TABLE option_table (
+  option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  option_value VARCHAR(4000) NOT NULL,
+  option_order INT NOT NULL,
+
+  option_field_id UUID REFERENCES field_table(field_id) NOT NULL
+);
+
+CREATE TABLE form_sla_table (
+  form_sla_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  form_sla_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  form_sla_date_updated TIMESTAMPTZ,
+  form_sla_hours INT NOT NULL,
+
+  form_sla_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+  form_sla_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE form_team_group_table (
+  form_team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  form_id UUID REFERENCES form_table(form_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+
+  UNIQUE(form_id, team_group_id) 
+);
+
+CREATE TABLE request_table (
+  request_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  request_formsly_id_prefix VARCHAR(4000),
+  request_formsly_id_serial VARCHAR(4000),
+  request_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  request_status_date_updated TIMESTAMPTZ,
+  request_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  request_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  request_jira_id VARCHAR(4000),
+  request_jira_link VARCHAR(4000),
+  request_otp_id VARCHAR(4000),
+
+  request_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+  request_project_id UUID REFERENCES team_project_table(team_project_id)
+);
+
+CREATE TABLE request_response_table (
+  request_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  request_response VARCHAR(4000) NOT NULL,
+  request_response_duplicatable_section_id UUID,
+  request_response_prefix VARCHAR(4000),
+
+  request_response_request_id UUID REFERENCES request_table(request_id) NOT NULL,
+  request_response_field_id UUID REFERENCES field_table(field_id) NOT NULL
+);
+
+CREATE TABLE request_signer_table (
+  request_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  request_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  request_signer_status_date_updated TIMESTAMPTZ,
+
+  request_signer_request_id UUID REFERENCES request_table(request_id) NOT NULL,
+  request_signer_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
+);
+
+CREATE TABLE comment_table (
+  comment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  comment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  comment_content VARCHAR(4000),
+  comment_is_edited  BOOLEAN DEFAULT FALSE,
+  comment_last_updated TIMESTAMPTZ,
+  comment_is_disabled  BOOLEAN DEFAULT FALSE NOT NULL,
+  comment_type VARCHAR(4000) NOT NULL,
+
+  comment_request_id UUID REFERENCES request_table(request_id) NOT NULL,
+  comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+);
+
+CREATE TABLE ticket_category_table (
+  ticket_category_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_category VARCHAR(4000) NOT NULL, 
+  ticket_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  ticket_category_is_active BOOLEAN DEFAULT true NOT NULL
+);
+
+CREATE TABLE ticket_section_table (
+  ticket_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_section_name VARCHAR(4000) NOT NULL,
+  ticket_section_is_duplicatable BOOLEAN DEFAULT false NOT NULL,
+  
+  ticket_section_category_id UUID REFERENCES ticket_category_table(ticket_category_id) NOT NULL
+);
+
+CREATE TABLE ticket_field_table (
+  ticket_field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_field_name VARCHAR(4000) NOT NULL,
+  ticket_field_type VARCHAR(4000) NOT NULL,
+  ticket_field_is_required BOOLEAN DEFAULT true NOT NULL,
+  ticket_field_is_read_only BOOLEAN DEFAULT false NOT NULL,
+  ticket_field_order INT NOT NULL,
+  
+  ticket_field_section_id UUID REFERENCES ticket_section_table(ticket_section_id) NOT NULL
+);
+
+CREATE TABLE ticket_option_table (
+  ticket_option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_option_value VARCHAR(4000) NOT NULL,
+  ticket_option_order INT NOT NULL,
+  
+  ticket_option_field_id UUID REFERENCES ticket_field_table(ticket_field_id) NOT NULL
+);
+
+CREATE TABLE ticket_table (
+  ticket_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  ticket_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ticket_status_date_updated TIMESTAMPTZ,
+  ticket_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  
+  ticket_category_id UUID REFERENCES ticket_category_table(ticket_category_id) NOT NULL,
+  ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
+);
+
+CREATE TABLE ticket_response_table (
+  ticket_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_response_value VARCHAR(4000) NOT NULL,
+  ticket_response_duplicatable_section_id UUID,
+  
+  ticket_response_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
+  ticket_response_field_id UUID REFERENCES ticket_field_table(ticket_field_id) NOT NULL
+);
+
+CREATE TABLE ticket_comment_table (
+  ticket_comment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  ticket_comment_content VARCHAR(4000) NOT NULL,
+  ticket_comment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  ticket_comment_is_edited BOOLEAN DEFAULT FALSE NOT NULL,
+  ticket_comment_type VARCHAR(4000) NOT NULL,
+  ticket_comment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ticket_comment_last_updated TIMESTAMPTZ,
+
+  ticket_comment_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
+  ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+);
+
+CREATE TABLE memo_table (
+  memo_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_subject VARCHAR(4000) NOT NULL,
+  memo_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+  memo_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  memo_author_user_id UUID REFERENCES user_table(user_id) NOT NULL,
+  memo_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  memo_version VARCHAR(4000) NOT NULL,
+  memo_reference_number UUID DEFAULT uuid_generate_v4() NOT NULL
+);
+
+CREATE TABLE memo_signer_table (
+  memo_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  memo_signer_is_primary BOOLEAN DEFAULT FALSE NOT NULL,
+  memo_signer_order INT NOT NULL,
+  memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL,
+  memo_signer_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  memo_signer_date_signed TIMESTAMPTZ(0)
+);
+
+CREATE TABLE memo_line_item_table (
+  memo_line_item_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_line_item_content VARCHAR(4000) NOT NULL,
+  memo_line_item_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+  memo_line_item_date_updated TIMESTAMPTZ(0),
+  memo_line_item_order INT NOT NULL,
+  memo_line_item_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_line_item_attachment_table (
+  memo_line_item_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_line_item_attachment_name VARCHAR(4000) NOT NULL,
+  memo_line_item_attachment_caption VARCHAR(4000),
+  memo_line_item_attachment_storage_bucket VARCHAR(4000) NOT NULL,
+  memo_line_item_attachment_public_url VARCHAR(4000) NOT NULL,
+  memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE memo_date_updated_table (
+  memo_date_updated_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_date_updated TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+  memo_date_updated_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_status_table (
+  memo_status_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  memo_status_date_updated TIMESTAMPTZ(0),
+  memo_status_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_read_receipt_table (
+  memo_read_receipt_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_read_receipt_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+  memo_read_receipt_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  memo_read_receipt_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_agreement_table (
+  memo_agreement_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_agreement_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
+  memo_agreement_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  memo_agreement_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+);
+
+CREATE TABLE memo_format_section_table(
+  memo_format_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_format_section_margin_top VARCHAR(20),
+  memo_format_section_margin_right VARCHAR(20),
+  memo_format_section_margin_bottom VARCHAR(20),
+  memo_format_section_margin_left VARCHAR(20),
+  memo_format_section_name VARCHAR(100)
+);
+
+CREATE TABLE memo_format_subsection_table(
+  memo_format_subsection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_format_subsection_name VARCHAR(100),
+  memo_format_subsection_text VARCHAR(4000),
+  memo_format_subsection_text_font_size VARCHAR(20),
+  memo_format_subsection_section_id UUID REFERENCES memo_format_section_table(memo_format_section_id)
+);
+
+CREATE TABLE memo_format_attachment_table(
+  memo_format_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  memo_format_attachment_name VARCHAR(4000) NOT NULL,
+  memo_format_attachment_url VARCHAR(4000) NOT NULL,
+  memo_format_attachment_order VARCHAR(20) NOT NULL,
+  memo_format_attachment_subsection_id UUID REFERENCES memo_format_subsection_table(memo_format_subsection_id)
+);
+
+CREATE TABLE user_name_history_table(
+  user_name_history_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  user_name_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  user_name_history_value VARCHAR(4000) NOT NULL,
+
+  user_name_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+
+CREATE TABLE signature_history_table(
+  signature_history_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  signature_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  signature_history_value VARCHAR(4000) NOT NULL,
+
+  signature_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
+);
+
+CREATE TABLE item_category_table (
+  item_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_category VARCHAR(4000) NOT NULL,
+  item_category_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_category_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  item_category_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
+);
+
+CREATE TABLE item_table (
+  item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_general_name VARCHAR(4000) NOT NULL,
+  item_unit VARCHAR(4000) NOT NULL,
+  item_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  item_gl_account VARCHAR(4000) NOT NULL,
+  item_is_ped_item BOOLEAN DEFAULT FALSE NOT NULL,
+  item_is_it_asset_item BOOLEAN DEFAULT FALSE NOT NULL,
+
+  item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  item_category_id UUID REFERENCES item_category_table(item_category_id)
+);
+
+CREATE TABLE item_division_table (
+  item_division_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_division_value VARCHAR(4000) NOT NULL,
+
+  item_division_item_id UUID REFERENCES item_table(item_id) NOT NULL
+);
+
+CREATE TABLE item_description_table (
+  item_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_description_label VARCHAR(4000) NOT NULL,
+  item_description_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_description_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  item_description_is_with_uom BOOLEAN DEFAULT FALSE NOT NULL,
+  item_description_order INT NOT NULL,
+
+  item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
+  item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE item_description_field_table (
+  item_description_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_description_field_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_description_field_value VARCHAR(4000) NOT NULL,
+  item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE item_description_field_uom_table (
+  item_description_field_uom_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_description_field_uom VARCHAR(4000) NOT NULL,
+
+  item_description_field_uom_item_description_field_id UUID REFERENCES item_description_field_table(item_description_field_id) ON DELETE CASCADE NOT NULL
+);
+
 CREATE TABLE item_level_three_description_table (
   item_level_three_description_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   item_level_three_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -884,45 +593,7 @@ CREATE TABLE item_level_three_description_table (
 
   item_level_three_description_item_id UUID REFERENCES item_table(item_id)
 );
--- End: Item Level Three Description
 
--- Start: Query table
-
-CREATE TABLE query_table (
-    query_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    query_name VARCHAR(4000) UNIQUE NOT NULL,
-    query_sql VARCHAR(4000) NOT NULL
-);
-
--- End: Query table
-
--- Start: Form SLA
-CREATE TABLE form_sla_table (
-    form_sla_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    form_sla_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    form_sla_date_updated TIMESTAMPTZ,
-    form_sla_hours INT NOT NULL,
-
-    form_sla_form_id UUID REFERENCES form_table(form_id) NOT NULL,
-    form_sla_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
--- End: Form SLA
-
--- Start: Capacity unit of measurement table
-
-CREATE TABLE capacity_unit_of_measurement_table(
-  capacity_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  capacity_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  capacity_unit_of_measurement VARCHAR(4000) NOT NULL,
-  capacity_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
-  capacity_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
-  
-  capacity_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
-);
-
--- End: Capacity unit of measurement table
-
--- Start: Jira automation tables
 CREATE TABLE jira_project_table (
   jira_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_project_jira_id VARCHAR(4000) NOT NULL,
@@ -973,44 +644,15 @@ CREATE TABLE jira_item_user_table (
 );
 
 CREATE TABLE jira_organization_table (
-    jira_organization_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    jira_organization_jira_id VARCHAR(4000) NOT NULL,
-    jira_organization_jira_label VARCHAR(4000) NOT NULL
+  jira_organization_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_organization_jira_id VARCHAR(4000) NOT NULL,
+  jira_organization_jira_label VARCHAR(4000) NOT NULL
 );
 
 CREATE TABLE jira_organization_team_project_table (
-    jira_organization_team_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    jira_organization_team_project_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL,
-    jira_organization_team_project_organization_id UUID REFERENCES jira_organization_table(jira_organization_id) NOT NULL
-);
--- End: Jira automation tables
-
--- Start: Team department table
-CREATE TABLE team_department_table (
-  team_department_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  team_department_name VARCHAR(4000) NOT NULL,
-  team_department_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  team_department_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL
-);
--- End: Team department table
-
--- employee_job_title_table
-CREATE TABLE employee_job_title_table (
-    employee_job_title_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    employee_job_title_label VARCHAR(4000) NOT NULL,
-    employee_job_title_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    employee_job_title_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
-);
-
--- scic_employee_table
-CREATE TABLE scic_employee_table (
-    scic_employee_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    scic_employee_hris_id_number VARCHAR(4000) NOT NULL,
-    scic_employee_first_name VARCHAR(4000) NOT NULL,
-    scic_employee_middle_name VARCHAR(4000),
-    scic_employee_last_name VARCHAR(4000) NOT NULL,
-    scic_employee_suffix VARCHAR(10),
-    scic_employee_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL
+  jira_organization_team_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  jira_organization_team_project_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL,
+  jira_organization_team_project_organization_id UUID REFERENCES jira_organization_table(jira_organization_id) NOT NULL
 );
 
 CREATE TABLE currency_table (
@@ -1021,11 +663,252 @@ CREATE TABLE currency_table (
   currency_numeric_code VARCHAR(10) NOT NULL
 );
 
----------- End: TABLES
+CREATE TABLE query_table (
+  query_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  query_name VARCHAR(4000) UNIQUE NOT NULL,
+  query_sql VARCHAR(4000) NOT NULL
+);
 
----------- Start: FUNCTIONS
+CREATE TABLE employee_job_title_table (
+  employee_job_title_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  employee_job_title_label VARCHAR(4000) NOT NULL,
+  employee_job_title_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  employee_job_title_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+);
 
--- Start: Get current date
+CREATE TABLE scic_employee_table (
+  scic_employee_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  scic_employee_hris_id_number VARCHAR(4000) NOT NULL,
+  scic_employee_first_name VARCHAR(4000) NOT NULL,
+  scic_employee_middle_name VARCHAR(4000),
+  scic_employee_last_name VARCHAR(4000) NOT NULL,
+  scic_employee_suffix VARCHAR(10),
+  scic_employee_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+CREATE TABLE csi_code_table (
+  csi_code_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  csi_code_section VARCHAR(4000) NOT NULL,
+  csi_code_division_id VARCHAR(4000) NOT NULL,
+  csi_code_division_description VARCHAR(4000) NOT NULL,
+  csi_code_level_two_major_group_id VARCHAR(4000) NOT NULL,
+  csi_code_level_two_major_group_description VARCHAR(4000) NOT NULL,
+  csi_code_level_two_minor_group_id VARCHAR(4000) NOT NULL,
+  csi_code_level_two_minor_group_description VARCHAR(4000) NOT NULL,
+  csi_code_level_three_id VARCHAR(4000) NOT NULL,
+  csi_code_level_three_description VARCHAR(4000) NOT NULL
+);
+
+CREATE TABLE formsly_price_table (
+  formsly_price_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  formsly_price_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  formsly_price INT NOT NULL
+);
+
+CREATE TABLE equipment_category_table (
+  equipment_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_category VARCHAR(4000) NOT NULL,
+  equipment_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_category_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  equipment_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE equipment_brand_table (
+  equipment_brand_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_brand_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_brand VARCHAR(4000) NOT NULL,
+  equipment_brand_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_brand_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  equipment_brand_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE equipment_model_table (
+  equipment_model_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_model_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_model VARCHAR(4000) NOT NULL,
+  equipment_model_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_model_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  equipment_model_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE equipment_component_category_table (
+  equipment_component_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_component_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_component_category VARCHAR(4000) NOT NULL,
+  equipment_component_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_component_category_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  equipment_component_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE equipment_table (
+  equipment_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_name VARCHAR(4000) NOT NULL,
+  equipment_name_shorthand VARCHAR(4000) NOT NULL,
+  equipment_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  equipment_equipment_category_id UUID REFERENCES equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE equipment_description_table (
+  equipment_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_description_property_number VARCHAR(4000) NOT NULL,
+  equipment_description_serial_number VARCHAR(4000) NOT NULL,
+  equipment_description_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_description_is_available BOOLEAN DEFAULT true NOT NULL,
+  equipment_description_acquisition_date INT,
+  equipment_description_is_rental BOOLEAN DEFAULT false NOT NULL,
+  
+  equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE equipment_general_name_table (
+  equipment_general_name_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_general_name_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_general_name VARCHAR(4000) NOT NULL,
+  equipment_general_name_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  equipment_general_name_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  equipment_general_name_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE equipment_unit_of_measurement_table (
+  equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_unit_of_measurement VARCHAR(4000) NOT NULL,
+  equipment_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  equipment_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  equipment_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE equipment_part_table (
+  equipment_part_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  equipment_part_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  equipment_part_number VARCHAR(4000) NOT NULL,
+  equipment_part_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  equipment_part_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+  equipment_part_general_name_id UUID REFERENCES equipment_general_name_table(equipment_general_name_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_unit_of_measurement_id UUID REFERENCES equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_component_category_id UUID REFERENCES equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE service_table (
+  service_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  service_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  service_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  service_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  service_name VARCHAR(4000) NOT NULL,
+
+  service_team_id UUID REFERENCES team_table(team_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE service_scope_table (
+  service_scope_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  service_scope_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  service_scope_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  service_scope_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  service_scope_name VARCHAR(4000) NOT NULL,
+  service_scope_type VARCHAR(4000) NOT NULL,
+  service_scope_is_with_other BOOLEAN NOT NULL,
+
+  service_scope_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
+  service_scope_service_id UUID REFERENCES service_table(service_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE service_scope_choice_table (
+  service_scope_choice_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  service_scope_choice_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  service_scope_choice_is_available BOOLEAN DEFAULT TRUE NOT NULL,
+  service_scope_choice_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  service_scope_choice_name VARCHAR(4000) NOT NULL,
+
+  service_scope_choice_service_scope_id UUID REFERENCES service_scope_table(service_scope_id) ON DELETE CASCADE NOT NULL
+);
+
+CREATE TABLE service_category_table (
+  service_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  service_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  service_category VARCHAR(4000) NOT NULL,
+  service_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  service_category_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  service_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE other_expenses_category_table(
+  other_expenses_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  other_expenses_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  other_expenses_category VARCHAR(4000) NOT NULL,
+  other_expenses_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  other_expenses_category_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  other_expenses_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE other_expenses_type_table(
+  other_expenses_type_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  other_expenses_type_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  other_expenses_type VARCHAR(4000) NOT NULL,
+  other_expenses_type_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  other_expenses_type_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  other_expenses_type_category_id UUID REFERENCES other_expenses_category_table(other_expenses_category_id)
+);
+
+CREATE TABLE capacity_unit_of_measurement_table(
+  capacity_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  capacity_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  capacity_unit_of_measurement VARCHAR(4000) NOT NULL,
+  capacity_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  capacity_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  capacity_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE general_unit_of_measurement_table (
+  general_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  general_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  general_unit_of_measurement VARCHAR(4000) NOT NULL,
+  general_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  general_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
+  
+  general_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+CREATE TABLE item_unit_of_measurement_table (
+  item_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  item_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  item_unit_of_measurement VARCHAR(4000) NOT NULL,
+  item_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  item_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
+
+  item_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+);
+
+----- END: TABLES
+
+GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
+
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
+
+----- START: FUNCTIONS
 
 CREATE OR REPLACE FUNCTION get_current_date()
 RETURNS TIMESTAMPTZ
@@ -1034,15 +917,6 @@ BEGIN
     RETURN NOW();
 END;
 $$ LANGUAGE plpgsql;
-
--- End: Get current date
-
--- Extensions
-CREATE EXTENSION IF NOT EXISTS plv8;
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
-
--- Start: Get SSOT
 
 CREATE OR REPLACE FUNCTION get_ssot(
   input_data JSON
@@ -1361,12 +1235,8 @@ plv8.subtransaction(function(){
 return ssot_data;
 $$ LANGUAGE plv8;
 
--- End: Get SSOT
-
--- Start: Create user
-
 CREATE OR REPLACE FUNCTION create_user(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let user_data;
@@ -1397,10 +1267,6 @@ RETURNS JSON AS $$
  });
  return user_data;
 $$ LANGUAGE plv8;
-
--- End: Create user
-
--- Start: Create request
 
 CREATE OR REPLACE FUNCTION create_request(
   input_data JSON
@@ -1513,12 +1379,8 @@ RETURNS JSON AS $$
  return request_data;
 $$ LANGUAGE plv8;
 
--- End: Create request
-
--- Start: Edit request
-
 CREATE OR REPLACE FUNCTION edit_request(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let request_data;
@@ -1563,12 +1425,8 @@ RETURNS JSON AS $$
  return request_data;
 $$ LANGUAGE plv8;
 
--- End: Edit request
-
--- Start: Approve or reject request
-    
 CREATE OR REPLACE FUNCTION approve_or_reject_request(
-    input_data JSON
+  input_data JSON
 )
 RETURNS TEXT AS $$
   let request_status;
@@ -1632,12 +1490,8 @@ RETURNS TEXT AS $$
  return request_status
 $$ LANGUAGE plv8;
 
--- End: Approve or reject request
-
--- Start: Create formsly premade forms
-
 CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
-    input_data JSON
+  input_data JSON
 )
 RETURNS VOID AS $$
   plv8.subtransaction(function(){
@@ -1662,12 +1516,8 @@ RETURNS VOID AS $$
  });
 $$ LANGUAGE plv8;
 
--- End: Create formsly premade forms
-
--- Start: Create item
-
 CREATE OR REPLACE FUNCTION create_item(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let item_data;
@@ -1774,12 +1624,8 @@ RETURNS JSON AS $$
  return item_data;
 $$ LANGUAGE plv8;
 
--- End: Create item
-
--- Start: Update item
-
 CREATE OR REPLACE FUNCTION update_item(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let item_data;
@@ -1930,12 +1776,8 @@ RETURNS JSON AS $$
  return item_data;
 $$ LANGUAGE plv8;
 
--- End: Update item
-
--- Start: Create service
-
 CREATE OR REPLACE FUNCTION create_service(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let item_data;
@@ -1998,13 +1840,8 @@ RETURNS JSON AS $$
  return item_data;
 $$ LANGUAGE plv8;
 
--- End: Create service
-
--- Start: Create team invitation
-
-
 CREATE OR REPLACE FUNCTION create_team_invitation(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let invitation_data;
@@ -2067,10 +1904,6 @@ RETURNS JSON AS $$
   return invitation_data;
 $$ LANGUAGE plv8;
 
--- End: Create team invitation
-
--- Start: Get user's active team id
-
 CREATE OR REPLACE FUNCTION get_user_active_team_id(
   user_id TEXT
 )
@@ -2091,13 +1924,9 @@ RETURNS TEXT as $$
  return active_team_id;
 $$ LANGUAGE plv8;
 
--- End: Get user's active team id
-
--- Start: check if Item form can be activated
-
 CREATE OR REPLACE FUNCTION check_item_form_status(
-    team_id TEXT,
-    form_id TEXT
+  team_id TEXT,
+  form_id TEXT
 )
 RETURNS Text as $$
   let return_data;
@@ -2120,13 +1949,9 @@ RETURNS Text as $$
  return return_data;
 $$ LANGUAGE plv8;
 
--- End: check if Item form can be activated
-
--- Start: check if Subcon form can be activated
-
 CREATE OR REPLACE FUNCTION check_subcon_form_status(
-    team_id TEXT,
-    form_id TEXT
+  team_id TEXT,
+  form_id TEXT
 )
 RETURNS Text as $$
   let return_data;
@@ -2149,13 +1974,9 @@ RETURNS Text as $$
  return return_data;
 $$ LANGUAGE plv8;
 
--- End: check if Subcon form can be activated
-
--- Start: Transfer ownership 
-
 CREATE OR REPLACE FUNCTION transfer_ownership(
-    owner_id TEXT,
-    member_id TEXT
+  owner_id TEXT,
+  member_id TEXT
 )
 RETURNS VOID  as $$
   plv8.subtransaction(function(){
@@ -2165,14 +1986,10 @@ RETURNS VOID  as $$
  });
 $$ LANGUAGE plv8;
 
--- End: Transfer ownership
-
--- Start: Accept team invitation
-
 CREATE OR REPLACE FUNCTION accept_team_invitation(
-    invitation_id TEXT,
-    team_id TEXT,
-    user_id TEXT
+  invitation_id TEXT,
+  team_id TEXT,
+  user_id TEXT
 )
 RETURNS JSON as $$
   let user_team_list
@@ -2204,15 +2021,11 @@ RETURNS JSON as $$
  return user_team_list;
 $$ LANGUAGE plv8;
 
--- End: Accept team invitation
-
--- Start: Update request status to canceled
-
 CREATE OR REPLACE FUNCTION cancel_request(
-    request_id TEXT,
-    member_id TEXT,
-    comment_type TEXT,
-    comment_content TEXT
+  request_id TEXT,
+  member_id TEXT,
+  comment_type TEXT,
+  comment_content TEXT
 )
 RETURNS VOID as $$
   plv8.subtransaction(function(){
@@ -2221,12 +2034,8 @@ RETURNS VOID as $$
  });
 $$ LANGUAGE plv8;
 
--- End: Accept team invitation
-
--- Start: Create request form
-
 CREATE OR REPLACE FUNCTION create_request_form(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let form_data;
@@ -2315,12 +2124,8 @@ RETURNS JSON AS $$
  return form_data;
 $$ LANGUAGE plv8;
 
--- End: Create request form
-
--- Start: Get all notification
-
 CREATE OR REPLACE FUNCTION get_all_notification(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let notification_data;
@@ -2347,12 +2152,8 @@ RETURNS JSON AS $$
  return notification_data;
 $$ LANGUAGE plv8;
 
--- End: Get all notification
-
--- Start: Update form signer
-
 CREATE OR REPLACE FUNCTION update_form_signer(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let signer_data;
@@ -2378,12 +2179,8 @@ RETURNS JSON AS $$
  return signer_data;
 $$ LANGUAGE plv8;
 
--- End: Update form signer
-
--- Start: Check if the approving or creating quotation item quantity are less than the item quantity
-
 CREATE OR REPLACE FUNCTION check_item_quantity(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
     let item_data
@@ -2530,12 +2327,8 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating quotation item quantity are less than the item quantity
-
--- Start: Check if the approving or creating release order item quantity are less than the quotation quantity
-
 CREATE OR REPLACE FUNCTION check_ro_item_quantity(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
     let item_data
@@ -2642,12 +2435,8 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating release order item quantity are less than the quotation quantity
-
--- Start: Check if the approving or creating rir item quantity are less than the quotation quantity
-
 CREATE OR REPLACE FUNCTION check_rir_item_quantity(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
     let item_data
@@ -2757,10 +2546,8 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating tranfer receipt item quantity are less than the release order quantity
-
 CREATE OR REPLACE FUNCTION check_tranfer_receipt_item_quantity(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
     let item_data
@@ -2871,12 +2658,8 @@ RETURNS JSON AS $$
     return item_data;
 $$ LANGUAGE plv8;
 
--- End: Check if the approving or creating tranfer receipt item quantity are less than the release order quantity
-
--- Start: Fetch request list
-
 CREATE OR REPLACE FUNCTION fetch_request_list(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
     let return_value
@@ -3005,11 +2788,8 @@ RETURNS JSON AS $$
     return return_value
 $$ LANGUAGE plv8;
 
--- End: Fetch request list
-
--- Start: Create Team Project
 CREATE OR REPLACE FUNCTION create_team_project(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let team_project_data;
@@ -3064,12 +2844,9 @@ RETURNS JSON AS $$
  });
  return team_project_data;
 $$ LANGUAGE plv8;
--- End: Create Team Project
-
--- Start: Insert Group Member
 
 CREATE OR REPLACE FUNCTION insert_group_member(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let group_data;
@@ -3133,12 +2910,8 @@ RETURNS JSON AS $$
  return group_data;
 $$ LANGUAGE plv8;
 
--- End: Insert Group Member
-
--- Start: Insert Project Member
-
 CREATE OR REPLACE FUNCTION insert_project_member(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let project_data;
@@ -3202,12 +2975,8 @@ RETURNS JSON AS $$
  return project_data;
 $$ LANGUAGE plv8;
 
--- End: Insert Project Member
-
--- Start: Update Form Group
-
 CREATE OR REPLACE FUNCTION update_form_group(
-    input_data JSON
+  input_data JSON
 )
 RETURNS VOID AS $$
   plv8.subtransaction(function(){
@@ -3227,12 +2996,8 @@ RETURNS VOID AS $$
   });
 $$ LANGUAGE plv8;
 
--- End: Update Form Group
-
--- Start: Get all team members without existing member of the group
-
 CREATE OR REPLACE FUNCTION get_all_team_members_without_group_members(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let member_data;
@@ -3261,12 +3026,8 @@ RETURNS JSON AS $$
  return member_data;
 $$ LANGUAGE plv8;
 
--- End: Get all team members without existing member of the group
-
--- End: Get all team members without existing member of the project
-
 CREATE OR REPLACE FUNCTION get_all_team_members_without_project_members(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let member_data;
@@ -3296,13 +3057,9 @@ RETURNS JSON AS $$
  return member_data;
 $$ LANGUAGE plv8;
 
--- End: Get all team members without existing member of the project
-
--- Start: Delete team
-
 CREATE OR REPLACE FUNCTION delete_team(
-    team_id TEXT,
-    team_member_id TEXT
+  team_id TEXT,
+  team_member_id TEXT
 )
 RETURNS VOID as $$
   plv8.subtransaction(function(){
@@ -3376,10 +3133,6 @@ RETURNS VOID as $$
  });
 $$ LANGUAGE plv8;
 
--- End: Delete team
-
--- Start: Update multiple approver
-
 CREATE OR REPLACE FUNCTION update_multiple_approver(
   input_data JSON
 )
@@ -3409,10 +3162,6 @@ RETURNS JSON as $$
  return approverList;
 $$ LANGUAGE plv8;
 
--- End: Update multiple approver
-
--- Start: Update multiple admin
-
 CREATE OR REPLACE FUNCTION update_multiple_admin(
   input_data JSON
 )
@@ -3441,10 +3190,6 @@ RETURNS JSON as $$
  });
  return adminList;
 $$ LANGUAGE plv8;
-
--- End: Update multiple admin
-
--- Start: Request page on load
 
 CREATE OR REPLACE FUNCTION request_page_on_load(
   input_data JSON
@@ -3523,12 +3268,8 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Request page on load
-
--- Start: Get team member on load
-
 CREATE OR REPLACE FUNCTION get_team_member_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let team_member_data;
@@ -3592,12 +3333,8 @@ RETURNS JSON AS $$
  return team_member_data;
 $$ LANGUAGE plv8;
 
--- End: Get team member on load
-
--- START: Get team on load
-
 CREATE OR REPLACE FUNCTION get_team_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let team_data;
@@ -3735,12 +3472,8 @@ RETURNS JSON AS $$
  return team_data;
 $$ LANGUAGE plv8;
 
--- End: Get team on load
-
--- START: Get team members with filter
-
 CREATE OR REPLACE FUNCTION get_team_member_with_filter(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let team_data;
@@ -3815,12 +3548,8 @@ RETURNS JSON AS $$
  return team_data;
 $$ LANGUAGE plv8;
 
--- End: Get team members with filter
-
--- START: Get notifications on load
-
 CREATE OR REPLACE FUNCTION get_notification_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let notification_data;
@@ -3855,12 +3584,8 @@ RETURNS JSON AS $$
  return notification_data;
 $$ LANGUAGE plv8;
 
--- End: Get notifications on load
-
--- START: Get ssot on load
-
 CREATE OR REPLACE FUNCTION get_ssot_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let ssot_data;
@@ -3889,12 +3614,8 @@ RETURNS JSON AS $$
  return ssot_data;
 $$ LANGUAGE plv8;
 
--- End: Get ssot on load
-
--- End: Get request list on load
-
 CREATE OR REPLACE FUNCTION get_request_list_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let request_data;
@@ -3915,10 +3636,6 @@ RETURNS JSON AS $$
  });
  return request_data;
 $$ LANGUAGE plv8;
-
--- End: Get request list on load
-
--- Start: Canvass page on load
 
 CREATE OR REPLACE FUNCTION canvass_page_on_load(
   input_data JSON
@@ -4174,10 +3891,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Canvass page on load
-
--- Start: Form list page on load
-
 CREATE OR REPLACE FUNCTION form_list_page_on_load(
   input_data JSON
 )
@@ -4287,10 +4000,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Form list page on load
-
--- Start: Build form page on load
-
 CREATE OR REPLACE FUNCTION build_form_page_on_load(
   input_data JSON
 )
@@ -4340,10 +4049,6 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Build form page on load
-
--- Start: Form page on load
 
 CREATE OR REPLACE FUNCTION form_page_on_load(
   input_data JSON
@@ -4410,10 +4115,6 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Form page on load
-
--- Start: Create request page on load
 
 CREATE OR REPLACE FUNCTION create_request_page_on_load(
   input_data JSON
@@ -5784,10 +5485,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Create request page on load
-
--- Start: Get request
-
 CREATE OR REPLACE FUNCTION get_request(
   request_id TEXT
 )
@@ -6071,12 +5768,8 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Get request
-
--- Start: Get ticket form
-
 CREATE OR REPLACE FUNCTION get_ticket_form(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -6406,12 +6099,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Edit ticket response
-
--- Start: Check custom csi validity
-
 CREATE OR REPLACE FUNCTION check_custom_csi_validity(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -6469,10 +6158,6 @@ RETURNS JSON AS $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Create ticket
-
--- Start: Get ticket on load
 
 CREATE OR REPLACE FUNCTION get_ticket_on_load(
   input_data JSON
@@ -6701,10 +6386,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Get ticket on load
-
--- Start: Assign ticket
-
 CREATE OR REPLACE FUNCTION assign_ticket(
   input_data JSON
 )
@@ -6770,10 +6451,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Assign ticket
-
--- Start: Update ticket status
-
 CREATE OR REPLACE FUNCTION update_ticket_status(
   input_data JSON
 )
@@ -6792,12 +6469,8 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Edit ticket response
-
--- Start: Fetch ticket list
-
 CREATE OR REPLACE FUNCTION fetch_ticket_list(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
     let return_value
@@ -6897,12 +6570,8 @@ RETURNS JSON AS $$
     return returnData
 $$ LANGUAGE plv8;
 
--- End: Fetch ticket list
-
--- Start: Analyze Item
-
 CREATE OR REPLACE FUNCTION analyze_item(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
 let returnData;
@@ -7032,11 +6701,6 @@ plv8.subtransaction(function(){
 return returnData;
 $$ LANGUAGE plv8;
 
--- End: Analyze Item
-
-
--- Start: Get Edit Request on load
-
 CREATE OR REPLACE FUNCTION get_edit_request_on_load(
   input_data JSON
 )
@@ -7102,10 +6766,6 @@ plv8.subtransaction(function(){
 });
 return returnData;
 $$ LANGUAGE plv8;
-
--- End: Get Edit Request on load
-
--- Start: Fetch Top Requestor
 
 CREATE OR REPLACE FUNCTION fetch_dashboard_top_requestor(
   input_data JSON
@@ -7202,12 +6862,8 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetch Top Requestor
-
--- Start: Fetch equipment part list
-
 CREATE OR REPLACE FUNCTION get_equipment_part_list(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -7301,12 +6957,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetch equipment part list
-
--- Start: Fetch item section choices
-
 CREATE OR REPLACE FUNCTION get_item_section_choices(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -7391,10 +7043,6 @@ RETURNS JSON AS $$
   });
   return returnData;
 $$ LANGUAGE plv8;
-
--- End: Fetch item section choices
-
--- Start: Fetch Top Signer
 
 CREATE OR REPLACE FUNCTION fetch_dashboard_top_signer(
   input_data JSON
@@ -7504,13 +7152,9 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetch Top Signer
-
--- Start: Leave Team
-
 CREATE OR REPLACE FUNCTION leave_team(
-    team_id TEXT,
-    team_member_id TEXT
+  team_id TEXT,
+  team_member_id TEXT
 )
 RETURNS VOID as $$
   plv8.subtransaction(function(){
@@ -7530,12 +7174,8 @@ RETURNS VOID as $$
  });
 $$ LANGUAGE plv8;
 
--- End: Leave Team
-
--- Start: Redirect to team dashboard
-
 CREATE OR REPLACE FUNCTION redirect_to_new_team(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -7600,21 +7240,15 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Redirect to team dashboard
-
--- Start: Format team name to url key
 CREATE OR REPLACE FUNCTION format_team_name_to_url_key(team_name TEXT)
 RETURNS TEXT AS $$
 BEGIN
   RETURN LOWER(regexp_replace(team_name, '\s+', '-', 'g'));
 END;
 $$ LANGUAGE plpgsql;
--- End: Format team name to url key
-
--- Start: Analyze user issued item
 
 CREATE OR REPLACE FUNCTION analyze_user_issued_item(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -7770,12 +7404,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Analyze user issued item
-
--- Start: memo queries
-
 CREATE OR REPLACE FUNCTION create_memo(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let new_memo_data;
@@ -7882,7 +7512,7 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_memo_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let memo_data_on_load;
@@ -8083,7 +7713,7 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_memo_list(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let return_value;
@@ -8177,7 +7807,7 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION edit_memo(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   plv8.subtransaction(function(){
@@ -8211,7 +7841,7 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_memo_reference_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let memo_data_on_load;
@@ -8338,7 +7968,7 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_reference_memo(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let new_memo_data;
@@ -8428,12 +8058,8 @@ RETURNS JSON AS $$
   return new_memo_data;
 $$ LANGUAGE plv8;
 
--- End: memo queries
-
--- Start: Update user
-
 CREATE OR REPLACE FUNCTION update_user(
-    input_data JSON
+  input_data JSON
 )
 RETURNS VOID AS $$
   plv8.subtransaction(function(){
@@ -8460,12 +8086,8 @@ RETURNS VOID AS $$
  });
 $$ LANGUAGE plv8;
 
--- End: Update user
-
--- Start: Fetch section in edit request
-
 CREATE OR REPLACE FUNCTION fetch_edit_request_section(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData = [];
@@ -8728,12 +8350,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetch section in edit request
-
--- START: Get query data
-
 CREATE OR REPLACE FUNCTION get_query_data(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -8755,12 +8373,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- END: Get query data
-
--- Start: Get signer sla
-
 CREATE OR REPLACE FUNCTION get_signer_sla(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -8842,12 +8456,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Get signer sla
-
--- Start: Incident report metrics
-
 CREATE OR REPLACE FUNCTION get_incident_report(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -8914,12 +8524,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Incident report metrics
-
--- Start: Get ticket list on load
-
 CREATE OR REPLACE FUNCTION get_ticket_list_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -8942,12 +8548,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Get ticket list on load
-
--- Start: Create ticket on load
-
 CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -8986,12 +8588,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Create ticket on load
-
--- Start: Create custom csi
-
 CREATE OR REPLACE FUNCTION create_custom_csi(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -9054,12 +8652,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Create custom csi
-
--- Start: Create ticket
-
 CREATE OR REPLACE FUNCTION create_ticket(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -9081,12 +8675,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Create ticket
-
--- Start: Edit ticket
-
 CREATE OR REPLACE FUNCTION edit_ticket(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -9103,12 +8693,8 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Create ticket
-
--- Start: Check custom csi validity
-
 CREATE OR REPLACE FUNCTION check_custom_csi_validity(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -9167,10 +8753,6 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Check custom csi validity
-
--- Start: Check if ped part already exists
-
 CREATE OR REPLACE FUNCTION ped_part_check(
   input_data JSON
 )
@@ -9218,10 +8800,6 @@ RETURNS BOOLEAN AS $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Check if ped part already exists
-
--- Start: Create PED Part from ticket request
 
 CREATE OR REPLACE FUNCTION create_ped_part_from_ticket_request(
   input_data JSON
@@ -9331,12 +8909,8 @@ RETURNS VOID AS $$
  });
 $$ LANGUAGE plv8;
 
--- End: Create PED Part from ticket request
-
--- Start: Create user valid id
-
 CREATE OR REPLACE FUNCTION create_user_valid_id(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let returnData;
@@ -9415,10 +8989,6 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Create user valid id
-
--- Start: Check if ped part already exists
-
 CREATE OR REPLACE FUNCTION check_ped_part(
   input_data JSON
 )
@@ -9456,10 +9026,6 @@ RETURNS BOOLEAN AS $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Check if ped part already exists
-
--- Start: Get request without duplictable section
 
 CREATE OR REPLACE FUNCTION get_request_without_duplicatable_section(
   request_id TEXT
@@ -9665,10 +9231,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Get request without duplictable section
-
--- Start: Fetch request page section
-
 CREATE OR REPLACE FUNCTION fetch_request_page_section(
   input_data JSON
 )
@@ -9815,11 +9377,6 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
-
--- End: Fetch request page section
-
--- Start: Generate request id condition
-
 CREATE OR REPLACE FUNCTION generate_request_id_condition(
   request_id TEXT
 )
@@ -9839,10 +9396,6 @@ RETURNS TEXT AS $$
  });
  return idCondition;
 $$ LANGUAGE plv8;
-
--- End: Generate request id condition
-
--- Start: Fetch request comment
 
 CREATE OR REPLACE FUNCTION fetch_request_comment(
   request_id TEXT
@@ -9896,10 +9449,6 @@ RETURNS JSON AS $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Fetch request comment
-
--- Start: Public request page on load
 
 CREATE OR REPLACE FUNCTION public_request_page_on_load(
   input_data JSON
@@ -9973,10 +9522,6 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Public request page on load
-
--- Start: Fetch item request conditional options
 
 CREATE OR REPLACE FUNCTION fetch_item_request_conditional_options(
   input_data JSON
@@ -10098,10 +9643,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetch item request conditional options
-
--- Start: Fetch service request conditional options
-
 CREATE OR REPLACE FUNCTION fetch_service_request_conditional_options(
   input_data JSON
 )
@@ -10149,10 +9690,6 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Fetch service request conditional options
-
--- Start: Fetch other expenses request conditional options
 
 CREATE OR REPLACE FUNCTION fetch_other_expenses_request_conditional_options(
   input_data JSON
@@ -10206,10 +9743,6 @@ RETURNS JSON as $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Fetch other expenses request conditional options
-
--- Start: Fetch ped equipment request conditional options
 
 CREATE OR REPLACE FUNCTION fetch_ped_equipment_request_conditional_options(
   input_data JSON
@@ -10352,10 +9885,6 @@ RETURNS JSON as $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetch ped equipment request conditional options
-
--- Start: Create item category
-
 CREATE OR REPLACE FUNCTION create_item_category(
   input_data JSON
 )
@@ -10403,10 +9932,6 @@ RETURNS VOID AS $$
  });
 $$ LANGUAGE plv8;
 
--- End: Create item category
-
--- Start: Update item category
-
 CREATE OR REPLACE FUNCTION update_item_category(
   input_data JSON
 )
@@ -10448,11 +9973,8 @@ RETURNS VOID AS $$
  });
 $$ LANGUAGE plv8;
 
--- End: Update item category
-
--- Start: Get Jira automation data
 CREATE OR REPLACE FUNCTION get_jira_automation_data(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let jira_automation_data;
@@ -10534,11 +10056,9 @@ RETURNS JSON AS $$
  });
  return jira_automation_data;
 $$ LANGUAGE plv8;
--- End: Get Jira automation data
 
--- Start: Get approver unresolved request count
 CREATE OR REPLACE FUNCTION get_approver_unresolved_request_count(
-    input_data JSON
+  input_data JSON
 )
 RETURNS JSON AS $$
   let data;
@@ -10578,9 +10098,6 @@ RETURNS JSON AS $$
   });
   return data;
 $$ LANGUAGE plv8;
--- End: Get approver unresolved request count
-
--- Start: Get ticket list on load
 
 CREATE OR REPLACE FUNCTION get_admin_ticket_analytics(
   input_data JSON
@@ -10645,10 +10162,6 @@ RETURNS JSON AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
--- End: Get ticket list on load
-
--- Start: Handle formsly payment
-
 CREATE OR REPLACE FUNCTION handle_formsly_payment(
   input_data JSON
 )
@@ -10691,10 +10204,6 @@ RETURNS VOID AS $$
  });
 $$ LANGUAGE plv8;
 
--- End: Handle formsly payment
-
--- Start: Team invoice onload
-
 CREATE OR REPLACE FUNCTION team_invoice_on_load(
   input_data JSON
 )
@@ -10735,10 +10244,6 @@ RETURNS JSON AS $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
--- End: Handle formsly payment
-
--- Start: Fetch request page section for form with multiple duplicatable section
 
 CREATE OR REPLACE FUNCTION fetch_form_section_with_multiple_duplicatable_section(
   input_data JSON
@@ -10788,12 +10293,8 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
--- End: Fetch request page section for form with multiple duplicatable section
+-------- START: POLICIES
 
----------- End: FUNCTIONS
-
-
--------- Start: POLICIES
 ALTER TABLE attachment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comment_table ENABLE ROW LEVEL SECURITY;
@@ -13981,17 +13482,17 @@ CREATE POLICY "Allow READ for anon users" ON "public"."scic_employee_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
--------- End: POLICIES
+-------- END: POLICIES
 
----------- Start: INDEXES
+---------- START: INDEXES
 
 CREATE INDEX request_response_request_id_idx ON request_response_table (request_response, request_response_request_id);
 CREATE INDEX request_list_idx ON request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
 CREATE INDEX request_response_idx ON request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
 
--------- End: INDEXES
+-------- END: INDEXES
 
----------- Start: VIEWS
+---------- START: VIEWS
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
 CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_table;
@@ -14010,9 +13511,9 @@ INNER JOIN
 ON 
     equipment_id = equipment_description_equipment_id;
 
--------- End: VIEWS
+-------- END: VIEWS
 
--------- Start: SUBSCRIPTION
+-------- START: SUBSCRIPTION
 
 DROP PUBLICATION if exists supabase_realtime;
 
@@ -14021,11 +13522,4 @@ COMMIT;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table, ticket_table, team_table;
 
--------- End: SUBSCRIPTION
-
-
-GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
-
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO public;
+-------- END: SUBSCRIPTION
