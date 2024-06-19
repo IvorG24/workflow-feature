@@ -1,7 +1,4 @@
-import {
-  getCsiTableSpecialFieldOption,
-  getRequestFormslyId,
-} from "@/backend/api/get";
+import { getRequestFormslyId } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   MAX_FILE_SIZE,
@@ -54,8 +51,6 @@ type RequestFormFieldsProps = {
   formslyFormName?: string;
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
-    onCSIDivisionChange: (index: number, value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
   };
   otherExpensesMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -294,24 +289,6 @@ const RequestFormFields = ({
       value: field.field_type !== "SWITCH" && field.field_is_required,
       message: "This field is required",
     },
-  };
-
-  const getCsiTableFieldDropdownOption = async ({
-    fieldId,
-    search,
-  }: {
-    fieldId: string;
-    search?: string;
-  }) => {
-    try {
-      const data = await getCsiTableSpecialFieldOption(supabaseClient, {
-        fieldId,
-        search,
-      });
-      return data;
-    } catch (error) {
-      return [];
-    }
   };
 
   useEffect(() => {
@@ -637,15 +614,6 @@ const RequestFormFields = ({
                       );
                       break;
 
-                    case "CSI Code Description":
-                      servicesFormMethods &&
-                        servicesFormMethods.onCSICodeChange(
-                          sectionIndex,
-                          value
-                        );
-
-                      break;
-
                     case "Requesting Project":
                       itemFormMethods?.onProjectNameChange(value);
                       servicesFormMethods?.onProjectNameChange(value);
@@ -664,12 +632,7 @@ const RequestFormFields = ({
                       equipmentServiceReportMethods?.onProjectNameChange(value);
                       requestForPaymentFormMethods?.onProjectNameChange(value);
                       break;
-                    case "CSI Division":
-                      servicesFormMethods?.onCSIDivisionChange(
-                        sectionIndex,
-                        value
-                      );
-                      break;
+
                     case "Category":
                       otherExpensesMethods?.onCategoryChange(
                         sectionIndex,
@@ -951,25 +914,6 @@ const RequestFormFields = ({
                 readOnly={field.field_is_read_only || isLoading}
                 rightSection={isLoading && <Loader size={16} />}
                 dropdownPosition="bottom"
-                onSearchChange={async (value) => {
-                  // fetch options for csi table special field
-                  if (
-                    field.field_special_field_template_id &&
-                    field.field_special_field_template_id ===
-                      "ff007180-4367-4cf2-b259-7804867615a7"
-                  ) {
-                    const newCsiOptionList =
-                      await getCsiTableFieldDropdownOption({
-                        fieldId: field.field_id,
-                        search: value,
-                      });
-
-                    setValue(
-                      `sections.${sectionIndex}.section_field.${fieldIndex}.field_option`,
-                      newCsiOptionList
-                    );
-                  }
-                }}
                 description={
                   personnelTransferRequisitionMethods &&
                   field.field_name === "Department"

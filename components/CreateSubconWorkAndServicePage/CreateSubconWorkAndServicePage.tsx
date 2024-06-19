@@ -410,7 +410,6 @@ const CreateSubconWorkAndServiceRequestPage = ({
                     formslyFormName={form.form_name}
                     servicesFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
-                      onCSIDivisionChange: handleCSIDivisionChange,
                       onCSICodeChange: handleCSICodeChange,
                     }}
                   />
