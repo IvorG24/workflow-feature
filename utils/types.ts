@@ -883,8 +883,6 @@ export type FieldWithChoices = {
 } & FieldTableRow;
 
 export type ItemWithDescriptionAndField = ItemTableRow & {
-  item_division_id_list: string[];
-} & {
   item_description: (ItemDescriptionTableRow & {
     item_description_field: (ItemDescriptionFieldTableRow & {
       item_description_field_uom: {
@@ -893,7 +891,6 @@ export type ItemWithDescriptionAndField = ItemTableRow & {
     })[];
     item_field: FieldTableRow;
   })[];
-  item_level_three_description?: string;
 } & ItemCategoryType;
 
 export type InvitationWithTeam = InvitationTableRow & {

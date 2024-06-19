@@ -544,7 +544,6 @@ const CreateItemRequestPage = ({ form, projectOptions }: Props) => {
                     itemFormMethods={{
                       onGeneralNameChange: handleGeneralNameChange,
                       onProjectNameChange: handleProjectNameChange,
-              
                     }}
                     formslyFormName={form.form_name}
                     loadingFieldList={loadingFieldList}

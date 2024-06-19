@@ -134,7 +134,6 @@ type RequestFormFieldsProps = {
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onGeneralNameChange: (index: number, value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
   liquidationReimbursementFormMethods?: {
@@ -650,10 +649,6 @@ const RequestFormFields = ({
                           sectionIndex,
                           value
                         );
-                      itAssetRequestFormMethods?.onCSICodeChange(
-                        sectionIndex,
-                        value
-                      );
                       break;
 
                     case "Requesting Project":

@@ -102,7 +102,6 @@ type RequestFormSectionProps = {
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onGeneralNameChange: (index: number, value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
   liquidationReimbursementFormMethods?: {
