@@ -1228,3 +1228,24 @@ export const updateJobTitle = async (
 
   return { success: true, error: null };
 };
+
+export const updateRequestOtpId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formslyId: string;
+    otpId: string;
+  }
+) => {
+  const { formslyId, otpId } = params;
+  const splitFormslyId = `${formslyId}`.split("-");
+  const formslyIdPrefix = splitFormslyId[0];
+  const formslyIdSerial = splitFormslyId[1];
+
+  const { error } = await supabaseClient
+    .from("request_table")
+    .update({ request_otp_id: otpId })
+    .eq("request_formsly_id_prefix", formslyIdPrefix)
+    .eq("request_formsly_id_serial", formslyIdSerial);
+
+  if (error) throw error;
+};

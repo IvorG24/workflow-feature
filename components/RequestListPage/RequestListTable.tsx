@@ -2,8 +2,10 @@ import {
   getFieldResponseByRequestId,
   getRequestTypeFieldResponse,
 } from "@/backend/api/get";
+import { updateRequestOtpId } from "@/backend/api/update";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   BASE_URL,
   DEFAULT_REQUEST_LIST_LIMIT,
@@ -84,6 +86,7 @@ const RequestListTable = ({
   const activeTeam = useActiveTeam();
   const formList = useFormList();
   const supabaseClient = createPagesBrowserClient();
+  const userTeamMember = useUserTeamMember();
 
   const [jiraTicketStatusList, setJiraTicketStatusList] = useLocalStorage<
     { jira_id: string; status: string }[]
@@ -93,12 +96,18 @@ const RequestListTable = ({
     []
   );
 
+  const [isFetchingOtpId, setIsFetchingOtpId] = useState<string[]>([]);
+  const [otpIdList, setOtpIdList] = useState<
+    { formslyId: string; otpId: string }[]
+  >([]);
+
   const [pedEquipmentNumberList, setPedEquipmentNumberList] = useLocalStorage<
     { request_id: string; equipment_number: string[] }[]
   >({
     key: "formsly-ped-equipment-number-list",
     defaultValue: [],
   });
+
   const [
     isFetchingPedEquipmentNumberList,
     setIsFetchingPedEquipmentNumberList,
@@ -184,6 +193,61 @@ const RequestListTable = ({
         (ticket) => ticket === jiraTicketKey
       );
       setIsFetchingJiraStatus(updatedFetchingJiraStatus);
+    }
+  };
+
+  const handleFetchOtpId = async (jiraTicketKey: string, formslyId: string) => {
+    try {
+      setIsFetchingOtpId((prev) => [...prev, formslyId]);
+      const requestJiraTicketData = await fetch(
+        `/api/jira/get-ticket?jiraTicketKey=${jiraTicketKey}`
+      );
+
+      if (!requestJiraTicketData.ok)
+        throw new Error("Failed to fetch jira ticket");
+
+      const jiraTicket = await requestJiraTicketData.json();
+
+      if (!jiraTicket.fields["customfield_10172"]) {
+        notifications.show({
+          message: "This request doesn't have an OTP ID",
+          color: "orange",
+        });
+        return;
+      }
+      const jiraTicketOtpId = jiraTicket.fields["customfield_10172"];
+
+      await updateRequestOtpId(supabaseClient, {
+        formslyId,
+        otpId: jiraTicketOtpId,
+      });
+
+      const isAlreadyFetched = otpIdList.find(
+        (otp) => otp.formslyId === formslyId
+      );
+
+      let updatedOtpIdList = otpIdList;
+      if (isAlreadyFetched) {
+        updatedOtpIdList = otpIdList.map((otp) => {
+          if (otp.formslyId === formslyId) {
+            return { ...otp, otpId: jiraTicketOtpId };
+          }
+          return otp;
+        });
+      } else {
+        updatedOtpIdList.push({ formslyId, otpId: jiraTicketOtpId });
+      }
+      setOtpIdList(updatedOtpIdList);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to fetch OTP Id",
+        color: "red",
+      });
+    } finally {
+      const updatedFetchingOtpId = isFetchingOtpId.filter(
+        (otpFormslyId) => otpFormslyId === formslyId
+      );
+      setIsFetchingOtpId(updatedFetchingOtpId);
     }
   };
 
@@ -298,6 +362,14 @@ const RequestListTable = ({
     selectedFormList,
     selectedFormFilter,
   ]);
+
+  useEffect(() => {
+    const currentOtpIdList = requestList.map((request) => ({
+      formslyId: request.request_formsly_id,
+      otpId: request.request_otp_id ?? "",
+    }));
+    setOtpIdList(currentOtpIdList);
+  }, [requestList]);
 
   return (
     <DataTable
@@ -458,27 +530,79 @@ const RequestListTable = ({
           accessor: "request_otp_id",
           title: "OTP ID",
           hidden: checkIfColumnIsHidden("request_otp_id"),
-          render: ({ request_otp_id }) => (
-            <Flex key={request_otp_id} justify="space-between">
-              <Text truncate maw={150}>
-                {request_otp_id}
-              </Text>
-              {request_otp_id && (
-                <CopyButton value={request_otp_id}>
-                  {({ copied, copy }) => (
-                    <Tooltip
-                      label={copied ? "Copied" : `Copy ${request_otp_id}`}
-                      onClick={copy}
-                    >
-                      <ActionIcon>
-                        <IconCopy size={16} />
-                      </ActionIcon>
-                    </Tooltip>
-                  )}
-                </CopyButton>
-              )}
-            </Flex>
-          ),
+          render: ({
+            request_otp_id,
+            request_team_member_id,
+            request_jira_id,
+            request_formsly_id,
+          }) => {
+            const canUserFetchOtpId =
+              userTeamMember &&
+              (userTeamMember.team_member_id === request_team_member_id ||
+                ["OWNER", "APPROVER"].includes(
+                  userTeamMember.team_member_role
+                ));
+            const currentOtp = otpIdList.find(
+              (otp) => otp.formslyId === request_formsly_id
+            );
+
+            const isBeingFetched = isFetchingOtpId.includes(
+              `${request_formsly_id}`
+            );
+
+            return (
+              <>
+                {request_jira_id && (
+                  <Flex maw={120} justify="space-between">
+                    {!request_otp_id &&
+                    canUserFetchOtpId &&
+                    !currentOtp?.otpId ? (
+                      <Badge
+                        w={120}
+                        sx={{ cursor: "pointer" }}
+                        onClick={() =>
+                          handleFetchOtpId(
+                            `${request_jira_id}`,
+                            request_formsly_id
+                          )
+                        }
+                      >
+                        {isBeingFetched ? (
+                          <Loader
+                            color={currentOtp ? "blue" : "white"}
+                            variant="dots"
+                            size={24}
+                          />
+                        ) : (
+                          "Get OTP"
+                        )}
+                      </Badge>
+                    ) : (
+                      <>
+                        <Text truncate w={90}>
+                          {currentOtp?.otpId}
+                        </Text>
+                        <CopyButton value={currentOtp?.otpId as string}>
+                          {({ copied, copy }) => (
+                            <Tooltip
+                              label={
+                                copied ? "Copied" : `Copy ${currentOtp?.otpId}`
+                              }
+                              onClick={copy}
+                            >
+                              <ActionIcon>
+                                <IconCopy size={16} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )}
+                        </CopyButton>
+                      </>
+                    )}
+                  </Flex>
+                )}
+              </>
+            );
+          },
         },
         {
           accessor: "request_form_id",
