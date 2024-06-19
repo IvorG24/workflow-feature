@@ -1,13 +1,9 @@
 import {
-  getCSICode,
-  getCSICodeOptionsForServices,
   getGeneralUnitOfMeasurementOptions,
   getNonDuplictableSectionResponse,
   getProjectSignerWithTeamMember,
   getSectionInRequestPage,
-  getServiceCSIDivisionOptions,
   getServiceCategoryOptions,
-  getServiceRequestConditionalOptions,
   getSupplierOptions,
 } from "@/backend/api/get";
 import { createRequest, editRequest } from "@/backend/api/post";
@@ -18,7 +14,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { FETCH_OPTION_LIMIT } from "@/utils/constant";
+import { CSI_HIDDEN_FIELDS, FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -94,12 +90,6 @@ const EditServicesRequestPage = ({
   const [unitOfMeasurementOptions, setUnitOfMeasurementOptions] = useState<
     OptionTableRow[]
   >([]);
-  const [csiDivisionOptions, setCsiDivisionOptions] = useState<
-    OptionTableRow[]
-  >([]);
-  const [loadingFieldList, setLoadingFieldList] = useState<
-    { sectionIndex: number; fieldIndex: number }[]
-  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -120,7 +110,6 @@ const EditServicesRequestPage = ({
     insert: addSection,
     remove: removeSection,
     replace: replaceSection,
-    update: updateSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -180,32 +169,6 @@ const EditServicesRequestPage = ({
           index += FETCH_OPTION_LIMIT;
         }
         setUnitOfMeasurementOptions(unitOfMeasurementOptionlist);
-
-        // Fetch CSI Division option
-        index = 0;
-        const csiDivisionOptionlist: OptionTableRow[] = [];
-        while (1) {
-          const csiDivisionData = await getServiceCSIDivisionOptions(
-            supabaseClient,
-            {
-              index,
-              limit: FETCH_OPTION_LIMIT,
-            }
-          );
-          const csiDivisionOptions = csiDivisionData.map((csi, index) => {
-            return {
-              option_field_id: form.form_section[1].section_field[4].field_id,
-              option_id: csi.csi_code_division_id as string,
-              option_order: index,
-              option_value: csi.csi_code_division_description as string,
-            };
-          });
-          csiDivisionOptionlist.push(...csiDivisionOptions);
-
-          if (csiDivisionOptions.length < FETCH_OPTION_LIMIT) break;
-          index += FETCH_OPTION_LIMIT;
-        }
-        setCsiDivisionOptions(csiDivisionOptionlist);
 
         // Fetch supplier option
         index = 0;
@@ -302,7 +265,14 @@ const EditServicesRequestPage = ({
             ...form.form_section[1],
             section_field: combinedFieldList,
           },
-        ]);
+        ]).map((section) => {
+          return {
+            ...section,
+            section_field: section.section_field.filter(
+              (field) => !CSI_HIDDEN_FIELDS.includes(field.field_name)
+            ),
+          };
+        });
 
         // Input option to the sections
         const formattedSection = newSection.map((section) => {
@@ -320,9 +290,6 @@ const EditServicesRequestPage = ({
                 option = unitOfMeasurementOptionlist;
                 break;
               case 4:
-                option = csiDivisionOptionlist;
-                break;
-              case 9:
                 option = supplierOptionlist;
                 break;
             }
@@ -339,71 +306,6 @@ const EditServicesRequestPage = ({
             ...section,
             section_field: fieldList,
           };
-        });
-
-        // Filter section with unique CSI Division
-        const uniqueCSIDivision: string[] = [];
-        const filteredSection: RequestFormValues["sections"] = [];
-        formattedSection.forEach((section) => {
-          if (
-            !uniqueCSIDivision.includes(
-              `${section.section_field[4].field_response}`
-            )
-          ) {
-            uniqueCSIDivision.push(
-              `${section.section_field[4].field_response}`
-            );
-            filteredSection.push(section);
-          }
-        });
-
-        // Fetch conditional options
-        const conditionalOptionList: {
-          csiDivision: string;
-          fieldList: {
-            fieldId: string;
-            optionList: OptionTableRow[];
-          }[];
-        }[] = [];
-
-        index = 0;
-        while (1) {
-          const optionData = await getServiceRequestConditionalOptions(
-            supabaseClient,
-            {
-              sectionList: filteredSection
-                .slice(index, index + 5)
-                .map((section) => {
-                  return {
-                    csiDivision: `${section.section_field[4].field_response}`,
-                    fieldIdList: [section.section_field[5].field_id],
-                  };
-                }),
-            }
-          );
-          conditionalOptionList.push(...optionData);
-          if (optionData.length < 5) break;
-          index += 5;
-        }
-
-        // Insert option to section list
-        formattedSection.forEach((section, sectionIndex) => {
-          const csiDivisionIndex = conditionalOptionList.findIndex(
-            (value) =>
-              value.csiDivision === section.section_field[4].field_response
-          );
-          if (csiDivisionIndex === -1) return;
-
-          conditionalOptionList[csiDivisionIndex].fieldList.forEach((field) => {
-            const fieldIndex = section.section_field.findIndex(
-              (value) => value.field_id === field.fieldId
-            );
-            if (fieldIndex === -1) return;
-
-            formattedSection[sectionIndex].section_field[
-              fieldIndex
-            ].field_option = field.optionList;
-          });
         });
 
         // Add duplicatable section id
@@ -536,12 +438,6 @@ const EditServicesRequestPage = ({
               field_section_duplicatable_id: sectionDuplicatableId,
               field_option: unitOfMeasurementOptions,
             };
-          } else if (field.field_name === "CSI Division") {
-            return {
-              ...field,
-              field_section_duplicatable_id: sectionDuplicatableId,
-              field_option: csiDivisionOptions,
-            };
           } else if (field.field_name === "Preferred Supplier") {
             return {
               ...field,
@@ -558,7 +454,10 @@ const EditServicesRequestPage = ({
       );
       const newSection = {
         ...sectionMatch,
-        section_field: duplicatedFieldsWithDuplicatableId,
+        section_field: [
+          ...duplicatedFieldsWithDuplicatableId.slice(0, 4),
+          duplicatedFieldsWithDuplicatableId[9],
+        ],
       };
       addSection(sectionLastIndex + 1, newSection);
       return;
@@ -574,153 +473,6 @@ const EditServicesRequestPage = ({
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
       return;
-    }
-  };
-
-  const handleCSIDivisionChange = async (
-    index: number,
-    value: string | null
-  ) => {
-    const newSection = getValues(`sections.${index}`);
-    try {
-      if (value) {
-        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 5 }]);
-
-        const csiCodeList = await getCSICodeOptionsForServices(supabaseClient, {
-          description: value,
-        });
-
-        const generalField = [
-          ...newSection.section_field.slice(0, 5),
-          {
-            ...newSection.section_field[5],
-            field_response: "",
-            field_option: csiCodeList.map((code, index) => {
-              return {
-                option_id: code.csi_code_id,
-                option_value: code.csi_code_level_three_description,
-                option_order: index + 1,
-                option_field_id: newSection.section_field[4].field_id,
-              };
-            }),
-          },
-          ...newSection.section_field.slice(6, 9).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          ...newSection.section_field.slice(9),
-        ];
-        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-
-        updateSection(index, {
-          ...newSection,
-          section_field: [
-            ...generalField.map((field) => {
-              return {
-                ...field,
-                field_section_duplicatable_id: duplicatableSectionId,
-              };
-            }),
-          ],
-        });
-      } else {
-        const generalField = [
-          ...newSection.section_field.slice(0, 5),
-          {
-            ...newSection.section_field[5],
-            field_response: "",
-            field_option: [],
-          },
-          ...newSection.section_field.slice(6, 9).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          ...newSection.section_field.slice(9),
-        ];
-        updateSection(index, {
-          ...newSection,
-          section_field: generalField,
-        });
-      }
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setLoadingFieldList([]);
-    }
-  };
-
-  const handleCSICodeChange = async (index: number, value: string | null) => {
-    const newSection = getValues(`sections.${index}`);
-
-    try {
-      if (value) {
-        setLoadingFieldList([
-          { sectionIndex: index, fieldIndex: 6 },
-          { sectionIndex: index, fieldIndex: 7 },
-          { sectionIndex: index, fieldIndex: 8 },
-        ]);
-
-        const csiCode = await getCSICode(supabaseClient, { csiCode: value });
-
-        const generalField = [
-          ...newSection.section_field.slice(0, 6),
-          {
-            ...newSection.section_field[6],
-            field_response: csiCode?.csi_code_section,
-          },
-          {
-            ...newSection.section_field[7],
-            field_response: csiCode?.csi_code_level_two_major_group_description,
-          },
-          {
-            ...newSection.section_field[8],
-            field_response: csiCode?.csi_code_level_two_minor_group_description,
-          },
-          ...newSection.section_field.slice(9),
-        ];
-        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-
-        updateSection(index, {
-          ...newSection,
-          section_field: [
-            ...generalField.map((field) => {
-              return {
-                ...field,
-                field_section_duplicatable_id: duplicatableSectionId,
-              };
-            }),
-          ],
-        });
-      } else {
-        const generalField = [
-          ...newSection.section_field.slice(0, 6),
-          ...newSection.section_field.slice(6, 9).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          ...newSection.section_field.slice(9),
-        ];
-        updateSection(index, {
-          ...newSection,
-          section_field: generalField,
-        });
-      }
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setLoadingFieldList([]);
     }
   };
 
@@ -800,11 +552,8 @@ const EditServicesRequestPage = ({
                     formslyFormName={form.form_name}
                     servicesFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
-                      onCSIDivisionChange: handleCSIDivisionChange,
-                      onCSICodeChange: handleCSICodeChange,
                     }}
                     isEdit={!isReferenceOnly}
-                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
