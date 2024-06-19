@@ -388,7 +388,6 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
                     formslyFormName={form.form_name}
                     otherExpensesMethods={{
                       onProjectNameChange: handleProjectNameChange,
-                      onCSICodeChange: handleCSICodeChange,
                       onCategoryChange: handleCategoryChange,
                     }}
                     loadingFieldList={loadingFieldList}
