@@ -13,7 +13,7 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { BASE_URL, formatDate } from "@/utils/constant";
+import { BASE_URL, CSI_HIDDEN_FIELDS, formatDate } from "@/utils/constant";
 import { mostOccurringElement } from "@/utils/functions";
 import {
   createJiraTicket,
@@ -47,14 +47,6 @@ import { v4 as uuidv4 } from "uuid";
 import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import RequestCommentList from "../RequestPage/RequestCommentList";
 import ItemSummary from "../SummarySection/ItemSummary";
-
-const hiddenFields = [
-  "CSI Code Description",
-  "CSI Code",
-  "Division Description",
-  "Level 2 Major Group Description",
-  "Level 2 Minor Group Description",
-];
 
 type Props = {
   request: RequestWithResponseType;
@@ -149,7 +141,7 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
           return {
             ...section,
             section_field: section.section_field.filter(
-              (field) => !hiddenFields.includes(field.field_name)
+              (field) => !CSI_HIDDEN_FIELDS.includes(field.field_name)
             ),
           };
         });
