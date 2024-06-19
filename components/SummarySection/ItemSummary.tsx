@@ -43,10 +43,9 @@ const ItemSummary = ({ summaryData }: Props) => {
               <th>Item</th>
               <th>Description</th>
               <th>GL Account</th>
-              <th>CSI Code Description</th>
               <th>Quantity</th>
               <th>Base Unit of Measurement</th>
-              {isWithPreferredSupplier ? <th>Preferred Supplier</th> : null}
+              <th>Preferred Supplier</th>
             </tr>
           </thead>
           <tbody>
@@ -57,7 +56,7 @@ const ItemSummary = ({ summaryData }: Props) => {
 
               let description = "";
               summary.section_field
-                .slice(isWithPreferredSupplier ? 10 : 9)
+                .slice(isWithPreferredSupplier ? 5 : 4)
                 .forEach((field) => {
                   if (field.field_response) {
                     description += `${field.field_name}: ${JSON.parse(
@@ -66,9 +65,6 @@ const ItemSummary = ({ summaryData }: Props) => {
                   }
                 });
 
-              const csiCode = JSON.parse(
-                `${summary.section_field[4].field_response?.request_response}`
-              );
               const glAccount = JSON.parse(
                 `${summary.section_field[3].field_response?.request_response}`
               );
@@ -79,10 +75,10 @@ const ItemSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[1].field_response?.request_response}`
               );
               const supplier =
-                summary.section_field[9].field_name === "Preferred Supplier" &&
-                summary.section_field[9].field_response?.request_response
+                summary.section_field[4].field_name === "Preferred Supplier" &&
+                summary.section_field[4].field_response?.request_response
                   ? JSON.parse(
-                      `${summary.section_field[9].field_response?.request_response}`
+                      `${summary.section_field[4].field_response?.request_response}`
                     )
                   : "";
 
@@ -95,10 +91,9 @@ const ItemSummary = ({ summaryData }: Props) => {
                     </pre>
                   </td>
                   <td>{glAccount}</td>
-                  <td>{csiCode}</td>
                   <td>{addCommaToNumber(quantity)}</td>
                   <td>{unit}</td>
-                  {isWithPreferredSupplier ? <td>{supplier}</td> : null}
+                  <td>{supplier}</td>
                 </tr>
               );
             })}

@@ -48,6 +48,14 @@ import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import RequestCommentList from "../RequestPage/RequestCommentList";
 import ItemSummary from "../SummarySection/ItemSummary";
 
+const hiddenFields = [
+  "CSI Code Description",
+  "CSI Code",
+  "Division Description",
+  "Level 2 Major Group Description",
+  "Level 2 Minor Group Description",
+];
+
 type Props = {
   request: RequestWithResponseType;
   duplicatableSectionIdList: string[];
@@ -137,7 +145,14 @@ const ItemRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             ...request.request_form.form_section[1],
             section_field: combinedFieldList,
           },
-        ]);
+        ]).map((section) => {
+          return {
+            ...section,
+            section_field: section.section_field.filter(
+              (field) => !hiddenFields.includes(field.field_name)
+            ),
+          };
+        });
         const newFormSection = [...formSection, ...newSection];
 
         setFormSection(newFormSection);
