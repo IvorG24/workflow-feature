@@ -130,7 +130,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
           {
             ...form.form_section[1],
             section_field: [
-              ...form.form_section[1].section_field.slice(0, 9),
+              ...form.form_section[1].section_field.slice(0, 4),
               {
                 ...form.form_section[1].section_field[9],
                 field_option: supplierOptionlist,
@@ -231,7 +231,10 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       );
       const newSection = {
         ...sectionMatch,
-        section_field: duplicatedFieldsWithDuplicatableId,
+        section_field: [
+          ...duplicatedFieldsWithDuplicatableId.slice(0, 4),
+          duplicatedFieldsWithDuplicatableId[9],
+        ],
       };
       addSection(sectionLastIndex + 1, newSection);
       return;

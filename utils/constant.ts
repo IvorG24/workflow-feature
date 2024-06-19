@@ -1370,4 +1370,5 @@ export const CSI_HIDDEN_FIELDS = [
   "Division Description",
   "Level 2 Major Group Description",
   "Level 2 Minor Group Description",
+  "CSI Division",
 ];
