@@ -59,7 +59,6 @@ type RequestFormFieldsProps = {
   };
   otherExpensesMethods?: {
     onProjectNameChange: (value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
     onCategoryChange: (index: number, value: string | null) => void;
   };
   pedEquipmentFormMethods?: {
@@ -644,11 +643,7 @@ const RequestFormFields = ({
                           sectionIndex,
                           value
                         );
-                      otherExpensesMethods &&
-                        otherExpensesMethods.onCSICodeChange(
-                          sectionIndex,
-                          value
-                        );
+
                       break;
 
                     case "Requesting Project":
