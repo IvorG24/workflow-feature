@@ -2,7 +2,6 @@ import {
   getGeneralUnitOfMeasurementOptions,
   getNonDuplictableSectionResponse,
   getOtherExpensesCategoryOptionsWithLimit,
-  getOtherExpensesRequestConditionalOptions,
   getProjectSignerWithTeamMember,
   getSectionInRequestPage,
   getSupplierOptions,
@@ -313,71 +312,6 @@ const EditOtherExpenesesRequestPage = ({
             ...section,
             section_field: fieldList,
           };
-        });
-
-        // Filter section with unique category
-        const uniqueCSIDivision: string[] = [];
-        const filteredSection: RequestFormValues["sections"] = [];
-        formattedSection.forEach((section) => {
-          if (
-            !uniqueCSIDivision.includes(
-              `${section.section_field[0].field_response}`
-            )
-          ) {
-            uniqueCSIDivision.push(
-              `${section.section_field[0].field_response}`
-            );
-            filteredSection.push(section);
-          }
-        });
-
-        // Fetch conditional options
-        const conditionalOptionList: {
-          category: string;
-          fieldList: {
-            fieldId: string;
-            optionList: OptionTableRow[];
-          }[];
-        }[] = [];
-
-        index = 0;
-        while (1) {
-          const optionData = await getOtherExpensesRequestConditionalOptions(
-            supabaseClient,
-            {
-              sectionList: filteredSection
-                .slice(index, index + 5)
-                .map((section) => {
-                  return {
-                    category: `${section.section_field[0].field_response}`,
-                    fieldIdList: [section.section_field[1].field_id],
-                  };
-                }),
-            }
-          );
-          conditionalOptionList.push(...optionData);
-          if (optionData.length < 5) break;
-          index += 5;
-        }
-
-        // Insert option to section list
-        formattedSection.forEach((section, sectionIndex) => {
-          const categoryIndex = conditionalOptionList.findIndex(
-            (value) =>
-              value.category === section.section_field[0].field_response
-          );
-          if (categoryIndex === -1) return;
-
-          conditionalOptionList[categoryIndex].fieldList.forEach((field) => {
-            const fieldIndex = section.section_field.findIndex(
-              (value) => value.field_id === field.fieldId
-            );
-            if (fieldIndex === -1) return;
-
-            formattedSection[sectionIndex].section_field[
-              fieldIndex
-            ].field_option = field.optionList;
-          });
         });
 
         // Add duplicatable section id
