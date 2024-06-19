@@ -7,15 +7,6 @@ type Props = {
 };
 
 const ITAssetSummary = ({ summaryData }: Props) => {
-  const isWithPreferredSupplier = summaryData
-    .map((data) => {
-      return data.section_field.findIndex(
-        (data) =>
-          data.field_name === "Preferred Supplier" &&
-          data.field_response?.request_response.length
-      );
-    })
-    .some((index) => index !== -1);
   return (
     <Paper p="xl" shadow="xs">
       <Title order={4} color="dimmed">
@@ -43,7 +34,6 @@ const ITAssetSummary = ({ summaryData }: Props) => {
               <th>Item</th>
               <th>Description</th>
               <th>GL Account</th>
-              <th>CSI Code Description</th>
               <th>Quantity</th>
               <th>Base Unit of Measurement</th>
             </tr>
@@ -55,19 +45,14 @@ const ITAssetSummary = ({ summaryData }: Props) => {
               );
 
               let description = "";
-              summary.section_field
-                .slice(isWithPreferredSupplier ? 10 : 9)
-                .forEach((field) => {
-                  if (field.field_response) {
-                    description += `${field.field_name}: ${JSON.parse(
-                      field.field_response.request_response
-                    )}\n`;
-                  }
-                });
+              summary.section_field.slice(4).forEach((field) => {
+                if (field.field_response) {
+                  description += `${field.field_name}: ${JSON.parse(
+                    field.field_response.request_response
+                  )}\n`;
+                }
+              });
 
-              const csiCode = JSON.parse(
-                `${summary.section_field[4].field_response?.request_response}`
-              );
               const glAccount = JSON.parse(
                 `${summary.section_field[3].field_response?.request_response}`
               );
@@ -87,7 +72,6 @@ const ITAssetSummary = ({ summaryData }: Props) => {
                     </pre>
                   </td>
                   <td>{glAccount}</td>
-                  <td>{csiCode}</td>
                   <td>{addCommaToNumber(quantity)}</td>
                   <td>{unit}</td>
                 </tr>

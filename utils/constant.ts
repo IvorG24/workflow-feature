@@ -1362,3 +1362,12 @@ export const INTERVAL_OPTIONS = [
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
 ];
+
+export const CSI_HIDDEN_FIELDS = [
+  "CSI Code Description",
+  "CSI Code",
+  "Division Description",
+  "Level 2 Major Group Description",
+  "Level 2 Minor Group Description",
+  "CSI Division",
+];

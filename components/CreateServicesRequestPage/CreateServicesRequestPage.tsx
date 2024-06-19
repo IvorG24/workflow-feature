@@ -1,6 +1,4 @@
 import {
-  getCSICode,
-  getCSICodeOptionsForServices,
   getProjectSignerWithTeamMember,
   getSupplierOptions,
 } from "@/backend/api/get";
@@ -69,9 +67,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
   const [preferredSupplierOptions, setPreferredSupplierOptions] = useState<
     OptionTableRow[]
   >([]);
-  const [loadingFieldList, setLoadingFieldList] = useState<
-    { sectionIndex: number; fieldIndex: number }[]
-  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -92,7 +87,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
     insert: addSection,
     remove: removeSection,
     replace: replaceSection,
-    update: updateSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -130,7 +124,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
           {
             ...form.form_section[1],
             section_field: [
-              ...form.form_section[1].section_field.slice(0, 9),
+              ...form.form_section[1].section_field.slice(0, 4),
               {
                 ...form.form_section[1].section_field[9],
                 field_option: supplierOptionlist,
@@ -231,7 +225,10 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       );
       const newSection = {
         ...sectionMatch,
-        section_field: duplicatedFieldsWithDuplicatableId,
+        section_field: [
+          ...duplicatedFieldsWithDuplicatableId.slice(0, 4),
+          duplicatedFieldsWithDuplicatableId[9],
+        ],
       };
       addSection(sectionLastIndex + 1, newSection);
       return;
@@ -247,153 +244,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
       return;
-    }
-  };
-
-  const handleCSIDivisionChange = async (
-    index: number,
-    value: string | null
-  ) => {
-    const newSection = getValues(`sections.${index}`);
-    try {
-      if (value) {
-        setLoadingFieldList([{ sectionIndex: index, fieldIndex: 5 }]);
-
-        const csiCodeList = await getCSICodeOptionsForServices(supabaseClient, {
-          description: value,
-        });
-
-        const generalField = [
-          ...newSection.section_field.slice(0, 5),
-          {
-            ...newSection.section_field[5],
-            field_response: "",
-            field_option: csiCodeList.map((code, index) => {
-              return {
-                option_id: code.csi_code_id,
-                option_value: code.csi_code_level_three_description,
-                option_order: index + 1,
-                option_field_id: newSection.section_field[4].field_id,
-              };
-            }),
-          },
-          ...newSection.section_field.slice(6, 9).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          ...newSection.section_field.slice(9),
-        ];
-        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-
-        updateSection(index, {
-          ...newSection,
-          section_field: [
-            ...generalField.map((field) => {
-              return {
-                ...field,
-                field_section_duplicatable_id: duplicatableSectionId,
-              };
-            }),
-          ],
-        });
-      } else {
-        const generalField = [
-          ...newSection.section_field.slice(0, 5),
-          {
-            ...newSection.section_field[5],
-            field_response: "",
-            field_option: [],
-          },
-          ...newSection.section_field.slice(6, 9).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          ...newSection.section_field.slice(9),
-        ];
-        updateSection(index, {
-          ...newSection,
-          section_field: generalField,
-        });
-      }
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setLoadingFieldList([]);
-    }
-  };
-
-  const handleCSICodeChange = async (index: number, value: string | null) => {
-    const newSection = getValues(`sections.${index}`);
-
-    try {
-      if (value) {
-        setLoadingFieldList([
-          { sectionIndex: index, fieldIndex: 6 },
-          { sectionIndex: index, fieldIndex: 7 },
-          { sectionIndex: index, fieldIndex: 8 },
-        ]);
-
-        const csiCode = await getCSICode(supabaseClient, { csiCode: value });
-
-        const generalField = [
-          ...newSection.section_field.slice(0, 6),
-          {
-            ...newSection.section_field[6],
-            field_response: csiCode?.csi_code_section,
-          },
-          {
-            ...newSection.section_field[7],
-            field_response: csiCode?.csi_code_level_two_major_group_description,
-          },
-          {
-            ...newSection.section_field[8],
-            field_response: csiCode?.csi_code_level_two_minor_group_description,
-          },
-          ...newSection.section_field.slice(9),
-        ];
-        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-
-        updateSection(index, {
-          ...newSection,
-          section_field: [
-            ...generalField.map((field) => {
-              return {
-                ...field,
-                field_section_duplicatable_id: duplicatableSectionId,
-              };
-            }),
-          ],
-        });
-      } else {
-        const generalField = [
-          ...newSection.section_field.slice(0, 6),
-          ...newSection.section_field.slice(6, 9).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          ...newSection.section_field.slice(9),
-        ];
-        updateSection(index, {
-          ...newSection,
-          section_field: generalField,
-        });
-      }
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setLoadingFieldList([]);
     }
   };
 
@@ -464,10 +314,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
                     formslyFormName={form.form_name}
                     servicesFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
-                      onCSIDivisionChange: handleCSIDivisionChange,
-                      onCSICodeChange: handleCSICodeChange,
                     }}
-                    loadingFieldList={loadingFieldList}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (

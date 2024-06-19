@@ -986,8 +986,7 @@ export const getItem = async (
     .from("item_table")
     .select(
       `
-        *, 
-        item_division_table(*), 
+        *,
         item_description: item_description_table(
           *, 
           item_description_field: item_description_field_table(
@@ -1000,7 +999,6 @@ export const getItem = async (
             *
           )
         ),
-        item_level_three_description: item_level_three_description_table(*),
         item_category: item_category_id(
           item_category_signer: item_category_signer_id(
             *,
@@ -1035,22 +1033,8 @@ export const getItem = async (
     .single();
 
   if (error) throw error;
-  const formattedData = data as unknown as ItemWithDescriptionAndField & {
-    item_division_table: { item_division_value: string }[];
-    item_level_three_description: { item_level_three_description: string }[];
-  };
 
-  return {
-    ...formattedData,
-    item_division_id_list: formattedData.item_division_table.map(
-      (division) => division.item_division_value
-    ),
-    item_level_three_description:
-      formattedData.item_level_three_description.length !== 0
-        ? formattedData.item_level_three_description[0]
-            .item_level_three_description
-        : "",
-  } as unknown as ItemWithDescriptionAndField;
+  return data as unknown as ItemWithDescriptionAndField;
 };
 
 // check if Item form can be activated

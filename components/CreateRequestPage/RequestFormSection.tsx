@@ -18,17 +18,13 @@ type RequestFormSectionProps = {
   itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
   };
   formslyFormName?: string;
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
-    onCSIDivisionChange: (index: number, value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
   };
   otherExpensesMethods?: {
     onProjectNameChange: (value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
     onCategoryChange: (index: number, value: string | null) => void;
   };
   pedEquipmentFormMethods?: {
@@ -103,7 +99,6 @@ type RequestFormSectionProps = {
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onGeneralNameChange: (index: number, value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
   liquidationReimbursementFormMethods?: {

@@ -1,10 +1,7 @@
 import {
-  getCSICode,
   getGeneralUnitOfMeasurementOptions,
   getNonDuplictableSectionResponse,
-  getOtherExpensesCSIDescriptionOptions,
   getOtherExpensesCategoryOptionsWithLimit,
-  getOtherExpensesRequestConditionalOptions,
   getProjectSignerWithTeamMember,
   getSectionInRequestPage,
   getSupplierOptions,
@@ -18,7 +15,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { FETCH_OPTION_LIMIT } from "@/utils/constant";
+import { CSI_HIDDEN_FIELDS, FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -92,9 +89,6 @@ const EditOtherExpenesesRequestPage = ({
   >([]);
   const [categoryOptions, setCategoryOptions] = useState<OptionTableRow[]>([]);
   const [unitOfMeasurementOptions, setUnitOfMeasurementOptions] = useState<
-    OptionTableRow[]
-  >([]);
-  const [csiCodeDescriptionOptions, setCsiCodeDescriptionOptions] = useState<
     OptionTableRow[]
   >([]);
   const [loadingFieldList, setLoadingFieldList] = useState<
@@ -181,30 +175,6 @@ const EditOtherExpenesesRequestPage = ({
           index += FETCH_OPTION_LIMIT;
         }
         setUnitOfMeasurementOptions(unitOfMeasurementOptionlist);
-
-        // Fetch CSI Division option
-        index = 0;
-        const csiDescriptionOptionlist: OptionTableRow[] = [];
-        while (1) {
-          const csiDescriptionData =
-            await getOtherExpensesCSIDescriptionOptions(supabaseClient, {
-              index,
-              limit: FETCH_OPTION_LIMIT,
-            });
-          const csiDescriptionOptions = csiDescriptionData.map((csi, index) => {
-            return {
-              option_field_id: form.form_section[1].section_field[5].field_id,
-              option_id: csi.csi_code_id,
-              option_order: index,
-              option_value: csi.csi_code_level_three_description,
-            };
-          });
-          csiDescriptionOptionlist.push(...csiDescriptionOptions);
-
-          if (csiDescriptionOptions.length < FETCH_OPTION_LIMIT) break;
-          index += FETCH_OPTION_LIMIT;
-        }
-        setCsiCodeDescriptionOptions(csiDescriptionOptionlist);
 
         // Fetch supplier option
         index = 0;
@@ -301,7 +271,14 @@ const EditOtherExpenesesRequestPage = ({
             ...form.form_section[1],
             section_field: combinedFieldList,
           },
-        ]);
+        ]).map((section) => {
+          return {
+            ...section,
+            section_field: section.section_field.filter(
+              (field) => !CSI_HIDDEN_FIELDS.includes(field.field_name)
+            ),
+          };
+        });
 
         // Input option to the sections
         const formattedSection = newSection.map((section) => {
@@ -319,9 +296,6 @@ const EditOtherExpenesesRequestPage = ({
                 option = unitOfMeasurementOptionlist;
                 break;
               case 5:
-                option = csiDescriptionOptionlist;
-                break;
-              case 9:
                 option = supplierOptionlist;
                 break;
             }
@@ -338,71 +312,6 @@ const EditOtherExpenesesRequestPage = ({
             ...section,
             section_field: fieldList,
           };
-        });
-
-        // Filter section with unique category
-        const uniqueCSIDivision: string[] = [];
-        const filteredSection: RequestFormValues["sections"] = [];
-        formattedSection.forEach((section) => {
-          if (
-            !uniqueCSIDivision.includes(
-              `${section.section_field[0].field_response}`
-            )
-          ) {
-            uniqueCSIDivision.push(
-              `${section.section_field[0].field_response}`
-            );
-            filteredSection.push(section);
-          }
-        });
-
-        // Fetch conditional options
-        const conditionalOptionList: {
-          category: string;
-          fieldList: {
-            fieldId: string;
-            optionList: OptionTableRow[];
-          }[];
-        }[] = [];
-
-        index = 0;
-        while (1) {
-          const optionData = await getOtherExpensesRequestConditionalOptions(
-            supabaseClient,
-            {
-              sectionList: filteredSection
-                .slice(index, index + 5)
-                .map((section) => {
-                  return {
-                    category: `${section.section_field[0].field_response}`,
-                    fieldIdList: [section.section_field[1].field_id],
-                  };
-                }),
-            }
-          );
-          conditionalOptionList.push(...optionData);
-          if (optionData.length < 5) break;
-          index += 5;
-        }
-
-        // Insert option to section list
-        formattedSection.forEach((section, sectionIndex) => {
-          const categoryIndex = conditionalOptionList.findIndex(
-            (value) =>
-              value.category === section.section_field[0].field_response
-          );
-          if (categoryIndex === -1) return;
-
-          conditionalOptionList[categoryIndex].fieldList.forEach((field) => {
-            const fieldIndex = section.section_field.findIndex(
-              (value) => value.field_id === field.fieldId
-            );
-            if (fieldIndex === -1) return;
-
-            formattedSection[sectionIndex].section_field[
-              fieldIndex
-            ].field_option = field.optionList;
-          });
         });
 
         // Add duplicatable section id
@@ -538,12 +447,6 @@ const EditOtherExpenesesRequestPage = ({
               field_section_duplicatable_id: sectionDuplicatableId,
               field_option: unitOfMeasurementOptions,
             };
-          } else if (field.field_name === "CSI Code Description") {
-            return {
-              ...field,
-              field_section_duplicatable_id: sectionDuplicatableId,
-              field_option: csiCodeDescriptionOptions,
-            };
           } else if (field.field_name === "Preferred Supplier") {
             return {
               ...field,
@@ -560,7 +463,10 @@ const EditOtherExpenesesRequestPage = ({
       );
       const newSection = {
         ...sectionMatch,
-        section_field: duplicatedFieldsWithDuplicatableId,
+        section_field: [
+          ...duplicatedFieldsWithDuplicatableId.slice(0, 5),
+          duplicatedFieldsWithDuplicatableId[9],
+        ],
       };
       addSection(sectionLastIndex + 1, newSection);
       return;
@@ -576,73 +482,6 @@ const EditOtherExpenesesRequestPage = ({
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
       return;
-    }
-  };
-
-  const handleCSICodeChange = async (index: number, value: string | null) => {
-    const newSection = getValues(`sections.${index}`);
-
-    try {
-      if (value) {
-        setLoadingFieldList([
-          { sectionIndex: index, fieldIndex: 6 },
-          { sectionIndex: index, fieldIndex: 7 },
-          { sectionIndex: index, fieldIndex: 8 },
-        ]);
-        const csiCode = await getCSICode(supabaseClient, { csiCode: value });
-
-        const generalField = [
-          ...newSection.section_field.slice(0, 6),
-          {
-            ...newSection.section_field[6],
-            field_response: csiCode?.csi_code_section,
-          },
-          {
-            ...newSection.section_field[7],
-            field_response: csiCode?.csi_code_level_two_major_group_description,
-          },
-          {
-            ...newSection.section_field[8],
-            field_response: csiCode?.csi_code_level_two_minor_group_description,
-          },
-          ...newSection.section_field.slice(9),
-        ];
-        const duplicatableSectionId = index === 1 ? undefined : uuidv4();
-
-        updateSection(index, {
-          ...newSection,
-          section_field: [
-            ...generalField.map((field) => {
-              return {
-                ...field,
-                field_section_duplicatable_id: duplicatableSectionId,
-              };
-            }),
-          ],
-        });
-      } else {
-        const generalField = [
-          ...newSection.section_field.slice(0, 6),
-          ...newSection.section_field.slice(6, 9).map((field) => {
-            return {
-              ...field,
-              field_response: "",
-            };
-          }),
-          ...newSection.section_field.slice(9),
-        ];
-        updateSection(index, {
-          ...newSection,
-          section_field: generalField,
-        });
-      }
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setLoadingFieldList([]);
     }
   };
 
@@ -791,7 +630,6 @@ const EditOtherExpenesesRequestPage = ({
                     formslyFormName={form.form_name}
                     otherExpensesMethods={{
                       onProjectNameChange: handleProjectNameChange,
-                      onCSICodeChange: handleCSICodeChange,
                       onCategoryChange: handleCategoryChange,
                     }}
                     isEdit={!isReferenceOnly}

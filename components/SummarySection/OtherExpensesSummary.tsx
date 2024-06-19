@@ -35,7 +35,6 @@ const OtherExpensesSummary = ({ summaryData }: Props) => {
               <th>Description</th>
               <th>Quantity</th>
               <th>Unit of Measurement</th>
-              <th>CSI Code Description</th>
               <th>Preferred Supplier</th>
             </tr>
           </thead>
@@ -56,13 +55,10 @@ const OtherExpensesSummary = ({ summaryData }: Props) => {
               const uom = JSON.parse(
                 `${summary.section_field[4].field_response?.request_response}`
               );
-              const csiCodeDescription = JSON.parse(
-                `${summary.section_field[5].field_response?.request_response}`
-              );
               const preferredSupplier =
-                summary.section_field[9].field_response?.request_response &&
+                summary.section_field[5].field_response?.request_response &&
                 JSON.parse(
-                  `${summary.section_field[9].field_response?.request_response}`
+                  `${summary.section_field[5].field_response?.request_response}`
                 );
 
               return (
@@ -72,7 +68,6 @@ const OtherExpensesSummary = ({ summaryData }: Props) => {
                   <td>{description}</td>
                   <td>{quantity}</td>
                   <td>{uom}</td>
-                  <td>{csiCodeDescription}</td>
                   <td>{preferredSupplier}</td>
                 </tr>
               );
