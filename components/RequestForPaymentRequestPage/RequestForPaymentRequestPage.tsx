@@ -470,8 +470,7 @@ const RequestForPaymentRequestPage = ({
 
       const { fields } = await automationFormResponse.json();
       const urgencyList = fields["5"].choices;
-      const departmentList = fields["6"].choices;
-      const payeeTypeList = fields["8"].choices;
+      const payeeTypeList = fields["25"].choices;
       const purposeList = fields["13"].choices;
       const chargeToList = fields["18"].choices;
 
@@ -503,11 +502,6 @@ const RequestForPaymentRequestPage = ({
           item.name.trim().toLowerCase() ===
           safeParse(`${requestUrgency}`).toLowerCase()
       );
-      const department = departmentList.find(
-        (item: JiraFormFieldChoice) =>
-          item.name.trim().toLowerCase() ===
-          safeParse(`${requestDepartment}`).toLowerCase()
-      );
       const payeeType = payeeTypeList.find(
         (item: JiraFormFieldChoice) =>
           item.name.trim().toLowerCase() ===
@@ -524,7 +518,7 @@ const RequestForPaymentRequestPage = ({
           safeParse(`${requestChargeTo}`).toLowerCase()
       );
 
-      if (!urgency || !department || !payeeType || !purpose || !chargeTo) {
+      if (!urgency || !payeeType || !purpose || !chargeTo) {
         throw new Error("Missing data in jira payload");
       }
 
@@ -533,7 +527,7 @@ const RequestForPaymentRequestPage = ({
         requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        department: department.id,
+        department: safeParse(`${requestDepartment}`),
         purpose: purpose.id,
         urgency: urgency.id,
         payeeType: payeeType.id,
