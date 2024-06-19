@@ -237,7 +237,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
       const newSection = {
         ...sectionMatch,
         section_order: sectionLastIndex + 1,
-        section_field: duplicatedFieldsWithDuplicatableId,
+        section_field: duplicatedFieldsWithDuplicatableId.slice(0, 4),
       };
 
       addSection(sectionLastIndex + 1, newSection);
@@ -574,7 +574,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
                 ...form.form_section[1].section_field[0],
                 field_option: itemOptionList,
               },
-              ...form.form_section[1].section_field.slice(1, 9),
+              ...form.form_section[1].section_field.slice(1, 4),
             ],
           },
           form.form_section[2],
