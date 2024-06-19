@@ -593,7 +593,10 @@ const EditItemRequestPage = ({
       );
       const newSection = {
         ...sectionMatch,
-        section_field: duplicatedFieldsWithDuplicatableId,
+        section_field: [
+          ...duplicatedFieldsWithDuplicatableId.slice(0, 4),
+          duplicatedFieldsWithDuplicatableId[9],
+        ],
       };
       addSection(sectionLastIndex + 1, newSection);
       return;
