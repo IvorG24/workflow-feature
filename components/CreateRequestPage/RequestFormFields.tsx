@@ -50,7 +50,6 @@ type RequestFormFieldsProps = {
   itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
-    onCSICodeChange: (index: number, value: string | null) => void;
   };
   formslyFormName?: string;
   servicesFormMethods?: {
@@ -641,8 +640,6 @@ const RequestFormFields = ({
                       break;
 
                     case "CSI Code Description":
-                      itemFormMethods &&
-                        itemFormMethods.onCSICodeChange(sectionIndex, value);
                       servicesFormMethods &&
                         servicesFormMethods.onCSICodeChange(
                           sectionIndex,
