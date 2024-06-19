@@ -15,7 +15,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { FETCH_OPTION_LIMIT } from "@/utils/constant";
+import { CSI_HIDDEN_FIELDS, FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -220,6 +220,7 @@ const EditItemRequestPage = ({
                 : `'${uuidv4()}'`,
             withOption: true,
           });
+
           newFields.push(...data);
           index += 5;
 
@@ -248,7 +249,14 @@ const EditItemRequestPage = ({
             ...form.form_section[1],
             section_field: combinedFieldList,
           },
-        ]);
+        ]).map((section) => {
+          return {
+            ...section,
+            section_field: section.section_field.filter(
+              (field) => !CSI_HIDDEN_FIELDS.includes(field.field_name)
+            ),
+          };
+        });
 
         // Input option to the sections
         const sectionIndexListWithoutSupplier: number[] = [];
@@ -263,7 +271,7 @@ const EditItemRequestPage = ({
               case 0:
                 option = itemOptionList;
                 break;
-              case 9:
+              case 4:
                 if (field.field_name === "Preferred Supplier")
                   option = supplierOptionlist;
                 else {
@@ -271,6 +279,7 @@ const EditItemRequestPage = ({
                 }
                 break;
             }
+
             if (response || field.field_name === "Preferred Supplier") {
               fieldList.push({
                 ...field,
@@ -288,7 +297,7 @@ const EditItemRequestPage = ({
 
         // Add supplier field if missing
         sectionIndexListWithoutSupplier.forEach((index) => {
-          formattedSection[index].section_field.splice(9, 0, {
+          formattedSection[index].section_field.splice(4, 0, {
             field_id: "159c86c3-dda6-4c8a-919f-50e1674659bd",
             field_name: "Preferred Supplier",
             field_is_required: false,
@@ -337,9 +346,8 @@ const EditItemRequestPage = ({
                   return {
                     itemName: `${section.section_field[0].field_response}`,
                     fieldIdList: [
-                      section.section_field[4].field_id,
                       ...section.section_field
-                        .slice(10)
+                        .slice(5)
                         .map((field) => field.field_id),
                     ],
                   };
