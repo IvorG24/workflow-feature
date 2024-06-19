@@ -138,6 +138,102 @@ type RequestFormFieldsProps = {
     onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
+  liquidationReimbursementFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onRequestTypeChange: (value: string | null) => void;
+    onDepartmentChange: (value: string | null) => void;
+  };
+  personnelTransferRequisitionMethods?: {
+    onTypeOfTransferChange: (value: string | null) => void;
+    onMannerOfTransferChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onFromChange: (value: string | null) => void;
+    onToChange: (value: string | null) => void;
+    onPurposeChange: (value: string | null, prevValue: string | null) => void;
+    onEquipmentCodeChange: (value: string | null, index: number) => void;
+    onEmployeeNumberChange: (value: string | null, index: number) => void;
+    onITAssetBooleanChange: (value: boolean, index: number) => void;
+    onEmployeeStatusChange: (
+      value: string | null,
+      prevValue: string | null,
+      index: number
+    ) => void;
+    onPhaseOfWorkChange: (
+      value: string | null,
+      sectionIndex: number,
+      fieldIndex: number
+    ) => void;
+  };
+  workingAdvanceVoucherFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
+  equipmentServiceReportMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCategoryChange: (value: string | null) => void;
+    onEquipmentTypeChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null) => void;
+    onActionTypeChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onActionPlanBlur: (value: string | null, index: number) => void;
+    onGeneralItemNameChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onComponentCategoryChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onBrandChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onModelChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onPartNumberChange: (value: string | null, index: number) => void;
+    onQuantityBlur: () => void;
+  };
+  requestForPaymentFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onDepartmentChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onPayeeTypeChange: (value: string | null, prevValue: string | null) => void;
+    onEmployeeNumberChange: (value: string | null) => void;
+    onPurposePlanChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onChargeToChange: (value: string | null) => void;
+    onAmountBlur: (value: string | null, index: number) => void;
+    onModeOfPaymentChange: (value: string | null, index: number) => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -156,6 +252,11 @@ const RequestFormFields = ({
   isEdit,
   isLoading,
   currencyOptionList,
+  liquidationReimbursementFormMethods,
+  personnelTransferRequisitionMethods,
+  workingAdvanceVoucherFormMethods,
+  equipmentServiceReportMethods,
+  requestForPaymentFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -186,7 +287,6 @@ const RequestFormFields = ({
 
   const inputProps = {
     label: field.field_name,
-    description: field.field_description,
     required: field.field_is_required,
     variant: field.field_is_read_only ? "filled" : "default",
     error: fieldError,
@@ -194,7 +294,7 @@ const RequestFormFields = ({
 
   const fieldRules = {
     required: {
-      value: field.field_is_required,
+      value: field.field_type !== "SWITCH" && field.field_is_required,
       message: "This field is required",
     },
   };
@@ -213,7 +313,6 @@ const RequestFormFields = ({
       });
       return data;
     } catch (error) {
-      console.log(error);
       return [];
     }
   };
@@ -284,16 +383,17 @@ const RequestFormFields = ({
           <Controller
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-            render={({ field: { value } }) => {
+            render={({ field: { value, onChange } }) => {
               return (
                 <Flex w="100%" align="flex-end" gap="xs">
                   <TextInput
                     {...inputProps}
                     error={fieldError}
                     withAsterisk={field.field_is_required}
-                    value={`${linkToDisplay || value}`}
+                    value={`${linkToDisplay || value || ""}`}
                     icon={<IconLink size={16} />}
                     style={{ flex: 1 }}
+                    onChange={onChange}
                   />
                   <ActionIcon
                     mb={4}
@@ -312,9 +412,21 @@ const RequestFormFields = ({
                 </Flex>
               );
             }}
-            rules={{ ...fieldRules }}
+            rules={{
+              ...fieldRules,
+              validate: {
+                isUrl: (value) => {
+                  if (linkToDisplay) {
+                    return true;
+                  }
+
+                  return isURL(`${value}`) || "Link is invalid";
+                },
+              },
+            }}
           />
         );
+
       case "TEXT":
         return (
           <TextInput
@@ -329,6 +441,26 @@ const RequestFormFields = ({
             withAsterisk={field.field_is_required}
             readOnly={field.field_is_read_only || isLoading}
             rightSection={isLoading && <Loader size={16} />}
+            onBlur={(e) => {
+              const value = e.currentTarget.value;
+              switch (field.field_name) {
+                case "Employee No. (HRIS)":
+                  personnelTransferRequisitionMethods &&
+                    personnelTransferRequisitionMethods.onEmployeeNumberChange(
+                      value,
+                      sectionIndex
+                    );
+                  requestForPaymentFormMethods &&
+                    requestForPaymentFormMethods.onEmployeeNumberChange(value);
+                  break;
+                case "Action Plan":
+                  equipmentServiceReportMethods?.onActionPlanBlur(
+                    value,
+                    sectionIndex
+                  );
+                  break;
+              }
+            }}
           />
         );
 
@@ -343,6 +475,9 @@ const RequestFormFields = ({
               }
             )}
             error={fieldError}
+            autosize
+            minRows={4}
+            maxRows={12}
             withAsterisk={field.field_is_required}
           />
         );
@@ -356,7 +491,6 @@ const RequestFormFields = ({
               render={({ field: { value, onChange } }) => (
                 <CurrencyFormField
                   label={inputProps.label}
-                  description={inputProps.description ?? undefined}
                   selectInputProps={{
                     data: currencyOptionList ?? [],
                     value: currencyFieldValue,
@@ -407,6 +541,19 @@ const RequestFormFields = ({
                   {...inputProps}
                   error={fieldError}
                   precision={2}
+                  onBlur={() => {
+                    switch (field.field_name) {
+                      case "Quantity":
+                        equipmentServiceReportMethods?.onQuantityBlur();
+                        break;
+                      case "Amount":
+                        requestForPaymentFormMethods?.onAmountBlur(
+                          value as string | null,
+                          sectionIndex
+                        );
+                        break;
+                    }
+                  }}
                 />
               )}
               rules={{
@@ -436,7 +583,19 @@ const RequestFormFields = ({
             render={({ field: { value, onChange } }) => (
               <Switch
                 checked={value as boolean}
-                onChange={(e) => onChange(e.currentTarget.checked)}
+                onChange={(e) => {
+                  const value = e.currentTarget.checked;
+                  switch (field.field_name) {
+                    case "Do employees transferring to other projects have IT assets":
+                      personnelTransferRequisitionMethods &&
+                        personnelTransferRequisitionMethods.onITAssetBooleanChange(
+                          value,
+                          sectionIndex
+                        );
+                      break;
+                  }
+                  onChange(value);
+                }}
                 {...inputProps}
                 mt="xs"
                 sx={{ label: { cursor: "pointer" } }}
@@ -454,6 +613,7 @@ const RequestFormFields = ({
             label: option.option_value,
           };
         });
+
         return (
           <Controller
             control={control}
@@ -508,6 +668,14 @@ const RequestFormFields = ({
                       pedItemFormMethods?.onProjectNameChange(value);
                       paymentRequestFormMethods?.onProjectNameChange(value);
                       itAssetRequestFormMethods?.onProjectNameChange(value);
+                      liquidationReimbursementFormMethods?.onProjectNameChange(
+                        value
+                      );
+                      workingAdvanceVoucherFormMethods?.onProjectNameChange(
+                        value
+                      );
+                      equipmentServiceReportMethods?.onProjectNameChange(value);
+                      requestForPaymentFormMethods?.onProjectNameChange(value);
                       break;
                     case "CSI Division":
                       servicesFormMethods?.onCSIDivisionChange(
@@ -538,6 +706,7 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+
                       break;
                     case "Equipment Name":
                       pedPartFormMethods?.onEquipmentNameChange(value);
@@ -551,10 +720,17 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
-
+                      equipmentServiceReportMethods?.onGeneralItemNameChange(
+                        value,
+                        sectionIndex
+                      );
                       break;
                     case "Component Category":
                       pedPartFormMethods?.onComponentCategoryChange(
+                        value,
+                        sectionIndex
+                      );
+                      equipmentServiceReportMethods?.onComponentCategoryChange(
                         value,
                         sectionIndex
                       );
@@ -565,12 +741,24 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+                      equipmentServiceReportMethods?.onBrandChange(
+                        value,
+                        sectionIndex
+                      );
                       break;
                     case "Model":
                       pedPartFormMethods?.onModelChange(value, sectionIndex);
+                      equipmentServiceReportMethods?.onModelChange(
+                        value,
+                        sectionIndex
+                      );
                       break;
                     case "Part Number":
                       pedPartFormMethods?.onPartNumberChange(
+                        value,
+                        sectionIndex
+                      );
+                      equipmentServiceReportMethods?.onPartNumberChange(
                         value,
                         sectionIndex
                       );
@@ -581,6 +769,110 @@ const RequestFormFields = ({
                         value
                       );
                       paymentRequestFormMethods?.onRequestTypeChange(
+                        value,
+                        sectionIndex
+                      );
+                      liquidationReimbursementFormMethods?.onRequestTypeChange(
+                        value
+                      );
+                      break;
+                    case "Department":
+                      liquidationReimbursementFormMethods?.onDepartmentChange(
+                        value
+                      );
+                      liquidationReimbursementFormMethods?.onRequestTypeChange(
+                        value
+                      );
+                      requestForPaymentFormMethods?.onDepartmentChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Type of Transfer":
+                      personnelTransferRequisitionMethods?.onTypeOfTransferChange(
+                        value
+                      );
+                      break;
+                    case "Manner of Transfer":
+                      personnelTransferRequisitionMethods?.onMannerOfTransferChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "From":
+                      personnelTransferRequisitionMethods?.onFromChange(value);
+                      break;
+                    case "To":
+                      personnelTransferRequisitionMethods?.onToChange(value);
+                      break;
+                    case "Purpose":
+                      personnelTransferRequisitionMethods?.onPurposeChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Equipment Code":
+                      personnelTransferRequisitionMethods?.onEquipmentCodeChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Employee No. (HRIS)":
+                      personnelTransferRequisitionMethods?.onEmployeeNumberChange(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                    case "Employee Status":
+                      personnelTransferRequisitionMethods?.onEmployeeStatusChange(
+                        value,
+                        prevValue as string | null,
+                        sectionIndex
+                      );
+                      break;
+                    case "Phase of Work":
+                      personnelTransferRequisitionMethods?.onPhaseOfWorkChange(
+                        value,
+                        sectionIndex,
+                        fieldIndex
+                      );
+                      break;
+                    case "Equipment Category":
+                      equipmentServiceReportMethods?.onCategoryChange(value);
+                      break;
+                    case "Equipment Type":
+                      equipmentServiceReportMethods?.onEquipmentTypeChange(
+                        value
+                      );
+                      break;
+                    case "Property Number":
+                      equipmentServiceReportMethods?.onPropertyNumberChange(
+                        value
+                      );
+                      break;
+                    case "Action Type":
+                      equipmentServiceReportMethods?.onActionTypeChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Payee Type":
+                      requestForPaymentFormMethods?.onPayeeTypeChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Purpose of Payment":
+                      requestForPaymentFormMethods?.onPurposePlanChange(
+                        value,
+                        prevValue as string | null
+                      );
+                      break;
+                    case "Charge To":
+                      requestForPaymentFormMethods?.onChargeToChange(value);
+                      break;
+                    case "Mode of Payment":
+                      requestForPaymentFormMethods?.onModeOfPaymentChange(
                         value,
                         sectionIndex
                       );
@@ -691,6 +983,12 @@ const RequestFormFields = ({
                     );
                   }
                 }}
+                description={
+                  personnelTransferRequisitionMethods &&
+                  field.field_name === "Department"
+                    ? "Which department will this employee go to?"
+                    : ""
+                }
               />
             )}
             rules={{ ...fieldRules }}
@@ -698,10 +996,13 @@ const RequestFormFields = ({
         );
 
       case "MULTISELECT":
-        const multiselectOption = field.options.map((option) => ({
-          value: option.option_value,
-          label: option.option_value,
-        }));
+        const multiselectOption = field.options
+          .map((option) => ({
+            value: option.option_value,
+            label: option.option_value,
+          }))
+          .filter((option) => option.value);
+
         return (
           <Controller
             control={control}

@@ -1,4 +1,3 @@
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 
 import {
@@ -31,7 +30,6 @@ type Props = {
 
 const CreateOtherExpensesType = ({ setIsCreatingType }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
-  const teamMember = useUserTeamMember();
   const team = useActiveTeam();
 
   const [categoryOption, setCategoryOption] = useState<
@@ -83,8 +81,6 @@ const CreateOtherExpensesType = ({ setIsCreatingType }: Props) => {
           other_expenses_type_category_id: data.category,
           other_expenses_type: data.type.toUpperCase().trim(),
           other_expenses_type_is_available: data.isAvailable,
-          other_expenses_type_encoder_team_member_id:
-            teamMember?.team_member_id,
         },
       });
 

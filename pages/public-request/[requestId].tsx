@@ -1,15 +1,22 @@
 import { getTeam, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
+import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
+import EquipmentServiceReportRequestPage from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
+import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
 import Meta from "@/components/Meta/Meta";
 import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
-import PaymentRequestPage from "@/components/PaymentRequestPage/PaymentRequestPage";
+import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
+import RequestForPaymentCodeRequestPage from "@/components/RequestForPaymentCodeRequestPage/RequestForPaymentCodeRequestPage";
+import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestPage/RequestForPaymentRequestPage";
+import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
+import WorkingAdvanceVoucherRequestPage from "@/components/WorkingAdvanceVoucherRequestPage/WorkingAdvanceVoucherRequestPage";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { RequestWithResponseType } from "@/utils/types";
 import { Space } from "@mantine/core";
@@ -104,9 +111,17 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 type Props = {
   request: RequestWithResponseType;
   duplicatableSectionIdList: string[];
+  sectionIdWithDuplicatableSectionIdList: {
+    request_response_duplicatable_section_id: string;
+    section_id: string;
+  }[];
 };
 
-const Page = ({ request, duplicatableSectionIdList }: Props) => {
+const Page = ({
+  request,
+  duplicatableSectionIdList,
+  sectionIdWithDuplicatableSectionIdList,
+}: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Item") {
       return (
@@ -150,11 +165,63 @@ const Page = ({ request, duplicatableSectionIdList }: Props) => {
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
-    } else if (request.request_form.form_name === "Request For Payment") {
-      return <PaymentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Request For Payment v1") {
+      return <RequestForPaymentv1RequestPage request={request} />;
     } else if (request.request_form.form_name === "IT Asset") {
       return (
         <ITAssetRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "Liquidation Reimbursement") {
+      return (
+        <LiquidationReimbursementRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (request.request_form.form_name === "Bill of Quantity") {
+      return (
+        <BillOfQuantityRequestPage
+          request={request}
+          duplicatableSectionIdList={duplicatableSectionIdList}
+        />
+      );
+    } else if (
+      request.request_form.form_name === "Personnel Transfer Requisition"
+    ) {
+      return (
+        <PersonnelTransferRequisitionRequestPage
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
+    } else if (request.request_form.form_name === "Working Advance Voucher") {
+      return <WorkingAdvanceVoucherRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Equipment Service Report") {
+      return (
+        <EquipmentServiceReportRequestPage
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
+    } else if (request.request_form.form_name === "Request For Payment") {
+      return (
+        <RequestForPaymentRequestPage
+          request={request}
+          sectionIdWithDuplicatableSectionIdList={
+            sectionIdWithDuplicatableSectionIdList
+          }
+        />
+      );
+    } else if (request.request_form.form_name === "Request For Payment Code") {
+      return (
+        <RequestForPaymentCodeRequestPage
           request={request}
           duplicatableSectionIdList={duplicatableSectionIdList}
         />

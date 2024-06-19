@@ -332,6 +332,13 @@ const EquipmentDescriptionList = ({
             ),
           },
           {
+            accessor: "equipment_description_acquisition_date",
+            title: "Acquisition Date",
+            render: ({ equipment_description_acquisition_date }) => (
+              <Text>{equipment_description_acquisition_date}</Text>
+            ),
+          },
+          {
             accessor: "status",
             title: "Status",
             textAlignment: "center",

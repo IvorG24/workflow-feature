@@ -1,3 +1,4 @@
+import { deleteJiraUser } from "@/backend/api/delete";
 import { getJiraUserAccountList } from "@/backend/api/get";
 import { createJiraUser } from "@/backend/api/post";
 import { updateJiraUser } from "@/backend/api/update";
@@ -20,6 +21,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -27,6 +29,7 @@ import {
   IconReload,
   IconSearch,
   IconSettings,
+  IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useState } from "react";
@@ -135,7 +138,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
   ) => {
     try {
       const response = await fetch(
-        `/api/get-jira-user?approverEmail=${data.jira_user_account_email_address}`,
+        `/api/jira/get-user?approverEmail=${data.jira_user_account_email_address}`,
         {
           method: "GET",
           headers: {
@@ -196,6 +199,36 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
       });
     }
   };
+
+  const handleDeleteJiraUser = async (jiraUserAccountId: string) => {
+    try {
+      setIsLoading(true);
+      await deleteJiraUser(supabaseClient, jiraUserAccountId);
+      setJiraUserList((prev) =>
+        prev.filter((user) => user.jira_user_account_id !== jiraUserAccountId)
+      );
+      setJiraUserCount((prev) => prev - 1);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to delete jira user.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openConfirmDeleteJiraUserModal = (jiraUserAccountId: string) =>
+    modals.openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">Are you sure you want to delete this jira user?</Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: async () => await handleDeleteJiraUser(jiraUserAccountId),
+      centered: true,
+      confirmProps: { color: "red" },
+    });
 
   return (
     <Box>
@@ -281,30 +314,40 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
                 jira_user_account_display_name,
                 jira_user_account_email_address,
               }) => (
-                <ActionIcon
-                  onClick={() => {
-                    setOpenJiraUserLookupFormModal(true);
-                    setIsUpdatingJiraUser(true);
-                    updateOrCreateJiraUserFormMethods.setValue(
-                      "jira_user_account_id",
-                      jira_user_account_id
-                    );
-                    updateOrCreateJiraUserFormMethods.setValue(
-                      "jira_user_account_jira_id",
-                      jira_user_account_jira_id
-                    );
-                    updateOrCreateJiraUserFormMethods.setValue(
-                      "jira_user_account_display_name",
-                      jira_user_account_display_name
-                    );
-                    updateOrCreateJiraUserFormMethods.setValue(
-                      "jira_user_account_email_address",
-                      jira_user_account_email_address
-                    );
-                  }}
-                >
-                  <IconSettings size={16} />
-                </ActionIcon>
+                <Flex>
+                  <ActionIcon
+                    onClick={() => {
+                      setOpenJiraUserLookupFormModal(true);
+                      setIsUpdatingJiraUser(true);
+                      updateOrCreateJiraUserFormMethods.setValue(
+                        "jira_user_account_id",
+                        jira_user_account_id
+                      );
+                      updateOrCreateJiraUserFormMethods.setValue(
+                        "jira_user_account_jira_id",
+                        jira_user_account_jira_id
+                      );
+                      updateOrCreateJiraUserFormMethods.setValue(
+                        "jira_user_account_display_name",
+                        jira_user_account_display_name
+                      );
+                      updateOrCreateJiraUserFormMethods.setValue(
+                        "jira_user_account_email_address",
+                        jira_user_account_email_address
+                      );
+                    }}
+                  >
+                    <IconSettings size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    onClick={() =>
+                      openConfirmDeleteJiraUserModal(jira_user_account_id)
+                    }
+                    color="red"
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Flex>
               ),
             },
           ]}

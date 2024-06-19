@@ -475,8 +475,22 @@ export type SpecialFieldTemplateTableInsert =
 export type SpecialFieldTemplateTableUpdate =
   Database["public"]["Tables"]["special_field_template_table"]["Update"];
 
+export type SCICEmployeeTableRow =
+  Database["public"]["Tables"]["scic_employee_table"]["Row"];
+export type SCICEmployeeTableInsert =
+  Database["public"]["Tables"]["scic_employee_table"]["Insert"];
+export type SCICEmployeeTableUpdate =
+  Database["public"]["Tables"]["scic_employee_table"]["Update"];
+
 export type TransactionTableRow =
   OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
+
+export type JobTitleTableRow =
+  Database["public"]["Tables"]["employee_job_title_table"]["Row"];
+export type JobTitleTableInsert =
+  Database["public"]["Tables"]["employee_job_title_table"]["Insert"];
+export type JobTitleTableUpdate =
+  Database["public"]["Tables"]["employee_job_title_table"]["Update"];
 
 // End: Database Table Types
 
@@ -734,6 +748,7 @@ export type FormType = {
   form_section: (SectionTableRow & {
     section_field: (FieldTableRow & {
       field_option: OptionTableRow[];
+      field_section_duplicatable_id?: string;
     })[];
   })[];
   form_team_group: {
@@ -1104,6 +1119,7 @@ export type DuplicateSectionType = SectionTableRow & {
   section_field: (FieldTableRow & {
     field_option?: OptionTableRow[];
     field_response: RequestResponseTableRow | null;
+    field_section_duplicatable_id?: string;
   })[];
 };
 
@@ -1374,7 +1390,9 @@ export type EquipmentDescriptionForm = {
   serialNumber: string;
   brand: string;
   model: string;
+  acquisitionDate: Date | null;
   isAvailable: boolean;
+  isRental: boolean;
 };
 
 export type EquipmentPartType = EquipmentPartTableRow & {
@@ -1770,10 +1788,7 @@ export type JiraITAssetTicketPayloadProps = {
   requestFormType: string;
 };
 
-export type JiraTicketData = {
-  success: boolean;
-  data: { jiraTicketKey: string; jiraTicketWebLink: string } | null;
-};
+export type JiraTicketData = { jiraTicketId: string; jiraTicketLink: string };
 
 export type ItemCategoryWithSigner = ItemCategoryTableRow & {
   item_category_signer: {
@@ -1884,4 +1899,99 @@ export type RequestListFilterValues = {
 export type TeamInviteJwtPayload = {
   teamId: string;
   invitedEmail: string;
+};
+
+export type JiraPayloadType = {
+  form: {
+    answers: {
+      [key: string]: {
+        choices?: (string | null)[];
+        text?: string;
+        users?: string[];
+        date?: string;
+      };
+    };
+  };
+  isAdfRequest: boolean;
+  requestFieldValues: { [key: string]: string };
+  requestTypeId: string;
+  serviceDeskId: string;
+  requestParticipants: string[];
+  raiseOnBehalfOf?: string;
+};
+
+export type JiraFormFieldChoice = {
+  id: string;
+  name: string;
+};
+
+export type JiraLRFTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  department: string;
+  purpose: string;
+  typeOfRequest: string;
+  requestFormType: string;
+  workingAdvances: string;
+  ticketUrl: string;
+  requestor: string;
+  boqCode?: string;
+  costCode?: string;
+};
+
+export type ConnectedRequestFormProps = {
+  request_id: string;
+  request_form_id: string;
+  request_project_id: string;
+  form_section: string[];
+  duplicatableSectionIdList: string[];
+};
+
+export type JiraPTRFTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  typeOfTransfer: string;
+  mannerOfTransfer: string;
+  department: string;
+  projectNameFrom: string;
+  projectNameTo: string;
+  purpose: string;
+  withITAsset: boolean;
+};
+
+export type JiraWAVTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  date: string;
+  payeeName: string;
+  amount: string;
+  amountInWord: string;
+  particulars: string;
+  department: string;
+};
+
+export type JiraESRTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  requestorName: string;
+  department: string;
+  workcode: string;
+  propertyNumber: string;
+};
+
+export type JiraRFPTicketPayloadProps = {
+  requestId: string;
+  requestUrl: string;
+  jiraProjectSiteId: string;
+  department: string;
+  purpose: string;
+  urgency: string;
+  chargeTo: string;
+  payeeType: string;
+  departmentCode?: string;
+  costCode?: string;
+  boqCode?: string;
 };

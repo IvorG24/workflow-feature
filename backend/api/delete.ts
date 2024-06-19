@@ -133,3 +133,15 @@ export const removeJiraUserFromProject = async (
 
   if (error) throw error;
 };
+
+export const deleteJiraUser = async (
+  supabaseClient: SupabaseClient<Database>,
+  jiraUserAccountId: string
+) => {
+  const { error } = await supabaseClient
+    .from("jira_user_account_table")
+    .delete()
+    .eq("jira_user_account_id", jiraUserAccountId);
+
+  if (error) throw error;
+};

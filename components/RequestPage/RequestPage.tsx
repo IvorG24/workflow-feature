@@ -358,6 +358,7 @@ const RequestPage = ({
             isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
+            requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
 

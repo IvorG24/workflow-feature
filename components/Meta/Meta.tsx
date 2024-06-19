@@ -14,7 +14,7 @@ const Meta = ({
   description,
   url, // url should be a canonical url e.g https://www.imdb.com/title/tt0117500/
   // #todo: replace default image with brand image
-  image = "/icon.svg", // Use custom images for “shareable” pages (e.g., homepage, articles, etc.)
+  image = "/icon-request-dark.svg", // Use custom images for “shareable” pages (e.g., homepage, articles, etc.)
   type = "website",
 }: Props) => {
   return (

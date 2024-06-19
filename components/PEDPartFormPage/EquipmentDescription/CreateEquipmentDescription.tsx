@@ -22,8 +22,10 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { YearPickerInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import moment from "moment";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
@@ -92,7 +94,9 @@ const CreateEquipmentDescription = ({
         serialNumber: "",
         brand: "",
         model: "",
+        acquisitionDate: null,
         isAvailable: true,
+        isRental: false,
       },
     });
 
@@ -107,9 +111,11 @@ const CreateEquipmentDescription = ({
           equipment_description_brand_id: data.brand,
           equipment_description_model_id: data.model,
           equipment_description_equipment_id: selectedEquipment.equipment_id,
-          equipment_description_encoder_team_member_id:
-            teamMember?.team_member_id,
+          equipment_description_acquisition_date: data.acquisitionDate
+            ? moment(data.acquisitionDate).year()
+            : null,
           equipment_description_is_available: data.isAvailable,
+          equipment_description_is_rental: data.isRental,
         },
         brand: brandOption.find((brand) => brand.value === data.brand)
           ?.label as string,
@@ -229,6 +235,24 @@ const CreateEquipmentDescription = ({
                   textTransform: "uppercase",
                 },
               }}
+            />
+            <Controller
+              control={control}
+              name="acquisitionDate"
+              render={({ field: { value, onChange } }) => (
+                <YearPickerInput
+                  value={value}
+                  onChange={onChange}
+                  error={formState.errors.acquisitionDate?.message}
+                  label="Acquisition Date"
+                  clearable
+                />
+              )}
+            />
+            <Checkbox
+              label="Rental"
+              {...register("isRental")}
+              sx={{ input: { cursor: "pointer" } }}
             />
             <Checkbox
               label="Available"

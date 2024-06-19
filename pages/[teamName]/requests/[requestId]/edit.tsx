@@ -1,13 +1,16 @@
 import { getEditRequestOnLoad } from "@/backend/api/get";
+import EditBillOfQuantityRequestPage from "@/components/EditBillOfQuantityRequestPage/EditBillOfQuantityRequestPage";
 import EditITAssetRequestPage from "@/components/EditITAssetRequestPage/EditITAssetRequestPage";
 import EditItemRequestPage from "@/components/EditItemRequestPage/EditItemRequestPage";
+import EditLiquidReimbursementRequestPage from "@/components/EditLiquidReimbursementRequestPage/EditLiquidReimbursementRequestPage";
 import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequestPage/EditOtherExpenesesRequestPage";
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
-import EditRequestForPaymentPage from "@/components/EditRequestForPaymentPage/EditRequestForPaymentPage";
+import EditRequestForPaymentPage from "@/components/EditRequestForPaymentv1Page/EditRequestForPaymentv1Page";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
+import EditWorkingAdvanceVoucherRequestPage from "@/components/EditWorkingAdvanceVoucherRequestPage/EditWorkingAdvanceVoucherRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -22,6 +25,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         requestId: `${context.query.requestId}`,
         referenceOnly,
       });
+
       return {
         props: {
           ...editRequestOnLoad,
@@ -109,7 +113,7 @@ const Page = ({
             requestId={requestId}
           />
         );
-      case "Request For Payment":
+      case "Request For Payment v1":
         return (
           <EditRequestForPaymentPage
             form={form}
@@ -120,6 +124,35 @@ const Page = ({
       case "IT Asset":
         return (
           <EditITAssetRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
+
+      case "Liquidation Reimbursement":
+        return (
+          <EditLiquidReimbursementRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
+
+      case "Bill of Quantity":
+        return (
+          <EditBillOfQuantityRequestPage
+            form={form}
+            duplicatableSectionIdList={duplicatableSectionIdList}
+            requestId={requestId}
+          />
+        );
+
+      case "Working Advance Voucher":
+        return (
+          <EditWorkingAdvanceVoucherRequestPage
             form={form}
             projectOptions={projectOptions}
             duplicatableSectionIdList={duplicatableSectionIdList}

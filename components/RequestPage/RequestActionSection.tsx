@@ -1,3 +1,4 @@
+import { checkIfAllPrimaryApprovedTheRequest } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { JiraTicketData } from "@/utils/types";
@@ -5,7 +6,9 @@ import { Button, Flex, Paper, Space, Stack, Text, Title } from "@mantine/core";
 // import { useRouter } from "next/router";
 import { modals, openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
+import { useState } from "react";
 
 type Props = {
   handleCancelRequest: () => void;
@@ -24,6 +27,7 @@ type Props = {
   isDeletable: boolean;
   isUserRequester?: boolean;
   onCreateJiraTicket?: () => Promise<JiraTicketData>;
+  requestSignerId?: string;
 };
 
 const RequestActionSection = ({
@@ -32,43 +36,58 @@ const RequestActionSection = ({
   handleUpdateRequest,
   isItemForm,
   isUserPrimarySigner,
+  requestId,
   isEditable,
   isCancelable,
   canSignerTakeAction,
   isDeletable,
   isUserRequester,
   onCreateJiraTicket,
+  requestSignerId,
 }: Props) => {
   const router = useRouter();
   const activeTeam = useActiveTeam();
+  const supabaseClient = useSupabaseClient();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleApproveItemRequest = async (
     onCreateJiraTicket: () => Promise<JiraTicketData>
   ) => {
     try {
-      if (process.env.NODE_ENV === "production") {
-        const jiraTicketResponse = await onCreateJiraTicket();
-        if (!jiraTicketResponse.data) {
-          notifications.show({
-            message: "Failed to create jira ticket",
-            color: "red",
-          });
-          return;
+      setIsLoading(true);
+      // check if all primary approver approves the request
+      if (!requestSignerId) return;
+      const isAllPrimaryApprovedTheRequest =
+        await checkIfAllPrimaryApprovedTheRequest(supabaseClient, {
+          requestId: requestId,
+          requestSignerId: requestSignerId,
+        });
+
+      if (isAllPrimaryApprovedTheRequest) {
+        if (process.env.NODE_ENV === "production") {
+          const { jiraTicketId, jiraTicketLink } = await onCreateJiraTicket();
+          if (!jiraTicketId) {
+            notifications.show({
+              message: "Failed to create jira ticket",
+              color: "red",
+            });
+            return;
+          }
+
+          handleUpdateRequest("APPROVED", jiraTicketId, jiraTicketLink);
+        } else {
+          handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
         }
-
-        const {
-          data: { jiraTicketKey, jiraTicketWebLink },
-        } = jiraTicketResponse;
-
-        handleUpdateRequest("APPROVED", jiraTicketKey, jiraTicketWebLink);
-      } else if (process.env.NODE_ENV === "development") {
-        handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
+      } else {
+        handleUpdateRequest("APPROVED");
       }
     } catch (error) {
       notifications.show({
         message: "Failed to approve item request",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -249,6 +268,7 @@ const RequestActionSection = ({
                 )}/requests/${router.query.requestId}/edit?referenceOnly=true`
               )
             }
+            disabled={isLoading}
           >
             Reference this Request
           </Button>
@@ -260,6 +280,7 @@ const RequestActionSection = ({
               color="green"
               fullWidth
               onClick={() => handleAction("approve", "green")}
+              disabled={isLoading}
             >
               Approve Request
             </Button>
@@ -267,6 +288,7 @@ const RequestActionSection = ({
               color="red"
               fullWidth
               onClick={() => handleAction("reject", "red")}
+              disabled={isLoading}
             >
               Reject Request
             </Button>
@@ -284,6 +306,7 @@ const RequestActionSection = ({
                 )}/requests/${router.query.requestId}/edit`
               )
             }
+            disabled={isLoading}
           >
             Edit Request
           </Button>
@@ -293,12 +316,18 @@ const RequestActionSection = ({
             variant="default"
             fullWidth
             onClick={() => handleAction("cancel", "blue")}
+            disabled={isLoading}
           >
             Cancel Request
           </Button>
         )}
         {isDeletable && (
-          <Button color="red" fullWidth onClick={openPromptDeleteModal}>
+          <Button
+            color="red"
+            fullWidth
+            onClick={openPromptDeleteModal}
+            disabled={isLoading}
+          >
             Delete Request
           </Button>
         )}

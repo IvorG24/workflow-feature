@@ -380,8 +380,6 @@ const TicketActionSection = ({
               item_description_field_is_available: true,
               item_description_field_item_description_id: `${itemDescriptionId}`,
               item_description_field_uom: uom,
-              item_description_field_encoder_team_member_id:
-                teamMember?.team_member_id,
             };
           })
         );
@@ -433,7 +431,6 @@ const TicketActionSection = ({
           ticketForm.ticket_sections[0].ticket_section_fields[6]
             .ticket_field_response as string
         ),
-        teamMemberId: teamMember.team_member_id,
         teamId: activeTeam.team_id,
       });
 

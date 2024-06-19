@@ -2,7 +2,11 @@ import { RequestFormValues } from "@/components/CreateRequestPage/CreateRequestP
 import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/TeamGroups/GroupMembers";
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
-import { formslyPremadeFormsData } from "@/utils/constant";
+import {
+  APP_SOURCE_ID,
+  BASE_URL,
+  formslyPremadeFormsData,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatJiraItemUserTableData } from "@/utils/functions";
 import { escapeQuotes } from "@/utils/string";
@@ -30,6 +34,7 @@ import {
   JiraOrganizationTableInsert,
   JiraProjectTableInsert,
   JiraUserAccountTableInsert,
+  JobTitleTableInsert,
   MemoAgreementTableRow,
   MemoLineItem,
   MemoTableRow,
@@ -254,7 +259,7 @@ export const sendResetPasswordEmail = async (
   email: string
 ) => {
   await supabaseClient.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password`,
+    redirectTo: `${BASE_URL}/reset-password`,
   });
 };
 
@@ -397,8 +402,6 @@ export const createItemDescriptionField = async (
         field.item_description_field_is_available,
       item_description_field_item_description_id:
         field.item_description_field_item_description_id,
-      item_description_field_encoder_team_member_id:
-        field.item_description_field_encoder_team_member_id,
     };
   });
   const { data: item, error: itemError } = await supabaseClient
@@ -1572,7 +1575,6 @@ export const createPedPartFromTicketRequest = async (
     model: string;
     unitOfMeasure: string;
     category: string;
-    teamMemberId: string;
     teamId: string;
   }
 ) => {
@@ -1908,4 +1910,47 @@ export const assignJiraFormslyOrganization = async (
   if (error) throw error;
 
   return data;
+};
+
+// Ecrypt app source id
+export const encryptAppSourceId = async () => {
+  const response = await fetch("/api/jwt", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "encrypt",
+      value: APP_SOURCE_ID,
+    }),
+  });
+
+  if (response.status !== 200) throw new Error("Encryption Error");
+  const { data } = await response.json();
+
+  return data as string;
+};
+
+export const createJobTitle = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JobTitleTableInsert
+) => {
+  // check if duplicate
+  const { count, error: duplicateError } = await supabaseClient
+    .from("employee_job_title_table")
+    .select("employee_job_title_id", { count: "exact" })
+    .eq("employee_job_title_label", params.employee_job_title_label);
+
+  if (duplicateError) throw duplicateError;
+
+  if (Number(count)) {
+    return { data: null, error: "Job title already exists." };
+  }
+
+  const { data, error } = await supabaseClient
+    .from("employee_job_title_table")
+    .insert(params)
+    .select("*");
+
+  if (error) throw error;
+
+  return { data, error: null };
 };

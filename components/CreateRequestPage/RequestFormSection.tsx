@@ -106,6 +106,102 @@ type RequestFormSectionProps = {
     onCSICodeChange: (index: number, value: string | null) => void;
   };
   currencyOptionList?: { value: string; label: string }[];
+  liquidationReimbursementFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onRequestTypeChange: (value: string | null) => void;
+    onDepartmentChange: (value: string | null) => void;
+  };
+  personnelTransferRequisitionMethods?: {
+    onMannerOfTransferChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onFromChange: (value: string | null) => void;
+    onToChange: (value: string | null) => void;
+    onTypeOfTransferChange: (value: string | null) => void;
+    onPurposeChange: (value: string | null, prevValue: string | null) => void;
+    onEquipmentCodeChange: (value: string | null, index: number) => void;
+    onEmployeeNumberChange: (value: string | null, index: number) => void;
+    onITAssetBooleanChange: (value: boolean, index: number) => void;
+    onEmployeeStatusChange: (
+      value: string | null,
+      prevValue: string | null,
+      index: number
+    ) => void;
+    onPhaseOfWorkChange: (
+      value: string | null,
+      sectionIndex: number,
+      fieldIndex: number
+    ) => void;
+  };
+  workingAdvanceVoucherFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+  };
+  equipmentServiceReportMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onCategoryChange: (value: string | null) => void;
+    onEquipmentTypeChange: (value: string | null) => void;
+    onPropertyNumberChange: (value: string | null) => void;
+    onActionTypeChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onActionPlanBlur: (value: string | null, index: number) => void;
+    onGeneralItemNameChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onComponentCategoryChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onBrandChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onModelChange: (
+      value: string | null,
+      index: number,
+      editDetails?: {
+        fieldId: string;
+        dupId: string | undefined;
+        response: string;
+      }
+    ) => void;
+    onPartNumberChange: (value: string | null, index: number) => void;
+    onQuantityBlur: () => void;
+  };
+  requestForPaymentFormMethods?: {
+    onProjectNameChange: (value: string | null) => void;
+    onDepartmentChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onPayeeTypeChange: (value: string | null, prevValue: string | null) => void;
+    onEmployeeNumberChange: (value: string | null) => void;
+    onPurposePlanChange: (
+      value: string | null,
+      prevValue: string | null
+    ) => void;
+    onChargeToChange: (value: string | null) => void;
+    onAmountBlur: (value: string | null, index: number) => void;
+    onModeOfPaymentChange: (value: string | null, index: number) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -124,6 +220,11 @@ const RequestFormSection = ({
   loadingFieldList,
   itAssetRequestFormMethods,
   currencyOptionList,
+  liquidationReimbursementFormMethods,
+  personnelTransferRequisitionMethods,
+  workingAdvanceVoucherFormMethods,
+  equipmentServiceReportMethods,
+  requestForPaymentFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -142,6 +243,7 @@ const RequestFormSection = ({
               }
               variant="light"
               color="red"
+              disabled={onRemoveSection === undefined}
             >
               <IconTrash size={16} />
             </ActionIcon>
@@ -182,6 +284,17 @@ const RequestFormSection = ({
               isEdit={isEdit}
               isLoading={isLoading}
               currencyOptionList={currencyOptionList}
+              liquidationReimbursementFormMethods={
+                liquidationReimbursementFormMethods
+              }
+              personnelTransferRequisitionMethods={
+                personnelTransferRequisitionMethods
+              }
+              workingAdvanceVoucherFormMethods={
+                workingAdvanceVoucherFormMethods
+              }
+              equipmentServiceReportMethods={equipmentServiceReportMethods}
+              requestForPaymentFormMethods={requestForPaymentFormMethods}
             />
           );
         })}

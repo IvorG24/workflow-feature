@@ -165,7 +165,6 @@ const CreateEquipmentPart = ({
         equipment_part_unit_of_measurement_id: data.uom,
         equipment_part_component_category_id: data.category,
         equipment_part_equipment_id: selectedEquipment.equipment_id,
-        equipment_part_encoder_team_member_id: teamMember?.team_member_id,
         equipment_part_is_available: data.isAvailable,
       };
 

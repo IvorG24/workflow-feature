@@ -19,6 +19,7 @@ import {
   JiraOrganizationTableUpdate,
   JiraProjectTableUpdate,
   JiraUserAccountTableUpdate,
+  JobTitleTableUpdate,
   MemberRoleType,
   MemoAgreementTableRow,
   MemoFormatAttachmentTableInsert,
@@ -129,11 +130,16 @@ export const approveOrRejectRequest = async (
     requestFormslyId?: string;
   }
 ) => {
-  const { error } = await supabaseClient.rpc("approve_or_reject_request", {
-    input_data: { ...params },
-  });
+  const { data, error } = await supabaseClient
+    .rpc("approve_or_reject_request", {
+      input_data: { ...params },
+    })
+    .select("*")
+    .single();
 
   if (error) throw error;
+
+  return data as string;
 };
 
 // Update request status to canceled
@@ -1074,11 +1080,11 @@ export const updateJiraUser = async (
   supabaseClient: SupabaseClient<Database>,
   params: JiraUserAccountTableUpdate
 ) => {
-  if (!params.jira_user_account_jira_id) throw new Error();
+  if (!params.jira_user_account_id) throw new Error();
   const { error } = await supabaseClient
     .from("jira_user_account_table")
     .update(params)
-    .eq("jira_user_account_jira_id", params.jira_user_account_jira_id);
+    .eq("jira_user_account_id", params.jira_user_account_id);
 
   if (error) throw error;
 
@@ -1171,4 +1177,54 @@ export const updateJiraFormslyOrganization = async (
   if (error) throw error;
 
   return data;
+};
+
+// add jira id and link to request
+export const updateRequestJiraId = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    jiraId: string;
+    jiraLink: string;
+  }
+) => {
+  const { requestId, jiraId, jiraLink } = params;
+
+  const { error } = await supabaseClient
+    .from("request_table")
+    .update({
+      request_jira_id: jiraId,
+      request_jira_link: jiraLink,
+    })
+    .eq("request_id", requestId);
+  if (error) throw error;
+};
+
+export const updateRequestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string; status: string }
+) => {
+  const { requestId, status } = params;
+  const { error } = await supabaseClient
+    .from("request_table")
+    .update({ request_status: status })
+    .eq("request_id", requestId);
+
+  if (error) throw error;
+};
+
+// update jira project
+export const updateJobTitle = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: JobTitleTableUpdate
+) => {
+  if (!params.employee_job_title_id) throw new Error();
+  const { error } = await supabaseClient
+    .from("employee_job_title_table")
+    .update(params)
+    .eq("employee_job_title_id", params.employee_job_title_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
 };

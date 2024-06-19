@@ -1,26 +1,41 @@
+import CreateBillOfQuantityRequestPage from "@/components/CreateBillOfQuantityRequestPage/CreateBillOfQuantityRequestPage";
+import CreateEquipmentServiceReportRequestPage from "@/components/CreateEquipmentServiceReportRequestPage/CreateEquipmentServiceReportRequestPage";
 import CreateITAssetRequestPage from "@/components/CreateITAssetRequestPage.tsx/CreateITAssetRequestPage";
 import CreateItemRequestPage from "@/components/CreateItemRequestPage/CreateItemRequestPage";
+import CreateLiquidationReimbursementRequestPage from "@/components/CreateLiquidationReimbursementRequestPage/CreateLiquidationReimbursementRequestPage";
 import CreateOtherExpensesRequestPage from "@/components/CreateOtherExpensesRequestPage/CreateOtherExpensesRequestPage";
 import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentRequestPage/CreatePEDEquipmentRequestPage";
 import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
+import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTransferRequisition/CreatePersonnelTransferRequisition";
+import CreateRequestForPaymentCodePage from "@/components/CreateRequestForPaymentCodePage/CreateRequestForPaymentCodePage";
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
+import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv1Page/CreateRequestForPaymentv1Page";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
+import CreateWorkingAdvanceRequestPage from "@/components/CreateWorkingAdvanceVoucheRequestPage/CreateWorkingAdvanceVoucheRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { FormWithResponseType, OptionTableRow } from "@/utils/types";
+import {
+  ConnectedRequestFormProps,
+  FormWithResponseType,
+  OptionTableRow,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
+      const connectedRequestFormslyId = context.query.lrf ?? context.query.rfp;
       const { data, error } = await supabaseClient.rpc(
         "create_request_page_on_load",
         {
           input_data: {
             formId: context.query.formId,
             userId: user.id,
+            connectedRequestFormslyId: connectedRequestFormslyId
+              ? connectedRequestFormslyId
+              : null,
           },
         }
       );
@@ -48,9 +63,19 @@ type Props = {
   requestProjectId: string;
   requestingProject?: string;
   categoryOptions?: OptionTableRow[];
+  connectedRequest?: ConnectedRequestFormProps;
+  departmentOptions?: OptionTableRow[];
+  allProjectOptions?: OptionTableRow[];
 };
 
-const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
+const Page = ({
+  form,
+  projectOptions = [],
+  categoryOptions = [],
+  connectedRequest,
+  departmentOptions = [],
+  allProjectOptions = [],
+}: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Item":
@@ -94,19 +119,72 @@ const Page = ({ form, projectOptions = [], categoryOptions = [] }: Props) => {
             projectOptions={projectOptions}
           />
         );
-      case "Request For Payment":
+      case "Request For Payment v1":
         return (
-          <CreateRequestForPaymentPage
+          <CreateRequestForPaymentv1Page
             form={form}
             projectOptions={projectOptions}
           />
         );
-
       case "IT Asset":
         return (
           <CreateITAssetRequestPage
             form={form}
             projectOptions={projectOptions}
+          />
+        );
+      case "Liquidation Reimbursement":
+        return (
+          <CreateLiquidationReimbursementRequestPage
+            form={form}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Bill of Quantity":
+        return (
+          <CreateBillOfQuantityRequestPage
+            form={form}
+            connectedRequest={connectedRequest}
+          />
+        );
+      case "Personnel Transfer Requisition":
+        return (
+          <CreatePersonnelTransferRequisition
+            form={form}
+            projectOptions={projectOptions}
+          />
+        );
+
+      case "Working Advance Voucher":
+        return (
+          <CreateWorkingAdvanceRequestPage
+            form={form}
+            projectOptions={projectOptions}
+          />
+        );
+      case "Equipment Service Report":
+        return (
+          <CreateEquipmentServiceReportRequestPage
+            form={form}
+            projectOptions={projectOptions}
+            categoryOptions={categoryOptions}
+          />
+        );
+      case "Request For Payment":
+        return (
+          <CreateRequestForPaymentPage
+            form={form}
+            projectOptions={projectOptions}
+            departmentOptions={departmentOptions}
+            allProjectOptions={allProjectOptions}
+          />
+        );
+
+      case "Request For Payment Code":
+        return (
+          <CreateRequestForPaymentCodePage
+            form={form}
+            connectedRequest={connectedRequest}
           />
         );
     }

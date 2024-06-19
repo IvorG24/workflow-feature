@@ -17,12 +17,16 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import { BASE_URL, formatDate } from "@/utils/constant";
 import { mostOccurringElement, safeParse } from "@/utils/functions";
-import { createJiraTicket } from "@/utils/jira-api-functions";
+import {
+  createJiraTicket,
+  formatJiraITAssetPayload,
+} from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
+  JiraFormFieldChoice,
   ReceiverStatusType,
   RequestCommentType,
   RequestWithResponseType,
@@ -84,87 +88,35 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
 
-  useEffect(() => {
-    try {
-      const fetchSections = async () => {
-        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [];
-        let index = 0;
-        while (1) {
-          setIsLoading(true);
-          const duplicatableSectionIdCondition = duplicatableSectionIdList
-            .slice(index, index + 5)
-            .map((dupId) => `'${dupId}'`)
-            .join(",");
-
-          const data = await getSectionInRequestPage(supabaseClient, {
-            index,
-            requestId: request.request_id,
-            sectionId: request.request_form.form_section[1].section_id,
-            duplicatableSectionIdCondition:
-              duplicatableSectionIdCondition.length !== 0
-                ? duplicatableSectionIdCondition
-                : `'${uuidv4()}'`,
-          });
-          newFields.push(...data);
-          index += 5;
-
-          if (index > duplicatableSectionIdList.length) break;
-        }
-
-        const uniqueFieldIdList: string[] = [];
-        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
-          [];
-        newFields.forEach((field) => {
-          if (uniqueFieldIdList.includes(field.field_id)) {
-            const currentFieldIndex = combinedFieldList.findIndex(
-              (combinedField) => combinedField.field_id === field.field_id
-            );
-            combinedFieldList[currentFieldIndex].field_response.push(
-              ...field.field_response
-            );
-          } else {
-            uniqueFieldIdList.push(field.field_id);
-            combinedFieldList.push(field);
-          }
-        });
-
-        const newSection = generateSectionWithDuplicateList([
-          {
-            ...request.request_form.form_section[1],
-            section_field: combinedFieldList,
-          },
-        ]);
-        const newFormSection = [...formSection, ...newSection];
-
-        setFormSection(newFormSection);
-        setIsLoading(false);
-      };
-      const fetchComments = async () => {
-        const data = await getRequestComment(supabaseClient, {
-          request_id: request.request_id,
-        });
-        setRequestCommentList(data);
-      };
-      fetchSections();
-      fetchComments();
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   const requestor = request.request_team_member.team_member_user;
-
   const requestDateCreated = formatDate(new Date(request.request_date_created));
+
+  const isUserOwner = requestor.user_id === user?.user_id;
+  const isUserSigner = signerList.find(
+    (signer) =>
+      signer.signer_team_member.team_member_id === teamMember?.team_member_id
+  );
+  const canSignerTakeAction =
+    isUserSigner &&
+    isUserSigner.request_signer_status === "PENDING" &&
+    requestStatus !== "CANCELED";
+  const isEditable =
+    signerList
+      .map((signer) => signer.request_signer_status)
+      .filter((status) => status !== "PENDING").length === 0 &&
+    isUserOwner &&
+    requestStatus === "PENDING";
+  const isCancelable = isUserOwner && requestStatus === "PENDING";
+  const isDeletable = isUserOwner && requestStatus === "CANCELED";
+  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+
+  const isRequestActionSectionVisible =
+    canSignerTakeAction || isEditable || isDeletable || isUserRequester;
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string
+    jiraId?: string,
+    jiraLink?: string
   ) => {
     try {
       setIsLoading(true);
@@ -179,18 +131,6 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
       }
       if (!teamMember) return;
 
-      let autoJiraLink = "";
-      const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
-      );
-
-      if (newJiraTicketData.ok) {
-        const jiraTicket = await newJiraTicketData.json();
-        const jiraTicketWebLink =
-          jiraTicket.fields["customfield_10010"]._links.web;
-        autoJiraLink = jiraTicketWebLink;
-      }
-
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -202,7 +142,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
-        jiraLink: autoJiraLink,
+        jiraLink,
         requestFormslyId: request.request_formsly_id,
       });
 
@@ -337,34 +277,19 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   const onCreateJiraTicket = async () => {
     try {
       if (!request.request_project_id) {
-        notifications.show({
-          message: "Project id is not defined.",
-          color: "red",
-        });
-        return { success: false, data: null };
+        throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
+
       const jiraAutomationData = await getJiraAutomationDataByProjectId(
         supabaseClient,
-        { teamProjectId: request.request_project_id }
+        {
+          teamProjectId: request.request_project_id,
+        }
       );
 
-      if (!jiraAutomationData) {
-        notifications.show({
-          message: "Error fetching of Jira project and item category data.",
-          color: "red",
-        });
-        return { success: false, data: null };
-      }
-
-      const { jiraProjectData } = jiraAutomationData;
-
-      if (!jiraProjectData) {
-        notifications.show({
-          message: "Jira project data is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
+      if (!jiraAutomationData?.jiraProjectData) {
+        throw new Error("Error fetching Jira project data.");
       }
 
       const employeeName =
@@ -372,7 +297,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
           .request_response;
 
       const response = await fetch(
-        "/api/get-jira-automation-form?serviceDeskId=3&requestType=332",
+        "/api/jira/get-form?serviceDeskId=3&requestType=332",
         {
           method: "GET",
           headers: {
@@ -381,6 +306,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
           },
         }
       );
+
       const { fields } = await response.json();
       const purposeList = fields["2"].choices;
       const itemList = fields["1"].choices;
@@ -389,7 +315,6 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         request.request_form.form_section[0].section_field.find(
           (field) => field.field_name === "Purpose"
         )?.field_response[0].request_response;
-
       const requestItem = safeParse(
         mostOccurringElement(
           formSection
@@ -400,59 +325,54 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             )
         )
       );
-
       const purpose = purposeList.find(
-        (purpose: { id: string; name: string }) =>
-          purpose.name.toLowerCase() ===
+        (p: JiraFormFieldChoice) =>
+          p.name.toLowerCase().trim() ===
           safeParse(`${requestPurpose?.toLowerCase()}`)
       );
-
       const item = itemList.find(
-        (item: { id: string; name: string }) =>
-          item.name.toLowerCase() === safeParse(`${requestItem?.toLowerCase()}`)
+        (i: JiraFormFieldChoice) =>
+          i.name.toLowerCase().trim() ===
+          safeParse(`${requestItem?.toLowerCase()}`)
       );
-
       if (!purpose || !item) {
-        notifications.show({
-          message: "Jira item or purpose is missing.",
-          color: "red",
-        });
-        return { success: false, data: null };
+        throw new Error("Jira item or purpose is missing.");
       }
-
-      const jiraTicketPayload = {
+      const jiraTicketPayload = formatJiraITAssetPayload({
         requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
+        requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
         requestTypeId: "332",
-        jiraProjectSiteId: jiraProjectData.jira_project_jira_id,
+        jiraProjectSiteId:
+          jiraAutomationData.jiraProjectData.jira_project_jira_id,
         employeeName: safeParse(employeeName),
         purpose: purpose.id,
         item: item.id,
         requestFormType: request.request_form.form_name,
-      };
-
-      const jiraTicketData = await createJiraTicket({
-        jiraTicketPayload,
-        requestCommentList,
-        supabaseClient,
-        isITAsset: true,
       });
 
-      if (!jiraTicketData.success) {
-        return { success: false, data: null };
+      const jiraTicket = await createJiraTicket({
+        requestType: "IT Requisition Form",
+        formslyId: request.request_formsly_id,
+        requestCommentList,
+        ticketPayload: jiraTicketPayload,
+      });
+
+      if (!jiraTicket.jiraTicketId) {
+        throw new Error("Failed to create jira ticket.");
       }
 
-      if (jiraTicketData.data) {
-        setRequestJira({
-          id: jiraTicketData.data.jiraTicketKey,
-          link: jiraTicketData.data.jiraTicketWebLink,
-        });
-      }
-
-      return jiraTicketData;
+      setRequestJira({
+        id: jiraTicket.jiraTicketId,
+        link: jiraTicket.jiraTicketLink,
+      });
+      return jiraTicket;
     } catch (error) {
-      console.error(error);
-      return { success: false, data: null };
+      const errorMessage = (error as Error).message;
+      notifications.show({
+        message: `Error: ${errorMessage}`,
+        color: "red",
+      });
+      return { jiraTicketId: "", jiraTicketLink: "" };
     } finally {
       setIsLoading(false);
     }
@@ -461,7 +381,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {
       const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${requestJiraId}`
+        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
       );
 
       if (newJiraTicketData.ok) {
@@ -480,27 +400,79 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
     }
   }, [requestJira.id]);
 
-  const isUserOwner = requestor.user_id === user?.user_id;
-  const isUserSigner = signerList.find(
-    (signer) =>
-      signer.signer_team_member.team_member_id === teamMember?.team_member_id
-  );
-  const canSignerTakeAction =
-    isUserSigner &&
-    isUserSigner.request_signer_status === "PENDING" &&
-    requestStatus !== "CANCELED";
-  const isEditable =
-    signerList
-      .map((signer) => signer.request_signer_status)
-      .filter((status) => status !== "PENDING").length === 0 &&
-    isUserOwner &&
-    requestStatus === "PENDING";
-  const isCancelable = isUserOwner && requestStatus === "PENDING";
-  const isDeletable = isUserOwner && requestStatus === "CANCELED";
-  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+  useEffect(() => {
+    try {
+      const fetchSections = async () => {
+        const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        let index = 0;
+        while (1) {
+          setIsLoading(true);
+          const duplicatableSectionIdCondition = duplicatableSectionIdList
+            .slice(index, index + 5)
+            .map((dupId) => `'${dupId}'`)
+            .join(",");
 
-  const isRequestActionSectionVisible =
-    canSignerTakeAction || isEditable || isDeletable || isUserRequester;
+          const data = await getSectionInRequestPage(supabaseClient, {
+            index,
+            requestId: request.request_id,
+            sectionId: request.request_form.form_section[1].section_id,
+            duplicatableSectionIdCondition:
+              duplicatableSectionIdCondition.length !== 0
+                ? duplicatableSectionIdCondition
+                : `'${uuidv4()}'`,
+          });
+          newFields.push(...data);
+          index += 5;
+
+          if (index > duplicatableSectionIdList.length) break;
+        }
+
+        const uniqueFieldIdList: string[] = [];
+        const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
+          [];
+        newFields.forEach((field) => {
+          if (uniqueFieldIdList.includes(field.field_id)) {
+            const currentFieldIndex = combinedFieldList.findIndex(
+              (combinedField) => combinedField.field_id === field.field_id
+            );
+            combinedFieldList[currentFieldIndex].field_response.push(
+              ...field.field_response
+            );
+          } else {
+            uniqueFieldIdList.push(field.field_id);
+            combinedFieldList.push(field);
+          }
+        });
+
+        const newSection = generateSectionWithDuplicateList([
+          {
+            ...request.request_form.form_section[1],
+            section_field: combinedFieldList,
+          },
+        ]);
+        const newFormSection = [...formSection, ...newSection];
+
+        setFormSection(newFormSection);
+        setIsLoading(false);
+      };
+      const fetchComments = async () => {
+        const data = await getRequestComment(supabaseClient, {
+          request_id: request.request_id,
+        });
+        setRequestCommentList(data);
+      };
+      fetchSections();
+      fetchComments();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   return (
     <Container>
@@ -593,6 +565,7 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
             requestId={request.request_id}
             isItemForm
             onCreateJiraTicket={onCreateJiraTicket}
+            requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
 
