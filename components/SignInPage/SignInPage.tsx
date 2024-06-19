@@ -99,19 +99,18 @@ const SignInPage = () => {
         const { inviteToken } = router.query;
 
         if (inviteToken) {
-          const response = await fetch(`/api/jwt/verify?token=${inviteToken}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
+          const response = await fetch("/api/jwt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "decrypt",
+              value: inviteToken,
+            }),
           });
+          const { data } = await response.json();
+          if (!data) throw new Error("Jwt decoded token is null");
 
-          const responseData = await response.json();
-
-          if (!responseData.decodedToken)
-            throw new Error("Jwt decoded token is null");
-
-          const { teamId, invitedEmail } = responseData.decodedToken;
+          const { teamId, invitedEmail } = data;
           const invitationId = await getInvitationId(supabaseClient, {
             teamId: `${teamId}`,
             userEmail: `${invitedEmail}`,

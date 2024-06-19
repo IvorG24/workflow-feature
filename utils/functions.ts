@@ -258,20 +258,24 @@ export const sendEmailTeamInvite = async ({
   teamName: string;
 }) => {
   const subject = `You have been invited to join ${teamName} on Formsly.`;
-
-  const response = await fetch("/api/team-invite/send", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      to: emailList,
-      subject,
-      teamId: teamId,
-      teamName: teamName,
-    }),
-  });
-
-  const responseData = await response.json();
-  return responseData;
+  try {
+    await Promise.all(
+      emailList.map((email) =>
+        fetch("/api/team-invite/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: email,
+            subject,
+            teamId: teamId,
+            teamName: teamName,
+          }),
+        })
+      )
+    );
+  } catch (error) {
+    console.log(error);
+  }
 };
