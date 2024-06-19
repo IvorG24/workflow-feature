@@ -1245,8 +1245,7 @@ export const updateRequestOtpId = async (
     .from("request_table")
     .update({ request_otp_id: otpId })
     .eq("request_formsly_id_prefix", formslyIdPrefix)
-    .eq("request_formsly_id_serial", formslyIdSerial)
-    .select("*");
+    .eq("request_formsly_id_serial", formslyIdSerial);
 
   if (error) throw error;
 };
