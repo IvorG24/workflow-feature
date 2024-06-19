@@ -198,7 +198,7 @@ const itemItemTableColumnList = [
   "Base Unit of Measurement",
   "Item Description",
   "GL Account",
-  "CSI Code",
+  // "CSI Code",
 ];
 
 // const quotationTableColumnList = [
@@ -1554,11 +1554,13 @@ const SSOTSpreadsheetView = ({
             itemQuantity[groupIndex] = JSON.parse(item.request_response);
           } else if (item.request_response_field_name === "GL Account") {
             itemGlAccount[groupIndex] = JSON.parse(item.request_response);
-          } else if (
-            item.request_response_field_name === "CSI Code Description"
-          ) {
-            itemCSICode[groupIndex] = JSON.parse(item.request_response);
-          } else if (
+          }
+          // else if (
+          //   item.request_response_field_name === "CSI Code Description"
+          // ) {
+          //   itemCSICode[groupIndex] = JSON.parse(item.request_response);
+          // }
+          else if (
             [
               "CSI Code",
               "Division Description",
@@ -1652,9 +1654,9 @@ const SSOTSpreadsheetView = ({
                         {itemItemTable.columnList["gl_account"] && (
                           <th className={classes.long}>GL Account</th>
                         )}
-                        {itemItemTable.columnList["csi_code"] && (
+                        {/* {itemItemTable.columnList["csi_code"] && (
                           <th className={classes.long}>CSI Code</th>
-                        )}
+                        )} */}
                       </tr>
                     </thead>
                     <tbody>
