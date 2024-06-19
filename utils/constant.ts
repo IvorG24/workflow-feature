@@ -46,6 +46,8 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Sourced Item",
   "Transfer Receipt",
   "Subcon",
+  "Request For Payment Code",
+  "Bill of Quantity",
 ];
 
 export const SLA_LIST = [
