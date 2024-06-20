@@ -315,7 +315,7 @@ export type OtherExpensesTypeTableUpdate =
   Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
 
 export type SignatureHistoryTableRow =
-  Database["public"]["Tables"]["signature_history_table"]["Row"];
+  Database["history_schema"]["Tables"]["signature_history_table"]["Row"];
 export type UserValidIDTableRow =
   Database["public"]["Tables"]["user_valid_id_table"]["Row"];
 export type UserValidIDTableInsert =

@@ -32,7 +32,10 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
 ----- START: SCHEMA
 
 DROP SCHEMA IF EXISTS public CASCADE;
+DROP SCHEMA IF EXISTS history_schema CASCADE;
+
 CREATE SCHEMA public AUTHORIZATION postgres;
+CREATE SCHEMA history_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
 
@@ -508,7 +511,7 @@ CREATE TABLE memo_format_attachment_table(
   memo_format_attachment_subsection_id UUID REFERENCES memo_format_subsection_table(memo_format_subsection_id)
 );
 
-CREATE TABLE user_name_history_table(
+CREATE TABLE history_schema.user_name_history_table(
   user_name_history_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   user_name_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   user_name_history_value VARCHAR(4000) NOT NULL,
@@ -516,7 +519,7 @@ CREATE TABLE user_name_history_table(
   user_name_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
 );
 
-CREATE TABLE signature_history_table(
+CREATE TABLE history_schema.signature_history_table(
   signature_history_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   signature_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   signature_history_value VARCHAR(4000) NOT NULL,
@@ -901,12 +904,6 @@ CREATE TABLE item_unit_of_measurement_table (
 );
 
 ----- END: TABLES
-
-GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
-GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
-
-GRANT ALL ON SCHEMA public TO postgres;
-GRANT ALL ON SCHEMA public TO public;
 
 ----- START: FUNCTIONS
 
@@ -7598,7 +7595,7 @@ RETURNS JSON AS $$
       FROM memo_signer_table mst
       INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
       INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id
-      LEFT JOIN signature_history_table sht ON sht.signature_history_user_id = ut.user_id
+      LEFT JOIN history_schema.signature_history_table sht ON sht.signature_history_user_id = ut.user_id
       WHERE mst.memo_signer_memo_id = '${memo_id}'
       GROUP BY mst.memo_signer_id, tm.team_member_id, ut.user_id;
     `);
@@ -7897,7 +7894,7 @@ RETURNS JSON AS $$
       FROM memo_signer_table mst
       INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
       INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id
-      LEFT JOIN signature_history_table sht ON sht.signature_history_user_id = ut.user_id
+      LEFT JOIN history_schema.signature_history_table sht ON sht.signature_history_user_id = ut.user_id
       WHERE mst.memo_signer_memo_id = '${memo_id}'
       GROUP BY mst.memo_signer_id, tm.team_member_id, ut.user_id;
     `);
@@ -8078,10 +8075,10 @@ RETURNS VOID AS $$
     plv8.execute(`UPDATE user_table SET ${userDataUpdate.join(", ")} WHERE user_id = '${userData.user_id}'`);
 
     if(previousUsername){
-      plv8.execute(`INSERT INTO user_name_history_table (user_name_history_value, user_name_history_user_id) VALUES ('${previousUsername}', '${userData.user_id}')`);
+      plv8.execute(`INSERT INTO history_schema.user_name_history_table (user_name_history_value, user_name_history_user_id) VALUES ('${previousUsername}', '${userData.user_id}')`);
     }
     if(previousSignatureUrl){
-      plv8.execute(`INSERT INTO signature_history_table (signature_history_value, signature_history_user_id) VALUES ('${previousSignatureUrl}', '${userData.user_id}')`);
+      plv8.execute(`INSERT INTO history_schema.signature_history_table (signature_history_value, signature_history_user_id) VALUES ('${previousSignatureUrl}', '${userData.user_id}')`);
     }
  });
 $$ LANGUAGE plv8;
@@ -10293,6 +10290,60 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_memo_signer_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    teamId
+  } = input_data;
+
+  const teamMemberList = plv8.execute(
+    `
+      SELECT 
+        team_member_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_job_title,
+        user_avatar
+      FROM team_member_table
+      INNER JOIN user_table ON user_id = team_member_user_id
+      WHERE 
+        team_member_team_id = '${teamId}'
+    `
+  );
+
+  returnData = teamMemberList.map(teamMember => {
+    const signatureList = plv8.execute(
+      `
+        SELECT *
+        FROM history_schema.signature_history_table
+        WHERE 
+          signature_history_user_id = '${teamMember.user_id}'
+      `
+    );
+
+    return {
+      team_member_id: teamMember.team_member_id,
+      team_member_user: {
+        user_id: teamMember.user_id,
+        user_first_name: teamMember.user_first_name,
+        user_last_name: teamMember.user_last_name,
+        user_job_title: teamMember.user_job_title,
+        user_avatar: teamMember.user_avatar,
+        signature_list: signatureList
+      }
+    }
+  })
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+-------- END: FUNCTIONS
+
 -------- START: POLICIES
 
 ALTER TABLE attachment_table ENABLE ROW LEVEL SECURITY;
@@ -10324,8 +10375,8 @@ ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_name_history_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE signature_history_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE history_schema.user_name_history_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE history_schema.signature_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE service_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_table ENABLE ROW LEVEL SECURITY;
@@ -10533,10 +10584,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_employee_number_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_employee_number_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_name_history_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.user_name_history_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON signature_history_table;
-DROP POLICY IF EXISTS "Enable read access for all users" ON signature_history_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.signature_history_table;
+DROP POLICY IF EXISTS "Enable read access for all users" ON history_schema.signature_history_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON general_unit_of_measurement_table;
@@ -12198,18 +12249,18 @@ USING (
   )
 );
 --- USER_NAME_HISTORY_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_name_history_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "history_schema"."user_name_history_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
 --- SIGNATURE_HISTORY_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."signature_history_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "history_schema"."signature_history_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Enable read access for all users" ON "public"."signature_history_table"
+CREATE POLICY "Enable read access for all users" ON "history_schema"."signature_history_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
@@ -13523,3 +13574,17 @@ COMMIT;
 ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table, ticket_table, team_table;
 
 -------- END: SUBSCRIPTION
+
+----- START: PRIVILEGES
+
+GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA history_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA history_schema TO POSTGRES;
+GRANT ALL ON SCHEMA history_schema TO postgres;
+GRANT ALL ON SCHEMA history_schema TO public;
+
+----- END: PRIVILEGES
