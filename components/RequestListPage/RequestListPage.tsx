@@ -1,4 +1,4 @@
-import { getRequestList } from "@/backend/api/get";
+import { getRequestList, getTeamMemoSignerList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
@@ -198,6 +198,23 @@ const RequestListPage = ({
             SSOT Spreadsheet View
           </Button>
         ) : null}
+        <Button
+          onClick={async () => {
+            try {
+              const teamMemoSignerList = await getTeamMemoSignerList(
+                supabaseClient,
+                {
+                  teamId: activeTeam.team_id,
+                }
+              );
+              console.log(teamMemoSignerList);
+            } catch (e) {
+              console.log(e);
+            }
+          }}
+        >
+          ASD
+        </Button>
         <Button
           variant="light"
           leftIcon={<IconReload size={16} />}
