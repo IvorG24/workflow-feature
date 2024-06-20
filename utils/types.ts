@@ -1991,4 +1991,5 @@ export type JiraRFPTicketPayloadProps = {
   departmentCode?: string;
   costCode?: string;
   boqCode?: string;
+  obTicket?: string;
 };

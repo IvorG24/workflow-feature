@@ -297,7 +297,8 @@ const RequestForPaymentCodeRequestPage = ({
         throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
-
+      let obTicket = "";
+      let departmentCode = "";
       const [jiraAutomationData, automationFormResponse, rfpRequest] =
         await Promise.all([
           getJiraAutomationDataByProjectId(supabaseClient, {
@@ -340,11 +341,16 @@ const RequestForPaymentCodeRequestPage = ({
         (field) => field.field_name === "Charge To"
       )?.field_id;
 
+      const obFieldId = rfpPayeeSectionFieldList.find(
+        (field) =>
+          field.field_name === "Ticket Number of Approved Official Business"
+      )?.field_id;
+
       const payeeSectionFieldResponse = await getRequestFieldResponse(
         supabaseClient,
         {
           requestId: rfpRequest.data.request.request_id,
-          fieldId: [`${purposeFieldId}`, `${chargeToFieldId}`],
+          fieldId: [`${purposeFieldId}`, `${chargeToFieldId}`, `${obFieldId}`],
         }
       );
 
@@ -363,7 +369,13 @@ const RequestForPaymentCodeRequestPage = ({
 
       const requestDepartmentCode = rfpHeaderSectionFieldList.find(
         (field) => field.field_name === "Department Code"
-      )?.field_response[0].request_response;
+      );
+
+      if (requestDepartmentCode?.field_response[0]) {
+        departmentCode = safeParse(
+          requestDepartmentCode.field_response[0].request_response
+        );
+      }
 
       const requestPayeeType = rfpHeaderSectionFieldList.find(
         (field) => field.field_name === "Payee Type"
@@ -375,6 +387,14 @@ const RequestForPaymentCodeRequestPage = ({
       const requestChargeTo = payeeSectionFieldResponse.find(
         (field) => field.request_response_field_id === chargeToFieldId
       )?.request_response;
+
+      if (safeParse(`${requestPurpose}`).toLowerCase() === "ob budget") {
+        const requestObTicket = payeeSectionFieldResponse.find(
+          (field) => field.request_response_field_id === obFieldId
+        )?.request_response;
+
+        obTicket = safeParse(requestObTicket ?? "");
+      }
 
       const costCode = safeParse(
         `${formSection[1].section_field[3].field_response?.request_response}`
@@ -420,7 +440,8 @@ const RequestForPaymentCodeRequestPage = ({
         chargeTo: chargeTo.id,
         costCode,
         boqCode,
-        departmentCode: safeParse(`${requestDepartmentCode ?? ""}`),
+        departmentCode,
+        obTicket,
       });
 
       const jiraTicket = await createJiraTicket({

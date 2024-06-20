@@ -642,6 +642,7 @@ export const formatJiraRFPPayload = ({
   payeeType,
   boqCode,
   costCode,
+  obTicket,
 }: JiraRFPTicketPayloadProps) => {
   // if department = plants and equipment, use PED jira form
   const isPEDDepartment = ["Plants and Equipment", "PED"].includes(department);
@@ -671,6 +672,12 @@ export const formatJiraRFPPayload = ({
     serviceDeskId,
     requestParticipants: [],
   };
+
+  if (obTicket) {
+    jiraTicketPayload.form.answers["15"] = {
+      text: obTicket,
+    };
+  }
 
   if (jiraProjectSiteId === "10172") {
     jiraTicketPayload.form.answers["23"] = {
