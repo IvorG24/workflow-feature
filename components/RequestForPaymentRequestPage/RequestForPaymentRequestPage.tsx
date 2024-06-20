@@ -451,17 +451,27 @@ const RequestForPaymentRequestPage = ({
       }
       setIsLoading(true);
 
+      const isChargeToVariousDepartment =
+        selectedChargeTo === "Various Department";
+
+      const requestTypeId = isChargeToVariousDepartment ? "337" : "337";
+      const serviceDeskId = isChargeToVariousDepartment ? "23" : "27";
+      const payeeFieldId = isChargeToVariousDepartment ? "24" : "25";
+
       const [jiraAutomationData, automationFormResponse] = await Promise.all([
         getJiraAutomationDataByProjectId(supabaseClient, {
           teamProjectId: request.request_project_id,
         }),
-        fetch("/api/jira/get-form?serviceDeskId=27&requestType=333", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-        }),
+        fetch(
+          `/api/jira/get-form?serviceDeskId=${serviceDeskId}&requestType=${requestTypeId}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }
+        ),
       ]);
 
       if (!jiraAutomationData?.jiraProjectData || !automationFormResponse.ok) {
@@ -470,7 +480,7 @@ const RequestForPaymentRequestPage = ({
 
       const { fields } = await automationFormResponse.json();
       const urgencyList = fields["5"].choices;
-      const payeeTypeList = fields["25"].choices;
+      const payeeTypeList = fields[payeeFieldId].choices;
       const purposeList = fields["13"].choices;
       const chargeToList = fields["18"].choices;
 
@@ -485,9 +495,6 @@ const RequestForPaymentRequestPage = ({
       )?.field_response?.request_response;
       const requestPurpose = formSection[1].section_field.find(
         (field) => field.field_name === "Purpose of Payment"
-      )?.field_response?.request_response;
-      const requestChargeTo = formSection[1].section_field.find(
-        (field) => field.field_name === "Charge To"
       )?.field_response?.request_response;
 
       const costCode = safeParse(
@@ -515,7 +522,7 @@ const RequestForPaymentRequestPage = ({
       const chargeTo = chargeToList.find(
         (item: JiraFormFieldChoice) =>
           item.name.trim().toLowerCase() ===
-          safeParse(`${requestChargeTo}`).toLowerCase()
+          safeParse(`${selectedChargeTo}`).toLowerCase()
       );
 
       if (!urgency || !payeeType || !purpose || !chargeTo) {
@@ -609,7 +616,7 @@ const RequestForPaymentRequestPage = ({
     request.request_form.form_section[0].section_field[1].field_response[0]
       .request_response
   );
-  const chargeTo = safeParse(
+  const selectedChargeTo = safeParse(
     formSection.length
       ? formSection[1].section_field.find(
           (field) => field.field_name === "Charge To"
@@ -621,7 +628,7 @@ const RequestForPaymentRequestPage = ({
     requestStatus === "APPROVED" &&
     isUserCostEngineer &&
     !["PED", "Plants and Equipment"].includes(selectedDepartment) &&
-    chargeTo === "Project";
+    selectedChargeTo === "Project";
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
@@ -737,7 +744,7 @@ const RequestForPaymentRequestPage = ({
             isItemForm
             onCreateJiraTicket={
               ["Plants and Equipment", "PED"].includes(selectedDepartment) ||
-              chargeTo === "Department"
+              selectedChargeTo === "Various Department"
                 ? onCreateJiraTicket
                 : undefined
             }
