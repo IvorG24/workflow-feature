@@ -361,6 +361,10 @@ const RequestForPaymentCodeRequestPage = ({
       const requestDepartment =
         rfpHeaderSectionFieldList[1].field_response[0].request_response;
 
+      const requestDepartmentCode = rfpHeaderSectionFieldList.find(
+        (field) => field.field_name === "Department Code"
+      )?.field_response[0].request_response;
+
       const requestPayeeType = rfpHeaderSectionFieldList.find(
         (field) => field.field_name === "Payee Type"
       )?.field_response[0].request_response;
@@ -416,6 +420,7 @@ const RequestForPaymentCodeRequestPage = ({
         chargeTo: chargeTo.id,
         costCode,
         boqCode,
+        departmentCode: safeParse(`${requestDepartmentCode ?? ""}`),
       });
 
       const jiraTicket = await createJiraTicket({
