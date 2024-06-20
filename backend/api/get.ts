@@ -4909,22 +4909,10 @@ export const getTeamMemoSignerList = async (
     teamId: string;
   }
 ) => {
-  const { data, error } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      `team_member_id,
-       team_member_user: team_member_user_id(
-          user_id,
-          user_first_name,
-          user_last_name,
-          user_job_title,
-          user_avatar,
-          signature_list: signature_history_table(*)
-        )
-      `
-    )
-    .eq("team_member_team_id", params.teamId);
-
+  console.log(params.teamId);
+  const { data, error } = await supabaseClient.rpc("get_memo_signer_list", {
+    input_data: params,
+  });
   if (error) throw error;
 
   const dataWithType = data as unknown as {
@@ -4950,7 +4938,7 @@ export const getTeamMemoSignerList = async (
         : "",
     };
   });
-
+  console.log(formattedData);
   return formattedData;
 };
 
@@ -5248,6 +5236,7 @@ export const getUserSignatureList = async (
 ) => {
   const { userId } = params;
   const { data, error } = await supabaseClient
+    .schema("history_schema")
     .from("signature_history_table")
     .select("*")
     .eq("signature_history_user_id", userId);
