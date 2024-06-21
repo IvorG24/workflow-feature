@@ -108,11 +108,12 @@ export type TeamTableInsert =
 export type TeamTableUpdate =
   Database["public"]["Tables"]["team_table"]["Update"];
 
-export type UserTableRow = Database["public"]["Tables"]["user_table"]["Row"];
+export type UserTableRow =
+  Database["user_schema"]["Tables"]["user_table"]["Row"];
 export type UserTableInsert =
-  Database["public"]["Tables"]["user_table"]["Insert"];
+  Database["user_schema"]["Tables"]["user_table"]["Insert"];
 export type UserTableUpdate =
-  Database["public"]["Tables"]["user_table"]["Update"];
+  Database["user_schema"]["Tables"]["user_table"]["Update"];
 
 export type ItemTableRow = Database["public"]["Tables"]["item_table"]["Row"];
 export type ItemTableInsert =

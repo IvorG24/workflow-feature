@@ -32,9 +32,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
 ----- START: SCHEMA
 
 DROP SCHEMA IF EXISTS public CASCADE;
+DROP SCHEMA IF EXISTS user_schema CASCADE;
 DROP SCHEMA IF EXISTS history_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
+CREATE SCHEMA user_schema AUTHORIZATION postgres;
 CREATE SCHEMA history_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
@@ -61,7 +63,7 @@ CREATE TABLE address_table (
   address_zip_code VARCHAR(4000) NOT NULL
 );
 
-CREATE TABLE user_table (
+CREATE TABLE user_schema.user_table (
   user_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   user_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   user_username VARCHAR(4000) UNIQUE NOT NULL,
@@ -87,7 +89,7 @@ CREATE TABLE team_table (
   team_is_request_signature_required BOOLEAN DEFAULT FALSE NOT NULL,
   team_logo VARCHAR(4000),
   
-  team_user_id UUID REFERENCES user_table(user_id) NOT NULL
+  team_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
 CREATE TABLE team_transaction_table (
@@ -106,7 +108,7 @@ CREATE TABLE team_member_table (
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
   team_member_is_disabled BOOL DEFAULT FALSE NOT NULL,
 
-  team_member_user_id UUID REFERENCES user_table(user_id) NOT NULL,
+  team_member_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
   team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   UNIQUE (team_member_team_id, team_member_user_id)
 );
@@ -181,8 +183,8 @@ CREATE TABLE user_valid_id_table (
   user_valid_id_back_image_url VARCHAR(4000),
   user_valid_id_status VARCHAR(4000) NOT NULL,
 
-  user_valid_id_approver_user_id UUID REFERENCES user_table(user_id),
-  user_valid_id_user_id UUID REFERENCES user_table(user_id) NOT NULL,
+  user_valid_id_approver_user_id UUID REFERENCES user_schema.user_table(user_id),
+  user_valid_id_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
   user_valid_id_address_id UUID REFERENCES address_table(address_id) NOT NULL
 );
 
@@ -192,7 +194,7 @@ CREATE TABLE user_employee_number_table (
   user_employee_number_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   user_employee_number VARCHAR(4000) NOT NULL,
 
-  user_employee_number_user_id UUID REFERENCES user_table(user_id)
+  user_employee_number_user_id UUID REFERENCES user_schema.user_table(user_id)
 );
 
 CREATE TABLE invitation_table (
@@ -215,7 +217,7 @@ CREATE TABLE notification_table (
   notification_app VARCHAR(4000) NOT NULL,
 
   notification_team_id UUID REFERENCES team_table(team_id),
-  notification_user_id UUID REFERENCES user_table(user_id) NOT NULL
+  notification_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
 CREATE TABLE form_table (
@@ -424,7 +426,7 @@ CREATE TABLE memo_table (
   memo_subject VARCHAR(4000) NOT NULL,
   memo_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
   memo_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
-  memo_author_user_id UUID REFERENCES user_table(user_id) NOT NULL,
+  memo_author_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
   memo_team_id UUID REFERENCES team_table(team_id) NOT NULL,
   memo_version VARCHAR(4000) NOT NULL,
   memo_reference_number UUID DEFAULT uuid_generate_v4() NOT NULL
@@ -516,7 +518,7 @@ CREATE TABLE history_schema.user_name_history_table(
   user_name_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   user_name_history_value VARCHAR(4000) NOT NULL,
 
-  user_name_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
+  user_name_history_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
 CREATE TABLE history_schema.signature_history_table(
@@ -524,7 +526,7 @@ CREATE TABLE history_schema.signature_history_table(
   signature_history_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   signature_history_value VARCHAR(4000) NOT NULL,
 
-  signature_history_user_id UUID REFERENCES user_table(user_id) NOT NULL
+  signature_history_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
 CREATE TABLE item_category_table (
@@ -1028,7 +1030,7 @@ plv8.subtransaction(function(){
     });
 
     // Item team member
-    const item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${item.request_team_member_id}'`)[0];
+    const item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${item.request_team_member_id}'`)[0];
 
     const quotation_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}'`);
     let quotation_list = [];
@@ -1054,7 +1056,7 @@ plv8.subtransaction(function(){
         });
 
         // Quotation team member
-        const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
+        const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
 
         const rir_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${rir_form.form_id}'`);
         let rir_list = [];
@@ -1081,7 +1083,7 @@ plv8.subtransaction(function(){
             });
 
             // rir team member
-            const rir_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${rir.request_team_member_id}'`)[0];
+            const rir_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${rir.request_team_member_id}'`)[0];
 
             return {
               rir_request_id: rir.request_id,
@@ -1128,7 +1130,7 @@ plv8.subtransaction(function(){
         });
 
         // Sourced Item team member
-        const sourced_item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${sourced_item.request_team_member_id}'`)[0];
+        const sourced_item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${sourced_item.request_team_member_id}'`)[0];
 
         const ro_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${sourced_item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${ro_form.form_id}'`);
         let ro_list = [];
@@ -1155,7 +1157,7 @@ plv8.subtransaction(function(){
             });
 
             // ro team member
-            const ro_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${ro.request_team_member_id}'`)[0];
+            const ro_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${ro.request_team_member_id}'`)[0];
 
             const transfer_receipt_ids = plv8.execute(`SELECT request_view.request_id FROM request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${ro.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${transfer_receipt_form.form_id}'`);
             let transfer_receipt_list = [];
@@ -1182,7 +1184,7 @@ plv8.subtransaction(function(){
                 });
 
                 // transfer_receipt team member
-                const transfer_receipt_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${transfer_receipt.request_team_member_id}'`)[0];
+                const transfer_receipt_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${transfer_receipt.request_team_member_id}'`)[0];
 
                 return {
                   transfer_receipt_request_id: transfer_receipt.request_id,
@@ -1252,9 +1254,9 @@ RETURNS JSON AS $$
     } = input_data;
 
     if(user_active_team_id){
-        user_data = plv8.execute(`INSERT INTO user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title,user_active_team_id) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}','${user_active_team_id}') RETURNING *;`)[0];
+      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title,user_active_team_id) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}','${user_active_team_id}') RETURNING *;`)[0];
     }else{
-        user_data = plv8.execute(`INSERT INTO user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
+      user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
     }
     const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM invitation_table invt INNER JOIN team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
 
@@ -1865,7 +1867,7 @@ RETURNS JSON AS $$
         });
       }
 
-      const checkUserData = plv8.execute(`SELECT * FROM user_table WHERE user_email='${email}';`)[0];
+      const checkUserData = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_email='${email}';`)[0];
 
       if (checkUserData) {
         notificationInput.push({
@@ -1907,7 +1909,7 @@ CREATE OR REPLACE FUNCTION get_user_active_team_id(
 RETURNS TEXT as $$
   let active_team_id;
   plv8.subtransaction(function(){
-    const user_data = plv8.execute(`SELECT * FROM user_table WHERE user_id='${user_id}' LIMIT 1`)[0];
+    const user_data = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${user_id}' LIMIT 1`)[0];
     
     if(!user_data.user_active_team_id){
       const team_member = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${user_id}' AND team_member_is_disabled='false' LIMIT 1`)[0];
@@ -1993,7 +1995,7 @@ RETURNS JSON as $$
   plv8.subtransaction(function(){
 
     const isUserPreviousMember = plv8.execute(`SELECT COUNT(*) FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}' AND team_member_is_disabled=TRUE`);
-    const userData = plv8.execute(`SELECT user_id, user_active_team_id FROM user_table WHERE user_id='${user_id}'`)[0];
+    const userData = plv8.execute(`SELECT user_id, user_active_team_id FROM user_schema.user_table WHERE user_id='${user_id}'`)[0];
 
     if (isUserPreviousMember[0].count > 0) {
       plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=FALSE WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}'`);
@@ -2002,7 +2004,7 @@ RETURNS JSON as $$
     }
 
     if (!userData.user_active_team_id) {
-      plv8.execute(`UPDATE user_table SET user_active_team_id='${team_id}' WHERE user_id='${user_id}'`);
+      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${team_id}' WHERE user_id='${user_id}'`);
     }
 
     plv8.execute(`UPDATE invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
@@ -2883,7 +2885,7 @@ RETURNS JSON AS $$
 
     const groupInsertValues = groupInsertData.map(group=>`('${group.team_group_member_id}','${group.team_member_id}','${group.team_group_id}')`).join(",");
 
-    const groupJoin = plv8.execute(`SELECT tgm.team_group_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_group_member_table tgm LEFT JOIN team_member_table tmemt ON tgm.team_member_id = tmemt.team_member_id WHERE (tgm.team_group_member_id,tgm.team_member_id,tgm.team_group_id) IN (${groupInsertValues}) GROUP BY tgm.team_group_member_id ,tmemt.team_member_id;`);
+    const groupJoin = plv8.execute(`SELECT tgm.team_group_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_group_member_table tgm LEFT JOIN team_member_table tmemt ON tgm.team_member_id = tmemt.team_member_id WHERE (tgm.team_group_member_id,tgm.team_member_id,tgm.team_group_id) IN (${groupInsertValues}) GROUP BY tgm.team_group_member_id ,tmemt.team_member_id;`);
 
     teamProjectIdList.forEach(projectId => {
       insertData.forEach(member => {
@@ -2948,7 +2950,7 @@ RETURNS JSON AS $$
 
     const projectInsertValues = projectInsertData.map(project=>`('${project.team_project_member_id}','${project.team_member_id}','${project.team_project_id}')`).join(",")
 
-    const projectJoin = plv8.execute(`SELECT tpm.team_project_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_project_member_table tpm LEFT JOIN team_member_table tmemt ON tpm.team_member_id = tmemt.team_member_id WHERE (tpm.team_project_member_id,tpm.team_member_id,tpm.team_project_id) IN (${projectInsertValues}) GROUP BY tpm.team_project_member_id ,tmemt.team_member_id;`) 
+    const projectJoin = plv8.execute(`SELECT tpm.team_project_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_project_member_table tpm LEFT JOIN team_member_table tmemt ON tpm.team_member_id = tmemt.team_member_id WHERE (tpm.team_project_member_id,tpm.team_member_id,tpm.team_project_id) IN (${projectInsertValues}) GROUP BY tpm.team_project_member_id ,tmemt.team_member_id;`) 
 
     teamGroupIdList.forEach(groupId => {
       insertData.forEach(member => {
@@ -3011,9 +3013,9 @@ RETURNS JSON AS $$
     let teamMemberList = [];
     
     if(condition.length !== 0){
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition})`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition})`);
     }else{
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
     }
 
     member_data = teamMemberList.sort((a, b) =>
@@ -3041,9 +3043,9 @@ RETURNS JSON AS $$
     let teamMemberList = []
     
     if(condition.length !== 0){
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition});`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition});`);
     }else{
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
     }
 
     member_data = teamMemberList.sort((a, b) =>
@@ -3123,9 +3125,9 @@ RETURNS VOID as $$
     const userTeamList = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_id='${team_member_id}' AND team_member_is_disabled=FALSE`);
 
     if (userTeamList.length > 0) {
-      plv8.execute(`UPDATE user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${user.team_member_user_id}'`);
+      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${user.team_member_user_id}'`);
     } else {
-      plv8.execute(`UPDATE user_table SET user_active_team_id=NULL WHERE user_id='${user.team_member_user_id}'`);
+      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id=NULL WHERE user_id='${user.team_member_user_id}'`);
     }
  });
 $$ LANGUAGE plv8;
@@ -3142,7 +3144,7 @@ RETURNS JSON as $$
     } = input_data;
     teamApproverIdList.forEach(id => {
       const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
-      const user = plv8.execute(`SELECT * FROM user_table WHERE user_id='${member.team_member_user_id}'`)[0];
+      const user = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${member.team_member_user_id}'`)[0];
 
       approverList.push({
         team_member_id: member.team_member_id,
@@ -3171,7 +3173,7 @@ RETURNS JSON as $$
     } = input_data;
     teamAdminIdList.forEach(id => {
       const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
-      const user = plv8.execute(`SELECT * FROM user_table WHERE user_id='${member.team_member_user_id}'`)[0];
+      const user = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${member.team_member_user_id}'`)[0];
 
       adminList.push({
         team_member_id: member.team_member_id,
@@ -3291,7 +3293,7 @@ RETURNS JSON AS $$
             'user_employee_number', uent.user_employee_number
           ) AS team_member_user 
         FROM team_member_table tmt 
-        INNER JOIN user_table usert ON usert.user_id = tmt.team_member_user_id
+        INNER JOIN user_schema.user_table usert ON usert.user_id = tmt.team_member_user_id
         LEFT JOIN user_employee_number_table uent 
           ON uent.user_employee_number_user_id = usert.user_id
           AND uent.user_employee_number_is_disabled = false
@@ -3361,7 +3363,7 @@ RETURNS JSON AS $$
         FROM 
             team_member_table tmt 
         JOIN 
-            user_table usert ON tmt.team_member_user_id = usert.user_id
+            user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
         LEFT JOIN 
             user_employee_number_table uent ON uent.user_employee_number_user_id = usert.user_id
                 AND uent.user_employee_number_is_disabled = false
@@ -3386,7 +3388,7 @@ RETURNS JSON AS $$
       `
         SELECT COUNT(*)
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_team_id='${teamId}' 
           AND tmt.team_member_is_disabled=false 
@@ -3498,7 +3500,7 @@ RETURNS JSON AS $$
             'user_employee_number', uent.user_employee_number
           ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id
+        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
         LEFT JOIN user_employee_number_table uent 
           ON uent.user_employee_number_user_id = usert.user_id
           AND uent.user_employee_number_is_disabled=false
@@ -3528,7 +3530,7 @@ RETURNS JSON AS $$
       `
         SELECT COUNT(*)
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           team_member_team_id='${teamId}' 
           AND tmt.team_member_is_disabled=false 
@@ -3623,7 +3625,7 @@ RETURNS JSON AS $$
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
     const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_table formt JOIN team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
 
@@ -3912,7 +3914,7 @@ RETURNS JSON as $$
           user_avatar
         FROM form_table 
         INNER JOIN team_member_table ON team_member_id = form_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           team_member_team_id = '${teamId}'
           AND form_is_disabled = false
@@ -3925,7 +3927,7 @@ RETURNS JSON as $$
         SELECT COUNT(*)
         FROM form_table 
         INNER JOIN team_member_table ON team_member_id = form_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           team_member_team_id = '${teamId}'
           AND form_is_disabled = false
@@ -3942,7 +3944,7 @@ RETURNS JSON as $$
           user_first_name,
           user_last_name
         FROM team_member_table
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
@@ -4017,7 +4019,7 @@ RETURNS JSON as $$
           user_first_name,
           user_last_name
         FROM team_member_table
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
@@ -4071,7 +4073,7 @@ RETURNS JSON as $$
           user_first_name,
           user_last_name
         FROM team_member_table
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
           team_member_team_id = '${teamId}'
           AND team_member_is_disabled = false
@@ -4151,7 +4153,7 @@ RETURNS JSON as $$
           user_username
         FROM form_table
         INNER JOIN team_member_table ON team_member_id = form_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
           form_id = '${formId}'
       `
@@ -4173,7 +4175,7 @@ RETURNS JSON as $$
           user_avatar
         FROM signer_table
         INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
           signer_is_disabled = false
           AND signer_team_project_id IS null
@@ -4201,7 +4203,7 @@ RETURNS JSON as $$
         if (field.field_special_field_template_id) {
           switch(field.field_special_field_template_id){
                 case "c3a2ab64-de3c-450f-8631-05f4cc7db890": 
-                    const teamMemberList = plv8.execute(`SELECT user_id, user_first_name, user_last_name FROM team_member_table INNER JOIN user_table ON user_id = team_member_user_id WHERE team_member_team_id = '${teamId}' ORDER BY user_last_name`); 
+                    const teamMemberList = plv8.execute(`SELECT user_id, user_first_name, user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON user_id = team_member_user_id WHERE team_member_team_id = '${teamId}' ORDER BY user_last_name`); 
                     optionData = teamMemberList.map((item, index) => ({
                         option_id: item.user_id,
                         option_value: item.user_last_name + ', ' + item.user_first_name,
@@ -5085,7 +5087,7 @@ RETURNS JSON as $$
               user_avatar
             FROM signer_table
             INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-            INNER JOIN user_table ON user_id = team_member_user_id
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
               signer_is_disabled = false
               AND signer_form_id = '${form.form_id}'
@@ -5430,7 +5432,7 @@ RETURNS JSON as $$
               user_avatar
             FROM signer_table
             INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-            INNER JOIN user_table ON user_id = team_member_user_id
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
               signer_is_disabled = false
               AND signer_form_id = '${form.form_id}'
@@ -5510,7 +5512,7 @@ RETURNS JSON as $$
           team_project_name
         FROM request_view
         INNER JOIN team_member_table ON team_member_id = request_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_table ON form_id = request_form_id
         LEFT JOIN team_project_table ON team_project_id = request_project_id
         WHERE 
@@ -5539,7 +5541,7 @@ RETURNS JSON as $$
         FROM request_signer_table
         INNER JOIN signer_table ON signer_id = request_signer_signer_id
         INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${requestData.request_id}'
       `
@@ -5562,7 +5564,7 @@ RETURNS JSON as $$
           user_avatar
         FROM comment_table 
         INNER JOIN team_member_table ON team_member_id = comment_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           comment_request_id = '${requestData.request_id}'
         ORDER BY comment_date_created DESC
@@ -5936,7 +5938,7 @@ RETURNS JSON AS $$
               'user_email', usert.user_email 
             ) AS team_member_user  
           FROM team_member_table tmt
-            JOIN user_table usert ON usert.user_id = tmt.team_member_user_id
+            JOIN user_schema.user_table usert ON usert.user_id = tmt.team_member_user_id
           WHERE 
             tmt.team_member_team_id = '${teamId}'
             AND tmt.team_member_is_disabled = false;
@@ -6186,7 +6188,7 @@ RETURNS JSON as $$
           )
       ) AS member
       FROM team_member_table tm
-      JOIN user_table u ON tm.team_member_user_id = u.user_id
+      JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
       WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}';`)[0]
     
     const ticketForm = plv8.execute(`SELECT get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
@@ -6294,7 +6296,7 @@ RETURNS JSON as $$
           )
       ) AS member
       FROM team_member_table tm
-      JOIN user_table u ON tm.team_member_user_id = u.user_id
+      JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
       WHERE tm.team_member_id = '${ticket.ticket_approver_team_member_id}';`)[0]
     }
 
@@ -6312,7 +6314,7 @@ RETURNS JSON as $$
           'user_email', usert.user_email 
         ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_team_id='${teamId}' 
           AND tmt.team_member_is_disabled=false 
@@ -6340,7 +6342,7 @@ RETURNS JSON as $$
           user_avatar
         FROM ticket_comment_table 
         INNER JOIN team_member_table ON team_member_id = ticket_comment_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           ticket_comment_ticket_id = '${ticketId}'
         ORDER BY ticket_comment_date_created DESC
@@ -6419,7 +6421,7 @@ RETURNS JSON as $$
           'user_email', usert.user_email 
         ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_id='${updatedTicket.ticket_requester_team_member_id}' 
       `
@@ -6437,7 +6439,7 @@ RETURNS JSON as $$
           'user_email', usert.user_email 
         ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_id='${teamMemberId}' 
       `
@@ -6530,7 +6532,7 @@ RETURNS JSON AS $$
               user_table.user_username,
               user_table.user_avatar
             FROM team_member_table
-            INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+            INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
             WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
           `
         )[0];
@@ -6546,7 +6548,7 @@ RETURNS JSON AS $$
                 user_table.user_username,
                 user_table.user_avatar
               FROM team_member_table
-              INNER JOIN user_table ON team_member_table.team_member_user_id = user_table.user_id
+              INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
               WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
             `
           )[0];
@@ -6731,7 +6733,7 @@ plv8.subtransaction(function(){
         user_id
       FROM request_table 
       INNER JOIN team_member_table ON team_member_id = request_team_member_id
-      INNER JOIN user_table ON user_id = team_member_user_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE 
         request_id = '${requestId}' 
         AND request_is_disabled = false
@@ -6807,7 +6809,7 @@ RETURNS JSON as $$
           user_avatar,
           user_email
         FROM team_member_table
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE team_member_id = '${requestor.request_team_member_id}'
       `)[0];
       const pendingCount = Number(plv8.execute(`
@@ -7088,7 +7090,7 @@ RETURNS JSON as $$
           user_avatar,
           user_email
         FROM team_member_table
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE team_member_id = '${signer.signer_team_member_id}'
       `)[0];
       const pendingCount = Number(plv8.execute(`
@@ -7164,9 +7166,9 @@ RETURNS VOID as $$
     const userTeamList = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${teamMember.team_member_user_id}' AND team_member_is_disabled=FALSE`);
 
     if (userTeamList.length > 0) {
-      plv8.execute(`UPDATE user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${teamMember.team_member_user_id}'`);
+      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${teamMember.team_member_user_id}'`);
     } else {
-      plv8.execute(`UPDATE user_table SET user_active_team_id=NULL WHERE user_id='${teamMember.team_member_user_id}'`);
+      plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id=NULL WHERE user_id='${teamMember.team_member_user_id}'`);
     }
  });
 $$ LANGUAGE plv8;
@@ -7183,7 +7185,7 @@ RETURNS JSON AS $$
       app
     } = input_data;
 
-    plv8.execute(`UPDATE user_table SET user_active_team_id = '${teamId}' WHERE user_id = '${userId}'`);
+    plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id = '${teamId}' WHERE user_id = '${userId}'`);
 
     const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
 
@@ -7483,7 +7485,7 @@ RETURNS JSON AS $$
 
     const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${memoData.memo_team_id}';`);
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
-    const memo_author_data = plv8.execute(`SELECT user_first_name, user_last_name FROM user_table WHERE user_id = '${memoData.memo_author_user_id}' LIMIT 1`)[0];
+    const memo_author_data = plv8.execute(`SELECT user_first_name, user_last_name FROM user_schema.user_table WHERE user_id = '${memoData.memo_author_user_id}' LIMIT 1`)[0];
 
     const signerNotificationInput = signerData.map((signer) => ({notification_app: 'REQUEST', notification_content: `${memo_author_data.user_first_name} ${memo_author_data.user_last_name} requested you to sign his/her memo`, notification_redirect_url: '', notification_team_id: memoData.memo_team_id, notification_type: 'MEMO-APPROVAL', notification_user_id: signer.memo_signer_user_id}));
 
@@ -7542,7 +7544,7 @@ RETURNS JSON AS $$
     const memo_data_raw = plv8.execute(`
       SELECT *
       FROM memo_table
-      INNER JOIN user_table ON user_table.user_id = memo_author_user_id
+      INNER JOIN user_schema.user_table ON user_table.user_id = memo_author_user_id
       INNER JOIN memo_date_updated_table ON memo_date_updated_memo_id = memo_id
       INNER JOIN memo_status_table ON memo_status_memo_id = memo_id
       WHERE memo_id = '${memo_id}' AND memo_is_disabled = false
@@ -7684,7 +7686,7 @@ RETURNS JSON AS $$
       SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
       FROM memo_read_receipt_table
       INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
-      INNER JOIN user_table ON user_id = team_member_user_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
       WHERE memo_read_receipt_memo_id = '${memo_id}'
     `);
@@ -7693,7 +7695,7 @@ RETURNS JSON AS $$
       SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
       FROM memo_agreement_table
       INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
-      INNER JOIN user_table ON user_id = team_member_user_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
       WHERE memo_agreement_memo_id = '${memo_id}'
     `);
@@ -7758,12 +7760,12 @@ RETURNS JSON AS $$
             )
           ) AS memo_signer_list
         FROM memo_table
-        INNER JOIN user_table ON user_table.user_id = memo_table.memo_author_user_id
+        INNER JOIN user_schema.user_table ON user_table.user_id = memo_table.memo_author_user_id
         INNER JOIN memo_date_updated_table ON memo_date_updated_memo_id = memo_table.memo_id
         INNER JOIN memo_status_table ON memo_status_memo_id = memo_table.memo_id
         LEFT JOIN memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
         LEFT JOIN team_member_table ON team_member_table.team_member_id = memo_signer_table.memo_signer_team_member_id
-        LEFT JOIN user_table AS team_member_user_table ON team_member_user_table.user_id = team_member_table.team_member_user_id
+        LEFT JOIN user_schema.user_table AS team_member_user_table ON team_member_user_table.user_id = team_member_table.team_member_user_id
         LEFT JOIN memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_table.memo_id
         WHERE 
           memo_team_id = '${teamId}'
@@ -7849,7 +7851,7 @@ RETURNS JSON AS $$
     const currentUser = plv8.execute(`
       SELECT *
       FROM team_member_table
-      INNER JOIN user_table ON user_id = team_member_user_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE team_member_user_id = '${current_user_id}'
       LIMIT 1
     `)[0];
@@ -7893,7 +7895,7 @@ RETURNS JSON AS $$
         json_agg(sht.*) as signature_list
       FROM memo_signer_table mst
       INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
-      INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id
+      INNER JOIN user_schema.user_table ut ON ut.user_id = tm.team_member_user_id
       LEFT JOIN history_schema.signature_history_table sht ON sht.signature_history_user_id = ut.user_id
       WHERE mst.memo_signer_memo_id = '${memo_id}'
       GROUP BY mst.memo_signer_id, tm.team_member_id, ut.user_id;
@@ -8072,7 +8074,7 @@ RETURNS VOID AS $$
         userDataUpdate.push(`${key} = '${userData[key]}'`)
       }
     }
-    plv8.execute(`UPDATE user_table SET ${userDataUpdate.join(", ")} WHERE user_id = '${userData.user_id}'`);
+    plv8.execute(`UPDATE user_schema.user_table SET ${userDataUpdate.join(", ")} WHERE user_id = '${userData.user_id}'`);
 
     if(previousUsername){
       plv8.execute(`INSERT INTO history_schema.user_name_history_table (user_name_history_value, user_name_history_user_id) VALUES ('${previousUsername}', '${userData.user_id}')`);
@@ -8254,7 +8256,7 @@ RETURNS JSON AS $$
               FROM item_category_table
               INNER JOIN signer_table ON signer_id = item_category_signer_id
               INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-              INNER JOIN user_table ON user_id = team_member_user_id
+              INNER JOIN user_schema. ON user_id = team_member_user_id
               WHERE item_category_id = '${item.item_category_id}'
             `
           );
@@ -8569,7 +8571,7 @@ RETURNS JSON AS $$
           'user_email', usert.user_email 
         ) AS team_member_user  
         FROM team_member_table tmt 
-        JOIN user_table usert ON tmt.team_member_user_id = usert.user_id 
+        JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_team_id='${teamId}' 
           AND tmt.team_member_is_disabled=false 
@@ -9052,7 +9054,7 @@ RETURNS JSON as $$
           team_project_name
         FROM request_view
         INNER JOIN team_member_table ON team_member_id = request_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_table ON form_id = request_form_id
         LEFT JOIN team_project_table ON team_project_id = request_project_id
         WHERE 
@@ -9166,7 +9168,7 @@ RETURNS JSON as $$
         FROM request_signer_table
         INNER JOIN signer_table ON signer_id = request_signer_signer_id
         INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${requestData.request_id}'
       `
@@ -9297,7 +9299,7 @@ plv8.subtransaction(function() {
               const teamMemberList = plv8.execute(`
                 SELECT user_id, user_first_name, user_last_name 
                 FROM team_member_table 
-                INNER JOIN user_table ON user_id = team_member_user_id 
+                INNER JOIN user_schema.user_table ON user_id = team_member_user_id 
                 WHERE team_member_team_id = '${teamId}' 
                 ORDER BY user_last_name
               `);
@@ -9417,7 +9419,7 @@ RETURNS JSON AS $$
           user_avatar
         FROM comment_table 
         INNER JOIN team_member_table ON team_member_id = comment_team_member_id
-        INNER JOIN user_table ON user_id = team_member_user_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           comment_request_id = '${request_id}'
         ORDER BY comment_date_created DESC
@@ -9548,7 +9550,7 @@ RETURNS JSON as $$
           INNER JOIN item_category_table AS ict ON it.item_category_id = ict.item_category_id
           INNER JOIN signer_table ON signer_id = item_category_signer_id
           INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-          INNER JOIN user_table ON user_id = team_member_user_id
+          INNER JOIN user_schema. ON user_id = team_member_user_id
           WHERE
             it.item_general_name = '${section.itemName}'
             AND it.item_is_disabled = false
@@ -10310,7 +10312,7 @@ plv8.subtransaction(function() {
         user_job_title,
         user_avatar
       FROM team_member_table
-      INNER JOIN user_table ON user_id = team_member_user_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE 
         team_member_team_id = '${teamId}'
     `
@@ -10342,6 +10344,1606 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_signer_with_profile(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    formId,
+    projectId
+  } = input_data;
+
+  const signerList = plv8.execute(
+    `
+      SELECT 
+        signer_table.*,
+        team_member_table.*,
+        user_table.*
+      FROM signer_table
+      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE 
+        signer_form_id = '${formId}'
+        AND signer_team_project_id ${projectId.length ? `= '${projectId}'` : `IS NULL`}
+    `
+  );
+
+  returnData = signerList.map(signer => {
+    return {
+      signer_action: signer.signer_action,
+      signer_form_id: signer.signer_form_id,
+      signer_id: signer.signer_id,
+      signer_is_disabled: signer.signer_is_disabled,
+      signer_is_primary_signer: signer.signer_is_primary_signer,
+      signer_order: signer.signer_order,
+      signer_team_member_id: signer.signer_team_member_id,
+      signer_team_project_id: signer.signer_team_project_id,
+      signer_team_member: {
+        team_member_date_created: signer.team_member_date_created,
+        team_member_id: signer.team_member_id,
+        team_member_is_disabled: signer.team_member_is_disabled,
+        team_member_role: signer.team_member_role,
+        team_member_team_id: signer.team_member_team_id,
+        team_member_user_id: signer.team_member_user_id,
+        team_member_user: {
+          user_active_app: signer.user_active_app,
+          user_active_team_id: signer.user_active_team_id,
+          user_avatar: signer.user_avatar,
+          user_date_created: signer.user_date_created,
+          user_email: signer.user_email,
+          user_first_name: signer.user_first_name,
+          user_id: signer.user_id,
+          user_is_disabled: signer.user_is_disabled,
+          user_job_title: signer.user_job_title,
+          user_last_name: signer.user_last_name,
+          user_phone_number: signer.user_phone_number,
+          user_signature_attachment_id: signer.user_signature_attachment_id,
+          user_username: signer.user_username
+        }
+      }
+    }
+  })
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_user_with_signature(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    userId
+  } = input_data;
+
+  const userData = plv8.execute(
+    `
+      SELECT 
+        user_table.*,
+        attachment_table.*,
+        user_employee_number,
+        user_employee_number_is_disabled
+      FROM user_schema.user_table
+      INNER JOIN attachment_table ON attachment_id = user_signature_attachment_id
+      INNER JOIN user_employee_number_table ON user_employee_number_user_id = user_id
+      WHERE 
+        user_id = '${userId}'
+        AND user_employee_number_is_disabled = false
+    `
+  )[0];
+
+  const userEmployeeNumberData = plv8.execute(
+    `
+      SELECT 
+        user_employee_number
+      FROM user_employee_number_table
+      WHERE 
+        user_employee_number_user_id = '${userData.user_id}'
+        AND user_employee_number_is_disabled = false
+    `
+  );
+
+  returnData = {
+    user_active_app: userData.user_active_app,
+    user_active_team_id: userData.user_active_team_id,
+    user_avatar: userData.user_avatar,
+    user_date_created: userData.user_date_created,
+    user_email: userData.user_email,
+    user_first_name: userData.user_first_name,
+    user_id: userData.user_id,
+    user_is_disabled: userData.user_is_disabled,
+    user_job_title: userData.user_job_title,
+    user_last_name: userData.user_last_name,
+    user_phone_number: userData.user_phone_number,
+    user_signature_attachment_id: userData.user_signature_attachment_id,
+    user_username: userData.user_username,
+    user_signature_attachment: {
+      attachment_bucket: userData.attachment_bucket,
+      attachment_date_created: userData.attachment_date_created,
+      attachment_id: userData.attachment_id,
+      attachment_is_disabled: userData.attachment_is_disabled,
+      attachment_name: userData.attachment_name,
+      attachment_value: userData.attachment_value
+    },
+    user_employee_number: userEmployeeNumberData.length ? userEmployeeNumberData[0].user_employee_number : null
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_user_with_signature(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    userId
+  } = input_data;
+
+  const userData = plv8.execute(
+    `
+      SELECT 
+        user_table.*,
+        attachment_table.*,
+        user_employee_number,
+        user_employee_number_is_disabled
+      FROM user_schema.user_table
+      INNER JOIN attachment_table ON attachment_id = user_signature_attachment_id
+      INNER JOIN user_employee_number_table ON user_employee_number_user_id = user_id
+      WHERE 
+        user_id = '${userId}'
+        AND user_employee_number_is_disabled = false
+    `
+  )[0];
+
+  const userEmployeeNumberData = plv8.execute(
+    `
+      SELECT 
+        user_employee_number
+      FROM user_employee_number_table
+      WHERE 
+        user_employee_number_user_id = '${userData.user_id}'
+        AND user_employee_number_is_disabled = false
+    `
+  );
+
+  returnData = {
+    user_active_app: userData.user_active_app,
+    user_active_team_id: userData.user_active_team_id,
+    user_avatar: userData.user_avatar,
+    user_date_created: userData.user_date_created,
+    user_email: userData.user_email,
+    user_first_name: userData.user_first_name,
+    user_id: userData.user_id,
+    user_is_disabled: userData.user_is_disabled,
+    user_job_title: userData.user_job_title,
+    user_last_name: userData.user_last_name,
+    user_phone_number: userData.user_phone_number,
+    user_signature_attachment_id: userData.user_signature_attachment_id,
+    user_username: userData.user_username,
+    user_signature_attachment: {
+      attachment_bucket: userData.attachment_bucket,
+      attachment_date_created: userData.attachment_date_created,
+      attachment_id: userData.attachment_id,
+      attachment_is_disabled: userData.attachment_is_disabled,
+      attachment_name: userData.attachment_name,
+      attachment_value: userData.attachment_value
+    },
+    user_employee_number: userEmployeeNumberData.length ? userEmployeeNumberData[0].user_employee_number : null
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_user_current_signature(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    userId
+  } = input_data;
+
+  const userData = plv8.execute(
+    `
+      SELECT 
+        attachment_value,
+        attachment_bucket
+      FROM user_schema.user_table
+      INNER JOIN attachment_table ON attachment_id = user_signature_attachment_id
+      WHERE 
+        user_id = '${userId}'
+    `
+  )[0];
+
+  returnData = {
+    user_signature_attachment: {
+      attachment_value: userData.attachment_value,
+      attachment_bucket: userData.attachment_bucket
+    }
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_form_list_with_filter(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    app,
+    page,
+    limit,
+    creator,
+    status,
+    sort,
+    search
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let creatorCondition = "";
+  if (creator) {
+    creatorCondition = creator.map((value) => {
+      creatorCondition += `AND form_team_member_id = '${value}'`;
+    }).join(" ");
+  }
+
+  let statusCondition = "";
+  if (status) {
+    statusCondition = `AND form_is_hidden = ${status === "hidden"}`
+  }
+
+  let searchCondition = "";
+  if (search) {
+    searchCondition = `AND form_name ILIKE '%${search}%'`
+  }
+
+  const formData = plv8.execute(
+    `
+      SELECT
+        form_table.*,
+        team_member_table.*,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar
+      FROM form_table
+      INNER JOIN team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND form_is_disabled = false
+        AND form_app = '${app}'
+        ${creatorCondition}
+        ${statusCondition}
+        ${searchCondition}
+      ORDER BY 
+        form_is_formsly_form DESC,
+        form_date_created ${sort === "ascending" ? "ASC" : "DESC"}
+      LIMIT ${limit}
+      OFFSET ${start}
+    `
+  );
+
+  const formCount = plv8.execute(
+    `
+      SELECT
+        COUNT(form_id)
+      FROM form_table
+      INNER JOIN team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND form_is_disabled = false
+        AND form_app = '${app}'
+        ${creatorCondition}
+        ${statusCondition}
+        ${searchCondition}
+    `
+  )[0].count;
+
+  const formList = formData.map(form => {
+    return {
+      form_id: form.form_id,
+      form_name: form.form_name,
+      form_description: form.form_description,
+      form_date_created: form.form_date_created,
+      form_is_disabled: form.form_is_disabled,
+      form_is_hidden: form.form_is_hidden,
+      form_is_signature_required: form.form_is_signature_required,
+      form_is_formsly_form: form.form_is_formsly_form,
+      form_app: form.form_app,
+      form_is_for_every_member: form.form_is_for_every_member,
+      form_type: form.form_type,
+      form_sub_type: form.form_sub_type,
+      form_team_member: {
+        team_member_id: form.team_member_id,
+        team_member_role: form.team_member_role,
+        team_member_date_created: form.team_member_date_created, 
+        team_member_is_disabled: form.team_member_is_disabled,
+        team_member_user_id: form.team_member_user_id,
+        team_member_team_id: form.team_member_team_id,
+        team_member_user: {
+          user_id: form.user_id,
+          user_first_name: form.user_first_name,
+          user_last_name: form.user_last_name,
+          user_avatar: form.user_avatar
+        }
+      }
+    }
+  });
+
+  returnData = {
+    data: formList,
+    count: Number(formCount)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_form(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    formId
+  } = input_data;
+
+  const formData = plv8.execute(
+    `
+      SELECT
+        form_table.*,
+        team_member_id,
+        user_schema.user_table.*
+      FROM form_table
+      INNER JOIN team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        form_id = '${formId}'
+    `
+  )[0];
+
+  const formTeamGroupData = plv8.execute(
+    `
+      SELECT
+        ftgt.team_group_id,
+        team_group_name,
+        team_group_is_disabled
+      FROM form_team_group_table AS ftgt
+      INNER JOIN team_group_table AS tgt ON tgt.team_group_id = ftgt.team_group_id
+      WHERE
+        form_id = '${formId}'
+        AND team_group_is_disabled = false
+    `
+  );
+
+  const formSignerData = plv8.execute(
+    `
+      SELECT
+        signer_id,
+        signer_is_primary_signer,
+        signer_action,
+        signer_order,
+        signer_is_disabled,
+        signer_team_project_id,
+        team_member_id,
+        user_table.*
+      FROM signer_table
+      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        signer_form_id = '${formId}'
+        AND signer_is_disabled = false
+        AND signer_team_project_id IS NULL
+    `
+  );
+
+  returnData = {
+    form_app: formData.form_app,
+    form_date_created: formData.form_date_created,
+    form_description: formData.form_description,
+    form_id: formData.form_id,
+    form_is_disabled: formData.form_is_disabled,
+    form_is_for_every_member: formData.form_is_for_every_member,
+    form_is_formsly_form: formData.form_is_formsly_form,
+    form_is_hidden: formData.form_is_hidden,
+    form_is_signature_required: formData.form_is_signature_required,
+    form_name: formData.form_name,
+    form_sub_type: formData.form_sub_type,
+    form_team_member_id: formData.form_team_member_id,
+    form_type: formData.form_type,
+    form_team_member: {
+      team_member_id: formData.team_member_id,
+      team_member_user: {
+        user_id: formData.user_id,
+        user_first_name: formData.user_first_name,
+        user_last_name: formData.user_last_name,
+        user_avatar: formData.user_avatar,
+        user_username: formData.user_username
+      }
+    },
+    form_team_group: formTeamGroupData.map(teamGroup => {
+      return {
+        team_group_id: teamGroup.team_group_id,
+        team_group_name: teamGroup.team_group_name,
+        team_group_is_disabled: teamGroup.team_group_is_disabled
+      }
+    }),
+    form_signer: formSignerData.map(formSigner => {
+      return {
+        signer_team_member: {
+          team_member_id: formSigner.team_member_id,
+          team_member_user: {
+            user_id: formSigner.user_id,
+            user_first_name: formSigner.user_first_name,
+            user_last_name: formSigner.user_last_name,
+            user_avatar: formSigner.user_avatar,
+            user_username: formSigner.user_username
+          }
+        }
+      }
+    })
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_item(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    itemName
+  } = input_data;
+
+  const itemData = plv8.execute(
+    `
+      SELECT 
+        it.*,
+        signer_table.*,
+        team_member_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar
+      FROM item_table AS it
+      LEFT JOIN item_category_table AS ict ON ict.item_category_id = it.item_category_id
+        AND item_category_is_disabled = false 
+      LEFT JOIN signer_table ON signer_id = ict.item_category_signer_id
+      LEFT JOIN team_member_table ON team_member_id = signer_team_member_id
+      LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        it.item_team_id = '${teamId}'
+        AND it.item_general_name = '${itemName}'
+        AND it.item_is_disabled = false
+        AND it.item_is_available = true
+    `
+  )[0];
+
+  const itemDescriptionData = plv8.execute(
+    `
+      SELECT 
+        item_description_table.*,
+        field_table.*
+      FROM item_description_table
+      INNER JOIN field_table ON field_id = item_description_field_id
+      WHERE
+        item_description_item_id = '${itemData.item_id}'
+        AND item_description_is_disabled = false
+        AND item_description_is_available = true
+    `
+  );
+
+  const formattedItemDescription = itemDescriptionData.map(itemDescription => {
+    const itemDescriptionFieldData = plv8.execute(
+      `
+        SELECT *
+        FROM item_description_field_table
+        WHERE
+          item_description_field_item_description_id = '${itemDescription.item_description_id}'
+          AND item_description_field_is_disabled = false
+          AND item_description_field_is_available = true
+      `
+    );
+    
+    const itemDescriptionFieldWithUom = itemDescriptionFieldData.map(itemDescriptionField => {
+      const itemDescriptionFieldUomData = plv8.execute(
+        `
+          SELECT *
+          FROM item_description_field_uom_table
+          WHERE
+            item_description_field_uom_item_description_field_id = '${itemDescriptionField.item_description_field_id}'
+          LIMIT 1
+        `
+      );
+
+      return {
+        ...itemDescriptionField,
+        item_description_field_uom: {
+          item_description_field_uom: itemDescriptionFieldUomData.length ? itemDescriptionFieldUomData[0].item_description_field_uom : null
+        }
+      }
+    })
+
+    return {
+      item_description_date_created: itemDescription.item_description_date_created,
+      item_description_field_id: itemDescription.item_description_field_id,
+      item_description_id: itemDescription.item_description_id,
+      item_description_is_available: itemDescription.item_description_is_available,
+      item_description_is_disabled: itemDescription.item_description_is_disabled,
+      item_description_is_with_uom: itemDescription.item_description_is_with_uom,
+      item_description_item_id: itemDescription.item_description_item_id,
+      item_description_label: itemDescription.item_description_label,
+      item_description_order: itemDescription.item_description_order,
+      item_description_field: itemDescriptionFieldWithUom.map(itemDescriptionField => {
+        return {
+          item_description_field_date_created: itemDescriptionField.item_description_field_date_created,
+          item_description_field_id: itemDescriptionField.item_description_field_id,
+          item_description_field_is_available: itemDescriptionField.item_description_field_is_available,
+          item_description_field_is_disabled: itemDescriptionField.item_description_field_is_disabled,
+          item_description_field_item_description_id: itemDescriptionField.item_description_field_item_description_id,
+          item_description_field_value: itemDescriptionField.item_description_field_value,
+          item_description_field_uom: itemDescriptionField.item_description_field_uom
+        }
+      }),
+      item_field: {
+        field_id: itemDescription.field_id,
+        field_is_positive_metric: itemDescription.field_is_positive_metric,
+        field_is_read_only: itemDescription.field_is_read_only,
+        field_is_required: itemDescription.field_is_required,
+        field_name: itemDescription.field_name,
+        field_order: itemDescription.field_order,
+        field_section_id: itemDescription.field_section_id,
+        field_special_field_template_id: itemDescription.field_special_field_template_id,
+        field_type: itemDescription.field_type
+      }
+    }
+  });
+  
+  returnData = {
+    item_category_id: itemData.item_category_id,
+    item_date_created: itemData.item_date_created,
+    item_general_name: itemData.item_general_name,
+    item_gl_account: itemData.item_gl_account,
+    item_id: itemData.item_id,
+    item_is_available: itemData.item_is_available,
+    item_is_disabled: itemData.item_is_disabled,
+    item_is_it_asset_item: itemData.item_is_it_asset_item,
+    item_is_ped_item: itemData.item_is_ped_item,
+    item_team_id: itemData.item_team_id,
+    item_unit: itemData.item_unit,
+    item_description: formattedItemDescription,
+    item_category: itemData.item_category_id ? {
+      item_category_signer: {
+        signer_id: itemData.signer_id,
+        signer_is_primary_signer: itemData.signer_is_primary_signer,
+        signer_action: itemData.signer_action,
+        signer_order: itemData.signer_order,
+      },
+      signer_team_member: {
+        team_member_id: itemData.team_member_id,
+        team_member_user: {
+          user_id: itemData.user_id,
+          user_first_name: itemData.user_first_name,
+          user_last_name: itemData.user_last_name,
+          user_avatar: itemData.user_avatar
+        }
+      }
+    } : null
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_member_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    search
+  } = input_data;
+
+  let searchCondition = '';
+  if(search){
+    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`
+  }
+
+  const teamMemberData = plv8.execute(
+    `
+      SELECT
+        team_member_id,
+        team_member_role,
+        team_member_date_created,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_email
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND team_member_is_disabled = false
+        AND user_is_disabled = false
+    `
+  );
+
+  returnData = teamMemberData.map(teamMember => {
+    return {
+      team_member_id: teamMember.team_member_id,
+      team_member_role: teamMember.team_member_role,
+      team_member_date_created: teamMember.team_member_date_created,
+      team_member_user: {
+        user_id: teamMember.user_id,
+        user_first_name: teamMember.user_first_name,
+        user_last_name: teamMember.user_last_name,
+        user_avatar: teamMember.user_avatar,
+        user_email: teamMember.user_email,
+        user_employee_number: teamMember.user_employee_number
+      }
+    }
+  })
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_group_member_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    groupId,
+    search,
+    page,
+    limit
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let searchCondition = "";
+  if(search){
+    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
+  }
+  
+  const teamGroupMemberData = plv8.execute(
+    `
+      SELECT
+        team_group_member_id,
+        tmt.team_member_id,
+        tmt.team_member_date_created,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_email
+      FROM team_group_member_table AS tgmt
+      INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
+      INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
+      WHERE
+        tgmt.team_group_id = '${groupId}'
+        AND team_member_is_disabled = false
+        ${searchCondition}
+      ORDER BY
+        user_first_name ASC,
+        user_last_name ASC
+      LIMIT ${limit} OFFSET ${start}
+    `
+  );
+
+  const count = plv8.execute(
+    `
+      SELECT
+        COUNT(team_group_member_id)
+      FROM team_group_member_table AS tgmt
+      INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
+      INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
+      WHERE
+        tgmt.team_group_id = '${groupId}'
+        AND team_member_is_disabled = false
+        ${searchCondition}
+    `
+  )[0].count;
+
+  const data = teamGroupMemberData.map(teamGroupMember => {
+    const teamProjectMemberData = plv8.execute(
+      `
+        SELECT
+          team_project_name
+        FROM team_project_member_table AS tpmt
+        INNER JOIN team_project_table AS tpt ON tpt.team_project_id = tpmt.team_project_id
+        WHERE
+          team_project_is_disabled = false
+          AND team_member_id = '${teamGroupMember.team_member_id}'
+      `
+    );
+
+    return {
+      team_group_member_id: teamGroupMember.team_group_member_id,
+      team_member: {
+        team_member_id: teamGroupMember.team_member_id,
+        team_member_date_created: teamGroupMember.team_member_date_created,
+        team_member_user: {
+          user_id: teamGroupMember.user_id,
+          user_first_name: teamGroupMember.user_first_name,
+          user_last_name: teamGroupMember.user_last_name,
+          user_avatar: teamGroupMember.user_avatar,
+          user_email: teamGroupMember.user_email,
+        },
+        team_member_project_list: teamProjectMemberData.map(teamProjectMember => teamProjectMember.team_project_name)
+      }
+    }
+  });
+
+  returnData = {
+    data,
+    count: Number(count)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_project_member_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    projectId,
+    search,
+    page,
+    limit
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let searchCondition = "";
+  if(search){
+    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
+  }
+  
+  const teamProjectMemberData = plv8.execute(
+    `
+      SELECT
+        team_project_member_id,
+        tmt.team_member_id,
+        tmt.team_member_date_created,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_email
+      FROM team_project_member_table AS tpmt
+      INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tpmt.team_member_id
+      INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
+      WHERE
+        tpmt.team_project_id = '${projectId}'
+        AND team_member_is_disabled = false
+        ${searchCondition}
+      ORDER BY
+        user_first_name ASC,
+        user_last_name ASC
+      LIMIT ${limit} OFFSET ${start}
+    `
+  );
+
+  const count = plv8.execute(
+    `
+      SELECT
+        COUNT(team_project_member_id)
+      FROM team_project_member_table AS tpmt
+      INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tpmt.team_member_id
+      INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
+      WHERE
+        tpmt.team_project_id = '${projectId}'
+        AND team_member_is_disabled = false
+        ${searchCondition}
+    `
+  )[0].count;
+
+  const data = teamProjectMemberData.map(teamProjectMember => {
+    const teamGroupMemberData = plv8.execute(
+      `
+        SELECT
+          team_group_name
+        FROM team_group_member_table AS tgmt
+        INNER JOIN team_group_table AS tpt ON tpt.team_group_id = tgmt.team_group_id
+        WHERE
+          team_group_is_disabled = false
+          AND team_member_id = '${teamProjectMember.team_member_id}'
+      `
+    );
+
+    return {
+      team_group_member_id: teamProjectMember.team_group_member_id,
+      team_member: {
+        team_member_id: teamProjectMember.team_member_id,
+        team_member_date_created: teamProjectMember.team_member_date_created,
+        team_member_user: {
+          user_id: teamProjectMember.user_id,
+          user_first_name: teamProjectMember.user_first_name,
+          user_last_name: teamProjectMember.user_last_name,
+          user_avatar: teamProjectMember.user_avatar,
+          user_email: teamProjectMember.user_email,
+        },
+        team_member_group_list: teamGroupMemberData.map(teamGroupMember => teamGroupMember.team_group_name)
+      }
+    }
+  });
+
+  returnData = {
+    data,
+    count: Number(count)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_project_signer_with_team_member(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    projectId,
+    formId
+  } = input_data;
+
+  const signerData = plv8.execute(
+    `
+      SELECT
+        signer_id,
+        signer_is_primary_signer,
+        signer_action,
+        signer_order,
+        signer_is_disabled,
+        signer_team_project_id,
+        team_member_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar
+      FROM signer_table
+      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        signer_team_project_id = '${projectId}'
+        AND signer_form_id = '${formId}'
+        AND signer_is_disabled = false
+    `
+  );
+
+  returnData = signerData.map(signer => {
+    return {
+      signer_id: signer.signer_id,
+      signer_is_primary_signer: signer.signer_is_primary_signer,
+      signer_action: signer.signer_action,
+      signer_order: signer.signer_order,
+      signer_is_disabled: signer.signer_is_disabled,
+      signer_team_project_id: signer.signer_team_project_id,
+      signer_team_member: {
+        team_member_id: signer.team_member_id,
+        team_member_user: {
+          user_id: signer.user_id,
+          user_first_name: signer.user_first_name,
+          user_last_name: signer.user_last_name,
+          user_avatar: signer.user_avatar,
+        }
+      }
+    }
+  })
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_multiple_project_signer_with_team_member(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    projectName,
+    formId
+  } = input_data;
+
+  const projectNameCondition = projectName.map(project => `'${project}'`).join(", ")
+
+  const signerData = plv8.execute(
+    `
+      SELECT
+        signer_id,
+        signer_is_primary_signer,
+        signer_action,
+        signer_order,
+        signer_is_disabled,
+        team_project_name,
+        team_member_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar
+      FROM signer_table
+      INNER JOIN team_project_table ON team_project_id = signer_team_project_id
+      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_project_name IN (${projectNameCondition})
+        AND signer_form_id = '${formId}'
+        AND signer_is_disabled = false
+    `
+  );
+
+  returnData = signerData.map(signer => {
+    return {
+      signer_id: signer.signer_id,
+      signer_is_primary_signer: signer.signer_is_primary_signer,
+      signer_action: signer.signer_action,
+      signer_order: signer.signer_order,
+      signer_is_disabled: signer.signer_is_disabled,
+      signer_team_project: {
+        team_project_name: signer.team_project_name
+      },
+      signer_team_member: {
+        team_member_id: signer.team_member_id,
+        team_member_user: {
+          user_id: signer.user_id,
+          user_first_name: signer.user_first_name,
+          user_last_name: signer.user_last_name,
+          user_avatar: signer.user_avatar,
+        }
+      }
+    }
+  })
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_approver_list_with_filter(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    search,
+    page,
+    limit
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let searchCondition = "";
+  if(search){
+    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
+  }
+
+  const teamMemberData = plv8.execute(
+    `
+      SELECT 
+        team_member_id,
+        team_member_date_created,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_email
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_role = 'APPROVER'
+        AND team_member_team_id = '${teamId}'
+        AND team_member_is_disabled = false
+        ${searchCondition}
+      ORDER BY
+        user_first_name ASC,
+        user_last_name ASC
+      LIMIT ${limit} OFFSET ${start}
+    `
+  );
+
+  const teamMemberCount = plv8.execute(
+    `
+      SELECT 
+        COUNT(team_member_id)
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_role = 'APPROVER'
+        AND team_member_team_id = '${teamId}'
+        AND team_member_is_disabled = false
+        ${searchCondition}
+    `
+  )[0].count;
+
+  returnData = {
+    data: teamMemberData,
+    count: Number(teamMemberCount)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_admin_list_with_filter(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    search,
+    page,
+    limit
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let searchCondition = "";
+  if(search){
+    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
+  }
+
+  const teamMemberData = plv8.execute(
+    `
+      SELECT 
+        team_member_id,
+        team_member_date_created,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_email
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_role = 'ADMIN'
+        AND team_member_team_id = '${teamId}'
+        AND team_member_is_disabled = false
+        ${searchCondition}
+      ORDER BY
+        user_first_name ASC,
+        user_last_name ASC
+      LIMIT ${limit} OFFSET ${start}
+    `
+  );
+
+  const teamMemberCount = plv8.execute(
+    `
+      SELECT 
+        COUNT(team_member_id)
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_role = 'ADMIN'
+        AND team_member_team_id = '${teamId}'
+        AND team_member_is_disabled = false
+        ${searchCondition}
+    `
+  )[0].count;
+
+  returnData = {
+    data: teamMemberData,
+    count: Number(teamMemberCount)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_members_with_member_role(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    teamId
+  } = input_data;
+
+  const teamMemberData = plv8.execute(
+    `
+      SELECT
+        team_member_id,
+        team_member_date_created,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar,
+        user_email
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND team_member_is_disabled = false
+        AND team_member_role = 'MEMBER'
+    `
+  );
+
+  returnData = teamMemberData.map(teamMember => {
+    return {
+      team_member_id: teamMember.team_member_id,
+      team_member_date_created: teamMember.team_member_date_created,
+      team_member_user: {
+        user_id: teamMember.user_id,
+        user_first_name: teamMember.user_first_name,
+        user_last_name: teamMember.user_last_name,
+        user_avatar: teamMember.user_avatar,
+        user_email: teamMember.user_email,
+      }
+    }
+  })
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_member_user_data(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    teamMemberId
+  } = input_data;
+
+  returnData = plv8.execute(
+    `
+      SELECT
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_username,
+        user_avatar
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_id = '${teamMemberId}'
+      LIMIT 1
+    `
+  );
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_member_user(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    teamMemberId
+  } = input_data;
+
+  const teamMemberData = plv8.execute(
+    `
+      SELECT
+        team_member_table.*,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_username,
+        user_avatar
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_id = '${teamMemberId}'
+      LIMIT 1
+    `
+  );
+
+  if(!teamMemberData.length) {
+    returnData = null
+  } else {
+    returnData = {
+      team_member_date_created: teamMemberData[0].team_member_date_created,
+      team_member_id: teamMemberData[0].team_member_id,
+      team_member_is_disabled: teamMemberData[0].team_member_is_disabled,
+      team_member_role: teamMemberData[0].team_member_role,
+      team_member_team_id: teamMemberData[0].team_member_team_id,
+      team_member_user_id: teamMemberData[0].team_member_user_id,
+      team_member_user: {
+        user_id: teamMemberData[0].user_id,
+        user_first_name: teamMemberData[0].user_first_name,
+        user_last_name: teamMemberData[0].user_last_name,
+        user_username: teamMemberData[0].user_username,
+        user_avatar: teamMemberData[0].user_avatar,
+      }
+    }
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_item_category_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    formId,
+    limit,
+    page,
+    search
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let searchCondition = "";
+  if(search){
+    searchCondition = `AND item_category ILIKE '%${search}%'`;
+  }
+
+  const itemCategoryData = plv8.execute(
+    `
+      SELECT
+        item_category_table.*,
+        signer_id,
+        signer_form_id,
+        team_member_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar
+      FROM item_category_table
+      INNER JOIN signer_table ON signer_id = item_category_signer_id
+      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        item_category_is_disabled = false
+        AND signer_form_id = '${formId}'
+        ${searchCondition}
+      ORDER BY item_category ASC
+      LIMIT ${limit} OFFSET ${start}
+    `
+  );
+
+  const itemCategoryCount = plv8.execute(
+    `
+      SELECT
+        COUNT(item_category_id)
+      FROM item_category_table
+      INNER JOIN signer_table ON signer_id = item_category_signer_id
+      WHERE
+        item_category_is_disabled = false
+        AND signer_form_id = '${formId}'
+        ${searchCondition}
+    `
+  )[0].count;
+
+  returnData = {
+    data: itemCategoryData.map(itemCategory => {
+      return {
+        item_category: itemCategory.item_category,
+        item_category_date_created: itemCategory.item_category_date_created,
+        item_category_id: itemCategory.item_category_id,
+        item_category_is_available: itemCategory.item_category_is_available,
+        item_category_is_disabled: itemCategory.item_category_is_disabled,
+        item_category_signer_id: itemCategory.item_category_signer_id,
+        item_category_signer: {
+          signer_id: itemCategory.signer_id,
+          signer_team_member: {
+            team_member_id: itemCategory.team_member_id,
+            team_member_user: {
+              user_id: itemCategory.user_id,
+              user_first_name: itemCategory.user_first_name,
+              user_last_name: itemCategory.user_last_name,
+              user_avatar: itemCategory.user_avatar,
+            }
+          }
+        }
+      }
+    }),
+    count: Number(itemCategoryCount)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_admin_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    teamId
+  } = input_data;
+
+  const teamMemberData = plv8.execute(
+    `
+      SELECT
+        team_member_id,
+        team_member_role,
+        team_member_date_created,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_username,
+        user_avatar
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND team_member_role = 'ADMIN'
+      ORDER BY
+        user_first_name ASC,
+        user_last_name ASC
+    `
+  );
+
+  returnData = teamMemberData.map(teamMember => {
+    return {
+      team_member_id: teamMember.team_member_id,
+      team_member_role: teamMember.team_member_role,
+      team_member_date_created: teamMember.team_member_date_created,
+      team_member_user: {
+        user_id: teamMember.user_id,
+        user_first_name: teamMember.user_first_name,
+        user_last_name: teamMember.user_last_name,
+        user_avatar: teamMember.user_avatar,
+        user_email: teamMember.user_email,
+      }
+    }
+  });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_item_form_approver(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    teamId
+  } = input_data;
+
+  const teamMemberData = plv8.execute(
+    `
+      SELECT
+        team_member_id,
+        user_first_name,
+        user_last_name
+      FROM team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_role = 'APPROVER'
+        AND team_member_is_disabled = false
+        AND team_member_team_id = '${teamId}'
+        AND user_is_disabled = false
+      ORDER BY
+        user_first_name ASC,
+        user_last_name ASC
+    `
+  );
+
+  returnData = teamMemberData.map(teamMember => {
+    return {
+      value: teamMember.team_member_id,
+      label: `${teamMember.user_first_name} ${teamMember.user_last_name}`
+    }
+  });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION agree_to_memo(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    memoId,
+    teamMemberId
+  } = input_data;
+
+  const memoAgreementCount = plv8.execute(
+    `
+      SELECT
+        COUNT(memo_agreement_id)
+      FROM memo_agreement_table
+      WHERE
+        memo_agreement_by_team_member_id = '${teamMemberId}'
+        AND memo_agreement_memo_id = '${memoId}'
+    `
+  )[0].count;
+
+  if(count){
+    returnData =  null;
+    return;
+  }
+
+  const memoAgreementId = plv8.execute(
+    `
+      INSERT INTO memo_agreement_table 
+      (memo_agreement_by_team_member_id, memo_agreement_memo_id) 
+      VALUES
+      ('${teamMemberId}', '${memoId}')
+      RETURNING memo_agreement_id
+    `
+  )[0].memo_agreement_id;
+
+  const memoAgreementData = plv8.execute(
+    `
+      SELECT
+        memo_agreement_table.*,
+        user_id
+        user_avatar
+        user_first_name
+        user_last_name
+        user_employee_number
+      FROM memo_agreement_table
+      INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE 
+        memo_agreement_id = '${memoAgreementId}'
+    `
+  )[0];
+
+  const employeeNumberData = plv8.execute(
+    `
+      SELECT user_employee_number
+      FROM user_employee_number_table
+      WHERE 
+        user_employee_number_user_id = '${memoAgreementData.user_id}'
+      LIMIT 1
+    `
+  );
+
+  returnData = {
+    memo_agreement_by_team_member_id: memoAgreementData.memo_agreement_by_team_member_id,
+    memo_agreement_date_created: memoAgreementData.memo_agreement_date_created,
+    memo_agreement_id: memoAgreementData.memo_agreement_id,
+    memo_agreement_memo_id: memoAgreementData.memo_agreement_memo_id,
+    memo_agreement_by_team_member: {
+      user_data: {
+        user_avatar: memoAgreementData.user_avatar,
+        user_id: memoAgreementData.user_id,
+        user_first_name: memoAgreementData.user_first_name,
+        user_last_name: memoAgreementData.user_last_name,
+        user_employee_number: employeeNumberData
+      }
+    }
+  };
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION approve_or_reject_memo(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    memoSignerId,
+    memoId,
+    action,
+    isPrimarySigner,
+    memoSignerTeamMemberId
+  } = input_data;
+
+  const currentDate = plv8.execute(`SELECT get_current_date()`)[0].get_current_date.toISOString();
+
+  plv8.execute(
+    `
+      UPDATE memo_signer_table
+      SET
+        memo_signer_status = '${action}',
+        memo_signer_date_signed = '${currentDate}'
+      WHERE
+        memo_signer_id = '${memoSignerId}'
+    `
+  );
+
+  if(isPrimarySigner){
+    plv8.execute(
+      `
+        UPDATE memo_status_table
+        SET
+          memo_status = '${action}',
+          memo_status_date_updated = '${currentDate}'
+        WHERE
+          memo_status_memo_id = '${memoId}'
+      `
+    );
+  }
+
+  if (action.toLowerCase() === "approved") {
+    const memoAgreementCount = plv8.execute(
+      `
+        SELECT COUNT(memo_agreement_id)
+        FROM memo_agreement_table
+        WHERE
+          memo_agreement_by_team_member_id = '${memoSignerTeamMemberId}'
+          AND memo_agreement_memo_id = '${memoId}'
+      `
+    )[0].count;
+
+    if (memoAgreementCount === 0) {
+      const memoAgreementId = plv8.execute(
+        `
+          INSERT INTO memo_agreement_table 
+          (memo_agreement_by_team_member_id, memo_agreement_memo_id) 
+          VALUES
+          ('${memoSignerTeamMemberId}', '${memoId}')
+          RETURNING memo_agreement_id
+        `
+      )[0].memo_agreement_id;
+
+      const memoAgreementData = plv8.execute(
+        `
+          SELECT
+            memo_agreement_table.*,
+            user_id
+            user_avatar
+            user_first_name
+            user_last_name
+            user_employee_number
+          FROM memo_agreement_table
+          INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          WHERE 
+            memo_agreement_id = '${memoAgreementId}'
+        `
+      )[0];
+
+      const employeeNumberData = plv8.execute(
+        `
+          SELECT user_employee_number
+          FROM user_employee_number_table
+          WHERE 
+            user_employee_number_user_id = '${memoAgreementData.user_id}'
+          LIMIT 1
+        `
+      );
+
+      returnData = {
+        memo_agreement_by_team_member_id: memoAgreementData.memo_agreement_by_team_member_id,
+        memo_agreement_date_created: memoAgreementData.memo_agreement_date_created,
+        memo_agreement_id: memoAgreementData.memo_agreement_id,
+        memo_agreement_memo_id: memoAgreementData.memo_agreement_memo_id,
+        memo_agreement_by_team_member: {
+          user_data: {
+            user_avatar: memoAgreementData.user_avatar,
+            user_id: memoAgreementData.user_id,
+            user_first_name: memoAgreementData.user_first_name,
+            user_last_name: memoAgreementData.user_last_name,
+            user_employee_number: employeeNumberData
+          }
+        }
+      };
+    }
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES
@@ -10353,7 +11955,7 @@ ALTER TABLE invitation_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_schema.user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE field_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_table ENABLE ROW LEVEL SECURITY;
@@ -10514,10 +12116,10 @@ DROP POLICY IF EXISTS "Allow READ for authenticated users" ON team_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON team_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own teams" ON team_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON user_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.user_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON form_team_group_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_team_group_table;
@@ -11341,7 +12943,7 @@ TO authenticated
 USING (
   invitation_to_email = (
     SELECT user_email 
-    FROM public.user_table 
+    FROM user_schema.user_table 
     WHERE user_id = auth.uid()
   )
   OR EXISTS (
@@ -11377,7 +12979,7 @@ USING (
     AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR invitation_to_email = (
     SELECT user_email 
-    FROM user_table 
+    FROM user_schema.user_table 
     WHERE user_id = auth.uid()
   )
 )
@@ -11396,7 +12998,7 @@ WITH CHECK (
     AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR invitation_to_email = (
     SELECT user_email 
-    FROM user_table 
+    FROM user_schema.user_table 
     WHERE user_id = auth.uid()
   )
 );
@@ -11560,22 +13162,22 @@ TO authenticated
 USING (auth.uid() = team_user_id);
 
 -- USER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "user_schema"."user_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."user_table"
+CREATE POLICY "Allow READ for anon users" ON "user_schema"."user_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "public"."user_table"
+CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "user_schema"."user_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "public"."user_table"
+CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "user_schema"."user_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (auth.uid() = user_id);
@@ -11720,7 +13322,7 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -11734,7 +13336,7 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
   ) 
@@ -11747,7 +13349,7 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -11757,7 +13359,7 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -11771,7 +13373,7 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -11852,7 +13454,7 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -11870,7 +13472,7 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -11880,7 +13482,7 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -11894,7 +13496,7 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_member_table as tm
-    JOIN user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -12226,14 +13828,14 @@ TO authenticated
 USING (
   EXISTS (
     SELECT user_id
-    FROM user_table
+    FROM user_schema.user_table
     WHERE user_id = user_employee_number_user_id
   )
 )
 WITH CHECK (
   EXISTS (
     SELECT user_id
-    FROM user_table
+    FROM user_schema.user_table
     WHERE user_id = user_employee_number_user_id
   )
 );
@@ -12244,7 +13846,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT user_id
-    FROM user_table
+    FROM user_schema.user_table
     WHERE user_id = user_employee_number_user_id
   )
 );
@@ -13581,6 +15183,11 @@ GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO POSTGRES;
 GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA user_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA user_schema TO POSTGRES;
+GRANT ALL ON SCHEMA user_schema TO postgres;
+GRANT ALL ON SCHEMA user_schema TO public;
 
 GRANT ALL ON ALL TABLES IN SCHEMA history_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA history_schema TO POSTGRES;

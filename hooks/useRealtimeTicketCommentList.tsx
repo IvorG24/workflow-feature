@@ -1,7 +1,4 @@
-import {
-  getCommentAttachment,
-  getTicketMemberUserData,
-} from "@/backend/api/get";
+import { getCommentAttachment, getMemberUserData } from "@/backend/api/get";
 import { Database } from "@/utils/database";
 import { TicketType } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -58,7 +55,7 @@ const useRealtimeTicketCommentList = (
                 ...prev,
               ]);
             } else {
-              const ticket_comment_team_member = await getTicketMemberUserData(
+              const ticket_comment_team_member = await getMemberUserData(
                 supabaseClient,
                 { teamMemberId: comment.ticket_comment_team_member_id }
               );
