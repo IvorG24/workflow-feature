@@ -1337,6 +1337,8 @@ RETURNS JSON AS $$
         endId = `RFPC`;
       } else if(formName.includes('Request For Payment')) {
         endId = `RFP`;
+      } else if(formName.includes('Working Advance Voucher Balance')) {
+        endId = `WAVB`;
       } else {
         endId = ``;
       }
@@ -3214,7 +3216,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Working Advance Voucher Balance'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -5467,6 +5469,89 @@ RETURNS JSON as $$
               duplicatableSectionIdList
             }
           };
+        } else {
+          returnData = {
+            form
+          }
+        }
+      } else if (form.form_name === "Working Advance Voucher Balance") {
+        if (connectedRequestFormslyId) {
+          const splitFormslyId = connectedRequestFormslyId.split('-');
+          const connectedRequest = plv8.execute(`
+            SELECT 
+              request_id, 
+              request_form_id,
+              request_project_id 
+            FROM 
+              request_table 
+            WHERE 
+              request_formsly_id_prefix = '${splitFormslyId[0]}' 
+              AND request_formsly_id_serial = '${splitFormslyId[1]}' 
+            LIMIT 1;
+          `)[0];
+
+          if (!connectedRequest) {
+            throw new Error('Request id not found');
+          }
+
+          const connectedRequestSectionId = plv8.execute(`
+            SELECT 
+              section_id 
+            FROM 
+              section_table 
+            WHERE 
+              section_form_id = '${connectedRequest.request_form_id}' 
+          `)[0].section_id;
+
+          const signerList = plv8.execute(`
+            SELECT
+              signer_id,
+              signer_is_primary_signer,
+              signer_action,
+              signer_order,
+              team_member_id,
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            FROM signer_table
+            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_table ON user_id = team_member_user_id
+            WHERE
+              signer_is_disabled = false
+              AND signer_form_id = '${form.form_id}'
+              AND signer_team_project_id = '${connectedRequest.request_project_id}'
+            ORDER BY signer_order
+          `);
+
+          const formattedSignerList = signerList.map(signer => {
+            return {
+              signer_id: signer.signer_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer,
+              signer_action: signer.signer_action,
+              signer_order: signer.signer_order,
+              signer_team_member: {
+                team_member_id: signer.team_member_id,
+                team_member_user: {
+                  user_id: signer.user_id,
+                  user_first_name: signer.user_first_name,
+                  user_last_name: signer.user_last_name,
+                  user_avatar: signer.user_avatar,
+                }
+              }
+            }
+          })
+
+        returnData = {
+          form: {
+            ...form,
+            form_signer: formattedSignerList
+          },
+          connectedRequest: {
+            ...connectedRequest,
+            form_section: [connectedRequestSectionId]
+          }
+        };
         } else {
           returnData = {
             form

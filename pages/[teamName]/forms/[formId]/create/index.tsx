@@ -14,6 +14,7 @@ import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
 import CreateWorkingAdvanceRequestPage from "@/components/CreateWorkingAdvanceVoucheRequestPage/CreateWorkingAdvanceVoucheRequestPage";
+import CreateWorkingAdvanceVoucherBalancePage from "@/components/CreateWorkingAdvanceVoucherBalancePage/CreateWorkingAdvanceVoucherBalancePage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
@@ -26,7 +27,9 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
-      const connectedRequestFormslyId = context.query.lrf ?? context.query.rfp;
+      const connectedRequestFormslyId =
+        context.query.lrf ?? context.query.rfp ?? context.query.wav;
+
       const { data, error } = await supabaseClient.rpc(
         "create_request_page_on_load",
         {
@@ -39,6 +42,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         }
       );
+
       if (error) throw error;
 
       return {
@@ -183,6 +187,14 @@ const Page = ({
       case "Request For Payment Code":
         return (
           <CreateRequestForPaymentCodePage
+            form={form}
+            connectedRequest={connectedRequest}
+          />
+        );
+
+      case "Working Advance Voucher Balance":
+        return (
+          <CreateWorkingAdvanceVoucherBalancePage
             form={form}
             connectedRequest={connectedRequest}
           />

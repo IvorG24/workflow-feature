@@ -1,4 +1,5 @@
 import {
+  getEmployeeName,
   getNonDuplictableSectionResponse,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
@@ -74,6 +75,9 @@ const EditWorkingAdvanceVoucherRequestPage = ({
   );
 
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
@@ -88,8 +92,13 @@ const EditWorkingAdvanceVoucherRequestPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>({ mode: "onChange" });
-  const { handleSubmit, control, setValue, unregister } = requestFormMethods;
-  const { fields: formSections, replace: replaceSection } = useFieldArray({
+  const { handleSubmit, control, setValue, unregister, getValues, setFocus } =
+    requestFormMethods;
+  const {
+    fields: formSections,
+    replace: replaceSection,
+    update: updateSection,
+  } = useFieldArray({
     control,
     name: "sections",
   });
@@ -213,6 +222,99 @@ const EditWorkingAdvanceVoucherRequestPage = ({
     );
   };
 
+  const handleWorkingAdvanceVoucherBooleanChange = async (
+    value: boolean,
+    sectionIndex: number
+  ) => {
+    try {
+      const selectedSection = getValues(`sections.${sectionIndex}`);
+
+      if (value) {
+        updateSection(sectionIndex, {
+          ...selectedSection,
+          section_field: [
+            ...selectedSection.section_field,
+            form.form_section[0].section_field[9],
+          ],
+        });
+        setTimeout(
+          () =>
+            setFocus(`sections.${sectionIndex}.section_field.9.field_response`),
+          0
+        );
+      } else {
+        updateSection(sectionIndex, {
+          ...selectedSection,
+          section_field: selectedSection.section_field.filter(
+            (field) => field.field_name !== "Approved Official Business"
+          ),
+        });
+      }
+    } catch (error) {
+      setValue(
+        `sections.${sectionIndex}.section_field.8.field_response`,
+        false
+      );
+      console.log(error);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleEmployeeNumberChange = async (
+    value: string | null,
+    sectionIndex: number
+  ) => {
+    try {
+      if (value) {
+        setLoadingFieldList([{ sectionIndex, fieldIndex: 1 }]);
+
+        const employee = await getEmployeeName(supabaseClient, {
+          employeeId: value,
+        });
+
+        if (employee) {
+          setValue(
+            `sections.${sectionIndex}.section_field.4.field_response`,
+            `${employee.scic_employee_first_name} ${
+              employee.scic_employee_middle_name
+            } ${employee.scic_employee_last_name} ${
+              employee.scic_employee_suffix ?? ""
+            }`
+          );
+        } else {
+          setValue(
+            `sections.${sectionIndex}.section_field.3.field_response`,
+            ""
+          );
+          setValue(
+            `sections.${sectionIndex}.section_field.4.field_response`,
+            ""
+          );
+          notifications.show({
+            message: `There's no employee with HRIS ${value}`,
+            color: "orange",
+          });
+          return;
+        }
+      } else {
+        setValue(`sections.${sectionIndex}.section_field.3.field_response`, "");
+        setValue(`sections.${sectionIndex}.section_field.4.field_response`, "");
+      }
+    } catch (e) {
+      setValue(`sections.${sectionIndex}.section_field.3.field_response`, "");
+      setValue(`sections.${sectionIndex}.section_field.4.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
@@ -227,7 +329,8 @@ const EditWorkingAdvanceVoucherRequestPage = ({
               (field) => field.field_id
             ),
           });
-        const requestDetailsSectionFieldList =
+
+        let requestDetailsSectionFieldList =
           form.form_section[0].section_field.map((field) => {
             const response = requestDetailsSectionResponse.find(
               (response) =>
@@ -246,6 +349,16 @@ const EditWorkingAdvanceVoucherRequestPage = ({
               field_option,
             };
           });
+
+        const isForOfficialBusiness =
+          requestDetailsSectionFieldList[9].field_response;
+
+        if (!Boolean(isForOfficialBusiness)) {
+          requestDetailsSectionFieldList =
+            requestDetailsSectionFieldList.filter(
+              (field) => field.field_name !== "Approved Official Business"
+            );
+        }
 
         // fetch additional signer
         handleProjectNameChange(
@@ -293,9 +406,13 @@ const EditWorkingAdvanceVoucherRequestPage = ({
                     sectionIndex={idx}
                     workingAdvanceVoucherFormMethods={{
                       onProjectNameChange: handleProjectNameChange,
+                      onWorkingAdvanceVoucherBooleanChange:
+                        handleWorkingAdvanceVoucherBooleanChange,
+                      onEmployeeNumberChange: handleEmployeeNumberChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}
+                    loadingFieldList={loadingFieldList}
                   />
                 </Box>
               );

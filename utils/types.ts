@@ -1961,12 +1961,11 @@ export type JiraWAVTicketPayloadProps = {
   requestId: string;
   requestUrl: string;
   jiraProjectSiteId: string;
-  date: string;
-  payeeName: string;
   amount: string;
-  amountInWord: string;
   particulars: string;
   department: string;
+  isForOfficialBusiness: boolean;
+  approvedOfficialBusiness?: string;
 };
 
 export type JiraESRTicketPayloadProps = {

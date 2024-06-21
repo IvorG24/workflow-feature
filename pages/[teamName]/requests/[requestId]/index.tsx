@@ -14,6 +14,7 @@ import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestP
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
+import WorkingAdvanceVoucherBalanceRequestPage from "@/components/WorkingAdvanceVoucherBalanceRequestPage/WorkingAdvanceVoucherBalanceRequestPage";
 import WorkingAdvanceVoucherRequestPage from "@/components/WorkingAdvanceVoucherRequestPage/WorkingAdvanceVoucherRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
@@ -165,6 +166,10 @@ const Page = ({
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
+    } else if (
+      request.request_form.form_name === "Working Advance Voucher Balance"
+    ) {
+      return <WorkingAdvanceVoucherBalanceRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

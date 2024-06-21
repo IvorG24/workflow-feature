@@ -160,6 +160,14 @@ type RequestFormFieldsProps = {
   };
   workingAdvanceVoucherFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
+    onWorkingAdvanceVoucherBooleanChange: (
+      value: boolean,
+      sectionIndex: number
+    ) => void;
+    onEmployeeNumberChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -426,7 +434,14 @@ const RequestFormFields = ({
                     );
                   requestForPaymentFormMethods &&
                     requestForPaymentFormMethods.onEmployeeNumberChange(value);
+
+                  workingAdvanceVoucherFormMethods &&
+                    workingAdvanceVoucherFormMethods.onEmployeeNumberChange(
+                      value,
+                      sectionIndex
+                    );
                   break;
+
                 case "Action Plan":
                   equipmentServiceReportMethods?.onActionPlanBlur(
                     value,
@@ -563,6 +578,14 @@ const RequestFormFields = ({
                     case "Do employees transferring to other projects have IT assets":
                       personnelTransferRequisitionMethods &&
                         personnelTransferRequisitionMethods.onITAssetBooleanChange(
+                          value,
+                          sectionIndex
+                        );
+                      break;
+
+                    case "Is this for Official Business":
+                      workingAdvanceVoucherFormMethods &&
+                        workingAdvanceVoucherFormMethods.onWorkingAdvanceVoucherBooleanChange(
                           value,
                           sectionIndex
                         );

@@ -131,6 +131,14 @@ type RequestFormSectionProps = {
   };
   workingAdvanceVoucherFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
+    onWorkingAdvanceVoucherBooleanChange: (
+      value: boolean,
+      sectionIndex: number
+    ) => void;
+    onEmployeeNumberChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
