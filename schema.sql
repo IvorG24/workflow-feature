@@ -7596,7 +7596,7 @@ RETURNS JSON AS $$
         json_agg(sht.*) as signature_list
       FROM memo_signer_table mst
       INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
-      INNER JOIN user_table ut ON ut.user_id = tm.team_member_user_id
+      INNER JOIN user_schema.user_table ut ON ut.user_id = tm.team_member_user_id
       LEFT JOIN history_schema.signature_history_table sht ON sht.signature_history_user_id = ut.user_id
       WHERE mst.memo_signer_memo_id = '${memo_id}'
       GROUP BY mst.memo_signer_id, tm.team_member_id, ut.user_id;
@@ -10705,7 +10705,7 @@ plv8.subtransaction(function() {
       SELECT
         form_table.*,
         team_member_id,
-        user_schema.user_table.*
+        user_table.*
       FROM form_table
       INNER JOIN team_member_table ON team_member_id = form_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
