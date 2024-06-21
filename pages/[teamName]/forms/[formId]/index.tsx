@@ -64,6 +64,7 @@ const Page = ({
   teamProjectList = [],
   teamProjectListCount = 0,
 }: Props) => {
+  console.log(form);
   const formslyForm = () => {
     switch (form.form_name) {
       case "Item":

@@ -11378,7 +11378,19 @@ plv8.subtransaction(function() {
   )[0].count;
 
   returnData = {
-    data: teamMemberData,
+    data: teamMemberData.map(teamMember => {
+      return {
+        team_member_id: teamMember.team_member_id,
+        team_member_date_created: teamMember.team_member_date_created,
+        team_member_user: {
+          user_id: teamMember.user_id,
+          user_first_name: teamMember.user_first_name,
+          user_last_name: teamMember.user_last_name,
+          user_avatar: teamMember.user_avatar,
+          user_email: teamMember.user_email,
+        }
+      }
+    }),
     count: Number(teamMemberCount)
   }
 });
@@ -11444,7 +11456,19 @@ plv8.subtransaction(function() {
   )[0].count;
 
   returnData = {
-    data: teamMemberData,
+    data: teamMemberData.map(teamMember => {
+      return {
+        team_member_id: teamMember.team_member_id,
+        team_member_date_created: teamMember.team_member_date_created,
+        team_member_user: {
+          user_id: teamMember.user_id,
+          user_first_name: teamMember.user_first_name,
+          user_last_name: teamMember.user_last_name,
+          user_avatar: teamMember.user_avatar,
+          user_email: teamMember.user_email,
+        }
+      }
+    }),
     count: Number(teamMemberCount)
   }
 });
