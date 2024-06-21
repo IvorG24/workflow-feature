@@ -8536,7 +8536,7 @@ RETURNS JSON AS $$
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
     const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
 
@@ -9550,7 +9550,7 @@ RETURNS JSON as $$
           INNER JOIN item_category_table AS ict ON it.item_category_id = ict.item_category_id
           INNER JOIN signer_table ON signer_id = item_category_signer_id
           INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-          INNER JOIN user_schema. ON user_id = team_member_user_id
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
           WHERE
             it.item_general_name = '${section.itemName}'
             AND it.item_is_disabled = false
@@ -10427,76 +10427,11 @@ plv8.subtransaction(function() {
         user_employee_number,
         user_employee_number_is_disabled
       FROM user_schema.user_table
-      INNER JOIN attachment_table ON attachment_id = user_signature_attachment_id
-      INNER JOIN user_employee_number_table ON user_employee_number_user_id = user_id
+      LEFT JOIN attachment_table ON attachment_id = user_signature_attachment_id
+      LEFT JOIN user_employee_number_table ON user_employee_number_user_id = user_id
+        AND user_employee_number_is_disabled = false
       WHERE 
         user_id = '${userId}'
-        AND user_employee_number_is_disabled = false
-    `
-  )[0];
-
-  const userEmployeeNumberData = plv8.execute(
-    `
-      SELECT 
-        user_employee_number
-      FROM user_employee_number_table
-      WHERE 
-        user_employee_number_user_id = '${userData.user_id}'
-        AND user_employee_number_is_disabled = false
-    `
-  );
-
-  returnData = {
-    user_active_app: userData.user_active_app,
-    user_active_team_id: userData.user_active_team_id,
-    user_avatar: userData.user_avatar,
-    user_date_created: userData.user_date_created,
-    user_email: userData.user_email,
-    user_first_name: userData.user_first_name,
-    user_id: userData.user_id,
-    user_is_disabled: userData.user_is_disabled,
-    user_job_title: userData.user_job_title,
-    user_last_name: userData.user_last_name,
-    user_phone_number: userData.user_phone_number,
-    user_signature_attachment_id: userData.user_signature_attachment_id,
-    user_username: userData.user_username,
-    user_signature_attachment: {
-      attachment_bucket: userData.attachment_bucket,
-      attachment_date_created: userData.attachment_date_created,
-      attachment_id: userData.attachment_id,
-      attachment_is_disabled: userData.attachment_is_disabled,
-      attachment_name: userData.attachment_name,
-      attachment_value: userData.attachment_value
-    },
-    user_employee_number: userEmployeeNumberData.length ? userEmployeeNumberData[0].user_employee_number : null
-  }
-});
-return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION get_user_with_signature(
-  input_data JSON
-)
-RETURNS JSON AS $$
-let returnData = [];
-plv8.subtransaction(function() {
-  const {
-    userId
-  } = input_data;
-
-  const userData = plv8.execute(
-    `
-      SELECT 
-        user_table.*,
-        attachment_table.*,
-        user_employee_number,
-        user_employee_number_is_disabled
-      FROM user_schema.user_table
-      INNER JOIN attachment_table ON attachment_id = user_signature_attachment_id
-      INNER JOIN user_employee_number_table ON user_employee_number_user_id = user_id
-      WHERE 
-        user_id = '${userId}'
-        AND user_employee_number_is_disabled = false
     `
   )[0];
 
@@ -10775,9 +10710,11 @@ plv8.subtransaction(function() {
     },
     form_team_group: formTeamGroupData.map(teamGroup => {
       return {
-        team_group_id: teamGroup.team_group_id,
-        team_group_name: teamGroup.team_group_name,
-        team_group_is_disabled: teamGroup.team_group_is_disabled
+        team_group: {
+            team_group_id: teamGroup.team_group_id,
+            team_group_name: teamGroup.team_group_name,
+            team_group_is_disabled: teamGroup.team_group_is_disabled
+        }
       }
     }),
     form_signer: formSignerData.map(formSigner => {
