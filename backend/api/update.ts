@@ -5,6 +5,7 @@ import { Database } from "@/utils/database";
 import { escapeQuotes } from "@/utils/string";
 import {
   AppType,
+  DepartmentSignerTableUpdate,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
   EquipmentLookupChoices,
@@ -1248,4 +1249,20 @@ export const updateRequestOtpId = async (
     .eq("request_formsly_id_serial", formslyIdSerial);
 
   if (error) throw error;
+};
+
+// update jira project
+export const updateDepartmentSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: DepartmentSignerTableUpdate
+) => {
+  if (!params.department_signer_id) throw new Error();
+  const { error } = await supabaseClient
+    .from("department_signer_table")
+    .update(params)
+    .eq("department_signer_id", params.department_signer_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
 };

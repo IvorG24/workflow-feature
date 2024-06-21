@@ -16,6 +16,7 @@ import {
   AttachmentTableInsert,
   CommentTableInsert,
   CreateTicketFormValues,
+  DepartmentSignerTableInsert,
   EquipmentDescriptionTableInsert,
   EquipmentPartTableInsert,
   EquipmentTableInsert,
@@ -1953,4 +1954,38 @@ export const createJobTitle = async (
   if (error) throw error;
 
   return { data, error: null };
+};
+
+export const createDepartmentSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: DepartmentSignerTableInsert
+) => {
+  // check if duplicate
+  const { count, error: duplicateError } = await supabaseClient
+    .from("department_signer_table")
+    .select("department_signer_id", { count: "exact", head: true })
+    .eq("department_signer_project_id", params.department_signer_project_id)
+    .eq(
+      "department_signer_department_id",
+      params.department_signer_department_id
+    )
+    .eq(
+      "department_signer_is_primary",
+      Boolean(params.department_signer_is_primary)
+    );
+
+  if (duplicateError) throw duplicateError;
+
+  if (Number(count)) {
+    return null;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("department_signer_table")
+    .insert(params)
+    .select("*");
+
+  if (error) throw error;
+
+  return data;
 };
