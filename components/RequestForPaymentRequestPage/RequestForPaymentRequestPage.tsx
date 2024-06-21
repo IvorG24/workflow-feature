@@ -230,7 +230,8 @@ const RequestForPaymentRequestPage = ({
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
-    jiraId?: string
+    jiraId?: string,
+    jiraLink?: string
   ) => {
     try {
       setIsLoading(true);
@@ -245,18 +246,6 @@ const RequestForPaymentRequestPage = ({
       }
       if (!teamMember) return;
 
-      let autoJiraLink = "";
-      const newJiraTicketData = await fetch(
-        `/api/get-jira-ticket?jiraTicketKey=${jiraId}`
-      );
-
-      if (newJiraTicketData.ok) {
-        const jiraTicket = await newJiraTicketData.json();
-        const jiraTicketWebLink =
-          jiraTicket.fields["customfield_10010"]._links.web;
-        autoJiraLink = jiraTicketWebLink;
-      }
-
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -268,7 +257,7 @@ const RequestForPaymentRequestPage = ({
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
         jiraId,
-        jiraLink: autoJiraLink,
+        jiraLink,
         requestFormslyId: request.request_formsly_id,
       });
 
@@ -451,9 +440,11 @@ const RequestForPaymentRequestPage = ({
       }
       setIsLoading(true);
 
+      let obTicket = "";
+      let departmentCode = "";
+
       const isChargeToVariousDepartment =
         selectedChargeTo === "Various Department";
-
       const requestTypeId = isChargeToVariousDepartment ? "337" : "337";
       const serviceDeskId = isChargeToVariousDepartment ? "23" : "27";
       const payeeFieldId = isChargeToVariousDepartment ? "24" : "25";
@@ -490,12 +481,35 @@ const RequestForPaymentRequestPage = ({
       )?.field_response?.request_response;
       const requestDepartment =
         headerSectionFieldList[1].field_response?.request_response;
+
+      const requestDepartmentCode = headerSectionFieldList.find(
+        (field) => field.field_name === "Department Code"
+      );
+
+      if (requestDepartmentCode?.field_response?.request_response) {
+        departmentCode = safeParse(
+          requestDepartmentCode.field_response.request_response
+        );
+      }
+
       const requestPayeeType = headerSectionFieldList.find(
         (field) => field.field_name === "Payee Type"
       )?.field_response?.request_response;
       const requestPurpose = formSection[1].section_field.find(
         (field) => field.field_name === "Purpose of Payment"
       )?.field_response?.request_response;
+
+      if (safeParse(`${requestPurpose}`).toLowerCase() === "ob budget") {
+        obTicket = safeParse(
+          formSection.length
+            ? formSection[1].section_field.find(
+                (field) =>
+                  field.field_name ===
+                  "Ticket Number of Approved Official Business"
+              )?.field_response?.request_response ?? ""
+            : ""
+        );
+      }
 
       const costCode = safeParse(
         `${headerSectionFieldList[2].field_response?.request_response}`
@@ -541,6 +555,8 @@ const RequestForPaymentRequestPage = ({
         chargeTo: chargeTo.id,
         costCode,
         boqCode,
+        departmentCode,
+        obTicket,
       });
 
       const jiraTicket = await createJiraTicket({
