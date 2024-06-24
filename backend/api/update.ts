@@ -916,6 +916,7 @@ export const updateOtherExpensesType = async (
   const { updateData, otherExpensesTypeId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_type_table")
     .update(updateData)
     .eq("other_expenses_type_id", otherExpensesTypeId)

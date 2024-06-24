@@ -14,6 +14,7 @@ type Props = {
   lookup: {
     table: string;
     label: string;
+    schema: string;
   };
 };
 
@@ -43,10 +44,12 @@ const CategoryLookup = ({ lookup }: Props) => {
           search: "",
           limit: ROW_PER_PAGE,
           page: 1,
+          schema: lookup.schema,
         });
         setCategoryLookupList(data);
         setCategoryLookupCount(Number(count ?? 0));
       } catch (e) {
+        console.log(e);
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",

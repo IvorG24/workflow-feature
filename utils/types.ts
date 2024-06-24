@@ -309,11 +309,11 @@ export type MemoAgreementTableInsert =
 export type MemoAgreementTableUpdate =
   Database["public"]["Tables"]["memo_agreement_table"]["Update"];
 export type OtherExpensesTypeTableRow =
-  Database["public"]["Tables"]["other_expenses_type_table"]["Row"];
+  Database["other_expenses_schema"]["Tables"]["other_expenses_type_table"]["Row"];
 export type OtherExpensesTypeTableInsert =
-  Database["public"]["Tables"]["other_expenses_type_table"]["Insert"];
+  Database["other_expenses_schema"]["Tables"]["other_expenses_type_table"]["Insert"];
 export type OtherExpensesTypeTableUpdate =
-  Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
+  Database["other_expenses_schema"]["Tables"]["other_expenses_type_table"]["Update"];
 
 export type SignatureHistoryTableRow =
   Database["history_schema"]["Tables"]["signature_history_table"]["Row"];
@@ -2003,3 +2003,9 @@ export type PendingInviteType = {
     team_member_team_id: string;
   };
 };
+
+export type SchemaType =
+  | "public"
+  | "history_schema"
+  | "other_expenses_schema"
+  | "user_schema";

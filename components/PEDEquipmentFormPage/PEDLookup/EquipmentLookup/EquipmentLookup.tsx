@@ -14,6 +14,7 @@ type Props = {
   lookup: {
     table: EquipmentLookupChoices;
     label: string;
+    schema: string;
   };
 };
 
@@ -43,6 +44,7 @@ const EquipmentLookup = ({ lookup }: Props) => {
           search: "",
           limit: ROW_PER_PAGE,
           page: 1,
+          schema: lookup.schema,
         });
         setEquipmentLookupList(data);
         setEquipmentLookupCount(Number(count ?? 0));

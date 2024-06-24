@@ -14,6 +14,7 @@ type Props = {
   lookup: {
     table: string;
     label: string;
+    schema: string;
   };
 };
 
@@ -43,6 +44,7 @@ const CategoryLookup = ({ lookup }: Props) => {
           search: "",
           limit: ROW_PER_PAGE,
           page: 1,
+          schema: lookup.schema,
         });
         setCategoryLookupList(data);
         setCategoryLookupCount(Number(count ?? 0));

@@ -24,6 +24,7 @@ type Props = {
   lookup: {
     table: string;
     label: string;
+    schema: string;
   };
   setIsCreatingCategoryLookup: Dispatch<SetStateAction<boolean>>;
 };
@@ -58,6 +59,7 @@ const CreateCategoryLookup = ({
           [team]: activeTeam.team_id,
         } as unknown as JSON,
         tableName: lookup.table,
+        schema: lookup.schema,
       });
 
       notifications.show({
