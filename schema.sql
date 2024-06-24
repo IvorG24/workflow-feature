@@ -168,7 +168,7 @@ CREATE TABLE supplier_table (
   supplier_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE user_valid_id_table (
+CREATE TABLE user_schema.user_valid_id_table (
   user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   user_valid_id_date_updated TIMESTAMPTZ,
@@ -188,7 +188,7 @@ CREATE TABLE user_valid_id_table (
   user_valid_id_address_id UUID REFERENCES address_table(address_id) NOT NULL
 );
 
-CREATE TABLE user_employee_number_table (
+CREATE TABLE user_schema.user_employee_number_table (
   user_employee_number_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   user_employee_number_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   user_employee_number_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
@@ -197,7 +197,7 @@ CREATE TABLE user_employee_number_table (
   user_employee_number_user_id UUID REFERENCES user_schema.user_table(user_id)
 );
 
-CREATE TABLE invitation_table (
+CREATE TABLE user_schema.invitation_table (
   invitation_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   invitation_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   invitation_to_email VARCHAR(4000) NOT NULL,
@@ -1258,11 +1258,11 @@ RETURNS JSON AS $$
     }else{
       user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
     }
-    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM invitation_table invt INNER JOIN team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
+    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM user_schema.invitation_table invt INNER JOIN team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
 
     if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
-    plv8.execute(`INSERT INTO user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
+    plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
  });
  return user_data;
 $$ LANGUAGE plv8;
@@ -1857,7 +1857,7 @@ RETURNS JSON AS $$
     emailList.forEach((email) => {
       const invitationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
 
-      const  checkInvitationCount = plv8.execute(`SELECT COUNT(*) FROM invitation_table WHERE invitation_to_email='${email}' AND invitation_from_team_member_id='${teamMemberId}' AND invitation_is_disabled='false' AND invitation_status='PENDING';`)[0].count;
+      const  checkInvitationCount = plv8.execute(`SELECT COUNT(*) FROM user_schema.invitation_table WHERE invitation_to_email='${email}' AND invitation_from_team_member_id='${teamMemberId}' AND invitation_is_disabled='false' AND invitation_status='PENDING';`)[0].count;
         
       if (!checkInvitationCount) {
         invitationInput.push({
@@ -1887,7 +1887,7 @@ RETURNS JSON AS $$
         )
         .join(",");
 
-      invitation_data = plv8.execute(`INSERT INTO invitation_table (invitation_id,invitation_to_email,invitation_from_team_member_id) VALUES ${invitationValues} RETURNING *;`);
+      invitation_data = plv8.execute(`INSERT INTO user_schema.invitation_table (invitation_id,invitation_to_email,invitation_from_team_member_id) VALUES ${invitationValues} RETURNING *;`);
     }
 
     if (notificationInput.length > 0){
@@ -2007,7 +2007,7 @@ RETURNS JSON as $$
       plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${team_id}' WHERE user_id='${user_id}'`);
     }
 
-    plv8.execute(`UPDATE invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
+    plv8.execute(`UPDATE user_schema.invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
 
     user_team_list = plv8.execute(`SELECT tt.* 
       FROM team_member_table as tm
@@ -3294,14 +3294,14 @@ RETURNS JSON AS $$
           ) AS team_member_user 
         FROM team_member_table tmt 
         INNER JOIN user_schema.user_table usert ON usert.user_id = tmt.team_member_user_id
-        LEFT JOIN user_employee_number_table uent 
+        LEFT JOIN user_schema.user_employee_number_table uent 
           ON uent.user_employee_number_user_id = usert.user_id
           AND uent.user_employee_number_is_disabled = false
         WHERE team_member_id='${teamMemberId}'
       `
     )[0];
 
-    const userValidId = plv8.execute(`SELECT * FROM user_valid_id_table WHERE user_valid_id_user_id='${member.team_member_user.user_id}';`)[0];
+    const userValidId = plv8.execute(`SELECT * FROM user_schema.user_valid_id_table WHERE user_valid_id_user_id='${member.team_member_user.user_id}';`)[0];
 
     const memberGroupToSelect = plv8.execute(`SELECT tgmt2.team_group_member_id, tgt2.team_group_name FROM team_group_member_table tgmt2 INNER JOIN team_group_table tgt2 ON tgt2.team_group_id = tgmt2.team_group_id WHERE tgmt2.team_member_id='${teamMemberId}' ORDER BY tgt2.team_group_name ASC LIMIT 10`);
 
@@ -3365,7 +3365,7 @@ RETURNS JSON AS $$
         JOIN 
             user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
         LEFT JOIN 
-            user_employee_number_table uent ON uent.user_employee_number_user_id = usert.user_id
+            user_schema.user_employee_number_table uent ON uent.user_employee_number_user_id = usert.user_id
                 AND uent.user_employee_number_is_disabled = false
         WHERE 
             tmt.team_member_team_id = '${teamId}'
@@ -3429,7 +3429,7 @@ RETURNS JSON AS $$
 
     const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
-    const pendingValidIDList = plv8.execute(`SELECT * FROM user_valid_id_table WHERE user_valid_id_status='PENDING';`);
+    const pendingValidIDList = plv8.execute(`SELECT * FROM user_schema.user_valid_id_table WHERE user_valid_id_status='PENDING';`);
 
     team_data = { 
       team, 
@@ -3501,7 +3501,7 @@ RETURNS JSON AS $$
           ) AS team_member_user  
         FROM team_member_table tmt 
         JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
-        LEFT JOIN user_employee_number_table uent 
+        LEFT JOIN user_schema.user_employee_number_table uent 
           ON uent.user_employee_number_user_id = usert.user_id
           AND uent.user_employee_number_is_disabled=false
         WHERE 
@@ -7687,7 +7687,7 @@ RETURNS JSON AS $$
       FROM memo_read_receipt_table
       INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
+      LEFT JOIN user_schema. ON user_id = user_employee_number_user_id
       WHERE memo_read_receipt_memo_id = '${memo_id}'
     `);
 
@@ -7696,7 +7696,7 @@ RETURNS JSON AS $$
       FROM memo_agreement_table
       INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      LEFT JOIN user_employee_number_table ON user_id = user_employee_number_user_id
+      LEFT JOIN user_schema.user_employee_number_table ON user_id = user_employee_number_user_id
       WHERE memo_agreement_memo_id = '${memo_id}'
     `);
 
@@ -8946,7 +8946,7 @@ RETURNS JSON AS $$
 
     const userValidIdData = plv8.execute(
       `
-        INSERT INTO user_valid_id_table
+        INSERT INTO user_schema.user_valid_id_table
           (
             user_valid_id_number, 
             user_valid_id_type, 
@@ -10428,7 +10428,7 @@ plv8.subtransaction(function() {
         user_employee_number_is_disabled
       FROM user_schema.user_table
       LEFT JOIN attachment_table ON attachment_id = user_signature_attachment_id
-      LEFT JOIN user_employee_number_table ON user_employee_number_user_id = user_id
+      LEFT JOIN user_schema.user_employee_number_table ON user_employee_number_user_id = user_id
         AND user_employee_number_is_disabled = false
       WHERE 
         user_id = '${userId}'
@@ -10439,7 +10439,7 @@ plv8.subtransaction(function() {
     `
       SELECT 
         user_employee_number
-      FROM user_employee_number_table
+      FROM user_schema.user_employee_number_table
       WHERE 
         user_employee_number_user_id = '${userData.user_id}'
         AND user_employee_number_is_disabled = false
@@ -10810,9 +10810,7 @@ plv8.subtransaction(function() {
 
       return {
         ...itemDescriptionField,
-        item_description_field_uom: {
-          item_description_field_uom: itemDescriptionFieldUomData.length ? itemDescriptionFieldUomData[0].item_description_field_uom : null
-        }
+        item_description_field_uom: itemDescriptionFieldUomData
       }
     })
 
@@ -11064,6 +11062,7 @@ plv8.subtransaction(function() {
         team_project_member_id,
         tmt.team_member_id,
         tmt.team_member_date_created,
+        tmt.team_member_role,
         user_id,
         user_first_name,
         user_last_name,
@@ -11115,6 +11114,7 @@ plv8.subtransaction(function() {
       team_member: {
         team_member_id: teamProjectMember.team_member_id,
         team_member_date_created: teamProjectMember.team_member_date_created,
+        team_member_role: teamProjectMember.team_member_role,
         team_member_user: {
           user_id: teamProjectMember.user_id,
           user_first_name: teamProjectMember.user_first_name,
@@ -11769,7 +11769,7 @@ plv8.subtransaction(function() {
   const employeeNumberData = plv8.execute(
     `
       SELECT user_employee_number
-      FROM user_employee_number_table
+      FROM user_schema.user_employee_number_table
       WHERE 
         user_employee_number_user_id = '${memoAgreementData.user_id}'
       LIMIT 1
@@ -11877,7 +11877,7 @@ plv8.subtransaction(function() {
       const employeeNumberData = plv8.execute(
         `
           SELECT user_employee_number
-          FROM user_employee_number_table
+          FROM user_schema.user_employee_number_table
           WHERE 
             user_employee_number_user_id = '${memoAgreementData.user_id}'
           LIMIT 1
@@ -11905,6 +11905,239 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_user_valid_id(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    validId
+  } = input_data;
+
+  const userValidIdData = plv8.execute(
+    `
+      SELECT
+        user_valid_id_table.*,
+        address_table.*
+      FROM user_schema.user_valid_id_table
+      INNER JOIN address_table ON address_id = user_valid_id_address_id
+      WHERE user_valid_id_id = '${validId}'
+    `
+  )[0];
+
+  const userData = plv8.execute(
+    `
+      SELECT * 
+      FROM user_schema.user_table
+      WHERE
+        user_id = '${userValidIdData.user_valid_id_user_id}'
+    `
+  )[0];
+
+  let approverData = null;
+  if(userValidIdData.user_valid_id_approver_user_id){
+    approverData = plv8.execute(
+      `
+        SELECT * 
+        FROM user_schema.user_table
+        WHERE
+          user_id = '${userValidIdData.user_valid_id_approver_user_id}'
+        LIMIT 1
+      `
+    )[0];
+  }
+  
+
+  returnData = {
+    user_valid_id_back_image_url: userValidIdData.user_valid_id_back_image_url,
+    user_valid_id_date_created: userValidIdData.user_valid_id_date_created,
+    user_valid_id_date_updated: userValidIdData.user_valid_id_date_updated,
+    user_valid_id_first_name: userValidIdData.user_valid_id_first_name,
+    user_valid_id_front_image_url: userValidIdData.user_valid_id_front_image_url,
+    user_valid_id_gender: userValidIdData.user_valid_id_gender,
+    user_valid_id_id: userValidIdData.user_valid_id_id,
+    user_valid_id_last_name: userValidIdData.user_valid_id_last_name,
+    user_valid_id_middle_name: userValidIdData.user_valid_id_middle_name,
+    user_valid_id_nationality: userValidIdData.user_valid_id_nationality,
+    user_valid_id_number: userValidIdData.user_valid_id_number,
+    user_valid_id_status: userValidIdData.user_valid_id_status,
+    user_valid_id_type: userValidIdData.user_valid_id_type,    
+    user_valid_id_user: userData,
+    user_valid_id_approver_user: approverData,
+    user_valid_id_address: {
+      address_barangay: userValidIdData.address_barangay,
+      address_city: userValidIdData.address_city,
+      address_date_created: userValidIdData.address_date_created,
+      address_id: userValidIdData.address_id,
+      address_province: userValidIdData.address_province,
+      address_region: userValidIdData.address_region,
+      address_street: userValidIdData.address_street,
+      address_zip_code: userValidIdData.address_zip_code,
+    }
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_team_invitation(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    status,
+    page,
+    limit,
+    search
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let searchCondition = "";
+  if(search){
+    searchCondition = `AND invitation_to_email ILIKE '%${search}%'`;
+  }
+
+  const invitationData = plv8.execute(
+    `
+      SELECT
+        invitation_id,
+        invitation_to_email,
+        invitation_date_created,
+        team_member_team_id
+      FROM user_schema.invitation_table
+      INNER JOIN team_member_table ON team_member_id = invitation_from_team_member_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND invitation_status = '${status}'
+        AND invitation_is_disabled = false
+        ${searchCondition}
+      ORDER BY invitation_to_email
+      OFFSET ${start} LIMIT ${limit}
+    `
+  );
+
+  const invitationCount = plv8.execute(
+    `
+      SELECT COUNT(invitation_id)
+      FROM user_schema.invitation_table
+      INNER JOIN team_member_table ON team_member_id = invitation_from_team_member_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND invitation_status = '${status}'
+        AND invitation_is_disabled = false
+        ${searchCondition}
+    `
+  )[0].count;
+
+  returnData = {
+    data: invitationData,
+    count: Number(invitationCount)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_invitation_id(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = "";
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    userEmail
+  } = input_data;
+
+  const invitationData = plv8.execute(
+    `
+      SELECT
+        invitation_id,
+        team_member_team_id
+      FROM user_schema.invitation_table
+      INNER JOIN team_member_table ON team_member_id = invitation_from_team_member_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND invitation_is_disabled = false
+        AND invitation_to_email = '${userEmail}'
+        AND invitation_status = 'PENDING'
+      ORDER BY invitation_date_created DESC
+      LIMIT 1
+    `
+  );
+
+  returnData = invitationData.length ? invitationData[0].invitation_id : null;
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_invitation(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    invitationId,
+    userEmail
+  } = input_data;
+
+  const invitationData = plv8.execute(
+    `
+      SELECT
+        invitation_table.*,
+        team_member_table.*,
+        team_table.*
+      FROM user_schema.invitation_table
+      INNER JOIN team_member_table ON team_member_id = invitation_from_team_member_id
+      INNER JOIN team_table ON team_id = team_member_team_id
+      WHERE
+        invitation_id = '${invitationId}'
+        AND invitation_is_disabled = false
+        AND invitation_to_email = '${userEmail}'
+      ORDER BY invitation_date_created DESC
+      LIMIT 1
+    `
+  );
+
+  if(!invitationData.length){
+    returnData = null;
+    return;
+  }
+
+  returnData = {
+    invitation_date_created: invitationData[0].invitation_date_created,
+    invitation_from_team_member_id: invitationData[0].invitation_from_team_member_id,
+    invitation_id: invitationData[0].invitation_id,
+    invitation_is_disabled: invitationData[0].invitation_is_disabled,
+    invitation_status: invitationData[0].invitation_status,
+    invitation_to_email: invitationData[0].invitation_to_email,
+    invitation_from_team_member: {
+      team_member_date_created: invitationData[0].team_member_date_created,
+      team_member_id: invitationData[0].team_member_id,
+      team_member_is_disabled: invitationData[0].team_member_is_disabled,
+      team_member_role: invitationData[0].team_member_role,
+      team_member_team_id: invitationData[0].team_member_team_id,
+      team_member_user_id: invitationData[0].team_member_user_id,
+      team_member_team: {
+        team_date_created: invitationData[0].team_date_created,
+        team_expiration: invitationData[0].team_expiration,
+        team_id: invitationData[0].team_id,
+        team_is_disabled: invitationData[0].team_is_disabled,
+        team_is_request_signature_required: invitationData[0].team_is_request_signature_required,
+        team_logo: invitationData[0].team_logo,
+        team_name: invitationData[0].team_name,
+        team_user_id: invitationData[0].team_user_id,
+      }
+    }
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES
@@ -11912,7 +12145,7 @@ $$ LANGUAGE plv8;
 ALTER TABLE attachment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invitation_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_schema.invitation_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_table ENABLE ROW LEVEL SECURITY;
@@ -11937,7 +12170,7 @@ ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_employee_number_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_schema.user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.signature_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
@@ -11950,7 +12183,7 @@ ALTER TABLE memo_date_updated_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_status_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_agreement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_valid_id_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_schema.user_valid_id_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_type_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
@@ -12052,10 +12285,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON comment_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on team_member_id" ON comment_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on team_member_id" ON comment_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON invitation_table;
-DROP POLICY IF EXISTS "Allow READ for users based on invitation_to_email" ON invitation_table;
-DROP POLICY IF EXISTS "Allow UPDATE for users based on invitation_from_team_member_id" ON invitation_table;
-DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_member_id" ON invitation_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.invitation_table;
+DROP POLICY IF EXISTS "Allow READ for users based on invitation_to_email" ON user_schema.invitation_table;
+DROP POLICY IF EXISTS "Allow UPDATE for users based on invitation_from_team_member_id" ON user_schema.invitation_table;
+DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_member_id" ON user_schema.invitation_table;
 
 DROP POLICY IF EXISTS "Allow INSERT for authenticated users" ON notification_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" ON notification_table;
@@ -12142,10 +12375,10 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_fie
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_employee_number_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON user_employee_number_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_employee_number_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_employee_number_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.user_employee_number_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_employee_number_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_employee_number_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_employee_number_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.user_name_history_table;
 
@@ -12189,9 +12422,9 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_read_receipt_table;
 DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_agreement_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_agreement_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_valid_id_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON user_valid_id_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_valid_id_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_schema.user_valid_id_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_valid_id_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_schema.user_valid_id_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_category_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_category_table;
@@ -12893,12 +13126,12 @@ TO authenticated
 USING (comment_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
 
 --- INVITATION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."invitation_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "user_schema"."invitation_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for users based on invitation_to_email" ON "public"."invitation_table"
+CREATE POLICY "Allow READ for users based on invitation_to_email" ON "user_schema"."invitation_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
@@ -12922,7 +13155,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for users based on invitation_from_team_member_id" ON "public"."invitation_table"
+CREATE POLICY "Allow UPDATE for users based on invitation_from_team_member_id" ON "user_schema"."invitation_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -12964,7 +13197,7 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON "public"."invitation_table"
+CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON "user_schema"."invitation_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
@@ -13774,16 +14007,16 @@ USING (
 );
 
 -- USER_EMPLOYEE_NUMBER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."user_employee_number_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "user_schema"."user_employee_number_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."user_employee_number_table"
+CREATE POLICY "Allow READ for anon users" ON "user_schema"."user_employee_number_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "public"."user_employee_number_table"
+CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "user_schema"."user_employee_number_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -13801,7 +14034,7 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "public"."user_employee_number_table"
+CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "user_schema"."user_employee_number_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14044,16 +14277,16 @@ USING (true);
 
 --- USER_VALID_ID_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."user_valid_id_table"
+CREATE POLICY "Allow CREATE access for all users" ON "user_schema"."user_valid_id_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."user_valid_id_table"
+CREATE POLICY "Allow READ for anon users" ON "user_schema"."user_valid_id_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."user_valid_id_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "user_schema"."user_valid_id_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
@@ -15134,7 +15367,7 @@ DROP PUBLICATION if exists supabase_realtime;
 CREATE PUBLICATION supabase_realtime;
 COMMIT;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, invitation_table, team_project_table, team_group_table, ticket_comment_table, ticket_table, team_table;
+ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, user_schema.invitation_table, team_project_table, team_group_table, ticket_comment_table, ticket_table, team_table;
 
 -------- END: SUBSCRIPTION
 

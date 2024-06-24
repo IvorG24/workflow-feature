@@ -60,6 +60,7 @@ import {
   NotificationTableRow,
   OptionTableRow,
   OtherExpensesTypeTableRow,
+  PendingInviteType,
   ReferenceMemoType,
   RequestListItemType,
   RequestListOnLoad,
@@ -825,19 +826,10 @@ export const getInvitation = async (
     userEmail: string;
   }
 ) => {
-  const { invitationId, userEmail } = params;
   const { data, error } = await supabaseClient
-    .from("invitation_table")
-    .select(
-      "*, invitation_from_team_member: invitation_from_team_member_id(*, team_member_team: team_member_team_id(*))"
-    )
-    .eq("invitation_id", invitationId)
-    .eq("invitation_to_email", userEmail)
-    .eq("invitation_is_disabled", false)
-    .maybeSingle();
-
+    .rpc("get_invitation", { input_data: params })
+    .select("*");
   if (error) throw error;
-
   return data;
 };
 
@@ -1660,7 +1652,6 @@ export const checkItemQuantity = async (
   const { data, error } = await supabaseClient
     .rpc("check_item_quantity", { input_data: params })
     .select("*");
-
   if (error) throw error;
 
   return data as string[];
@@ -2595,33 +2586,21 @@ export const getTeamInvitation = async (
   params: {
     teamId: string;
     status: string;
-    from: number;
-    to: number;
+    page: number;
+    limit: number;
     search?: string;
   }
 ) => {
-  const { teamId, status, search, from, to } = params;
-  let query = supabaseClient
-    .from("invitation_table")
-    .select(
-      "invitation_id, invitation_to_email, invitation_date_created, team_member: invitation_from_team_member_id!inner(team_member_team_id)",
-      { count: "exact" }
-    )
-    .eq("team_member.team_member_team_id", teamId)
-    .eq("invitation_status", status)
-    .eq("invitation_is_disabled", false)
-    .order("invitation_to_email")
-    .range(from, to);
-
-  if (search) {
-    query = query.ilike("invitation_to_email", `%${search}%`);
-  }
-
-  const { data, count, error } = await query;
-
+  const { data, error } = await supabaseClient
+    .rpc("get_team_invitation", { input_data: params })
+    .select("*");
   if (error) throw error;
+  const formattedData = data as unknown as {
+    data: PendingInviteType[];
+    count: number;
+  };
 
-  return { data, count: Number(count), error: null };
+  return { data: formattedData.data, count: formattedData.count };
 };
 
 export const getRequestFormslyId = async (
@@ -3034,27 +3013,12 @@ export const getInvitationId = async (
     userEmail: string;
   }
 ) => {
-  const { teamId, userEmail } = params;
-
   const { data, error } = await supabaseClient
-    .from("invitation_table")
-    .select(
-      `
-      invitation_id,
-      team_member: invitation_from_team_member_id!inner(
-        team_member_team_id
-      )
-    `
-    )
-    .eq("team_member.team_member_team_id", teamId)
-    .eq("invitation_is_disabled", false)
-    .eq("invitation_to_email", userEmail)
-    .eq("invitation_status", "PENDING")
-    .maybeSingle();
-
+    .rpc("get_invitation_id", { input_data: params })
+    .select("*");
   if (error) throw error;
 
-  return data ? data.invitation_id : null;
+  return data;
 };
 
 export const getUserPendingInvitation = async (
@@ -3066,6 +3030,7 @@ export const getUserPendingInvitation = async (
   const { userEmail } = params;
 
   const { data, error } = await supabaseClient
+    .schema("user_schema")
     .from("invitation_table")
     .select("*")
     .eq("invitation_is_disabled", false)
@@ -4524,12 +4489,8 @@ export const getUserValidID = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .from("user_valid_id_table")
-    .select(
-      "*, user_valid_id_user: user_valid_id_user_id(*), user_valid_id_approver_user: user_valid_id_approver_user_id(*), user_valid_id_address: user_valid_id_address_id(*)"
-    )
-    .eq("user_valid_id_id", params.validId)
-    .single();
+    .rpc("get_user_valid_id", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   return data;

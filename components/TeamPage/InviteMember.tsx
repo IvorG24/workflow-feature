@@ -3,8 +3,8 @@ import { cancelTeamInvitation, createTeamInvitation } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
-import { getPagination, sendEmailTeamInvite } from "@/utils/functions";
-import { TeamMemberType } from "@/utils/types";
+import { sendEmailTeamInvite } from "@/utils/functions";
+import { PendingInviteType, TeamMemberType } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -36,15 +36,6 @@ type Props = {
 
 type EmailListData = { value: string; label: string }[];
 
-type PendingInvite = {
-  invitation_id: string;
-  invitation_to_email: string;
-  invitation_date_created: string;
-  team_member: {
-    team_member_team_id: string;
-  };
-};
-
 type ResendInviteTimeout = {
   invitation_email: string;
   invitation_resend_date_created: Date;
@@ -57,9 +48,9 @@ const InviteMember = ({ memberEmailList }: Props) => {
   const [emailListData, setEmailListData] = useState<EmailListData>([]);
   const [isInvitingMember, setIsInvitingMember] = useState(false);
   const [emailList, setEmailList] = useState<string[]>([]);
-  const [pendingInviteList, setPendingInviteList] = useState<PendingInvite[]>(
-    []
-  );
+  const [pendingInviteList, setPendingInviteList] = useState<
+    PendingInviteType[]
+  >([]);
   const [pendingInviteCount, setPendingInviteCount] = useState(0);
   const [isResendingInvite, setIsResendingInvite] = useState(false);
   const [resendInviteTimeoutList, setResendInviteTimeoutList] =
@@ -181,16 +172,15 @@ const InviteMember = ({ memberEmailList }: Props) => {
     page: number;
   }) => {
     try {
-      const { from, to } = getPagination(page - 1, ROW_PER_PAGE);
       const { data, count } = await getTeamInvitation(supabaseClient, {
         teamId: team.team_id,
         status: "PENDING",
-        from,
-        to,
+        page,
+        limit: ROW_PER_PAGE,
         search,
       });
 
-      setPendingInviteList(data as unknown as PendingInvite[]);
+      setPendingInviteList(data);
       setPendingInviteCount(count);
     } catch (error) {
       console.error(error);
