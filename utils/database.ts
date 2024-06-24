@@ -287,25 +287,25 @@ export type Database = {
       };
       currency_table: {
         Row: {
+          currency_alphabetic_code: string;
           currency_entity: string;
           currency_id: string;
           currency_label: string;
           currency_numeric_code: string;
-          currnecy_alphabetic_code: string;
         };
         Insert: {
+          currency_alphabetic_code: string;
           currency_entity: string;
           currency_id?: string;
           currency_label: string;
           currency_numeric_code: string;
-          currnecy_alphabetic_code: string;
         };
         Update: {
+          currency_alphabetic_code?: string;
           currency_entity?: string;
           currency_id?: string;
           currency_label?: string;
           currency_numeric_code?: string;
-          currnecy_alphabetic_code?: string;
         };
         Relationships: [];
       };

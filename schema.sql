@@ -665,7 +665,7 @@ CREATE TABLE currency_table (
   currency_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   currency_entity VARCHAR(4000) NOT NULL,
   currency_label VARCHAR(4000) NOT NULL,
-  currnecy_alphabetic_code VARCHAR(10) NOT NULL,
+  currency_alphabetic_code VARCHAR(10) NOT NULL,
   currency_numeric_code VARCHAR(10) NOT NULL
 );
 
