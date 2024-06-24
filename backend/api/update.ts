@@ -291,6 +291,7 @@ export const declineTeamInvitation = async (
 ) => {
   const { invitationId } = params;
   const { error: invitationError } = await supabaseClient
+    .schema("user_schema")
     .from("invitation_table")
     .update({ invitation_status: "DECLINED" })
     .eq("invitation_id", invitationId);
@@ -493,6 +494,7 @@ export const cancelTeamInvitation = async (
 ) => {
   const { invitation_id } = params;
   const { error } = await supabaseClient
+    .schema("user_schema")
     .from("invitation_table")
     .update({ invitation_is_disabled: true })
     .eq("invitation_id", invitation_id)
@@ -937,6 +939,7 @@ export const approveOrRejectValidId = async (
   const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
 
   const { error } = await supabaseClient
+    .schema("user_schema")
     .from("user_valid_id_table")
     .update({
       user_valid_id_status: params.status,

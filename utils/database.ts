@@ -1093,41 +1093,6 @@ export type Database = {
           }
         ];
       };
-      invitation_table: {
-        Row: {
-          invitation_date_created: string;
-          invitation_from_team_member_id: string;
-          invitation_id: string;
-          invitation_is_disabled: boolean;
-          invitation_status: string;
-          invitation_to_email: string;
-        };
-        Insert: {
-          invitation_date_created?: string;
-          invitation_from_team_member_id: string;
-          invitation_id?: string;
-          invitation_is_disabled?: boolean;
-          invitation_status?: string;
-          invitation_to_email: string;
-        };
-        Update: {
-          invitation_date_created?: string;
-          invitation_from_team_member_id?: string;
-          invitation_id?: string;
-          invitation_is_disabled?: boolean;
-          invitation_status?: string;
-          invitation_to_email?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "invitation_table_invitation_from_team_member_id_fkey";
-            columns: ["invitation_from_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          }
-        ];
-      };
       item_category_table: {
         Row: {
           item_category: string;
@@ -3450,117 +3415,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      user_employee_number_table: {
-        Row: {
-          user_employee_number: string;
-          user_employee_number_date_created: string;
-          user_employee_number_id: string;
-          user_employee_number_is_disabled: boolean;
-          user_employee_number_user_id: string | null;
-        };
-        Insert: {
-          user_employee_number: string;
-          user_employee_number_date_created?: string;
-          user_employee_number_id?: string;
-          user_employee_number_is_disabled?: boolean;
-          user_employee_number_user_id?: string | null;
-        };
-        Update: {
-          user_employee_number?: string;
-          user_employee_number_date_created?: string;
-          user_employee_number_id?: string;
-          user_employee_number_is_disabled?: boolean;
-          user_employee_number_user_id?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_employee_number_table_user_employee_number_user_id_fkey";
-            columns: ["user_employee_number_user_id"];
-            isOneToOne: false;
-            referencedRelation: "user_table";
-            referencedColumns: ["user_id"];
-          }
-        ];
-      };
-      user_valid_id_table: {
-        Row: {
-          user_valid_id_address_id: string;
-          user_valid_id_approver_user_id: string | null;
-          user_valid_id_back_image_url: string | null;
-          user_valid_id_date_created: string;
-          user_valid_id_date_updated: string | null;
-          user_valid_id_first_name: string;
-          user_valid_id_front_image_url: string;
-          user_valid_id_gender: string;
-          user_valid_id_id: string;
-          user_valid_id_last_name: string;
-          user_valid_id_middle_name: string;
-          user_valid_id_nationality: string;
-          user_valid_id_number: string;
-          user_valid_id_status: string;
-          user_valid_id_type: string;
-          user_valid_id_user_id: string;
-        };
-        Insert: {
-          user_valid_id_address_id: string;
-          user_valid_id_approver_user_id?: string | null;
-          user_valid_id_back_image_url?: string | null;
-          user_valid_id_date_created?: string;
-          user_valid_id_date_updated?: string | null;
-          user_valid_id_first_name: string;
-          user_valid_id_front_image_url: string;
-          user_valid_id_gender: string;
-          user_valid_id_id?: string;
-          user_valid_id_last_name: string;
-          user_valid_id_middle_name: string;
-          user_valid_id_nationality: string;
-          user_valid_id_number: string;
-          user_valid_id_status: string;
-          user_valid_id_type: string;
-          user_valid_id_user_id: string;
-        };
-        Update: {
-          user_valid_id_address_id?: string;
-          user_valid_id_approver_user_id?: string | null;
-          user_valid_id_back_image_url?: string | null;
-          user_valid_id_date_created?: string;
-          user_valid_id_date_updated?: string | null;
-          user_valid_id_first_name?: string;
-          user_valid_id_front_image_url?: string;
-          user_valid_id_gender?: string;
-          user_valid_id_id?: string;
-          user_valid_id_last_name?: string;
-          user_valid_id_middle_name?: string;
-          user_valid_id_nationality?: string;
-          user_valid_id_number?: string;
-          user_valid_id_status?: string;
-          user_valid_id_type?: string;
-          user_valid_id_user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_valid_id_table_user_valid_id_address_id_fkey";
-            columns: ["user_valid_id_address_id"];
-            isOneToOne: false;
-            referencedRelation: "address_table";
-            referencedColumns: ["address_id"];
-          },
-          {
-            foreignKeyName: "user_valid_id_table_user_valid_id_approver_user_id_fkey";
-            columns: ["user_valid_id_approver_user_id"];
-            isOneToOne: false;
-            referencedRelation: "user_table";
-            referencedColumns: ["user_id"];
-          },
-          {
-            foreignKeyName: "user_valid_id_table_user_valid_id_user_id_fkey";
-            columns: ["user_valid_id_user_id"];
-            isOneToOne: false;
-            referencedRelation: "user_table";
-            referencedColumns: ["user_id"];
-          }
-        ];
-      };
     };
     Views: {
       distinct_division_view: {
@@ -4123,6 +3977,18 @@ export type Database = {
         };
         Returns: Json;
       };
+      get_invitation: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      get_invitation_id: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       get_item: {
         Args: {
           input_data: Json;
@@ -4279,6 +4145,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      get_team_invitation: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
       get_team_member_list: {
         Args: {
           input_data: Json;
@@ -4340,6 +4212,12 @@ export type Database = {
         Returns: string;
       };
       get_user_current_signature: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      get_user_valid_id: {
         Args: {
           input_data: Json;
         };
@@ -4523,6 +4401,73 @@ export type Database = {
   };
   user_schema: {
     Tables: {
+      invitation_table: {
+        Row: {
+          invitation_date_created: string;
+          invitation_from_team_member_id: string;
+          invitation_id: string;
+          invitation_is_disabled: boolean;
+          invitation_status: string;
+          invitation_to_email: string;
+        };
+        Insert: {
+          invitation_date_created?: string;
+          invitation_from_team_member_id: string;
+          invitation_id?: string;
+          invitation_is_disabled?: boolean;
+          invitation_status?: string;
+          invitation_to_email: string;
+        };
+        Update: {
+          invitation_date_created?: string;
+          invitation_from_team_member_id?: string;
+          invitation_id?: string;
+          invitation_is_disabled?: boolean;
+          invitation_status?: string;
+          invitation_to_email?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invitation_table_invitation_from_team_member_id_fkey";
+            columns: ["invitation_from_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          }
+        ];
+      };
+      user_employee_number_table: {
+        Row: {
+          user_employee_number: string;
+          user_employee_number_date_created: string;
+          user_employee_number_id: string;
+          user_employee_number_is_disabled: boolean;
+          user_employee_number_user_id: string | null;
+        };
+        Insert: {
+          user_employee_number: string;
+          user_employee_number_date_created?: string;
+          user_employee_number_id?: string;
+          user_employee_number_is_disabled?: boolean;
+          user_employee_number_user_id?: string | null;
+        };
+        Update: {
+          user_employee_number?: string;
+          user_employee_number_date_created?: string;
+          user_employee_number_id?: string;
+          user_employee_number_is_disabled?: boolean;
+          user_employee_number_user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_employee_number_table_user_employee_number_user_id_fkey";
+            columns: ["user_employee_number_user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_table";
+            referencedColumns: ["user_id"];
+          }
+        ];
+      };
       user_table: {
         Row: {
           user_active_app: string;
@@ -4576,6 +4521,85 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "attachment_table";
             referencedColumns: ["attachment_id"];
+          }
+        ];
+      };
+      user_valid_id_table: {
+        Row: {
+          user_valid_id_address_id: string;
+          user_valid_id_approver_user_id: string | null;
+          user_valid_id_back_image_url: string | null;
+          user_valid_id_date_created: string;
+          user_valid_id_date_updated: string | null;
+          user_valid_id_first_name: string;
+          user_valid_id_front_image_url: string;
+          user_valid_id_gender: string;
+          user_valid_id_id: string;
+          user_valid_id_last_name: string;
+          user_valid_id_middle_name: string;
+          user_valid_id_nationality: string;
+          user_valid_id_number: string;
+          user_valid_id_status: string;
+          user_valid_id_type: string;
+          user_valid_id_user_id: string;
+        };
+        Insert: {
+          user_valid_id_address_id: string;
+          user_valid_id_approver_user_id?: string | null;
+          user_valid_id_back_image_url?: string | null;
+          user_valid_id_date_created?: string;
+          user_valid_id_date_updated?: string | null;
+          user_valid_id_first_name: string;
+          user_valid_id_front_image_url: string;
+          user_valid_id_gender: string;
+          user_valid_id_id?: string;
+          user_valid_id_last_name: string;
+          user_valid_id_middle_name: string;
+          user_valid_id_nationality: string;
+          user_valid_id_number: string;
+          user_valid_id_status: string;
+          user_valid_id_type: string;
+          user_valid_id_user_id: string;
+        };
+        Update: {
+          user_valid_id_address_id?: string;
+          user_valid_id_approver_user_id?: string | null;
+          user_valid_id_back_image_url?: string | null;
+          user_valid_id_date_created?: string;
+          user_valid_id_date_updated?: string | null;
+          user_valid_id_first_name?: string;
+          user_valid_id_front_image_url?: string;
+          user_valid_id_gender?: string;
+          user_valid_id_id?: string;
+          user_valid_id_last_name?: string;
+          user_valid_id_middle_name?: string;
+          user_valid_id_nationality?: string;
+          user_valid_id_number?: string;
+          user_valid_id_status?: string;
+          user_valid_id_type?: string;
+          user_valid_id_user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_valid_id_table_user_valid_id_address_id_fkey";
+            columns: ["user_valid_id_address_id"];
+            isOneToOne: false;
+            referencedRelation: "address_table";
+            referencedColumns: ["address_id"];
+          },
+          {
+            foreignKeyName: "user_valid_id_table_user_valid_id_approver_user_id_fkey";
+            columns: ["user_valid_id_approver_user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_table";
+            referencedColumns: ["user_id"];
+          },
+          {
+            foreignKeyName: "user_valid_id_table_user_valid_id_user_id_fkey";
+            columns: ["user_valid_id_user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_table";
+            referencedColumns: ["user_id"];
           }
         ];
       };
