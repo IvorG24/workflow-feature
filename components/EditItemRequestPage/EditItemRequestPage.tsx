@@ -226,6 +226,7 @@ const EditItemRequestPage = ({
 
           if (index > duplicatableSectionIdList.length) break;
         }
+
         const uniqueFieldIdList: string[] = [];
         const combinedFieldList: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
@@ -334,7 +335,7 @@ const EditItemRequestPage = ({
             optionList: OptionTableRow[];
           }[];
         }[] = [];
-
+        
         index = 0;
         while (1) {
           const optionData = await getItemRequestConditionalOptions(
