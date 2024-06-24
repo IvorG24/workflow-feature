@@ -1,24 +1,25 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  getExistingConnectedRequest,
+  getJiraAutomationDataByProjectId,
   getRequestComment,
 } from "@/backend/api/get";
-import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
+import {
+  approveOrRejectRequest,
+  cancelRequest,
+  updateRequestJiraId,
+} from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
-import { useFormList } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  useUserProfile,
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
+import { safeParse } from "@/utils/functions";
+import { createJiraTicket, formatJiraWAVPayload } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -26,21 +27,10 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import {
-  Alert,
-  Button,
-  Container,
-  Flex,
-  Group,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title,
-} from "@mantine/core";
+import { Container, Flex, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -49,8 +39,7 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
-  const forms = useFormList();
+const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
@@ -64,25 +53,19 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
     };
   });
 
-  const requestJira = {
-    id: request.request_jira_id,
-    link: request.request_jira_link,
-  };
-
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
-
+  const [requestJira, setRequestJira] = useState({
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  });
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
-  const [wavBalanceRequestRedirectUrl, setWAVBalanceRequestRedirectUrl] =
-    useState<string | null>(null);
-
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
-  const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
 
   const requestor = request.request_team_member.team_member_user;
@@ -110,12 +93,14 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
     requestStatus === "PENDING";
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
-  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
-  const isUserAccountant = teamMemberGroupList.includes("ACCOUNTANT");
-  const canCreateWAVBalance = requestStatus === "APPROVED" && isUserAccountant;
 
   const isRequestActionSectionVisible =
-    canSignerTakeAction || isEditable || isDeletable || isUserRequester;
+    canSignerTakeAction || isEditable || isDeletable;
+
+  const parentWavRequestId = safeParse(
+    request.request_form.form_section[0].section_field[0].field_response[0]
+      .request_response
+  );
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -134,6 +119,13 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
         return;
       }
       if (!teamMember) return;
+      if (!jiraId || !jiraLink) {
+        notifications.show({
+          message: "Jira id or jira link is undefined",
+          color: "orange",
+        });
+        return;
+      }
 
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
@@ -148,6 +140,13 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
         jiraId,
         jiraLink,
         requestFormslyId: request.request_formsly_id,
+      });
+
+      // update parent lrf jira id and jira link
+      await updateRequestJiraId(supabaseClient, {
+        requestId: parentWavRequestId,
+        jiraId,
+        jiraLink,
       });
 
       notifications.show({
@@ -277,47 +276,97 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const openRedirectToWAVBalanceRequestModal = (redirectUrl: string) =>
-    modals.openConfirmModal({
-      title: <Text weight={600}>WAV Balance request already exists.</Text>,
-      children: (
-        <Text size="sm">
-          Would you like to be redirected to the WAV Balance request page?
-        </Text>
-      ),
-      labels: { confirm: "Confirm", cancel: "Cancel" },
-      centered: true,
-      onConfirm: () => router.push(redirectUrl),
-    });
-
-  const handleCreateWAVBalanceRequest = async () => {
+  const onCreateJiraTicket = async () => {
     try {
-      if (wavBalanceRequestRedirectUrl) {
-        openRedirectToWAVBalanceRequestModal(wavBalanceRequestRedirectUrl);
-        return;
+      if (!request.request_project_id || !user) {
+        throw new Error("Project id is not defined.");
+      }
+      setIsLoading(true);
+
+      const [jiraAutomationData, parentWavRequest] = await Promise.all([
+        getJiraAutomationDataByProjectId(supabaseClient, {
+          teamProjectId: request.request_project_id,
+        }),
+        supabaseClient.rpc("request_page_on_load", {
+          input_data: {
+            requestId: parentWavRequestId,
+            userId: user.user_id,
+          },
+        }),
+      ]);
+
+      if (!jiraAutomationData?.jiraProjectData || !parentWavRequest) {
+        throw new Error(
+          "Error fetching of jira project and parent WAV request data."
+        );
       }
 
-      const wavBalanceForm = forms.find(
-        (form) => form.form_name === "Working Advance Voucher Balance"
+      const {
+        data: { request: wavRequest },
+      } = parentWavRequest;
+
+      let approvedOfficialBusiness = "";
+
+      const requestSectionFieldList =
+        wavRequest.request_form.form_section[0].section_field;
+
+      const department = safeParse(
+        requestSectionFieldList[2].field_response[0].request_response
       );
-      if (!wavBalanceForm) {
-        notifications.show({
-          message: "Working Advance Voucher Balance form is not available",
-          color: "red",
-        });
-        return;
+
+      const amount = safeParse(
+        requestSectionFieldList[5].field_response[0].request_response
+      );
+      const particulars = safeParse(
+        requestSectionFieldList[7].field_response[0].request_response
+      );
+      const isForOfficialBusiness = Boolean(
+        safeParse(requestSectionFieldList[8].field_response[0].request_response)
+      );
+
+      if (isForOfficialBusiness) {
+        approvedOfficialBusiness = safeParse(
+          requestSectionFieldList[9].field_response[0].request_response
+        );
       }
-      router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
-          wavBalanceForm.form_id
-        }/create?wav=${request.request_formsly_id}`
-      );
+
+      const jiraTicketPayload = formatJiraWAVPayload({
+        requestId: wavRequest.request_formsly_id,
+        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${wavRequest.request_formsly_id}`,
+        jiraProjectSiteId:
+          jiraAutomationData.jiraProjectData.jira_project_jira_id,
+        amount,
+        isForOfficialBusiness,
+        approvedOfficialBusiness,
+        particulars,
+        department,
+      });
+
+      const jiraTicket = await createJiraTicket({
+        requestType: "Working Advance Voucher",
+        formslyId: request.request_formsly_id,
+        requestCommentList,
+        ticketPayload: jiraTicketPayload,
+      });
+
+      if (!jiraTicket.jiraTicketId) {
+        throw new Error("Failed to create jira ticket.");
+      }
+
+      setRequestJira({
+        id: jiraTicket.jiraTicketId,
+        link: jiraTicket.jiraTicketLink,
+      });
+      return jiraTicket;
     } catch (error) {
+      const errorMessage = (error as Error).message;
       notifications.show({
-        message:
-          "Failed to create Bill of Quantity request. Please contact the IT team.",
+        message: `Error: ${errorMessage}`,
         color: "red",
       });
+      return { jiraTicketId: "", jiraTicketLink: "" };
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -362,38 +411,12 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
     }
   }, [requestJira.id]);
 
-  useEffect(() => {
-    const fetchWAVBalanceRequest = async () => {
-      const wavBalanceRequest = await getExistingConnectedRequest(
-        supabaseClient,
-        request.request_id
-      );
-
-      if (wavBalanceRequest) {
-        const { request_formsly_id_prefix, request_formsly_id_serial } =
-          wavBalanceRequest;
-        const redirectUrl = `/${formatTeamNameToUrlKey(
-          activeTeam.team_name
-        )}/requests/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
-        setWAVBalanceRequestRedirectUrl(redirectUrl);
-      }
-    };
-    if (requestStatus === "APPROVED" && activeTeam.team_name) {
-      fetchWAVBalanceRequest();
-    }
-  }, [requestStatus, activeTeam.team_name]);
-
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {canCreateWAVBalance && (
-          <Button onClick={() => handleCreateWAVBalanceRequest()}>
-            Create WAV Balance
-          </Button>
-        )}
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -405,29 +428,6 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
           requestJira={requestJira}
           jiraTicketStatus={jiraTicketStatus}
         />
-
-        {/* connected WAV Balance request */}
-        {wavBalanceRequestRedirectUrl && (
-          <Alert variant="light" color="blue">
-            <Flex align="center" gap="sm">
-              <Group spacing={4}>
-                <ThemeIcon variant="light">
-                  <IconAlertCircle size={16} />
-                </ThemeIcon>
-                <Text color="blue" weight={600}>
-                  A WAV Balance request has been created for this request.
-                </Text>
-              </Group>
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => router.push(wavBalanceRequestRedirectUrl)}
-              >
-                View WAV Balance
-              </Button>
-            </Flex>
-          </Alert>
-        )}
 
         {sectionWithDuplicateList.map((section, idx) => {
           if (
@@ -457,14 +457,15 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
                 ? Boolean(isUserSigner.signer_is_primary_signer)
                 : false
             }
-            isEditable={isEditable}
+            isEditable={false} // todo: add edit request page
             isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
-            isUserRequester={isUserRequester}
+            isUserRequester={false} // referencing BOQ is not allowed
             requestId={request.request_id}
             isItemForm
             requestSignerId={isUserSigner?.request_signer_id}
+            onCreateJiraTicket={onCreateJiraTicket}
           />
         )}
 
@@ -484,4 +485,4 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
   );
 };
 
-export default WorkingAdvanceVoucherRequestPage;
+export default PettyCashVoucherBalanceRequestPage;

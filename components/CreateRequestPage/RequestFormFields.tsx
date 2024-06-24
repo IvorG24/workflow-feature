@@ -158,9 +158,9 @@ type RequestFormFieldsProps = {
       fieldIndex: number
     ) => void;
   };
-  workingAdvanceVoucherFormMethods?: {
+  pettyCashVoucherFormMethods?: {
     onProjectOrDepartmentNameChange: () => void;
-    onWorkingAdvanceVoucherBooleanChange: (
+    onPettyCashVoucherBooleanChange: (
       value: boolean,
       sectionIndex: number
     ) => void;
@@ -254,7 +254,7 @@ const RequestFormFields = ({
   currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
-  workingAdvanceVoucherFormMethods,
+  pettyCashVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
 }: RequestFormFieldsProps) => {
@@ -435,8 +435,8 @@ const RequestFormFields = ({
                   requestForPaymentFormMethods &&
                     requestForPaymentFormMethods.onEmployeeNumberChange(value);
 
-                  workingAdvanceVoucherFormMethods &&
-                    workingAdvanceVoucherFormMethods.onEmployeeNumberChange(
+                  pettyCashVoucherFormMethods &&
+                    pettyCashVoucherFormMethods.onEmployeeNumberChange(
                       value,
                       sectionIndex
                     );
@@ -584,8 +584,8 @@ const RequestFormFields = ({
                       break;
 
                     case "Is this for Official Business":
-                      workingAdvanceVoucherFormMethods &&
-                        workingAdvanceVoucherFormMethods.onWorkingAdvanceVoucherBooleanChange(
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onPettyCashVoucherBooleanChange(
                           value,
                           sectionIndex
                         );
@@ -649,7 +649,7 @@ const RequestFormFields = ({
                       liquidationReimbursementFormMethods?.onProjectNameChange(
                         value
                       );
-                      workingAdvanceVoucherFormMethods?.onProjectOrDepartmentNameChange();
+                      pettyCashVoucherFormMethods?.onProjectOrDepartmentNameChange();
                       equipmentServiceReportMethods?.onProjectNameChange(value);
                       requestForPaymentFormMethods?.onProjectNameChange(value);
                       break;
@@ -758,7 +758,7 @@ const RequestFormFields = ({
                         value,
                         prevValue as string | null
                       );
-                      workingAdvanceVoucherFormMethods?.onProjectOrDepartmentNameChange();
+                      pettyCashVoucherFormMethods?.onProjectOrDepartmentNameChange();
                       break;
                     case "Type of Transfer":
                       personnelTransferRequisitionMethods?.onTypeOfTransferChange(

@@ -36,7 +36,7 @@ type Props = {
   connectedRequest?: ConnectedRequestFormProps;
 };
 
-const CreateWorkingAdvanceVoucherBalancePage = ({
+const CreatePettyCashVoucherBalancePage = ({
   form,
   connectedRequest,
 }: Props) => {
@@ -180,4 +180,4 @@ const CreateWorkingAdvanceVoucherBalancePage = ({
   );
 };
 
-export default CreateWorkingAdvanceVoucherBalancePage;
+export default CreatePettyCashVoucherBalancePage;

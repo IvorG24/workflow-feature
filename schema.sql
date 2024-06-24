@@ -1332,16 +1332,16 @@ RETURNS JSON AS $$
         endId = `BOQ`;
       } else if(formName === 'Personnel Transfer Requisition') {
         endId = `PTRF`;
-      } else if(formName === 'Working Advance Voucher') {
-        endId = `WAV`;
+      } else if(formName === 'Petty Cash Voucher') {
+        endId = `PCV`;
       } else if(formName === 'Equipment Service Report') {
         endId = `ESR`;
       } else if(formName === 'Request For Payment Code') {
         endId = `RFPC`;
       } else if(formName.includes('Request For Payment')) {
         endId = `RFP`;
-      } else if(formName.includes('Working Advance Voucher Balance')) {
-        endId = `WAVB`;
+      } else if(formName.includes('Petty Cash Voucher Balance')) {
+        endId = `PCVB`;
       } else {
         endId = ``;
       }
@@ -3219,7 +3219,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Working Advance Voucher Balance'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -5132,7 +5132,7 @@ RETURNS JSON as $$
             form
           }
         }
-      } else if (form.form_name === "Working Advance Voucher") {
+      } else if (form.form_name === "Petty Cash Voucher") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -5147,7 +5147,7 @@ RETURNS JSON as $$
 
         const projectOptions = projects.map((project, index) => {
           return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: project.team_project_id,
             option_order: index,
             option_value: project.team_project_name,
@@ -5158,7 +5158,7 @@ RETURNS JSON as $$
 
         const departmentOptions = departments.map((department, index) => {
           return {
-            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_field_id: form.form_section[1].section_field[2].field_id,
             option_id: department.team_department_id,
             option_order: index,
             option_value: department.team_department_name
@@ -5459,7 +5459,7 @@ RETURNS JSON as $$
             form
           }
         }
-      } else if (form.form_name === "Working Advance Voucher Balance") {
+      } else if (form.form_name === "Petty Cash Voucher Balance") {
         if (connectedRequestFormslyId) {
           const splitFormslyId = connectedRequestFormslyId.split('-');
           const connectedRequest = plv8.execute(`
@@ -9542,7 +9542,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Working Advance Voucher Balance'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -11211,11 +11211,11 @@ let returnData = [];
 plv8.subtransaction(function() {
   const {
     projectId,
-    formId
+    formId,
+    departmentId
   } = input_data;
 
-  const signerData = plv8.execute(
-    `
+  let query = `
       SELECT
         signer_id,
         signer_is_primary_signer,
@@ -11235,8 +11235,13 @@ plv8.subtransaction(function() {
         signer_team_project_id = '${projectId}'
         AND signer_form_id = '${formId}'
         AND signer_is_disabled = false
-    `
-  );
+    `;
+
+  if (departmentId) {
+    query = query + ` AND signer_team_department_id = '${departmentId}'`
+  }
+
+  const signerData = plv8.execute(query);
 
   returnData = signerData.map(signer => {
     return {

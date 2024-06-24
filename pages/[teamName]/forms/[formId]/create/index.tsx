@@ -8,13 +8,13 @@ import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentReques
 import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTransferRequisition/CreatePersonnelTransferRequisition";
+import CreatePettyCashVoucherBalancePage from "@/components/CreatePettyCashVoucherBalancePage/CreatePettyCashVoucherBalancePage";
+import CreatePettyCashVoucherRequestPage from "@/components/CreatePettyCashVoucherRequestPage/CreatePettyCashVoucherRequestPage";
 import CreateRequestForPaymentCodePage from "@/components/CreateRequestForPaymentCodePage/CreateRequestForPaymentCodePage";
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv1Page/CreateRequestForPaymentv1Page";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
-import CreateWorkingAdvanceVoucherBalancePage from "@/components/CreateWorkingAdvanceVoucherBalancePage/CreateWorkingAdvanceVoucherBalancePage";
-import CreateWorkingAdvanceVoucherRequestPage from "@/components/CreateWorkingAdvanceVoucherRequestPage/CreateWorkingAdvanceVoucherRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
@@ -159,9 +159,9 @@ const Page = ({
           />
         );
 
-      case "Working Advance Voucher":
+      case "Petty Cash Voucher":
         return (
-          <CreateWorkingAdvanceVoucherRequestPage
+          <CreatePettyCashVoucherRequestPage
             form={form}
             projectOptions={projectOptions}
             departmentOptions={departmentOptions}
@@ -193,9 +193,9 @@ const Page = ({
           />
         );
 
-      case "Working Advance Voucher Balance":
+      case "Petty Cash Voucher Balance":
         return (
-          <CreateWorkingAdvanceVoucherBalancePage
+          <CreatePettyCashVoucherBalancePage
             form={form}
             connectedRequest={connectedRequest}
           />

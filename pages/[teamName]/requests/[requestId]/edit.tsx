@@ -7,10 +7,10 @@ import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequest
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
+import EditPettyCashVoucherRequestPage from "@/components/EditPettyCashVoucherRequestPage/EditPettyCashVoucherRequestPage";
 import EditRequestForPaymentPage from "@/components/EditRequestForPaymentv1Page/EditRequestForPaymentv1Page";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
-import EditWorkingAdvanceVoucherRequestPage from "@/components/EditWorkingAdvanceVoucherRequestPage/EditWorkingAdvanceVoucherRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -152,9 +152,9 @@ const Page = ({
           />
         );
 
-      case "Working Advance Voucher":
+      case "Petty Cash Voucher":
         return (
-          <EditWorkingAdvanceVoucherRequestPage
+          <EditPettyCashVoucherRequestPage
             form={form}
             projectOptions={projectOptions}
             duplicatableSectionIdList={duplicatableSectionIdList}

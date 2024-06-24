@@ -1,8 +1,9 @@
 import {
   getEmployeeName,
+  getNonDuplictableSectionResponse,
   getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
+import { createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -10,14 +11,24 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
   OptionTableRow,
   RequestResponseTableRow,
+  RequestTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Container,
+  Flex,
+  Space,
+  Stack,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
@@ -38,22 +49,39 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
+  duplicatableSectionIdList: string[];
+  requestId: string;
   departmentOptions: OptionTableRow[];
 };
 
-const CreateWorkingAdvanceVoucherRequestPage = ({
+const EditPettyCashVoucherRequestPage = ({
   form,
   projectOptions,
+  requestId,
   departmentOptions,
 }: Props) => {
   const router = useRouter();
-  const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
-  const activeTeam = useActiveTeam();
+  const team = useActiveTeam();
+
+  const isReferenceOnly = Boolean(router.query.referenceOnly);
+
+  const [initialRequestDetails, setInitialRequestDetails] =
+    useState<RequestFormValues>();
+  const [signerList, setSignerList] = useState(
+    form.form_signer.map((signer) => ({
+      ...signer,
+      signer_action: signer.signer_action.toUpperCase(),
+    }))
+  );
+
+  const [isFetchingSigner, setIsFetchingSigner] = useState(false);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const requestorProfile = useUserProfile();
-
   const { setIsLoading } = useLoadingActions();
 
   const formDetails = {
@@ -61,10 +89,12 @@ const CreateWorkingAdvanceVoucherRequestPage = ({
     form_description: form.form_description,
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
+    form_type: form.form_type,
+    form_sub_type: form.form_sub_type,
   };
 
   const requestFormMethods = useForm<RequestFormValues>({ mode: "onChange" });
-  const { handleSubmit, control, setValue, getValues, setFocus } =
+  const { handleSubmit, control, setValue, unregister, getValues, setFocus } =
     requestFormMethods;
   const {
     fields: formSections,
@@ -75,18 +105,7 @@ const CreateWorkingAdvanceVoucherRequestPage = ({
     name: "sections",
   });
 
-  const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [signerList, setSignerList] = useState(
-    form.form_signer.map((signer) => ({
-      ...signer,
-      signer_action: signer.signer_action.toUpperCase(),
-    }))
-  );
-  const [loadingFieldList, setLoadingFieldList] = useState<
-    { sectionIndex: number; fieldIndex: number }[]
-  >([]);
-
-  const handleCreateRequest = async (data: RequestFormValues) => {
+  const onSubmit = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
       notifications.show({
         message: "Wait until all signers are fetched before submitting.",
@@ -107,31 +126,45 @@ const CreateWorkingAdvanceVoucherRequestPage = ({
         (option) => option.option_value === response
       )?.option_id as string;
 
-      const request = await createRequest(supabaseClient, {
-        requestFormValues: data,
-        formId,
-        teamMemberId: teamMember.team_member_id,
-        signers: signerList,
-        teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
-        formName: form.form_name,
-        isFormslyForm: true,
-        projectId,
-        teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
-      });
+      const additionalSignerList: FormType["form_signer"] = [];
+
+      let request: RequestTableRow;
+      if (isReferenceOnly) {
+        request = await createRequest(supabaseClient, {
+          requestFormValues: data,
+          formId: form.form_id,
+          teamMemberId: teamMember.team_member_id,
+          signers: [...signerList, ...additionalSignerList],
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
+          isFormslyForm: true,
+          projectId,
+          teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        });
+      } else {
+        request = await editRequest(supabaseClient, {
+          requestId,
+          requestFormValues: data,
+          signers: [...signerList, ...additionalSignerList],
+          teamId: teamMember.team_member_team_id,
+          requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+          formName: form.form_name,
+          teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
+        });
+      }
 
       notifications.show({
-        message: "Request created.",
+        message: `Request ${isReferenceOnly ? "created" : "edited"}.`,
         color: "green",
       });
 
       router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
+        `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
       );
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -191,7 +224,13 @@ const CreateWorkingAdvanceVoucherRequestPage = ({
     }
   };
 
-  const handleWorkingAdvanceVoucherBooleanChange = async (
+  const handleResetRequest = () => {
+    unregister(`sections.${0}`);
+    replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
+    handleProjectOrDepartmentNameChange();
+  };
+
+  const handlePettyCashVoucherBooleanChange = async (
     value: boolean,
     sectionIndex: number
   ) => {
@@ -285,47 +324,86 @@ const CreateWorkingAdvanceVoucherRequestPage = ({
   };
 
   useEffect(() => {
-    const fetchOptions = async () => {
-      setIsLoading(true);
-      try {
-        if (!activeTeam.team_id) return;
-        // add project options
-        const sectionWithProjectOptions = {
-          ...form.form_section[0],
-          section_field: [
-            {
-              ...form.form_section[0].section_field[0],
-              field_option: projectOptions,
-            },
-            form.form_section[0].section_field[1],
-            {
-              ...form.form_section[0].section_field[2],
-              field_option: departmentOptions,
-            },
-            ...form.form_section[0].section_field.slice(3, 9),
-          ],
-        };
-        replaceSection([sectionWithProjectOptions]);
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      } finally {
+    setIsLoading(true);
+    if (!team.team_id) return;
+    try {
+      const fetchRequestDetails = async () => {
+        // Fetch response
+        // Request Details Section
+        const requestDetailsSectionResponse =
+          await getNonDuplictableSectionResponse(supabaseClient, {
+            requestId,
+            fieldIdList: form.form_section[0].section_field.map(
+              (field) => field.field_id
+            ),
+          });
+
+        let requestDetailsSectionFieldList =
+          form.form_section[0].section_field.map((field) => {
+            const response = requestDetailsSectionResponse.find(
+              (response) =>
+                response.request_response_field_id === field.field_id
+            );
+            let field_option = field.field_option ?? [];
+
+            if (field.field_name === "Requesting Project") {
+              field_option = projectOptions;
+            }
+            if (field.field_name === "Department") {
+              field_option = departmentOptions;
+            }
+            return {
+              ...field,
+              field_response: response
+                ? safeParse(response.request_response)
+                : "",
+              field_option,
+            };
+          });
+
+        const isForOfficialBusiness =
+          requestDetailsSectionFieldList[9].field_response;
+
+        if (!Boolean(isForOfficialBusiness)) {
+          requestDetailsSectionFieldList =
+            requestDetailsSectionFieldList.filter(
+              (field) => field.field_name !== "Approved Official Business"
+            );
+        }
+
+        // fetch additional signer
+        handleProjectOrDepartmentNameChange();
+
+        const finalInitialRequestDetails = [
+          {
+            ...form.form_section[0],
+            section_field: requestDetailsSectionFieldList,
+          },
+        ];
+
+        replaceSection(finalInitialRequestDetails);
+        setInitialRequestDetails({ sections: finalInitialRequestDetails });
         setIsLoading(false);
-      }
-    };
-    fetchOptions();
-  }, [activeTeam]);
+      };
+      fetchRequestDetails();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [team]);
 
   return (
     <Container>
       <Title order={2} color="dimmed">
-        Create Request
+        {isReferenceOnly ? "Create" : "Edit"} Request
       </Title>
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
-        <form onSubmit={handleSubmit(handleCreateRequest)}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <Stack spacing="xl">
             <RequestFormDetails formDetails={formDetails} />
             {formSections.map((section, idx) => {
@@ -335,21 +413,31 @@ const CreateWorkingAdvanceVoucherRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    workingAdvanceVoucherFormMethods={{
+                    pettyCashVoucherFormMethods={{
                       onProjectOrDepartmentNameChange:
                         handleProjectOrDepartmentNameChange,
-                      onWorkingAdvanceVoucherBooleanChange:
-                        handleWorkingAdvanceVoucherBooleanChange,
+                      onPettyCashVoucherBooleanChange:
+                        handlePettyCashVoucherBooleanChange,
                       onEmployeeNumberChange: handleEmployeeNumberChange,
                     }}
                     formslyFormName={form.form_name}
+                    isEdit={!isReferenceOnly}
                     loadingFieldList={loadingFieldList}
                   />
                 </Box>
               );
             })}
             <RequestFormSigner signerList={signerList} />
-            <Button type="submit">Submit</Button>
+            <Flex direction="column" gap="sm">
+              <Button
+                variant="outline"
+                color="red"
+                onClick={handleResetRequest}
+              >
+                Reset
+              </Button>
+              <Button type="submit">Submit</Button>
+            </Flex>
           </Stack>
         </form>
       </FormProvider>
@@ -357,4 +445,4 @@ const CreateWorkingAdvanceVoucherRequestPage = ({
   );
 };
 
-export default CreateWorkingAdvanceVoucherRequestPage;
+export default EditPettyCashVoucherRequestPage;
