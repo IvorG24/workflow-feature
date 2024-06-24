@@ -32,6 +32,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import {
   checkIfTeamGroupMember,
   getProjectSigner,
+  getTeamDepartmentOptions,
   getTeamProjectList,
 } from "@/backend/api/get";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
@@ -118,6 +119,9 @@ const RequestFormPage = ({
     RequestSigner[]
   >([]);
   const [isFetchingProjectSigner, setIsFetchingProjectSigner] = useState(false);
+  const [departmentOptionList, setDepartmentOptionList] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   useEffect(() => {
     const checkIfMember = async () => {
@@ -289,6 +293,23 @@ const RequestFormPage = ({
       setIsFetchingProjectSigner(false);
     }
   };
+
+  useEffect(() => {
+    const fetchDepartmentOptionList = async () => {
+      const departmentList = await getTeamDepartmentOptions(supabaseClient, {
+        index: 1,
+        limit: 124,
+      });
+
+      setDepartmentOptionList(
+        departmentList.map((d) => ({
+          value: d.team_department_id,
+          label: d.team_department_name,
+        }))
+      );
+    };
+    fetchDepartmentOptionList();
+  }, []);
 
   return (
     <Container>
@@ -490,6 +511,7 @@ const RequestFormPage = ({
                 formId={form.form_id}
                 selectedProjectId={selectedProject.projectId}
                 teamMemberList={teamMemberList}
+                departmentOptionList={departmentOptionList}
               />
             )}
           </>

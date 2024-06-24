@@ -1,15 +1,12 @@
-import {
-  getProjectDepartmentSignerList,
-  getTeamDepartmentOptions,
-} from "@/backend/api/get";
+import { getFormDepartmentSigner } from "@/backend/api/get";
 import { createDepartmentSigner } from "@/backend/api/post";
 import { updateDepartmentSigner } from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
   DepartmentSigner,
-  DepartmentSignerTableInsert,
-  DepartmentSignerTableUpdate,
+  SignerTableInsert,
+  SignerTableUpdate,
   TeamMemberWithUserType,
 } from "@/utils/types";
 import {
@@ -35,14 +32,16 @@ type Props = {
   formId: string;
   selectedProjectId: string;
   teamMemberList: TeamMemberWithUserType[];
+  departmentOptionList: { value: string; label: string }[];
 };
 
-type FormValues = DepartmentSignerTableInsert | DepartmentSignerTableUpdate;
+type FormValues = SignerTableInsert | SignerTableUpdate;
 
 const FormDepartmentSignerSection = ({
   formId,
   selectedProjectId,
   teamMemberList,
+  departmentOptionList,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [departmentSignerList, setDepartmentSignerList] = useState<
@@ -52,9 +51,6 @@ const FormDepartmentSignerSection = ({
   const [isLoading, setIsLoading] = useState(false);
   const [activePage, setActivePage] = useState(1);
   const [departmentSearch, setDepartmentSearch] = useState("");
-  const [departmentOptionList, setDepartmentOptionList] = useState<
-    { value: string; label: string }[]
-  >([]);
   const [openDepartmentSignerForm, setOpenDepartmentSignerForm] =
     useState(false);
   const [isUpdatingDepartmentSigner, setIsUpdatingDepartmentSigner] =
@@ -81,15 +77,21 @@ const FormDepartmentSignerSection = ({
 
         setIsUpdatingDepartmentSigner(false);
       } else {
+        const signerOrder = departmentSignerList.filter(
+          (dept) =>
+            dept.signer_team_department_id === data.signer_team_department_id
+        ).length;
         const newSigner = await createDepartmentSigner(supabaseClient, {
-          ...(data as DepartmentSignerTableInsert),
-          department_signer_project_id: selectedProjectId,
-          department_signer_form_id: formId,
+          ...(data as SignerTableInsert),
+          signer_team_project_id: selectedProjectId,
+          signer_form_id: formId,
+          signer_order: signerOrder + 1,
+          signer_action: `${data.signer_action ?? ""}`.toLocaleUpperCase(),
         });
 
         if (!newSigner) {
           notifications.show({
-            message: "Department already has a signer.",
+            message: "Department already has a primary signer.",
             color: "red",
           });
           return;
@@ -122,17 +124,30 @@ const FormDepartmentSignerSection = ({
     try {
       setActivePage(page);
       setIsLoading(true);
-      const { data, count } = await getProjectDepartmentSignerList(
-        supabaseClient,
-        {
-          formId: formId,
-          projectId: selectedProjectId,
-          page,
-          search,
-          limit: ROW_PER_PAGE,
-        }
-      );
-      setDepartmentSignerList(data);
+      const { data, count } = await getFormDepartmentSigner(supabaseClient, {
+        formId: formId,
+        projectId: selectedProjectId,
+        page,
+        search,
+        limit: ROW_PER_PAGE,
+      });
+      const dataWithTeamMemberUser = data.map((signer) => {
+        const teamMemberMatch = teamMemberList.find(
+          (member) => member.team_member_id === signer.signer_team_member_id
+        );
+        const departmentMatch = departmentOptionList.find(
+          (option) => option.value === signer.signer_team_department_id
+        );
+
+        if (!teamMemberMatch || !departmentMatch) return signer;
+
+        return {
+          ...signer,
+          team_member_user: teamMemberMatch.team_member_user,
+          team_department_name: departmentMatch.label,
+        };
+      });
+      setDepartmentSignerList(dataWithTeamMemberUser as DepartmentSigner[]);
       setDepartmentSignerCount(count ?? 0);
     } catch (e) {
       notifications.show({
@@ -147,18 +162,6 @@ const FormDepartmentSignerSection = ({
   useEffect(() => {
     const fetchDepartmentSignerList = async () => {
       await handleFetchDepartmentSignerList(1, "");
-
-      const departmentList = await getTeamDepartmentOptions(supabaseClient, {
-        index: 1,
-        limit: 124,
-      });
-
-      setDepartmentOptionList(
-        departmentList.map((d) => ({
-          value: d.team_department_id,
-          label: d.team_department_name,
-        }))
-      );
     };
     fetchDepartmentSignerList();
   }, []);
@@ -207,7 +210,7 @@ const FormDepartmentSignerSection = ({
       </Group>
 
       <DataTable
-        idAccessor="department_signer_id"
+        idAccessor="signer_id"
         mt="xs"
         withBorder
         fw="bolder"
@@ -217,47 +220,56 @@ const FormDepartmentSignerSection = ({
         records={departmentSignerList}
         columns={[
           {
-            accessor: "department.team_department_id",
+            accessor: "signer_team_department_id",
             title: "Department",
-            render: ({ department: { team_department_name } }) => (
+            render: ({ team_department_name }) => (
               <Text>{team_department_name}</Text>
             ),
           },
           {
-            accessor: "signer.team_member_id",
+            accessor: "signer_team_member_id",
             title: "Signer",
             render: ({
-              signer: {
-                team_member_user: { user_first_name, user_last_name },
-              },
-            }) => <Text>{`${user_first_name} ${user_last_name}`}</Text>,
+              team_member_user: { user_first_name, user_last_name },
+              signer_is_primary_signer,
+            }) => (
+              <Flex gap="sm">
+                <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                {signer_is_primary_signer && (
+                  <Badge color="green">Primary</Badge>
+                )}
+              </Flex>
+            ),
           },
           {
-            accessor: "department_signer_is_primary",
-            title: "Primary",
-            render: ({ department_signer_is_primary }) =>
-              department_signer_is_primary ? (
-                <Badge color="green">Primary</Badge>
-              ) : (
-                <></>
-              ),
+            accessor: "signer_action",
+            title: "Signer Action",
+            render: ({ signer_action }) => <Text>{signer_action}</Text>,
           },
           {
-            accessor: "department_signer_id",
+            accessor: "signer_id",
             title: "Action",
-            render: ({ department_signer_id, department, signer }) => (
+            render: ({
+              signer_id,
+              signer_action,
+              signer_is_primary_signer,
+              signer_team_department_id,
+              signer_team_member_id,
+            }) => (
               <ActionIcon
                 onClick={() => {
                   setIsUpdatingDepartmentSigner(true);
                   setOpenDepartmentSignerForm(true);
-                  setValue("department_signer_id", department_signer_id);
+                  setValue("signer_id", signer_id);
                   setValue(
-                    "department_signer_department_id",
-                    department.team_department_id
+                    "signer_team_department_id",
+                    signer_team_department_id
                   );
+                  setValue("signer_team_member_id", signer_team_member_id);
+                  setValue("signer_action", signer_action.toLocaleUpperCase());
                   setValue(
-                    "department_signer_team_member_id",
-                    signer.team_member_id
+                    "signer_is_primary_signer",
+                    signer_is_primary_signer
                   );
                 }}
               >

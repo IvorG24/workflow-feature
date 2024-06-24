@@ -49,6 +49,7 @@ type Props = {
   projectOptions?: OptionTableRow[];
   duplicatableSectionIdList: string[];
   requestId: string;
+  departmentOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -56,6 +57,7 @@ const Page = ({
   projectOptions = [],
   duplicatableSectionIdList = [],
   requestId,
+  departmentOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -157,6 +159,7 @@ const Page = ({
             projectOptions={projectOptions}
             duplicatableSectionIdList={duplicatableSectionIdList}
             requestId={requestId}
+            departmentOptions={departmentOptions}
           />
         );
     }

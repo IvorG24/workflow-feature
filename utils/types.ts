@@ -493,13 +493,6 @@ export type JobTitleTableInsert =
 export type JobTitleTableUpdate =
   Database["public"]["Tables"]["employee_job_title_table"]["Update"];
 
-export type DepartmentSignerTableRow =
-  Database["public"]["Tables"]["department_signer_table"]["Row"];
-export type DepartmentSignerTableInsert =
-  Database["public"]["Tables"]["department_signer_table"]["Insert"];
-export type DepartmentSignerTableUpdate =
-  Database["public"]["Tables"]["department_signer_table"]["Update"];
-
 export type TeamDepartmentTableRow =
   Database["public"]["Tables"]["team_department_table"]["Row"];
 
@@ -2004,17 +1997,6 @@ export type JiraRFPTicketPayloadProps = {
   obTicket?: string;
 };
 
-export type DepartmentSigner = DepartmentSignerTableRow & {
-  signer: {
-    team_member_id: string;
-    team_member_user: {
-      user_first_name: string;
-      user_last_name: string;
-    };
-  };
-} & {
-  department: {
-    team_department_id: string;
-    team_department_name: string;
-  };
-};
+export type DepartmentSigner = SignerTableRow & {
+  team_member_user: TeamMemberWithUser["team_member_user"];
+} & { team_department_name: string };

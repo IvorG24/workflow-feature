@@ -13,8 +13,8 @@ import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPag
 import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv1Page/CreateRequestForPaymentv1Page";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
-import CreateWorkingAdvanceRequestPage from "@/components/CreateWorkingAdvanceVoucheRequestPage/CreateWorkingAdvanceVoucheRequestPage";
 import CreateWorkingAdvanceVoucherBalancePage from "@/components/CreateWorkingAdvanceVoucherBalancePage/CreateWorkingAdvanceVoucherBalancePage";
+import CreateWorkingAdvanceVoucherRequestPage from "@/components/CreateWorkingAdvanceVoucherRequestPage/CreateWorkingAdvanceVoucherRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
@@ -161,9 +161,10 @@ const Page = ({
 
       case "Working Advance Voucher":
         return (
-          <CreateWorkingAdvanceRequestPage
+          <CreateWorkingAdvanceVoucherRequestPage
             form={form}
             projectOptions={projectOptions}
+            departmentOptions={departmentOptions}
           />
         );
       case "Equipment Service Report":

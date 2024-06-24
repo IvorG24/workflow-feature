@@ -159,7 +159,7 @@ type RequestFormFieldsProps = {
     ) => void;
   };
   workingAdvanceVoucherFormMethods?: {
-    onProjectNameChange: (value: string | null) => void;
+    onProjectOrDepartmentNameChange: () => void;
     onWorkingAdvanceVoucherBooleanChange: (
       value: boolean,
       sectionIndex: number
@@ -649,9 +649,7 @@ const RequestFormFields = ({
                       liquidationReimbursementFormMethods?.onProjectNameChange(
                         value
                       );
-                      workingAdvanceVoucherFormMethods?.onProjectNameChange(
-                        value
-                      );
+                      workingAdvanceVoucherFormMethods?.onProjectOrDepartmentNameChange();
                       equipmentServiceReportMethods?.onProjectNameChange(value);
                       requestForPaymentFormMethods?.onProjectNameChange(value);
                       break;
@@ -760,6 +758,7 @@ const RequestFormFields = ({
                         value,
                         prevValue as string | null
                       );
+                      workingAdvanceVoucherFormMethods?.onProjectOrDepartmentNameChange();
                       break;
                     case "Type of Transfer":
                       personnelTransferRequisitionMethods?.onTypeOfTransferChange(

@@ -33,7 +33,6 @@ import {
   ConnectedRequestItemType,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
-  DepartmentSigner,
   EquipmentDescriptionTableRow,
   EquipmentLookupChoices,
   EquipmentPartTableInsert,
@@ -2670,6 +2669,7 @@ export const getProjectSignerWithTeamMember = async (
   params: {
     projectId: string;
     formId: string;
+    departmentId?: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -6705,7 +6705,7 @@ export const getExistingConnectedRequest = async (
     : null;
 };
 
-export const getProjectDepartmentSignerList = async (
+export const getFormDepartmentSigner = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     projectId: string;
@@ -6715,29 +6715,16 @@ export const getProjectDepartmentSignerList = async (
     limit: number;
   }
 ) => {
-  const { search = "", page, limit } = params;
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("department_signer_table")
-    .select(
-      "department_signer_id, department_signer_is_primary, department: department_signer_department_id(team_department_id, team_department_name), signer: department_signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name))",
-      { count: "exact" }
-    )
-    .eq("department_signer_form_id", params.formId)
-    .eq("department_signer_project_id", params.projectId);
-
-  if (search) {
-    query = query.ilike("department.team_department_name", `%${search}%`);
-  }
-
-  query = query.order("department(team_department_name)", { ascending: true });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data, count, error } = await query;
+  const { projectId, formId } = params;
+  const { data, count, error } = await supabaseClient
+    .from("signer_table")
+    .select("*", { count: "exact" })
+    .eq("signer_team_project_id", projectId)
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false)
+    .not("signer_team_department_id", "is", null);
 
   if (error) throw error;
 
-  return { data: data as unknown as DepartmentSigner[], count: Number(count) };
+  return { data, count: Number(count) };
 };

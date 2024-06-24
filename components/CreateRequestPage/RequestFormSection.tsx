@@ -130,7 +130,7 @@ type RequestFormSectionProps = {
     ) => void;
   };
   workingAdvanceVoucherFormMethods?: {
-    onProjectNameChange: (value: string | null) => void;
+    onProjectOrDepartmentNameChange: () => void;
     onWorkingAdvanceVoucherBooleanChange: (
       value: boolean,
       sectionIndex: number

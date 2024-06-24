@@ -5,7 +5,6 @@ import { Database } from "@/utils/database";
 import { escapeQuotes } from "@/utils/string";
 import {
   AppType,
-  DepartmentSignerTableUpdate,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
   EquipmentLookupChoices,
@@ -27,6 +26,7 @@ import {
   MemoFormatSubsectionTableUpdate,
   OtherExpensesTypeTableUpdate,
   SignerTableRow,
+  SignerTableUpdate,
   TeamTableRow,
   TeamTableUpdate,
   TicketTableRow,
@@ -1207,13 +1207,13 @@ export const updateRequestOtpId = async (
 // update jira project
 export const updateDepartmentSigner = async (
   supabaseClient: SupabaseClient<Database>,
-  params: DepartmentSignerTableUpdate
+  params: SignerTableUpdate
 ) => {
-  if (!params.department_signer_id) throw new Error();
+  if (!params.signer_id) throw new Error();
   const { error } = await supabaseClient
-    .from("department_signer_table")
+    .from("signer_table")
     .update(params)
-    .eq("department_signer_id", params.department_signer_id);
+    .eq("signer_id", params.signer_id);
 
   if (error) throw error;
 

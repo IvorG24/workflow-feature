@@ -1,8 +1,6 @@
+import { SignerTableInsert, SignerTableUpdate } from "@/utils/types";
 import {
-  DepartmentSignerTableInsert,
-  DepartmentSignerTableUpdate,
-} from "@/utils/types";
-import {
+  Autocomplete,
   Button,
   Checkbox,
   LoadingOverlay,
@@ -15,9 +13,7 @@ import { Controller, useFormContext } from "react-hook-form";
 type Props = {
   opened: boolean;
   close: () => void;
-  onSubmit: (
-    data: DepartmentSignerTableInsert | DepartmentSignerTableUpdate
-  ) => void;
+  onSubmit: (data: SignerTableInsert | SignerTableUpdate) => void;
   isLoading?: boolean;
   isUpdate?: boolean;
   departmentOptionList: { value: string; label: string }[];
@@ -38,9 +34,7 @@ const FormDepartmentSignerForm = ({
     handleSubmit,
     register,
     formState: { errors },
-  } = useFormContext<
-    DepartmentSignerTableInsert | DepartmentSignerTableUpdate
-  >();
+  } = useFormContext<SignerTableInsert | SignerTableUpdate>();
   return (
     <Modal
       opened={opened}
@@ -53,7 +47,7 @@ const FormDepartmentSignerForm = ({
       <LoadingOverlay overlayBlur={2} visible={Boolean(isLoading)} />
       <Stack>
         <Controller
-          name={"department_signer_department_id"}
+          name={"signer_team_department_id"}
           control={control}
           render={({ field: { onChange, value } }) => (
             <Select
@@ -62,14 +56,14 @@ const FormDepartmentSignerForm = ({
               data={departmentOptionList}
               withinPortal={true}
               value={value}
-              error={errors.department_signer_department_id?.message}
+              error={errors.signer_team_department_id?.message}
               onChange={onChange}
             />
           )}
           rules={{ required: "This field is required." }}
         />
         <Controller
-          name={"department_signer_team_member_id"}
+          name={"signer_team_member_id"}
           control={control}
           render={({ field: { onChange, value } }) => (
             <Select
@@ -78,7 +72,22 @@ const FormDepartmentSignerForm = ({
               data={signerOptionList}
               withinPortal={true}
               value={value}
-              error={errors.department_signer_team_member_id?.message}
+              error={errors.signer_team_member_id?.message}
+              onChange={onChange}
+            />
+          )}
+          rules={{ required: "This field is required." }}
+        />
+        <Controller
+          name={"signer_action"}
+          control={control}
+          render={({ field: { onChange, value } }) => (
+            <Autocomplete
+              label="Select Action"
+              data={["APPROVED", "NOTED", "PURCHASED"]}
+              withinPortal={true}
+              value={value}
+              error={errors.signer_action?.message}
               onChange={onChange}
             />
           )}
@@ -86,7 +95,7 @@ const FormDepartmentSignerForm = ({
         />
         <Checkbox
           label="Make primary signer"
-          {...register("department_signer_is_primary")}
+          {...register("signer_is_primary_signer")}
           sx={{ input: { cursor: "pointer" } }}
         />
         <form onSubmit={handleSubmit(onSubmit)}>

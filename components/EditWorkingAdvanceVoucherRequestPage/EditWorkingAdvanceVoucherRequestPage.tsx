@@ -51,12 +51,14 @@ type Props = {
   projectOptions: OptionTableRow[];
   duplicatableSectionIdList: string[];
   requestId: string;
+  departmentOptions: OptionTableRow[];
 };
 
 const EditWorkingAdvanceVoucherRequestPage = ({
   form,
   projectOptions,
   requestId,
+  departmentOptions,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -181,29 +183,38 @@ const EditWorkingAdvanceVoucherRequestPage = ({
     );
   };
 
-  const handleProjectNameChange = async (value: string | null) => {
+  const handleProjectOrDepartmentNameChange = async () => {
     try {
       setIsFetchingSigner(true);
-      if (value) {
-        const projectId = projectOptions.find(
-          (option) => option.option_value === value
-        )?.option_id;
-        if (projectId) {
-          const data = await getProjectSignerWithTeamMember(supabaseClient, {
-            projectId,
-            formId: form.form_id,
-          });
-          if (data.length !== 0) {
-            setSignerList(data as unknown as FormType["form_signer"]);
-          } else {
-            resetSigner();
-          }
+      const selectedProject = getValues(
+        `sections.0.section_field.0.field_response`
+      );
+      const selectedDepartment = getValues(
+        `sections.0.section_field.2.field_response`
+      );
+
+      const projectId = projectOptions.find(
+        (option) => option.option_value === selectedProject
+      )?.option_id;
+      const departmentId = departmentOptions.find(
+        (option) => option.option_value === selectedDepartment
+      )?.option_id;
+
+      if (projectId) {
+        const data = await getProjectSignerWithTeamMember(supabaseClient, {
+          projectId,
+          formId: form.form_id,
+          departmentId: departmentId ?? undefined,
+        });
+        if (data.length !== 0) {
+          setSignerList(data as unknown as FormType["form_signer"]);
+        } else {
+          resetSigner();
         }
-      } else {
-        resetSigner();
       }
     } catch (e) {
       setValue(`sections.0.section_field.0.field_response`, "");
+      setValue(`sections.0.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -216,10 +227,7 @@ const EditWorkingAdvanceVoucherRequestPage = ({
   const handleResetRequest = () => {
     unregister(`sections.${0}`);
     replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
-    handleProjectNameChange(
-      initialRequestDetails?.sections[0].section_field[0]
-        .field_response as string
-    );
+    handleProjectOrDepartmentNameChange();
   };
 
   const handleWorkingAdvanceVoucherBooleanChange = async (
@@ -341,6 +349,9 @@ const EditWorkingAdvanceVoucherRequestPage = ({
             if (field.field_name === "Requesting Project") {
               field_option = projectOptions;
             }
+            if (field.field_name === "Department") {
+              field_option = departmentOptions;
+            }
             return {
               ...field,
               field_response: response
@@ -361,9 +372,7 @@ const EditWorkingAdvanceVoucherRequestPage = ({
         }
 
         // fetch additional signer
-        handleProjectNameChange(
-          requestDetailsSectionFieldList[0].field_response
-        );
+        handleProjectOrDepartmentNameChange();
 
         const finalInitialRequestDetails = [
           {
@@ -405,7 +414,8 @@ const EditWorkingAdvanceVoucherRequestPage = ({
                     section={section}
                     sectionIndex={idx}
                     workingAdvanceVoucherFormMethods={{
-                      onProjectNameChange: handleProjectNameChange,
+                      onProjectOrDepartmentNameChange:
+                        handleProjectOrDepartmentNameChange,
                       onWorkingAdvanceVoucherBooleanChange:
                         handleWorkingAdvanceVoucherBooleanChange,
                       onEmployeeNumberChange: handleEmployeeNumberChange,

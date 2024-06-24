@@ -246,7 +246,8 @@ CREATE TABLE signer_table (
 
   signer_form_id UUID REFERENCES form_table(form_id) NOT NULL,
   signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  signer_team_project_id UUID REFERENCES team_project_table(team_project_id)
+  signer_team_project_id UUID REFERENCES team_project_table(team_project_id),
+  signer_team_department_id UUID REFERENCES team_department_table(team_department_id)
 );
 
 CREATE TABLE section_table (
@@ -5164,28 +5165,10 @@ RETURNS JSON as $$
           }
         });
 
-        const requestDetailsSectionFieldList = form.form_section[0].section_field.map((field) => {
-          if (field.field_name === 'Department') {
-            return {
-              ...field,
-              field_option: departmentOptions,
-            }
-          }  else {
-            return field;
-          }
-        });
-
         returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: requestDetailsSectionFieldList,
-              }
-            ],
-          },
-          projectOptions
+          form,
+          projectOptions,
+          departmentOptions
         }
         return;
       } else if (form.form_name === "Equipment Service Report") {
@@ -9559,7 +9542,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Working Advance Voucher Balance'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {

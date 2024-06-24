@@ -16,7 +16,6 @@ import {
   AttachmentTableInsert,
   CommentTableInsert,
   CreateTicketFormValues,
-  DepartmentSignerTableInsert,
   EquipmentDescriptionTableInsert,
   EquipmentPartTableInsert,
   EquipmentTableInsert,
@@ -48,6 +47,7 @@ import {
   ServiceForm,
   ServiceScopeChoiceTableInsert,
   ServiceTableInsert,
+  SignerTableInsert,
   SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
@@ -1937,21 +1937,15 @@ export const createJobTitle = async (
 
 export const createDepartmentSigner = async (
   supabaseClient: SupabaseClient<Database>,
-  params: DepartmentSignerTableInsert
+  params: SignerTableInsert
 ) => {
   // check if duplicate
   const { count, error: duplicateError } = await supabaseClient
-    .from("department_signer_table")
-    .select("department_signer_id", { count: "exact", head: true })
-    .eq("department_signer_project_id", params.department_signer_project_id)
-    .eq(
-      "department_signer_department_id",
-      params.department_signer_department_id
-    )
-    .eq(
-      "department_signer_is_primary",
-      Boolean(params.department_signer_is_primary)
-    );
+    .from("signer_table")
+    .select("signer_id", { count: "exact", head: true })
+    .eq("signer_team_project_id", `${params.signer_team_project_id}`)
+    .eq("signer_team_department_id", `${params.signer_team_department_id}`)
+    .eq("signer_is_primary_signer", Boolean(params.signer_is_primary_signer));
 
   if (duplicateError) throw duplicateError;
 
@@ -1960,7 +1954,7 @@ export const createDepartmentSigner = async (
   }
 
   const { data, error } = await supabaseClient
-    .from("department_signer_table")
+    .from("signer_table")
     .insert(params)
     .select("*");
 

@@ -38,9 +38,14 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
+  departmentOptions: OptionTableRow[];
 };
 
-const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
+const CreateWorkingAdvanceVoucherRequestPage = ({
+  form,
+  projectOptions,
+  departmentOptions,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -126,6 +131,7 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
         }-${request.request_formsly_id_serial}`
       );
     } catch (error) {
+      console.log(error);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -144,29 +150,38 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
     );
   };
 
-  const handleProjectNameChange = async (value: string | null) => {
+  const handleProjectOrDepartmentNameChange = async () => {
     try {
       setIsFetchingSigner(true);
-      if (value) {
-        const projectId = projectOptions.find(
-          (option) => option.option_value === value
-        )?.option_id;
-        if (projectId) {
-          const data = await getProjectSignerWithTeamMember(supabaseClient, {
-            projectId,
-            formId,
-          });
-          if (data.length !== 0) {
-            setSignerList(data as unknown as FormType["form_signer"]);
-          } else {
-            resetSigner();
-          }
+      const selectedProject = getValues(
+        `sections.0.section_field.0.field_response`
+      );
+      const selectedDepartment = getValues(
+        `sections.0.section_field.2.field_response`
+      );
+
+      const projectId = projectOptions.find(
+        (option) => option.option_value === selectedProject
+      )?.option_id;
+      const departmentId = departmentOptions.find(
+        (option) => option.option_value === selectedDepartment
+      )?.option_id;
+
+      if (projectId) {
+        const data = await getProjectSignerWithTeamMember(supabaseClient, {
+          projectId,
+          formId: form.form_id,
+          departmentId: departmentId ?? undefined,
+        });
+        if (data.length !== 0) {
+          setSignerList(data as unknown as FormType["form_signer"]);
+        } else {
+          resetSigner();
         }
-      } else {
-        resetSigner();
       }
     } catch (e) {
       setValue(`sections.0.section_field.0.field_response`, "");
+      setValue(`sections.0.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -282,7 +297,12 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
               ...form.form_section[0].section_field[0],
               field_option: projectOptions,
             },
-            ...form.form_section[0].section_field.slice(1, 9),
+            form.form_section[0].section_field[1],
+            {
+              ...form.form_section[0].section_field[2],
+              field_option: departmentOptions,
+            },
+            ...form.form_section[0].section_field.slice(3, 9),
           ],
         };
         replaceSection([sectionWithProjectOptions]);
@@ -316,7 +336,8 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
                     section={section}
                     sectionIndex={idx}
                     workingAdvanceVoucherFormMethods={{
-                      onProjectNameChange: handleProjectNameChange,
+                      onProjectOrDepartmentNameChange:
+                        handleProjectOrDepartmentNameChange,
                       onWorkingAdvanceVoucherBooleanChange:
                         handleWorkingAdvanceVoucherBooleanChange,
                       onEmployeeNumberChange: handleEmployeeNumberChange,
@@ -336,4 +357,4 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
   );
 };
 
-export default CreateWorkingAdvanceRequestPage;
+export default CreateWorkingAdvanceVoucherRequestPage;
