@@ -3528,62 +3528,6 @@ export type Database = {
           },
         ]
       }
-      user_table: {
-        Row: {
-          user_active_app: string
-          user_active_team_id: string | null
-          user_avatar: string | null
-          user_date_created: string
-          user_email: string
-          user_first_name: string
-          user_id: string
-          user_is_disabled: boolean
-          user_job_title: string | null
-          user_last_name: string
-          user_phone_number: string | null
-          user_signature_attachment_id: string | null
-          user_username: string
-        }
-        Insert: {
-          user_active_app?: string
-          user_active_team_id?: string | null
-          user_avatar?: string | null
-          user_date_created?: string
-          user_email: string
-          user_first_name: string
-          user_id?: string
-          user_is_disabled?: boolean
-          user_job_title?: string | null
-          user_last_name: string
-          user_phone_number?: string | null
-          user_signature_attachment_id?: string | null
-          user_username: string
-        }
-        Update: {
-          user_active_app?: string
-          user_active_team_id?: string | null
-          user_avatar?: string | null
-          user_date_created?: string
-          user_email?: string
-          user_first_name?: string
-          user_id?: string
-          user_is_disabled?: boolean
-          user_job_title?: string | null
-          user_last_name?: string
-          user_phone_number?: string | null
-          user_signature_attachment_id?: string | null
-          user_username?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_table_user_signature_attachment_id_fkey"
-            columns: ["user_signature_attachment_id"]
-            isOneToOne: false
-            referencedRelation: "attachment_table"
-            referencedColumns: ["attachment_id"]
-          },
-        ]
-      }
       user_valid_id_table: {
         Row: {
           user_valid_id_address_id: string
@@ -3811,6 +3755,12 @@ export type Database = {
         }
         Returns: Json
       }
+      agree_to_memo: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       analyze_item: {
         Args: {
           input_data: Json
@@ -3818,6 +3768,12 @@ export type Database = {
         Returns: Json
       }
       analyze_user_issued_item: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      approve_or_reject_memo: {
         Args: {
           input_data: Json
         }
@@ -4189,7 +4145,37 @@ export type Database = {
         }
         Returns: Json
       }
+      get_form: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_form_list_with_filter: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_incident_report: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_item: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_item_category_list: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_item_form_approver: {
         Args: {
           input_data: Json
         }
@@ -4202,6 +4188,18 @@ export type Database = {
         Returns: Json
       }
       get_jira_automation_data: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_member_user: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_member_user_data: {
         Args: {
           input_data: Json
         }
@@ -4231,7 +4229,19 @@ export type Database = {
         }
         Returns: Json
       }
+      get_multiple_project_signer_with_team_member: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_notification_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_project_signer_with_team_member: {
         Args: {
           input_data: Json
         }
@@ -4267,6 +4277,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_signer_with_profile: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_ssot: {
         Args: {
           input_data: Json
@@ -4274,6 +4290,36 @@ export type Database = {
         Returns: Json
       }
       get_ssot_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_team_admin_list: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_team_admin_list_with_filter: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_team_approver_list_with_filter: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_team_group_member_list: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_team_member_list: {
         Args: {
           input_data: Json
         }
@@ -4291,7 +4337,19 @@ export type Database = {
         }
         Returns: Json
       }
+      get_team_members_with_member_role: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_team_on_load: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_team_project_member_list: {
         Args: {
           input_data: Json
         }
@@ -4320,6 +4378,18 @@ export type Database = {
           user_id: string
         }
         Returns: string
+      }
+      get_user_current_signature: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_user_with_signature: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
       }
       gtrgm_compress: {
         Args: {
@@ -4483,6 +4553,78 @@ export type Database = {
         }
         Returns: undefined
       }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+  user_schema: {
+    Tables: {
+      user_table: {
+        Row: {
+          user_active_app: string
+          user_active_team_id: string | null
+          user_avatar: string | null
+          user_date_created: string
+          user_email: string
+          user_first_name: string
+          user_id: string
+          user_is_disabled: boolean
+          user_job_title: string | null
+          user_last_name: string
+          user_phone_number: string | null
+          user_signature_attachment_id: string | null
+          user_username: string
+        }
+        Insert: {
+          user_active_app?: string
+          user_active_team_id?: string | null
+          user_avatar?: string | null
+          user_date_created?: string
+          user_email: string
+          user_first_name: string
+          user_id?: string
+          user_is_disabled?: boolean
+          user_job_title?: string | null
+          user_last_name: string
+          user_phone_number?: string | null
+          user_signature_attachment_id?: string | null
+          user_username: string
+        }
+        Update: {
+          user_active_app?: string
+          user_active_team_id?: string | null
+          user_avatar?: string | null
+          user_date_created?: string
+          user_email?: string
+          user_first_name?: string
+          user_id?: string
+          user_is_disabled?: boolean
+          user_job_title?: string | null
+          user_last_name?: string
+          user_phone_number?: string | null
+          user_signature_attachment_id?: string | null
+          user_username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_table_user_signature_attachment_id_fkey"
+            columns: ["user_signature_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "attachment_table"
+            referencedColumns: ["attachment_id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

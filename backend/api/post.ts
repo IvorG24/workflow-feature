@@ -247,6 +247,7 @@ export const checkIfEmailExists = async (
   }
 ) => {
   const { data, error } = await supabaseClient
+    .schema("user_schema")
     .from("user_table")
     .select("user_email")
     .eq("user_email", params.email);
@@ -1105,46 +1106,24 @@ export const agreeToMemo = async (
   supabaseClient: SupabaseClient<Database>,
   params: { memoId: string; teamMemberId: string }
 ) => {
-  const { memoId, teamMemberId } = params;
+  const { data, error } = await supabaseClient
+    .rpc("agree_to_memo", { input_data: params })
+    .select("*");
+  if (error) throw error;
 
-  const { count, error: CountError } = await supabaseClient
-    .from("memo_agreement_table")
-    .select("*", { count: "exact" })
-    .eq("memo_agreement_by_team_member_id", teamMemberId)
-    .eq("memo_agreement_memo_id", memoId);
-
-  if (CountError) throw Error;
-
-  if (Number(count) === 0) {
-    const { data, error } = await supabaseClient
-      .from("memo_agreement_table")
-      .insert({
-        memo_agreement_by_team_member_id: teamMemberId,
-        memo_agreement_memo_id: memoId,
-      })
-      .select(
-        "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name, user_employee_number: user_employee_number_table(user_employee_number)))"
-      )
-      .maybeSingle();
-
-    if (error) throw Error;
-
-    return data as unknown as MemoAgreementTableRow & {
-      memo_agreement_by_team_member: {
-        user_data: {
-          user_avatar: string;
-          user_id: string;
-          user_first_name: string;
-          user_last_name: string;
-          user_employee_number: {
-            user_employee_number: string;
-          }[];
-        };
+  return data as unknown as MemoAgreementTableRow & {
+    memo_agreement_by_team_member: {
+      user_data: {
+        user_avatar: string;
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_employee_number: {
+          user_employee_number: string;
+        }[];
       };
     };
-  }
-
-  return null;
+  };
 };
 
 // create reference memo

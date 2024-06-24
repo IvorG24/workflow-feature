@@ -1,5 +1,7 @@
 import { ItemOrderType } from "@/components/ItemFormPage/ItemList/ItemList";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
+import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
+import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   APP_SOURCE_ID,
@@ -39,9 +41,11 @@ import {
   EquipmentTableRow,
   FetchRequestListParams,
   FieldTableRow,
+  FormTableRow,
   FormType,
   InitialFormType,
   ItemCategoryType,
+  ItemCategoryWithSigner,
   ItemDescriptionFieldWithUoM,
   ItemDescriptionTableRow,
   ItemWithDescriptionAndField,
@@ -58,8 +62,6 @@ import {
   OptionTableRow,
   OtherExpensesTypeTableRow,
   ReferenceMemoType,
-  RequestByFormType,
-  RequestDashboardOverviewData,
   RequestListItemType,
   RequestListOnLoad,
   RequestProjectSignerType,
@@ -82,10 +84,8 @@ import {
   TicketListType,
   TicketPageOnLoad,
   TicketStatusType,
-  TicketType,
   TransactionTableRow,
   UserIssuedItem,
-  UserTableRow,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -176,6 +176,7 @@ export const getUser = async (
 ) => {
   const { userId } = params;
   const { data, error } = await supabaseClient
+    .schema("user_schema")
     .from("user_table")
     .select("*")
     .eq("user_is_disabled", false)
@@ -323,28 +324,11 @@ export const getUserWithSignature = async (
     userId: string;
   }
 ) => {
-  const { userId } = params;
   const { data, error } = await supabaseClient
-    .from("user_table")
-    .select(
-      "*, user_signature_attachment: user_signature_attachment_id(*), user_employee_number: user_employee_number_table(user_employee_number, user_employee_number_is_disabled)"
-    )
-    .eq("user_id", userId)
-    .eq("user_employee_number.user_employee_number_is_disabled", false)
-    .single();
+    .rpc("get_user_with_signature", { input_data: params })
+    .select("*");
   if (error) throw error;
-
-  const formattedData = data as unknown as UserTableRow & {
-    user_employee_number: { user_employee_number: string }[];
-  };
-
-  return {
-    ...formattedData,
-    user_employee_number:
-      formattedData.user_employee_number.length !== 0
-        ? formattedData.user_employee_number[0].user_employee_number
-        : null,
-  };
+  return data;
 };
 
 // Check username if it already exists
@@ -356,138 +340,13 @@ export const checkUsername = async (
 ) => {
   const { username } = params;
   const { data, error } = await supabaseClient
+    .schema("user_schema")
     .from("user_table")
     .select("user_username")
     .eq("user_username", username)
     .maybeSingle();
   if (error) throw error;
   return Boolean(data);
-};
-
-// Get specific request
-export const getRequest = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-  }
-) => {
-  const { requestId } = params;
-
-  const { data, error } = await supabaseClient
-    .from("request_table")
-    .select(
-      `*, 
-      request_team_member: request_team_member_id!inner(
-        team_member_team_id, 
-        team_member_user: team_member_user_id!inner(
-          user_id, 
-          user_first_name, 
-          user_last_name, 
-          user_username, 
-          user_avatar
-        )
-      ), 
-      request_signer: request_signer_table!inner(
-        request_signer_id, 
-        request_signer_status, 
-        request_signer_signer: request_signer_signer_id!inner(
-          signer_id, 
-          signer_is_primary_signer, 
-          signer_action, 
-          signer_order, 
-          signer_form_id,
-          signer_team_member: signer_team_member_id!inner(
-            team_member_id, 
-            team_member_user: team_member_user_id!inner(
-              user_first_name, 
-              user_last_name
-            )
-          )
-        )
-      ), 
-      request_comment: comment_table(
-        comment_id, 
-        comment_date_created, 
-        comment_content, 
-        comment_is_edited,
-        comment_last_updated, 
-        comment_type, 
-        comment_team_member_id, 
-        comment_team_member: comment_team_member_id!inner(
-          team_member_user: team_member_user_id!inner(
-            user_id, 
-            user_first_name, 
-            user_last_name, 
-            user_username, 
-            user_avatar
-          )
-        )
-      ), 
-      request_form: request_form_id!inner(
-        form_id, 
-        form_name, 
-        form_description, 
-        form_is_formsly_form, 
-        form_section: section_table!inner(
-          *, 
-          section_field: field_table!inner(
-            *, 
-            field_option: option_table(*), 
-            field_response: request_response_table(*)
-          )
-        )
-      ),
-      request_project: request_project_id(team_project_name)`
-    )
-    .eq("request_id", requestId)
-    .eq("request_is_disabled", false)
-    .eq(
-      "request_form.form_section.section_field.field_response.request_response_request_id",
-      requestId
-    )
-    .eq("request_comment.comment_is_disabled", false)
-    .order("comment_date_created", {
-      foreignTable: "comment_table",
-      ascending: false,
-    })
-    .maybeSingle();
-  if (error) throw error;
-
-  const formattedRequest = data as unknown as RequestWithResponseType;
-  const sortedSection = formattedRequest.request_form.form_section
-    .sort((a, b) => {
-      return a.section_order - b.section_order;
-    })
-    .map((section) => {
-      const sortedFields = section.section_field
-        .sort((a, b) => {
-          return a.field_order - b.field_order;
-        })
-        .map((field) => {
-          let sortedOption = field.field_option;
-          if (field.field_option) {
-            sortedOption = field.field_option.sort((a, b) => {
-              return a.option_order - b.option_order;
-            });
-          }
-          return {
-            ...field,
-            field_option: sortedOption,
-          };
-        });
-      return {
-        ...section,
-        section_field: sortedFields,
-      };
-    });
-
-  return {
-    ...formattedRequest,
-    request_form: {
-      ...formattedRequest.request_form,
-      form_section: sortedSection,
-    },
-  };
 };
 
 // Get specific team
@@ -545,123 +404,17 @@ export const getFormListWithFilter = async (
     search?: string;
   }
 ) => {
-  const {
-    teamId,
-    app,
-    page,
-    limit,
-    creator,
-    status,
-    sort = "descending",
-    search,
-  } = params;
-
-  const start = (page - 1) * limit;
-  let query = supabaseClient
-    .from("form_table")
-    .select(
-      "*, form_team_member:form_team_member_id!inner(*, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar))",
-      {
-        count: "exact",
-      }
-    )
-    .eq("form_team_member.team_member_team_id", teamId)
-    .eq("form_is_disabled", false)
-    .eq("form_app", app);
-
-  if (creator) {
-    let creatorCondition = "";
-    creator.forEach((value) => {
-      creatorCondition += `form_team_member_id.eq.${value}, `;
-    });
-    query = query.or(creatorCondition.slice(0, -2));
-  }
-
-  if (status) {
-    query = query.eq("form_is_hidden", status === "hidden");
-  }
-
-  if (search) {
-    query = query.ilike("form_name", `%${search}%`);
-  }
-
-  query = query
-    .order("form_is_formsly_form", {
-      ascending: false,
-    })
-    .order("form_date_created", {
-      ascending: sort === "ascending",
-    });
-
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data: formList, count, error } = await query;
-  if (error) throw error;
-
-  const sortedFormList = sortFormList(formList, FORMSLY_FORM_ORDER);
-
-  return { data: sortedFormList, count };
-};
-
-// Get all team members
-export const getAllTeamMembers = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    search?: string;
-  }
-) => {
-  const { teamId } = params;
   const { data, error } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
-    )
-    .eq("team_member_team_id", teamId)
-    .eq("team_member_is_disabled", false);
+    .rpc("get_form_list_with_filter", { input_data: params })
+    .select("*");
   if (error) throw error;
-
-  return data;
-};
-
-// Get team's all approver members
-export const getTeamApproverList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-  }
-) => {
-  const { teamId } = params;
-  const { data, error } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      "team_member_id, team_member_role, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name)"
-    )
-    .eq("team_member_team_id", teamId)
-    .eq("team_member_is_disabled", false)
-    .or("team_member_role.eq.APPROVER, team_member_role.eq.OWNER");
-  if (error) throw error;
-
   const formattedData = data as unknown as {
-    team_member_id: string;
-    team_member_role: string;
-    team_member_user: {
-      user_id: string;
-      user_first_name: string;
-      user_last_name: string;
-    };
-  }[];
+    data: FormTableRow[];
+    count: number;
+  };
+  const sortedFormList = sortFormList(formattedData.data, FORMSLY_FORM_ORDER);
 
-  return formattedData.sort((a, b) =>
-    `${a.team_member_user.user_first_name}` >
-    `${b.team_member_user.user_first_name}`
-      ? 1
-      : `${b.team_member_user.user_first_name}` >
-        `${a.team_member_user.user_first_name}`
-      ? -1
-      : 0
-  );
+  return { data: sortedFormList, count: formattedData.count };
 };
 
 // Get specific form
@@ -671,46 +424,9 @@ export const getForm = async (
     formId: string;
   }
 ) => {
-  const { formId } = params;
   const { data, error } = await supabaseClient
-    .from("form_table")
-    .select(
-      `
-        *,
-        form_team_member: form_team_member_id(
-          team_member_id,
-          team_member_user: team_member_user_id(
-            *
-          )
-        ),
-        form_team_group: form_team_group_table(
-          team_group: team_group_id(
-            team_group_id,
-            team_group_name,
-            team_group_is_disabled
-          )
-        ),
-        form_signer: signer_table(
-          signer_id, 
-          signer_is_primary_signer, 
-          signer_action, 
-          signer_order,
-          signer_is_disabled, 
-          signer_team_project_id,
-          signer_team_member: signer_team_member_id(
-            team_member_id,
-            team_member_user: team_member_user_id(
-              *
-            )
-          )
-        )
-      `
-    )
-    .eq("form_id", formId)
-    .eq("form_team_group.team_group.team_group_is_disabled", false)
-    .eq("form_signer.signer_is_disabled", false)
-    .is("form_signer.signer_team_project_id", null)
-    .single();
+    .rpc("get_form", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   return data as unknown as InitialFormType;
@@ -981,58 +697,9 @@ export const getItem = async (
   supabaseClient: SupabaseClient<Database>,
   params: { teamId: string; itemName: string }
 ) => {
-  const { teamId, itemName } = params;
-
   const { data, error } = await supabaseClient
-    .from("item_table")
-    .select(
-      `
-        *,
-        item_description: item_description_table(
-          *, 
-          item_description_field: item_description_field_table(
-            *, 
-            item_description_field_uom: item_description_field_uom_table(
-              item_description_field_uom
-            )
-          ), 
-          item_field: item_description_field_id(
-            *
-          )
-        ),
-        item_category: item_category_id(
-          item_category_signer: item_category_signer_id(
-            *,
-            signer_team_member: signer_team_member_id(
-              team_member_id,
-              team_member_user: team_member_user_id(
-                user_id,
-                user_first_name,
-                user_last_name,
-                user_avatar
-              )
-            )
-          )
-        )
-      `
-    )
-    .eq("item_team_id", teamId)
-    .eq("item_general_name", itemName)
-    .eq("item_is_disabled", false)
-    .eq("item_is_available", true)
-    .eq("item_description.item_description_is_disabled", false)
-    .eq("item_description.item_description_is_available", true)
-    .eq(
-      "item_description.item_description_field.item_description_field_is_disabled",
-      false
-    )
-    .eq(
-      "item_description.item_description_field.item_description_field_is_available",
-      true
-    )
-    .eq("item_category.item_category_is_disabled", false)
-    .single();
-
+    .rpc("get_item", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   return data as unknown as ItemWithDescriptionAndField;
@@ -1143,25 +810,9 @@ export const getTeamMemberList = async (
     search?: string;
   }
 ) => {
-  const { teamId, search = "" } = params;
-
-  let query = supabaseClient
-    .from("team_member_table")
-    .select(
-      "team_member_id, team_member_role, team_member_user: team_member_user_id!inner(user_id, user_first_name, user_last_name, user_avatar, user_email)"
-    )
-    .eq("team_member_team_id", teamId)
-    .eq("team_member_is_disabled", false)
-    .eq("team_member_user.user_is_disabled", false);
-
-  if (search) {
-    query = query.or(
-      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
-      { foreignTable: "team_member_user_id" }
-    );
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabaseClient
+    .rpc("get_team_member_list", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   return data as unknown as TeamMemberType[];
@@ -1488,67 +1139,6 @@ export const checkReceiver = async (
   if (error) throw error;
 
   return Boolean(count);
-};
-
-// Get request by formId
-export const getRequestListByForm = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    formId?: string;
-  }
-) => {
-  const { formId, teamId } = params;
-  let query = supabaseClient
-    .from("request_table")
-    .select(
-      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_form: request_form_id!inner(form_id, form_name, form_description, form_is_formsly_form, form_section: section_table(*, section_field: field_table(*, field_option: option_table(*), field_response: request_response_table!inner(request_response_field_id, request_response_id, request_response, request_response_duplicatable_section_id, request_response_request_id))))",
-      { count: "exact" }
-    )
-    .eq("request_team_member.team_member_team_id", teamId)
-    .eq("request_is_disabled", false)
-    .eq("request_form.form_is_disabled", false);
-
-  if (formId) {
-    const formCondition = `request_form_id.eq.${formId}`;
-    query = query.or(formCondition);
-  }
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  const requestList = data as unknown as RequestByFormType[];
-
-  return { data: requestList, count };
-};
-
-export const getDashboardOverViewData = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-    formId?: string;
-  }
-) => {
-  const { formId, teamId } = params;
-  let query = supabaseClient
-    .from("request_table")
-    .select(
-      "request_id, request_date_created, request_status, request_team_member: request_team_member_id!inner(team_member_id, team_member_user: team_member_user_id(user_id, user_first_name, user_last_name, user_avatar)), request_signer: request_signer_table(request_signer_id, request_signer_status, request_signer_signer: request_signer_signer_id(signer_id, signer_is_primary_signer, signer_action, signer_order, signer_team_member: signer_team_member_id(team_member_id, team_member_user: team_member_user_id(user_first_name, user_last_name, user_avatar)))), request_form: request_form_id!inner(form_id, form_name, form_description, form_is_formsly_form)))",
-      { count: "exact" }
-    )
-    .eq("request_team_member.team_member_team_id", teamId)
-    .eq("request_is_disabled", false)
-    .eq("request_form.form_is_disabled", false);
-
-  if (formId) {
-    const formCondition = `request_form_id.eq.${formId}`;
-    query = query.or(formCondition);
-  }
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  const requestList = data as unknown as RequestDashboardOverviewData[];
-
-  return { data: requestList, count };
 };
 
 // Get specific formsly form by name and team id
@@ -2635,22 +2225,6 @@ export const getTeamMemberOnLoad = async (
   return data as unknown as TeamMemberOnLoad;
 };
 
-// Get team member
-export const getTeamMember = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { teamMemberId: string }
-) => {
-  const { teamMemberId } = params;
-  const { data, error } = await supabaseClient
-    .from("team_member_table")
-    .select("*, team_member_user: team_member_user_id(*)")
-    .eq("team_member_id", teamMemberId)
-    .single();
-  if (error) throw error;
-
-  return data;
-};
-
 // Get team group list
 export const getTeamGroupList = async (
   supabaseClient: SupabaseClient<Database>,
@@ -2797,93 +2371,19 @@ export const getTeamGroupMemberList = async (
     limit: number;
   }
 ) => {
-  const { groupId, search = "", page, limit } = params;
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("team_group_member_table")
-    .select(
-      `
-        team_group_member_id,
-        team_member: team_member_id!inner(
-          team_member_id,
-          team_member_date_created, 
-          team_member_user: team_member_user_id!inner(
-            user_id, 
-            user_first_name, 
-            user_last_name,
-            user_avatar, 
-            user_email
-          ),
-          team_member_project: team_project_member_table(
-            team_project: team_project_id!inner(team_project_name)
-          )
-        )
-      `,
-      { count: "exact" }
-    )
-    .eq("team_group_id", groupId)
-    .eq("team_member.team_member_is_disabled", false)
-    .eq(
-      "team_member.team_member_project.team_project.team_project_is_disabled",
-      false
-    );
-
-  if (search) {
-    query = query.or(
-      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
-      { foreignTable: "team_member.team_member_user" }
-    );
-  }
-
-  query = query.order("user_first_name", {
-    ascending: true,
-    foreignTable: "team_member.team_member_user",
-  });
-  query = query.order("user_last_name", {
-    ascending: true,
-    foreignTable: "team_member.team_member_user",
-  });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data, count, error } = await query;
-
+  const { data, error } = await supabaseClient
+    .rpc("get_team_group_member_list", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   const formattedData = data as unknown as {
-    team_group_member_id: string;
-    team_member: {
-      team_member_id: string;
-      team_member_date_created: string;
-      team_member_user: {
-        user_id: string;
-        user_first_name: string;
-        user_last_name: string;
-        user_avatar: string;
-        user_email: string;
-      };
-      team_member_project: {
-        team_project: {
-          team_project_name: string;
-        };
-      }[];
-    };
-  }[];
+    data: TeamMemberType[];
+    count: number;
+  };
 
   return {
-    data: formattedData.map((data) => {
-      return {
-        ...data,
-        team_member: {
-          ...data.team_member,
-          team_member_project_list: data.team_member.team_member_project.map(
-            (project) => project.team_project.team_project_name
-          ),
-        },
-      };
-    }),
-    count,
+    data: formattedData.data,
+    count: formattedData.count,
   };
 };
 
@@ -2914,85 +2414,19 @@ export const getTeamProjectMemberList = async (
     limit: number;
   }
 ) => {
-  const { projectId, search = "", page, limit } = params;
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("team_project_member_table")
-    .select(
-      `
-        team_project_member_id,
-        team_member: team_member_id!inner(
-          team_member_id,
-          team_member_date_created, 
-          team_member_role,
-          team_member_user: team_member_user_id!inner(
-            user_id, 
-            user_first_name, 
-            user_last_name,
-            user_avatar, 
-            user_email
-          ),
-          team_member_group: team_group_member_table(
-            team_group: team_group_id(team_group_name)
-          )
-        )
-      `,
-      { count: "exact" }
-    )
-    .eq("team_project_id", projectId)
-    .eq("team_member.team_member_is_disabled", false);
-
-  if (search) {
-    query = query.or(
-      `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`,
-      { foreignTable: "team_member.team_member_user" }
-    );
-  }
-
-  query = query.order("team_member_date_created", {
-    ascending: false,
-    foreignTable: "team_member",
-  });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data, count, error } = await query;
+  const { data, error } = await supabaseClient
+    .rpc("get_team_project_member_list", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   const formattedData = data as unknown as {
-    team_group_member_id: string;
-    team_member: {
-      team_member_id: string;
-      team_member_date_created: string;
-      team_member_user: {
-        user_id: string;
-        user_first_name: string;
-        user_last_name: string;
-        user_avatar: string;
-        user_email: string;
-      };
-      team_member_group: {
-        team_group: {
-          team_group_name: string;
-        };
-      }[];
-    };
-  }[];
+    data: TeamMemberType[];
+    count: number;
+  };
 
   return {
-    data: formattedData.map((data) => {
-      return {
-        ...data,
-        team_member: {
-          ...data.team_member,
-          team_member_group_list: data.team_member.team_member_group.map(
-            (group) => group.team_group.team_group_name
-          ),
-        },
-      };
-    }),
-    count,
+    data: formattedData.data,
+    count: formattedData.count,
   };
 };
 
@@ -3238,30 +2672,9 @@ export const getProjectSignerWithTeamMember = async (
     formId: string;
   }
 ) => {
-  const { projectId, formId } = params;
   const { data, error } = await supabaseClient
-    .from("signer_table")
-    .select(
-      `signer_id, 
-      signer_is_primary_signer, 
-      signer_action, 
-      signer_order,
-      signer_is_disabled, 
-      signer_team_project_id,
-      signer_team_member: signer_team_member_id(
-        team_member_id, 
-        team_member_user: team_member_user_id(
-          user_id, 
-          user_first_name, 
-          user_last_name, 
-          user_avatar
-        )
-      )`
-    )
-    .eq("signer_team_project_id", projectId)
-    .eq("signer_form_id", formId)
-    .eq("signer_is_disabled", false);
-
+    .rpc("get_project_signer_with_team_member", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   return data as unknown as FormType["form_signer"];
@@ -3295,32 +2708,9 @@ export const getMultipleProjectSignerWithTeamMember = async (
     formId: string;
   }
 ) => {
-  const { projectName, formId } = params;
   const { data, error } = await supabaseClient
-    .from("signer_table")
-    .select(
-      `signer_id, 
-      signer_is_primary_signer, 
-      signer_action, 
-      signer_order,
-      signer_is_disabled, 
-      signer_team_project: signer_team_project_id!inner(
-        team_project_name
-      ),
-      signer_team_member: signer_team_member_id(
-        team_member_id, 
-        team_member_user: team_member_user_id(
-          user_id, 
-          user_first_name, 
-          user_last_name, 
-          user_avatar
-        )
-      )`
-    )
-    .in("signer_team_project.team_project_name", projectName)
-    .eq("signer_form_id", formId)
-    .eq("signer_is_disabled", false);
-
+    .rpc("get_multiple_project_signer_with_team_member", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   return data;
@@ -3500,51 +2890,19 @@ export const getTeamApproverListWithFilter = async (
     limit: number;
   }
 ) => {
-  const { teamId, search = "", page, limit } = params;
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("team_member_table")
-    .select(
-      `
-        team_member_id,
-        team_member_date_created, 
-        team_member_user: team_member_user_id!inner(
-          user_id, 
-          user_first_name, 
-          user_last_name,
-          user_avatar, 
-          user_email
-        )
-      `,
-      { count: "exact" }
-    )
-    .eq("team_member_role", "APPROVER")
-    .eq("team_member_team_id", teamId)
-    .eq("team_member_is_disabled", false);
-
-  if (search) {
-    let orQuery = "";
-    search.split(" ").map((search) => {
-      orQuery += `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`;
-    });
-    query = query.or(orQuery, { foreignTable: "team_member_user" });
-  }
-
-  query = query.order("team_member_user(user_first_name)", {
-    ascending: true,
-    foreignTable: "",
-  });
-
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data, count, error } = await query;
+  const { data, error } = await supabaseClient
+    .rpc("get_team_approver_list_with_filter", { input_data: params })
+    .select("*");
   if (error) throw error;
 
+  const formattedData = data as unknown as {
+    data: TeamApproverType[];
+    count: number;
+  };
+
   return {
-    data,
-    count,
+    data: formattedData.data,
+    count: formattedData.count,
   };
 };
 
@@ -3558,51 +2916,19 @@ export const getTeamAdminListWithFilter = async (
     limit: number;
   }
 ) => {
-  const { teamId, search = "", page, limit } = params;
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("team_member_table")
-    .select(
-      `
-        team_member_id,
-        team_member_date_created, 
-        team_member_user: team_member_user_id!inner(
-          user_id, 
-          user_first_name, 
-          user_last_name,
-          user_avatar, 
-          user_email
-        )
-      `,
-      { count: "exact" }
-    )
-    .eq("team_member_role", "ADMIN")
-    .eq("team_member_team_id", teamId)
-    .eq("team_member_is_disabled", false);
-
-  if (search) {
-    let orQuery = "";
-    search.split(" ").map((search) => {
-      orQuery += `user_first_name.ilike.%${search}%, user_last_name.ilike.%${search}%, user_email.ilike.%${search}%`;
-    });
-    query = query.or(orQuery, { foreignTable: "team_member_user" });
-  }
-
-  query = query.order("team_member_user(user_first_name)", {
-    ascending: true,
-    foreignTable: "",
-  });
-
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data, count, error } = await query;
+  const { data, error } = await supabaseClient
+    .rpc("get_team_admin_list_with_filter", { input_data: params })
+    .select("*");
   if (error) throw error;
 
+  const formattedData = data as unknown as {
+    data: TeamAdminType[];
+    count: number;
+  };
+
   return {
-    data,
-    count,
+    data: formattedData.data,
+    count: formattedData.count,
   };
 };
 
@@ -3613,27 +2939,11 @@ export const getTeamMembersWithMemberRole = async (
     teamId: string;
   }
 ) => {
-  const { teamId } = params;
-
   const { data, error } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      `
-      team_member_id,
-      team_member_date_created, 
-      team_member_user: team_member_user_id!inner(
-        user_id, 
-        user_first_name, 
-        user_last_name,
-        user_avatar, 
-        user_email
-      )
-    `
-    )
-    .eq("team_member_team_id", teamId)
-    .eq("team_member_is_disabled", false)
-    .eq("team_member_role", "MEMBER");
+    .rpc("get_team_members_with_member_role", { input_data: params })
+    .select("*");
   if (error) throw error;
+
   return data;
 };
 
@@ -3643,19 +2953,10 @@ export const getMemberUserData = async (
     teamMemberId: string;
   }
 ) => {
-  const { data } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      `team_member_user: team_member_user_id!inner(
-        user_id, 
-        user_first_name, 
-        user_last_name, 
-        user_username, 
-        user_avatar
-      )`
-    )
-    .eq("team_member_id", params.teamMemberId)
-    .limit(1);
+  const { data, error } = await supabaseClient
+    .rpc("get_member_user_data", { input_data: params })
+    .select("*");
+  if (error) throw error;
 
   if (data) {
     const commentTeamMember = data[0];
@@ -4060,35 +3361,6 @@ export const getTicketOnLoad = async (
 
   if (error) throw error;
   return data as TicketPageOnLoad;
-};
-
-// Get ticket member user data
-export const getTicketMemberUserData = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamMemberId: string;
-  }
-) => {
-  const { data } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      `team_member_user: team_member_user_id!inner(
-        user_id, 
-        user_first_name, 
-        user_last_name, 
-        user_username, 
-        user_avatar
-      )`
-    )
-    .eq("team_member_id", params.teamMemberId)
-    .limit(1);
-
-  if (data) {
-    const commentTeamMember = data[0];
-    return commentTeamMember as unknown as TicketType["ticket_comment"][0]["ticket_comment_team_member"];
-  } else {
-    return null;
-  }
 };
 
 // Get ticket list
@@ -4722,6 +3994,7 @@ export const checkIfEmailsOnboarded = async (
 ) => {
   const { emailList } = params;
   const { data, error } = await supabaseClient
+    .schema("user_schema")
     .from("user_table")
     .select("user_email")
     .in("user_email", emailList);
@@ -4910,7 +4183,6 @@ export const getTeamMemoSignerList = async (
     teamId: string;
   }
 ) => {
-  console.log(params.teamId);
   const { data, error } = await supabaseClient.rpc("get_memo_signer_list", {
     input_data: params,
   });
@@ -4939,7 +4211,6 @@ export const getTeamMemoSignerList = async (
         : "",
     };
   });
-  console.log(formattedData);
   return formattedData;
 };
 
@@ -5473,20 +4744,9 @@ export const getSignerWithProfile = async (
     projectId: string;
   }
 ) => {
-  const { formId, projectId } = params;
-  const query = supabaseClient
-    .from("signer_table")
-    .select(
-      "*, signer_team_member: team_member_table(*, team_member_user: user_table(*))"
-    )
-    .eq("signer_form_id", formId);
-
-  if (projectId.length > 0) {
-    query.eq("signer_team_project_id", projectId);
-  } else {
-    query.is("signer_team_project_id", null);
-  }
-  const { data, error } = await query;
+  const { data, error } = await supabaseClient
+    .rpc("get_signer_with_profile", { input_data: params })
+    .select("*");
   if (error) throw error;
 
   return data as SignerWithProfile[];
@@ -5565,21 +4825,10 @@ export const getMemberUser = async (
     teamMemberId: string;
   }
 ) => {
-  const { data } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      `
-      *,
-      team_member_user: team_member_user_id!inner(
-        user_id, 
-        user_first_name, 
-        user_last_name, 
-        user_username, 
-        user_avatar
-      )`
-    )
-    .eq("team_member_id", params.teamMemberId)
-    .single();
+  const { data, error } = await supabaseClient
+    .rpc("get_member_user", { input_data: params })
+    .select("*");
+  if (error) throw error;
 
   return data as unknown as TeamMemberWithUser;
 };
@@ -6473,14 +5722,11 @@ export const getUserCurrentSignature = async (
     userId: string;
   }
 ) => {
-  const { userId } = params;
   const { data, error } = await supabaseClient
-    .from("user_table")
-    .select(
-      "user_signature_attachment: user_signature_attachment_id!inner(attachment_value, attachment_bucket)"
-    )
-    .eq("user_id", userId)
-    .maybeSingle();
+    .rpc("get_user_current_signature", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
   const formattedData = data as unknown as {
     user_signature_attachment: {
       attachment_value: string;
@@ -6488,7 +5734,6 @@ export const getUserCurrentSignature = async (
     };
   };
 
-  if (error) throw error;
   return formattedData
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${formattedData.user_signature_attachment.attachment_bucket}/${formattedData.user_signature_attachment.attachment_value}`
     : "";
@@ -6803,47 +6048,12 @@ export const getItemFormApprover = async (
     teamId: string;
   }
 ) => {
-  const { teamId } = params;
   const { data, error } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      `
-        team_member_id,
-        team_member_user: team_member_user_id!inner(
-          user_first_name,
-          user_last_name
-        )
-      `
-    )
-    .eq("team_member_role", "APPROVER")
-    .eq("team_member_is_disabled", false)
-    .eq("team_member_team_id", teamId)
-    .eq("team_member_user.user_is_disabled", false)
-    .order("team_member_user(user_first_name)", {
-      ascending: true,
-      foreignTable: "",
-    })
-    .order("team_member_user(user_last_name)", {
-      ascending: true,
-      foreignTable: "",
-    });
-
+    .rpc("get_item_form_approver", { input_data: params })
+    .select("*");
   if (error) throw error;
 
-  const formattedData = data as unknown as {
-    team_member_id: string;
-    team_member_user: {
-      user_first_name: string;
-      user_last_name: string;
-    };
-  }[];
-
-  return formattedData.map((teamMember) => {
-    return {
-      value: teamMember.team_member_id,
-      label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
-    };
-  });
+  return data;
 };
 
 // check if item category already exists
@@ -6873,49 +6083,19 @@ export const getItemCategoryList = async (
     search?: string;
   }
 ) => {
-  const { formId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from("item_category_table")
-    .select(
-      `
-        *,
-        item_category_signer: item_category_signer_id!inner(
-          signer_id,
-          signer_form_id,
-          signer_team_member: signer_team_member_id(
-            team_member_id,
-            team_member_user: team_member_user_id(
-              user_id,
-              user_first_name,
-              user_last_name,
-              user_avatar
-            )
-          )
-        )
-      `,
-      { count: "exact" }
-    )
-    .eq("item_category_is_disabled", false)
-    .eq("item_category_signer.signer_form_id", formId);
-
-  if (search) {
-    query = query.ilike("item_category", `%${search}%`);
-  }
-
-  query.order("item_category", { ascending: true });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
+  const { data, error } = await supabaseClient
+    .rpc("get_item_category_list", { input_data: params })
+    .select("*");
   if (error) throw error;
 
+  const formattedData = data as unknown as {
+    data: ItemCategoryWithSigner[];
+    count: number;
+  };
+
   return {
-    data,
-    count,
+    data: formattedData.data,
+    count: formattedData.count,
   };
 };
 
@@ -7092,36 +6272,12 @@ export const getTeamAdminList = async (
     teamId: string;
   }
 ) => {
-  const { teamId } = params;
   const { data, error } = await supabaseClient
-    .from("team_member_table")
-    .select(
-      `
-        *,
-        team_member_user: team_member_user_id!inner(
-          user_id, 
-          user_first_name, 
-          user_last_name, 
-          user_username, 
-          user_avatar
-        )
-      `
-    )
-    .eq("team_member_team_id", teamId)
-    .eq("team_member_role", "ADMIN");
+    .rpc("get_team_admin_list", { input_data: params })
+    .select("*");
   if (error) throw error;
 
-  const formattedData = data as unknown as TeamMemberType[];
-
-  return formattedData.sort((a, b) =>
-    `${a.team_member_user.user_first_name}` >
-    `${b.team_member_user.user_first_name}`
-      ? 1
-      : `${b.team_member_user.user_first_name}` >
-        `${a.team_member_user.user_first_name}`
-      ? -1
-      : 0
-  );
+  return data;
 };
 
 export const getAdminTicketAnalytics = async (

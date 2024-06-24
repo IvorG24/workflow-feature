@@ -62,6 +62,7 @@ export const updateUserActiveApp = async (
 ) => {
   const { userId, app } = params;
   const { error } = await supabaseClient
+    .schema("user_schema")
     .from("user_table")
     .update({ user_active_app: app })
     .eq("user_id", userId);
@@ -78,6 +79,7 @@ export const updateUserActiveTeam = async (
 ) => {
   const { userId, teamId } = params;
   const { error } = await supabaseClient
+    .schema("user_schema")
     .from("user_table")
     .update({ user_active_team_id: teamId })
     .eq("user_id", userId);
@@ -90,6 +92,7 @@ export const updateUser = async (
   params: UserTableUpdate
 ) => {
   const { error } = await supabaseClient
+    .schema("user_schema")
     .from("user_table")
     .update(params)
     .eq("user_id", `${params.user_id}`);
@@ -684,73 +687,23 @@ export const approveOrRejectMemo = async (
     memoSignerTeamMemberId: string;
   }
 ) => {
-  const {
-    memoSignerId,
-    memoId,
-    action,
-    isPrimarySigner,
-    memoSignerTeamMemberId,
-  } = params;
-
-  const currentDate = (await getCurrentDate(supabaseClient)).toISOString();
-
-  const { error } = await supabaseClient
-    .from("memo_signer_table")
-    .update({
-      memo_signer_status: action,
-      memo_signer_date_signed: `${currentDate}`,
-    })
-    .eq("memo_signer_id", memoSignerId);
-
-  if (error) throw Error;
-
-  if (isPrimarySigner) {
-    const { error } = await supabaseClient
-      .from("memo_status_table")
-      .update({
-        memo_status: action,
-        memo_status_date_updated: `${currentDate}`,
-      })
-      .eq("memo_status_memo_id", memoId);
-    if (error) throw Error;
-  }
-
-  // agree to memo
-  if (action.toLowerCase() === "approved") {
-    const { count } = await supabaseClient
-      .from("memo_agreement_table")
-      .select("*", { count: "exact" })
-      .eq("memo_agreement_by_team_member_id", memoSignerTeamMemberId)
-      .eq("memo_agreement_memo_id", memoId);
-
-    if (Number(count) === 0) {
-      const { data, error: MemoAgreementError } = await supabaseClient
-        .from("memo_agreement_table")
-        .insert({
-          memo_agreement_by_team_member_id: memoSignerTeamMemberId,
-          memo_agreement_memo_id: memoId,
-        })
-        .select(
-          "*, memo_agreement_by_team_member: memo_agreement_by_team_member_id!inner(user_data: team_member_user_id(user_id, user_avatar, user_first_name, user_last_name, user_employee_number: user_employee_number_table(user_employee_number)))"
-        )
-        .maybeSingle();
-      if (MemoAgreementError) throw Error;
-
-      return data as unknown as MemoAgreementTableRow & {
-        memo_agreement_by_team_member: {
-          user_data: {
-            user_avatar: string;
-            user_id: string;
-            user_first_name: string;
-            user_last_name: string;
-            user_employee_number: {
-              user_employee_number: string;
-            }[];
-          };
-        };
+  const { data, error } = await supabaseClient
+    .rpc("approve_or_reject_memo", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data as unknown as MemoAgreementTableRow & {
+    memo_agreement_by_team_member: {
+      user_data: {
+        user_avatar: string;
+        user_id: string;
+        user_first_name: string;
+        user_last_name: string;
+        user_employee_number: {
+          user_employee_number: string;
+        }[];
       };
-    }
-  }
+    };
+  };
 };
 
 // update memo
