@@ -303,7 +303,7 @@ const MemberList = ({
         </Group>
       </Flex>
       <DataTable
-        idAccessor="team_project_member_id"
+        idAccessor="team_member.team_member_id"
         mt="xs"
         withBorder
         fw="bolder"

@@ -12,6 +12,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         invitationId: `${context.query.invitationId}`,
         userEmail: user.email || "",
       });
+
       if (!invitation) {
         return {
           redirect: {

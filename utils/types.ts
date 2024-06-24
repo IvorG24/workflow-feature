@@ -34,11 +34,11 @@ export type FormTableUpdate =
   Database["public"]["Tables"]["form_table"]["Update"];
 
 export type InvitationTableRow =
-  Database["public"]["Tables"]["invitation_table"]["Row"];
+  Database["user_schema"]["Tables"]["invitation_table"]["Row"];
 export type InvitationTableInsert =
-  Database["public"]["Tables"]["invitation_table"]["Insert"];
+  Database["user_schema"]["Tables"]["invitation_table"]["Insert"];
 export type InvitationTableUpdate =
-  Database["public"]["Tables"]["invitation_table"]["Update"];
+  Database["user_schema"]["Tables"]["invitation_table"]["Update"];
 
 export type NotificationTableRow =
   Database["public"]["Tables"]["notification_table"]["Row"];
@@ -318,11 +318,11 @@ export type OtherExpensesTypeTableUpdate =
 export type SignatureHistoryTableRow =
   Database["history_schema"]["Tables"]["signature_history_table"]["Row"];
 export type UserValidIDTableRow =
-  Database["public"]["Tables"]["user_valid_id_table"]["Row"];
+  Database["user_schema"]["Tables"]["user_valid_id_table"]["Row"];
 export type UserValidIDTableInsert =
-  Database["public"]["Tables"]["user_valid_id_table"]["Insert"];
+  Database["user_schema"]["Tables"]["user_valid_id_table"]["Insert"];
 export type UserValidIDTableUpdate =
-  Database["public"]["Tables"]["user_valid_id_table"]["Update"];
+  Database["user_schema"]["Tables"]["user_valid_id_table"]["Update"];
 
 export type MemoFormatTableRow =
   Database["public"]["Tables"]["memo_format_section_table"]["Row"];
@@ -1993,4 +1993,13 @@ export type JiraRFPTicketPayloadProps = {
   costCode?: string;
   boqCode?: string;
   obTicket?: string;
+};
+
+export type PendingInviteType = {
+  invitation_id: string;
+  invitation_to_email: string;
+  invitation_date_created: string;
+  team_member: {
+    team_member_team_id: string;
+  };
 };

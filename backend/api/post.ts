@@ -911,6 +911,7 @@ export const cancelTeamInvitation = async (
 ) => {
   const { invitation_id } = params;
   const { error } = await supabaseClient
+    .schema("user_schema")
     .from("invitation_table")
     .update({ invitation_is_disabled: true })
     .eq("invitation_id", invitation_id)
