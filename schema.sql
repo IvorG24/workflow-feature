@@ -5188,7 +5188,7 @@ RETURNS JSON as $$
           }
         });
 
-        const uomList = plv8.execute(`SELECT * FROM item_unit_of_measurement_table WHERE item_unit_of_measurement_is_disabled= FALSE`);
+        const uomList = plv8.execute(`SELECT * FROM unit_of_measurement_schema.item_unit_of_measurement_table WHERE item_unit_of_measurement_is_disabled= FALSE`);
         const uomOptions = uomList.map((uom, index) => {
           return {
             option_field_id: form.form_section[5].section_field[2].field_id,
@@ -5515,6 +5515,21 @@ RETURNS JSON as $$
             throw new Error('Request id not found');
           }
 
+          let connectedRequestChargeToProjectResponse = "";
+          let connectedRequestChargeToProjectId = "";
+
+          const connectedRequestChargeToProject = plv8.execute(`SELECT request_response FROM request_response_table WHERE request_response_request_id = '${connectedRequest.request_id}' AND request_response_field_id='2bac0084-53f4-419f-aba7-fb1f77403e00'`);
+
+          if (connectedRequestChargeToProject[0]) {
+            connectedRequestChargeToProjectResponse = JSON.parse(connectedRequestChargeToProject[0].request_response);
+
+            const selectedProject = plv8.execute(`SELECT team_project_id FROM team_project_table WHERE team_project_name = '${connectedRequestChargeToProjectResponse}'`);
+
+            if (selectedProject[0]) {
+              connectedRequestChargeToProjectId = selectedProject[0].team_project_id;
+            }
+          }
+
           const connectedRequestSectionId = plv8.execute(`
             SELECT 
               section_id 
@@ -5523,6 +5538,14 @@ RETURNS JSON as $$
             WHERE 
               section_form_id = '${connectedRequest.request_form_id}' 
           `)[0].section_id;
+
+          const signerTeamProjectList = [connectedRequest.request_project_id]
+
+          if (connectedRequestChargeToProjectId) {
+            signerTeamProjectList.push(connectedRequestChargeToProjectId)
+          }
+
+          const teamProjectQuery = signerTeamProjectList.map(project => `'${project}'`).join(", ");
 
           const signerList = plv8.execute(`
             SELECT
@@ -5537,11 +5560,11 @@ RETURNS JSON as $$
               user_avatar
             FROM signer_table
             INNER JOIN team_member_table ON team_member_id = signer_team_member_id
-            INNER JOIN user_table ON user_id = team_member_user_id
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
               signer_is_disabled = false
               AND signer_form_id = '${form.form_id}'
-              AND signer_team_project_id = '${connectedRequest.request_project_id}'
+              AND signer_team_project_id IN (${teamProjectQuery})
             ORDER BY signer_order
           `);
 
@@ -13420,21 +13443,29 @@ WITH CHECK (
     SELECT team_member_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-  )
+  ) 
 );
 
-CREATE POLICY "Allow DELETE for authenticated users on own request response" ON "public"."request_response_table"
+CREATE POLICY "Allow DELETE for authenticated users on own request response"
+ON "public"."request_response_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   (
     SELECT rt.request_team_member_id
-    FROM request_table as rt
+    FROM request_table AS rt
     WHERE rt.request_id = request_response_request_id
   ) IN (
-    SELECT team_member_id
-    FROM team_member_table
-    WHERE team_member_user_id = auth.uid()
+    SELECT tmt.team_member_id
+    FROM team_member_table AS tmt
+    WHERE tmt.team_member_user_id = auth.uid()
+  ) OR EXISTS (
+    SELECT 1
+    FROM team_group_member_table AS tgm
+    INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id
+    INNER JOIN team_group_table AS tg ON tg.team_group_id = tgm.team_group_id
+    WHERE tmt.team_member_user_id = auth.uid()
+    AND tg.team_group_name = 'COST ENGINEER'
   )
 );
 

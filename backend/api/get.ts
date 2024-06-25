@@ -6603,3 +6603,22 @@ export const getFormDepartmentSigner = async (
 
   return { data, count: Number(count) };
 };
+
+export const checkIfUserIsRequestOwner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    requestId: string;
+  }
+) => {
+  const { requestId, teamMemberId } = params;
+  const { count, error } = await supabaseClient
+    .from("request_table")
+    .select("*", { count: "exact", head: true })
+    .eq("request_id", requestId)
+    .eq("request_team_member_id", teamMemberId);
+
+  if (error) throw error;
+
+  return Number(count) > 0;
+};

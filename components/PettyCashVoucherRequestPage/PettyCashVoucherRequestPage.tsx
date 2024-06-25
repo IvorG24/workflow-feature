@@ -76,7 +76,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   >([]);
 
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
-  const [wavBalanceRequestRedirectUrl, setWAVBalanceRequestRedirectUrl] =
+  const [wavBalanceRequestRedirectUrl, setPCVBalanceRequestRedirectUrl] =
     useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
@@ -90,8 +90,9 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   const requestDateCreated = formatDate(new Date(request.request_date_created));
 
   const originalSectionList = request.request_form.form_section;
-  const sectionWithDuplicateList =
-    generateSectionWithDuplicateList(originalSectionList);
+  const [sectionWithDuplicateList, setSectionWithDuplicateList] = useState(
+    generateSectionWithDuplicateList(originalSectionList)
+  );
 
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
@@ -112,7 +113,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
   const isUserAccountant = teamMemberGroupList.includes("ACCOUNTANT");
-  const canCreateWAVBalance = requestStatus === "APPROVED" && isUserAccountant;
+  const canCreatePCVBalance = requestStatus === "APPROVED" && isUserAccountant;
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
@@ -277,12 +278,12 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const openRedirectToWAVBalanceRequestModal = (redirectUrl: string) =>
+  const openRedirectToPCVBalanceRequestModal = (redirectUrl: string) =>
     modals.openConfirmModal({
-      title: <Text weight={600}>WAV Balance request already exists.</Text>,
+      title: <Text weight={600}>PCV Balance request already exists.</Text>,
       children: (
         <Text size="sm">
-          Would you like to be redirected to the WAV Balance request page?
+          Would you like to be redirected to the PCV Balance request page?
         </Text>
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -290,10 +291,10 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
       onConfirm: () => router.push(redirectUrl),
     });
 
-  const handleCreateWAVBalanceRequest = async () => {
+  const handleCreatePCVBalanceRequest = async () => {
     try {
       if (wavBalanceRequestRedirectUrl) {
-        openRedirectToWAVBalanceRequestModal(wavBalanceRequestRedirectUrl);
+        openRedirectToPCVBalanceRequestModal(wavBalanceRequestRedirectUrl);
         return;
       }
 
@@ -323,6 +324,37 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
 
   useEffect(() => {
     try {
+      // update sections
+      const isChargeToProject =
+        request.request_form.form_section[1].section_field.find(
+          (field) =>
+            field.field_name === "Is this request charged to the project?"
+        )?.field_response[0].request_response;
+
+      const salaryDeductionSection = request.request_form.form_section.find(
+        (section) =>
+          section.section_name === "SCIC Salary Deduction Authorization"
+      );
+      const isSalaryDeduction =
+        salaryDeductionSection?.section_field[0]?.field_response[0]
+          .request_response;
+
+      if (isChargeToProject === "false") {
+        const updatedRequestSectionList = sectionWithDuplicateList.filter(
+          (section) => section.section_name !== "Charge to Project Details"
+        );
+
+        setSectionWithDuplicateList(updatedRequestSectionList);
+      }
+
+      if (isSalaryDeduction === "false") {
+        const updatedRequestSectionList = sectionWithDuplicateList.filter(
+          (section) => section.section_name !== "Particular Details"
+        );
+
+        setSectionWithDuplicateList(updatedRequestSectionList);
+      }
+
       const fetchComments = async () => {
         const data = await getRequestComment(supabaseClient, {
           request_id: request.request_id,
@@ -363,7 +395,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   }, [requestJira.id]);
 
   useEffect(() => {
-    const fetchWAVBalanceRequest = async () => {
+    const fetchPCVBalanceRequest = async () => {
       const wavBalanceRequest = await getExistingConnectedRequest(
         supabaseClient,
         request.request_id
@@ -375,11 +407,11 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         const redirectUrl = `/${formatTeamNameToUrlKey(
           activeTeam.team_name
         )}/requests/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
-        setWAVBalanceRequestRedirectUrl(redirectUrl);
+        setPCVBalanceRequestRedirectUrl(redirectUrl);
       }
     };
     if (requestStatus === "APPROVED" && activeTeam.team_name) {
-      fetchWAVBalanceRequest();
+      fetchPCVBalanceRequest();
     }
   }, [requestStatus, activeTeam.team_name]);
 
@@ -389,9 +421,9 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {canCreateWAVBalance && (
-          <Button onClick={() => handleCreateWAVBalanceRequest()}>
-            Create WAV Balance
+        {canCreatePCVBalance && (
+          <Button onClick={() => handleCreatePCVBalanceRequest()}>
+            Create PCV Balance
           </Button>
         )}
       </Flex>
@@ -406,7 +438,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
           jiraTicketStatus={jiraTicketStatus}
         />
 
-        {/* connected WAV Balance request */}
+        {/* connected PCV Balance request */}
         {wavBalanceRequestRedirectUrl && (
           <Alert variant="light" color="blue">
             <Flex align="center" gap="sm">
@@ -415,7 +447,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
                   <IconAlertCircle size={16} />
                 </ThemeIcon>
                 <Text color="blue" weight={600}>
-                  A WAV Balance request has been created for this request.
+                  A PCV Balance request has been created for this request.
                 </Text>
               </Group>
               <Button
@@ -423,7 +455,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
                 variant="outline"
                 onClick={() => router.push(wavBalanceRequestRedirectUrl)}
               >
-                View WAV Balance
+                View PCV Balance
               </Button>
             </Flex>
           </Alert>

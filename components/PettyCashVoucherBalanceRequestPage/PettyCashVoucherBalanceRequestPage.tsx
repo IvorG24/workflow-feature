@@ -15,7 +15,11 @@ import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
@@ -27,10 +31,11 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Flex, Stack, Text, Title } from "@mantine/core";
+import { Alert, Container, Flex, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -42,6 +47,7 @@ type Props = {
 const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
 
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
@@ -63,6 +69,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
     link: request.request_jira_link,
   });
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
+  const [invalidCostCode, setInvalidCostCode] = useState(true);
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -75,21 +82,22 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =
     generateSectionWithDuplicateList(originalSectionList);
-
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
+  const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
   const canSignerTakeAction =
     isUserSigner &&
     isUserSigner.request_signer_status === "PENDING" &&
-    requestStatus !== "CANCELED";
+    requestStatus !== "CANCELED" &&
+    invalidCostCode;
   const isEditable =
     signerList
       .map((signer) => signer.request_signer_status)
       .filter((status) => status !== "PENDING").length === 0 &&
-    isUserOwner &&
+    (isUserOwner || isUserCostEngineer) &&
     requestStatus === "PENDING";
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
@@ -372,6 +380,21 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
 
   useEffect(() => {
     try {
+      const costCodeSection = request.request_form.form_section[2];
+
+      if (costCodeSection.section_name) {
+        const isValidBoqCode =
+          safeParse(
+            costCodeSection.section_field[0].field_response[0].request_response
+          ) !== "TBA";
+        const isValidCostCode =
+          safeParse(
+            costCodeSection.section_field[1].field_response[0].request_response
+          ) !== "TBA";
+
+        setInvalidCostCode(isValidBoqCode && isValidCostCode);
+      }
+
       const fetchComments = async () => {
         const data = await getRequestComment(supabaseClient, {
           request_id: request.request_id,
@@ -429,14 +452,21 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
           jiraTicketStatus={jiraTicketStatus}
         />
 
-        {sectionWithDuplicateList.map((section, idx) => {
-          if (
-            idx === 0 &&
-            section.section_field[0].field_response?.request_response ===
-              '"null"'
-          )
-            return;
+        {!invalidCostCode && (
+          <Alert
+            variant="filled"
+            color="orange"
+            title="Notice for Approvers"
+            icon={<IconAlertCircle size={16} />}
+          >
+            Approval is not possible at this time due to invalid input in the
+            cost code section. Please ask the cost engineer to update it. If it
+            has already been updated, refresh the page. If the issue continues,
+            contact the IT team.
+          </Alert>
+        )}
 
+        {sectionWithDuplicateList.map((section, idx) => {
           return (
             <RequestSection
               key={section.section_id + idx}
@@ -457,7 +487,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
                 ? Boolean(isUserSigner.signer_is_primary_signer)
                 : false
             }
-            isEditable={false} // todo: add edit request page
+            isEditable={isEditable} // todo: add edit request page
             isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}

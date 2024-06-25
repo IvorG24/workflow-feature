@@ -1,3 +1,4 @@
+import { getRequestFieldResponse } from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
@@ -6,6 +7,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   ConnectedRequestFormProps,
@@ -122,7 +124,30 @@ const CreatePettyCashVoucherBalancePage = ({
           );
           return;
         }
-        replaceSection([
+
+        const requestingDepartmentFieldId =
+          "694465de-8aa9-4361-be52-f8c091c13fde";
+        const chargeToBooleanFieldId = "9cde1e79-646d-4a9f-9e76-3a6494bff6e2";
+
+        const fieldResponseList = await getRequestFieldResponse(
+          supabaseClient,
+          {
+            requestId: connectedRequest.request_id,
+            fieldId: [requestingDepartmentFieldId, chargeToBooleanFieldId],
+          }
+        );
+
+        const isPed =
+          safeParse(fieldResponseList[0].request_response) ===
+          "Plants and Equipment";
+
+        const isChargeToProject = safeParse(
+          fieldResponseList[1].request_response
+        );
+
+        const requiresCostEngineer = isPed && isChargeToProject;
+
+        const formSectionList = [
           {
             ...form.form_section[0],
             section_field: [
@@ -136,7 +161,21 @@ const CreatePettyCashVoucherBalancePage = ({
           {
             ...form.form_section[1],
           },
-        ]);
+        ];
+
+        if (requiresCostEngineer) {
+          formSectionList.push({
+            ...form.form_section[2],
+            section_name: `${form.form_section[2].section_name} - To be filled by Cost Engineer`,
+            section_field: form.form_section[2].section_field.map((field) => ({
+              ...field,
+              field_is_read_only: true,
+              field_response: "TBA",
+            })),
+          });
+        }
+
+        replaceSection(formSectionList);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

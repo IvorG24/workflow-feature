@@ -7,6 +7,7 @@ import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequest
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
+import EditPettyCashVoucherBalanceRequestPage from "@/components/EditPettyCashVoucherBalancePage/EditPettyCashVoucherBalancePage";
 import EditPettyCashVoucherRequestPage from "@/components/EditPettyCashVoucherRequestPage/EditPettyCashVoucherRequestPage";
 import EditRequestForPaymentPage from "@/components/EditRequestForPaymentv1Page/EditRequestForPaymentv1Page";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
@@ -169,6 +170,14 @@ const Page = ({
             expenseTypeOptions={expenseTypeOptions}
             bankListOptions={bankListOptions}
             uomOptions={uomOptions}
+          />
+        );
+
+      case "Petty Cash Voucher Balance":
+        return (
+          <EditPettyCashVoucherBalanceRequestPage
+            requestId={requestId}
+            form={form}
           />
         );
     }
