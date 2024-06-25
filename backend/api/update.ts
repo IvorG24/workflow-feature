@@ -533,6 +533,7 @@ export const updateEquipment = async (
   if (!equipmentData.equipment_id) throw new Error();
 
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_table")
     .update(equipmentData)
     .eq("equipment_id", equipmentData.equipment_id)
@@ -560,6 +561,7 @@ export const updateEquipmentDescription = async (
   if (!equipmentDescriptionData.equipment_description_id) throw new Error();
 
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_table")
     .update(equipmentDescriptionData)
     .eq(
@@ -598,6 +600,7 @@ export const updateEquipmentPart = async (
   if (!equipmentPartData.equipment_part_id) throw new Error();
 
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_part_table")
     .update(equipmentPartData)
     .eq("equipment_part_id", equipmentPartData.equipment_part_id)

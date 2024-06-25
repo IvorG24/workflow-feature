@@ -208,7 +208,6 @@ type RequestFormFieldsProps = {
       }
     ) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
-    onQuantityBlur: () => void;
   };
   requestForPaymentFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -517,9 +516,6 @@ const RequestFormFields = ({
                   precision={2}
                   onBlur={() => {
                     switch (field.field_name) {
-                      case "Quantity":
-                        equipmentServiceReportMethods?.onQuantityBlur();
-                        break;
                       case "Amount":
                         requestForPaymentFormMethods?.onAmountBlur(
                           value as string | null,

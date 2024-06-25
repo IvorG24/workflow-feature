@@ -1032,23 +1032,6 @@ const CreateEquipmentServiceReportRequestPage = ({
     }
   };
 
-  const handleQuantityBlur = () => {
-    const newSection = getValues(`sections.1`);
-    updateSection(1, {
-      ...newSection,
-      section_field: [
-        ...newSection.section_field.slice(0, 4),
-        ...newSection.section_field.slice(4, 10).map((field) => {
-          return {
-            ...field,
-            field_response: "",
-          };
-        }),
-        ...newSection.section_field.slice(10),
-      ],
-    });
-  };
-
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -1086,7 +1069,6 @@ const CreateEquipmentServiceReportRequestPage = ({
                       onBrandChange: handleBrandChange,
                       onModelChange: handleModelChange,
                       onPartNumberChange: handlePartNumberChange,
-                      onQuantityBlur: handleQuantityBlur,
                     }}
                   />
                   {section.section_is_duplicatable &&

@@ -179,7 +179,6 @@ type RequestFormSectionProps = {
       }
     ) => void;
     onPartNumberChange: (value: string | null, index: number) => void;
-    onQuantityBlur: () => void;
   };
   requestForPaymentFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
