@@ -3625,7 +3625,7 @@ export const getEquipmentDescriptionList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
-    .from("equipment_description_table")
+    .from("equipment_description_view")
     .select(
       `
         *,
@@ -3643,11 +3643,13 @@ export const getEquipmentDescriptionList = async (
 
   if (search) {
     query = query.or(
-      `equipment_description_property_number.ilike.%${search}%, equipment_description_serial_number.ilike.%${search}%`
+      `equipment_description_property_number_with_prefix.ilike.%${search}%, equipment_description_serial_number.ilike.%${search}%`
     );
   }
 
-  query.order("equipment_description_property_number", { ascending: true });
+  query.order("equipment_description_property_number_with_prefix", {
+    ascending: true,
+  });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;

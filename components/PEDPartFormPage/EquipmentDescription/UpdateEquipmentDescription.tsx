@@ -135,6 +135,7 @@ const UpdateEquipmentDescription = ({
             ?.label as string,
           model: modelOption.find((model) => model.value === data.model)
             ?.label as string,
+          shorthand: selectedEquipment.equipment_name_shorthand,
         });
 
       setEquipmentDescriptionList((prev) => {
