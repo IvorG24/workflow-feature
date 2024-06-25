@@ -1,5 +1,5 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getEquipmentLookupList } from "@/backend/api/get";
+import { getLookupList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -84,7 +84,7 @@ const EquipmentLookupList = ({
     setIsLoading(true);
     try {
       if (!team.team_id) return;
-      const { data, count } = await getEquipmentLookupList(supabaseClient, {
+      const { data, count } = await getLookupList(supabaseClient, {
         lookup: lookup.table,
         teamId: team.team_id,
         search,

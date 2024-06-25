@@ -255,11 +255,11 @@ export type EquipmentModelTableUpdate =
   Database["public"]["Tables"]["equipment_model_table"]["Update"];
 
 export type EquipmentUnitOfMeasurementTableRow =
-  Database["public"]["Tables"]["equipment_unit_of_measurement_table"]["Row"];
+  Database["unit_of_measurement_schema"]["Tables"]["equipment_unit_of_measurement_table"]["Row"];
 export type EquipmentUnitOfMeasurementTableInsert =
   Database["public"]["Tables"]["equipment_brand_table"]["Insert"];
 export type EquipmentUnitOfMeasurementTableUpdate =
-  Database["public"]["Tables"]["equipment_unit_of_measurement_table"]["Update"];
+  Database["unit_of_measurement_schema"]["Tables"]["equipment_unit_of_measurement_table"]["Update"];
 
 export type EquipmentComponentCategoryTableRow =
   Database["public"]["Tables"]["equipment_component_category_table"]["Row"];

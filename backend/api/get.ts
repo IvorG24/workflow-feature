@@ -34,7 +34,6 @@ import {
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   EquipmentDescriptionTableRow,
-  EquipmentLookupChoices,
   EquipmentPartTableInsert,
   EquipmentPartType,
   EquipmentTableRow,
@@ -2847,6 +2846,7 @@ export const getItemUnitOfMeasurementOption = async (
 ) => {
   const { teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("item_unit_of_measurement_table")
     .select("item_unit_of_measurement_id, item_unit_of_measurement")
     .eq("item_unit_of_measurement_is_available", true)
@@ -3815,6 +3815,7 @@ export const getEquipmentUOMAndCategoryOption = async (
 ) => {
   const { teamId } = params;
   const { data: uomList, error: uomListError } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("equipment_unit_of_measurement_table")
     .select("*")
     .eq("equipment_unit_of_measurement_team_id", teamId)
@@ -3901,61 +3902,6 @@ export const checkEquipmentLookupTable = async (
   if (error) throw error;
 
   return Boolean(count);
-};
-
-// Get equipment lookup list
-export const getEquipmentLookupList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    lookup: EquipmentLookupChoices;
-    teamId: string;
-    limit: number;
-    page: number;
-    search?: string;
-    schema: string;
-  }
-) => {
-  const { lookup, teamId, search, limit, page, schema } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .schema(schema as "public")
-    .from(`${lookup}_table`)
-    .select("*", { count: "exact" })
-    .eq(`${lookup}_team_id`, teamId)
-    .eq(`${lookup}_is_disabled`, false);
-
-  if (search) {
-    query = query.ilike(`${lookup}`, `%${search}%`);
-  }
-
-  query.order(`${lookup}`, { ascending: true, foreignTable: "" });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  const id = `${lookup}_id`;
-  const value = lookup;
-  const status = `${lookup}_is_available`;
-
-  const formattedData = data as unknown as {
-    [key: string]: string;
-  }[];
-
-  return {
-    data: formattedData.map((lookupData) => {
-      return {
-        id: lookupData[id],
-        status: Boolean(lookupData[status]),
-        value: lookupData[value],
-      };
-    }),
-    count,
-  };
 };
 
 // check if email list are onboarded
@@ -4999,64 +4945,12 @@ export const getItemUnitOfMeasurement = async (
     partNumber: string;
   }
 ) => {
-  const { generalName, componentCategory, brand, model, partNumber } = params;
   const { data, error } = await supabaseClient
-    .from("equipment_part_table")
-    .select(
-      `
-        equipment_part_id,
-        equipment_part_general_name: equipment_part_general_name_id!inner(equipment_general_name),
-        equipment_part_component_category: equipment_part_component_category_id!inner(equipment_component_category),
-        equipment_part_brand: equipment_part_brand_id!inner(equipment_brand),
-        equipment_part_model: equipment_part_model_id!inner(equipment_model),
-        equipment_part_number,
-        equipment_part_unit_of_measurement: equipment_part_unit_of_measurement_id(equipment_unit_of_measurement)
-      `
-    )
-    .eq("equipment_part_is_disabled", false)
-    .eq("equipment_part_is_available", true)
-    .eq("equipment_part_general_name.equipment_general_name_is_disabled", false)
-    .eq("equipment_part_general_name.equipment_general_name_is_available", true)
-    .eq("equipment_part_general_name.equipment_general_name", generalName)
-    .eq(
-      "equipment_part_component_category.equipment_component_category_is_disabled",
-      false
-    )
-    .eq(
-      "equipment_part_component_category.equipment_component_category_is_available",
-      true
-    )
-    .eq(
-      "equipment_part_component_category.equipment_component_category",
-      componentCategory
-    )
-    .eq("equipment_part_brand.equipment_brand_is_disabled", false)
-    .eq("equipment_part_brand.equipment_brand_is_available", true)
-    .eq("equipment_part_brand.equipment_brand", brand)
-    .eq("equipment_part_model.equipment_model_is_disabled", false)
-    .eq("equipment_part_model.equipment_model_is_available", true)
-    .eq("equipment_part_model.equipment_model", model)
-    .eq("equipment_part_number", partNumber)
-    .eq(
-      "equipment_part_unit_of_measurement.equipment_unit_of_measurement_is_disabled",
-      false
-    )
-    .eq(
-      "equipment_part_unit_of_measurement.equipment_unit_of_measurement_is_available",
-      true
-    )
-    .single();
-
+    .rpc("get_item_unit_of_measurement", { input_data: params })
+    .select("*");
   if (error) throw error;
 
-  const formattedData = data as unknown as {
-    equipment_part_unit_of_measurement: {
-      equipment_unit_of_measurement: string;
-    };
-  };
-
-  return formattedData.equipment_part_unit_of_measurement
-    .equipment_unit_of_measurement;
+  return data;
 };
 
 // Fetch equipment section choices based on given parameters
@@ -5787,6 +5681,7 @@ export const getGeneralUnitOfMeasurementOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("general_unit_of_measurement_table")
     .select("general_unit_of_measurement_id, general_unit_of_measurement")
     .eq("general_unit_of_measurement_team_id", teamId)
@@ -5937,6 +5832,7 @@ export const getCapacityUnitOfMeasurementOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("capacity_unit_of_measurement_table")
     .select("capacity_unit_of_measurement_id, capacity_unit_of_measurement")
     .eq("capacity_unit_of_measurement_team_id", teamId)
@@ -6439,6 +6335,7 @@ export const getEquipmentUnitOptions = async (
 ) => {
   const { index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("equipment_unit_of_measurement_table")
     .select("equipment_unit_of_measurement_id, equipment_unit_of_measurement")
     .eq("equipment_unit_of_measurement_is_disabled", false)
