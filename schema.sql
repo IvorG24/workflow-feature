@@ -714,7 +714,7 @@ CREATE TABLE formsly_price_table (
   formsly_price INT NOT NULL
 );
 
-CREATE TABLE equipment_category_table (
+CREATE TABLE equipment_schema.equipment_category_table (
   equipment_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_category VARCHAR(4000) NOT NULL,
@@ -724,7 +724,7 @@ CREATE TABLE equipment_category_table (
   equipment_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE equipment_brand_table (
+CREATE TABLE equipment_schema.equipment_brand_table (
   equipment_brand_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_brand_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_brand VARCHAR(4000) NOT NULL,
@@ -734,7 +734,7 @@ CREATE TABLE equipment_brand_table (
   equipment_brand_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE equipment_model_table (
+CREATE TABLE equipment_schema.equipment_model_table (
   equipment_model_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_model_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_model VARCHAR(4000) NOT NULL,
@@ -744,7 +744,7 @@ CREATE TABLE equipment_model_table (
   equipment_model_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE equipment_component_category_table (
+CREATE TABLE equipment_schema.equipment_component_category_table (
   equipment_component_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_component_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_component_category VARCHAR(4000) NOT NULL,
@@ -754,7 +754,7 @@ CREATE TABLE equipment_component_category_table (
   equipment_component_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE equipment_table (
+CREATE TABLE equipment_schema.equipment_table (
   equipment_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_name VARCHAR(4000) NOT NULL,
@@ -762,11 +762,11 @@ CREATE TABLE equipment_table (
   equipment_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  equipment_equipment_category_id UUID REFERENCES equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_equipment_category_id UUID REFERENCES equipment_schema.equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
   equipment_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE equipment_description_table (
+CREATE TABLE equipment_schema.equipment_description_table (
   equipment_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_description_property_number VARCHAR(4000) NOT NULL,
@@ -776,12 +776,12 @@ CREATE TABLE equipment_description_table (
   equipment_description_acquisition_date INT,
   equipment_description_is_rental BOOLEAN DEFAULT false NOT NULL,
   
-  equipment_description_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
-  equipment_description_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
-  equipment_description_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+  equipment_description_brand_id UUID REFERENCES equipment_schema.equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_model_id UUID REFERENCES equipment_schema.equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
+  equipment_description_equipment_id UUID REFERENCES equipment_schema.equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE equipment_general_name_table (
+CREATE TABLE equipment_schema.equipment_general_name_table (
   equipment_general_name_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_general_name_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_general_name VARCHAR(4000) NOT NULL,
@@ -801,19 +801,19 @@ CREATE TABLE unit_of_measurement_schema.equipment_unit_of_measurement_table (
   equipment_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE equipment_part_table (
+CREATE TABLE equipment_schema.equipment_part_table (
   equipment_part_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_part_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_part_number VARCHAR(4000) NOT NULL,
   equipment_part_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   equipment_part_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  equipment_part_general_name_id UUID REFERENCES equipment_general_name_table(equipment_general_name_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_general_name_id UUID REFERENCES equipment_schema.equipment_general_name_table(equipment_general_name_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_brand_id UUID REFERENCES equipment_schema.equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_model_id UUID REFERENCES equipment_schema.equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
   equipment_part_unit_of_measurement_id UUID REFERENCES unit_of_measurement_schema.equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_component_category_id UUID REFERENCES equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
+  equipment_part_component_category_id UUID REFERENCES equipment_schema.equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_equipment_id UUID REFERENCES equipment_schema.equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
 );
 
 CREATE TABLE service_schema.service_table (
@@ -4616,7 +4616,7 @@ RETURNS JSON as $$
             SELECT 
                 equipment_category_id,
                 equipment_category
-            FROM equipment_category_table
+            FROM equipment_schema.equipment_category_table
             WHERE 
               equipment_category_team_id = '${teamMember.team_member_team_id}'
               AND equipment_category_is_disabled = false
@@ -4721,7 +4721,7 @@ RETURNS JSON as $$
             SELECT 
                 equipment_category_id,
                 equipment_category
-            FROM equipment_category_table
+            FROM equipment_schema.equipment_category_table
             WHERE 
               equipment_category_team_id = '${teamMember.team_member_team_id}'
               AND equipment_category_is_disabled = false
@@ -5240,7 +5240,7 @@ RETURNS JSON as $$
             SELECT 
               equipment_category_id,
               equipment_category
-            FROM equipment_category_table
+            FROM equipment_schema.equipment_category_table
             WHERE 
               equipment_category_team_id = '${teamMember.team_member_team_id}'
               AND equipment_category_is_disabled = false
@@ -5973,7 +5973,7 @@ RETURNS JSON AS $$
       const equipmentNameList = plv8.execute(
         `
           SELECT equipment_name
-          FROM equipment_table
+          FROM equipment_schema.equipment_table
           WHERE
             equipment_is_disabled = false
             AND equipment_is_available = true
@@ -5987,7 +5987,7 @@ RETURNS JSON AS $$
       const equipmentGeneralNameCount = plv8.execute(
         `
           SELECT COUNT(*)
-          FROM equipment_general_name_table 
+          FROM equipment_schema.equipment_general_name_table 
           WHERE equipment_general_name_team_id = '${teamId}'
         `
       )[0].count;
@@ -5996,7 +5996,7 @@ RETURNS JSON AS $$
         const nameList = plv8.execute(
           `
             SELECT equipment_general_name 
-            FROM equipment_general_name_table 
+            FROM equipment_schema.equipment_general_name_table 
             WHERE 
               equipment_general_name_team_id = '${teamId}'
               AND equipment_general_name_is_disabled = false
@@ -6014,7 +6014,7 @@ RETURNS JSON AS $$
       const brandList = plv8.execute(
         `
           SELECT equipment_brand
-          FROM equipment_brand_table
+          FROM equipment_schema.equipment_brand_table
           WHERE
             equipment_brand_is_disabled = false
             AND equipment_brand_is_available = true
@@ -6027,7 +6027,7 @@ RETURNS JSON AS $$
       const modelList = plv8.execute(
         `
           SELECT equipment_model
-          FROM equipment_model_table
+          FROM equipment_schema.equipment_model_table
           WHERE
             equipment_model_is_disabled = false
             AND equipment_model_is_available = true
@@ -6053,7 +6053,7 @@ RETURNS JSON AS $$
       const categoryList = plv8.execute(
         `
           SELECT equipment_component_category
-          FROM equipment_component_category_table
+          FROM equipment_schema.equipment_component_category_table
           WHERE
             equipment_component_category_is_disabled = false
             AND equipment_component_category_is_available = true
@@ -6889,20 +6889,20 @@ RETURNS JSON AS $$
           equipment_model AS equipment_part_model,
           equipment_unit_of_measurement AS equipment_part_unit_of_measurement,
           equipment_component_category AS equipment_part_component_category
-        FROM equipment_part_table
-        LEFT JOIN equipment_general_name_table 
+        FROM equipment_schema.equipment_part_table
+        LEFT JOIN equipment_schema.equipment_general_name_table 
           ON equipment_part_general_name_id = equipment_general_name_id
           AND equipment_general_name_is_disabled = false
-        LEFT JOIN equipment_brand_table 
+        LEFT JOIN equipment_schema.equipment_brand_table 
           ON equipment_part_brand_id = equipment_brand_id
           AND equipment_brand_is_disabled = false
-        LEFT JOIN equipment_model_table 
+        LEFT JOIN equipment_schema.equipment_model_table 
           ON equipment_part_model_id = equipment_model_id
           AND equipment_model_is_disabled = false
         LEFT JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table 
           ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
           AND equipment_unit_of_measurement_is_disabled = false
-        LEFT JOIN equipment_component_category_table 
+        LEFT JOIN equipment_schema.equipment_component_category_table 
           ON equipment_part_component_category_id = equipment_component_category_id
           AND equipment_component_category_is_disabled = false
         WHERE
@@ -6923,20 +6923,20 @@ RETURNS JSON AS $$
 
     const count = plv8.execute(
       `
-        SELECT COUNT(equipment_part_id) FROM equipment_part_table
-        LEFT JOIN equipment_general_name_table 
+        SELECT COUNT(equipment_part_id) FROM equipment_schema.equipment_part_table
+        LEFT JOIN equipment_schema.equipment_general_name_table 
           ON equipment_part_general_name_id = equipment_general_name_id
           AND equipment_general_name_is_disabled = false
-        LEFT JOIN equipment_brand_table 
+        LEFT JOIN equipment_schema.equipment_brand_table 
           ON equipment_part_brand_id = equipment_brand_id
           AND equipment_brand_is_disabled = false
-        LEFT JOIN equipment_model_table 
+        LEFT JOIN equipment_schema.equipment_model_table 
           ON equipment_part_model_id = equipment_model_id
           AND equipment_model_is_disabled = false
         LEFT JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table 
           ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
           AND equipment_unit_of_measurement_is_disabled = false
-        LEFT JOIN equipment_component_category_table 
+        LEFT JOIN equipment_schema.equipment_component_category_table 
           ON equipment_part_component_category_id = equipment_component_category_id
           AND equipment_component_category_is_disabled = false
         WHERE
@@ -7004,12 +7004,12 @@ RETURNS JSON AS $$
             ${brand ? "equipment_model, " : ""}
             ${model ? "equipment_part_number, " : ""}
             ROW_NUMBER() OVER (PARTITION BY ${order}) AS row_number 
-          FROM equipment_part_table
-          INNER JOIN equipment_general_name_table ON equipment_general_name_id = equipment_part_general_name_id
-          INNER JOIN equipment_table ON equipment_id = equipment_part_equipment_id
-          INNER JOIN equipment_component_category_table ON equipment_component_category_id = equipment_part_component_category_id
-          INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_part_brand_id
-          INNER JOIN equipment_model_table ON equipment_model_id = equipment_part_model_id
+          FROM equipment_schema.equipment_part_table
+          INNER JOIN equipment_schema.equipment_general_name_table ON equipment_general_name_id = equipment_part_general_name_id
+          INNER JOIN equipment_schema.equipment_table ON equipment_id = equipment_part_equipment_id
+          INNER JOIN equipment_schema.equipment_component_category_table ON equipment_component_category_id = equipment_part_component_category_id
+          INNER JOIN equipment_schema.equipment_brand_table ON equipment_brand_id = equipment_part_brand_id
+          INNER JOIN equipment_schema.equipment_model_table ON equipment_model_id = equipment_part_model_id
           INNER JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table ON equipment_unit_of_measurement_id = equipment_part_unit_of_measurement_id
           WHERE
             equipment_part_is_disabled = false
@@ -8772,12 +8772,12 @@ RETURNS BOOLEAN AS $$
       category
     } = input_data;
     
-    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}'`)[0].equipment_id;
-    const generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`);
-    const brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`);
-    const modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`);
+    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_schema.equipment_table WHERE equipment_name = '${equipmentName}'`)[0].equipment_id;
+    const generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_schema.equipment_general_name_table WHERE equipment_general_name = '${partName}'`);
+    const brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_schema.equipment_brand_table WHERE equipment_brand = '${brand}'`);
+    const modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_schema.equipment_model_table WHERE equipment_model = '${model}'`);
     const uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM unit_of_measurement_schema.equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`);
-    const categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`);
+    const categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_schema.equipment_component_category_table WHERE equipment_component_category = '${category}'`);
 
     if(generalNameId.length === 0 || brandId.length === 0 || modelId.length === 0 || uomId.length === 0 || categoryId.length === 0) {
       returnData = false;
@@ -8786,7 +8786,7 @@ RETURNS BOOLEAN AS $$
 
     const partData = plv8.execute(
       `
-        SELECT * FROM equipment_part_table
+        SELECT * FROM equipment_schema.equipment_part_table
         WHERE
           equipment_part_is_disabled = false
           AND equipment_part_equipment_id = '${equipmentId}'
@@ -8820,17 +8820,17 @@ RETURNS VOID AS $$
       teamId
     } = input_data;
     
-    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_table WHERE equipment_name = '${equipmentName}' AND equipment_is_disabled = false`)[0].equipment_id;
-    let generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}' AND equipment_general_name_is_disabled = false`);
-    let brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}' AND equipment_brand_is_disabled = false`);
-    let modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}' AND equipment_model_is_disabled = false`);
+    const equipmentId = plv8.execute(`SELECT equipment_id FROM equipment_schema.equipment_table WHERE equipment_name = '${equipmentName}' AND equipment_is_disabled = false`)[0].equipment_id;
+    let generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_schema.equipment_general_name_table WHERE equipment_general_name = '${partName}' AND equipment_general_name_is_disabled = false`);
+    let brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_schema.equipment_brand_table WHERE equipment_brand = '${brand}' AND equipment_brand_is_disabled = false`);
+    let modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_schema.equipment_model_table WHERE equipment_model = '${model}' AND equipment_model_is_disabled = false`);
     let uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM unit_of_measurement_schema.equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}' AND equipment_unit_of_measurement_is_disabled = false`);
-    let categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}' AND equipment_component_category_is_disabled = false`);
+    let categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_schema.equipment_component_category_table WHERE equipment_component_category = '${category}' AND equipment_component_category_is_disabled = false`);
 
     if(generalNameId.length === 0){
       generalNameId = plv8.execute(
         `
-          INSERT INTO equipment_general_name_table 
+          INSERT INTO equipment_schema.equipment_general_name_table 
           (equipment_general_name, equipment_general_name_team_id) 
           VALUES 
           ('${partName}', '${teamId}')
@@ -8841,7 +8841,7 @@ RETURNS VOID AS $$
     if(brandId.length === 0){
       brandId = plv8.execute(
         `
-          INSERT INTO equipment_brand_table 
+          INSERT INTO equipment_schema.equipment_brand_table 
           (equipment_brand, equipment_brand_team_id) 
           VALUES 
           ('${brand}', '${teamId}')
@@ -8852,7 +8852,7 @@ RETURNS VOID AS $$
     if(modelId.length === 0){
       modelId = plv8.execute(
         `
-          INSERT INTO equipment_model_table 
+          INSERT INTO equipment_schema.equipment_model_table 
           (equipment_model, equipment_model_team_id) 
           VALUES 
           ('${model}', '${teamId}')
@@ -8874,7 +8874,7 @@ RETURNS VOID AS $$
     if(categoryId.length === 0){
       categoryId = plv8.execute(
         `
-          INSERT INTO equipment_component_category_table 
+          INSERT INTO equipment_schema.equipment_component_category_table 
           (equipment_component_category, equipment_component_category_team_id) 
           VALUES 
           ('${category}', '${teamId}')
@@ -8886,7 +8886,7 @@ RETURNS VOID AS $$
     const formattedPartNumber = partNumber.replace('/[^a-zA-Z0-9]/g', '');
     const partData = plv8.execute(
       `
-        SELECT * FROM equipment_part_table
+        SELECT * FROM equipment_schema.equipment_part_table
         WHERE
           equipment_part_is_disabled = false
           AND equipment_part_equipment_id = '${equipmentId}'
@@ -8903,7 +8903,7 @@ RETURNS VOID AS $$
 
     plv8.execute(
       `
-        INSERT INTO equipment_part_table
+        INSERT INTO equipment_schema.equipment_part_table
           (equipment_part_number, equipment_part_general_name_id, equipment_part_brand_id, equipment_part_model_id, equipment_part_unit_of_measurement_id, equipment_part_component_category_id, equipment_part_equipment_id)
         VALUES
           ('${partNumber}', '${generalNameId[0].equipment_general_name_id}', '${brandId[0].equipment_brand_id}', '${modelId[0].equipment_model_id}', '${uomId[0].equipment_unit_of_measurement_id}', '${categoryId[0].equipment_component_category_id}', '${equipmentId}')
@@ -9012,7 +9012,7 @@ RETURNS BOOLEAN AS $$
       `
         SELECT 
           *
-        FROM equipment_part_table 
+        FROM equipment_schema.equipment_part_table 
         WHERE
           equipment_part_general_name_id = '${equipment_part_general_name_id}'
           AND regexp_replace(equipment_part_number, '[^a-zA-Z0-9]', '', 'g') = '${equipment_part_number}'
@@ -9778,8 +9778,8 @@ RETURNS JSON as $$
                   DISTINCT
                   equipment_id,
                   equipment_name
-                FROM equipment_table
-                INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                FROM equipment_schema.equipment_table
+                INNER JOIN equipment_schema.equipment_category_table ON equipment_equipment_category_id = equipment_category_id
                 WHERE
                   equipment_category = '${section.category}'
                   AND equipment_is_disabled = false
@@ -9803,10 +9803,10 @@ RETURNS JSON as $$
                   DISTINCT
                   equipment_brand_id,
                   equipment_brand
-                FROM equipment_table
-                INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id
-                INNER JOIN equipment_description_table ON equipment_description_equipment_id = equipment_id
-                INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
+                FROM equipment_schema.equipment_table
+                INNER JOIN equipment_schema.equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                INNER JOIN equipment_schema.equipment_description_table ON equipment_description_equipment_id = equipment_id
+                INNER JOIN equipment_schema.equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
                 WHERE
                   equipment_category = '${section.category}'
                   AND equipment_is_disabled = false
@@ -9841,11 +9841,11 @@ RETURNS JSON as $$
                   DISTINCT
                   equipment_model_id,
                   equipment_model
-                FROM equipment_table
-                INNER JOIN equipment_category_table ON equipment_equipment_category_id = equipment_category_id
-                INNER JOIN equipment_description_table ON equipment_description_equipment_id = equipment_id
-                INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
-                INNER JOIN equipment_model_table ON equipment_model_id = equipment_description_model_id
+                FROM equipment_schema.equipment_table
+                INNER JOIN equipment_schema.equipment_category_table ON equipment_equipment_category_id = equipment_category_id
+                INNER JOIN equipment_schema.equipment_description_table ON equipment_description_equipment_id = equipment_id
+                INNER JOIN equipment_schema.equipment_brand_table ON equipment_brand_id = equipment_description_brand_id
+                INNER JOIN equipment_schema.equipment_model_table ON equipment_model_id = equipment_description_model_id
                 WHERE
                   equipment_category = '${section.category}'
                   AND equipment_is_disabled = false
@@ -12160,20 +12160,20 @@ plv8.subtransaction(function() {
     `
       SELECT
         equipment_unit_of_measurement
-      FROM equipment_part_table AS ept
-      INNER JOIN equipment_general_name_table ON equipment_general_name_id = ept.equipment_part_general_name_id
+      FROM equipment_schema.equipment_part_table AS ept
+      INNER JOIN equipment_schema.equipment_general_name_table ON equipment_general_name_id = ept.equipment_part_general_name_id
         AND equipment_general_name_is_disabled = false
         AND equipment_general_name_is_available = true
         AND equipment_general_name = '${generalName}'
-      INNER JOIN equipment_component_category_table ON equipment_component_category_id = ept.equipment_part_component_category_id
+      INNER JOIN equipment_schema.equipment_component_category_table ON equipment_component_category_id = ept.equipment_part_component_category_id
         AND equipment_component_category_is_disabled = false
         AND equipment_component_category_is_available = true
         AND equipment_component_category = '${componentCategory}'
-      INNER JOIN equipment_brand_table ON equipment_brand_id = ept.equipment_part_brand_id
+      INNER JOIN equipment_schema.equipment_brand_table ON equipment_brand_id = ept.equipment_part_brand_id
         AND equipment_brand_is_disabled = false
         AND equipment_brand_is_available = true
         AND equipment_brand = '${brand}'
-      INNER JOIN equipment_model_table ON equipment_model_id = ept.equipment_part_model_id
+      INNER JOIN equipment_schema.equipment_model_table ON equipment_model_id = ept.equipment_part_model_id
         AND equipment_model_is_disabled = false
         AND equipment_model_is_available = true
         AND equipment_model = '${model}'
@@ -12256,15 +12256,15 @@ ALTER TABLE ticket_section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_field_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_option_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_response_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_brand_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_model_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_component_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_description_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_schema.equipment_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_schema.equipment_brand_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_schema.equipment_model_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_schema.equipment_component_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_schema.equipment_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_schema.equipment_description_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE unit_of_measurement_schema.equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_general_name_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_part_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_schema.equipment_general_name_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE equipment_schema.equipment_part_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE unit_of_measurement_schema.capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_project_table ENABLE ROW LEVEL SECURITY;
@@ -12538,50 +12538,50 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_response_tabl
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_response_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON ticket_response_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_category_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_category_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_category_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_brand_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_brand_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_brand_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_brand_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_brand_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_model_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_model_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_model_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_model_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_model_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_component_category_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_component_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_component_category_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_component_category_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_component_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_description_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_description_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_description_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_description_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_schema.;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_description_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_general_name_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_general_name_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_general_name_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_general_name_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_general_name_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ONequipment_schema.equipment_general_name_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_part_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_part_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_part_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_part_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_part_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
@@ -14693,7 +14693,7 @@ TO authenticated
 USING(true);
 
 --- EQUIPMENT_CATEGORY_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_category_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_category_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14706,11 +14706,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_category_table"
+CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_category_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_category_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_category_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14723,7 +14723,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_category_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_category_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14737,7 +14737,7 @@ USING (
 );
 
 --- EQUIPMENT_BRAND_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_brand_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_brand_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14750,11 +14750,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_brand_table"
+CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_brand_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_brand_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_brand_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14767,7 +14767,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_brand_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_brand_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14781,7 +14781,7 @@ USING (
 );
 
 --- EQUIPMENT_MODEL_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_model_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_model_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14794,11 +14794,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_model_table"
+CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_model_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_model_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_model_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14811,7 +14811,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_model_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_model_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14825,7 +14825,7 @@ USING (
 );
 
 --- EQUIPMENT_COMPONENT_CATEGORY_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_component_category_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_component_category_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14838,11 +14838,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_component_category_table"
+CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_component_category_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_component_category_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_component_category_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14855,7 +14855,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_component_category_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_component_category_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14869,7 +14869,7 @@ USING (
 );
 
 --- EQUIPMENT_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14882,11 +14882,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_table"
+CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14899,7 +14899,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14913,13 +14913,13 @@ USING (
 );
 
 --- EQUIPMENT_DESCRIPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_description_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_description_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM equipment_table
+    FROM equipment_schema.equipment_table
     INNER JOIN team_table ON team_id = equipment_team_id
     INNER JOIN team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
@@ -14928,17 +14928,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_description_table"
+CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_description_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_description_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_description_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM equipment_table
+    FROM equipment_schema.equipment_table
     INNER JOIN team_table ON team_id = equipment_team_id
     INNER JOIN team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
@@ -14947,13 +14947,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_description_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_description_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM equipment_table
+    FROM equipment_schema.equipment_table
     INNER JOIN team_table ON team_id = equipment_team_id
     INNER JOIN team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
@@ -15007,7 +15007,7 @@ USING (
 );
 
 --- EQUIPMENT_GENERAL_NAME_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_general_name_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_general_name_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15020,11 +15020,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_general_name_table"
+CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_general_name_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_general_name_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_general_name_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15037,7 +15037,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_general_name_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_general_name_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15051,13 +15051,13 @@ USING (
 );
 
 --- EQUIPMENT_PART_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_part_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_part_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM equipment_table
+    FROM equipment_schema.equipment_table
     INNER JOIN team_table ON team_id = equipment_team_id
     INNER JOIN team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
@@ -15066,17 +15066,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_part_table"
+CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_part_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_part_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_part_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM equipment_table
+    FROM equipment_schema.equipment_table
     INNER JOIN team_table ON team_id = equipment_team_id
     INNER JOIN team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
@@ -15085,13 +15085,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_part_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_part_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM equipment_table
+    FROM equipment_schema.equipment_table
     INNER JOIN team_table ON team_id = equipment_team_id
     INNER JOIN team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
@@ -15400,20 +15400,20 @@ CREATE INDEX request_response_idx ON request_response_table (request_response_re
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
 CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_table;
-CREATE VIEW equipment_description_view AS 
+CREATE VIEW equipment_schema.equipment_description_view AS 
 SELECT 
-    equipment_description_table.*, 
-    CASE 
-        WHEN equipment_description_is_rental = true 
-        THEN CONCAT('REN-', equipment_name_shorthand, '-', equipment_description_property_number) 
-        ELSE CONCAT(equipment_name_shorthand, '-', equipment_description_property_number) 
-    END AS equipment_description_property_number_with_prefix 
+  equipment_description_table.*, 
+  CASE 
+      WHEN equipment_description_is_rental = true 
+      THEN CONCAT('REN-', equipment_name_shorthand, '-', equipment_description_property_number) 
+      ELSE CONCAT(equipment_name_shorthand, '-', equipment_description_property_number) 
+  END AS equipment_description_property_number_with_prefix 
 FROM 
-    equipment_description_table 
+    equipment_schema.equipment_description_table 
 INNER JOIN 
-    equipment_table 
+  equipment_schema.equipment_table 
 ON 
-    equipment_id = equipment_description_equipment_id;
+  equipment_id = equipment_description_equipment_id;
 
 -------- END: VIEWS
 

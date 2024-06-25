@@ -3548,6 +3548,7 @@ export const getEquipmentList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("equipment_schema")
     .from("equipment_table")
     .select(
       "*, equipment_category: equipment_equipment_category_id(equipment_category)",
@@ -3592,6 +3593,7 @@ export const checkEquipmentName = async (
   const { equipmentName, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_table")
     .select("*", { count: "exact", head: true })
     .eq("equipment_name", equipmentName)
@@ -3609,6 +3611,7 @@ export const getEquipmentCategoryOption = async (
 ) => {
   const { teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_category_table")
     .select("*")
     .eq("equipment_category_team_id", teamId)
@@ -3630,6 +3633,7 @@ export const getEquipmentDescriptionList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_view")
     .select(
       `
@@ -3693,6 +3697,7 @@ export const getEquipmentBrandAndModelOption = async (
 ) => {
   const { teamId } = params;
   const { data: brandList, error: brandError } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_brand_table")
     .select("*")
     .eq("equipment_brand_team_id", teamId)
@@ -3702,6 +3707,7 @@ export const getEquipmentBrandAndModelOption = async (
   if (brandError) throw brandError;
 
   const { data: modelList, error: modelError } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_model_table")
     .select("*")
     .eq("equipment_model_team_id", teamId)
@@ -3726,6 +3732,7 @@ export const getEquipmentNameOption = async (
 ) => {
   const { index, teamId } = params;
   const { data: nameList, error: nameError } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_general_name_table")
     .select("*")
     .eq("equipment_general_name_team_id", teamId)
@@ -3748,6 +3755,7 @@ export const checkPropertyNumber = async (
   const { propertyNumber, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_view")
     .select(
       "*, equipment_description_equipment: equipment_description_equipment_id(*)",
@@ -3772,6 +3780,7 @@ export const checkSerialNumber = async (
   const { serialNumber, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_table")
     .select(
       "*, equipment_description_equipment: equipment_description_equipment_id(*)",
@@ -3825,6 +3834,7 @@ export const getEquipmentUOMAndCategoryOption = async (
   if (uomListError) throw uomListError;
 
   const { data: categoryList, error: categoryError } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_component_category_table")
     .select("*")
     .eq("equipment_component_category_team_id", teamId)
@@ -3864,6 +3874,7 @@ export const getEquipmentCategoryList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("equipment_schema")
     .from("equipment_category_table")
     .select("*", { count: "exact" })
     .eq("equipment_category_team_id", teamId)
@@ -4815,6 +4826,7 @@ export const getEquipmentName = async (
 ) => {
   const { category } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_table")
     .select("*")
     .eq("equipment_is_disabled", false)
@@ -4834,6 +4846,7 @@ export const getEquipmentPropertyNumber = async (
 ) => {
   const { equipmentId } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_view")
     .select("*")
     .eq("equipment_description_is_disabled", false)
@@ -4853,6 +4866,7 @@ export const getEquipmentDescription = async (
 ) => {
   const { propertyNumber } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_view")
     .select(
       "*, equipment_description_brand: equipment_description_brand_id(equipment_brand), equipment_description_model: equipment_description_model_id(equipment_model)"
@@ -4964,6 +4978,7 @@ export const getEquipmentSectionChoices = async (
 ) => {
   const { category, equipmentName, brand } = params;
   let query = supabaseClient
+    .schema("equipment_schema")
     .from("equipment_table")
     .select(
       `
@@ -5265,6 +5280,7 @@ export const getPropertyNumberOptions = async (
 ) => {
   const { teamId, index, limit, equipmentId, isWithAcquisitionDate } = params;
   let query = supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_view")
     .select(
       `
@@ -5808,6 +5824,7 @@ export const getPEDEquipmentCategoryOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_category_table")
     .select("equipment_category_id, equipment_category")
     .eq("equipment_category_team_id", teamId)
@@ -6311,6 +6328,7 @@ export const getEquipmentCodeOptions = async (
 ) => {
   const { index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_view")
     .select(
       "equipment_description_id, equipment_description_property_number_with_prefix"

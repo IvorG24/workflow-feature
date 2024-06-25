@@ -1482,6 +1482,7 @@ export const createEquipment = async (
 ) => {
   const { equipmentData, category } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_table")
     .insert(equipmentData)
     .select()
@@ -1505,6 +1506,7 @@ export const createEquipmentDescription = async (
 ) => {
   const { equipmentDescriptionData, brand, model } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_description_table")
     .insert(equipmentDescriptionData)
     .select()
@@ -1532,6 +1534,7 @@ export const createEquipmentPart = async (
 ) => {
   const { equipmentPartData, name, brand, model, uom, category } = params;
   const { data, error } = await supabaseClient
+    .schema("equipment_schema")
     .from("equipment_part_table")
     .insert(equipmentPartData)
     .select()

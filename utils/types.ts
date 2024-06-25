@@ -213,60 +213,60 @@ export type ServiceCategoryTableUpdate =
   Database["service_schema"]["Tables"]["service_category_table"]["Update"];
 
 export type EquipmentTableRow =
-  Database["public"]["Tables"]["equipment_table"]["Row"];
+  Database["equipment_schema"]["Tables"]["equipment_table"]["Row"];
 export type EquipmentTableInsert =
-  Database["public"]["Tables"]["equipment_table"]["Insert"];
+  Database["equipment_schema"]["Tables"]["equipment_table"]["Insert"];
 export type EquipmentTableUpdate =
-  Database["public"]["Tables"]["equipment_table"]["Update"];
+  Database["equipment_schema"]["Tables"]["equipment_table"]["Update"];
 
 export type EquipmentDescriptionTableRow =
-  Database["public"]["Tables"]["equipment_description_table"]["Row"];
+  Database["equipment_schema"]["Tables"]["equipment_description_table"]["Row"];
 export type EquipmentDescriptionTableInsert =
-  Database["public"]["Tables"]["equipment_description_table"]["Insert"];
+  Database["equipment_schema"]["Tables"]["equipment_description_table"]["Insert"];
 export type EquipmentDescriptionTableUpdate =
-  Database["public"]["Tables"]["equipment_description_table"]["Update"];
+  Database["equipment_schema"]["Tables"]["equipment_description_table"]["Update"];
 
 export type EquipmentPartTableRow =
-  Database["public"]["Tables"]["equipment_part_table"]["Row"];
+  Database["equipment_schema"]["Tables"]["equipment_part_table"]["Row"];
 export type EquipmentPartTableInsert =
-  Database["public"]["Tables"]["equipment_part_table"]["Insert"];
+  Database["equipment_schema"]["Tables"]["equipment_part_table"]["Insert"];
 export type EquipmentPartTableUpdate =
-  Database["public"]["Tables"]["equipment_part_table"]["Update"];
+  Database["equipment_schema"]["Tables"]["equipment_part_table"]["Update"];
 
 export type EquipmentCategoryTableRow =
-  Database["public"]["Tables"]["equipment_category_table"]["Row"];
+  Database["equipment_schema"]["Tables"]["equipment_category_table"]["Row"];
 export type EquipmentCategoryTableInsert =
-  Database["public"]["Tables"]["equipment_category_table"]["Insert"];
+  Database["equipment_schema"]["Tables"]["equipment_category_table"]["Insert"];
 export type EquipmentCategoryTableUpdate =
-  Database["public"]["Tables"]["equipment_category_table"]["Update"];
+  Database["equipment_schema"]["Tables"]["equipment_category_table"]["Update"];
 
 export type EquipmentBrandTableRow =
-  Database["public"]["Tables"]["equipment_brand_table"]["Row"];
+  Database["equipment_schema"]["Tables"]["equipment_brand_table"]["Row"];
 export type EquipmentBrandTableInsert =
-  Database["public"]["Tables"]["equipment_brand_table"]["Insert"];
+  Database["equipment_schema"]["Tables"]["equipment_brand_table"]["Insert"];
 export type EquipmentBrandTableUpdate =
-  Database["public"]["Tables"]["equipment_brand_table"]["Update"];
+  Database["equipment_schema"]["Tables"]["equipment_brand_table"]["Update"];
 
 export type EquipmentModelTableRow =
-  Database["public"]["Tables"]["equipment_model_table"]["Row"];
+  Database["equipment_schema"]["Tables"]["equipment_model_table"]["Row"];
 export type EquipmentModelTableInsert =
-  Database["public"]["Tables"]["equipment_model_table"]["Insert"];
+  Database["equipment_schema"]["Tables"]["equipment_model_table"]["Insert"];
 export type EquipmentModelTableUpdate =
-  Database["public"]["Tables"]["equipment_model_table"]["Update"];
+  Database["equipment_schema"]["Tables"]["equipment_model_table"]["Update"];
 
 export type EquipmentUnitOfMeasurementTableRow =
   Database["unit_of_measurement_schema"]["Tables"]["equipment_unit_of_measurement_table"]["Row"];
 export type EquipmentUnitOfMeasurementTableInsert =
-  Database["public"]["Tables"]["equipment_brand_table"]["Insert"];
+  Database["equipment_schema"]["Tables"]["equipment_brand_table"]["Insert"];
 export type EquipmentUnitOfMeasurementTableUpdate =
   Database["unit_of_measurement_schema"]["Tables"]["equipment_unit_of_measurement_table"]["Update"];
 
 export type EquipmentComponentCategoryTableRow =
-  Database["public"]["Tables"]["equipment_component_category_table"]["Row"];
+  Database["equipment_schema"]["Tables"]["equipment_component_category_table"]["Row"];
 export type EquipmentComponentCategoryTableInsert =
-  Database["public"]["Tables"]["equipment_component_category_table"]["Insert"];
+  Database["equipment_schema"]["Tables"]["equipment_component_category_table"]["Insert"];
 export type EquipmentComponentCategoryTableUpdate =
-  Database["public"]["Tables"]["equipment_component_category_table"]["Update"];
+  Database["equipment_schema"]["Tables"]["equipment_component_category_table"]["Update"];
 
 export type MemoTableRow = Database["public"]["Tables"]["memo_table"]["Row"];
 export type MemoTableInsert =
