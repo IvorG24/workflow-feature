@@ -4,14 +4,14 @@ import EquipmentLookup from "./EquipmentLookup/EquipmentLookup";
 
 const PEDLookup = () => {
   const equipmentLookupList = [
-    { table: "equipment_category", label: "Category" },
-    { table: "equipment_brand", label: "Brand" },
-    { table: "equipment_model", label: "Model" },
+    { table: "equipment_category", label: "Category", schema: "public" },
+    { table: "equipment_brand", label: "Brand", schema: "public" },
+    { table: "equipment_model", label: "Model", schema: "public" },
     {
       table: "capacity_unit_of_measurement",
       label: "Capacity Unit of Measurement",
     },
-  ] as { table: EquipmentLookupChoices; label: string }[];
+  ] as { table: EquipmentLookupChoices; label: string; schema: string }[];
 
   return (
     <Container p={0} fluid pos="relative">

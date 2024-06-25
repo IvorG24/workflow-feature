@@ -3,9 +3,13 @@ import CategoryLookup from "./CategoryLookup/CategoryLookup";
 
 const ItemLookup = () => {
   const serviceLookupList = [
-    { table: "item_unit_of_measurement", label: "Unit of Measurement" },
-    { table: "supplier", label: "Supplier" },
-  ] as { table: string; label: string }[];
+    {
+      table: "item_unit_of_measurement",
+      label: "Unit of Measurement",
+      schema: "public",
+    },
+    { table: "supplier", label: "Supplier", schema: "public" },
+  ] as { table: string; label: string; schema: string }[];
 
   return (
     <Container p={0} fluid pos="relative">

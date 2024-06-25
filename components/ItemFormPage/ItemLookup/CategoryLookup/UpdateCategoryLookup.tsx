@@ -24,6 +24,7 @@ type Props = {
   lookup: {
     table: string;
     label: string;
+    schema: string;
   };
   setCategoryLookupList: Dispatch<SetStateAction<LookupTable[]>>;
   setEditCategoryLookup: Dispatch<SetStateAction<LookupTable | null>>;

@@ -144,6 +144,7 @@ const EquipmentDescriptionList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "equipment_description",
+        schema: "public",
       });
       handleFetch("", 1);
 
@@ -301,13 +302,10 @@ const EquipmentDescriptionList = ({
             width: 40,
           },
           {
-            accessor: "equipment_description_property_number",
+            accessor: "equipment_description_property_number_with_prefix",
             title: "Property Number",
-            render: ({ equipment_description_property_number }) => (
-              <Text>
-                {selectedEquipment.equipment_name_shorthand}-
-                {equipment_description_property_number}
-              </Text>
+            render: ({ equipment_description_property_number_with_prefix }) => (
+              <Text>{equipment_description_property_number_with_prefix}</Text>
             ),
           },
           {

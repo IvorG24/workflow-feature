@@ -133,6 +133,7 @@ const OtherExpensesTypeList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "other_expenses_type",
+        schema: "other_expenses_schema",
       });
       handleFetch("", 1);
 

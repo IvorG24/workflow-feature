@@ -225,6 +225,7 @@ const ItemList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "item",
+        schema: "public",
       });
 
       setSelectedItem(null);

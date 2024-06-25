@@ -1,5 +1,5 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getEquipmentLookupList } from "@/backend/api/get";
+import { getLookupList } from "@/backend/api/get";
 import { toggleStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
@@ -45,6 +45,7 @@ type Props = {
   lookup: {
     table: EquipmentLookupChoices;
     label: string;
+    schema: string;
   };
   equipmentLookupList: LookupTable[];
   setEquipmentLookupList: Dispatch<SetStateAction<LookupTable[]>>;
@@ -83,12 +84,13 @@ const EquipmentLookupList = ({
     setIsLoading(true);
     try {
       if (!team.team_id) return;
-      const { data, count } = await getEquipmentLookupList(supabaseClient, {
+      const { data, count } = await getLookupList(supabaseClient, {
         lookup: lookup.table,
         teamId: team.team_id,
         search,
         limit: ROW_PER_PAGE,
         page,
+        schema: lookup.schema,
       });
       setEquipmentLookupList(data);
       setEquipmentLookupCount(Number(count));
@@ -138,6 +140,7 @@ const EquipmentLookupList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: lookup.table,
+        schema: lookup.schema,
       });
       handleFetch("", 1);
 

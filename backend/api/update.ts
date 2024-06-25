@@ -554,9 +554,10 @@ export const updateEquipmentDescription = async (
     equipmentDescriptionData: EquipmentDescriptionTableUpdate;
     brand: string;
     model: string;
+    shorthand: string;
   }
 ) => {
-  const { equipmentDescriptionData, brand, model } = params;
+  const { equipmentDescriptionData, brand, model, shorthand } = params;
   if (!equipmentDescriptionData.equipment_description_id) throw new Error();
 
   const { data, error } = await supabaseClient
@@ -574,6 +575,11 @@ export const updateEquipmentDescription = async (
     ...data,
     equipment_description_brand: brand,
     equipment_description_model: model,
+    equipment_description_property_number_with_prefix: `${
+      equipmentDescriptionData.equipment_description_is_rental ? "REN-" : ""
+    }${shorthand}-${
+      equipmentDescriptionData.equipment_description_property_number
+    }`,
   };
 };
 
@@ -917,6 +923,7 @@ export const updateOtherExpensesType = async (
   const { updateData, otherExpensesTypeId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_type_table")
     .update(updateData)
     .eq("other_expenses_type_id", otherExpensesTypeId)

@@ -3,10 +3,14 @@ import CategoryLookup from "./CategoryLookup/CategoryLookup";
 
 const ServicesLookup = () => {
   const serviceLookupList = [
-    { table: "service_category", label: "Category" },
-    { table: "general_unit_of_measurement", label: "Unit of Measurement" },
-    { table: "supplier", label: "Supplier" },
-  ] as { table: string; label: string }[];
+    { table: "service_category", label: "Category", schema: "service_schema" },
+    {
+      table: "general_unit_of_measurement",
+      label: "Unit of Measurement",
+      schema: "public",
+    },
+    { table: "supplier", label: "Supplier", schema: "public" },
+  ] as { table: string; label: string; schema: string }[];
 
   return (
     <Container p={0} fluid pos="relative">

@@ -45,6 +45,7 @@ type Props = {
   lookup: {
     table: string;
     label: string;
+    schema: string;
   };
   categoryLookupList: LookupTable[];
   setCategoryLookupList: Dispatch<SetStateAction<LookupTable[]>>;
@@ -89,12 +90,13 @@ const CategoryLookupList = ({
         search,
         limit: ROW_PER_PAGE,
         page,
+        schema: lookup.schema,
       });
       setCategoryLookupList(data);
       setCategoryLookupCount(Number(count));
     } catch (e) {
       notifications.show({
-        message: `Error on fetching category ${lookup.label} list`,
+        message: `Error on fetching ${lookup.label} list`,
         color: "red",
       });
     } finally {
@@ -138,6 +140,7 @@ const CategoryLookupList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: lookup.table,
+        schema: lookup.schema,
       });
       handleFetch("", 1);
       notifications.show({

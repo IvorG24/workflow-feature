@@ -171,25 +171,25 @@ export type CSICodeTableUpdate =
   Database["public"]["Tables"]["csi_code_table"]["Update"];
 
 export type ServiceTableRow =
-  Database["public"]["Tables"]["service_table"]["Row"];
+  Database["service_schema"]["Tables"]["service_table"]["Row"];
 export type ServiceTableInsert =
-  Database["public"]["Tables"]["service_table"]["Insert"];
+  Database["service_schema"]["Tables"]["service_table"]["Insert"];
 export type ServiceTableUpdate =
-  Database["public"]["Tables"]["service_table"]["Update"];
+  Database["service_schema"]["Tables"]["service_table"]["Update"];
 
 export type ServiceScopeTableRow =
-  Database["public"]["Tables"]["service_scope_table"]["Row"];
+  Database["service_schema"]["Tables"]["service_scope_table"]["Row"];
 export type ServiceScopeTableInsert =
-  Database["public"]["Tables"]["service_scope_table"]["Insert"];
+  Database["service_schema"]["Tables"]["service_scope_table"]["Insert"];
 export type ServiceScopeTableUpdate =
-  Database["public"]["Tables"]["service_scope_table"]["Update"];
+  Database["service_schema"]["Tables"]["service_scope_table"]["Update"];
 
 export type ServiceScopeChoiceTableRow =
-  Database["public"]["Tables"]["service_scope_choice_table"]["Row"];
+  Database["service_schema"]["Tables"]["service_scope_choice_table"]["Row"];
 export type ServiceScopeChoiceTableInsert =
-  Database["public"]["Tables"]["service_scope_choice_table"]["Insert"];
+  Database["service_schema"]["Tables"]["service_scope_choice_table"]["Insert"];
 export type ServiceScopeChoiceTableUpdate =
-  Database["public"]["Tables"]["service_scope_choice_table"]["Update"];
+  Database["service_schema"]["Tables"]["service_scope_choice_table"]["Update"];
 
 export type TicketTableRow =
   Database["public"]["Tables"]["ticket_table"]["Row"];
@@ -206,11 +206,11 @@ export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
 
 export type ServiceCategoryTableRow =
-  Database["public"]["Tables"]["service_category_table"]["Row"];
+  Database["service_schema"]["Tables"]["service_category_table"]["Row"];
 export type ServiceCategoryTableInsert =
-  Database["public"]["Tables"]["service_category_table"]["Insert"];
+  Database["service_schema"]["Tables"]["service_category_table"]["Insert"];
 export type ServiceCategoryTableUpdate =
-  Database["public"]["Tables"]["service_category_table"]["Update"];
+  Database["service_schema"]["Tables"]["service_category_table"]["Update"];
 
 export type EquipmentTableRow =
   Database["public"]["Tables"]["equipment_table"]["Row"];
@@ -255,11 +255,11 @@ export type EquipmentModelTableUpdate =
   Database["public"]["Tables"]["equipment_model_table"]["Update"];
 
 export type EquipmentUnitOfMeasurementTableRow =
-  Database["public"]["Tables"]["equipment_unit_of_measurement_table"]["Row"];
+  Database["unit_of_measurement_schema"]["Tables"]["equipment_unit_of_measurement_table"]["Row"];
 export type EquipmentUnitOfMeasurementTableInsert =
   Database["public"]["Tables"]["equipment_brand_table"]["Insert"];
 export type EquipmentUnitOfMeasurementTableUpdate =
-  Database["public"]["Tables"]["equipment_unit_of_measurement_table"]["Update"];
+  Database["unit_of_measurement_schema"]["Tables"]["equipment_unit_of_measurement_table"]["Update"];
 
 export type EquipmentComponentCategoryTableRow =
   Database["public"]["Tables"]["equipment_component_category_table"]["Row"];
@@ -309,11 +309,11 @@ export type MemoAgreementTableInsert =
 export type MemoAgreementTableUpdate =
   Database["public"]["Tables"]["memo_agreement_table"]["Update"];
 export type OtherExpensesTypeTableRow =
-  Database["public"]["Tables"]["other_expenses_type_table"]["Row"];
+  Database["other_expenses_schema"]["Tables"]["other_expenses_type_table"]["Row"];
 export type OtherExpensesTypeTableInsert =
-  Database["public"]["Tables"]["other_expenses_type_table"]["Insert"];
+  Database["other_expenses_schema"]["Tables"]["other_expenses_type_table"]["Insert"];
 export type OtherExpensesTypeTableUpdate =
-  Database["public"]["Tables"]["other_expenses_type_table"]["Update"];
+  Database["other_expenses_schema"]["Tables"]["other_expenses_type_table"]["Update"];
 
 export type SignatureHistoryTableRow =
   Database["history_schema"]["Tables"]["signature_history_table"]["Row"];
@@ -1382,6 +1382,8 @@ export type EquipmentForm = {
 };
 
 export type EquipmentDescriptionType = EquipmentDescriptionTableRow & {
+  equipment_description_property_number_with_prefix: string;
+} & {
   equipment_description_brand: string;
   equipment_description_model: string;
 };
@@ -2009,3 +2011,9 @@ export type PendingInviteType = {
     team_member_team_id: string;
   };
 };
+
+export type SchemaType =
+  | "public"
+  | "history_schema"
+  | "other_expenses_schema"
+  | "user_schema";

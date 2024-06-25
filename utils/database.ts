@@ -81,6 +81,112 @@ export type Database = {
       [_ in never]: never;
     };
   };
+  other_expenses_schema: {
+    Tables: {
+      other_expenses_category_table: {
+        Row: {
+          other_expenses_category: string;
+          other_expenses_category_date_created: string;
+          other_expenses_category_encoder_team_member_id: string | null;
+          other_expenses_category_id: string;
+          other_expenses_category_is_available: boolean;
+          other_expenses_category_is_disabled: boolean;
+          other_expenses_category_team_id: string;
+        };
+        Insert: {
+          other_expenses_category: string;
+          other_expenses_category_date_created?: string;
+          other_expenses_category_encoder_team_member_id?: string | null;
+          other_expenses_category_id?: string;
+          other_expenses_category_is_available?: boolean;
+          other_expenses_category_is_disabled?: boolean;
+          other_expenses_category_team_id: string;
+        };
+        Update: {
+          other_expenses_category?: string;
+          other_expenses_category_date_created?: string;
+          other_expenses_category_encoder_team_member_id?: string | null;
+          other_expenses_category_id?: string;
+          other_expenses_category_is_available?: boolean;
+          other_expenses_category_is_disabled?: boolean;
+          other_expenses_category_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_category_table_other_expenses_category_enco_fkey";
+            columns: ["other_expenses_category_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          },
+          {
+            foreignKeyName: "other_expenses_category_table_other_expenses_category_team_fkey";
+            columns: ["other_expenses_category_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          }
+        ];
+      };
+      other_expenses_type_table: {
+        Row: {
+          other_expenses_type: string;
+          other_expenses_type_category_id: string | null;
+          other_expenses_type_date_created: string;
+          other_expenses_type_encoder_team_member_id: string | null;
+          other_expenses_type_id: string;
+          other_expenses_type_is_available: boolean;
+          other_expenses_type_is_disabled: boolean;
+        };
+        Insert: {
+          other_expenses_type: string;
+          other_expenses_type_category_id?: string | null;
+          other_expenses_type_date_created?: string;
+          other_expenses_type_encoder_team_member_id?: string | null;
+          other_expenses_type_id?: string;
+          other_expenses_type_is_available?: boolean;
+          other_expenses_type_is_disabled?: boolean;
+        };
+        Update: {
+          other_expenses_type?: string;
+          other_expenses_type_category_id?: string | null;
+          other_expenses_type_date_created?: string;
+          other_expenses_type_encoder_team_member_id?: string | null;
+          other_expenses_type_id?: string;
+          other_expenses_type_is_available?: boolean;
+          other_expenses_type_is_disabled?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_type_table_other_expenses_type_category_id_fkey";
+            columns: ["other_expenses_type_category_id"];
+            isOneToOne: false;
+            referencedRelation: "other_expenses_category_table";
+            referencedColumns: ["other_expenses_category_id"];
+          },
+          {
+            foreignKeyName: "other_expenses_type_table_other_expenses_type_encoder_team_fkey";
+            columns: ["other_expenses_type_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          }
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       address_table: {
@@ -143,50 +249,20 @@ export type Database = {
         };
         Relationships: [];
       };
-      capacity_unit_of_measurement_table: {
+      bank_list_table: {
         Row: {
-          capacity_unit_of_measurement: string;
-          capacity_unit_of_measurement_date_created: string;
-          capacity_unit_of_measurement_encoder_team_member_id: string | null;
-          capacity_unit_of_measurement_id: string;
-          capacity_unit_of_measurement_is_available: boolean;
-          capacity_unit_of_measurement_is_disabled: boolean;
-          capacity_unit_of_measurement_team_id: string;
+          bank_id: string;
+          bank_label: string;
         };
         Insert: {
-          capacity_unit_of_measurement: string;
-          capacity_unit_of_measurement_date_created?: string;
-          capacity_unit_of_measurement_encoder_team_member_id?: string | null;
-          capacity_unit_of_measurement_id?: string;
-          capacity_unit_of_measurement_is_available?: boolean;
-          capacity_unit_of_measurement_is_disabled?: boolean;
-          capacity_unit_of_measurement_team_id: string;
+          bank_id?: string;
+          bank_label: string;
         };
         Update: {
-          capacity_unit_of_measurement?: string;
-          capacity_unit_of_measurement_date_created?: string;
-          capacity_unit_of_measurement_encoder_team_member_id?: string | null;
-          capacity_unit_of_measurement_id?: string;
-          capacity_unit_of_measurement_is_available?: boolean;
-          capacity_unit_of_measurement_is_disabled?: boolean;
-          capacity_unit_of_measurement_team_id?: string;
+          bank_id?: string;
+          bank_label?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "capacity_unit_of_measurement__capacity_unit_of_measurement_fkey";
-            columns: ["capacity_unit_of_measurement_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          },
-          {
-            foreignKeyName: "capacity_unit_of_measurement_capacity_unit_of_measurement_fkey1";
-            columns: ["capacity_unit_of_measurement_team_id"];
-            isOneToOne: false;
-            referencedRelation: "team_table";
-            referencedColumns: ["team_id"];
-          }
-        ];
+        Relationships: [];
       };
       comment_table: {
         Row: {
@@ -785,51 +861,6 @@ export type Database = {
           }
         ];
       };
-      equipment_unit_of_measurement_table: {
-        Row: {
-          equipment_unit_of_measurement: string;
-          equipment_unit_of_measurement_date_created: string;
-          equipment_unit_of_measurement_encoder_team_member_id: string | null;
-          equipment_unit_of_measurement_id: string;
-          equipment_unit_of_measurement_is_available: boolean;
-          equipment_unit_of_measurement_is_disabled: boolean;
-          equipment_unit_of_measurement_team_id: string;
-        };
-        Insert: {
-          equipment_unit_of_measurement: string;
-          equipment_unit_of_measurement_date_created?: string;
-          equipment_unit_of_measurement_encoder_team_member_id?: string | null;
-          equipment_unit_of_measurement_id?: string;
-          equipment_unit_of_measurement_is_available?: boolean;
-          equipment_unit_of_measurement_is_disabled?: boolean;
-          equipment_unit_of_measurement_team_id: string;
-        };
-        Update: {
-          equipment_unit_of_measurement?: string;
-          equipment_unit_of_measurement_date_created?: string;
-          equipment_unit_of_measurement_encoder_team_member_id?: string | null;
-          equipment_unit_of_measurement_id?: string;
-          equipment_unit_of_measurement_is_available?: boolean;
-          equipment_unit_of_measurement_is_disabled?: boolean;
-          equipment_unit_of_measurement_team_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "equipment_unit_of_measuremen_equipment_unit_of_measuremen_fkey1";
-            columns: ["equipment_unit_of_measurement_team_id"];
-            isOneToOne: false;
-            referencedRelation: "team_table";
-            referencedColumns: ["team_id"];
-          },
-          {
-            foreignKeyName: "equipment_unit_of_measurement_equipment_unit_of_measuremen_fkey";
-            columns: ["equipment_unit_of_measurement_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          }
-        ];
-      };
       expense_type_table: {
         Row: {
           expense_type_id: string;
@@ -1047,51 +1078,6 @@ export type Database = {
           formsly_price_id?: string;
         };
         Relationships: [];
-      };
-      general_unit_of_measurement_table: {
-        Row: {
-          general_unit_of_measurement: string;
-          general_unit_of_measurement_date_created: string;
-          general_unit_of_measurement_encoder_team_member_id: string | null;
-          general_unit_of_measurement_id: string;
-          general_unit_of_measurement_is_available: boolean;
-          general_unit_of_measurement_is_disabled: boolean;
-          general_unit_of_measurement_team_id: string;
-        };
-        Insert: {
-          general_unit_of_measurement: string;
-          general_unit_of_measurement_date_created?: string;
-          general_unit_of_measurement_encoder_team_member_id?: string | null;
-          general_unit_of_measurement_id?: string;
-          general_unit_of_measurement_is_available?: boolean;
-          general_unit_of_measurement_is_disabled?: boolean;
-          general_unit_of_measurement_team_id: string;
-        };
-        Update: {
-          general_unit_of_measurement?: string;
-          general_unit_of_measurement_date_created?: string;
-          general_unit_of_measurement_encoder_team_member_id?: string | null;
-          general_unit_of_measurement_id?: string;
-          general_unit_of_measurement_is_available?: boolean;
-          general_unit_of_measurement_is_disabled?: boolean;
-          general_unit_of_measurement_team_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "general_unit_of_measurement__general_unit_of_measurement__fkey1";
-            columns: ["general_unit_of_measurement_team_id"];
-            isOneToOne: false;
-            referencedRelation: "team_table";
-            referencedColumns: ["team_id"];
-          },
-          {
-            foreignKeyName: "general_unit_of_measurement_t_general_unit_of_measurement__fkey";
-            columns: ["general_unit_of_measurement_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          }
-        ];
       };
       item_category_table: {
         Row: {
@@ -1387,51 +1373,6 @@ export type Database = {
           {
             foreignKeyName: "item_table_item_team_id_fkey";
             columns: ["item_team_id"];
-            isOneToOne: false;
-            referencedRelation: "team_table";
-            referencedColumns: ["team_id"];
-          }
-        ];
-      };
-      item_unit_of_measurement_table: {
-        Row: {
-          item_unit_of_measurement: string;
-          item_unit_of_measurement_date_created: string;
-          item_unit_of_measurement_encoder_team_member_id: string | null;
-          item_unit_of_measurement_id: string;
-          item_unit_of_measurement_is_available: boolean;
-          item_unit_of_measurement_is_disabled: boolean;
-          item_unit_of_measurement_team_id: string;
-        };
-        Insert: {
-          item_unit_of_measurement: string;
-          item_unit_of_measurement_date_created?: string;
-          item_unit_of_measurement_encoder_team_member_id?: string | null;
-          item_unit_of_measurement_id?: string;
-          item_unit_of_measurement_is_available?: boolean;
-          item_unit_of_measurement_is_disabled?: boolean;
-          item_unit_of_measurement_team_id: string;
-        };
-        Update: {
-          item_unit_of_measurement?: string;
-          item_unit_of_measurement_date_created?: string;
-          item_unit_of_measurement_encoder_team_member_id?: string | null;
-          item_unit_of_measurement_id?: string;
-          item_unit_of_measurement_is_available?: boolean;
-          item_unit_of_measurement_is_disabled?: boolean;
-          item_unit_of_measurement_team_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "item_unit_of_measurement_tabl_item_unit_of_measurement_enc_fkey";
-            columns: ["item_unit_of_measurement_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          },
-          {
-            foreignKeyName: "item_unit_of_measurement_tabl_item_unit_of_measurement_tea_fkey";
-            columns: ["item_unit_of_measurement_team_id"];
             isOneToOne: false;
             referencedRelation: "team_table";
             referencedColumns: ["team_id"];
@@ -2159,96 +2100,6 @@ export type Database = {
           }
         ];
       };
-      other_expenses_category_table: {
-        Row: {
-          other_expenses_category: string;
-          other_expenses_category_date_created: string;
-          other_expenses_category_encoder_team_member_id: string | null;
-          other_expenses_category_id: string;
-          other_expenses_category_is_available: boolean;
-          other_expenses_category_is_disabled: boolean;
-          other_expenses_category_team_id: string;
-        };
-        Insert: {
-          other_expenses_category: string;
-          other_expenses_category_date_created?: string;
-          other_expenses_category_encoder_team_member_id?: string | null;
-          other_expenses_category_id?: string;
-          other_expenses_category_is_available?: boolean;
-          other_expenses_category_is_disabled?: boolean;
-          other_expenses_category_team_id: string;
-        };
-        Update: {
-          other_expenses_category?: string;
-          other_expenses_category_date_created?: string;
-          other_expenses_category_encoder_team_member_id?: string | null;
-          other_expenses_category_id?: string;
-          other_expenses_category_is_available?: boolean;
-          other_expenses_category_is_disabled?: boolean;
-          other_expenses_category_team_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "other_expenses_category_table_other_expenses_category_enco_fkey";
-            columns: ["other_expenses_category_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          },
-          {
-            foreignKeyName: "other_expenses_category_table_other_expenses_category_team_fkey";
-            columns: ["other_expenses_category_team_id"];
-            isOneToOne: false;
-            referencedRelation: "team_table";
-            referencedColumns: ["team_id"];
-          }
-        ];
-      };
-      other_expenses_type_table: {
-        Row: {
-          other_expenses_type: string;
-          other_expenses_type_category_id: string | null;
-          other_expenses_type_date_created: string;
-          other_expenses_type_encoder_team_member_id: string | null;
-          other_expenses_type_id: string;
-          other_expenses_type_is_available: boolean;
-          other_expenses_type_is_disabled: boolean;
-        };
-        Insert: {
-          other_expenses_type: string;
-          other_expenses_type_category_id?: string | null;
-          other_expenses_type_date_created?: string;
-          other_expenses_type_encoder_team_member_id?: string | null;
-          other_expenses_type_id?: string;
-          other_expenses_type_is_available?: boolean;
-          other_expenses_type_is_disabled?: boolean;
-        };
-        Update: {
-          other_expenses_type?: string;
-          other_expenses_type_category_id?: string | null;
-          other_expenses_type_date_created?: string;
-          other_expenses_type_encoder_team_member_id?: string | null;
-          other_expenses_type_id?: string;
-          other_expenses_type_is_available?: boolean;
-          other_expenses_type_is_disabled?: boolean;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "other_expenses_type_table_other_expenses_type_category_id_fkey";
-            columns: ["other_expenses_type_category_id"];
-            isOneToOne: false;
-            referencedRelation: "other_expenses_category_table";
-            referencedColumns: ["other_expenses_category_id"];
-          },
-          {
-            foreignKeyName: "other_expenses_type_table_other_expenses_type_encoder_team_fkey";
-            columns: ["other_expenses_type_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          }
-        ];
-      };
       query_table: {
         Row: {
           query_id: string;
@@ -2527,172 +2378,6 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "form_table";
             referencedColumns: ["form_id"];
-          }
-        ];
-      };
-      service_category_table: {
-        Row: {
-          service_category: string;
-          service_category_date_created: string;
-          service_category_encoder_team_member_id: string | null;
-          service_category_id: string;
-          service_category_is_available: boolean;
-          service_category_is_disabled: boolean;
-          service_category_team_id: string;
-        };
-        Insert: {
-          service_category: string;
-          service_category_date_created?: string;
-          service_category_encoder_team_member_id?: string | null;
-          service_category_id?: string;
-          service_category_is_available?: boolean;
-          service_category_is_disabled?: boolean;
-          service_category_team_id: string;
-        };
-        Update: {
-          service_category?: string;
-          service_category_date_created?: string;
-          service_category_encoder_team_member_id?: string | null;
-          service_category_id?: string;
-          service_category_is_available?: boolean;
-          service_category_is_disabled?: boolean;
-          service_category_team_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "service_category_table_service_category_encoder_team_membe_fkey";
-            columns: ["service_category_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          },
-          {
-            foreignKeyName: "service_category_table_service_category_team_id_fkey";
-            columns: ["service_category_team_id"];
-            isOneToOne: false;
-            referencedRelation: "team_table";
-            referencedColumns: ["team_id"];
-          }
-        ];
-      };
-      service_scope_choice_table: {
-        Row: {
-          service_scope_choice_date_created: string;
-          service_scope_choice_id: string;
-          service_scope_choice_is_available: boolean;
-          service_scope_choice_is_disabled: boolean;
-          service_scope_choice_name: string;
-          service_scope_choice_service_scope_id: string;
-        };
-        Insert: {
-          service_scope_choice_date_created?: string;
-          service_scope_choice_id?: string;
-          service_scope_choice_is_available?: boolean;
-          service_scope_choice_is_disabled?: boolean;
-          service_scope_choice_name: string;
-          service_scope_choice_service_scope_id: string;
-        };
-        Update: {
-          service_scope_choice_date_created?: string;
-          service_scope_choice_id?: string;
-          service_scope_choice_is_available?: boolean;
-          service_scope_choice_is_disabled?: boolean;
-          service_scope_choice_name?: string;
-          service_scope_choice_service_scope_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "service_scope_choice_table_service_scope_choice_service_sc_fkey";
-            columns: ["service_scope_choice_service_scope_id"];
-            isOneToOne: false;
-            referencedRelation: "service_scope_table";
-            referencedColumns: ["service_scope_id"];
-          }
-        ];
-      };
-      service_scope_table: {
-        Row: {
-          service_scope_date_created: string;
-          service_scope_field_id: string;
-          service_scope_id: string;
-          service_scope_is_available: boolean;
-          service_scope_is_disabled: boolean;
-          service_scope_is_with_other: boolean;
-          service_scope_name: string;
-          service_scope_service_id: string;
-          service_scope_type: string;
-        };
-        Insert: {
-          service_scope_date_created?: string;
-          service_scope_field_id: string;
-          service_scope_id?: string;
-          service_scope_is_available?: boolean;
-          service_scope_is_disabled?: boolean;
-          service_scope_is_with_other: boolean;
-          service_scope_name: string;
-          service_scope_service_id: string;
-          service_scope_type: string;
-        };
-        Update: {
-          service_scope_date_created?: string;
-          service_scope_field_id?: string;
-          service_scope_id?: string;
-          service_scope_is_available?: boolean;
-          service_scope_is_disabled?: boolean;
-          service_scope_is_with_other?: boolean;
-          service_scope_name?: string;
-          service_scope_service_id?: string;
-          service_scope_type?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "service_scope_table_service_scope_field_id_fkey";
-            columns: ["service_scope_field_id"];
-            isOneToOne: false;
-            referencedRelation: "field_table";
-            referencedColumns: ["field_id"];
-          },
-          {
-            foreignKeyName: "service_scope_table_service_scope_service_id_fkey";
-            columns: ["service_scope_service_id"];
-            isOneToOne: false;
-            referencedRelation: "service_table";
-            referencedColumns: ["service_id"];
-          }
-        ];
-      };
-      service_table: {
-        Row: {
-          service_date_created: string;
-          service_id: string;
-          service_is_available: boolean;
-          service_is_disabled: boolean;
-          service_name: string;
-          service_team_id: string;
-        };
-        Insert: {
-          service_date_created?: string;
-          service_id?: string;
-          service_is_available?: boolean;
-          service_is_disabled?: boolean;
-          service_name: string;
-          service_team_id: string;
-        };
-        Update: {
-          service_date_created?: string;
-          service_id?: string;
-          service_is_available?: boolean;
-          service_is_disabled?: boolean;
-          service_name?: string;
-          service_team_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "service_table_service_team_id_fkey";
-            columns: ["service_team_id"];
-            isOneToOne: false;
-            referencedRelation: "team_table";
-            referencedColumns: ["team_id"];
           }
         ];
       };
@@ -4013,6 +3698,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      get_item_unit_of_measurement: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: string;
+      };
       get_jira_automation_data: {
         Args: {
           input_data: Json;
@@ -4391,6 +4082,384 @@ export type Database = {
         };
         Returns: undefined;
       };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+  service_schema: {
+    Tables: {
+      service_category_table: {
+        Row: {
+          service_category: string;
+          service_category_date_created: string;
+          service_category_encoder_team_member_id: string | null;
+          service_category_id: string;
+          service_category_is_available: boolean;
+          service_category_is_disabled: boolean;
+          service_category_team_id: string;
+        };
+        Insert: {
+          service_category: string;
+          service_category_date_created?: string;
+          service_category_encoder_team_member_id?: string | null;
+          service_category_id?: string;
+          service_category_is_available?: boolean;
+          service_category_is_disabled?: boolean;
+          service_category_team_id: string;
+        };
+        Update: {
+          service_category?: string;
+          service_category_date_created?: string;
+          service_category_encoder_team_member_id?: string | null;
+          service_category_id?: string;
+          service_category_is_available?: boolean;
+          service_category_is_disabled?: boolean;
+          service_category_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_category_table_service_category_encoder_team_membe_fkey";
+            columns: ["service_category_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          },
+          {
+            foreignKeyName: "service_category_table_service_category_team_id_fkey";
+            columns: ["service_category_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          }
+        ];
+      };
+      service_scope_choice_table: {
+        Row: {
+          service_scope_choice_date_created: string;
+          service_scope_choice_id: string;
+          service_scope_choice_is_available: boolean;
+          service_scope_choice_is_disabled: boolean;
+          service_scope_choice_name: string;
+          service_scope_choice_service_scope_id: string;
+        };
+        Insert: {
+          service_scope_choice_date_created?: string;
+          service_scope_choice_id?: string;
+          service_scope_choice_is_available?: boolean;
+          service_scope_choice_is_disabled?: boolean;
+          service_scope_choice_name: string;
+          service_scope_choice_service_scope_id: string;
+        };
+        Update: {
+          service_scope_choice_date_created?: string;
+          service_scope_choice_id?: string;
+          service_scope_choice_is_available?: boolean;
+          service_scope_choice_is_disabled?: boolean;
+          service_scope_choice_name?: string;
+          service_scope_choice_service_scope_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_scope_choice_table_service_scope_choice_service_sc_fkey";
+            columns: ["service_scope_choice_service_scope_id"];
+            isOneToOne: false;
+            referencedRelation: "service_scope_table";
+            referencedColumns: ["service_scope_id"];
+          }
+        ];
+      };
+      service_scope_table: {
+        Row: {
+          service_scope_date_created: string;
+          service_scope_field_id: string;
+          service_scope_id: string;
+          service_scope_is_available: boolean;
+          service_scope_is_disabled: boolean;
+          service_scope_is_with_other: boolean;
+          service_scope_name: string;
+          service_scope_service_id: string;
+          service_scope_type: string;
+        };
+        Insert: {
+          service_scope_date_created?: string;
+          service_scope_field_id: string;
+          service_scope_id?: string;
+          service_scope_is_available?: boolean;
+          service_scope_is_disabled?: boolean;
+          service_scope_is_with_other: boolean;
+          service_scope_name: string;
+          service_scope_service_id: string;
+          service_scope_type: string;
+        };
+        Update: {
+          service_scope_date_created?: string;
+          service_scope_field_id?: string;
+          service_scope_id?: string;
+          service_scope_is_available?: boolean;
+          service_scope_is_disabled?: boolean;
+          service_scope_is_with_other?: boolean;
+          service_scope_name?: string;
+          service_scope_service_id?: string;
+          service_scope_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_scope_table_service_scope_field_id_fkey";
+            columns: ["service_scope_field_id"];
+            isOneToOne: false;
+            referencedRelation: "field_table";
+            referencedColumns: ["field_id"];
+          },
+          {
+            foreignKeyName: "service_scope_table_service_scope_service_id_fkey";
+            columns: ["service_scope_service_id"];
+            isOneToOne: false;
+            referencedRelation: "service_table";
+            referencedColumns: ["service_id"];
+          }
+        ];
+      };
+      service_table: {
+        Row: {
+          service_date_created: string;
+          service_id: string;
+          service_is_available: boolean;
+          service_is_disabled: boolean;
+          service_name: string;
+          service_team_id: string;
+        };
+        Insert: {
+          service_date_created?: string;
+          service_id?: string;
+          service_is_available?: boolean;
+          service_is_disabled?: boolean;
+          service_name: string;
+          service_team_id: string;
+        };
+        Update: {
+          service_date_created?: string;
+          service_id?: string;
+          service_is_available?: boolean;
+          service_is_disabled?: boolean;
+          service_name?: string;
+          service_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "service_table_service_team_id_fkey";
+            columns: ["service_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          }
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+  unit_of_measurement_schema: {
+    Tables: {
+      capacity_unit_of_measurement_table: {
+        Row: {
+          capacity_unit_of_measurement: string;
+          capacity_unit_of_measurement_date_created: string;
+          capacity_unit_of_measurement_encoder_team_member_id: string | null;
+          capacity_unit_of_measurement_id: string;
+          capacity_unit_of_measurement_is_available: boolean;
+          capacity_unit_of_measurement_is_disabled: boolean;
+          capacity_unit_of_measurement_team_id: string;
+        };
+        Insert: {
+          capacity_unit_of_measurement: string;
+          capacity_unit_of_measurement_date_created?: string;
+          capacity_unit_of_measurement_encoder_team_member_id?: string | null;
+          capacity_unit_of_measurement_id?: string;
+          capacity_unit_of_measurement_is_available?: boolean;
+          capacity_unit_of_measurement_is_disabled?: boolean;
+          capacity_unit_of_measurement_team_id: string;
+        };
+        Update: {
+          capacity_unit_of_measurement?: string;
+          capacity_unit_of_measurement_date_created?: string;
+          capacity_unit_of_measurement_encoder_team_member_id?: string | null;
+          capacity_unit_of_measurement_id?: string;
+          capacity_unit_of_measurement_is_available?: boolean;
+          capacity_unit_of_measurement_is_disabled?: boolean;
+          capacity_unit_of_measurement_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "capacity_unit_of_measurement__capacity_unit_of_measurement_fkey";
+            columns: ["capacity_unit_of_measurement_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          },
+          {
+            foreignKeyName: "capacity_unit_of_measurement_capacity_unit_of_measurement_fkey1";
+            columns: ["capacity_unit_of_measurement_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          }
+        ];
+      };
+      equipment_unit_of_measurement_table: {
+        Row: {
+          equipment_unit_of_measurement: string;
+          equipment_unit_of_measurement_date_created: string;
+          equipment_unit_of_measurement_encoder_team_member_id: string | null;
+          equipment_unit_of_measurement_id: string;
+          equipment_unit_of_measurement_is_available: boolean;
+          equipment_unit_of_measurement_is_disabled: boolean;
+          equipment_unit_of_measurement_team_id: string;
+        };
+        Insert: {
+          equipment_unit_of_measurement: string;
+          equipment_unit_of_measurement_date_created?: string;
+          equipment_unit_of_measurement_encoder_team_member_id?: string | null;
+          equipment_unit_of_measurement_id?: string;
+          equipment_unit_of_measurement_is_available?: boolean;
+          equipment_unit_of_measurement_is_disabled?: boolean;
+          equipment_unit_of_measurement_team_id: string;
+        };
+        Update: {
+          equipment_unit_of_measurement?: string;
+          equipment_unit_of_measurement_date_created?: string;
+          equipment_unit_of_measurement_encoder_team_member_id?: string | null;
+          equipment_unit_of_measurement_id?: string;
+          equipment_unit_of_measurement_is_available?: boolean;
+          equipment_unit_of_measurement_is_disabled?: boolean;
+          equipment_unit_of_measurement_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "equipment_unit_of_measuremen_equipment_unit_of_measuremen_fkey1";
+            columns: ["equipment_unit_of_measurement_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          },
+          {
+            foreignKeyName: "equipment_unit_of_measurement_equipment_unit_of_measuremen_fkey";
+            columns: ["equipment_unit_of_measurement_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          }
+        ];
+      };
+      general_unit_of_measurement_table: {
+        Row: {
+          general_unit_of_measurement: string;
+          general_unit_of_measurement_date_created: string;
+          general_unit_of_measurement_encoder_team_member_id: string | null;
+          general_unit_of_measurement_id: string;
+          general_unit_of_measurement_is_available: boolean;
+          general_unit_of_measurement_is_disabled: boolean;
+          general_unit_of_measurement_team_id: string;
+        };
+        Insert: {
+          general_unit_of_measurement: string;
+          general_unit_of_measurement_date_created?: string;
+          general_unit_of_measurement_encoder_team_member_id?: string | null;
+          general_unit_of_measurement_id?: string;
+          general_unit_of_measurement_is_available?: boolean;
+          general_unit_of_measurement_is_disabled?: boolean;
+          general_unit_of_measurement_team_id: string;
+        };
+        Update: {
+          general_unit_of_measurement?: string;
+          general_unit_of_measurement_date_created?: string;
+          general_unit_of_measurement_encoder_team_member_id?: string | null;
+          general_unit_of_measurement_id?: string;
+          general_unit_of_measurement_is_available?: boolean;
+          general_unit_of_measurement_is_disabled?: boolean;
+          general_unit_of_measurement_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "general_unit_of_measurement__general_unit_of_measurement__fkey1";
+            columns: ["general_unit_of_measurement_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          },
+          {
+            foreignKeyName: "general_unit_of_measurement_t_general_unit_of_measurement__fkey";
+            columns: ["general_unit_of_measurement_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          }
+        ];
+      };
+      item_unit_of_measurement_table: {
+        Row: {
+          item_unit_of_measurement: string;
+          item_unit_of_measurement_date_created: string;
+          item_unit_of_measurement_encoder_team_member_id: string | null;
+          item_unit_of_measurement_id: string;
+          item_unit_of_measurement_is_available: boolean;
+          item_unit_of_measurement_is_disabled: boolean;
+          item_unit_of_measurement_team_id: string;
+        };
+        Insert: {
+          item_unit_of_measurement: string;
+          item_unit_of_measurement_date_created?: string;
+          item_unit_of_measurement_encoder_team_member_id?: string | null;
+          item_unit_of_measurement_id?: string;
+          item_unit_of_measurement_is_available?: boolean;
+          item_unit_of_measurement_is_disabled?: boolean;
+          item_unit_of_measurement_team_id: string;
+        };
+        Update: {
+          item_unit_of_measurement?: string;
+          item_unit_of_measurement_date_created?: string;
+          item_unit_of_measurement_encoder_team_member_id?: string | null;
+          item_unit_of_measurement_id?: string;
+          item_unit_of_measurement_is_available?: boolean;
+          item_unit_of_measurement_is_disabled?: boolean;
+          item_unit_of_measurement_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "item_unit_of_measurement_tabl_item_unit_of_measurement_enc_fkey";
+            columns: ["item_unit_of_measurement_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          },
+          {
+            foreignKeyName: "item_unit_of_measurement_tabl_item_unit_of_measurement_tea_fkey";
+            columns: ["item_unit_of_measurement_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          }
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
     };
     Enums: {
       [_ in never]: never;

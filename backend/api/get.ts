@@ -34,7 +34,6 @@ import {
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   EquipmentDescriptionTableRow,
-  EquipmentLookupChoices,
   EquipmentPartTableInsert,
   EquipmentPartType,
   EquipmentTableRow,
@@ -2848,6 +2847,7 @@ export const getItemUnitOfMeasurementOption = async (
 ) => {
   const { teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("item_unit_of_measurement_table")
     .select("item_unit_of_measurement_id, item_unit_of_measurement")
     .eq("item_unit_of_measurement_is_available", true)
@@ -3092,6 +3092,7 @@ export const getServiceList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("service_schema")
     .from("service_table")
     .select("*, service_scope: service_scope_table(*)", {
       count: "exact",
@@ -3125,6 +3126,7 @@ export const checkServiceScope = async (
   const { serviceScope, scopeId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_scope_choice_table")
     .select("*", { count: "exact", head: true })
     .eq("service_scope_choice_name", serviceScope)
@@ -3150,6 +3152,7 @@ export const getServiceScopeChoiceList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("service_schema")
     .from("service_scope_choice_table")
     .select("*", {
       count: "exact",
@@ -3183,6 +3186,7 @@ export const checkServiceName = async (
   const { serviceName, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_table")
     .select("*", { count: "exact", head: true })
     .eq("service_name", serviceName)
@@ -3267,6 +3271,7 @@ export const getService = async (
   const { teamId, serviceName } = params;
 
   const { data, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_table")
     .select(
       "*, service_scope: service_scope_table(*, service_scope_choice: service_scope_choice_table(*), service_field: service_scope_field_id(*))"
@@ -3626,7 +3631,7 @@ export const getEquipmentDescriptionList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
-    .from("equipment_description_table")
+    .from("equipment_description_view")
     .select(
       `
         *,
@@ -3644,11 +3649,13 @@ export const getEquipmentDescriptionList = async (
 
   if (search) {
     query = query.or(
-      `equipment_description_property_number.ilike.%${search}%, equipment_description_serial_number.ilike.%${search}%`
+      `equipment_description_property_number_with_prefix.ilike.%${search}%, equipment_description_serial_number.ilike.%${search}%`
     );
   }
 
-  query.order("equipment_description_property_number", { ascending: true });
+  query.order("equipment_description_property_number_with_prefix", {
+    ascending: true,
+  });
   query.limit(limit);
   query.range(start, start + limit - 1);
   query.maybeSingle;
@@ -3809,6 +3816,7 @@ export const getEquipmentUOMAndCategoryOption = async (
 ) => {
   const { teamId } = params;
   const { data: uomList, error: uomListError } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("equipment_unit_of_measurement_table")
     .select("*")
     .eq("equipment_unit_of_measurement_team_id", teamId)
@@ -3897,59 +3905,6 @@ export const checkEquipmentLookupTable = async (
   return Boolean(count);
 };
 
-// Get equipment lookup list
-export const getEquipmentLookupList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    lookup: EquipmentLookupChoices;
-    teamId: string;
-    limit: number;
-    page: number;
-    search?: string;
-  }
-) => {
-  const { lookup, teamId, search, limit, page } = params;
-
-  const start = (page - 1) * limit;
-
-  let query = supabaseClient
-    .from(`${lookup}_table`)
-    .select("*", { count: "exact" })
-    .eq(`${lookup}_team_id`, teamId)
-    .eq(`${lookup}_is_disabled`, false);
-
-  if (search) {
-    query = query.ilike(`${lookup}`, `%${search}%`);
-  }
-
-  query.order(`${lookup}`, { ascending: true, foreignTable: "" });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-  query.maybeSingle;
-
-  const { data, error, count } = await query;
-  if (error) throw error;
-
-  const id = `${lookup}_id`;
-  const value = lookup;
-  const status = `${lookup}_is_available`;
-
-  const formattedData = data as unknown as {
-    [key: string]: string;
-  }[];
-
-  return {
-    data: formattedData.map((lookupData) => {
-      return {
-        id: lookupData[id],
-        status: Boolean(lookupData[status]),
-        value: lookupData[value],
-      };
-    }),
-    count,
-  };
-};
-
 // check if email list are onboarded
 export const checkIfEmailsOnboarded = async (
   supabaseClient: SupabaseClient<Database>,
@@ -4029,13 +3984,15 @@ export const getLookupList = async (
     limit: number;
     page: number;
     search?: string;
+    schema: string;
   }
 ) => {
-  const { lookup, teamId, search, limit, page } = params;
+  const { lookup, teamId, search, limit, page, schema } = params;
 
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema(schema)
     .from(`${lookup}_table`)
     .select("*", { count: "exact" })
     .eq(`${lookup}_team_id`, teamId)
@@ -4364,6 +4321,7 @@ export const getTypeList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("other_expenses_schema")
     .from(`other_expenses_type_table`)
     .select(
       `
@@ -4416,6 +4374,7 @@ export const checkOtherExpenesesTypeTable = async (
 ) => {
   const { value, categoryId } = params;
   const { count, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_type_table")
     .select("*", { count: "exact", head: true })
     .eq("other_expenses_type", value)
@@ -4435,6 +4394,7 @@ export const getOtherExpensesCategoryOptions = async (
 ) => {
   const { teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_category_table")
     .select("*")
     .eq("other_expenses_category_team_id", teamId)
@@ -4454,6 +4414,7 @@ export const getTypeOptions = async (
 ) => {
   const { categoryId } = params;
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_type_table")
     .select("*")
     .eq("other_expenses_type_category_id", categoryId)
@@ -4985,64 +4946,12 @@ export const getItemUnitOfMeasurement = async (
     partNumber: string;
   }
 ) => {
-  const { generalName, componentCategory, brand, model, partNumber } = params;
   const { data, error } = await supabaseClient
-    .from("equipment_part_table")
-    .select(
-      `
-        equipment_part_id,
-        equipment_part_general_name: equipment_part_general_name_id!inner(equipment_general_name),
-        equipment_part_component_category: equipment_part_component_category_id!inner(equipment_component_category),
-        equipment_part_brand: equipment_part_brand_id!inner(equipment_brand),
-        equipment_part_model: equipment_part_model_id!inner(equipment_model),
-        equipment_part_number,
-        equipment_part_unit_of_measurement: equipment_part_unit_of_measurement_id(equipment_unit_of_measurement)
-      `
-    )
-    .eq("equipment_part_is_disabled", false)
-    .eq("equipment_part_is_available", true)
-    .eq("equipment_part_general_name.equipment_general_name_is_disabled", false)
-    .eq("equipment_part_general_name.equipment_general_name_is_available", true)
-    .eq("equipment_part_general_name.equipment_general_name", generalName)
-    .eq(
-      "equipment_part_component_category.equipment_component_category_is_disabled",
-      false
-    )
-    .eq(
-      "equipment_part_component_category.equipment_component_category_is_available",
-      true
-    )
-    .eq(
-      "equipment_part_component_category.equipment_component_category",
-      componentCategory
-    )
-    .eq("equipment_part_brand.equipment_brand_is_disabled", false)
-    .eq("equipment_part_brand.equipment_brand_is_available", true)
-    .eq("equipment_part_brand.equipment_brand", brand)
-    .eq("equipment_part_model.equipment_model_is_disabled", false)
-    .eq("equipment_part_model.equipment_model_is_available", true)
-    .eq("equipment_part_model.equipment_model", model)
-    .eq("equipment_part_number", partNumber)
-    .eq(
-      "equipment_part_unit_of_measurement.equipment_unit_of_measurement_is_disabled",
-      false
-    )
-    .eq(
-      "equipment_part_unit_of_measurement.equipment_unit_of_measurement_is_available",
-      true
-    )
-    .single();
-
+    .rpc("get_item_unit_of_measurement", { input_data: params })
+    .select("*");
   if (error) throw error;
 
-  const formattedData = data as unknown as {
-    equipment_part_unit_of_measurement: {
-      equipment_unit_of_measurement: string;
-    };
-  };
-
-  return formattedData.equipment_part_unit_of_measurement
-    .equipment_unit_of_measurement;
+  return data;
 };
 
 // Fetch equipment section choices based on given parameters
@@ -5748,6 +5657,7 @@ export const getServiceCategoryOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_category_table")
     .select("service_category_id, service_category")
     .eq("service_category_team_id", teamId)
@@ -5772,6 +5682,7 @@ export const getGeneralUnitOfMeasurementOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("general_unit_of_measurement_table")
     .select("general_unit_of_measurement_id, general_unit_of_measurement")
     .eq("general_unit_of_measurement_team_id", teamId)
@@ -5833,6 +5744,7 @@ export const getOtherExpensesCategoryOptionsWithLimit = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_category_table")
     .select("other_expenses_category_id, other_expenses_category")
     .eq("other_expenses_category_team_id", teamId)
@@ -5921,6 +5833,7 @@ export const getCapacityUnitOfMeasurementOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("capacity_unit_of_measurement_table")
     .select("capacity_unit_of_measurement_id, capacity_unit_of_measurement")
     .eq("capacity_unit_of_measurement_team_id", teamId)
@@ -6423,6 +6336,7 @@ export const getEquipmentUnitOptions = async (
 ) => {
   const { index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("unit_of_measurement_schema")
     .from("equipment_unit_of_measurement_table")
     .select("equipment_unit_of_measurement_id, equipment_unit_of_measurement")
     .eq("equipment_unit_of_measurement_is_disabled", false)

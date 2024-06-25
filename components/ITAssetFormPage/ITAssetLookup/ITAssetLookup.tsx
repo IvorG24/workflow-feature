@@ -3,8 +3,12 @@ import CategoryLookup from "./CategoryLookup/CategoryLookup";
 
 const ITAssetLookup = () => {
   const serviceLookupList = [
-    { table: "item_unit_of_measurement", label: "Unit of Measurement" },
-  ] as { table: string; label: string }[];
+    {
+      table: "item_unit_of_measurement",
+      label: "Unit of Measurement",
+      schema: "public",
+    },
+  ] as { table: string; label: string; schema: string }[];
 
   return (
     <Container p={0} fluid pos="relative">
