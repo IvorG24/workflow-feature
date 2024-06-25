@@ -3,7 +3,7 @@ import CategoryLookup from "./CategoryLookup/CategoryLookup";
 
 const ServicesLookup = () => {
   const serviceLookupList = [
-    { table: "service_category", label: "Category", schema: "public" },
+    { table: "service_category", label: "Category", schema: "service_schema" },
     {
       table: "general_unit_of_measurement",
       label: "Unit of Measurement",

@@ -34,10 +34,12 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
 DROP SCHEMA IF EXISTS public CASCADE;
 DROP SCHEMA IF EXISTS user_schema CASCADE;
 DROP SCHEMA IF EXISTS history_schema CASCADE;
+DROP SCHEMA IF EXISTS service_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
 CREATE SCHEMA history_schema AUTHORIZATION postgres;
+CREATE SCHEMA service_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
 
@@ -812,7 +814,7 @@ CREATE TABLE equipment_part_table (
   equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE service_table (
+CREATE TABLE service_schema.service_table (
   service_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   service_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   service_is_available BOOLEAN DEFAULT TRUE NOT NULL,
@@ -822,7 +824,7 @@ CREATE TABLE service_table (
   service_team_id UUID REFERENCES team_table(team_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE service_scope_table (
+CREATE TABLE service_schema.service_scope_table (
   service_scope_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   service_scope_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   service_scope_is_available BOOLEAN DEFAULT TRUE NOT NULL,
@@ -832,20 +834,20 @@ CREATE TABLE service_scope_table (
   service_scope_is_with_other BOOLEAN NOT NULL,
 
   service_scope_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
-  service_scope_service_id UUID REFERENCES service_table(service_id) ON DELETE CASCADE NOT NULL
+  service_scope_service_id UUID REFERENCES service_schema.service_table(service_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE service_scope_choice_table (
+CREATE TABLE service_schema.service_scope_choice_table (
   service_scope_choice_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   service_scope_choice_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   service_scope_choice_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   service_scope_choice_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   service_scope_choice_name VARCHAR(4000) NOT NULL,
 
-  service_scope_choice_service_scope_id UUID REFERENCES service_scope_table(service_scope_id) ON DELETE CASCADE NOT NULL
+  service_scope_choice_service_scope_id UUID REFERENCES service_schema.service_scope_table(service_scope_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE service_category_table (
+CREATE TABLE service_schema.service_category_table (
   service_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   service_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   service_category VARCHAR(4000) NOT NULL,
@@ -1792,7 +1794,7 @@ RETURNS JSON AS $$
     } = input_data;
 
     
-    const service_result = plv8.execute(`INSERT INTO service_table (service_name,service_is_available,service_team_id) VALUES ('${service_name}','${service_is_available}','${service_team_id}') RETURNING *;`)[0];
+    const service_result = plv8.execute(`INSERT INTO service_schema.service_table (service_name,service_is_available,service_team_id) VALUES ('${service_name}','${service_is_available}','${service_team_id}') RETURNING *;`)[0];
 
     const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Service';`)[0];
 
@@ -1831,7 +1833,7 @@ RETURNS JSON AS $$
       .join(",");
 
     plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
-    const service_scope = plv8.execute(`INSERT INTO service_scope_table (service_scope_name,service_scope_type,service_scope_is_with_other,service_scope_service_id,service_scope_field_id) VALUES ${serviceScopeValues} RETURNING *;`);
+    const service_scope = plv8.execute(`INSERT INTO service_schema.service_scope_table (service_scope_name,service_scope_type,service_scope_is_with_other,service_scope_service_id,service_scope_field_id) VALUES ${serviceScopeValues} RETURNING *;`);
 
     item_data = {...service_result, service_scope: service_scope}
 
@@ -1957,7 +1959,7 @@ RETURNS Text as $$
   plv8.subtransaction(function(){
 
 
-    const service_count = plv8.execute(`SELECT COUNT(*) FROM service_table WHERE service_team_id='${team_id}' AND service_is_available='true' AND service_is_disabled='false'`)[0];
+    const service_count = plv8.execute(`SELECT COUNT(*) FROM service_schema.service_table WHERE service_team_id='${team_id}' AND service_is_available='true' AND service_is_disabled='false'`)[0];
 
     const signer_count = plv8.execute(`SELECT COUNT(*) FROM signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
 
@@ -4358,7 +4360,7 @@ RETURNS JSON as $$
             SELECT 
                 service_category_id,
                 service_category
-            FROM service_category_table
+            FROM service_schema.service_category_table
             WHERE 
               service_category_team_id = '${teamMember.team_member_team_id}'
               AND service_category_is_disabled = false
@@ -12174,7 +12176,7 @@ ALTER TABLE user_schema.user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.signature_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE service_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE service_schema.service_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_signer_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_line_item_table ENABLE ROW LEVEL SECURITY;
@@ -12350,20 +12352,20 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_comment_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_comment_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_comment_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_scope_choice_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_scope_choice_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_scope_choice_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_scope_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_scope_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_scope_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_scope_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_division_table;
@@ -12390,10 +12392,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON general_unit_of_measurement
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_category_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON service_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_category_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_category_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_table;
@@ -13754,14 +13756,14 @@ USING (
 );
 
 --- SERVICE_SCOPE_CHOICE_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_choice_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 
-    FROM service_scope_table
-    JOIN service_table ON service_id = service_scope_service_id
+    FROM service_schema.service_scope_table
+    JOIN service_schema.service_table ON service_id = service_scope_service_id
     JOIN team_table ON team_id = service_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
@@ -13770,18 +13772,18 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."service_scope_choice_table"
+CREATE POLICY "Allow READ access for anon users" ON "service_schema"."service_scope_choice_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_choice_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM service_scope_table
-    JOIN service_table ON service_id = service_scope_service_id
+    FROM service_schema.service_scope_table
+    JOIN service_schema.service_table ON service_id = service_scope_service_id
     JOIN team_table ON team_id = service_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
@@ -13790,14 +13792,14 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_choice_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM service_scope_table
-    JOIN service_table ON service_id = service_scope_service_id
+    FROM service_schema.service_scope_table
+    JOIN service_schema.service_table ON service_id = service_scope_service_id
     JOIN team_table ON team_id = service_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
@@ -13807,13 +13809,13 @@ USING (
 );
 
 --- SERVICE_SCOPE_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM service_table 
+    FROM service_schema.service_table 
     JOIN team_table ON team_id = service_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
@@ -13822,17 +13824,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."service_scope_table"
+CREATE POLICY "Allow READ access for anon users" ON "service_schema"."service_scope_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM service_table
+    FROM service_schema.service_table
     JOIN team_table ON team_id = service_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
@@ -13841,13 +13843,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_scope_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM service_table
+    FROM service_schema.service_table
     JOIN team_table ON team_id = service_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
@@ -13857,7 +13859,7 @@ USING (
 );
 
 --- SERVICE_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -13870,11 +13872,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."service_table"
+CREATE POLICY "Allow READ access for anon users" ON "service_schema"."service_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -13887,7 +13889,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14109,7 +14111,7 @@ USING (
 );
 
 --- service_category_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_category_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14123,11 +14125,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."service_category_table"
+CREATE POLICY "Allow READ access for anon users" ON "service_schema"."service_category_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_category_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14141,7 +14143,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."service_category_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_category_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15387,5 +15389,10 @@ GRANT ALL ON ALL TABLES IN SCHEMA history_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA history_schema TO POSTGRES;
 GRANT ALL ON SCHEMA history_schema TO postgres;
 GRANT ALL ON SCHEMA history_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA service_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA service_schema TO POSTGRES;
+GRANT ALL ON SCHEMA service_schema TO postgres;
+GRANT ALL ON SCHEMA service_schema TO public;
 
 ----- END: PRIVILEGES

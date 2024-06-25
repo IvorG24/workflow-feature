@@ -171,25 +171,25 @@ export type CSICodeTableUpdate =
   Database["public"]["Tables"]["csi_code_table"]["Update"];
 
 export type ServiceTableRow =
-  Database["public"]["Tables"]["service_table"]["Row"];
+  Database["service_schema"]["Tables"]["service_table"]["Row"];
 export type ServiceTableInsert =
-  Database["public"]["Tables"]["service_table"]["Insert"];
+  Database["service_schema"]["Tables"]["service_table"]["Insert"];
 export type ServiceTableUpdate =
-  Database["public"]["Tables"]["service_table"]["Update"];
+  Database["service_schema"]["Tables"]["service_table"]["Update"];
 
 export type ServiceScopeTableRow =
-  Database["public"]["Tables"]["service_scope_table"]["Row"];
+  Database["service_schema"]["Tables"]["service_scope_table"]["Row"];
 export type ServiceScopeTableInsert =
-  Database["public"]["Tables"]["service_scope_table"]["Insert"];
+  Database["service_schema"]["Tables"]["service_scope_table"]["Insert"];
 export type ServiceScopeTableUpdate =
-  Database["public"]["Tables"]["service_scope_table"]["Update"];
+  Database["service_schema"]["Tables"]["service_scope_table"]["Update"];
 
 export type ServiceScopeChoiceTableRow =
-  Database["public"]["Tables"]["service_scope_choice_table"]["Row"];
+  Database["service_schema"]["Tables"]["service_scope_choice_table"]["Row"];
 export type ServiceScopeChoiceTableInsert =
-  Database["public"]["Tables"]["service_scope_choice_table"]["Insert"];
+  Database["service_schema"]["Tables"]["service_scope_choice_table"]["Insert"];
 export type ServiceScopeChoiceTableUpdate =
-  Database["public"]["Tables"]["service_scope_choice_table"]["Update"];
+  Database["service_schema"]["Tables"]["service_scope_choice_table"]["Update"];
 
 export type TicketTableRow =
   Database["public"]["Tables"]["ticket_table"]["Row"];
@@ -206,11 +206,11 @@ export type TicketCommentTableUpdate =
   Database["public"]["Tables"]["ticket_comment_table"]["Update"];
 
 export type ServiceCategoryTableRow =
-  Database["public"]["Tables"]["service_category_table"]["Row"];
+  Database["service_schema"]["Tables"]["service_category_table"]["Row"];
 export type ServiceCategoryTableInsert =
-  Database["public"]["Tables"]["service_category_table"]["Insert"];
+  Database["service_schema"]["Tables"]["service_category_table"]["Insert"];
 export type ServiceCategoryTableUpdate =
-  Database["public"]["Tables"]["service_category_table"]["Update"];
+  Database["service_schema"]["Tables"]["service_category_table"]["Update"];
 
 export type EquipmentTableRow =
   Database["public"]["Tables"]["equipment_table"]["Row"];
