@@ -855,7 +855,7 @@ CREATE TABLE service_category_table (
   service_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE other_expenses_category_table(
+CREATE TABLE other_expenses_schema.other_expenses_category_table(
   other_expenses_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   other_expenses_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   other_expenses_category VARCHAR(4000) NOT NULL,
@@ -865,14 +865,14 @@ CREATE TABLE other_expenses_category_table(
   other_expenses_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE other_expenses_type_table(
+CREATE TABLE other_expenses_schema.other_expenses_type_table(
   other_expenses_type_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   other_expenses_type_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   other_expenses_type VARCHAR(4000) NOT NULL,
   other_expenses_type_is_disabled BOOLEAN DEFAULT false NOT NULL,
   other_expenses_type_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  other_expenses_type_category_id UUID REFERENCES other_expenses_category_table(other_expenses_category_id)
+  other_expenses_type_category_id UUID REFERENCES other_expenses_schema.other_expenses_category_table(other_expenses_category_id)
 );
 
 CREATE TABLE capacity_unit_of_measurement_table(
@@ -4484,7 +4484,7 @@ RETURNS JSON as $$
             SELECT 
                 other_expenses_category_id,
                 other_expenses_category
-            FROM other_expenses_category_table
+            FROM other_expenses_schema.other_expenses_category_table
             WHERE 
               other_expenses_category_team_id = '${teamMember.team_member_team_id}'
               AND other_expenses_category_is_disabled = false
@@ -9711,8 +9711,8 @@ RETURNS JSON as $$
               SELECT
                 other_expenses_type_id,
                 other_expenses_type
-              FROM other_expenses_category_table
-              INNER JOIN other_expenses_type_table ON other_expenses_type_category_id = other_expenses_category_id
+              FROM other_expenses_schema.other_expenses_category_table
+              INNER JOIN other_expenses_schema.other_expenses_type_table ON other_expenses_type_category_id = other_expenses_category_id
               WHERE
                 other_expenses_category = '${section.category}'
                 AND other_expenses_type_is_available = true
@@ -10868,14 +10868,14 @@ plv8.subtransaction(function() {
         signer_is_primary_signer: itemData.signer_is_primary_signer,
         signer_action: itemData.signer_action,
         signer_order: itemData.signer_order,
-      },
-      signer_team_member: {
-        team_member_id: itemData.team_member_id,
-        team_member_user: {
-          user_id: itemData.user_id,
-          user_first_name: itemData.user_first_name,
-          user_last_name: itemData.user_last_name,
-          user_avatar: itemData.user_avatar
+        signer_team_member: {
+          team_member_id: itemData.team_member_id,
+          team_member_user: {
+            user_id: itemData.user_id,
+            user_first_name: itemData.user_first_name,
+            user_last_name: itemData.user_last_name,
+            user_avatar: itemData.user_avatar
+          },
         }
       }
     } : null
@@ -12184,8 +12184,8 @@ ALTER TABLE memo_status_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_agreement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_valid_id_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE other_expenses_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE other_expenses_type_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE other_expenses_schema.other_expenses_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE other_expenses_schema.other_expenses_type_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_level_three_description_table  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_section_table ENABLE ROW LEVEL SECURITY;
@@ -12426,15 +12426,15 @@ DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_schema.user_va
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_valid_id_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_schema.user_valid_id_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_category_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_category_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_category_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_schema.other_expenses_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_type_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_type_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_type_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_type_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_schema.other_expenses_type_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON item_unit_of_measurement_table;
@@ -14293,7 +14293,7 @@ USING(true)
 WITH CHECK (true);
 
 --- other_expenses_category_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_category_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_category_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14307,11 +14307,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."other_expenses_category_table"
+CREATE POLICY "Allow READ access for anon users" ON "other_expenses_schema"."other_expenses_category_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_category_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_category_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14325,13 +14325,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_category_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_category_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM other_expenses_category_table
+    FROM other_expenses_schema.other_expenses_category_table
     JOIN team_table ON other_expenses_category_team_id = team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
@@ -14341,13 +14341,13 @@ USING (
 );
 
 --- other_expenses_type_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_type_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_type_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 
-    FROM other_expenses_category_table
+    FROM other_expenses_schema.other_expenses_category_table
     JOIN team_table ON team_id = other_expenses_category_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
@@ -14356,17 +14356,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."other_expenses_type_table"
+CREATE POLICY "Allow READ access for anon users" ON "other_expenses_schema"."other_expenses_type_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_type_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_type_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM other_expenses_category_table
+    FROM other_expenses_schema.other_expenses_category_table
     JOIN team_table ON team_id = other_expenses_category_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
@@ -14375,13 +14375,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."other_expenses_type_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_type_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM other_expenses_category_table
+    FROM other_expenses_schema.other_expenses_category_table
     JOIN team_table ON team_id = other_expenses_category_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id

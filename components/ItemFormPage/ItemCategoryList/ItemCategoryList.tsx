@@ -144,6 +144,7 @@ const ItemCategoryList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "item_category",
+        schema: "public",
       });
 
       notifications.show({

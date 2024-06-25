@@ -132,6 +132,7 @@ const EquipmentPartList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "equipment_part",
+        schema: "public",
       });
       handleFetch("", 1);
 

@@ -148,6 +148,7 @@ const EquipmentList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "equipment",
+        schema: "public",
       });
 
       setSelectedEquipment(null);

@@ -3905,13 +3905,15 @@ export const getEquipmentLookupList = async (
     limit: number;
     page: number;
     search?: string;
+    schema: string;
   }
 ) => {
-  const { lookup, teamId, search, limit, page } = params;
+  const { lookup, teamId, search, limit, page, schema } = params;
 
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema(schema as "public")
     .from(`${lookup}_table`)
     .select("*", { count: "exact" })
     .eq(`${lookup}_team_id`, teamId)
@@ -4028,13 +4030,15 @@ export const getLookupList = async (
     limit: number;
     page: number;
     search?: string;
+    schema: string;
   }
 ) => {
-  const { lookup, teamId, search, limit, page } = params;
+  const { lookup, teamId, search, limit, page, schema } = params;
 
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema(schema)
     .from(`${lookup}_table`)
     .select("*", { count: "exact" })
     .eq(`${lookup}_team_id`, teamId)
@@ -4363,6 +4367,7 @@ export const getTypeList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("other_expenses_schema")
     .from(`other_expenses_type_table`)
     .select(
       `
@@ -4415,6 +4420,7 @@ export const checkOtherExpenesesTypeTable = async (
 ) => {
   const { value, categoryId } = params;
   const { count, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_type_table")
     .select("*", { count: "exact", head: true })
     .eq("other_expenses_type", value)
@@ -4434,6 +4440,7 @@ export const getOtherExpensesCategoryOptions = async (
 ) => {
   const { teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_category_table")
     .select("*")
     .eq("other_expenses_category_team_id", teamId)
@@ -4453,6 +4460,7 @@ export const getTypeOptions = async (
 ) => {
   const { categoryId } = params;
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_type_table")
     .select("*")
     .eq("other_expenses_type_category_id", categoryId)
@@ -5832,6 +5840,7 @@ export const getOtherExpensesCategoryOptionsWithLimit = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_category_table")
     .select("other_expenses_category_id, other_expenses_category")
     .eq("other_expenses_category_team_id", teamId)

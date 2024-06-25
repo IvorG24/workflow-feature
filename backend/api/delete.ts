@@ -54,9 +54,10 @@ export const deleteRow = async (
   params: {
     rowId: string[];
     table: string;
+    schema: string;
   }
 ) => {
-  const { rowId, table } = params;
+  const { rowId, table, schema } = params;
 
   let condition = "";
   rowId.forEach((id) => {
@@ -64,6 +65,7 @@ export const deleteRow = async (
   });
 
   const { error } = await supabaseClient
+    .schema(schema)
     .from(`${table}_table`)
     .update({ [`${table}_is_disabled`]: true })
     .or(condition.slice(0, -2));

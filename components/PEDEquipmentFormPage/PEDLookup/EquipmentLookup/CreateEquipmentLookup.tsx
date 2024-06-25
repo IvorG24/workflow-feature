@@ -23,6 +23,7 @@ type Props = {
   lookup: {
     table: EquipmentLookupChoices;
     label: string;
+    schema: string;
   };
   setIsCreatingEquipmentLookup: Dispatch<SetStateAction<boolean>>;
 };
@@ -57,6 +58,7 @@ const CreateEquipmentLookup = ({
           [team]: activeTeam.team_id,
         } as unknown as JSON,
         tableName: lookup.table,
+        schema: lookup.schema,
       });
 
       notifications.show({

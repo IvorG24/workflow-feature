@@ -990,10 +990,12 @@ export const createRowInLookupTable = async (
   params: {
     inputData: JSON;
     tableName: string;
+    schema: string;
   }
 ) => {
-  const { tableName, inputData } = params;
+  const { tableName, inputData, schema } = params;
   const { data, error } = await supabaseClient
+    .schema(schema)
     .from(`${tableName}_table`)
     .insert(inputData)
     .select()
@@ -1248,6 +1250,7 @@ export const createRowInOtherExpensesTypeTable = async (
 ) => {
   const { inputData } = params;
   const { data, error } = await supabaseClient
+    .schema("other_expenses_schema")
     .from("other_expenses_type_table")
     .insert(inputData)
     .select()

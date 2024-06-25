@@ -45,6 +45,7 @@ type Props = {
   lookup: {
     table: EquipmentLookupChoices;
     label: string;
+    schema: string;
   };
   equipmentLookupList: LookupTable[];
   setEquipmentLookupList: Dispatch<SetStateAction<LookupTable[]>>;
@@ -89,6 +90,7 @@ const EquipmentLookupList = ({
         search,
         limit: ROW_PER_PAGE,
         page,
+        schema: lookup.schema,
       });
       setEquipmentLookupList(data);
       setEquipmentLookupCount(Number(count));
@@ -138,6 +140,7 @@ const EquipmentLookupList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: lookup.table,
+        schema: lookup.schema,
       });
       handleFetch("", 1);
 
