@@ -7,408 +7,8 @@ export type Json =
   | Json[];
 
 export type Database = {
-  history_schema: {
+  equipment_schema: {
     Tables: {
-      signature_history_table: {
-        Row: {
-          signature_history_date_created: string;
-          signature_history_id: string;
-          signature_history_user_id: string;
-          signature_history_value: string;
-        };
-        Insert: {
-          signature_history_date_created?: string;
-          signature_history_id?: string;
-          signature_history_user_id: string;
-          signature_history_value: string;
-        };
-        Update: {
-          signature_history_date_created?: string;
-          signature_history_id?: string;
-          signature_history_user_id?: string;
-          signature_history_value?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "signature_history_table_signature_history_user_id_fkey";
-            columns: ["signature_history_user_id"];
-            isOneToOne: false;
-            referencedRelation: "user_table";
-            referencedColumns: ["user_id"];
-          }
-        ];
-      };
-      user_name_history_table: {
-        Row: {
-          user_name_history_date_created: string;
-          user_name_history_id: string;
-          user_name_history_user_id: string;
-          user_name_history_value: string;
-        };
-        Insert: {
-          user_name_history_date_created?: string;
-          user_name_history_id?: string;
-          user_name_history_user_id: string;
-          user_name_history_value: string;
-        };
-        Update: {
-          user_name_history_date_created?: string;
-          user_name_history_id?: string;
-          user_name_history_user_id?: string;
-          user_name_history_value?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_name_history_table_user_name_history_user_id_fkey";
-            columns: ["user_name_history_user_id"];
-            isOneToOne: false;
-            referencedRelation: "user_table";
-            referencedColumns: ["user_id"];
-          }
-        ];
-      };
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      [_ in never]: never;
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-  other_expenses_schema: {
-    Tables: {
-      other_expenses_category_table: {
-        Row: {
-          other_expenses_category: string;
-          other_expenses_category_date_created: string;
-          other_expenses_category_encoder_team_member_id: string | null;
-          other_expenses_category_id: string;
-          other_expenses_category_is_available: boolean;
-          other_expenses_category_is_disabled: boolean;
-          other_expenses_category_team_id: string;
-        };
-        Insert: {
-          other_expenses_category: string;
-          other_expenses_category_date_created?: string;
-          other_expenses_category_encoder_team_member_id?: string | null;
-          other_expenses_category_id?: string;
-          other_expenses_category_is_available?: boolean;
-          other_expenses_category_is_disabled?: boolean;
-          other_expenses_category_team_id: string;
-        };
-        Update: {
-          other_expenses_category?: string;
-          other_expenses_category_date_created?: string;
-          other_expenses_category_encoder_team_member_id?: string | null;
-          other_expenses_category_id?: string;
-          other_expenses_category_is_available?: boolean;
-          other_expenses_category_is_disabled?: boolean;
-          other_expenses_category_team_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "other_expenses_category_table_other_expenses_category_enco_fkey";
-            columns: ["other_expenses_category_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          },
-          {
-            foreignKeyName: "other_expenses_category_table_other_expenses_category_team_fkey";
-            columns: ["other_expenses_category_team_id"];
-            isOneToOne: false;
-            referencedRelation: "team_table";
-            referencedColumns: ["team_id"];
-          }
-        ];
-      };
-      other_expenses_type_table: {
-        Row: {
-          other_expenses_type: string;
-          other_expenses_type_category_id: string | null;
-          other_expenses_type_date_created: string;
-          other_expenses_type_encoder_team_member_id: string | null;
-          other_expenses_type_id: string;
-          other_expenses_type_is_available: boolean;
-          other_expenses_type_is_disabled: boolean;
-        };
-        Insert: {
-          other_expenses_type: string;
-          other_expenses_type_category_id?: string | null;
-          other_expenses_type_date_created?: string;
-          other_expenses_type_encoder_team_member_id?: string | null;
-          other_expenses_type_id?: string;
-          other_expenses_type_is_available?: boolean;
-          other_expenses_type_is_disabled?: boolean;
-        };
-        Update: {
-          other_expenses_type?: string;
-          other_expenses_type_category_id?: string | null;
-          other_expenses_type_date_created?: string;
-          other_expenses_type_encoder_team_member_id?: string | null;
-          other_expenses_type_id?: string;
-          other_expenses_type_is_available?: boolean;
-          other_expenses_type_is_disabled?: boolean;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "other_expenses_type_table_other_expenses_type_category_id_fkey";
-            columns: ["other_expenses_type_category_id"];
-            isOneToOne: false;
-            referencedRelation: "other_expenses_category_table";
-            referencedColumns: ["other_expenses_category_id"];
-          },
-          {
-            foreignKeyName: "other_expenses_type_table_other_expenses_type_encoder_team_fkey";
-            columns: ["other_expenses_type_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          }
-        ];
-      };
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      [_ in never]: never;
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-  public: {
-    Tables: {
-      address_table: {
-        Row: {
-          address_barangay: string;
-          address_city: string;
-          address_date_created: string;
-          address_id: string;
-          address_province: string;
-          address_region: string;
-          address_street: string;
-          address_zip_code: string;
-        };
-        Insert: {
-          address_barangay: string;
-          address_city: string;
-          address_date_created?: string;
-          address_id?: string;
-          address_province: string;
-          address_region: string;
-          address_street: string;
-          address_zip_code: string;
-        };
-        Update: {
-          address_barangay?: string;
-          address_city?: string;
-          address_date_created?: string;
-          address_id?: string;
-          address_province?: string;
-          address_region?: string;
-          address_street?: string;
-          address_zip_code?: string;
-        };
-        Relationships: [];
-      };
-      attachment_table: {
-        Row: {
-          attachment_bucket: string;
-          attachment_date_created: string;
-          attachment_id: string;
-          attachment_is_disabled: boolean;
-          attachment_name: string;
-          attachment_value: string;
-        };
-        Insert: {
-          attachment_bucket: string;
-          attachment_date_created?: string;
-          attachment_id?: string;
-          attachment_is_disabled?: boolean;
-          attachment_name: string;
-          attachment_value: string;
-        };
-        Update: {
-          attachment_bucket?: string;
-          attachment_date_created?: string;
-          attachment_id?: string;
-          attachment_is_disabled?: boolean;
-          attachment_name?: string;
-          attachment_value?: string;
-        };
-        Relationships: [];
-      };
-      bank_list_table: {
-        Row: {
-          bank_id: string;
-          bank_label: string;
-        };
-        Insert: {
-          bank_id?: string;
-          bank_label: string;
-        };
-        Update: {
-          bank_id?: string;
-          bank_label?: string;
-        };
-        Relationships: [];
-      };
-      comment_table: {
-        Row: {
-          comment_content: string | null;
-          comment_date_created: string;
-          comment_id: string;
-          comment_is_disabled: boolean;
-          comment_is_edited: boolean | null;
-          comment_last_updated: string | null;
-          comment_request_id: string;
-          comment_team_member_id: string;
-          comment_type: string;
-        };
-        Insert: {
-          comment_content?: string | null;
-          comment_date_created?: string;
-          comment_id?: string;
-          comment_is_disabled?: boolean;
-          comment_is_edited?: boolean | null;
-          comment_last_updated?: string | null;
-          comment_request_id: string;
-          comment_team_member_id: string;
-          comment_type: string;
-        };
-        Update: {
-          comment_content?: string | null;
-          comment_date_created?: string;
-          comment_id?: string;
-          comment_is_disabled?: boolean;
-          comment_is_edited?: boolean | null;
-          comment_last_updated?: string | null;
-          comment_request_id?: string;
-          comment_team_member_id?: string;
-          comment_type?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "comment_table_comment_request_id_fkey";
-            columns: ["comment_request_id"];
-            isOneToOne: false;
-            referencedRelation: "request_table";
-            referencedColumns: ["request_id"];
-          },
-          {
-            foreignKeyName: "comment_table_comment_request_id_fkey";
-            columns: ["comment_request_id"];
-            isOneToOne: false;
-            referencedRelation: "request_view";
-            referencedColumns: ["request_id"];
-          },
-          {
-            foreignKeyName: "comment_table_comment_team_member_id_fkey";
-            columns: ["comment_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          }
-        ];
-      };
-      csi_code_table: {
-        Row: {
-          csi_code_division_description: string;
-          csi_code_division_id: string;
-          csi_code_id: string;
-          csi_code_level_three_description: string;
-          csi_code_level_three_id: string;
-          csi_code_level_two_major_group_description: string;
-          csi_code_level_two_major_group_id: string;
-          csi_code_level_two_minor_group_description: string;
-          csi_code_level_two_minor_group_id: string;
-          csi_code_section: string;
-        };
-        Insert: {
-          csi_code_division_description: string;
-          csi_code_division_id: string;
-          csi_code_id?: string;
-          csi_code_level_three_description: string;
-          csi_code_level_three_id: string;
-          csi_code_level_two_major_group_description: string;
-          csi_code_level_two_major_group_id: string;
-          csi_code_level_two_minor_group_description: string;
-          csi_code_level_two_minor_group_id: string;
-          csi_code_section: string;
-        };
-        Update: {
-          csi_code_division_description?: string;
-          csi_code_division_id?: string;
-          csi_code_id?: string;
-          csi_code_level_three_description?: string;
-          csi_code_level_three_id?: string;
-          csi_code_level_two_major_group_description?: string;
-          csi_code_level_two_major_group_id?: string;
-          csi_code_level_two_minor_group_description?: string;
-          csi_code_level_two_minor_group_id?: string;
-          csi_code_section?: string;
-        };
-        Relationships: [];
-      };
-      currency_table: {
-        Row: {
-          currency_alphabetic_code: string;
-          currency_entity: string;
-          currency_id: string;
-          currency_label: string;
-          currency_numeric_code: string;
-        };
-        Insert: {
-          currency_alphabetic_code: string;
-          currency_entity: string;
-          currency_id?: string;
-          currency_label: string;
-          currency_numeric_code: string;
-        };
-        Update: {
-          currency_alphabetic_code?: string;
-          currency_entity?: string;
-          currency_id?: string;
-          currency_label?: string;
-          currency_numeric_code?: string;
-        };
-        Relationships: [];
-      };
-      employee_job_title_table: {
-        Row: {
-          employee_job_title_date_created: string;
-          employee_job_title_date_updated: string | null;
-          employee_job_title_id: string;
-          employee_job_title_is_disabled: boolean;
-          employee_job_title_label: string;
-        };
-        Insert: {
-          employee_job_title_date_created?: string;
-          employee_job_title_date_updated?: string | null;
-          employee_job_title_id?: string;
-          employee_job_title_is_disabled?: boolean;
-          employee_job_title_label: string;
-        };
-        Update: {
-          employee_job_title_date_created?: string;
-          employee_job_title_date_updated?: string | null;
-          employee_job_title_id?: string;
-          employee_job_title_is_disabled?: boolean;
-          employee_job_title_label?: string;
-        };
-        Relationships: [];
-      };
       equipment_brand_table: {
         Row: {
           equipment_brand: string;
@@ -860,6 +460,468 @@ export type Database = {
             referencedColumns: ["team_id"];
           }
         ];
+      };
+    };
+    Views: {
+      equipment_description_view: {
+        Row: {
+          equipment_description_acquisition_date: number | null;
+          equipment_description_brand_id: string | null;
+          equipment_description_date_created: string | null;
+          equipment_description_encoder_team_member_id: string | null;
+          equipment_description_equipment_id: string | null;
+          equipment_description_id: string | null;
+          equipment_description_is_available: boolean | null;
+          equipment_description_is_disabled: boolean | null;
+          equipment_description_is_rental: boolean | null;
+          equipment_description_model_id: string | null;
+          equipment_description_property_number: string | null;
+          equipment_description_property_number_with_prefix: string | null;
+          equipment_description_serial_number: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "equipment_description_table_equipment_description_brand_id_fkey";
+            columns: ["equipment_description_brand_id"];
+            isOneToOne: false;
+            referencedRelation: "equipment_brand_table";
+            referencedColumns: ["equipment_brand_id"];
+          },
+          {
+            foreignKeyName: "equipment_description_table_equipment_description_encoder__fkey";
+            columns: ["equipment_description_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          },
+          {
+            foreignKeyName: "equipment_description_table_equipment_description_equipmen_fkey";
+            columns: ["equipment_description_equipment_id"];
+            isOneToOne: false;
+            referencedRelation: "equipment_table";
+            referencedColumns: ["equipment_id"];
+          },
+          {
+            foreignKeyName: "equipment_description_table_equipment_description_model_id_fkey";
+            columns: ["equipment_description_model_id"];
+            isOneToOne: false;
+            referencedRelation: "equipment_model_table";
+            referencedColumns: ["equipment_model_id"];
+          }
+        ];
+      };
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+  history_schema: {
+    Tables: {
+      signature_history_table: {
+        Row: {
+          signature_history_date_created: string;
+          signature_history_id: string;
+          signature_history_user_id: string;
+          signature_history_value: string;
+        };
+        Insert: {
+          signature_history_date_created?: string;
+          signature_history_id?: string;
+          signature_history_user_id: string;
+          signature_history_value: string;
+        };
+        Update: {
+          signature_history_date_created?: string;
+          signature_history_id?: string;
+          signature_history_user_id?: string;
+          signature_history_value?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "signature_history_table_signature_history_user_id_fkey";
+            columns: ["signature_history_user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_table";
+            referencedColumns: ["user_id"];
+          }
+        ];
+      };
+      user_name_history_table: {
+        Row: {
+          user_name_history_date_created: string;
+          user_name_history_id: string;
+          user_name_history_user_id: string;
+          user_name_history_value: string;
+        };
+        Insert: {
+          user_name_history_date_created?: string;
+          user_name_history_id?: string;
+          user_name_history_user_id: string;
+          user_name_history_value: string;
+        };
+        Update: {
+          user_name_history_date_created?: string;
+          user_name_history_id?: string;
+          user_name_history_user_id?: string;
+          user_name_history_value?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_name_history_table_user_name_history_user_id_fkey";
+            columns: ["user_name_history_user_id"];
+            isOneToOne: false;
+            referencedRelation: "user_table";
+            referencedColumns: ["user_id"];
+          }
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+  other_expenses_schema: {
+    Tables: {
+      other_expenses_category_table: {
+        Row: {
+          other_expenses_category: string;
+          other_expenses_category_date_created: string;
+          other_expenses_category_encoder_team_member_id: string | null;
+          other_expenses_category_id: string;
+          other_expenses_category_is_available: boolean;
+          other_expenses_category_is_disabled: boolean;
+          other_expenses_category_team_id: string;
+        };
+        Insert: {
+          other_expenses_category: string;
+          other_expenses_category_date_created?: string;
+          other_expenses_category_encoder_team_member_id?: string | null;
+          other_expenses_category_id?: string;
+          other_expenses_category_is_available?: boolean;
+          other_expenses_category_is_disabled?: boolean;
+          other_expenses_category_team_id: string;
+        };
+        Update: {
+          other_expenses_category?: string;
+          other_expenses_category_date_created?: string;
+          other_expenses_category_encoder_team_member_id?: string | null;
+          other_expenses_category_id?: string;
+          other_expenses_category_is_available?: boolean;
+          other_expenses_category_is_disabled?: boolean;
+          other_expenses_category_team_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_category_table_other_expenses_category_enco_fkey";
+            columns: ["other_expenses_category_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          },
+          {
+            foreignKeyName: "other_expenses_category_table_other_expenses_category_team_fkey";
+            columns: ["other_expenses_category_team_id"];
+            isOneToOne: false;
+            referencedRelation: "team_table";
+            referencedColumns: ["team_id"];
+          }
+        ];
+      };
+      other_expenses_type_table: {
+        Row: {
+          other_expenses_type: string;
+          other_expenses_type_category_id: string | null;
+          other_expenses_type_date_created: string;
+          other_expenses_type_encoder_team_member_id: string | null;
+          other_expenses_type_id: string;
+          other_expenses_type_is_available: boolean;
+          other_expenses_type_is_disabled: boolean;
+        };
+        Insert: {
+          other_expenses_type: string;
+          other_expenses_type_category_id?: string | null;
+          other_expenses_type_date_created?: string;
+          other_expenses_type_encoder_team_member_id?: string | null;
+          other_expenses_type_id?: string;
+          other_expenses_type_is_available?: boolean;
+          other_expenses_type_is_disabled?: boolean;
+        };
+        Update: {
+          other_expenses_type?: string;
+          other_expenses_type_category_id?: string | null;
+          other_expenses_type_date_created?: string;
+          other_expenses_type_encoder_team_member_id?: string | null;
+          other_expenses_type_id?: string;
+          other_expenses_type_is_available?: boolean;
+          other_expenses_type_is_disabled?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "other_expenses_type_table_other_expenses_type_category_id_fkey";
+            columns: ["other_expenses_type_category_id"];
+            isOneToOne: false;
+            referencedRelation: "other_expenses_category_table";
+            referencedColumns: ["other_expenses_category_id"];
+          },
+          {
+            foreignKeyName: "other_expenses_type_table_other_expenses_type_encoder_team_fkey";
+            columns: ["other_expenses_type_encoder_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          }
+        ];
+      };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
+  };
+  public: {
+    Tables: {
+      address_table: {
+        Row: {
+          address_barangay: string;
+          address_city: string;
+          address_date_created: string;
+          address_id: string;
+          address_province: string;
+          address_region: string;
+          address_street: string;
+          address_zip_code: string;
+        };
+        Insert: {
+          address_barangay: string;
+          address_city: string;
+          address_date_created?: string;
+          address_id?: string;
+          address_province: string;
+          address_region: string;
+          address_street: string;
+          address_zip_code: string;
+        };
+        Update: {
+          address_barangay?: string;
+          address_city?: string;
+          address_date_created?: string;
+          address_id?: string;
+          address_province?: string;
+          address_region?: string;
+          address_street?: string;
+          address_zip_code?: string;
+        };
+        Relationships: [];
+      };
+      attachment_table: {
+        Row: {
+          attachment_bucket: string;
+          attachment_date_created: string;
+          attachment_id: string;
+          attachment_is_disabled: boolean;
+          attachment_name: string;
+          attachment_value: string;
+        };
+        Insert: {
+          attachment_bucket: string;
+          attachment_date_created?: string;
+          attachment_id?: string;
+          attachment_is_disabled?: boolean;
+          attachment_name: string;
+          attachment_value: string;
+        };
+        Update: {
+          attachment_bucket?: string;
+          attachment_date_created?: string;
+          attachment_id?: string;
+          attachment_is_disabled?: boolean;
+          attachment_name?: string;
+          attachment_value?: string;
+        };
+        Relationships: [];
+      };
+      bank_list_table: {
+        Row: {
+          bank_id: string;
+          bank_label: string;
+        };
+        Insert: {
+          bank_id?: string;
+          bank_label: string;
+        };
+        Update: {
+          bank_id?: string;
+          bank_label?: string;
+        };
+        Relationships: [];
+      };
+      comment_table: {
+        Row: {
+          comment_content: string | null;
+          comment_date_created: string;
+          comment_id: string;
+          comment_is_disabled: boolean;
+          comment_is_edited: boolean | null;
+          comment_last_updated: string | null;
+          comment_request_id: string;
+          comment_team_member_id: string;
+          comment_type: string;
+        };
+        Insert: {
+          comment_content?: string | null;
+          comment_date_created?: string;
+          comment_id?: string;
+          comment_is_disabled?: boolean;
+          comment_is_edited?: boolean | null;
+          comment_last_updated?: string | null;
+          comment_request_id: string;
+          comment_team_member_id: string;
+          comment_type: string;
+        };
+        Update: {
+          comment_content?: string | null;
+          comment_date_created?: string;
+          comment_id?: string;
+          comment_is_disabled?: boolean;
+          comment_is_edited?: boolean | null;
+          comment_last_updated?: string | null;
+          comment_request_id?: string;
+          comment_team_member_id?: string;
+          comment_type?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comment_table_comment_request_id_fkey";
+            columns: ["comment_request_id"];
+            isOneToOne: false;
+            referencedRelation: "request_table";
+            referencedColumns: ["request_id"];
+          },
+          {
+            foreignKeyName: "comment_table_comment_request_id_fkey";
+            columns: ["comment_request_id"];
+            isOneToOne: false;
+            referencedRelation: "request_view";
+            referencedColumns: ["request_id"];
+          },
+          {
+            foreignKeyName: "comment_table_comment_team_member_id_fkey";
+            columns: ["comment_team_member_id"];
+            isOneToOne: false;
+            referencedRelation: "team_member_table";
+            referencedColumns: ["team_member_id"];
+          }
+        ];
+      };
+      csi_code_table: {
+        Row: {
+          csi_code_division_description: string;
+          csi_code_division_id: string;
+          csi_code_id: string;
+          csi_code_level_three_description: string;
+          csi_code_level_three_id: string;
+          csi_code_level_two_major_group_description: string;
+          csi_code_level_two_major_group_id: string;
+          csi_code_level_two_minor_group_description: string;
+          csi_code_level_two_minor_group_id: string;
+          csi_code_section: string;
+        };
+        Insert: {
+          csi_code_division_description: string;
+          csi_code_division_id: string;
+          csi_code_id?: string;
+          csi_code_level_three_description: string;
+          csi_code_level_three_id: string;
+          csi_code_level_two_major_group_description: string;
+          csi_code_level_two_major_group_id: string;
+          csi_code_level_two_minor_group_description: string;
+          csi_code_level_two_minor_group_id: string;
+          csi_code_section: string;
+        };
+        Update: {
+          csi_code_division_description?: string;
+          csi_code_division_id?: string;
+          csi_code_id?: string;
+          csi_code_level_three_description?: string;
+          csi_code_level_three_id?: string;
+          csi_code_level_two_major_group_description?: string;
+          csi_code_level_two_major_group_id?: string;
+          csi_code_level_two_minor_group_description?: string;
+          csi_code_level_two_minor_group_id?: string;
+          csi_code_section?: string;
+        };
+        Relationships: [];
+      };
+      currency_table: {
+        Row: {
+          currency_alphabetic_code: string;
+          currency_entity: string;
+          currency_id: string;
+          currency_label: string;
+          currency_numeric_code: string;
+        };
+        Insert: {
+          currency_alphabetic_code: string;
+          currency_entity: string;
+          currency_id?: string;
+          currency_label: string;
+          currency_numeric_code: string;
+        };
+        Update: {
+          currency_alphabetic_code?: string;
+          currency_entity?: string;
+          currency_id?: string;
+          currency_label?: string;
+          currency_numeric_code?: string;
+        };
+        Relationships: [];
+      };
+      employee_job_title_table: {
+        Row: {
+          employee_job_title_date_created: string;
+          employee_job_title_date_updated: string | null;
+          employee_job_title_id: string;
+          employee_job_title_is_disabled: boolean;
+          employee_job_title_label: string;
+        };
+        Insert: {
+          employee_job_title_date_created?: string;
+          employee_job_title_date_updated?: string | null;
+          employee_job_title_id?: string;
+          employee_job_title_is_disabled?: boolean;
+          employee_job_title_label: string;
+        };
+        Update: {
+          employee_job_title_date_created?: string;
+          employee_job_title_date_updated?: string | null;
+          employee_job_title_id?: string;
+          employee_job_title_is_disabled?: boolean;
+          employee_job_title_label?: string;
+        };
+        Relationships: [];
       };
       expense_type_table: {
         Row: {
@@ -3108,53 +3170,6 @@ export type Database = {
           csi_code_division_id: string | null;
         };
         Relationships: [];
-      };
-      equipment_description_view: {
-        Row: {
-          equipment_description_acquisition_date: number | null;
-          equipment_description_brand_id: string | null;
-          equipment_description_date_created: string | null;
-          equipment_description_encoder_team_member_id: string | null;
-          equipment_description_equipment_id: string | null;
-          equipment_description_id: string | null;
-          equipment_description_is_available: boolean | null;
-          equipment_description_is_disabled: boolean | null;
-          equipment_description_is_rental: boolean | null;
-          equipment_description_model_id: string | null;
-          equipment_description_property_number: string | null;
-          equipment_description_property_number_with_prefix: string | null;
-          equipment_description_serial_number: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "equipment_description_table_equipment_description_brand_id_fkey";
-            columns: ["equipment_description_brand_id"];
-            isOneToOne: false;
-            referencedRelation: "equipment_brand_table";
-            referencedColumns: ["equipment_brand_id"];
-          },
-          {
-            foreignKeyName: "equipment_description_table_equipment_description_encoder__fkey";
-            columns: ["equipment_description_encoder_team_member_id"];
-            isOneToOne: false;
-            referencedRelation: "team_member_table";
-            referencedColumns: ["team_member_id"];
-          },
-          {
-            foreignKeyName: "equipment_description_table_equipment_description_equipmen_fkey";
-            columns: ["equipment_description_equipment_id"];
-            isOneToOne: false;
-            referencedRelation: "equipment_table";
-            referencedColumns: ["equipment_id"];
-          },
-          {
-            foreignKeyName: "equipment_description_table_equipment_description_model_id_fkey";
-            columns: ["equipment_description_model_id"];
-            isOneToOne: false;
-            referencedRelation: "equipment_model_table";
-            referencedColumns: ["equipment_model_id"];
-          }
-        ];
       };
       item_unspsc_view: {
         Row: {
