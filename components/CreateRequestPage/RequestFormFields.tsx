@@ -168,6 +168,10 @@ type RequestFormFieldsProps = {
       value: string | null,
       sectionIndex: number
     ) => void;
+    onAccountingAuthorizationBooleanChange: (value: boolean) => void;
+    onSCICAuthorizationChange: (value: boolean) => void;
+    onChargeToProjectBooleanChange: (value: boolean) => void;
+    onModeOfPaymentChange: (value: string | null, sectionIndex: number) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -583,11 +587,30 @@ const RequestFormFields = ({
                         );
                       break;
 
-                    case "Is this for Official Business":
+                    case "Is this for Official Business?":
                       pettyCashVoucherFormMethods &&
                         pettyCashVoucherFormMethods.onPettyCashVoucherBooleanChange(
                           value,
                           sectionIndex
+                        );
+                      break;
+
+                    case "This is to authorize the Accounting Department to deduct the cash advance amount from my salary upon my failure to liquidate within 48hrs after the purpose has been accomplished.":
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onAccountingAuthorizationBooleanChange(
+                          value
+                        );
+                      break;
+                    case "This is to authorize Sta. Clara International Corporation to deduct from my salary the specified amount, representing payment for the particulars listed below.":
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onSCICAuthorizationChange(
+                          value
+                        );
+                      break;
+                    case "Is this request charged to the project?":
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onChargeToProjectBooleanChange(
+                          value
                         );
                       break;
                   }
@@ -845,6 +868,10 @@ const RequestFormFields = ({
                       break;
                     case "Mode of Payment":
                       requestForPaymentFormMethods?.onModeOfPaymentChange(
+                        value,
+                        sectionIndex
+                      );
+                      pettyCashVoucherFormMethods?.onModeOfPaymentChange(
                         value,
                         sectionIndex
                       );

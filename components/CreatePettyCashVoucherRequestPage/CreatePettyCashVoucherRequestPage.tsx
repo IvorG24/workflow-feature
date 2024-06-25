@@ -39,12 +39,18 @@ type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
   departmentOptions: OptionTableRow[];
+  expenseTypeOptions: OptionTableRow[];
+  bankListOptions: OptionTableRow[];
+  uomOptions: OptionTableRow[];
 };
 
 const CreatePettyCashVoucherRequestPage = ({
   form,
   projectOptions,
   departmentOptions,
+  expenseTypeOptions,
+  bankListOptions,
+  uomOptions,
 }: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
@@ -70,6 +76,8 @@ const CreatePettyCashVoucherRequestPage = ({
     fields: formSections,
     replace: replaceSection,
     update: updateSection,
+    insert: insertSection,
+    remove: removeSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -100,10 +108,10 @@ const CreatePettyCashVoucherRequestPage = ({
 
       setIsLoading(true);
 
-      const response = data.sections[0].section_field[0]
+      const response = data.sections[1].section_field[0]
         .field_response as string;
 
-      const projectId = data.sections[0].section_field[0].field_option.find(
+      const projectId = data.sections[1].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
 
@@ -154,10 +162,10 @@ const CreatePettyCashVoucherRequestPage = ({
     try {
       setIsFetchingSigner(true);
       const selectedProject = getValues(
-        `sections.0.section_field.0.field_response`
+        `sections.1.section_field.0.field_response`
       );
       const selectedDepartment = getValues(
-        `sections.0.section_field.2.field_response`
+        `sections.1.section_field.2.field_response`
       );
 
       const projectId = projectOptions.find(
@@ -179,9 +187,41 @@ const CreatePettyCashVoucherRequestPage = ({
           resetSigner();
         }
       }
+
+      const isPed = selectedDepartment === "Plants and Equipment";
+      const requestDetailsSection = getValues(`sections.1`);
+      const pedConditionalField = form.form_section[1].section_field[10];
+      const pedConditionalFieldExists =
+        requestDetailsSection.section_field.findIndex(
+          (field) =>
+            field.field_name === "Is this request charged to the project?"
+        );
+      const chargeToProjectSectionIndex = getValues(`sections`).findIndex(
+        (section) => section.section_name === "Charge to Project Details"
+      );
+
+      if (isPed) {
+        updateSection(1, {
+          ...requestDetailsSection,
+          section_field: [
+            ...requestDetailsSection.section_field,
+            pedConditionalField,
+          ],
+        });
+      } else if (!isPed && pedConditionalFieldExists) {
+        updateSection(1, {
+          ...requestDetailsSection,
+          section_field: requestDetailsSection.section_field.filter(
+            (field) => field.field_order !== 11
+          ),
+        });
+        if (chargeToProjectSectionIndex) {
+          removeSection(chargeToProjectSectionIndex);
+        }
+      }
     } catch (e) {
-      setValue(`sections.0.section_field.0.field_response`, "");
-      setValue(`sections.0.section_field.2.field_response`, "");
+      setValue(`sections.1.section_field.0.field_response`, "");
+      setValue(`sections.1.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -191,20 +231,32 @@ const CreatePettyCashVoucherRequestPage = ({
     }
   };
 
-  const handlePettyCashVoucherBooleanChange = async (
+  const handlePettyCashVoucherBooleanChange = (
     value: boolean,
     sectionIndex: number
   ) => {
     try {
       const selectedSection = getValues(`sections.${sectionIndex}`);
+      const pedConditionalFieldExists = selectedSection.section_field.find(
+        (field) =>
+          field.field_name === "Is this request charged to the project?"
+      );
 
       if (value) {
+        let selectedSectionFieldList = [
+          ...selectedSection.section_field.slice(0, 9),
+          form.form_section[sectionIndex].section_field[9],
+        ];
+
+        if (pedConditionalFieldExists) {
+          selectedSectionFieldList = [
+            ...selectedSectionFieldList,
+            pedConditionalFieldExists,
+          ];
+        }
         updateSection(sectionIndex, {
           ...selectedSection,
-          section_field: [
-            ...selectedSection.section_field,
-            form.form_section[0].section_field[9],
-          ],
+          section_field: selectedSectionFieldList,
         });
         setTimeout(
           () =>
@@ -284,28 +336,218 @@ const CreatePettyCashVoucherRequestPage = ({
     }
   };
 
+  const handleAccountingAuthorizationBooleanChange = (value: boolean) => {
+    try {
+      if (value) {
+        const accountingAuthorizationSection = getValues(`sections.0`);
+        const requestDetailsSection = form.form_section[1];
+        const requestDetailsSectionWithProjectOptions = {
+          ...requestDetailsSection,
+          section_field: [
+            {
+              ...requestDetailsSection.section_field[0],
+              field_option: projectOptions,
+            },
+            requestDetailsSection.section_field[1],
+            {
+              ...requestDetailsSection.section_field[2],
+              field_option: departmentOptions,
+            },
+            ...requestDetailsSection.section_field.slice(3, 9),
+          ],
+        };
+        const paymentSection = {
+          ...form.form_section[3],
+          section_field: [form.form_section[3].section_field[0]],
+        };
+        const scicAuthorizationSection = form.form_section[4];
+
+        replaceSection([
+          accountingAuthorizationSection,
+          requestDetailsSectionWithProjectOptions,
+          paymentSection,
+          scicAuthorizationSection,
+        ]);
+      } else if (!value) {
+        replaceSection([getValues(`sections.0`)]);
+      }
+    } catch (error) {
+      setValue(`sections.0.section_field.0.field_response`, false);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleChargeToProjectBooleanChange = (value: boolean) => {
+    try {
+      if (value) {
+        const chargeToProjectSection = form.form_section[2];
+        const sectionWithProjectOptions = {
+          ...chargeToProjectSection,
+          section_field: [
+            {
+              ...chargeToProjectSection.section_field[0],
+              field_option: projectOptions,
+            },
+            {
+              ...chargeToProjectSection.section_field[1],
+              field_option: expenseTypeOptions,
+            },
+            chargeToProjectSection.section_field[2],
+          ],
+        };
+
+        insertSection(2, sectionWithProjectOptions, { focusIndex: 0 });
+      } else if (!value) {
+        const requestDetailsSectionExists = getValues(`sections.2`);
+        if (requestDetailsSectionExists) {
+          removeSection(2);
+        }
+      }
+    } catch (error) {
+      const requestDetailsSection = getValues(`sections.1`);
+      const pedConditionalFieldIndex =
+        requestDetailsSection.section_field.findIndex(
+          (field) =>
+            field.field_name === "Is this request charged to the project?"
+        );
+      setValue(
+        `sections.1.section_field.${pedConditionalFieldIndex}.field_response`,
+        false
+      );
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleModeOfPaymentChange = (
+    value: string | null,
+    sectionIndex: number
+  ) => {
+    try {
+      if (!value) return;
+
+      const selectedSection = getValues(`sections.${sectionIndex}`);
+      const paymentOptionField = {
+        ...form.form_section[3].section_field[1],
+        field_option: bankListOptions,
+      };
+
+      const isWithAccountConditionalField = [
+        "Bank Transfer",
+        "E-Cash",
+        "Telegraphic Transfer",
+      ].includes(value);
+
+      const isBankTransfer = value === "Bank Transfer";
+      const paymentOptionFieldExists = selectedSection.section_field.find(
+        (field) => field.field_name === "Payment Option"
+      );
+      const conditionalFieldExists = selectedSection.section_field.find(
+        (field) => field.field_name === "Account Name"
+      );
+
+      if (isWithAccountConditionalField) {
+        if (isBankTransfer) {
+          updateSection(sectionIndex, {
+            ...selectedSection,
+            section_field: [
+              selectedSection.section_field[0],
+              paymentOptionField,
+              ...form.form_section[3].section_field.slice(2, 4),
+            ],
+          });
+        } else if (!isBankTransfer && paymentOptionFieldExists) {
+          updateSection(sectionIndex, {
+            ...selectedSection,
+            section_field: selectedSection.section_field.filter(
+              (field) => field.field_name !== "Payment Option"
+            ),
+          });
+        } else {
+          updateSection(sectionIndex, {
+            ...selectedSection,
+            section_field: [
+              selectedSection.section_field[0],
+              ...form.form_section[3].section_field.slice(2, 4),
+            ],
+          });
+        }
+      } else if (!isWithAccountConditionalField && conditionalFieldExists) {
+        updateSection(sectionIndex, {
+          ...selectedSection,
+          section_field: [selectedSection.section_field[0]],
+        });
+      }
+    } catch (error) {
+      setValue(`sections.3.section_field.0.field_response`, false);
+      console.log(error);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleSCICAuthorizationBooleanChange = (value: boolean) => {
+    try {
+      const currentRequestSectionList = getValues(`sections`);
+
+      if (value) {
+        const particularSection = form.form_section[5];
+        const sectionWithProjectOptions = {
+          ...particularSection,
+          section_field: [
+            ...particularSection.section_field.slice(0, 2),
+            {
+              ...particularSection.section_field[2],
+              field_option: uomOptions,
+            },
+            ...particularSection.section_field.slice(3, 5),
+          ],
+        };
+
+        insertSection(
+          currentRequestSectionList.length,
+          sectionWithProjectOptions,
+          { focusIndex: 0 }
+        );
+      } else if (!value) {
+        const particularSectionExists = getValues(
+          `sections.${currentRequestSectionList.length - 1}`
+        );
+        if (particularSectionExists) {
+          removeSection(currentRequestSectionList.length - 1);
+        }
+      }
+    } catch (error) {
+      const requestDetailsSection = getValues(`sections.1`);
+      const pedConditionalFieldIndex =
+        requestDetailsSection.section_field.findIndex(
+          (field) =>
+            field.field_name === "Is this request charged to the project?"
+        );
+      setValue(
+        `sections.1.section_field.${pedConditionalFieldIndex}.field_response`,
+        false
+      );
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
       try {
         if (!activeTeam.team_id) return;
-        // add project options
-        const sectionWithProjectOptions = {
-          ...form.form_section[0],
-          section_field: [
-            {
-              ...form.form_section[0].section_field[0],
-              field_option: projectOptions,
-            },
-            form.form_section[0].section_field[1],
-            {
-              ...form.form_section[0].section_field[2],
-              field_option: departmentOptions,
-            },
-            ...form.form_section[0].section_field.slice(3, 9),
-          ],
-        };
-        replaceSection([sectionWithProjectOptions]);
+        replaceSection([form.form_section[0]]);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -341,6 +583,13 @@ const CreatePettyCashVoucherRequestPage = ({
                       onPettyCashVoucherBooleanChange:
                         handlePettyCashVoucherBooleanChange,
                       onEmployeeNumberChange: handleEmployeeNumberChange,
+                      onAccountingAuthorizationBooleanChange:
+                        handleAccountingAuthorizationBooleanChange,
+                      onChargeToProjectBooleanChange:
+                        handleChargeToProjectBooleanChange,
+                      onModeOfPaymentChange: handleModeOfPaymentChange,
+                      onSCICAuthorizationChange:
+                        handleSCICAuthorizationBooleanChange,
                     }}
                     formslyFormName={form.form_name}
                     loadingFieldList={loadingFieldList}

@@ -52,6 +52,9 @@ type Props = {
   duplicatableSectionIdList: string[];
   requestId: string;
   departmentOptions: OptionTableRow[];
+  expenseTypeOptions: OptionTableRow[];
+  bankListOptions: OptionTableRow[];
+  uomOptions: OptionTableRow[];
 };
 
 const EditPettyCashVoucherRequestPage = ({
@@ -59,6 +62,9 @@ const EditPettyCashVoucherRequestPage = ({
   projectOptions,
   requestId,
   departmentOptions,
+  expenseTypeOptions,
+  bankListOptions,
+  uomOptions,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -100,6 +106,8 @@ const EditPettyCashVoucherRequestPage = ({
     fields: formSections,
     replace: replaceSection,
     update: updateSection,
+    insert: insertSection,
+    remove: removeSection,
   } = useFieldArray({
     control,
     name: "sections",
@@ -119,10 +127,10 @@ const EditPettyCashVoucherRequestPage = ({
 
       setIsLoading(true);
 
-      const response = data.sections[0].section_field[0]
+      const response = data.sections[1].section_field[0]
         .field_response as string;
 
-      const projectId = data.sections[0].section_field[0].field_option.find(
+      const projectId = data.sections[1].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
 
@@ -187,10 +195,10 @@ const EditPettyCashVoucherRequestPage = ({
     try {
       setIsFetchingSigner(true);
       const selectedProject = getValues(
-        `sections.0.section_field.0.field_response`
+        `sections.1.section_field.0.field_response`
       );
       const selectedDepartment = getValues(
-        `sections.0.section_field.2.field_response`
+        `sections.1.section_field.2.field_response`
       );
 
       const projectId = projectOptions.find(
@@ -212,9 +220,41 @@ const EditPettyCashVoucherRequestPage = ({
           resetSigner();
         }
       }
+
+      const isPed = selectedDepartment === "Plants and Equipment";
+      const requestDetailsSection = getValues(`sections.1`);
+      const pedConditionalField = form.form_section[1].section_field[10];
+      const pedConditionalFieldExists =
+        requestDetailsSection.section_field.findIndex(
+          (field) =>
+            field.field_name === "Is this request charged to the project?"
+        );
+      const chargeToProjectSectionIndex = getValues(`sections`).findIndex(
+        (section) => section.section_name === "Charge to Project Details"
+      );
+
+      if (isPed) {
+        updateSection(1, {
+          ...requestDetailsSection,
+          section_field: [
+            ...requestDetailsSection.section_field,
+            pedConditionalField,
+          ],
+        });
+      } else if (!isPed && pedConditionalFieldExists) {
+        updateSection(1, {
+          ...requestDetailsSection,
+          section_field: requestDetailsSection.section_field.filter(
+            (field) => field.field_order !== 11
+          ),
+        });
+        if (chargeToProjectSectionIndex) {
+          removeSection(chargeToProjectSectionIndex);
+        }
+      }
     } catch (e) {
-      setValue(`sections.0.section_field.0.field_response`, "");
-      setValue(`sections.0.section_field.2.field_response`, "");
+      setValue(`sections.1.section_field.0.field_response`, "");
+      setValue(`sections.1.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -230,20 +270,32 @@ const EditPettyCashVoucherRequestPage = ({
     handleProjectOrDepartmentNameChange();
   };
 
-  const handlePettyCashVoucherBooleanChange = async (
+  const handlePettyCashVoucherBooleanChange = (
     value: boolean,
     sectionIndex: number
   ) => {
     try {
       const selectedSection = getValues(`sections.${sectionIndex}`);
+      const pedConditionalFieldExists = selectedSection.section_field.find(
+        (field) =>
+          field.field_name === "Is this request charged to the project?"
+      );
 
       if (value) {
+        let selectedSectionFieldList = [
+          ...selectedSection.section_field.slice(0, 9),
+          form.form_section[sectionIndex].section_field[9],
+        ];
+
+        if (pedConditionalFieldExists) {
+          selectedSectionFieldList = [
+            ...selectedSectionFieldList,
+            pedConditionalFieldExists,
+          ];
+        }
         updateSection(sectionIndex, {
           ...selectedSection,
-          section_field: [
-            ...selectedSection.section_field,
-            form.form_section[0].section_field[9],
-          ],
+          section_field: selectedSectionFieldList,
         });
         setTimeout(
           () =>
@@ -323,35 +375,248 @@ const EditPettyCashVoucherRequestPage = ({
     }
   };
 
+  const handleAccountingAuthorizationBooleanChange = (value: boolean) => {
+    try {
+      if (value) {
+        const requestDetailsSection = form.form_section[1];
+        const sectionWithProjectOptions = {
+          ...requestDetailsSection,
+          section_field: [
+            {
+              ...requestDetailsSection.section_field[0],
+              field_option: projectOptions,
+            },
+            requestDetailsSection.section_field[1],
+            {
+              ...requestDetailsSection.section_field[2],
+              field_option: departmentOptions,
+            },
+            ...requestDetailsSection.section_field.slice(3, 9),
+          ],
+        };
+
+        insertSection(1, sectionWithProjectOptions, { focusIndex: 0 });
+      } else if (!value) {
+        const requestDetailsSectionExists = getValues(`sections.1`);
+        if (requestDetailsSectionExists) {
+          removeSection(1);
+        }
+      }
+    } catch (error) {
+      setValue(`sections.0.section_field.0.field_response`, false);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleChargeToProjectBooleanChange = (value: boolean) => {
+    try {
+      if (value) {
+        const chargeToProjectSection = form.form_section[2];
+        const sectionWithProjectOptions = {
+          ...chargeToProjectSection,
+          section_field: [
+            {
+              ...chargeToProjectSection.section_field[0],
+              field_option: projectOptions,
+            },
+            {
+              ...chargeToProjectSection.section_field[1],
+              field_option: expenseTypeOptions,
+            },
+            chargeToProjectSection.section_field[2],
+          ],
+        };
+
+        insertSection(2, sectionWithProjectOptions, { focusIndex: 0 });
+      } else if (!value) {
+        const requestDetailsSectionExists = getValues(`sections.2`);
+        if (requestDetailsSectionExists) {
+          removeSection(2);
+        }
+      }
+    } catch (error) {
+      const requestDetailsSection = getValues(`sections.1`);
+      const pedConditionalFieldIndex =
+        requestDetailsSection.section_field.findIndex(
+          (field) =>
+            field.field_name === "Is this request charged to the project?"
+        );
+      setValue(
+        `sections.1.section_field.${pedConditionalFieldIndex}.field_response`,
+        false
+      );
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleModeOfPaymentChange = (
+    value: string | null,
+    sectionIndex: number
+  ) => {
+    try {
+      if (!value) return;
+
+      const selectedSection = getValues(`sections.${sectionIndex}`);
+      const paymentOptionField = {
+        ...form.form_section[3].section_field[1],
+        field_option: bankListOptions,
+      };
+
+      const isWithAccountConditionalField = [
+        "Bank Transfer",
+        "E-Cash",
+        "Telegraphic Transfer",
+      ].includes(value);
+
+      const isBankTransfer = value === "Bank Transfer";
+      const paymentOptionFieldExists = selectedSection.section_field.find(
+        (field) => field.field_name === "Payment Option"
+      );
+      const conditionalFieldExists = selectedSection.section_field.find(
+        (field) => field.field_name === "Account Name"
+      );
+
+      if (isWithAccountConditionalField) {
+        if (isBankTransfer) {
+          updateSection(sectionIndex, {
+            ...selectedSection,
+            section_field: [
+              selectedSection.section_field[0],
+              paymentOptionField,
+              ...form.form_section[3].section_field.slice(2, 4),
+            ],
+          });
+        } else if (!isBankTransfer && paymentOptionFieldExists) {
+          updateSection(sectionIndex, {
+            ...selectedSection,
+            section_field: selectedSection.section_field.filter(
+              (field) => field.field_name !== "Payment Option"
+            ),
+          });
+        } else {
+          updateSection(sectionIndex, {
+            ...selectedSection,
+            section_field: [
+              selectedSection.section_field[0],
+              ...form.form_section[3].section_field.slice(2, 4),
+            ],
+          });
+        }
+      } else if (!isWithAccountConditionalField && conditionalFieldExists) {
+        updateSection(sectionIndex, {
+          ...selectedSection,
+          section_field: [selectedSection.section_field[0]],
+        });
+      }
+    } catch (error) {
+      setValue(`sections.3.section_field.0.field_response`, false);
+      console.log(error);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleSCICAuthorizationBooleanChange = (value: boolean) => {
+    try {
+      const currentRequestSectionList = getValues(`sections`);
+
+      if (value) {
+        const particularSection = form.form_section[5];
+        const sectionWithProjectOptions = {
+          ...particularSection,
+          section_field: [
+            ...particularSection.section_field.slice(0, 2),
+            {
+              ...particularSection.section_field[2],
+              field_option: uomOptions,
+            },
+            ...particularSection.section_field.slice(3, 5),
+          ],
+        };
+
+        insertSection(
+          currentRequestSectionList.length,
+          sectionWithProjectOptions,
+          { focusIndex: 0 }
+        );
+      } else if (!value) {
+        const particularSectionExists = getValues(
+          `sections.${currentRequestSectionList.length - 1}`
+        );
+        if (particularSectionExists) {
+          removeSection(currentRequestSectionList.length - 1);
+        }
+      }
+    } catch (error) {
+      const requestDetailsSection = getValues(`sections.1`);
+      const pedConditionalFieldIndex =
+        requestDetailsSection.section_field.findIndex(
+          (field) =>
+            field.field_name === "Is this request charged to the project?"
+        );
+      setValue(
+        `sections.1.section_field.${pedConditionalFieldIndex}.field_response`,
+        false
+      );
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
     try {
       const fetchRequestDetails = async () => {
-        // Fetch response
-        // Request Details Section
-        const requestDetailsSectionResponse =
-          await getNonDuplictableSectionResponse(supabaseClient, {
+        const formSectionResponseList = await getNonDuplictableSectionResponse(
+          supabaseClient,
+          {
             requestId,
-            fieldIdList: form.form_section[0].section_field.map(
-              (field) => field.field_id
+            fieldIdList: form.form_section.flatMap((section) =>
+              section.section_field.map((field) => field.field_id)
             ),
-          });
+          }
+        );
 
-        let requestDetailsSectionFieldList =
-          form.form_section[0].section_field.map((field) => {
-            const response = requestDetailsSectionResponse.find(
+        let formSectionWithResponse = form.form_section.map((section) => {
+          let fieldWithResponseList = section.section_field.map((field) => {
+            const response = formSectionResponseList.find(
               (response) =>
                 response.request_response_field_id === field.field_id
             );
             let field_option = field.field_option ?? [];
 
-            if (field.field_name === "Requesting Project") {
-              field_option = projectOptions;
+            switch (field.field_name) {
+              case "Requesting Project":
+              case "Project":
+                field_option = projectOptions;
+                break;
+              case "Department":
+                field_option = departmentOptions;
+                break;
+              case "Type of Request":
+                field_option = expenseTypeOptions;
+                break;
+              case "Payment Option":
+                field_option = bankListOptions;
+                break;
+              case "Unit of Measure":
+                field_option = uomOptions;
+                break;
+              default:
+                break;
             }
-            if (field.field_name === "Department") {
-              field_option = departmentOptions;
-            }
+
             return {
               ...field,
               field_response: response
@@ -361,29 +626,38 @@ const EditPettyCashVoucherRequestPage = ({
             };
           });
 
-        const isForOfficialBusiness =
-          requestDetailsSectionFieldList[9].field_response;
+          if (section.section_order === 1) {
+            const isForOfficialBusiness = fieldWithResponseList.find(
+              (field) => field.field_name === "Is this for Official Business?"
+            )?.field_response;
 
-        if (!Boolean(isForOfficialBusiness)) {
-          requestDetailsSectionFieldList =
-            requestDetailsSectionFieldList.filter(
-              (field) => field.field_name !== "Approved Official Business"
-            );
+            if (!Boolean(isForOfficialBusiness)) {
+              fieldWithResponseList = fieldWithResponseList.filter(
+                (field) => field.field_name !== "Approved Official Business"
+              );
+            }
+          }
+
+          return {
+            ...section,
+            section_field: fieldWithResponseList,
+          };
+        });
+
+        const isChargedToProject =
+          formSectionWithResponse[1].section_field.find(
+            (field) =>
+              field.field_name === "Is this request charged to the project?"
+          )?.field_response;
+
+        if (!Boolean(isChargedToProject)) {
+          formSectionWithResponse = formSectionWithResponse.filter(
+            (section) => section.section_name !== "Charge to Project Details"
+          );
         }
 
-        // fetch additional signer
-        handleProjectOrDepartmentNameChange();
-
-        const finalInitialRequestDetails = [
-          {
-            ...form.form_section[0],
-            section_field: requestDetailsSectionFieldList,
-          },
-        ];
-
-        replaceSection(finalInitialRequestDetails);
-        setInitialRequestDetails({ sections: finalInitialRequestDetails });
-        setIsLoading(false);
+        replaceSection(formSectionWithResponse);
+        setInitialRequestDetails({ sections: formSectionWithResponse });
       };
       fetchRequestDetails();
     } catch (e) {
@@ -419,6 +693,13 @@ const EditPettyCashVoucherRequestPage = ({
                       onPettyCashVoucherBooleanChange:
                         handlePettyCashVoucherBooleanChange,
                       onEmployeeNumberChange: handleEmployeeNumberChange,
+                      onAccountingAuthorizationBooleanChange:
+                        handleAccountingAuthorizationBooleanChange,
+                      onChargeToProjectBooleanChange:
+                        handleChargeToProjectBooleanChange,
+                      onModeOfPaymentChange: handleModeOfPaymentChange,
+                      onSCICAuthorizationChange:
+                        handleSCICAuthorizationBooleanChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}

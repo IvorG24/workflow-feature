@@ -139,6 +139,10 @@ type RequestFormSectionProps = {
       value: string | null,
       sectionIndex: number
     ) => void;
+    onAccountingAuthorizationBooleanChange: (value: boolean) => void;
+    onSCICAuthorizationChange: (value: boolean) => void;
+    onChargeToProjectBooleanChange: (value: boolean) => void;
+    onModeOfPaymentChange: (value: string | null, sectionIndex: number) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;

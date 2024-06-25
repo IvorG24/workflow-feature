@@ -3219,7 +3219,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -5155,7 +5155,6 @@ RETURNS JSON as $$
         });
 
         const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_department_table WHERE team_department_is_disabled=FALSE`);
-
         const departmentOptions = departments.map((department, index) => {
           return {
             option_field_id: form.form_section[1].section_field[2].field_id,
@@ -5165,10 +5164,43 @@ RETURNS JSON as $$
           }
         });
 
+        const expenseTypes = plv8.execute(`SELECT * FROM expense_type_table WHERE expense_type_is_disabled = FALSE`);
+        const expenseTypeOptions = expenseTypes.map((expense, index) => {
+          return {
+            option_field_id: form.form_section[2].section_field[1].field_id,
+            option_id: expense.expense_type_id,
+            option_order: index,
+            option_value: expense.expense_type_label
+          }
+        });
+
+        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankListOptions = bankList.map((bank, index) => {
+          return {
+            option_field_id: form.form_section[3].section_field[1].field_id,
+            option_id: bank.bank_id,
+            option_order: index,
+            option_value: bank.bank_label
+          }
+        });
+
+        const uomList = plv8.execute(`SELECT * FROM item_unit_of_measurement_table WHERE item_unit_of_measurement_is_disabled= FALSE`);
+        const uomOptions = uomList.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[5].section_field[2].field_id,
+            option_id: uom.item_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.item_unit_of_measurement
+          }
+        });
+
         returnData = {
           form,
           projectOptions,
-          departmentOptions
+          departmentOptions,
+          expenseTypeOptions,
+          bankListOptions,
+          uomOptions
         }
         return;
       } else if (form.form_name === "Equipment Service Report") {
@@ -9542,7 +9574,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {

@@ -139,7 +139,7 @@ const Page = ({
           }
         />
       );
-    } else if (request.request_form.form_name === "Working Advance Voucher") {
+    } else if (request.request_form.form_name === "Petty Cash Voucher") {
       return <PettyCashVoucherRequestPage request={request} />;
     } else if (request.request_form.form_name === "Equipment Service Report") {
       return (
@@ -167,7 +167,7 @@ const Page = ({
         />
       );
     } else if (
-      request.request_form.form_name === "Working Advance Voucher Balance"
+      request.request_form.form_name === "Petty Cash Voucher Balance"
     ) {
       return <PettyCashVoucherBalanceRequestPage request={request} />;
     } else {

@@ -70,6 +70,9 @@ type Props = {
   connectedRequest?: ConnectedRequestFormProps;
   departmentOptions?: OptionTableRow[];
   allProjectOptions?: OptionTableRow[];
+  expenseTypeOptions?: OptionTableRow[];
+  bankListOptions?: OptionTableRow[];
+  uomOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -79,6 +82,9 @@ const Page = ({
   connectedRequest,
   departmentOptions = [],
   allProjectOptions = [],
+  expenseTypeOptions = [],
+  bankListOptions = [],
+  uomOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -165,6 +171,9 @@ const Page = ({
             form={form}
             projectOptions={projectOptions}
             departmentOptions={departmentOptions}
+            expenseTypeOptions={expenseTypeOptions}
+            bankListOptions={bankListOptions}
+            uomOptions={uomOptions}
           />
         );
       case "Equipment Service Report":
