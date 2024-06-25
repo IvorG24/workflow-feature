@@ -49,7 +49,6 @@ const CategoryLookup = ({ lookup }: Props) => {
         setCategoryLookupList(data);
         setCategoryLookupCount(Number(count ?? 0));
       } catch (e) {
-        console.log(e);
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",

@@ -1379,6 +1379,8 @@ export type EquipmentForm = {
 };
 
 export type EquipmentDescriptionType = EquipmentDescriptionTableRow & {
+  equipment_description_property_number_with_prefix: string;
+} & {
   equipment_description_brand: string;
   equipment_description_model: string;
 };
