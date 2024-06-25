@@ -960,6 +960,7 @@ export const createServiceScopeChoice = async (
   params: ServiceScopeChoiceTableInsert
 ) => {
   const { data, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_scope_choice_table")
     .insert(params)
     .select("*")

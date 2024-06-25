@@ -3091,6 +3091,7 @@ export const getServiceList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("service_schema")
     .from("service_table")
     .select("*, service_scope: service_scope_table(*)", {
       count: "exact",
@@ -3124,6 +3125,7 @@ export const checkServiceScope = async (
   const { serviceScope, scopeId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_scope_choice_table")
     .select("*", { count: "exact", head: true })
     .eq("service_scope_choice_name", serviceScope)
@@ -3149,6 +3151,7 @@ export const getServiceScopeChoiceList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("service_schema")
     .from("service_scope_choice_table")
     .select("*", {
       count: "exact",
@@ -3182,6 +3185,7 @@ export const checkServiceName = async (
   const { serviceName, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_table")
     .select("*", { count: "exact", head: true })
     .eq("service_name", serviceName)
@@ -3266,6 +3270,7 @@ export const getService = async (
   const { teamId, serviceName } = params;
 
   const { data, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_table")
     .select(
       "*, service_scope: service_scope_table(*, service_scope_choice: service_scope_choice_table(*), service_field: service_scope_field_id(*))"
@@ -5757,6 +5762,7 @@ export const getServiceCategoryOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("service_schema")
     .from("service_category_table")
     .select("service_category_id, service_category")
     .eq("service_category_team_id", teamId)
