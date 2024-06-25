@@ -35,11 +35,13 @@ DROP SCHEMA IF EXISTS public CASCADE;
 DROP SCHEMA IF EXISTS user_schema CASCADE;
 DROP SCHEMA IF EXISTS history_schema CASCADE;
 DROP SCHEMA IF EXISTS service_schema CASCADE;
+DROP SCHEMA IF EXISTS unit_of_measurement_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
 CREATE SCHEMA history_schema AUTHORIZATION postgres;
 CREATE SCHEMA service_schema AUTHORIZATION postgres;
+CREATE SCHEMA unit_of_measurement_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
 
@@ -789,7 +791,7 @@ CREATE TABLE equipment_general_name_table (
   equipment_general_name_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE equipment_unit_of_measurement_table (
+CREATE TABLE unit_of_measurement_schema.equipment_unit_of_measurement_table (
   equipment_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   equipment_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   equipment_unit_of_measurement VARCHAR(4000) NOT NULL,
@@ -809,7 +811,7 @@ CREATE TABLE equipment_part_table (
   equipment_part_general_name_id UUID REFERENCES equipment_general_name_table(equipment_general_name_id) ON DELETE CASCADE NOT NULL,
   equipment_part_brand_id UUID REFERENCES equipment_brand_table(equipment_brand_id) ON DELETE CASCADE NOT NULL,
   equipment_part_model_id UUID REFERENCES equipment_model_table(equipment_model_id) ON DELETE CASCADE NOT NULL,
-  equipment_part_unit_of_measurement_id UUID REFERENCES equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
+  equipment_part_unit_of_measurement_id UUID REFERENCES unit_of_measurement_schema.equipment_unit_of_measurement_table(equipment_unit_of_measurement_id) ON DELETE CASCADE NOT NULL,
   equipment_part_component_category_id UUID REFERENCES equipment_component_category_table(equipment_component_category_id) ON DELETE CASCADE NOT NULL,
   equipment_part_equipment_id UUID REFERENCES equipment_table(equipment_id) ON DELETE CASCADE NOT NULL
 );
@@ -877,7 +879,7 @@ CREATE TABLE other_expenses_schema.other_expenses_type_table(
   other_expenses_type_category_id UUID REFERENCES other_expenses_schema.other_expenses_category_table(other_expenses_category_id)
 );
 
-CREATE TABLE capacity_unit_of_measurement_table(
+CREATE TABLE unit_of_measurement_schema.capacity_unit_of_measurement_table(
   capacity_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   capacity_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   capacity_unit_of_measurement VARCHAR(4000) NOT NULL,
@@ -887,7 +889,7 @@ CREATE TABLE capacity_unit_of_measurement_table(
   capacity_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE general_unit_of_measurement_table (
+CREATE TABLE unit_of_measurement_schema.general_unit_of_measurement_table (
   general_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   general_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   general_unit_of_measurement VARCHAR(4000) NOT NULL,
@@ -897,7 +899,7 @@ CREATE TABLE general_unit_of_measurement_table (
   general_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE item_unit_of_measurement_table (
+CREATE TABLE unit_of_measurement_schema.item_unit_of_measurement_table (
   item_unit_of_measurement_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_unit_of_measurement_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_unit_of_measurement VARCHAR(4000) NOT NULL,
@@ -4401,7 +4403,7 @@ RETURNS JSON as $$
             SELECT 
                 general_unit_of_measurement_id,
                 general_unit_of_measurement
-            FROM general_unit_of_measurement_table
+            FROM unit_of_measurement_schema.general_unit_of_measurement_table
             WHERE 
               general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
               AND general_unit_of_measurement_is_disabled = false
@@ -4529,7 +4531,7 @@ RETURNS JSON as $$
             SELECT 
                 general_unit_of_measurement_id,
                 general_unit_of_measurement
-            FROM general_unit_of_measurement_table
+            FROM unit_of_measurement_schema.general_unit_of_measurement_table
             WHERE 
               general_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
               AND general_unit_of_measurement_is_disabled = false
@@ -4637,7 +4639,7 @@ RETURNS JSON as $$
             SELECT 
                 capacity_unit_of_measurement_id,
                 capacity_unit_of_measurement
-            FROM capacity_unit_of_measurement_table
+            FROM unit_of_measurement_schema.capacity_unit_of_measurement_table
             WHERE 
               capacity_unit_of_measurement_team_id = '${teamMember.team_member_team_id}'
               AND capacity_unit_of_measurement_is_disabled = false
@@ -5894,7 +5896,7 @@ RETURNS JSON AS $$
 
       const uomList = plv8.execute(`
         SELECT item_unit_of_measurement
-        FROM item_unit_of_measurement_table
+        FROM unit_of_measurement_schema.item_unit_of_measurement_table
         WHERE 
           item_unit_of_measurement_is_available=true
           AND item_unit_of_measurement_is_disabled=false
@@ -6038,7 +6040,7 @@ RETURNS JSON AS $$
       const uomList = plv8.execute(
         `
           SELECT equipment_unit_of_measurement
-          FROM equipment_unit_of_measurement_table
+          FROM unit_of_measurement_schema.equipment_unit_of_measurement_table
           WHERE
             equipment_unit_of_measurement_is_disabled = false
             AND equipment_unit_of_measurement_is_available = true
@@ -6897,7 +6899,7 @@ RETURNS JSON AS $$
         LEFT JOIN equipment_model_table 
           ON equipment_part_model_id = equipment_model_id
           AND equipment_model_is_disabled = false
-        LEFT JOIN equipment_unit_of_measurement_table 
+        LEFT JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table 
           ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
           AND equipment_unit_of_measurement_is_disabled = false
         LEFT JOIN equipment_component_category_table 
@@ -6931,7 +6933,7 @@ RETURNS JSON AS $$
         LEFT JOIN equipment_model_table 
           ON equipment_part_model_id = equipment_model_id
           AND equipment_model_is_disabled = false
-        LEFT JOIN equipment_unit_of_measurement_table 
+        LEFT JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table 
           ON equipment_part_unit_of_measurement_id = equipment_unit_of_measurement_id
           AND equipment_unit_of_measurement_is_disabled = false
         LEFT JOIN equipment_component_category_table 
@@ -7008,7 +7010,7 @@ RETURNS JSON AS $$
           INNER JOIN equipment_component_category_table ON equipment_component_category_id = equipment_part_component_category_id
           INNER JOIN equipment_brand_table ON equipment_brand_id = equipment_part_brand_id
           INNER JOIN equipment_model_table ON equipment_model_id = equipment_part_model_id
-          INNER JOIN equipment_unit_of_measurement_table ON equipment_unit_of_measurement_id = equipment_part_unit_of_measurement_id
+          INNER JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table ON equipment_unit_of_measurement_id = equipment_part_unit_of_measurement_id
           WHERE
             equipment_part_is_disabled = false
             AND equipment_part_is_available = true
@@ -8774,7 +8776,7 @@ RETURNS BOOLEAN AS $$
     const generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}'`);
     const brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}'`);
     const modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}'`);
-    const uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`);
+    const uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM unit_of_measurement_schema.equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}'`);
     const categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}'`);
 
     if(generalNameId.length === 0 || brandId.length === 0 || modelId.length === 0 || uomId.length === 0 || categoryId.length === 0) {
@@ -8822,7 +8824,7 @@ RETURNS VOID AS $$
     let generalNameId = plv8.execute(`SELECT equipment_general_name_id FROM equipment_general_name_table WHERE equipment_general_name = '${partName}' AND equipment_general_name_is_disabled = false`);
     let brandId = plv8.execute(`SELECT equipment_brand_id FROM equipment_brand_table WHERE equipment_brand = '${brand}' AND equipment_brand_is_disabled = false`);
     let modelId = plv8.execute(`SELECT equipment_model_id FROM equipment_model_table WHERE equipment_model = '${model}' AND equipment_model_is_disabled = false`);
-    let uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}' AND equipment_unit_of_measurement_is_disabled = false`);
+    let uomId = plv8.execute(`SELECT equipment_unit_of_measurement_id FROM unit_of_measurement_schema.equipment_unit_of_measurement_table WHERE equipment_unit_of_measurement = '${unitOfMeasure}' AND equipment_unit_of_measurement_is_disabled = false`);
     let categoryId = plv8.execute(`SELECT equipment_component_category_id FROM equipment_component_category_table WHERE equipment_component_category = '${category}' AND equipment_component_category_is_disabled = false`);
 
     if(generalNameId.length === 0){
@@ -8861,7 +8863,7 @@ RETURNS VOID AS $$
     if(uomId.length === 0){
       uomId = plv8.execute(
         `
-          INSERT INTO equipment_unit_of_measurement_table 
+          INSERT INTO unit_of_measurement_schema.equipment_unit_of_measurement_table 
           (equipment_unit_of_measurement, equipment_unit_of_measurement_team_id) 
           VALUES 
           ('${unitOfMeasure}', '${teamId}')
@@ -12140,6 +12142,59 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_item_unit_of_measurement(
+  input_data JSON
+)
+RETURNS TEXT AS $$
+let returnData = "";
+plv8.subtransaction(function() {
+  const {
+    generalName,
+    componentCategory,
+    brand,
+    model,
+    partNumber
+  } = input_data;
+
+  const uomData = plv8.execute(
+    `
+      SELECT
+        equipment_unit_of_measurement
+      FROM equipment_part_table AS ept
+      INNER JOIN equipment_general_name_table ON equipment_general_name_id = ept.equipment_part_general_name_id
+        AND equipment_general_name_is_disabled = false
+        AND equipment_general_name_is_available = true
+        AND equipment_general_name = '${generalName}'
+      INNER JOIN equipment_component_category_table ON equipment_component_category_id = ept.equipment_part_component_category_id
+        AND equipment_component_category_is_disabled = false
+        AND equipment_component_category_is_available = true
+        AND equipment_component_category = '${componentCategory}'
+      INNER JOIN equipment_brand_table ON equipment_brand_id = ept.equipment_part_brand_id
+        AND equipment_brand_is_disabled = false
+        AND equipment_brand_is_available = true
+        AND equipment_brand = '${brand}'
+      INNER JOIN equipment_model_table ON equipment_model_id = ept.equipment_part_model_id
+        AND equipment_model_is_disabled = false
+        AND equipment_model_is_available = true
+        AND equipment_model = '${model}'
+      INNER JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table ON equipment_unit_of_measurement_id = ept.equipment_part_unit_of_measurement_id
+        AND equipment_unit_of_measurement_is_disabled = false
+        AND equipment_unit_of_measurement_is_available = true
+      WHERE
+        equipment_part_is_disabled = false
+        AND equipment_part_is_available = true
+        AND equipment_part_number = '${partNumber}'
+      LIMIT 1
+    `
+  );
+
+  if(uomData.length){
+    returnData = uomData[0].equipment_unit_of_measurement
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES
@@ -12175,7 +12230,7 @@ ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.signature_history_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE unit_of_measurement_schema.general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE service_schema.service_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_signer_table ENABLE ROW LEVEL SECURITY;
@@ -12188,7 +12243,7 @@ ALTER TABLE memo_agreement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_valid_id_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_schema.other_expenses_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_schema.other_expenses_type_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE unit_of_measurement_schema.item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_level_three_description_table  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
@@ -12207,10 +12262,10 @@ ALTER TABLE equipment_model_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_component_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_description_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE unit_of_measurement_schema.equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_general_name_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_part_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE unit_of_measurement_schema.capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
@@ -12387,10 +12442,10 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.u
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.signature_history_table;
 DROP POLICY IF EXISTS "Enable read access for all users" ON history_schema.signature_history_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON general_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON unit_of_measurement_schema.general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_category_table;
@@ -12438,10 +12493,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_schema.other
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON item_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON unit_of_measurement_schema.item_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_level_three_description_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_level_three_description_table;
@@ -12513,10 +12568,10 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_descriptio
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_description_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_description_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_general_name_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_general_name_table;
@@ -12528,10 +12583,10 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_part_table
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_part_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_part_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON capacity_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON capacity_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users" ON address_table;
@@ -14064,7 +14119,7 @@ TO authenticated
 USING (true);
 
 --- general_unit_of_measurement_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."general_unit_of_measurement_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14078,11 +14133,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."general_unit_of_measurement_table"
+CREATE POLICY "Allow READ access for anon users" ON "unit_of_measurement_schema"."general_unit_of_measurement_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."general_unit_of_measurement_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14096,7 +14151,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."general_unit_of_measurement_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."general_unit_of_measurement_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14393,7 +14448,7 @@ USING (
 );
 
 --- item_unit_of_measurement_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_unit_of_measurement_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."item_unit_of_measurement_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14407,11 +14462,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_unit_of_measurement_table"
+CREATE POLICY "Allow READ access for anon users" ON "unit_of_measurement_schema"."item_unit_of_measurement_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_unit_of_measurement_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."item_unit_of_measurement_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14425,7 +14480,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_unit_of_measurement_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."item_unit_of_measurement_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14908,7 +14963,7 @@ USING (
 );
 
 --- EQUIPMENT_UNIT_OF_MEASUREMENT_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_unit_of_measurement_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."equipment_unit_of_measurement_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14921,11 +14976,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."equipment_unit_of_measurement_table"
+CREATE POLICY "Allow READ access for anon users" ON "unit_of_measurement_schema"."equipment_unit_of_measurement_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_unit_of_measurement_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."equipment_unit_of_measurement_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14938,7 +14993,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."equipment_unit_of_measurement_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."equipment_unit_of_measurement_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15046,7 +15101,7 @@ USING (
 );
 
 --- CAPACITY_UNIT_OF_MEASUREMENT_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."capacity_unit_of_measurement_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."capacity_unit_of_measurement_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15059,11 +15114,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."capacity_unit_of_measurement_table"
+CREATE POLICY "Allow READ access for anon users" ON "unit_of_measurement_schema"."capacity_unit_of_measurement_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."capacity_unit_of_measurement_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."capacity_unit_of_measurement_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15076,7 +15131,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."capacity_unit_of_measurement_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."capacity_unit_of_measurement_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15394,5 +15449,10 @@ GRANT ALL ON ALL TABLES IN SCHEMA service_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA service_schema TO POSTGRES;
 GRANT ALL ON SCHEMA service_schema TO postgres;
 GRANT ALL ON SCHEMA service_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA unit_of_measurement_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA unit_of_measurement_schema TO POSTGRES;
+GRANT ALL ON SCHEMA unit_of_measurement_schema TO postgres;
+GRANT ALL ON SCHEMA unit_of_measurement_schema TO public;
 
 ----- END: PRIVILEGES

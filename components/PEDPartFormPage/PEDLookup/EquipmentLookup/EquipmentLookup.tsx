@@ -1,4 +1,4 @@
-import { getEquipmentLookupList } from "@/backend/api/get";
+import { getLookupList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { EquipmentLookupChoices, LookupTable } from "@/utils/types";
@@ -38,7 +38,7 @@ const EquipmentLookup = ({ lookup }: Props) => {
       try {
         if (!team.team_id) return;
         setIsLoading(true);
-        const { data, count } = await getEquipmentLookupList(supabaseClient, {
+        const { data, count } = await getLookupList(supabaseClient, {
           lookup: lookup.table,
           teamId: team.team_id,
           search: "",
