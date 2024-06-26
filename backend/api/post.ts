@@ -406,11 +406,13 @@ export const createItemDescriptionField = async (
     };
   });
   const { data: item, error: itemError } = await supabaseClient
+    .schema("item_schema")
     .from("item_description_field_table")
     .insert(itemDescriptionFieldInput)
     .select("*");
   if (itemError) throw itemError;
   const { data: uom, error: uomError } = await supabaseClient
+    .schema("item_schema")
     .from("item_description_field_uom_table")
     .insert(itemDescriptionFieldUomInput)
     .select("*");
@@ -1466,6 +1468,7 @@ export const createItemDivision = async (
 ) => {
   const { divisionId, itemId } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_division_table")
     .insert({ item_division_value: divisionId, item_division_item_id: itemId });
   if (error) throw error;

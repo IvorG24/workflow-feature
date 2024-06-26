@@ -533,7 +533,7 @@ CREATE TABLE history_schema.signature_history_table(
   signature_history_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
-CREATE TABLE item_category_table (
+CREATE TABLE item_schema.item_category_table (
   item_category_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_category_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_category VARCHAR(4000) NOT NULL,
@@ -543,7 +543,7 @@ CREATE TABLE item_category_table (
   item_category_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
 );
 
-CREATE TABLE item_table (
+CREATE TABLE item_schema.item_table (
   item_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_general_name VARCHAR(4000) NOT NULL,
@@ -555,17 +555,17 @@ CREATE TABLE item_table (
   item_is_it_asset_item BOOLEAN DEFAULT FALSE NOT NULL,
 
   item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
-  item_category_id UUID REFERENCES item_category_table(item_category_id)
+  item_category_id UUID REFERENCES item_schema.item_category_table(item_category_id)
 );
 
-CREATE TABLE item_division_table (
+CREATE TABLE item_schema.item_division_table (
   item_division_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_division_value VARCHAR(4000) NOT NULL,
 
-  item_division_item_id UUID REFERENCES item_table(item_id) NOT NULL
+  item_division_item_id UUID REFERENCES item_schema.item_table(item_id) NOT NULL
 );
 
-CREATE TABLE item_description_table (
+CREATE TABLE item_schema.item_description_table (
   item_description_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_description_label VARCHAR(4000) NOT NULL,
@@ -575,32 +575,32 @@ CREATE TABLE item_description_table (
   item_description_order INT NOT NULL,
 
   item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
-  item_description_item_id UUID REFERENCES item_table(item_id) ON DELETE CASCADE NOT NULL
+  item_description_item_id UUID REFERENCES item_schema.item_table(item_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE item_description_field_table (
+CREATE TABLE item_schema.item_description_field_table (
   item_description_field_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_description_field_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_description_field_value VARCHAR(4000) NOT NULL,
   item_description_field_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_description_field_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  item_description_field_item_description_id UUID REFERENCES item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
+  item_description_field_item_description_id UUID REFERENCES item_schema.item_description_table(item_description_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE item_description_field_uom_table (
+CREATE TABLE item_schema.item_description_field_uom_table (
   item_description_field_uom_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   item_description_field_uom VARCHAR(4000) NOT NULL,
 
-  item_description_field_uom_item_description_field_id UUID REFERENCES item_description_field_table(item_description_field_id) ON DELETE CASCADE NOT NULL
+  item_description_field_uom_item_description_field_id UUID REFERENCES item_schema.item_description_field_table(item_description_field_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE item_level_three_description_table (
+CREATE TABLE item_schema.item_level_three_description_table (
   item_level_three_description_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   item_level_three_description_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   item_level_three_description VARCHAR(4000) NOT NULL,
 
-  item_level_three_description_item_id UUID REFERENCES item_table(item_id)
+  item_level_three_description_item_id UUID REFERENCES item_schema.item_table(item_id)
 );
 
 CREATE TABLE jira_project_table (
@@ -1543,7 +1543,7 @@ RETURNS JSON AS $$
     
     const item_result = plv8.execute(
       `
-        INSERT INTO item_table 
+        INSERT INTO item_schema.item_table 
         (
           item_general_name,
           item_is_available,
@@ -1573,9 +1573,9 @@ RETURNS JSON AS $$
     }).join(",");
     let itemDivisionDescription;
     if (item_level_three_description) {
-      itemDivisionDescription = plv8.execute(`INSERT INTO item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_result.item_id}', '${item_level_three_description}') RETURNING *`)[0].item_level_three_description;
+      itemDivisionDescription = plv8.execute(`INSERT INTO item_schema.item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_result.item_id}', '${item_level_three_description}') RETURNING *`)[0].item_level_three_description;
     }
-    const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
+    const item_division_list_result = plv8.execute(`INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
     const itemDescriptionInput = [];
     const fieldInput= [];
@@ -1615,7 +1615,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
     
-    const item_description = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+    const item_description = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
 
     item_data = {
       ...item_result, 
@@ -1656,7 +1656,7 @@ RETURNS JSON AS $$
     
     const item_result = plv8.execute(
       `
-        UPDATE item_table SET 
+        UPDATE item_schema.item_table SET 
           item_general_name = '${item_general_name}',
           item_is_available = '${item_is_available}',
           item_unit = '${item_unit}',
@@ -1713,7 +1713,7 @@ RETURNS JSON AS $$
     toUpdate.forEach(description => {
       const updatedDescription = plv8.execute(
         `
-          UPDATE item_description_table SET 
+          UPDATE item_schema.item_description_table SET 
             item_description_is_with_uom = '${description.item_description_is_with_uom}',
             item_description_label = '${description.item_description_label}',
             item_description_order = ${description.item_description_order}
@@ -1736,7 +1736,7 @@ RETURNS JSON AS $$
     toRemove.forEach(description => {
       plv8.execute(
         `
-          UPDATE item_description_table SET 
+          UPDATE item_schema.item_description_table SET 
             item_description_is_disabled = true
           WHERE item_description_id = '${description.descriptionId}'
         `
@@ -1744,7 +1744,7 @@ RETURNS JSON AS $$
     });
     plv8.execute(
       `
-        DELETE FROM item_level_three_description_table
+        DELETE FROM item_schema.item_level_three_description_table
         WHERE item_level_three_description_item_id = '${item_id}'
       `
     );
@@ -1754,19 +1754,19 @@ RETURNS JSON AS $$
     if(fieldValues.length && itemDescriptionValues.length){
       plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
 
-      addedDescription = plv8.execute(`INSERT INTO item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+      addedDescription = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
     }
 
-    plv8.execute(`DELETE FROM item_division_table WHERE item_division_item_id='${item_id}'`);
+    plv8.execute(`DELETE FROM item_schema.item_division_table WHERE item_division_item_id='${item_id}'`);
     const itemDivisionInput = item_division_id_list.map(division => {
       return `(${division}, '${item_result.item_id}')`;
     }).join(",");
     
-    const item_division_list_result = plv8.execute(`INSERT INTO item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
+    const item_division_list_result = plv8.execute(`INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
     let itemLevelThreeDescription = "";
     if(item_level_three_description){
-      itemLevelThreeDescription = plv8.execute(`INSERT INTO item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_id}', '${item_level_three_description}') RETURNING *`)[0].item_level_three_description;
+      itemLevelThreeDescription = plv8.execute(`INSERT INTO item_schema.item_level_three_description_table (item_level_three_description_item_id, item_level_three_description) VALUES ('${item_id}', '${item_level_three_description}') RETURNING *`)[0].item_level_three_description;
     }
 
     item_data = {
@@ -1936,7 +1936,7 @@ RETURNS Text as $$
   plv8.subtransaction(function(){
 
 
-    const item_count = plv8.execute(`SELECT COUNT(*) FROM item_table WHERE item_team_id='${team_id}' AND item_is_available='true' AND item_is_disabled='false'`)[0];
+    const item_count = plv8.execute(`SELECT COUNT(*) FROM item_schema.item_table WHERE item_team_id='${team_id}' AND item_is_available='true' AND item_is_disabled='false'`)[0];
 
     const signer_count = plv8.execute(`SELECT COUNT(*) FROM signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
 
@@ -3110,18 +3110,18 @@ RETURNS VOID as $$
 
     plv8.execute(`UPDATE team_project_table SET team_project_is_disabled=TRUE WHERE team_project_team_id='${team_id}'`);
 
-    plv8.execute(`UPDATE item_table SET item_is_disabled=TRUE, item_is_available=FALSE WHERE item_team_id='${team_id}'`);
+    plv8.execute(`UPDATE item_schema.item_table SET item_is_disabled=TRUE, item_is_available=FALSE WHERE item_team_id='${team_id}'`);
 
-    plv8.execute(`UPDATE item_description_table dt
+    plv8.execute(`UPDATE item_schema.item_description_table dt
       SET item_description_is_disabled=TRUE, item_description_is_available=FALSE
-      FROM item_table it
+      FROM item_schema.item_table it
       WHERE it.item_team_id='${team_id}'
       AND dt.item_description_item_id = it.item_id `);
 
-    plv8.execute(`UPDATE item_description_field_table AS idf
+    plv8.execute(`UPDATE item_schema.item_description_field_table AS idf
       SET item_description_field_is_disabled=TRUE, item_description_field_is_available=FALSE
-      FROM item_description_table AS dt
-      JOIN item_table AS it ON it.item_id = dt.item_description_item_id
+      FROM item_schema.item_description_table AS dt
+      JOIN item_schema.item_table AS it ON it.item_id = dt.item_description_item_id
       WHERE dt.item_description_id = idf.item_description_field_item_description_id
       AND it.item_team_id = '${team_id}'
       AND dt.item_description_item_id = it.item_id`);
@@ -3605,7 +3605,7 @@ RETURNS JSON AS $$
 
     const ssotData = plv8.execute(`SELECT get_ssot('{ "activeTeam": "${teamId}", "pageNumber": 1, "rowLimit": 10, "search": "", "itemFilter": [], "itemFilterCount": 0, "supplierList": [] }');`)[0].get_ssot;
 
-    const itemList = plv8.execute(`SELECT * FROM item_table WHERE item_team_id='${teamId}' AND item_is_disabled=false AND item_is_available=true ORDER BY item_general_name ASC;`);
+    const itemList = plv8.execute(`SELECT * FROM item_schema.item_table WHERE item_team_id='${teamId}' AND item_is_disabled=false AND item_is_available=true ORDER BY item_general_name ASC;`);
 
     const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC;`);
     
@@ -5620,7 +5620,7 @@ RETURNS JSON as $$
           const order = plv8.execute(
             `
               SELECT item_description_order
-              FROM item_description_table
+              FROM item_schema.item_description_table
               WHERE item_description_field_id = '${field.field_id}'
             `
           );
@@ -5821,7 +5821,7 @@ RETURNS JSON AS $$
 
     if(category === "Request Custom CSI"){
       const itemList = plv8.execute(`
-        SELECT * FROM item_table 
+        SELECT * FROM item_schema.item_table 
         WHERE item_team_id='${teamId}'
         AND item_is_disabled = false
         AND item_is_available = true
@@ -5847,7 +5847,7 @@ RETURNS JSON AS $$
 
     } else if (category === "Request Item CSI"){
       const itemList = plv8.execute(`
-        SELECT * FROM item_table 
+        SELECT * FROM item_schema.item_table 
         WHERE item_team_id='${teamId}'
         AND item_is_disabled = false
         AND item_is_available = true
@@ -5886,7 +5886,7 @@ RETURNS JSON AS $$
 
     } else if (category === "Request Item Option"){
       const itemList = plv8.execute(`
-        SELECT * FROM item_table 
+        SELECT * FROM item_schema.item_table 
         WHERE item_team_id='${teamId}'
         AND item_is_disabled = false
         AND item_is_available = true
@@ -6270,8 +6270,8 @@ RETURNS JSON as $$
           let fieldOptions = field.ticket_field_option
           if(ticket.ticket_category === "Request Item Option" && sectionIdx === 0 && fieldIdx === 1){
             const itemName = JSON.parse(sectionWithDuplicateList[0].ticket_section_fields[0].ticket_field_response[0]?.ticket_response_value)
-            const item = plv8.execute(`SELECT * FROM item_table WHERE item_general_name = '${itemName}';`)[0];
-            const itemDescriptionList = plv8.execute(`SELECT item_description_label FROM item_description_table WHERE item_description_item_id = '${item.item_id}';`);
+            const item = plv8.execute(`SELECT * FROM item_schema.item_table WHERE item_general_name = '${itemName}';`)[0];
+            const itemDescriptionList = plv8.execute(`SELECT item_description_label FROM item_schema.item_description_table WHERE item_description_item_id = '${item.item_id}';`);
             fieldOptions = itemDescriptionList.map((description)=>description.item_description_label)
           }
           
@@ -8164,7 +8164,7 @@ RETURNS JSON AS $$
 
         const item = plv8.execute(`
           SELECT *
-          FROM item_table
+          FROM item_schema.item_table
           WHERE 
             item_team_id = '${teamId}'
             AND item_general_name = '${itemName}'
@@ -8174,13 +8174,13 @@ RETURNS JSON AS $$
 
         if(!item) return null;
 
-        const divisionList = plv8.execute(`SELECT * FROM item_division_table WHERE item_division_item_id = '${item.item_id}'`);
+        const divisionList = plv8.execute(`SELECT * FROM item_schema.item_division_table WHERE item_division_item_id = '${item.item_id}'`);
 
         itemDivisionIdList.push(divisionList.map(division => division.item_division_value));
 
         const itemDescriptionList = plv8.execute(`
           SELECT * 
-          FROM item_description_table
+          FROM item_schema.item_description_table
           WHERE 
             item_description_item_id = '${item.item_id}'
             AND item_description_is_disabled = false
@@ -8192,8 +8192,8 @@ RETURNS JSON AS $$
 
             const itemDescriptionFieldList = plv8.execute(`
               SELECT * 
-              FROM item_description_field_table
-              LEFT JOIN item_description_field_uom_table ON item_description_field_id = item_description_field_uom_item_description_field_id
+              FROM item_schema.item_description_field_table
+              LEFT JOIN item_schema.item_description_field_uom_table ON item_description_field_id = item_description_field_uom_item_description_field_id
               WHERE 
                 item_description_field_item_description_id = '${description.item_description_id}'
                 AND item_description_field_is_disabled = false
@@ -8257,7 +8257,7 @@ RETURNS JSON AS $$
                 user_first_name,
                 user_last_name,
                 user_avatar
-              FROM item_category_table
+              FROM item_schema.item_category_table
               INNER JOIN signer_table ON signer_id = item_category_signer_id
               INNER JOIN team_member_table ON team_member_id = signer_team_member_id
               INNER JOIN user_schema. ON user_id = team_member_user_id
@@ -8627,20 +8627,20 @@ RETURNS JSON AS $$
 
     const item = plv8.execute(`
       SELECT *
-      FROM item_table
+      FROM item_schema.item_table
       WHERE item_general_name = '${itemName}'
     `)[0];
   
     const itemDivision = plv8.execute(`
       SELECT *
-      FROM item_division_table
+      FROM item_schema.item_division_table
       WHERE item_division_item_id='${item.item_id}'
       AND item_division_value='${csi_code_division_id}';
     `);
 
     if(itemDivision.lenght<=0){
      plv8.execute(`
-      INSERT INTO item_division_table (item_division_value, item_division_item_id) 
+      INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) 
       VALUES ('${csi_code_division_id}','${item.item_id}') 
       RETURNING *;
      `)[0];
@@ -9550,8 +9550,8 @@ RETURNS JSON as $$
             user_first_name,
             user_last_name,
             user_avatar
-          FROM item_table AS it
-          INNER JOIN item_category_table AS ict ON it.item_category_id = ict.item_category_id
+          FROM item_schema.item_table AS it
+          INNER JOIN item_schema.item_category_table AS ict ON it.item_category_id = ict.item_category_id
           INNER JOIN signer_table ON signer_id = item_category_signer_id
           INNER JOIN team_member_table ON team_member_id = signer_team_member_id
           INNER JOIN user_schema.user_table ON user_id = team_member_user_id
@@ -9589,8 +9589,8 @@ RETURNS JSON as $$
                 SELECT
                   csi_code_id,
                   csi_code_level_three_description
-                FROM item_table
-                LEFT JOIN item_division_table ON item_division_item_id = item_id
+                FROM item_schema.item_table
+                LEFT JOIN item_schema.item_division_table ON item_division_item_id = item_id
                 LEFT JOIN csi_code_table ON csi_code_division_id = item_division_value
                 WHERE
                   item_general_name = '${section.itemName}'
@@ -9614,11 +9614,11 @@ RETURNS JSON as $$
                   item_description_field_value,
                   item_description_field_uom,
                   item_description_is_with_uom
-                FROM item_table
-                INNER JOIN item_description_table ON item_description_item_id = item_id
+                FROM item_schema.item_table
+                INNER JOIN item_schema.item_description_table ON item_description_item_id = item_id
                 INNER JOIN field_table ON field_id = item_description_field_id
-                INNER JOIN item_description_field_table AS idft ON idft.item_description_field_item_description_id = item_description_id
-                LEFT JOIN item_description_field_uom_table ON item_description_field_uom_item_description_field_id = idft.item_description_field_id
+                INNER JOIN item_schema.item_description_field_table AS idft ON idft.item_description_field_item_description_id = item_description_id
+                LEFT JOIN item_schema.item_description_field_uom_table ON item_description_field_uom_item_description_field_id = idft.item_description_field_id
                 WHERE
                   item_general_name = '${section.itemName}'
                   AND field_id = '${field}'
@@ -9926,7 +9926,7 @@ RETURNS VOID AS $$
 
     plv8.execute(
       `
-        INSERT INTO item_category_table 
+        INSERT INTO item_schema.item_category_table 
         (item_category, item_category_signer_id)
         VALUES
         ('${category}', '${signerData.signer_id}')
@@ -9972,7 +9972,7 @@ RETURNS VOID AS $$
       )[0]; 
     }
 
-    plv8.execute(`UPDATE item_category_table SET item_category = '${category}', item_category_signer_id = '${signerData.signer_id}' WHERE item_category_id = '${categoryId}'`);
+    plv8.execute(`UPDATE item_schema.item_category_table SET item_category = '${category}', item_category_signer_id = '${signerData.signer_id}' WHERE item_category_id = '${categoryId}'`);
  });
 $$ LANGUAGE plv8;
 
@@ -10761,8 +10761,8 @@ plv8.subtransaction(function() {
         user_first_name,
         user_last_name,
         user_avatar
-      FROM item_table AS it
-      LEFT JOIN item_category_table AS ict ON ict.item_category_id = it.item_category_id
+      FROM item_schema.item_table AS it
+      LEFT JOIN item_schema.item_category_table AS ict ON ict.item_category_id = it.item_category_id
         AND item_category_is_disabled = false 
       LEFT JOIN signer_table ON signer_id = ict.item_category_signer_id
       LEFT JOIN team_member_table ON team_member_id = signer_team_member_id
@@ -10778,9 +10778,9 @@ plv8.subtransaction(function() {
   const itemDescriptionData = plv8.execute(
     `
       SELECT 
-        item_description_table.*,
+        item_schema.item_description_table.*,
         field_table.*
-      FROM item_description_table
+      FROM item_schema.item_description_table
       INNER JOIN field_table ON field_id = item_description_field_id
       WHERE
         item_description_item_id = '${itemData.item_id}'
@@ -10793,7 +10793,7 @@ plv8.subtransaction(function() {
     const itemDescriptionFieldData = plv8.execute(
       `
         SELECT *
-        FROM item_description_field_table
+        FROM item_schema.item_description_field_table
         WHERE
           item_description_field_item_description_id = '${itemDescription.item_description_id}'
           AND item_description_field_is_disabled = false
@@ -10805,7 +10805,7 @@ plv8.subtransaction(function() {
       const itemDescriptionFieldUomData = plv8.execute(
         `
           SELECT *
-          FROM item_description_field_uom_table
+          FROM item_schema.item_description_field_uom_table
           WHERE
             item_description_field_uom_item_description_field_id = '${itemDescriptionField.item_description_field_id}'
           LIMIT 1
@@ -11572,7 +11572,7 @@ plv8.subtransaction(function() {
         user_first_name,
         user_last_name,
         user_avatar
-      FROM item_category_table
+      FROM item_schema.item_category_table
       INNER JOIN signer_table ON signer_id = item_category_signer_id
       INNER JOIN team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
@@ -11589,7 +11589,7 @@ plv8.subtransaction(function() {
     `
       SELECT
         COUNT(item_category_id)
-      FROM item_category_table
+      FROM item_schema.item_category_table
       INNER JOIN signer_table ON signer_id = item_category_signer_id
       WHERE
         item_category_is_disabled = false
@@ -12195,6 +12195,43 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_item_category_option(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    formId
+  } = input_data;
+
+  returnData = plv8.execute(
+    `
+      SELECT
+        item_category_id,
+        item_category,
+        signer_form_id
+      FROM item_schema.item_category_table
+      INNER JOIN signer_table ON signer_id = item_category_signer_id
+      WHERE
+        item_category_is_available = true
+        AND item_category_is_disabled = false
+        AND signer_form_id = '${formId}'
+      ORDER BY item_category
+    `
+  ).map(itemCategory => {
+    return {
+      item_category_id: itemCategory.item_category_id,
+      item_category: itemCategory.item_category,
+      item_category_signer: {
+        signer_form_id: itemCategory.signer_form_id
+      }
+    }
+  })
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES
@@ -12209,9 +12246,9 @@ ALTER TABLE team_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE field_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_description_field_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_description_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_schema.item_description_field_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_schema.item_description_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_schema.item_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE option_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_signer_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE section_table ENABLE ROW LEVEL SECURITY;
@@ -12225,8 +12262,8 @@ ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_division_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_schema.item_division_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_schema.item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_employee_number_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.signature_history_table ENABLE ROW LEVEL SECURITY;
@@ -12244,7 +12281,7 @@ ALTER TABLE user_schema.user_valid_id_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_schema.other_expenses_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_schema.other_expenses_type_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE unit_of_measurement_schema.item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_level_three_description_table  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_schema.item_level_three_description_table  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
@@ -12297,20 +12334,20 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON form_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_field_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON option_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON option_table;
@@ -12422,15 +12459,15 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.servi
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_division_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_division_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_division_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_division_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_description_field_uom_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_description_field_uom_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_field_uom_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.user_employee_number_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_employee_number_table;
@@ -12498,10 +12535,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON unit_of_measurement_schema.
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_level_three_description_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_level_three_description_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_level_three_description_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_level_three_description_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_level_three_description_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
 
 DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_section_table;
 DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_subsection_table;
@@ -12723,14 +12760,14 @@ USING (
 );
 
 --- ITEM_DESCRIPTION_FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 
-    FROM item_description_table as id
-    JOIN item_table as it ON it.item_id = id.item_description_item_id
+    FROM item_schema.item_description_table as id
+    JOIN item_schema.item_table as it ON it.item_id = id.item_description_item_id
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
@@ -12739,18 +12776,18 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_field_table"
+CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_description_field_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM item_description_table as id
-    JOIN item_table as it ON it.item_id = id.item_description_item_id
+    FROM item_schema.item_description_table as id
+    JOIN item_schema.item_table as it ON it.item_id = id.item_description_item_id
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
@@ -12759,14 +12796,14 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM item_description_table as id
-    JOIN item_table as it ON it.item_id = id.item_description_item_id
+    FROM item_schema.item_description_table as id
+    JOIN item_schema.item_table as it ON it.item_id = id.item_description_item_id
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
@@ -12776,13 +12813,13 @@ USING (
 );
 
 --- ITEM_DESCRIPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
@@ -12791,17 +12828,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_table"
+CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_description_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
@@ -12810,13 +12847,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
@@ -12826,7 +12863,7 @@ USING (
 );
 
 --- ITEM_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -12839,11 +12876,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_table"
+CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -12856,7 +12893,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -13958,13 +13995,13 @@ USING (
 );
 
 --- ITEM_DIVISION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_division_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
@@ -13973,17 +14010,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_division_table"
+CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_division_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_division_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
@@ -13992,13 +14029,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_division_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_division_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
@@ -14008,15 +14045,15 @@ USING (
 );
 
 --- item_description_field_uom_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_uom_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_uom_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 
-    FROM item_description_field_table AS idf
-    JOIN item_description_table ON item_description_id = item_description_field_item_description_id
-    JOIN item_table ON item_id = item_description_item_id
+    FROM item_schema.item_description_field_table AS idf
+    JOIN item_schema.item_description_table ON item_description_id = item_description_field_item_description_id
+    JOIN item_schema.item_table ON item_id = item_description_item_id
     JOIN team_table ON team_id = item_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
@@ -14025,19 +14062,19 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_description_field_uom_table"
+CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_description_field_uom_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_uom_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_uom_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM item_description_field_table AS idf
-    JOIN item_description_table ON item_description_id = item_description_field_item_description_id
-    JOIN item_table ON item_id = item_description_item_id
+    FROM item_schema.item_description_field_table AS idf
+    JOIN item_schema.item_description_table ON item_description_id = item_description_field_item_description_id
+    JOIN item_schema.item_table ON item_id = item_description_item_id
     JOIN team_table ON team_id = item_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
@@ -14046,15 +14083,15 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_description_field_uom_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_uom_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM item_description_field_table AS idf
-    JOIN item_description_table ON item_description_id = item_description_field_item_description_id
-    JOIN item_table ON item_id = item_description_item_id
+    FROM item_schema.item_description_field_table AS idf
+    JOIN item_schema.item_description_table ON item_description_id = item_description_field_item_description_id
+    JOIN item_schema.item_table ON item_id = item_description_item_id
     JOIN team_table ON team_id = item_team_id
     JOIN team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
@@ -14495,13 +14532,13 @@ USING (
 );
 
 --- ITEM_LEVEL_THREE_DESCRIPTION
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_level_three_description_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
@@ -14510,17 +14547,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."item_level_three_description_table"
+CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_level_three_description_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_level_three_description_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
@@ -14529,13 +14566,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."item_level_three_description_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_level_three_description_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM item_table as it
+    FROM item_schema.item_table as it
     JOIN team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id

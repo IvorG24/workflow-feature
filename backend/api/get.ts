@@ -490,6 +490,7 @@ export const getItemList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select(
       `
@@ -577,7 +578,8 @@ export const getItemList = async (
       return {
         ...data,
         item_division_id_list: data.item_division_table.map(
-          (division) => division.item_division_value
+          (division: { item_division_value: string }) =>
+            division.item_division_value
         ),
         item_level_three_description:
           data.item_level_three_description.length !== 0
@@ -596,6 +598,7 @@ export const getAllItems = async (
 ) => {
   const { teamId, search } = params;
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_general_name")
     .eq("item_team_id", teamId)
@@ -623,6 +626,7 @@ export const getItemDescriptionList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_description_table")
     .select("*", {
       count: "exact",
@@ -663,6 +667,7 @@ export const getItemDescriptionFieldList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_description_field_table")
     .select(
       "*, item_description_field_uom: item_description_field_uom_table(item_description_field_uom)",
@@ -750,6 +755,7 @@ export const checkItemName = async (
   const { itemName, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("*", { count: "exact", head: true })
     .eq("item_general_name", itemName)
@@ -772,6 +778,7 @@ export const checkItemDescription = async (
   const { itemDescription, itemDescriptionUom, descriptionId } = params;
 
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_description_field_table")
     .select(
       `*${
@@ -4741,6 +4748,7 @@ export const checkCSICodeItemExists = async (
 ) => {
   const { divisionId, itemId } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_division_table")
     .select("*")
     .eq("item_division_value", divisionId)
@@ -5185,6 +5193,7 @@ export const getItemOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_id, item_general_name")
     .eq("item_team_id", teamId)
@@ -5253,6 +5262,7 @@ export const getPedItemOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_id, item_general_name")
     .eq("item_team_id", teamId)
@@ -5895,6 +5905,7 @@ export const getPedItemGeneralNameOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_id, item_general_name")
     .eq("item_team_id", teamId)
@@ -5916,19 +5927,15 @@ export const getItemCategoryOption = async (
     formId: string;
   }
 ) => {
-  const { formId } = params;
   const { data, error } = await supabaseClient
-    .from("item_category_table")
-    .select(
-      "item_category_id, item_category, item_category_signer: item_category_signer_id!inner(signer_form_id)"
-    )
-    .eq("item_category_is_available", true)
-    .eq("item_category_is_disabled", false)
-    .eq("item_category_signer.signer_form_id", formId)
-    .order("item_category", { ascending: true });
-
+    .rpc("get_item_category_option", { input_data: params })
+    .select("*");
   if (error) throw error;
-  return data;
+
+  return data as unknown as {
+    item_category: string;
+    item_category_id: string;
+  }[];
 };
 
 // Fetch all item form approver
@@ -5954,6 +5961,7 @@ export const checkItemCategory = async (
   const { category } = params;
 
   const { count, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_category_table")
     .select("*", { count: "exact", head: true })
     .eq("item_category", category)
@@ -6069,6 +6077,7 @@ export const getITAssetItemOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_id, item_general_name")
     .eq("item_team_id", teamId)
