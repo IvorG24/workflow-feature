@@ -1,6 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  getExistingBOQRequest,
+  getExistingConnectedRequest,
   getJiraAutomationDataByProjectId,
   getRequestComment,
   getSectionInRequestPage,
@@ -582,7 +582,7 @@ const LiquidationReimbursementRequestPage = ({
   useEffect(() => {
     const fetchBOQRequest = async () => {
       // check if boq request exists
-      const boqRequest = await getExistingBOQRequest(
+      const boqRequest = await getExistingConnectedRequest(
         supabaseClient,
         request.request_id
       );

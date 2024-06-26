@@ -258,7 +258,8 @@ CREATE TABLE signer_table (
 
   signer_form_id UUID REFERENCES form_table(form_id) NOT NULL,
   signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  signer_team_project_id UUID REFERENCES team_project_table(team_project_id)
+  signer_team_project_id UUID REFERENCES team_project_table(team_project_id),
+  signer_team_department_id UUID REFERENCES team_department_table(team_department_id)
 );
 
 CREATE TABLE section_table (
@@ -676,7 +677,7 @@ CREATE TABLE lookup_schema.currency_table (
   currency_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   currency_entity VARCHAR(4000) NOT NULL,
   currency_label VARCHAR(4000) NOT NULL,
-  currnecy_alphabetic_code VARCHAR(10) NOT NULL,
+  currency_alphabetic_code VARCHAR(10) NOT NULL,
   currency_numeric_code VARCHAR(10) NOT NULL
 );
 
@@ -1343,14 +1344,16 @@ RETURNS JSON AS $$
         endId = `BOQ`;
       } else if(formName === 'Personnel Transfer Requisition') {
         endId = `PTRF`;
-      } else if(formName === 'Working Advance Voucher') {
-        endId = `WAV`;
+      } else if(formName === 'Petty Cash Voucher') {
+        endId = `PCV`;
       } else if(formName === 'Equipment Service Report') {
         endId = `ESR`;
       } else if(formName === 'Request For Payment Code') {
         endId = `RFPC`;
       } else if(formName.includes('Request For Payment')) {
         endId = `RFP`;
+      } else if(formName.includes('Petty Cash Voucher Balance')) {
+        endId = `PCVB`;
       } else {
         endId = ``;
       }
@@ -3228,7 +3231,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -5141,7 +5144,7 @@ RETURNS JSON as $$
             form
           }
         }
-      } else if (form.form_name === "Working Advance Voucher") {
+      } else if (form.form_name === "Petty Cash Voucher") {
         const projects = plv8.execute(
           `
             SELECT 
@@ -5156,7 +5159,7 @@ RETURNS JSON as $$
 
         const projectOptions = projects.map((project, index) => {
           return {
-            option_field_id: form.form_section[0].section_field[0].field_id,
+            option_field_id: form.form_section[1].section_field[0].field_id,
             option_id: project.team_project_id,
             option_order: index,
             option_value: project.team_project_name,
@@ -5164,38 +5167,52 @@ RETURNS JSON as $$
         });
 
         const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_department_table WHERE team_department_is_disabled=FALSE`);
-
         const departmentOptions = departments.map((department, index) => {
           return {
-            option_field_id: form.form_section[0].section_field[2].field_id,
+            option_field_id: form.form_section[1].section_field[2].field_id,
             option_id: department.team_department_id,
             option_order: index,
             option_value: department.team_department_name
           }
         });
 
-        const requestDetailsSectionFieldList = form.form_section[0].section_field.map((field) => {
-          if (field.field_name === 'Department') {
-            return {
-              ...field,
-              field_option: departmentOptions,
-            }
-          }  else {
-            return field;
+        const expenseTypes = plv8.execute(`SELECT * FROM expense_type_table WHERE expense_type_is_disabled = FALSE`);
+        const expenseTypeOptions = expenseTypes.map((expense, index) => {
+          return {
+            option_field_id: form.form_section[2].section_field[1].field_id,
+            option_id: expense.expense_type_id,
+            option_order: index,
+            option_value: expense.expense_type_label
+          }
+        });
+
+        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankListOptions = bankList.map((bank, index) => {
+          return {
+            option_field_id: form.form_section[3].section_field[1].field_id,
+            option_id: bank.bank_id,
+            option_order: index,
+            option_value: bank.bank_label
+          }
+        });
+
+        const uomList = plv8.execute(`SELECT * FROM unit_of_measurement_schema.item_unit_of_measurement_table WHERE item_unit_of_measurement_is_disabled= FALSE`);
+        const uomOptions = uomList.map((uom, index) => {
+          return {
+            option_field_id: form.form_section[5].section_field[2].field_id,
+            option_id: uom.item_unit_of_measurement_id,
+            option_order: index,
+            option_value: uom.item_unit_of_measurement
           }
         });
 
         returnData = {
-          form: {
-            ...form,
-            form_section: [
-              {
-                ...form.form_section[0],
-                section_field: requestDetailsSectionFieldList,
-              }
-            ],
-          },
-          projectOptions
+          form,
+          projectOptions,
+          departmentOptions,
+          expenseTypeOptions,
+          bankListOptions,
+          uomOptions
         }
         return;
       } else if (form.form_name === "Equipment Service Report") {
@@ -5481,6 +5498,112 @@ RETURNS JSON as $$
               duplicatableSectionIdList
             }
           };
+        } else {
+          returnData = {
+            form
+          }
+        }
+      } else if (form.form_name === "Petty Cash Voucher Balance") {
+        if (connectedRequestFormslyId) {
+          const splitFormslyId = connectedRequestFormslyId.split('-');
+          const connectedRequest = plv8.execute(`
+            SELECT 
+              request_id, 
+              request_form_id,
+              request_project_id 
+            FROM 
+              request_table 
+            WHERE 
+              request_formsly_id_prefix = '${splitFormslyId[0]}' 
+              AND request_formsly_id_serial = '${splitFormslyId[1]}' 
+            LIMIT 1;
+          `)[0];
+
+          if (!connectedRequest) {
+            throw new Error('Request id not found');
+          }
+
+          let connectedRequestChargeToProjectResponse = "";
+          let connectedRequestChargeToProjectId = "";
+
+          const connectedRequestChargeToProject = plv8.execute(`SELECT request_response FROM request_response_table WHERE request_response_request_id = '${connectedRequest.request_id}' AND request_response_field_id='2bac0084-53f4-419f-aba7-fb1f77403e00'`);
+
+          if (connectedRequestChargeToProject[0]) {
+            connectedRequestChargeToProjectResponse = JSON.parse(connectedRequestChargeToProject[0].request_response);
+
+            const selectedProject = plv8.execute(`SELECT team_project_id FROM team_project_table WHERE team_project_name = '${connectedRequestChargeToProjectResponse}'`);
+
+            if (selectedProject[0]) {
+              connectedRequestChargeToProjectId = selectedProject[0].team_project_id;
+            }
+          }
+
+          const connectedRequestSectionId = plv8.execute(`
+            SELECT 
+              section_id 
+            FROM 
+              section_table 
+            WHERE 
+              section_form_id = '${connectedRequest.request_form_id}' 
+          `)[0].section_id;
+
+          const signerTeamProjectList = [connectedRequest.request_project_id]
+
+          if (connectedRequestChargeToProjectId) {
+            signerTeamProjectList.push(connectedRequestChargeToProjectId)
+          }
+
+          const teamProjectQuery = signerTeamProjectList.map(project => `'${project}'`).join(", ");
+
+          const signerList = plv8.execute(`
+            SELECT
+              signer_id,
+              signer_is_primary_signer,
+              signer_action,
+              signer_order,
+              team_member_id,
+              user_id,
+              user_first_name,
+              user_last_name,
+              user_avatar
+            FROM signer_table
+            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+            WHERE
+              signer_is_disabled = false
+              AND signer_form_id = '${form.form_id}'
+              AND signer_team_project_id IN (${teamProjectQuery})
+            ORDER BY signer_order
+          `);
+
+          const formattedSignerList = signerList.map(signer => {
+            return {
+              signer_id: signer.signer_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer,
+              signer_action: signer.signer_action,
+              signer_order: signer.signer_order,
+              signer_team_member: {
+                team_member_id: signer.team_member_id,
+                team_member_user: {
+                  user_id: signer.user_id,
+                  user_first_name: signer.user_first_name,
+                  user_last_name: signer.user_last_name,
+                  user_avatar: signer.user_avatar,
+                }
+              }
+            }
+          })
+
+        returnData = {
+          form: {
+            ...form,
+            form_signer: formattedSignerList
+          },
+          connectedRequest: {
+            ...connectedRequest,
+            form_section: [connectedRequestSectionId]
+          }
+        };
         } else {
           returnData = {
             form
@@ -9426,7 +9549,7 @@ RETURNS JSON as $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -11095,11 +11218,11 @@ let returnData = [];
 plv8.subtransaction(function() {
   const {
     projectId,
-    formId
+    formId,
+    departmentId
   } = input_data;
 
-  const signerData = plv8.execute(
-    `
+  let query = `
       SELECT
         signer_id,
         signer_is_primary_signer,
@@ -11119,8 +11242,13 @@ plv8.subtransaction(function() {
         signer_team_project_id = '${projectId}'
         AND signer_form_id = '${formId}'
         AND signer_is_disabled = false
-    `
-  );
+    `;
+
+  if (departmentId) {
+    query = query + ` AND signer_team_department_id = '${departmentId}'`
+  }
+
+  const signerData = plv8.execute(query);
 
   returnData = signerData.map(signer => {
     return {
@@ -12141,6 +12269,55 @@ plv8.subtransaction(function() {
   }
 });
 return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION send_notification_to_project_cost_engineer(
+  input_data JSON
+)
+RETURNS VOID AS $$
+plv8.subtransaction(function() {
+  const {
+    projectId,
+    requesterName,
+    redirectUrl,
+    teamId
+  } = input_data;
+
+  const projectTeamMemberIdList = plv8.execute(`SELECT team_member_id FROM team_project_member_table WHERE team_project_id='${projectId}'`);
+
+  if (projectTeamMemberIdList.length <= 0) throw Error('Team member not found');
+
+  const projectTeamMemberIdListQuery = projectTeamMemberIdList.map((project) => `'${project.team_member_id}'`).join(', ');
+
+  const costEngineerGroupId = plv8.execute(`SELECT team_group_id FROM team_group_table WHERE team_group_name='COST ENGINEER'`)[0].team_group_id;
+
+  const projectCostEngineerList = plv8.execute(`
+    SELECT tgm.team_member_id, tmt.team_member_user_id 
+    FROM team_group_member_table AS tgm 
+    INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id 
+    WHERE tgm.team_member_id IN (${projectTeamMemberIdListQuery}) 
+    AND tgm.team_group_id = '${costEngineerGroupId}'`);
+
+  if (projectCostEngineerList.length <= 0) throw Error('No Cost Engineers found for the project');
+
+  const costEngineerNotificationInput = projectCostEngineerList.map((costEngineer) => ({
+    notification_app: 'REQUEST',
+    notification_content: `${requesterName} requested you to add cost code to his/her request`,
+    notification_redirect_url: redirectUrl,
+    notification_team_id: teamId,
+    notification_type: 'REQUEST',
+    notification_user_id: costEngineer.team_member_user_id
+  }));
+
+  const notificationValues = costEngineerNotificationInput.map((notification) =>
+    `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`).join(",");
+
+  plv8.execute(
+    `INSERT INTO notification_table 
+    (notification_app, notification_content, notification_redirect_url, notification_team_id, notification_type, notification_user_id) 
+    VALUES ${notificationValues};`);
+
+});
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_item_category_option(
@@ -13300,21 +13477,29 @@ WITH CHECK (
     SELECT team_member_id
     FROM team_member_table
     WHERE team_member_user_id = auth.uid()
-  )
+  ) 
 );
 
-CREATE POLICY "Allow DELETE for authenticated users on own request response" ON "public"."request_response_table"
+CREATE POLICY "Allow DELETE for authenticated users on own request response"
+ON "public"."request_response_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   (
     SELECT rt.request_team_member_id
-    FROM request_table as rt
+    FROM request_table AS rt
     WHERE rt.request_id = request_response_request_id
   ) IN (
-    SELECT team_member_id
-    FROM team_member_table
-    WHERE team_member_user_id = auth.uid()
+    SELECT tmt.team_member_id
+    FROM team_member_table AS tmt
+    WHERE tmt.team_member_user_id = auth.uid()
+  ) OR EXISTS (
+    SELECT 1
+    FROM team_group_member_table AS tgm
+    INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id
+    INNER JOIN team_group_table AS tg ON tg.team_group_id = tgm.team_group_id
+    WHERE tmt.team_member_user_id = auth.uid()
+    AND tg.team_group_name = 'COST ENGINEER'
   )
 );
 

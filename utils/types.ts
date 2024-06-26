@@ -495,6 +495,9 @@ export type JobTitleTableInsert =
 export type JobTitleTableUpdate =
   Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Update"];
 
+export type TeamDepartmentTableRow =
+  Database["public"]["Tables"]["team_department_table"]["Row"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -1966,12 +1969,11 @@ export type JiraWAVTicketPayloadProps = {
   requestId: string;
   requestUrl: string;
   jiraProjectSiteId: string;
-  date: string;
-  payeeName: string;
   amount: string;
-  amountInWord: string;
   particulars: string;
   department: string;
+  isForOfficialBusiness: boolean;
+  approvedOfficialBusiness?: string;
 };
 
 export type JiraESRTicketPayloadProps = {
@@ -1998,6 +2000,10 @@ export type JiraRFPTicketPayloadProps = {
   boqCode?: string;
   obTicket?: string;
 };
+
+export type DepartmentSigner = SignerTableRow & {
+  team_member_user: TeamMemberWithUser["team_member_user"];
+} & { team_department_name: string };
 
 export type PendingInviteType = {
   invitation_id: string;

@@ -47,6 +47,7 @@ import {
   ServiceForm,
   ServiceScopeChoiceTableInsert,
   ServiceTableInsert,
+  SignerTableInsert,
   SupplierTableInsert,
   TeamGroupTableInsert,
   TeamMemberTableInsert,
@@ -1945,4 +1946,65 @@ export const createJobTitle = async (
   if (error) throw error;
 
   return { data, error: null };
+};
+
+export const createDepartmentSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: SignerTableInsert
+) => {
+  // check if duplicate
+  const {
+    data: duplicateData,
+    count,
+    error: duplicateError,
+  } = await supabaseClient
+    .from("signer_table")
+    .select("signer_id, signer_is_disabled", { count: "exact" })
+    .eq("signer_team_project_id", `${params.signer_team_project_id}`)
+    .eq("signer_team_department_id", `${params.signer_team_department_id}`)
+    .eq("signer_is_primary_signer", Boolean(params.signer_is_primary_signer))
+    .maybeSingle();
+
+  if (duplicateError) throw duplicateError;
+
+  if (!duplicateData?.signer_is_disabled && Number(count)) {
+    return null;
+  }
+
+  if (duplicateData?.signer_is_disabled) {
+    const { data, error } = await supabaseClient
+      .from("signer_table")
+      .update({ signer_is_disabled: false })
+      .eq("signer_id", duplicateData.signer_id)
+      .select("*");
+
+    if (error) throw error;
+
+    return data;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("signer_table")
+    .insert(params)
+    .select("*");
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const sendNotificationToCostEngineer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    requesterName: string;
+    redirectUrl: string;
+    teamId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "send_notification_to_project_cost_engineer",
+    { input_data: params }
+  );
+  if (error) throw error;
 };

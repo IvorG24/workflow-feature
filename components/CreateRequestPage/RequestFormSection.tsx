@@ -129,8 +129,20 @@ type RequestFormSectionProps = {
       fieldIndex: number
     ) => void;
   };
-  workingAdvanceVoucherFormMethods?: {
-    onProjectNameChange: (value: string | null) => void;
+  pettyCashVoucherFormMethods?: {
+    onProjectOrDepartmentNameChange: () => void;
+    onPettyCashVoucherBooleanChange: (
+      value: boolean,
+      sectionIndex: number
+    ) => void;
+    onEmployeeNumberChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
+    onAccountingAuthorizationBooleanChange: (value: boolean) => void;
+    onSCICAuthorizationChange: (value: boolean) => void;
+    onChargeToProjectBooleanChange: (value: boolean) => void;
+    onModeOfPaymentChange: (value: string | null, sectionIndex: number) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -216,7 +228,7 @@ const RequestFormSection = ({
   currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
-  workingAdvanceVoucherFormMethods,
+  pettyCashVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
 }: RequestFormSectionProps) => {
@@ -284,9 +296,7 @@ const RequestFormSection = ({
               personnelTransferRequisitionMethods={
                 personnelTransferRequisitionMethods
               }
-              workingAdvanceVoucherFormMethods={
-                workingAdvanceVoucherFormMethods
-              }
+              pettyCashVoucherFormMethods={pettyCashVoucherFormMethods}
               equipmentServiceReportMethods={equipmentServiceReportMethods}
               requestForPaymentFormMethods={requestForPaymentFormMethods}
             />

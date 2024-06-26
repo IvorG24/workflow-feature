@@ -1,7 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   getAllSection,
-  getExistingRFPCodeRequest,
+  getExistingConnectedRequest,
   getJiraAutomationDataByProjectId,
   getRequestComment,
   getSectionInRequestPageWithMultipleDuplicatableSection,
@@ -205,7 +205,7 @@ const RequestForPaymentRequestPage = ({
   useEffect(() => {
     const fetchRFPCodeRequest = async () => {
       // check if rfp code request exists
-      const rfpCodeRequest = await getExistingRFPCodeRequest(
+      const rfpCodeRequest = await getExistingConnectedRequest(
         supabaseClient,
         request.request_id
       );

@@ -8,12 +8,13 @@ import CreatePEDEquipmentRequestPage from "@/components/CreatePEDEquipmentReques
 import CreatePEDItemRequestPage from "@/components/CreatePEDItemRequestPage/CreatePEDItemRequestPage";
 import CreatePEDPartRequestPage from "@/components/CreatePEDPartRequestPage/CreatePEDPartRequestPage";
 import CreatePersonnelTransferRequisition from "@/components/CreatePersonnelTransferRequisition/CreatePersonnelTransferRequisition";
+import CreatePettyCashVoucherBalancePage from "@/components/CreatePettyCashVoucherBalancePage/CreatePettyCashVoucherBalancePage";
+import CreatePettyCashVoucherRequestPage from "@/components/CreatePettyCashVoucherRequestPage/CreatePettyCashVoucherRequestPage";
 import CreateRequestForPaymentCodePage from "@/components/CreateRequestForPaymentCodePage/CreateRequestForPaymentCodePage";
 import CreateRequestForPaymentPage from "@/components/CreateRequestForPaymentPage/CreateRequestForPaymentPage";
 import CreateRequestForPaymentv1Page from "@/components/CreateRequestForPaymentv1Page/CreateRequestForPaymentv1Page";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import CreateServicesRequestPage from "@/components/CreateServicesRequestPage/CreateServicesRequestPage";
-import CreateWorkingAdvanceRequestPage from "@/components/CreateWorkingAdvanceVoucheRequestPage/CreateWorkingAdvanceVoucheRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
@@ -26,7 +27,9 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
   async ({ supabaseClient, user, context }) => {
     try {
-      const connectedRequestFormslyId = context.query.lrf ?? context.query.rfp;
+      const connectedRequestFormslyId =
+        context.query.lrf ?? context.query.rfp ?? context.query.wav;
+
       const { data, error } = await supabaseClient.rpc(
         "create_request_page_on_load",
         {
@@ -39,6 +42,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         }
       );
+
       if (error) throw error;
 
       return {
@@ -66,6 +70,9 @@ type Props = {
   connectedRequest?: ConnectedRequestFormProps;
   departmentOptions?: OptionTableRow[];
   allProjectOptions?: OptionTableRow[];
+  expenseTypeOptions?: OptionTableRow[];
+  bankListOptions?: OptionTableRow[];
+  uomOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -75,6 +82,9 @@ const Page = ({
   connectedRequest,
   departmentOptions = [],
   allProjectOptions = [],
+  expenseTypeOptions = [],
+  bankListOptions = [],
+  uomOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -155,11 +165,15 @@ const Page = ({
           />
         );
 
-      case "Working Advance Voucher":
+      case "Petty Cash Voucher":
         return (
-          <CreateWorkingAdvanceRequestPage
+          <CreatePettyCashVoucherRequestPage
             form={form}
             projectOptions={projectOptions}
+            departmentOptions={departmentOptions}
+            expenseTypeOptions={expenseTypeOptions}
+            bankListOptions={bankListOptions}
+            uomOptions={uomOptions}
           />
         );
       case "Equipment Service Report":
@@ -183,6 +197,14 @@ const Page = ({
       case "Request For Payment Code":
         return (
           <CreateRequestForPaymentCodePage
+            form={form}
+            connectedRequest={connectedRequest}
+          />
+        );
+
+      case "Petty Cash Voucher Balance":
+        return (
+          <CreatePettyCashVoucherBalancePage
             form={form}
             connectedRequest={connectedRequest}
           />

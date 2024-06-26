@@ -535,43 +535,37 @@ export const formatJiraWAVPayload = ({
   requestId,
   requestUrl,
   jiraProjectSiteId,
-  date,
-  payeeName,
   amount,
-  amountInWord,
+  isForOfficialBusiness,
+  approvedOfficialBusiness,
   particulars,
   department,
 }: JiraWAVTicketPayloadProps) => {
   const isPEDDepartment = department === "Plants and Equipment";
   const requestTypeId = isPEDDepartment ? "410" : "407";
   const serviceDeskId = isPEDDepartment ? "27" : "23";
+  const forOfficialBusiness = isForOfficialBusiness ? "11129" : "11130";
 
-  const jiraTicketPayload = {
+  const jiraTicketPayload: JiraPayloadType = {
     form: {
       answers: {
-        "6": {
-          text: payeeName, // Payee Name
-        },
-        "5": {
-          date: date, // Date
-        },
         "13": {
-          choices: [jiraProjectSiteId], // Requesting Project
+          choices: [jiraProjectSiteId],
         },
-        "16": {
-          text: amount, // Amount
-        },
-        "17": {
-          text: amountInWord, // Amount in Words
+        "36": {
+          text: amount,
         },
         "11": {
-          text: particulars, // Particulars
+          text: particulars,
+        },
+        "33": {
+          choices: [forOfficialBusiness],
         },
         "20": {
-          text: requestId, // Formsly Id
+          text: requestId,
         },
         "21": {
-          text: requestUrl, // Formsly URL
+          text: requestUrl,
         },
       },
     },
@@ -581,6 +575,12 @@ export const formatJiraWAVPayload = ({
     requestTypeId: requestTypeId,
     serviceDeskId: serviceDeskId,
   };
+
+  if (forOfficialBusiness) {
+    jiraTicketPayload.form.answers["35"] = {
+      text: approvedOfficialBusiness,
+    };
+  }
 
   return jiraTicketPayload;
 };

@@ -1,21 +1,24 @@
 import {
+  checkIfUserIsRequestOwner,
   getNonDuplictableSectionResponse,
-  getProjectSignerWithTeamMember,
 } from "@/backend/api/get";
-import { createRequest, editRequest } from "@/backend/api/post";
+import { createComment, createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
-  OptionTableRow,
   RequestResponseTableRow,
   RequestTableRow,
 } from "@/utils/types";
@@ -33,6 +36,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -47,34 +51,26 @@ export type FieldWithResponseArray = Field & {
 
 type Props = {
   form: FormType;
-  projectOptions: OptionTableRow[];
-  duplicatableSectionIdList: string[];
   requestId: string;
 };
 
-const EditWorkingAdvanceVoucherRequestPage = ({
-  form,
-  projectOptions,
-  requestId,
-}: Props) => {
+const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
+  const userProfile = useUserProfile();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
   const team = useActiveTeam();
+  const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
 
   const isReferenceOnly = Boolean(router.query.referenceOnly);
 
   const [initialRequestDetails, setInitialRequestDetails] =
     useState<RequestFormValues>();
-  const [signerList, setSignerList] = useState(
-    form.form_signer.map((signer) => ({
-      ...signer,
-      signer_action: signer.signer_action.toUpperCase(),
-    }))
-  );
-
-  const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-
+  const signerList = form.form_signer.map((signer) => ({
+    ...signer,
+    signer_action: signer.signer_action.toUpperCase(),
+  }));
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
@@ -88,30 +84,25 @@ const EditWorkingAdvanceVoucherRequestPage = ({
   };
 
   const requestFormMethods = useForm<RequestFormValues>({ mode: "onChange" });
-  const { handleSubmit, control, setValue, unregister } = requestFormMethods;
+  const { handleSubmit, control, unregister } = requestFormMethods;
   const { fields: formSections, replace: replaceSection } = useFieldArray({
     control,
     name: "sections",
   });
+  const [oldBoqCodeValue, setOldBoqCodeValue] = useState("TBA");
+  const [oldCostCodeValue, setOldCostCodeValue] = useState("TBA");
 
   const onSubmit = async (data: RequestFormValues) => {
-    if (isFetchingSigner) {
-      notifications.show({
-        message: "Wait until all signers are fetched before submitting.",
-        color: "orange",
-      });
-      return;
-    }
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
 
       setIsLoading(true);
 
-      const response = data.sections[0].section_field[0]
+      const response = data.sections[1].section_field[0]
         .field_response as string;
 
-      const projectId = data.sections[0].section_field[0].field_option.find(
+      const projectId = data.sections[1].section_field[0].field_option.find(
         (option) => option.option_value === response
       )?.option_id as string;
 
@@ -141,6 +132,23 @@ const EditWorkingAdvanceVoucherRequestPage = ({
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
         });
+
+        // add comment
+        if (isUserCostEngineer && form.form_section[2]) {
+          const newBoqCodeFieldValue = safeParse(
+            `${data.sections[2].section_field[0].field_response}`
+          );
+          const newcostCodeFieldValue = safeParse(
+            `${data.sections[2].section_field[1].field_response}`
+          );
+          await createComment(supabaseClient, {
+            comment_request_id: requestId,
+            comment_team_member_id: teamMember.team_member_id,
+            comment_type: "REQUEST_COMMENT",
+            comment_content: `${userProfile?.user_first_name} ${userProfile?.user_last_name} updated the request cost code section. BOQ Code (old) ${oldBoqCodeValue} => (new) ${newBoqCodeFieldValue}. Cost Code (old) ${oldCostCodeValue} => (new) ${newcostCodeFieldValue}`,
+            comment_id: uuidv4(),
+          });
+        }
       }
 
       notifications.show({
@@ -163,105 +171,93 @@ const EditWorkingAdvanceVoucherRequestPage = ({
     }
   };
 
-  const resetSigner = () => {
-    setSignerList(
-      form.form_signer.map((signer) => ({
-        ...signer,
-        signer_action: signer.signer_action.toUpperCase(),
-      }))
-    );
-  };
-
-  const handleProjectNameChange = async (value: string | null) => {
-    try {
-      setIsFetchingSigner(true);
-      if (value) {
-        const projectId = projectOptions.find(
-          (option) => option.option_value === value
-        )?.option_id;
-        if (projectId) {
-          const data = await getProjectSignerWithTeamMember(supabaseClient, {
-            projectId,
-            formId: form.form_id,
-          });
-          if (data.length !== 0) {
-            setSignerList(data as unknown as FormType["form_signer"]);
-          } else {
-            resetSigner();
-          }
-        }
-      } else {
-        resetSigner();
-      }
-    } catch (e) {
-      setValue(`sections.0.section_field.0.field_response`, "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingSigner(false);
-    }
-  };
-
   const handleResetRequest = () => {
     unregister(`sections.${0}`);
     replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
-    handleProjectNameChange(
-      initialRequestDetails?.sections[0].section_field[0]
-        .field_response as string
-    );
   };
 
   useEffect(() => {
     setIsLoading(true);
-    if (!team.team_id) return;
+    if (!team.team_id || !teamMember) return;
     try {
+      if (!teamMember) return;
       const fetchRequestDetails = async () => {
-        // Fetch response
-        // Request Details Section
-        const requestDetailsSectionResponse =
-          await getNonDuplictableSectionResponse(supabaseClient, {
+        const isOwner = await checkIfUserIsRequestOwner(supabaseClient, {
+          requestId,
+          teamMemberId: teamMember.team_member_id,
+        });
+
+        const formSectionResponseList = await getNonDuplictableSectionResponse(
+          supabaseClient,
+          {
             requestId,
-            fieldIdList: form.form_section[0].section_field.map(
-              (field) => field.field_id
+            fieldIdList: form.form_section.flatMap((section) =>
+              section.section_field.map((field) => field.field_id)
             ),
-          });
-        const requestDetailsSectionFieldList =
-          form.form_section[0].section_field.map((field) => {
-            const response = requestDetailsSectionResponse.find(
+          }
+        );
+
+        const formSectionWithResponse = form.form_section.map((section) => {
+          const fieldWithResponseList = section.section_field.map((field) => {
+            const response = formSectionResponseList.find(
               (response) =>
                 response.request_response_field_id === field.field_id
             );
-            let field_option = field.field_option ?? [];
+            const field_option = field.field_option ?? [];
 
-            if (field.field_name === "Requesting Project") {
-              field_option = projectOptions;
-            }
             return {
               ...field,
               field_response: response
                 ? safeParse(response.request_response)
                 : "",
               field_option,
+              field_is_read_only: true,
             };
           });
 
-        // fetch additional signer
-        handleProjectNameChange(
-          requestDetailsSectionFieldList[0].field_response
+          return {
+            ...section,
+            section_field: fieldWithResponseList,
+          };
+        });
+
+        let balanceSection = formSectionWithResponse[1];
+        let costCodeSection = formSectionWithResponse[2];
+
+        if (isOwner) {
+          const updatedSectionField = balanceSection.section_field.map(
+            (field) => ({ ...field, field_is_read_only: false })
+          );
+
+          balanceSection = {
+            ...balanceSection,
+            section_field: updatedSectionField,
+          };
+        }
+
+        if (isUserCostEngineer && costCodeSection) {
+          const updatedSectionField = costCodeSection.section_field.map(
+            (field) => ({ ...field, field_is_read_only: false })
+          );
+
+          costCodeSection = {
+            ...costCodeSection,
+            section_field: updatedSectionField,
+          };
+        }
+
+        replaceSection([
+          formSectionWithResponse[0],
+          balanceSection,
+          costCodeSection,
+        ]);
+        setInitialRequestDetails({ sections: formSectionWithResponse });
+        setOldBoqCodeValue(
+          safeParse(costCodeSection.section_field[0].field_response)
         );
-
-        const finalInitialRequestDetails = [
-          {
-            ...form.form_section[0],
-            section_field: requestDetailsSectionFieldList,
-          },
-        ];
-
-        replaceSection(finalInitialRequestDetails);
-        setInitialRequestDetails({ sections: finalInitialRequestDetails });
-        setIsLoading(false);
+        setOldCostCodeValue(
+          safeParse(costCodeSection.section_field[1].field_response)
+        );
       };
       fetchRequestDetails();
     } catch (e) {
@@ -291,9 +287,6 @@ const EditWorkingAdvanceVoucherRequestPage = ({
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    workingAdvanceVoucherFormMethods={{
-                      onProjectNameChange: handleProjectNameChange,
-                    }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}
                   />
@@ -318,4 +311,4 @@ const EditWorkingAdvanceVoucherRequestPage = ({
   );
 };
 
-export default EditWorkingAdvanceVoucherRequestPage;
+export default EditPettyCashVoucherBalanceRequestPage;

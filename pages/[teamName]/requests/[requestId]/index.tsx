@@ -9,12 +9,13 @@ import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEqu
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
 import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
+import PettyCashVoucherBalanceRequestPage from "@/components/PettyCashVoucherBalanceRequestPage/PettyCashVoucherBalanceRequestPage";
+import PettyCashVoucherRequestPage from "@/components/PettyCashVoucherRequestPage/PettyCashVoucherRequestPage";
 import RequestForPaymentCodeRequestPage from "@/components/RequestForPaymentCodeRequestPage/RequestForPaymentCodeRequestPage";
 import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestPage/RequestForPaymentRequestPage";
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
-import WorkingAdvanceVoucherRequestPage from "@/components/WorkingAdvanceVoucherRequestPage/WorkingAdvanceVoucherRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -138,8 +139,8 @@ const Page = ({
           }
         />
       );
-    } else if (request.request_form.form_name === "Working Advance Voucher") {
-      return <WorkingAdvanceVoucherRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Petty Cash Voucher") {
+      return <PettyCashVoucherRequestPage request={request} />;
     } else if (request.request_form.form_name === "Equipment Service Report") {
       return (
         <EquipmentServiceReportRequestPage
@@ -165,6 +166,10 @@ const Page = ({
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
+    } else if (
+      request.request_form.form_name === "Petty Cash Voucher Balance"
+    ) {
+      return <PettyCashVoucherBalanceRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

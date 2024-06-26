@@ -7,10 +7,11 @@ import EditOtherExpensesRequestPage from "@/components/EditOtherExpenesesRequest
 import EditPEDEquipmentRequestPage from "@/components/EditPEDEquipmentRequestPage/EditPEDEquipmentRequestPage";
 import EditPEDItemRequestPage from "@/components/EditPEDItemRequestPage/EditPEDItemRequestPage";
 import EditPEDPartRequestPage from "@/components/EditPEDPartRequestPage/EditPEDPartRequestPage";
+import EditPettyCashVoucherBalanceRequestPage from "@/components/EditPettyCashVoucherBalancePage/EditPettyCashVoucherBalancePage";
+import EditPettyCashVoucherRequestPage from "@/components/EditPettyCashVoucherRequestPage/EditPettyCashVoucherRequestPage";
 import EditRequestForPaymentPage from "@/components/EditRequestForPaymentv1Page/EditRequestForPaymentv1Page";
 import EditRequestPage from "@/components/EditRequestPage/EditRequestPage";
 import EditServicesRequestPage from "@/components/EditServicesRequestPage/EditServicesRequestPage";
-import EditWorkingAdvanceVoucherRequestPage from "@/components/EditWorkingAdvanceVoucherRequestPage/EditWorkingAdvanceVoucherRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { FormWithResponseType, OptionTableRow } from "@/utils/types";
@@ -49,6 +50,10 @@ type Props = {
   projectOptions?: OptionTableRow[];
   duplicatableSectionIdList: string[];
   requestId: string;
+  departmentOptions?: OptionTableRow[];
+  expenseTypeOptions?: OptionTableRow[];
+  bankListOptions?: OptionTableRow[];
+  uomOptions?: OptionTableRow[];
 };
 
 const Page = ({
@@ -56,6 +61,10 @@ const Page = ({
   projectOptions = [],
   duplicatableSectionIdList = [],
   requestId,
+  departmentOptions = [],
+  expenseTypeOptions = [],
+  bankListOptions = [],
+  uomOptions = [],
 }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
@@ -150,13 +159,25 @@ const Page = ({
           />
         );
 
-      case "Working Advance Voucher":
+      case "Petty Cash Voucher":
         return (
-          <EditWorkingAdvanceVoucherRequestPage
+          <EditPettyCashVoucherRequestPage
             form={form}
             projectOptions={projectOptions}
             duplicatableSectionIdList={duplicatableSectionIdList}
             requestId={requestId}
+            departmentOptions={departmentOptions}
+            expenseTypeOptions={expenseTypeOptions}
+            bankListOptions={bankListOptions}
+            uomOptions={uomOptions}
+          />
+        );
+
+      case "Petty Cash Voucher Balance":
+        return (
+          <EditPettyCashVoucherBalanceRequestPage
+            requestId={requestId}
+            form={form}
           />
         );
     }

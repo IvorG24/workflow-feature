@@ -9,6 +9,7 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Center,
   Container,
@@ -31,6 +32,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import {
   checkIfTeamGroupMember,
   getProjectSigner,
+  getTeamDepartmentOptions,
   getTeamProjectList,
 } from "@/backend/api/get";
 import { useFormActions, useFormList } from "@/stores/useFormStore";
@@ -43,6 +45,7 @@ import { DataTable } from "mantine-datatable";
 import GroupSection from "../FormBuilder/GroupSection";
 import SignerPerProject from "../FormBuilder/SignerPerProject";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
+import FormDepartmentSignerSection from "./FormDepartmentSignerSection/FormDepartmentSignerSection";
 import FormDetailsSection from "./FormDetailsSection";
 import FormSectionList from "./FormSectionList";
 
@@ -53,6 +56,11 @@ type Props = {
   teamProjectList: TeamProjectTableRow[];
   teamProjectListCount: number;
   isFormslyForm: boolean;
+};
+
+type SelectedProject = {
+  projectName: string;
+  projectId: string;
 };
 
 const RequestFormPage = ({
@@ -105,14 +113,15 @@ const RequestFormPage = ({
   const [projectSearch, setProjectSearch] = useState("");
   const [projectList, setProjectList] = useState(teamProjectList);
   const [projectCount, setProjectCount] = useState(teamProjectListCount);
-  const [selectedProject, setSelectedProject] = useState<{
-    projectName: string;
-    projectId: string;
-  } | null>(null);
+  const [selectedProject, setSelectedProject] =
+    useState<SelectedProject | null>(null);
   const [selectedProjectSigner, setSelectedProjectSigner] = useState<
     RequestSigner[]
   >([]);
   const [isFetchingProjectSigner, setIsFetchingProjectSigner] = useState(false);
+  const [departmentOptionList, setDepartmentOptionList] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   useEffect(() => {
     const checkIfMember = async () => {
@@ -284,6 +293,23 @@ const RequestFormPage = ({
       setIsFetchingProjectSigner(false);
     }
   };
+
+  useEffect(() => {
+    const fetchDepartmentOptionList = async () => {
+      const departmentList = await getTeamDepartmentOptions(supabaseClient, {
+        index: 1,
+        limit: 124,
+      });
+
+      setDepartmentOptionList(
+        departmentList.map((d) => ({
+          value: d.team_department_id,
+          label: d.team_department_name,
+        }))
+      );
+    };
+    fetchDepartmentOptionList();
+  }, []);
 
   return (
     <Container>
@@ -469,15 +495,25 @@ const RequestFormPage = ({
                 </Center>
               ) : null}
               {selectedProject ? (
-                <SignerPerProject
-                  teamMemberList={teamMemberList}
-                  formId={form.form_id}
-                  formSigner={selectedProjectSigner}
-                  selectedProject={selectedProject}
-                  setSelectedProject={setSelectedProject}
-                />
+                <Box>
+                  <SignerPerProject
+                    teamMemberList={teamMemberList}
+                    formId={form.form_id}
+                    formSigner={selectedProjectSigner}
+                    selectedProject={selectedProject}
+                    setSelectedProject={setSelectedProject}
+                  />
+                </Box>
               ) : null}
             </Paper>
+            {selectedProject && (
+              <FormDepartmentSignerSection
+                formId={form.form_id}
+                selectedProjectId={selectedProject.projectId}
+                teamMemberList={teamMemberList}
+                departmentOptionList={departmentOptionList}
+              />
+            )}
           </>
         )}
       </Stack>

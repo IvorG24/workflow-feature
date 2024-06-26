@@ -26,6 +26,7 @@ import {
   MemoFormatSubsectionTableUpdate,
   OtherExpensesTypeTableUpdate,
   SignerTableRow,
+  SignerTableUpdate,
   TeamTableRow,
   TeamTableUpdate,
   TicketTableRow,
@@ -1214,5 +1215,31 @@ export const updateRequestOtpId = async (
     .eq("request_formsly_id_prefix", formslyIdPrefix)
     .eq("request_formsly_id_serial", formslyIdSerial);
 
+  if (error) throw error;
+};
+
+export const updateDepartmentSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: SignerTableUpdate
+) => {
+  if (!params.signer_id) throw new Error();
+  const { error } = await supabaseClient
+    .from("signer_table")
+    .update(params)
+    .eq("signer_id", params.signer_id);
+
+  if (error) throw error;
+
+  return { success: true, error: null };
+};
+
+export const removeDepartmentSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  signerId: string
+) => {
+  const { error } = await supabaseClient
+    .from("signer_table")
+    .update({ signer_is_disabled: true })
+    .eq("signer_id", signerId);
   if (error) throw error;
 };

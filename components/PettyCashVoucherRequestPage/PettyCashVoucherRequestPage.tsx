@@ -1,6 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  getJiraAutomationDataByProjectId,
+  getExistingConnectedRequest,
   getRequestComment,
 } from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
@@ -9,6 +9,7 @@ import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
+import { useFormList } from "@/stores/useFormStore";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import {
@@ -18,8 +19,6 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
-import { createJiraTicket, formatJiraWAVPayload } from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -27,11 +26,21 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Flex, Stack, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Container,
+  Flex,
+  Group,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import moment from "moment";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -40,7 +49,8 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
+const PettyCashVoucherRequestPage = ({ request }: Props) => {
+  const forms = useFormList();
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
@@ -54,16 +64,20 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
     };
   });
 
+  const requestJira = {
+    id: request.request_jira_id,
+    link: request.request_jira_link,
+  };
+
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
-  const [requestJira, setRequestJira] = useState({
-    id: request.request_jira_id,
-    link: request.request_jira_link,
-  });
+
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
+  const [pcvBalanceRequestRedirectUrl, setPCVBalanceRequestRedirectUrl] =
+    useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
@@ -72,18 +86,12 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
   const activeTeam = useActiveTeam();
 
   const requestor = request.request_team_member.team_member_user;
-
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
-
-  const originalSectionList = request.request_form.form_section;
-  const sectionWithDuplicateList =
-    generateSectionWithDuplicateList(originalSectionList);
-
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
+  const requestDateCreated = formatDate(new Date(request.request_date_created));
   const canSignerTakeAction =
     isUserSigner &&
     isUserSigner.request_signer_status === "PENDING" &&
@@ -97,9 +105,16 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+  const isUserAccountant = teamMemberGroupList.includes("ACCOUNTANT");
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
+
+  const originalSectionList = request.request_form.form_section;
+  const [sectionWithDuplicateList, setSectionWithDuplicateList] = useState(
+    generateSectionWithDuplicateList(originalSectionList)
+  );
+  const [canCreatePCVBalance, setCanCreatePCVBalance] = useState(false);
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -261,87 +276,88 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const onCreateJiraTicket = async () => {
+  const openRedirectToPCVBalanceRequestModal = (redirectUrl: string) =>
+    modals.openConfirmModal({
+      title: <Text weight={600}>PCV Balance request already exists.</Text>,
+      children: (
+        <Text size="sm">
+          Would you like to be redirected to the PCV Balance request page?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      centered: true,
+      onConfirm: () => router.push(redirectUrl),
+    });
+
+  const handleCreatePCVBalanceRequest = async () => {
     try {
-      if (!request.request_project_id) {
-        throw new Error("Project id is not defined.");
-      }
-      setIsLoading(true);
-
-      const jiraAutomationData = await getJiraAutomationDataByProjectId(
-        supabaseClient,
-        { teamProjectId: request.request_project_id }
-      );
-
-      if (!jiraAutomationData?.jiraProjectData) {
-        throw new Error("Error fetching Jira project data.");
+      if (pcvBalanceRequestRedirectUrl) {
+        openRedirectToPCVBalanceRequestModal(pcvBalanceRequestRedirectUrl);
+        return;
       }
 
-      const requestSectionFieldList =
-        request.request_form.form_section[0].section_field;
-      const department = safeParse(
-        requestSectionFieldList[1].field_response[0].request_response
+      const wavBalanceForm = forms.find(
+        (form) => form.form_name === "Petty Cash Voucher Balance"
       );
-      const date = moment(
-        `${safeParse(
-          requestSectionFieldList[2].field_response[0].request_response
-        )}`
-      ).format("YYYY-MM-DD");
-      const payeeName = safeParse(
-        requestSectionFieldList[3].field_response[0].request_response
-      );
-      const amount = safeParse(
-        requestSectionFieldList[4].field_response[0].request_response
-      );
-      const amountInWord = safeParse(
-        requestSectionFieldList[5].field_response[0].request_response
-      );
-      const particulars = safeParse(
-        requestSectionFieldList[6].field_response[0].request_response
-      );
-
-      const jiraTicketPayload = formatJiraWAVPayload({
-        requestId: request.request_formsly_id,
-        requestUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${request.request_formsly_id}`,
-        jiraProjectSiteId:
-          jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        date,
-        payeeName,
-        amount,
-        amountInWord,
-        particulars,
-        department,
-      });
-      const jiraTicket = await createJiraTicket({
-        requestType: "Working Advance Voucher",
-        formslyId: request.request_formsly_id,
-        requestCommentList,
-        ticketPayload: jiraTicketPayload,
-      });
-
-      if (!jiraTicket.jiraTicketId) {
-        throw new Error("Failed to create jira ticket.");
+      if (!wavBalanceForm) {
+        notifications.show({
+          message: "Petty Cash Voucher Balance form is not available",
+          color: "red",
+        });
+        return;
       }
-
-      setRequestJira({
-        id: jiraTicket.jiraTicketId,
-        link: jiraTicket.jiraTicketLink,
-      });
-      return jiraTicket;
+      router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
+          wavBalanceForm.form_id
+        }/create?wav=${request.request_formsly_id}`
+      );
     } catch (error) {
-      const errorMessage = (error as Error).message;
       notifications.show({
-        message: `Error: ${errorMessage}`,
+        message:
+          "Failed to create Bill of Quantity request. Please contact the IT team.",
         color: "red",
       });
-      return { jiraTicketId: "", jiraTicketLink: "" };
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     try {
+      // update sections
+      let updatedRequestSectionList = sectionWithDuplicateList;
+      const isChargeToProject =
+        request.request_form.form_section[1].section_field.find(
+          (field) =>
+            field.field_name === "Is this request charged to the project?"
+        )?.field_response[0];
+      const salaryDeductionSection = request.request_form.form_section.find(
+        (section) =>
+          section.section_name === "SCIC Salary Deduction Authorization"
+      );
+
+      const isSalaryDeduction =
+        salaryDeductionSection?.section_field[0]?.field_response[0];
+
+      const isPedAndChargeToProject =
+        isChargeToProject &&
+        isChargeToProject.request_response &&
+        isChargeToProject.request_response === "false";
+
+      if (!isChargeToProject || Boolean(isPedAndChargeToProject)) {
+        updatedRequestSectionList = updatedRequestSectionList.filter(
+          (section) => section.section_name !== "Charge to Project Details"
+        );
+      }
+
+      if (
+        isSalaryDeduction?.request_response &&
+        isSalaryDeduction.request_response === "false"
+      ) {
+        updatedRequestSectionList = updatedRequestSectionList.filter(
+          (section) => section.section_name !== "Particular Details"
+        );
+      }
+      setSectionWithDuplicateList(updatedRequestSectionList);
+
       const fetchComments = async () => {
         const data = await getRequestComment(supabaseClient, {
           request_id: request.request_id,
@@ -351,6 +367,7 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
 
       fetchComments();
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -381,12 +398,47 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
     }
   }, [requestJira.id]);
 
+  useEffect(() => {
+    const fetchPCVBalanceRequest = async () => {
+      const pcvBalanceRequest = await getExistingConnectedRequest(
+        supabaseClient,
+        request.request_id
+      );
+      setCanCreatePCVBalance(
+        requestStatus === "APPROVED" && isUserAccountant && !pcvBalanceRequest
+      );
+      if (pcvBalanceRequest) {
+        const { request_formsly_id_prefix, request_formsly_id_serial } =
+          pcvBalanceRequest;
+        const baseUrl = activeTeam.team_name
+          ? `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+          : `/public-request`;
+        const redirectUrl = `${baseUrl}/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
+        setPCVBalanceRequestRedirectUrl(redirectUrl);
+      }
+    };
+    if (requestStatus === "APPROVED") {
+      fetchPCVBalanceRequest();
+    }
+  }, [
+    requestStatus,
+    activeTeam.team_name,
+    supabaseClient,
+    request.request_id,
+    isUserAccountant,
+  ]);
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
         </Title>
+        {canCreatePCVBalance && (
+          <Button onClick={() => handleCreatePCVBalanceRequest()}>
+            Create PCV Balance
+          </Button>
+        )}
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -398,6 +450,29 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
           requestJira={requestJira}
           jiraTicketStatus={jiraTicketStatus}
         />
+
+        {/* connected PCV Balance request */}
+        {pcvBalanceRequestRedirectUrl && (
+          <Alert variant="light" color="blue">
+            <Flex align="center" gap="sm">
+              <Group spacing={4}>
+                <ThemeIcon variant="light">
+                  <IconAlertCircle size={16} />
+                </ThemeIcon>
+                <Text color="blue" weight={600}>
+                  A PCV Balance request has been created for this request.
+                </Text>
+              </Group>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => router.push(pcvBalanceRequestRedirectUrl)}
+              >
+                View PCV Balance
+              </Button>
+            </Flex>
+          </Alert>
+        )}
 
         {sectionWithDuplicateList.map((section, idx) => {
           if (
@@ -435,7 +510,6 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
             requestId={request.request_id}
             isItemForm
             requestSignerId={isUserSigner?.request_signer_id}
-            onCreateJiraTicket={onCreateJiraTicket}
           />
         )}
 
@@ -455,4 +529,4 @@ const WorkingAdvanceVoucherRequestPage = ({ request }: Props) => {
   );
 };
 
-export default WorkingAdvanceVoucherRequestPage;
+export default PettyCashVoucherRequestPage;

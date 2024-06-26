@@ -177,8 +177,8 @@ const Section = ({
         .select("*");
       if (!data) return;
       const optionList = data.map((item) => ({
-        value: item.currnecy_alphabetic_code,
-        label: item.currnecy_alphabetic_code,
+        value: item.currency_alphabetic_code,
+        label: item.currency_alphabetic_code,
       }));
       setCurrencyOptionList(optionList);
     };

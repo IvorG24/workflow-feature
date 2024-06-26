@@ -158,8 +158,20 @@ type RequestFormFieldsProps = {
       fieldIndex: number
     ) => void;
   };
-  workingAdvanceVoucherFormMethods?: {
-    onProjectNameChange: (value: string | null) => void;
+  pettyCashVoucherFormMethods?: {
+    onProjectOrDepartmentNameChange: () => void;
+    onPettyCashVoucherBooleanChange: (
+      value: boolean,
+      sectionIndex: number
+    ) => void;
+    onEmployeeNumberChange: (
+      value: string | null,
+      sectionIndex: number
+    ) => void;
+    onAccountingAuthorizationBooleanChange: (value: boolean) => void;
+    onSCICAuthorizationChange: (value: boolean) => void;
+    onChargeToProjectBooleanChange: (value: boolean) => void;
+    onModeOfPaymentChange: (value: string | null, sectionIndex: number) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -245,7 +257,7 @@ const RequestFormFields = ({
   currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
-  workingAdvanceVoucherFormMethods,
+  pettyCashVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
 }: RequestFormFieldsProps) => {
@@ -425,7 +437,14 @@ const RequestFormFields = ({
                     );
                   requestForPaymentFormMethods &&
                     requestForPaymentFormMethods.onEmployeeNumberChange(value);
+
+                  pettyCashVoucherFormMethods &&
+                    pettyCashVoucherFormMethods.onEmployeeNumberChange(
+                      value,
+                      sectionIndex
+                    );
                   break;
+
                 case "Action Plan":
                   equipmentServiceReportMethods?.onActionPlanBlur(
                     value,
@@ -548,6 +567,7 @@ const RequestFormFields = ({
       case "SWITCH":
         return (
           <Controller
+            defaultValue={false}
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
             render={({ field: { value, onChange } }) => (
@@ -561,6 +581,33 @@ const RequestFormFields = ({
                         personnelTransferRequisitionMethods.onITAssetBooleanChange(
                           value,
                           sectionIndex
+                        );
+                      break;
+
+                    case "Is this for Official Business?":
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onPettyCashVoucherBooleanChange(
+                          value,
+                          sectionIndex
+                        );
+                      break;
+
+                    case "This is to authorize the Accounting Department to deduct the cash advance amount from my salary upon my failure to liquidate within 48hrs after the purpose has been accomplished.":
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onAccountingAuthorizationBooleanChange(
+                          value
+                        );
+                      break;
+                    case "This is to authorize Sta. Clara International Corporation to deduct from my salary the specified amount, representing payment for the particulars listed below.":
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onSCICAuthorizationChange(
+                          value
+                        );
+                      break;
+                    case "Is this request charged to the project?":
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onChargeToProjectBooleanChange(
+                          value
                         );
                       break;
                   }
@@ -622,9 +669,7 @@ const RequestFormFields = ({
                       liquidationReimbursementFormMethods?.onProjectNameChange(
                         value
                       );
-                      workingAdvanceVoucherFormMethods?.onProjectNameChange(
-                        value
-                      );
+                      pettyCashVoucherFormMethods?.onProjectOrDepartmentNameChange();
                       equipmentServiceReportMethods?.onProjectNameChange(value);
                       requestForPaymentFormMethods?.onProjectNameChange(value);
                       break;
@@ -733,6 +778,7 @@ const RequestFormFields = ({
                         value,
                         prevValue as string | null
                       );
+                      pettyCashVoucherFormMethods?.onProjectOrDepartmentNameChange();
                       break;
                     case "Type of Transfer":
                       personnelTransferRequisitionMethods?.onTypeOfTransferChange(
@@ -819,6 +865,10 @@ const RequestFormFields = ({
                       break;
                     case "Mode of Payment":
                       requestForPaymentFormMethods?.onModeOfPaymentChange(
+                        value,
+                        sectionIndex
+                      );
+                      pettyCashVoucherFormMethods?.onModeOfPaymentChange(
                         value,
                         sectionIndex
                       );

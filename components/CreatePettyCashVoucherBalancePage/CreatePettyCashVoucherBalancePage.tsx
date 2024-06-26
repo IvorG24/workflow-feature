@@ -1,5 +1,8 @@
-import { getProjectSignerWithTeamMember } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
+import { getRequestFieldResponse } from "@/backend/api/get";
+import {
+  createRequest,
+  sendNotificationToCostEngineer,
+} from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -7,11 +10,12 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
+  ConnectedRequestFormProps,
   FormType,
   FormWithResponseType,
-  OptionTableRow,
   RequestResponseTableRow,
 } from "@/utils/types";
 import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
@@ -24,25 +28,30 @@ import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
 
-export type RequestFormValues = {
-  sections: Section[];
-};
-
 export type FieldWithResponseArray = Field & {
   field_response: RequestResponseTableRow[];
 };
 
-type Props = {
-  form: FormType;
-  projectOptions: OptionTableRow[];
+type RequestFormValues = {
+  sections: Section[];
 };
 
-const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
+type Props = {
+  form: FormType;
+  connectedRequest?: ConnectedRequestFormProps;
+};
+
+const CreatePettyCashVoucherBalancePage = ({
+  form,
+  connectedRequest,
+}: Props) => {
   const router = useRouter();
   const formId = router.query.formId as string;
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
+
+  const [requireCostEngineer, setRequireCostEngineer] = useState(false);
 
   const requestorProfile = useUserProfile();
 
@@ -55,65 +64,61 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
     form_team_member: form.form_team_member,
   };
 
-  const requestFormMethods = useForm<RequestFormValues>({ mode: "onChange" });
-  const { handleSubmit, control, setValue } = requestFormMethods;
+  const requestFormMethods = useForm<RequestFormValues>({
+    mode: "onChange",
+  });
+  const { handleSubmit, control } = requestFormMethods;
   const { fields: formSections, replace: replaceSection } = useFieldArray({
     control,
     name: "sections",
   });
 
-  const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-  const [signerList, setSignerList] = useState(
-    form.form_signer.map((signer) => ({
-      ...signer,
-      signer_action: signer.signer_action.toUpperCase(),
-    }))
-  );
+  const signerList = form.form_signer.map((signer) => ({
+    ...signer,
+    signer_action: signer.signer_action.toUpperCase(),
+  }));
 
   const handleCreateRequest = async (data: RequestFormValues) => {
-    if (isFetchingSigner) {
-      notifications.show({
-        message: "Wait until all signers are fetched before submitting.",
-        color: "orange",
-      });
-      return;
-    }
     try {
       if (!requestorProfile) return;
-      if (!teamMember) return;
+      if (!teamMember || !connectedRequest) return;
 
       setIsLoading(true);
-
-      const response = data.sections[0].section_field[0]
-        .field_response as string;
-
-      const projectId = data.sections[0].section_field[0].field_option.find(
-        (option) => option.option_value === response
-      )?.option_id as string;
-
+      const requesterName = `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`;
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: signerList,
         teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+        requesterName,
         formName: form.form_name,
         isFormslyForm: true,
-        projectId,
+        projectId: connectedRequest.request_project_id,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
       });
+
+      const redirectUrl = `/${formatTeamNameToUrlKey(
+        activeTeam.team_name ?? ""
+      )}/requests/${request.request_formsly_id_prefix}-${
+        request.request_formsly_id_serial
+      }`;
+
+      if (requireCostEngineer) {
+        await sendNotificationToCostEngineer(supabaseClient, {
+          projectId: connectedRequest.request_project_id,
+          requesterName,
+          redirectUrl,
+          teamId: teamMember.team_member_team_id,
+        });
+      }
 
       notifications.show({
         message: "Request created.",
         color: "green",
       });
 
-      router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
-          request.request_formsly_id_prefix
-        }-${request.request_formsly_id_serial}`
-      );
+      router.push(redirectUrl);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -124,64 +129,68 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
     }
   };
 
-  const resetSigner = () => {
-    setSignerList(
-      form.form_signer.map((signer) => ({
-        ...signer,
-        signer_action: signer.signer_action.toUpperCase(),
-      }))
-    );
-  };
-
-  const handleProjectNameChange = async (value: string | null) => {
-    try {
-      setIsFetchingSigner(true);
-      if (value) {
-        const projectId = projectOptions.find(
-          (option) => option.option_value === value
-        )?.option_id;
-        if (projectId) {
-          const data = await getProjectSignerWithTeamMember(supabaseClient, {
-            projectId,
-            formId,
-          });
-          if (data.length !== 0) {
-            setSignerList(data as unknown as FormType["form_signer"]);
-          } else {
-            resetSigner();
-          }
-        }
-      } else {
-        resetSigner();
-      }
-    } catch (e) {
-      setValue(`sections.0.section_field.0.field_response`, "");
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingSigner(false);
-    }
-  };
-
   useEffect(() => {
     const fetchOptions = async () => {
       setIsLoading(true);
       try {
         if (!activeTeam.team_id) return;
-        // add project options
-        const sectionWithProjectOptions = {
-          ...form.form_section[0],
-          section_field: [
-            {
-              ...form.form_section[0].section_field[0],
-              field_option: projectOptions,
-            },
-            ...form.form_section[0].section_field.slice(1),
-          ],
-        };
-        replaceSection([sectionWithProjectOptions]);
+        if (!connectedRequest) {
+          router.push(
+            `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+          );
+          return;
+        }
+
+        const requestingDepartmentFieldId =
+          "694465de-8aa9-4361-be52-f8c091c13fde";
+        const chargeToBooleanFieldId = "9cde1e79-646d-4a9f-9e76-3a6494bff6e2";
+
+        const fieldResponseList = await getRequestFieldResponse(
+          supabaseClient,
+          {
+            requestId: connectedRequest.request_id,
+            fieldId: [requestingDepartmentFieldId, chargeToBooleanFieldId],
+          }
+        );
+
+        const isPed =
+          safeParse(fieldResponseList[0].request_response) ===
+          "Plants and Equipment";
+
+        const isChargeToProject = safeParse(
+          fieldResponseList[1] ? fieldResponseList[1].request_response : ""
+        );
+
+        setRequireCostEngineer(isPed && isChargeToProject);
+
+        const formSectionList = [
+          {
+            ...form.form_section[0],
+            section_field: [
+              {
+                ...form.form_section[0].section_field[0],
+                field_response: connectedRequest.request_id,
+                field_is_read_only: true,
+              },
+            ],
+          },
+          {
+            ...form.form_section[1],
+          },
+        ];
+
+        if (isPed && isChargeToProject) {
+          formSectionList.push({
+            ...form.form_section[2],
+            section_name: `${form.form_section[2].section_name} - To be filled by Cost Engineer`,
+            section_field: form.form_section[2].section_field.map((field) => ({
+              ...field,
+              field_is_read_only: true,
+              field_response: "TBA",
+            })),
+          });
+        }
+        replaceSection(formSectionList);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -211,9 +220,6 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
                     key={section.section_id}
                     section={section}
                     sectionIndex={idx}
-                    workingAdvanceVoucherFormMethods={{
-                      onProjectNameChange: handleProjectNameChange,
-                    }}
                     formslyFormName={form.form_name}
                   />
                 </Box>
@@ -228,4 +234,4 @@ const CreateWorkingAdvanceRequestPage = ({ form, projectOptions }: Props) => {
   );
 };
 
-export default CreateWorkingAdvanceRequestPage;
+export default CreatePettyCashVoucherBalancePage;

@@ -2655,6 +2655,7 @@ export const getProjectSignerWithTeamMember = async (
   params: {
     projectId: string;
     formId: string;
+    departmentId?: string;
   }
 ) => {
   const { data, error } = await supabaseClient
@@ -6545,28 +6546,6 @@ export const getJiraProjectByTeamProjectName = async (
   };
 };
 
-// Fetch existing BOQ request
-export const getExistingBOQRequest = async (
-  supabaseClient: SupabaseClient<Database>,
-  lrfRequestId: string
-) => {
-  const { data, error } = await supabaseClient
-    .from("request_response_table")
-    .select("request_response, request: request_response_request_id!inner(*)")
-    .eq("request_response", JSON.stringify(lrfRequestId))
-    .in("request.request_status", ["PENDING", "APPROVED"])
-    .maybeSingle();
-
-  if (error) throw error;
-
-  return data
-    ? (data.request as unknown as Pick<
-        RequestTableRow,
-        "request_formsly_id_prefix" | "request_formsly_id_serial"
-      >)
-    : null;
-};
-
 export const getRequestStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: { requestId: string }
@@ -6608,28 +6587,6 @@ export const getJobTitleList = async (
   return { data, count: Number(count) };
 };
 
-// Fetch existing RFP Code request
-export const getExistingRFPCodeRequest = async (
-  supabaseClient: SupabaseClient<Database>,
-  rfpRequestId: string
-) => {
-  const { data, error } = await supabaseClient
-    .from("request_response_table")
-    .select("request_response, request: request_response_request_id!inner(*)")
-    .eq("request_response", JSON.stringify(rfpRequestId))
-    .in("request.request_status", ["PENDING", "APPROVED"])
-    .maybeSingle();
-
-  if (error) throw error;
-
-  return data
-    ? (data.request as unknown as Pick<
-        RequestTableRow,
-        "request_formsly_id_prefix" | "request_formsly_id_serial"
-      >)
-    : null;
-};
-
 export const getRequestFieldResponse = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6646,4 +6603,68 @@ export const getRequestFieldResponse = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getExistingConnectedRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  parentRequestId: string
+) => {
+  const { data, error } = await supabaseClient
+    .from("request_response_table")
+    .select("request_response, request: request_response_request_id!inner(*)")
+    .eq("request_response", JSON.stringify(parentRequestId))
+    .in("request.request_status", ["PENDING", "APPROVED"])
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data
+    ? (data.request as unknown as Pick<
+        RequestTableRow,
+        "request_formsly_id_prefix" | "request_formsly_id_serial"
+      >)
+    : null;
+};
+
+export const getFormDepartmentSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    formId: string;
+    search?: string;
+    page: number;
+    limit: number;
+  }
+) => {
+  const { projectId, formId } = params;
+  const { data, count, error } = await supabaseClient
+    .from("signer_table")
+    .select("*", { count: "exact" })
+    .eq("signer_team_project_id", projectId)
+    .eq("signer_form_id", formId)
+    .eq("signer_is_disabled", false)
+    .not("signer_team_department_id", "is", null);
+
+  if (error) throw error;
+
+  return { data, count: Number(count) };
+};
+
+export const checkIfUserIsRequestOwner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    requestId: string;
+  }
+) => {
+  const { requestId, teamMemberId } = params;
+  const { count, error } = await supabaseClient
+    .from("request_table")
+    .select("*", { count: "exact", head: true })
+    .eq("request_id", requestId)
+    .eq("request_team_member_id", teamMemberId);
+
+  if (error) throw error;
+
+  return Number(count) > 0;
 };
