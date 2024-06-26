@@ -2188,6 +2188,7 @@ export const getCSI = async (
   const { csi, fieldId, divisionIdList } = params;
 
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_level_three_description")
     .ilike("csi_code_level_three_description", `${csi}%`)
@@ -2806,6 +2807,7 @@ export const getCSICodeOptionsForItems = async (
 ) => {
   const { divisionIdList } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .in("csi_code_division_id", divisionIdList);
@@ -2823,6 +2825,7 @@ export const getCSICode = async (
 ) => {
   const { csiCode } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .eq("csi_code_level_three_description", csiCode);
@@ -3984,6 +3987,7 @@ export const getCSIDescriptionOption = async (
 ) => {
   const { divisionId } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .eq("csi_code_division_id", divisionId)
@@ -4073,6 +4077,7 @@ export const getCSICodeOptionsForServices = async (
 ) => {
   const { description } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .eq("csi_code_division_description", description);
@@ -4484,6 +4489,7 @@ export const getCSIDescriptionOptionBasedOnDivisionId = async (
 ) => {
   const { divisionId } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_level_three_description, csi_code_division_id")
     .in("csi_code_division_id", divisionId)
@@ -4501,6 +4507,7 @@ export const getLevelThreeDescription = async (
 ) => {
   const { levelThreeDescription } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .eq("csi_code_level_three_description", levelThreeDescription)
@@ -4556,7 +4563,10 @@ export const getQueryData = async (
 export const getQueryList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
-  const { data, error } = await supabaseClient.from("query_table").select("*");
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("query_table")
+    .select("*");
   if (error) throw error;
   return data;
 };
@@ -4730,6 +4740,7 @@ export const checkCSICodeDescriptionExists = async (
 ) => {
   const { csiCodeDescription } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_level_three_description")
     .ilike("csi_code_level_three_description", csiCodeDescription)
@@ -5240,6 +5251,7 @@ export const getCSICodeOptions = async (
 ) => {
   const { index, limit, divisionIdList } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_id, csi_code_level_three_description")
     .order("csi_code_level_three_description")
@@ -5793,6 +5805,7 @@ export const getOtherExpensesCSIDescriptionOptions = async (
 ) => {
   const { index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_id, csi_code_level_three_description")
     .eq("csi_code_division_id", "01")
@@ -6247,6 +6260,7 @@ export const getCsiTableSpecialFieldOption = async (
   const { search, fieldId } = params;
 
   let query = supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_id, csi_code_section");
 
@@ -6297,6 +6311,7 @@ export const fetchFormslyLatestPrice = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("formsly_price_table")
     .select("formsly_price")
     .order("formsly_price_date_created", { ascending: false })
@@ -6384,6 +6399,7 @@ export const getEmployeePositionOptions = async (
 ) => {
   const { index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .select("employee_job_title_id, employee_job_title_label")
     .eq("employee_job_title_is_disabled", false)
@@ -6406,6 +6422,7 @@ export const getEmployeeOptions = async (
 ) => {
   const { index, limit, search } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("scic_employee_table")
     .select("scic_employee_id, scic_employee_hris_id_number")
     .ilike("scic_employee_hris_id_number", `%${search}%`)
@@ -6426,6 +6443,7 @@ export const getEmployeeName = async (
 ) => {
   const { employeeId } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("scic_employee_table")
     .select("*")
     .eq("scic_employee_hris_id_number", employeeId)
@@ -6574,6 +6592,7 @@ export const getJobTitleList = async (
 ) => {
   const { from, to, search } = params;
   let query = supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .select("*", { count: "exact" })
     .order("employee_job_title_label")

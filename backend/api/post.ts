@@ -1925,6 +1925,7 @@ export const createJobTitle = async (
 ) => {
   // check if duplicate
   const { count, error: duplicateError } = await supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .select("employee_job_title_id", { count: "exact" })
     .eq("employee_job_title_label", params.employee_job_title_label);
@@ -1936,6 +1937,7 @@ export const createJobTitle = async (
   }
 
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .insert(params)
     .select("*");

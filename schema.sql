@@ -36,12 +36,20 @@ DROP SCHEMA IF EXISTS user_schema CASCADE;
 DROP SCHEMA IF EXISTS history_schema CASCADE;
 DROP SCHEMA IF EXISTS service_schema CASCADE;
 DROP SCHEMA IF EXISTS unit_of_measurement_schema CASCADE;
+DROP SCHEMA IF EXISTS item_schema CASCADE;
+DROP SCHEMA IF EXISTS other_expenses_schema CASCADE;
+DROP SCHEMA IF EXISTS equipment_schema CASCADE;
+DROP SCHEMA IF EXISTS lookup_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
 CREATE SCHEMA history_schema AUTHORIZATION postgres;
 CREATE SCHEMA service_schema AUTHORIZATION postgres;
 CREATE SCHEMA unit_of_measurement_schema AUTHORIZATION postgres;
+CREATE SCHEMA item_schema AUTHORIZATION postgres;
+CREATE SCHEMA other_expenses_schema AUTHORIZATION postgres;
+CREATE SCHEMA equipment_schema AUTHORIZATION postgres;
+CREATE SCHEMA lookup_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
 
@@ -664,7 +672,7 @@ CREATE TABLE jira_organization_team_project_table (
   jira_organization_team_project_organization_id UUID REFERENCES jira_organization_table(jira_organization_id) NOT NULL
 );
 
-CREATE TABLE currency_table (
+CREATE TABLE lookup_schema.currency_table (
   currency_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   currency_entity VARCHAR(4000) NOT NULL,
   currency_label VARCHAR(4000) NOT NULL,
@@ -672,20 +680,20 @@ CREATE TABLE currency_table (
   currency_numeric_code VARCHAR(10) NOT NULL
 );
 
-CREATE TABLE query_table (
+CREATE TABLE lookup_schema.query_table (
   query_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   query_name VARCHAR(4000) UNIQUE NOT NULL,
   query_sql VARCHAR(4000) NOT NULL
 );
 
-CREATE TABLE employee_job_title_table (
+CREATE TABLE lookup_schema.employee_job_title_table (
   employee_job_title_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   employee_job_title_label VARCHAR(4000) NOT NULL,
   employee_job_title_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   employee_job_title_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
 );
 
-CREATE TABLE scic_employee_table (
+CREATE TABLE lookup_schema.scic_employee_table (
   scic_employee_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   scic_employee_hris_id_number VARCHAR(4000) NOT NULL,
   scic_employee_first_name VARCHAR(4000) NOT NULL,
@@ -695,7 +703,7 @@ CREATE TABLE scic_employee_table (
   scic_employee_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE csi_code_table (
+CREATE TABLE lookup_schema.csi_code_table (
   csi_code_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   csi_code_section VARCHAR(4000) NOT NULL,
   csi_code_division_id VARCHAR(4000) NOT NULL,
@@ -708,7 +716,7 @@ CREATE TABLE csi_code_table (
   csi_code_level_three_description VARCHAR(4000) NOT NULL
 );
 
-CREATE TABLE formsly_price_table (
+CREATE TABLE lookup_schema.formsly_price_table (
   formsly_price_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   formsly_price_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   formsly_price INT NOT NULL
@@ -4217,7 +4225,7 @@ RETURNS JSON as $$
                     break;
 
                 case "ff007180-4367-4cf2-b259-7804867615a7":
-                    const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM csi_code_table LIMIT 1000`); 
+                    const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM lookup_schema.csi_code_table LIMIT 1000`); 
                     optionData = csiCodeList.map((item, index) => ({
                         option_id: item.csi_code_id,
                         option_value: item.csi_code_section,
@@ -4511,7 +4519,7 @@ RETURNS JSON as $$
             SELECT 
                 csi_code_id,
                 csi_code_level_three_description
-            FROM csi_code_table
+            FROM lookup_schema.csi_code_table
             WHERE csi_code_division_id = '01'
             ORDER BY csi_code_level_three_description
           `
@@ -5856,7 +5864,7 @@ RETURNS JSON AS $$
       const itemOptions = itemList.map((option)=> option.item_general_name);
 
       const csiCodeDescriptionList = plv8.execute(`
-        SELECT * FROM csi_code_table 
+        SELECT * FROM lookup_schema.csi_code_table 
         ORDER BY csi_code_level_three_description ASC;
       `);
       const csiCodeDescriptionOptions = csiCodeDescriptionList.map((option)=> option.csi_code_level_three_description);
@@ -6120,14 +6128,14 @@ RETURNS JSON AS $$
 
     const csiCodeDivisionIdExists = plv8.execute(`
       SELECT *
-      FROM csi_code_table
+      FROM lookup_schema.csi_code_table
       WHERE 
         csi_code_division_id = '${csi_code_division_id}';
     `)[0];
     
     const csiCodeLevelTwoMajorGroupIdExists = plv8.execute(`
       SELECT *
-      FROM csi_code_table
+      FROM lookup_schema.csi_code_table
       WHERE 
         csi_code_division_id = '${csi_code_division_id}'
         AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}';
@@ -6135,7 +6143,7 @@ RETURNS JSON AS $$
     
     const csiCodeLevelTwoMinorGroupIdExists = plv8.execute(`
       SELECT *
-      FROM csi_code_table
+      FROM lookup_schema.csi_code_table
       WHERE 
         csi_code_division_id = '${csi_code_division_id}'
         AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
@@ -6144,7 +6152,7 @@ RETURNS JSON AS $$
     
     const csiCodeLevelThreeIdExists = plv8.execute(`
       SELECT *
-      FROM csi_code_table
+      FROM lookup_schema.csi_code_table
       WHERE 
         csi_code_division_id = '${csi_code_division_id}'
         AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
@@ -8363,7 +8371,7 @@ RETURNS JSON AS $$
       queryId
     } = input_data;
     
-    const selectedQuery = plv8.execute(`SELECT * FROM query_table WHERE query_id='${queryId}';`)[0];
+    const selectedQuery = plv8.execute(`SELECT * FROM lookup_schema.query_table WHERE query_id='${queryId}';`)[0];
 
     const fetchedData = plv8.execute(selectedQuery.query_sql);
     
@@ -8611,7 +8619,7 @@ RETURNS JSON AS $$
 
     const referrence = plv8.execute(`
       SELECT *
-      FROM csi_code_table
+      FROM lookup_schema.csi_code_table
       WHERE 
         csi_code_division_id = '${csi_code_division_id}'
         AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
@@ -8620,7 +8628,7 @@ RETURNS JSON AS $$
 
     if(referrence){
     const csi = plv8.execute(`
-      INSERT INTO csi_code_table (csi_code_section, csi_code_division_id, csi_code_division_description, csi_code_level_two_major_group_id,csi_code_level_two_major_group_description, csi_code_level_two_minor_group_id, csi_code_level_two_minor_group_description, csi_code_level_three_id, csi_code_level_three_description) 
+      INSERT INTO lookup_schema.csi_code_table (csi_code_section, csi_code_division_id, csi_code_division_description, csi_code_level_two_major_group_id,csi_code_level_two_major_group_description, csi_code_level_two_minor_group_id, csi_code_level_two_minor_group_description, csi_code_level_three_id, csi_code_level_three_description) 
       VALUES ('${csiCode}','${csi_code_division_id}','${referrence.csi_code_division_description}','${csi_code_level_two_major_group_id}','${referrence.csi_code_level_two_major_group_description}','${csi_code_level_two_minor_group_id}','${referrence.csi_code_level_two_minor_group_description}','${csi_code_level_three_id}','${csiCodeDescription}') 
       RETURNING *;
      `)[0];
@@ -8692,66 +8700,6 @@ RETURNS JSON AS $$
     plv8.execute(`DELETE FROM ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
     plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
     
- });
- return returnData;
-$$ LANGUAGE plv8;
-
-CREATE OR REPLACE FUNCTION check_custom_csi_validity(
-  input_data JSON
-)
-RETURNS JSON AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      csiCode
-    } = input_data;
-    
-    const csiCodeArray = csiCode.split(" ");
-    const csi_code_division_id = csiCodeArray[0];
-    const csi_code_level_two_major_group_id = csiCodeArray[1][0];
-    const csi_code_level_two_minor_group_id = csiCodeArray[1][1];
-    const csi_code_level_three_id = csiCodeArray[2];
-
-    const csiCodeDivisionIdExists = plv8.execute(`
-      SELECT *
-      FROM csi_code_table
-      WHERE 
-        csi_code_division_id = '${csi_code_division_id}';
-    `)[0];
-    
-    const csiCodeLevelTwoMajorGroupIdExists = plv8.execute(`
-      SELECT *
-      FROM csi_code_table
-      WHERE 
-        csi_code_division_id = '${csi_code_division_id}'
-        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}';
-    `)[0];
-    
-    const csiCodeLevelTwoMinorGroupIdExists = plv8.execute(`
-      SELECT *
-      FROM csi_code_table
-      WHERE 
-        csi_code_division_id = '${csi_code_division_id}'
-        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
-        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}';
-    `)[0];
-    
-    const csiCodeLevelThreeIdExists = plv8.execute(`
-      SELECT *
-      FROM csi_code_table
-      WHERE 
-        csi_code_division_id = '${csi_code_division_id}'
-        AND csi_code_level_two_major_group_id = '${csi_code_level_two_major_group_id}'
-        AND csi_code_level_two_minor_group_id = '${csi_code_level_two_minor_group_id}'
-        AND csi_code_level_three_id = '${csi_code_level_three_id}';
-    `)[0];
-
-    returnData = {
-      csiCodeDivisionIdExists: Boolean(csiCodeDivisionIdExists),
-      csiCodeLevelTwoMajorGroupIdExists: Boolean(csiCodeLevelTwoMajorGroupIdExists),
-      csiCodeLevelTwoMinorGroupIdExists: Boolean(csiCodeLevelTwoMinorGroupIdExists),
-      csiCodeLevelThreeIdExists: Boolean(csiCodeLevelThreeIdExists),
-    }
  });
  return returnData;
 $$ LANGUAGE plv8;
@@ -9318,7 +9266,7 @@ plv8.subtransaction(function() {
             case "ff007180-4367-4cf2-b259-7804867615a7":
               const csiCodeList = plv8.execute(`
                 SELECT csi_code_id, csi_code_section 
-                FROM csi_code_table LIMIT 1000
+                FROM lookup_schema.csi_code_table LIMIT 1000
               `);
               requestOptionData = csiCodeList.map((item, index) => ({
                 option_id: item.csi_code_id,
@@ -9591,7 +9539,7 @@ RETURNS JSON as $$
                   csi_code_level_three_description
                 FROM item_schema.item_table
                 LEFT JOIN item_schema.item_division_table ON item_division_item_id = item_id
-                LEFT JOIN csi_code_table ON csi_code_division_id = item_division_value
+                LEFT JOIN lookup_schema.csi_code_table ON csi_code_division_id = item_division_value
                 WHERE
                   item_general_name = '${section.itemName}'
                   AND item_is_disabled = false
@@ -9667,7 +9615,7 @@ RETURNS JSON as $$
               SELECT
                 csi_code_id,
                 csi_code_level_three_description
-              FROM csi_code_table
+              FROM lookup_schema.csi_code_table
               WHERE
                 csi_code_division_description = '${section.csiDivision}'
             `
@@ -10233,7 +10181,7 @@ RETURNS JSON AS $$
       `
     );
 
-    const price = plv8.execute(`SELECT formsly_price FROM formsly_price_table ORDER BY formsly_price_date_created DESC LIMIT 1`)[0].formsly_price;
+    const price = plv8.execute(`SELECT formsly_price FROM lookup_schema.formsly_price_table ORDER BY formsly_price_date_created DESC LIMIT 1`)[0].formsly_price;
 
     if (latestTransaction.length) {
       expirationDate =
@@ -12285,9 +12233,9 @@ ALTER TABLE item_schema.item_level_three_description_table  ENABLE ROW LEVEL SEC
 ALTER TABLE memo_format_section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE query_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lookup_schema.query_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_sla_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE csi_code_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lookup_schema.csi_code_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_field_table ENABLE ROW LEVEL SECURITY;
@@ -12314,8 +12262,8 @@ ALTER TABLE jira_item_user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_department_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_organization_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE employee_job_title_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE scic_employee_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lookup_schema.employee_job_title_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lookup_schema.scic_employee_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -12544,15 +12492,15 @@ DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_section_table;
 DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_subsection_table;
 DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_attachment_table;
 
-DROP POLICY IF EXISTS "Allow READ for anon users" ON query_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.query_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON form_sla_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON form_sla_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON form_sla_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON csi_code_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON csi_code_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON csi_code_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON lookup_schema.csi_code_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON lookup_schema.csi_code_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON lookup_schema.csi_code_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_category_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_category_table;
@@ -12650,10 +12598,10 @@ DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
 
-DROP POLICY IF EXISTS "Allow READ for anon users" ON employee_job_title_table;
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON employee_job_title_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON employee_job_title_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON scic_employee_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.employee_job_title_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.scic_employee_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -14601,7 +14549,7 @@ WITH CHECK (true);
 
 --- QUERY_TABLE
 
-CREATE POLICY "Allow READ for anon users" ON "public"."query_table"
+CREATE POLICY "Allow READ for anon users" ON "lookup_schema"."query_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
@@ -14624,16 +14572,16 @@ WITH CHECK (true);
 
 --- CSI_CODE_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."csi_code_table"
+CREATE POLICY "Allow CREATE access for all users" ON "lookup_schema"."csi_code_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."csi_code_table"
+CREATE POLICY "Allow READ access for anon users" ON "lookup_schema"."csi_code_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."csi_code_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "lookup_schema"."csi_code_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
@@ -15387,12 +15335,12 @@ USING (
 );
 
 -- employee_job_title_table
-CREATE POLICY "Allow READ for anon users" ON "public"."employee_job_title_table"
+CREATE POLICY "Allow READ for anon users" ON "lookup_schema"."employee_job_title_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" 
-ON "public"."employee_job_title_table"
+ON "lookup_schema"."employee_job_title_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15405,7 +15353,7 @@ WITH CHECK (
 );
 
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" 
-ON "public"."employee_job_title_table"
+ON "lookup_schema"."employee_job_title_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15419,7 +15367,7 @@ USING (
 
 
 -- scic_employee_table
-CREATE POLICY "Allow READ for anon users" ON "public"."scic_employee_table"
+CREATE POLICY "Allow READ for anon users" ON "lookup_schema"."scic_employee_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
@@ -15435,7 +15383,7 @@ CREATE INDEX request_response_idx ON request_response_table (request_response_re
 
 ---------- START: VIEWS
 
-CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description from csi_code_table;
+CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description FROM lookup_schema.csi_code_table;
 CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_table;
 CREATE VIEW equipment_schema.equipment_description_view AS 
 SELECT 
@@ -15491,5 +15439,25 @@ GRANT ALL ON ALL TABLES IN SCHEMA unit_of_measurement_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA unit_of_measurement_schema TO POSTGRES;
 GRANT ALL ON SCHEMA unit_of_measurement_schema TO postgres;
 GRANT ALL ON SCHEMA unit_of_measurement_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA item_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA item_schema TO POSTGRES;
+GRANT ALL ON SCHEMA item_schema TO postgres;
+GRANT ALL ON SCHEMA item_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA other_expenses_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA other_expenses_schema TO POSTGRES;
+GRANT ALL ON SCHEMA other_expenses_schema TO postgres;
+GRANT ALL ON SCHEMA other_expenses_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA equipment_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA equipment_schema TO POSTGRES;
+GRANT ALL ON SCHEMA equipment_schema TO postgres;
+GRANT ALL ON SCHEMA equipment_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA lookup_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA lookup_schema TO POSTGRES;
+GRANT ALL ON SCHEMA lookup_schema TO postgres;
+GRANT ALL ON SCHEMA lookup_schema TO public;
 
 ----- END: PRIVILEGES

@@ -14,6 +14,7 @@ export default async function handler(
     const supabase = createPagesServerClient<Database>({ req, res });
 
     const { data, error } = await supabase
+      .schema("lookup_schema")
       .from("employee_job_title_table")
       .select("*");
 

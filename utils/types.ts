@@ -165,11 +165,11 @@ export type TeamProjectTableUpdate =
   Database["public"]["Tables"]["team_project_table"]["Update"];
 
 export type CSICodeTableRow =
-  Database["public"]["Tables"]["csi_code_table"]["Row"];
+  Database["lookup_schema"]["Tables"]["csi_code_table"]["Row"];
 export type CSICodeTableInsert =
-  Database["public"]["Tables"]["csi_code_table"]["Insert"];
+  Database["lookup_schema"]["Tables"]["csi_code_table"]["Insert"];
 export type CSICodeTableUpdate =
-  Database["public"]["Tables"]["csi_code_table"]["Update"];
+  Database["lookup_schema"]["Tables"]["csi_code_table"]["Update"];
 
 export type ServiceTableRow =
   Database["service_schema"]["Tables"]["service_table"]["Row"];
@@ -346,7 +346,8 @@ export type MemoFormatAttachmentTableInsert =
 export type MemoFormatAttachmentTableUpdate =
   Database["public"]["Tables"]["memo_format_attachment_table"]["Update"];
 
-export type QueryTableRow = Database["public"]["Tables"]["query_table"]["Row"];
+export type QueryTableRow =
+  Database["lookup_schema"]["Tables"]["query_table"]["Row"];
 
 export type FormSLATableRow =
   Database["public"]["Tables"]["form_sla_table"]["Row"];
@@ -478,21 +479,21 @@ export type SpecialFieldTemplateTableUpdate =
   Database["public"]["Tables"]["special_field_template_table"]["Update"];
 
 export type SCICEmployeeTableRow =
-  Database["public"]["Tables"]["scic_employee_table"]["Row"];
+  Database["lookup_schema"]["Tables"]["scic_employee_table"]["Row"];
 export type SCICEmployeeTableInsert =
-  Database["public"]["Tables"]["scic_employee_table"]["Insert"];
+  Database["lookup_schema"]["Tables"]["scic_employee_table"]["Insert"];
 export type SCICEmployeeTableUpdate =
-  Database["public"]["Tables"]["scic_employee_table"]["Update"];
+  Database["lookup_schema"]["Tables"]["scic_employee_table"]["Update"];
 
 export type TransactionTableRow =
   OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 
 export type JobTitleTableRow =
-  Database["public"]["Tables"]["employee_job_title_table"]["Row"];
+  Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Row"];
 export type JobTitleTableInsert =
-  Database["public"]["Tables"]["employee_job_title_table"]["Insert"];
+  Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Insert"];
 export type JobTitleTableUpdate =
-  Database["public"]["Tables"]["employee_job_title_table"]["Update"];
+  Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Update"];
 
 // End: Database Table Types
 
