@@ -49,10 +49,10 @@ import {
   ItemWithDescriptionAndField,
   ItemWithDescriptionType,
   JiraFormslyItemCategoryWithUserDataType,
+  JiraFormslyProjectType,
   JiraItemCategoryDataType,
   JiraOrganizationTableRow,
   JiraProjectDataType,
-  JiraProjectTableRow,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -5385,6 +5385,7 @@ export const getJiraProjectList = async (
 ) => {
   const { from, to, search } = params;
   let query = supabaseClient
+    .schema("jira_schema")
     .from("jira_project_table")
     .select("*", { count: "exact" })
     .order("jira_project_jira_label")
@@ -5404,57 +5405,25 @@ export const getJiraFormslyProjectList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamId: string;
-    from: number;
-    to: number;
+    page: number;
+    limit: number;
     search?: string;
   }
 ) => {
-  const { from, to, search, teamId } = params;
-  let query = supabaseClient
-    .from("team_project_table")
-    .select(
-      "team_project_id, team_project_name, assigned_jira_project: jira_formsly_project_table(jira_formsly_project_id, jira_project_id, formsly_project_id), assigned_jira_organization: jira_organization_team_project_table(jira_organization_team_project_id, jira_organization_team_project_project_id, jira_organization_team_project_organization_id)",
-      { count: "exact" }
-    )
-    .eq("team_project_team_id", teamId)
-    .order("team_project_name")
-    .range(from, to);
-
-  if (search) {
-    query = query.ilike("team_project_name", `%${search}%`);
-  }
-
-  const { data, count, error } = await query;
-
+  const { data, error } = await supabaseClient.rpc(
+    "get_jira_formsly_project_list",
+    {
+      input_data: params,
+    }
+  );
   if (error) throw error;
 
-  const formattedData = data.map((item) => {
-    const assignedJiraProject = item.assigned_jira_project
-      ? (item.assigned_jira_project as {
-          jira_formsly_project_id: string;
-          jira_project_id: string;
-          formsly_project_id: string;
-          jira_project: JiraProjectTableRow | null;
-        })
-      : null;
+  const formattedData = data as unknown as {
+    data: JiraFormslyProjectType[];
+    count: number;
+  };
 
-    const assignedOrganization = item.assigned_jira_organization as {
-      jira_organization_team_project_id: string;
-      jira_organization_team_project_project_id: string;
-      jira_organization_team_project_organization_id: string;
-      jira_organization_team_project_organization: JiraOrganizationTableRow | null;
-    }[];
-
-    return {
-      team_project_id: item.team_project_id,
-      team_project_name: item.team_project_name,
-      assigned_jira_project: assignedJiraProject,
-      assigned_jira_organization: assignedOrganization
-        ? assignedOrganization[0]
-        : null,
-    };
-  });
-  return { data: formattedData, count: Number(count) };
+  return { data: formattedData.data, count: Number(formattedData.count) };
 };
 
 export const getJiraUserAccountList = async (
@@ -5467,6 +5436,7 @@ export const getJiraUserAccountList = async (
 ) => {
   const { from, to, search } = params;
   let query = supabaseClient
+    .schema("jira_schema")
     .from("jira_user_account_table")
     .select("*", {
       count: "exact",
@@ -5499,6 +5469,7 @@ export const getProjectJiraUserAccountList = async (
 ) => {
   const { from, to, search, teamProjectId } = params;
   let query = supabaseClient
+    .schema("jira_schema")
     .from("jira_project_user_table")
     .select("*", { count: "exact" })
     .eq("jira_project_user_team_project_id", teamProjectId)
@@ -5527,6 +5498,7 @@ export const getJiraUserRoleList = async (
 ) => {
   const { from, to } = params;
   const query = supabaseClient
+    .schema("jira_schema")
     .from("jira_user_role_table")
     .select("*")
     .order("jira_user_role_label")
@@ -5549,6 +5521,7 @@ export const getJiraItemCategoryList = async (
 ) => {
   const { from, to, search } = params;
   let query = supabaseClient
+    .schema("jira_schema")
     .from("jira_item_category_table")
     .select(
       "*, assigned_jira_user: jira_item_user_table(jira_item_user_id, jira_item_user_account_id(jira_user_account_jira_id, jira_user_account_display_name, jira_user_account_id), jira_item_user_role_id(jira_user_role_id, jira_user_role_label))",
@@ -6116,6 +6089,7 @@ export const getJiraOrganizationList = async (
 ) => {
   const { from, to, search } = params;
   let query = supabaseClient
+    .schema("jira_schema")
     .from("jira_organization_table")
     .select("*", {
       count: "exact",
@@ -6526,6 +6500,7 @@ export const getJiraProjectByTeamProjectName = async (
   }
 ) => {
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_formsly_project_table")
     .select(
       "jira_project_id!inner(jira_project_jira_id, jira_project_jira_label), formsly_project_id!inner(team_project_name)"

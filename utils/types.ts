@@ -402,53 +402,53 @@ export type RequestViewTableRow =
   Database["public"]["Views"]["request_view"]["Row"];
 
 export type JiraProjectTableRow =
-  Database["public"]["Tables"]["jira_project_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_project_table"]["Row"];
 export type JiraProjectTableInsert =
-  Database["public"]["Tables"]["jira_project_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_project_table"]["Insert"];
 export type JiraProjectTableUpdate =
-  Database["public"]["Tables"]["jira_project_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_project_table"]["Update"];
 
 export type JiraFormslyProjectTableRow =
-  Database["public"]["Tables"]["jira_formsly_project_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_formsly_project_table"]["Row"];
 export type JiraFormslyProjectTableInsert =
-  Database["public"]["Tables"]["jira_formsly_project_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_formsly_project_table"]["Insert"];
 export type JiraFormslyProjectTableUpdate =
-  Database["public"]["Tables"]["jira_formsly_project_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_formsly_project_table"]["Update"];
 
 export type JiraUserAccountTableRow =
-  Database["public"]["Tables"]["jira_user_account_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_user_account_table"]["Row"];
 export type JiraUserAccountTableInsert =
-  Database["public"]["Tables"]["jira_user_account_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_user_account_table"]["Insert"];
 export type JiraUserAccountTableUpdate =
-  Database["public"]["Tables"]["jira_user_account_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_user_account_table"]["Update"];
 
 export type JiraUserRoleTableRow =
-  Database["public"]["Tables"]["jira_user_role_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_user_role_table"]["Row"];
 export type JiraUserRoleTableInsert =
-  Database["public"]["Tables"]["jira_user_role_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_user_role_table"]["Insert"];
 export type JiraUserRoleTableUpdate =
-  Database["public"]["Tables"]["jira_user_role_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_user_role_table"]["Update"];
 
 export type JiraProjectUserTableRow =
-  Database["public"]["Tables"]["jira_project_user_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_project_user_table"]["Row"];
 export type JiraProjectUserTableInsert =
-  Database["public"]["Tables"]["jira_project_user_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_project_user_table"]["Insert"];
 export type JiraProjectUserTableUpdate =
-  Database["public"]["Tables"]["jira_project_user_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_project_user_table"]["Update"];
 
 export type JiraItemCategoryTableRow =
-  Database["public"]["Tables"]["jira_item_category_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_item_category_table"]["Row"];
 export type JiraItemCategoryTableInsert =
-  Database["public"]["Tables"]["jira_item_category_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_item_category_table"]["Insert"];
 export type JiraItemCategoryTableUpdate =
-  Database["public"]["Tables"]["jira_item_category_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_item_category_table"]["Update"];
 
 export type JiraItemCategoryUserTableRow =
-  Database["public"]["Tables"]["jira_item_user_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_item_user_table"]["Row"];
 export type JiraItemCategoryUserTableInsert =
-  Database["public"]["Tables"]["jira_item_user_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_item_user_table"]["Insert"];
 export type JiraItemCategoryUserTableUpdate =
-  Database["public"]["Tables"]["jira_item_user_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_item_user_table"]["Update"];
 
 export type ItemCategoryTableRow =
   Database["item_schema"]["Tables"]["item_category_table"]["Row"];
@@ -458,18 +458,18 @@ export type ItemCategoryTableUpdate =
   Database["item_schema"]["Tables"]["item_category_table"]["Update"];
 
 export type JiraOrganizationTableRow =
-  Database["public"]["Tables"]["jira_organization_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_organization_table"]["Row"];
 export type JiraOrganizationTableInsert =
-  Database["public"]["Tables"]["jira_organization_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_organization_table"]["Insert"];
 export type JiraOrganizationTableUpdate =
-  Database["public"]["Tables"]["jira_organization_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_organization_table"]["Update"];
 
 export type JiraOrganizationTeamProjectTableRow =
-  Database["public"]["Tables"]["jira_organization_team_project_table"]["Row"];
+  Database["jira_schema"]["Tables"]["jira_organization_team_project_table"]["Row"];
 export type JiraOrganizationTeamProjectTableInsert =
-  Database["public"]["Tables"]["jira_organization_team_project_table"]["Insert"];
+  Database["jira_schema"]["Tables"]["jira_organization_team_project_table"]["Insert"];
 export type JiraOrganizationTeamProjectTableUpdate =
-  Database["public"]["Tables"]["jira_organization_team_project_table"]["Update"];
+  Database["jira_schema"]["Tables"]["jira_organization_team_project_table"]["Update"];
 
 export type SpecialFieldTemplateTableRow =
   Database["public"]["Tables"]["special_field_template_table"]["Row"];

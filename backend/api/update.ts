@@ -990,6 +990,7 @@ export const updateJiraItemCategory = async (
   if (!params.jira_item_category_id) throw new Error();
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_item_category_table")
     .update(params)
     .eq("jira_item_category_id", params.jira_item_category_id)
@@ -1033,6 +1034,7 @@ export const updateJiraProject = async (
 ) => {
   if (!params.jira_project_id) throw new Error();
   const { error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_project_table")
     .update(params)
     .eq("jira_project_id", params.jira_project_id);
@@ -1049,6 +1051,7 @@ export const updateJiraUser = async (
 ) => {
   if (!params.jira_user_account_id) throw new Error();
   const { error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_user_account_table")
     .update(params)
     .eq("jira_user_account_id", params.jira_user_account_id);
@@ -1086,6 +1089,7 @@ export const updateJiraFormslyProject = async (
   const { formslyProjectId, jiraProjectId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_formsly_project_table")
     .update({ jira_project_id: jiraProjectId })
     .eq("formsly_project_id", formslyProjectId)
@@ -1103,6 +1107,7 @@ export const updateJiraOrganization = async (
 ) => {
   if (!params.jira_organization_id) throw new Error();
   const { error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_organization_table")
     .update(params)
     .eq("jira_organization_id", params.jira_organization_id);
@@ -1124,6 +1129,7 @@ export const updateJiraFormslyOrganization = async (
 
   if (!jiraOrganizationId) {
     const { error } = await supabaseClient
+      .schema("jira_schema")
       .from("jira_organization_team_project_table")
       .delete()
       .eq("jira_organization_team_project_project_id", formslyProjectId);
@@ -1134,6 +1140,7 @@ export const updateJiraFormslyOrganization = async (
   }
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_organization_team_project_table")
     .update({
       jira_organization_team_project_organization_id: jiraOrganizationId,

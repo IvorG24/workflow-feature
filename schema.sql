@@ -40,6 +40,7 @@ DROP SCHEMA IF EXISTS item_schema CASCADE;
 DROP SCHEMA IF EXISTS other_expenses_schema CASCADE;
 DROP SCHEMA IF EXISTS equipment_schema CASCADE;
 DROP SCHEMA IF EXISTS lookup_schema CASCADE;
+DROP SCHEMA IF EXISTS jira_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
@@ -50,6 +51,7 @@ CREATE SCHEMA item_schema AUTHORIZATION postgres;
 CREATE SCHEMA other_expenses_schema AUTHORIZATION postgres;
 CREATE SCHEMA equipment_schema AUTHORIZATION postgres;
 CREATE SCHEMA lookup_schema AUTHORIZATION postgres;
+CREATE SCHEMA jira_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
 
@@ -612,26 +614,26 @@ CREATE TABLE item_schema.item_level_three_description_table (
   item_level_three_description_item_id UUID REFERENCES item_schema.item_table(item_id)
 );
 
-CREATE TABLE jira_project_table (
+CREATE TABLE jira_schema.jira_project_table (
   jira_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_project_jira_id VARCHAR(4000) NOT NULL,
   jira_project_jira_label VARCHAR(4000) NOT NULL
 );
 
-CREATE TABLE jira_formsly_project_table (
+CREATE TABLE jira_schema.jira_formsly_project_table (
   jira_formsly_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  jira_project_id UUID REFERENCES jira_project_table(jira_project_id) NOT NULL,
+  jira_project_id UUID REFERENCES jira_schema.jira_project_table(jira_project_id) NOT NULL,
   formsly_project_id UUID REFERENCES team_project_table(team_project_id) UNIQUE NOT NULL
 );
 
-CREATE TABLE jira_user_role_table (
+CREATE TABLE jira_schema.jira_user_role_table (
   jira_user_role_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_user_role_label VARCHAR(4000) NOT NULL,
   jira_user_role_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   jira_user_role_date_updated TIMESTAMPTZ
 );
 
-CREATE TABLE jira_user_account_table (
+CREATE TABLE jira_schema.jira_user_account_table (
   jira_user_account_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_user_account_jira_id VARCHAR(4000) NOT NULL,
   jira_user_account_email_address VARCHAR(4000) NOT NULL,
@@ -640,37 +642,37 @@ CREATE TABLE jira_user_account_table (
   jira_user_account_date_updated TIMESTAMPTZ
 );
 
-CREATE TABLE jira_project_user_table (
+CREATE TABLE jira_schema.jira_project_user_table (
   jira_project_user_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  jira_project_user_account_id UUID REFERENCES jira_user_account_table(jira_user_account_id) NOT NULL,
+  jira_project_user_account_id UUID REFERENCES jira_schema.jira_user_account_table(jira_user_account_id) NOT NULL,
   jira_project_user_team_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL,
-  jira_project_user_role_id UUID REFERENCES jira_user_role_table(jira_user_role_id) NOT NULL
+  jira_project_user_role_id UUID REFERENCES jira_schema.jira_user_role_table(jira_user_role_id) NOT NULL
 );
 
-CREATE TABLE jira_item_category_table (
+CREATE TABLE jira_schema.jira_item_category_table (
   jira_item_category_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_item_category_jira_id VARCHAR(4000) NOT NULL,
   jira_item_category_jira_label VARCHAR(4000) NOT NULL,
   jira_item_category_formsly_label VARCHAR(4000) NOT NULL
 );
 
-CREATE TABLE jira_item_user_table (
+CREATE TABLE jira_schema.jira_item_user_table (
   jira_item_user_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  jira_item_user_account_id UUID REFERENCES jira_user_account_table(jira_user_account_id) NOT NULL,
-  jira_item_user_item_category_id UUID REFERENCES jira_item_category_table(jira_item_category_id) NOT NULL,
-  jira_item_user_role_id UUID REFERENCES jira_user_role_table(jira_user_role_id) NOT NULL
+  jira_item_user_account_id UUID REFERENCES jira_schema.jira_user_account_table(jira_user_account_id) NOT NULL,
+  jira_item_user_item_category_id UUID REFERENCES jira_schema.jira_item_category_table(jira_item_category_id) NOT NULL,
+  jira_item_user_role_id UUID REFERENCES jira_schema.jira_user_role_table(jira_user_role_id) NOT NULL
 );
 
-CREATE TABLE jira_organization_table (
+CREATE TABLE jira_schema.jira_organization_table (
   jira_organization_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_organization_jira_id VARCHAR(4000) NOT NULL,
   jira_organization_jira_label VARCHAR(4000) NOT NULL
 );
 
-CREATE TABLE jira_organization_team_project_table (
+CREATE TABLE jira_schema.jira_organization_team_project_table (
   jira_organization_team_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_organization_team_project_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL,
-  jira_organization_team_project_organization_id UUID REFERENCES jira_organization_table(jira_organization_id) NOT NULL
+  jira_organization_team_project_organization_id UUID REFERENCES jira_schema.jira_organization_table(jira_organization_id) NOT NULL
 );
 
 CREATE TABLE lookup_schema.currency_table (
@@ -8395,7 +8397,7 @@ RETURNS JSON AS $$
               WHERE item_category_id = '${item.item_category_id}'
             `
           );
-          if (signerData.lenght === 0) {
+          if (signerData.length === 0) {
             itemCategorySignerList.push(null);
           } else {
             const signer = signerData[0];
@@ -8769,7 +8771,7 @@ RETURNS JSON AS $$
       AND item_division_value='${csi_code_division_id}';
     `);
 
-    if(itemDivision.lenght<=0){
+    if(itemDivision.length<=0){
      plv8.execute(`
       INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) 
       VALUES ('${csi_code_division_id}','${item.item_id}') 
@@ -10060,14 +10062,14 @@ RETURNS JSON AS $$
     const projectJiraUserData = plv8.execute(
       `
         SELECT 
-            jpt.jira_project_jira_id,
-            jpt.jira_project_jira_label
+          jpt.jira_project_jira_id,
+          jpt.jira_project_jira_label
         FROM
-            jira_formsly_project_table jfpt
+          jira_schema.jira_formsly_project_table jfpt
         LEFT JOIN
-            jira_project_table jpt ON jpt.jira_project_id = jfpt.jira_project_id
+          jira_schema.jira_project_table jpt ON jpt.jira_project_id = jfpt.jira_project_id
         WHERE
-            formsly_project_id = '${teamProjectId}'
+          formsly_project_id = '${teamProjectId}'
       `
     );
 
@@ -10078,11 +10080,11 @@ RETURNS JSON AS $$
           jua.jira_user_account_display_name,
           jur.jira_user_role_label
         FROM
-          jira_project_user_table jira_project_user_team_project_id
+          jira_schema.jira_project_user_table jira_project_user_team_project_id
         LEFT JOIN
-          jira_user_account_table jua ON jua.jira_user_account_id = jira_project_user_account_id
+          jira_schema.jira_user_account_table jua ON jua.jira_user_account_id = jira_project_user_account_id
         LEFT JOIN
-          jira_user_role_table jur ON jur.jira_user_role_id = jira_project_user_role_id
+          jira_schema.jira_user_role_table jur ON jur.jira_user_role_id = jira_project_user_role_id
         WHERE
           jira_project_user_team_project_id = '${teamProjectId}'
       `
@@ -10104,10 +10106,10 @@ RETURNS JSON AS $$
           jua.jira_user_account_display_name,
           jur.jira_user_role_label
         FROM
-          jira_item_category_table
-        LEFT JOIN jira_item_user_table jiu ON jiu.jira_item_user_item_category_id = jira_item_category_id
-        LEFT JOIN jira_user_account_table jua ON jua.jira_user_account_id = jiu.jira_item_user_account_id
-        LEFT JOIN jira_user_role_table jur ON jur.jira_user_role_id= jiu.jira_item_user_role_id
+          jira_schema.jira_item_category_table
+        LEFT JOIN jira_schema.jira_item_user_table jiu ON jiu.jira_item_user_item_category_id = jira_item_category_id
+        LEFT JOIN jira_schema.jira_user_account_table jua ON jua.jira_user_account_id = jiu.jira_item_user_account_id
+        LEFT JOIN jira_schema.jira_user_role_table jur ON jur.jira_user_role_id= jiu.jira_item_user_role_id
       `
     );
 
@@ -10119,8 +10121,8 @@ RETURNS JSON AS $$
           jira_organization_jira_label,
           jira_organization_team_project_project_id
         FROM
-          jira_organization_team_project_table
-        INNER JOIN jira_organization_table jot ON jot.jira_organization_id = jira_organization_team_project_organization_id
+          jira_schema.jira_organization_team_project_table
+        INNER JOIN jira_schema.jira_organization_table jot ON jot.jira_organization_id = jira_organization_team_project_organization_id
         WHERE
           jira_organization_team_project_project_id = '${teamProjectId}'
       `
@@ -10257,7 +10259,7 @@ RETURNS VOID AS $$
           AND team_transaction_team_id = '${teamId}'
       `
     );
-    if(existingData.lenght) return;
+    if(existingData.length) return;
     
     plv8.execute(`
       INSERT INTO team_transaction_table
@@ -11185,7 +11187,7 @@ plv8.subtransaction(function() {
     );
 
     return {
-      team_group_member_id: teamProjectMember.team_group_member_id,
+      team_project_member_id: teamProjectMember.team_project_member_id,
       team_member: {
         team_member_id: teamProjectMember.team_member_id,
         team_member_date_created: teamProjectMember.team_member_date_created,
@@ -12357,6 +12359,118 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_jira_formsly_project_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    page,
+    limit,
+    search
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let searchCondition = "";
+  if (search) {
+    searchCondition = `AND team_project_name ILIKE '%${search}%'`
+  }
+
+  const teamProjectData = plv8.execute(
+    `
+      SELECT
+        team_project_id,
+        team_project_name
+      FROM team_project_table
+      WHERE
+        team_project_team_id = '${teamId}'
+      ORDER BY team_project_name
+      OFFSET ${start} LIMIT ${limit}
+    `
+  );
+
+  const teamProjectCount = plv8.execute(
+    `
+      SELECT COUNT(team_project_id)
+      FROM team_project_table
+      WHERE
+        team_project_team_id = '${teamId}'
+    `
+  )[0].count;
+
+  const teamProjectWithJiraProjectAndOrganization = teamProjectData.map(teamProject => {
+    const jiraFormslyProjectData = plv8.execute(
+      `
+        SELECT
+          jira_formsly_project_id,
+          jira_project_id,
+          formsly_project_id
+        FROM jira_schema.jira_formsly_project_table
+        WHERE
+          formsly_project_id = '${teamProject.team_project_id}'
+      `
+    );
+
+    let jiraProjectData = [];
+    if(jiraFormslyProjectData.length){
+      jiraProjectData = plv8.execute(
+        `
+          SELECT *
+          FROM jira_schema.jira_project_table
+          WHERE
+            jira_project_id = '${jiraFormslyProjectData[0].jira_project_id}'
+        `
+      );
+    }
+
+    const jiraFormslyOrganizationData = plv8.execute(
+      `
+        SELECT
+          jira_organization_team_project_id,
+          jira_organization_team_project_project_id,
+          jira_organization_team_project_organization_id
+        FROM jira_schema.jira_organization_team_project_table
+        WHERE
+          jira_organization_team_project_project_id = '${teamProject.team_project_id}'
+      `
+    );
+
+    let jiraOrganizationData = [];
+    if(jiraFormslyOrganizationData.length){
+      jiraOrganizationData = plv8.execute(
+        `
+          SELECT *
+          FROM jira_schema.jira_organization_table
+          WHERE
+            jira_organization_id = '${jiraFormslyOrganizationData[0].jira_organization_team_project_organization_id}'
+        `
+      );
+    }
+
+    return {
+      ...teamProject,
+      assigned_jira_project: jiraFormslyProjectData.length ? {
+        ...jiraProjectData,
+        jira_project: jiraProjectData.length ? jiraProjectData[0] : null
+      } : null,
+      assigned_jira_organization: jiraFormslyOrganizationData.length ? {
+        ...jiraFormslyOrganizationData,
+        jira_organization_team_project_organization: jiraOrganizationData.length ? jiraOrganizationData[0] : null
+      } : null
+    }
+  });
+
+  returnData = {
+    data: teamProjectWithJiraProjectAndOrganization,
+    count: Number(teamProjectCount)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES
@@ -12429,16 +12543,16 @@ ALTER TABLE equipment_schema.equipment_general_name_table ENABLE ROW LEVEL SECUR
 ALTER TABLE equipment_schema.equipment_part_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE unit_of_measurement_schema.capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_project_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_schema.jira_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_schema.jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_user_role_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_user_account_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_project_user_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_item_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_item_user_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_schema.jira_user_account_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_schema.jira_project_user_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_schema.jira_item_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_schema.jira_item_user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_department_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_organization_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_schema.jira_organization_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE jira_schema.jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.employee_job_title_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.scic_employee_table ENABLE ROW LEVEL SECURITY;
 
@@ -12756,24 +12870,24 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON address_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON address_table;
 
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_project_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_formsly_project_table;
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_formsly_project_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_formsly_project_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_user_role_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_formsly_project_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_user_role_table;
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_user_account_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_project_user_table;
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_project_user_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_category_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_item_user_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_project_user_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_category_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON team_department_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_organization_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_organization_team_project_table;
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_organization_team_project_table;
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_organization_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_organization_team_project_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.employee_job_title_table;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
@@ -15336,17 +15450,17 @@ TO authenticated
 USING (true);
 
 -- JIRA_PROJECT_TABLE
-CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_project_table"
+CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_project_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
 -- JIRA_FORMSLY_PROJECT_TABLE
-CREATE POLICY "Allow READ for anon users" ON "public"."jira_formsly_project_table"
+CREATE POLICY "Allow READ for anon users" ON "jira_schema"."jira_formsly_project_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_formsly_project_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_formsly_project_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15362,7 +15476,7 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_formsly_project_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_formsly_project_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15379,23 +15493,23 @@ USING (
 );
 
 -- JIRA_USER_ROLE_TABLE
-CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_user_role_table"
+CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_user_role_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
 -- JIRA_USER_ACCOUNT_TABLE
-CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_user_account_table"
+CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_user_account_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
 -- JIRA_PROJECT_USER_TABLE
-CREATE POLICY "Allow READ for anon users" ON "public"."jira_project_user_table"
+CREATE POLICY "Allow READ for anon users" ON "jira_schema"."jira_project_user_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_project_user_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15411,7 +15525,7 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_project_user_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15427,7 +15541,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."jira_project_user_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_project_user_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15444,13 +15558,13 @@ USING (
 );
 
 -- JIRA_ITEM_CATEGORY_TABLE
-CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_item_category_table"
+CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_item_category_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
 -- JIRA_ITEM_USER_TABLE
-CREATE POLICY "Allow CRUD for authenticated users " ON "public"."jira_item_user_table"
+CREATE POLICY "Allow CRUD for authenticated users " ON "jira_schema"."jira_item_user_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
@@ -15461,17 +15575,17 @@ AS PERMISSIVE FOR SELECT
 USING (true);
 
 -- jira_organization_table
-CREATE POLICY "Allow CRUD for authenticated users" ON "public"."jira_organization_table"
+CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_organization_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
 -- jira_organization_team_project_table
-CREATE POLICY "Allow READ for anon users" ON "public"."jira_organization_team_project_table"
+CREATE POLICY "Allow READ for anon users" ON "jira_schema"."jira_organization_team_project_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_organization_team_project_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15487,7 +15601,7 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_organization_team_project_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15503,7 +15617,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."jira_organization_team_project_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_organization_team_project_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15644,5 +15758,10 @@ GRANT ALL ON ALL TABLES IN SCHEMA lookup_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA lookup_schema TO POSTGRES;
 GRANT ALL ON SCHEMA lookup_schema TO postgres;
 GRANT ALL ON SCHEMA lookup_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA jira_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA jira_schema TO POSTGRES;
+GRANT ALL ON SCHEMA jira_schema TO postgres;
+GRANT ALL ON SCHEMA jira_schema TO public;
 
 ----- END: PRIVILEGES
