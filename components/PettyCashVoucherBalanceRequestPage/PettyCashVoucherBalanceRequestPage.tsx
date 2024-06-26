@@ -79,9 +79,10 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
 
   const requestDateCreated = formatDate(new Date(request.request_date_created));
 
-  const originalSectionList = request.request_form.form_section;
-  const sectionWithDuplicateList =
-    generateSectionWithDuplicateList(originalSectionList);
+  const originalSectionList = request.request_form.form_section.slice(0, 2);
+  const [sectionWithDuplicateList, setSectionWithDuplicateList] = useState(
+    generateSectionWithDuplicateList(originalSectionList)
+  );
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
@@ -381,8 +382,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
   useEffect(() => {
     try {
       const costCodeSection = request.request_form.form_section[2];
-
-      if (costCodeSection.section_name) {
+      if (costCodeSection.section_field[0].field_response.length > 0) {
         const isValidBoqCode =
           safeParse(
             costCodeSection.section_field[0].field_response[0].request_response
@@ -393,6 +393,17 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
           ) !== "TBA";
 
         setInvalidCostCode(isValidBoqCode && isValidCostCode);
+        const updatedCostCodeSection = generateSectionWithDuplicateList([
+          costCodeSection,
+        ])[0];
+        setSectionWithDuplicateList((prev) => [
+          ...prev,
+          updatedCostCodeSection,
+        ]);
+      } else {
+        setSectionWithDuplicateList((prev) =>
+          prev.filter((section) => section.section_name !== "Cost Code")
+        );
       }
 
       const fetchComments = async () => {
@@ -404,6 +415,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
 
       fetchComments();
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

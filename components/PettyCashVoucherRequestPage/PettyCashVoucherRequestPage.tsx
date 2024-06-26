@@ -76,7 +76,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   >([]);
 
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
-  const [wavBalanceRequestRedirectUrl, setPCVBalanceRequestRedirectUrl] =
+  const [pcvBalanceRequestRedirectUrl, setPCVBalanceRequestRedirectUrl] =
     useState<string | null>(null);
 
   const { setIsLoading } = useLoadingActions();
@@ -86,19 +86,12 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   const activeTeam = useActiveTeam();
 
   const requestor = request.request_team_member.team_member_user;
-
-  const requestDateCreated = formatDate(new Date(request.request_date_created));
-
-  const originalSectionList = request.request_form.form_section;
-  const [sectionWithDuplicateList, setSectionWithDuplicateList] = useState(
-    generateSectionWithDuplicateList(originalSectionList)
-  );
-
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
+  const requestDateCreated = formatDate(new Date(request.request_date_created));
   const canSignerTakeAction =
     isUserSigner &&
     isUserSigner.request_signer_status === "PENDING" &&
@@ -113,10 +106,15 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
   const isUserAccountant = teamMemberGroupList.includes("ACCOUNTANT");
-  const canCreatePCVBalance = requestStatus === "APPROVED" && isUserAccountant;
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
+
+  const originalSectionList = request.request_form.form_section;
+  const [sectionWithDuplicateList, setSectionWithDuplicateList] = useState(
+    generateSectionWithDuplicateList(originalSectionList)
+  );
+  const [canCreatePCVBalance, setCanCreatePCVBalance] = useState(false);
 
   const handleUpdateRequest = async (
     status: "APPROVED" | "REJECTED",
@@ -293,8 +291,8 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
 
   const handleCreatePCVBalanceRequest = async () => {
     try {
-      if (wavBalanceRequestRedirectUrl) {
-        openRedirectToPCVBalanceRequestModal(wavBalanceRequestRedirectUrl);
+      if (pcvBalanceRequestRedirectUrl) {
+        openRedirectToPCVBalanceRequestModal(pcvBalanceRequestRedirectUrl);
         return;
       }
 
@@ -325,35 +323,40 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
   useEffect(() => {
     try {
       // update sections
+      let updatedRequestSectionList = sectionWithDuplicateList;
       const isChargeToProject =
         request.request_form.form_section[1].section_field.find(
           (field) =>
             field.field_name === "Is this request charged to the project?"
-        )?.field_response[0].request_response;
-
+        )?.field_response[0];
       const salaryDeductionSection = request.request_form.form_section.find(
         (section) =>
           section.section_name === "SCIC Salary Deduction Authorization"
       );
-      const isSalaryDeduction =
-        salaryDeductionSection?.section_field[0]?.field_response[0]
-          .request_response;
 
-      if (isChargeToProject === "false") {
-        const updatedRequestSectionList = sectionWithDuplicateList.filter(
+      const isSalaryDeduction =
+        salaryDeductionSection?.section_field[0]?.field_response[0];
+
+      const isPedAndChargeToProject =
+        isChargeToProject &&
+        isChargeToProject.request_response &&
+        isChargeToProject.request_response === "false";
+
+      if (!isChargeToProject || Boolean(isPedAndChargeToProject)) {
+        updatedRequestSectionList = updatedRequestSectionList.filter(
           (section) => section.section_name !== "Charge to Project Details"
         );
-
-        setSectionWithDuplicateList(updatedRequestSectionList);
       }
 
-      if (isSalaryDeduction === "false") {
-        const updatedRequestSectionList = sectionWithDuplicateList.filter(
+      if (
+        isSalaryDeduction?.request_response &&
+        isSalaryDeduction.request_response === "false"
+      ) {
+        updatedRequestSectionList = updatedRequestSectionList.filter(
           (section) => section.section_name !== "Particular Details"
         );
-
-        setSectionWithDuplicateList(updatedRequestSectionList);
       }
+      setSectionWithDuplicateList(updatedRequestSectionList);
 
       const fetchComments = async () => {
         const data = await getRequestComment(supabaseClient, {
@@ -364,6 +367,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
 
       fetchComments();
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -396,24 +400,33 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
 
   useEffect(() => {
     const fetchPCVBalanceRequest = async () => {
-      const wavBalanceRequest = await getExistingConnectedRequest(
+      const pcvBalanceRequest = await getExistingConnectedRequest(
         supabaseClient,
         request.request_id
       );
-
-      if (wavBalanceRequest) {
+      setCanCreatePCVBalance(
+        requestStatus === "APPROVED" && isUserAccountant && !pcvBalanceRequest
+      );
+      if (pcvBalanceRequest) {
         const { request_formsly_id_prefix, request_formsly_id_serial } =
-          wavBalanceRequest;
-        const redirectUrl = `/${formatTeamNameToUrlKey(
-          activeTeam.team_name
-        )}/requests/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
+          pcvBalanceRequest;
+        const baseUrl = activeTeam.team_name
+          ? `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+          : `/public-request`;
+        const redirectUrl = `${baseUrl}/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
         setPCVBalanceRequestRedirectUrl(redirectUrl);
       }
     };
-    if (requestStatus === "APPROVED" && activeTeam.team_name) {
+    if (requestStatus === "APPROVED") {
       fetchPCVBalanceRequest();
     }
-  }, [requestStatus, activeTeam.team_name]);
+  }, [
+    requestStatus,
+    activeTeam.team_name,
+    supabaseClient,
+    request.request_id,
+    isUserAccountant,
+  ]);
 
   return (
     <Container>
@@ -439,7 +452,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         />
 
         {/* connected PCV Balance request */}
-        {wavBalanceRequestRedirectUrl && (
+        {pcvBalanceRequestRedirectUrl && (
           <Alert variant="light" color="blue">
             <Flex align="center" gap="sm">
               <Group spacing={4}>
@@ -453,7 +466,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
               <Button
                 size="xs"
                 variant="outline"
-                onClick={() => router.push(wavBalanceRequestRedirectUrl)}
+                onClick={() => router.push(pcvBalanceRequestRedirectUrl)}
               >
                 View PCV Balance
               </Button>

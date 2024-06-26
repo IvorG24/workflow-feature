@@ -233,7 +233,7 @@ const EditPettyCashVoucherRequestPage = ({
         (section) => section.section_name === "Charge to Project Details"
       );
 
-      if (isPed) {
+      if (isPed && !pedConditionalFieldExists) {
         updateSection(1, {
           ...requestDetailsSection,
           section_field: [
@@ -267,7 +267,9 @@ const EditPettyCashVoucherRequestPage = ({
   const handleResetRequest = () => {
     unregister(`sections.${0}`);
     replaceSection(initialRequestDetails ? initialRequestDetails.sections : []);
-    handleProjectOrDepartmentNameChange();
+    if (initialRequestDetails) {
+      handleUpdateConditionalSectionAndField(initialRequestDetails.sections);
+    }
   };
 
   const handlePettyCashVoucherBooleanChange = (
@@ -413,7 +415,11 @@ const EditPettyCashVoucherRequestPage = ({
 
   const handleChargeToProjectBooleanChange = (value: boolean) => {
     try {
-      if (value) {
+      const chargeToProjectSectionExists =
+        getValues(`sections`).findIndex(
+          (section) => section.section_name === "Charge to Project Details"
+        ) > 0;
+      if (value && !chargeToProjectSectionExists) {
         const chargeToProjectSection = form.form_section[2];
         const sectionWithProjectOptions = {
           ...chargeToProjectSection,
@@ -573,6 +579,36 @@ const EditPettyCashVoucherRequestPage = ({
     }
   };
 
+  const handleUpdateConditionalSectionAndField = (sections: Section[]) => {
+    handleProjectOrDepartmentNameChange();
+    // update conditional sections and fields
+    const isChargedToProject = sections[1].section_field.find(
+      (field) => field.field_name === "Is this request charged to the project?"
+    )?.field_response;
+
+    handleChargeToProjectBooleanChange(isChargedToProject as boolean);
+
+    const paymentDetailsSectionIndex = sections.findIndex(
+      (section) => section.section_name === "Payment Details"
+    );
+    const modeOfPayment =
+      sections[paymentDetailsSectionIndex].section_field[0].field_response;
+
+    handleModeOfPaymentChange(
+      safeParse(`${modeOfPayment}`),
+      paymentDetailsSectionIndex
+    );
+
+    const scicAuthorizationSectionIndex = sections.findIndex(
+      (section) =>
+        section.section_name === "SCIC Salary Deduction Authorization"
+    );
+    const scicAuthorization =
+      sections[scicAuthorizationSectionIndex].section_field[0].field_response;
+
+    handleSCICAuthorizationBooleanChange(scicAuthorization as boolean);
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
@@ -626,7 +662,7 @@ const EditPettyCashVoucherRequestPage = ({
             };
           });
 
-          if (section.section_order === 1) {
+          if (section.section_name === "Request Details") {
             const isForOfficialBusiness = fieldWithResponseList.find(
               (field) => field.field_name === "Is this for Official Business?"
             )?.field_response;
@@ -658,6 +694,8 @@ const EditPettyCashVoucherRequestPage = ({
 
         replaceSection(formSectionWithResponse);
         setInitialRequestDetails({ sections: formSectionWithResponse });
+
+        handleUpdateConditionalSectionAndField(formSectionWithResponse);
       };
       fetchRequestDetails();
     } catch (e) {

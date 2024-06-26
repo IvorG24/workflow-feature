@@ -1,5 +1,8 @@
 import { getRequestFieldResponse } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
+import {
+  createRequest,
+  sendNotificationToCostEngineer,
+} from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -19,7 +22,7 @@ import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 
 export type Section = FormWithResponseType["form_section"][0];
@@ -47,6 +50,8 @@ const CreatePettyCashVoucherBalancePage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
+
+  const [requireCostEngineer, setRequireCostEngineer] = useState(false);
 
   const requestorProfile = useUserProfile();
 
@@ -79,30 +84,41 @@ const CreatePettyCashVoucherBalancePage = ({
       if (!teamMember || !connectedRequest) return;
 
       setIsLoading(true);
-
+      const requesterName = `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`;
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId,
         teamMemberId: teamMember.team_member_id,
         signers: signerList,
         teamId: teamMember.team_member_team_id,
-        requesterName: `${requestorProfile.user_first_name} ${requestorProfile.user_last_name}`,
+        requesterName,
         formName: form.form_name,
         isFormslyForm: true,
         projectId: connectedRequest.request_project_id,
         teamName: formatTeamNameToUrlKey(activeTeam.team_name ?? ""),
       });
 
+      const redirectUrl = `/${formatTeamNameToUrlKey(
+        activeTeam.team_name ?? ""
+      )}/requests/${request.request_formsly_id_prefix}-${
+        request.request_formsly_id_serial
+      }`;
+
+      if (requireCostEngineer) {
+        await sendNotificationToCostEngineer(supabaseClient, {
+          projectId: connectedRequest.request_project_id,
+          requesterName,
+          redirectUrl,
+          teamId: teamMember.team_member_team_id,
+        });
+      }
+
       notifications.show({
         message: "Request created.",
         color: "green",
       });
 
-      router.push(
-        `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
-          request.request_formsly_id_prefix
-        }-${request.request_formsly_id_serial}`
-      );
+      router.push(redirectUrl);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -142,10 +158,10 @@ const CreatePettyCashVoucherBalancePage = ({
           "Plants and Equipment";
 
         const isChargeToProject = safeParse(
-          fieldResponseList[1].request_response
+          fieldResponseList[1] ? fieldResponseList[1].request_response : ""
         );
 
-        const requiresCostEngineer = isPed && isChargeToProject;
+        setRequireCostEngineer(isPed && isChargeToProject);
 
         const formSectionList = [
           {
@@ -163,7 +179,7 @@ const CreatePettyCashVoucherBalancePage = ({
           },
         ];
 
-        if (requiresCostEngineer) {
+        if (isPed && isChargeToProject) {
           formSectionList.push({
             ...form.form_section[2],
             section_name: `${form.form_section[2].section_name} - To be filled by Cost Engineer`,
@@ -174,7 +190,6 @@ const CreatePettyCashVoucherBalancePage = ({
             })),
           });
         }
-
         replaceSection(formSectionList);
       } catch (e) {
         notifications.show({

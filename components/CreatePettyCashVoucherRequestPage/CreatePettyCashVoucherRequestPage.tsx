@@ -200,23 +200,28 @@ const CreatePettyCashVoucherRequestPage = ({
         (section) => section.section_name === "Charge to Project Details"
       );
 
-      if (isPed) {
-        updateSection(1, {
-          ...requestDetailsSection,
-          section_field: [
-            ...requestDetailsSection.section_field,
-            pedConditionalField,
-          ],
-        });
-      } else if (!isPed && pedConditionalFieldExists) {
-        updateSection(1, {
-          ...requestDetailsSection,
-          section_field: requestDetailsSection.section_field.filter(
-            (field) => field.field_order !== 11
-          ),
-        });
-        if (chargeToProjectSectionIndex) {
-          removeSection(chargeToProjectSectionIndex);
+      if (selectedProject) {
+        if (isPed) {
+          updateSection(1, {
+            ...requestDetailsSection,
+            section_field: [
+              ...requestDetailsSection.section_field,
+              pedConditionalField,
+            ],
+          });
+        } else if (!isPed && Boolean(pedConditionalFieldExists)) {
+          updateSection(1, {
+            ...requestDetailsSection,
+            section_field: requestDetailsSection.section_field.filter(
+              (field) => field.field_order !== 11
+            ),
+          });
+          if (
+            chargeToProjectSectionIndex === 2 &&
+            getValues(`sections.2`).section_name === "Charge to Project Details"
+          ) {
+            removeSection(chargeToProjectSectionIndex);
+          }
         }
       }
     } catch (e) {

@@ -12323,6 +12323,55 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION send_notification_to_project_cost_engineer(
+  input_data JSON
+)
+RETURNS VOID AS $$
+plv8.subtransaction(function() {
+  const {
+    projectId,
+    requesterName,
+    redirectUrl,
+    teamId
+  } = input_data;
+
+  const projectTeamMemberIdList = plv8.execute(`SELECT team_member_id FROM team_project_member_table WHERE team_project_id='${projectId}'`);
+
+  if (projectTeamMemberIdList.length <= 0) throw Error('Team member not found');
+
+  const projectTeamMemberIdListQuery = projectTeamMemberIdList.map((project) => `'${project.team_member_id}'`).join(', ');
+
+  const costEngineerGroupId = plv8.execute(`SELECT team_group_id FROM team_group_table WHERE team_group_name='COST ENGINEER'`)[0].team_group_id;
+
+  const projectCostEngineerList = plv8.execute(`
+    SELECT tgm.team_member_id, tmt.team_member_user_id 
+    FROM team_group_member_table AS tgm 
+    INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id 
+    WHERE tgm.team_member_id IN (${projectTeamMemberIdListQuery}) 
+    AND tgm.team_group_id = '${costEngineerGroupId}'`);
+
+  if (projectCostEngineerList.length <= 0) throw Error('No Cost Engineers found for the project');
+
+  const costEngineerNotificationInput = projectCostEngineerList.map((costEngineer) => ({
+    notification_app: 'REQUEST',
+    notification_content: `${requesterName} requested you to add cost code to his/her request`,
+    notification_redirect_url: redirectUrl,
+    notification_team_id: teamId,
+    notification_type: 'REQUEST',
+    notification_user_id: costEngineer.team_member_user_id
+  }));
+
+  const notificationValues = costEngineerNotificationInput.map((notification) =>
+    `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`).join(",");
+
+  plv8.execute(
+    `INSERT INTO notification_table 
+    (notification_app, notification_content, notification_redirect_url, notification_team_id, notification_type, notification_user_id) 
+    VALUES ${notificationValues};`);
+
+});
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES

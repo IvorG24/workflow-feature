@@ -4020,6 +4020,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      send_notification_to_project_cost_engineer: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: undefined;
+      };
       set_limit: {
         Args: {
           "": number;

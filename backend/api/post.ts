@@ -1970,3 +1970,19 @@ export const createDepartmentSigner = async (
 
   return data;
 };
+
+export const sendNotificationToCostEngineer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    projectId: string;
+    requesterName: string;
+    redirectUrl: string;
+    teamId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "send_notification_to_project_cost_engineer",
+    { input_data: params }
+  );
+  if (error) throw error;
+};

@@ -567,6 +567,7 @@ const RequestFormFields = ({
       case "SWITCH":
         return (
           <Controller
+            defaultValue={false}
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
             render={({ field: { value, onChange } }) => (
