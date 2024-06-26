@@ -317,7 +317,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       let approvedOfficialBusiness = "";
 
       const requestSectionFieldList =
-        wavRequest.request_form.form_section[0].section_field;
+        wavRequest.request_form.form_section[1].section_field;
 
       const department = safeParse(
         requestSectionFieldList[2].field_response[0].request_response
