@@ -1,6 +1,9 @@
 import { getFormDepartmentSigner } from "@/backend/api/get";
 import { createDepartmentSigner } from "@/backend/api/post";
-import { updateDepartmentSigner } from "@/backend/api/update";
+import {
+  removeDepartmentSigner,
+  updateDepartmentSigner,
+} from "@/backend/api/update";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
@@ -13,6 +16,7 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Center,
   Flex,
   Group,
   Paper,
@@ -20,9 +24,15 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconReload, IconSearch, IconSettings } from "@tabler/icons-react";
+import {
+  IconReload,
+  IconSearch,
+  IconSettings,
+  IconTrashFilled,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -97,6 +107,7 @@ const FormDepartmentSignerSection = ({
           return;
         }
       }
+      handleFetchDepartmentSignerList(activePage, "");
       setOpenDepartmentSignerForm(false);
       resetDepartmentSignerForm();
       notifications.show({
@@ -158,6 +169,36 @@ const FormDepartmentSignerSection = ({
       setIsLoading(false);
     }
   };
+
+  const handleRemoveDepartmentSigner = async (signerId: string) =>
+    modals.openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you would like to remove this signer?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      centered: true,
+      onConfirm: async () => {
+        try {
+          await removeDepartmentSigner(supabaseClient, signerId);
+          notifications.show({
+            message: "Successfully removed department signer.",
+            color: "green",
+          });
+          setDepartmentSignerList((prev) =>
+            prev.filter((signer) => signer.signer_id !== signerId)
+          );
+        } catch (error) {
+          notifications.show({
+            message: "Failed to remove department signer.",
+            color: "red",
+          });
+        }
+      },
+      confirmProps: { color: "red" },
+    });
 
   useEffect(() => {
     const fetchDepartmentSignerList = async () => {
@@ -249,6 +290,7 @@ const FormDepartmentSignerSection = ({
           {
             accessor: "signer_id",
             title: "Action",
+            textAlignment: "center",
             render: ({
               signer_id,
               signer_action,
@@ -256,25 +298,36 @@ const FormDepartmentSignerSection = ({
               signer_team_department_id,
               signer_team_member_id,
             }) => (
-              <ActionIcon
-                onClick={() => {
-                  setIsUpdatingDepartmentSigner(true);
-                  setOpenDepartmentSignerForm(true);
-                  setValue("signer_id", signer_id);
-                  setValue(
-                    "signer_team_department_id",
-                    signer_team_department_id
-                  );
-                  setValue("signer_team_member_id", signer_team_member_id);
-                  setValue("signer_action", signer_action.toLocaleUpperCase());
-                  setValue(
-                    "signer_is_primary_signer",
-                    signer_is_primary_signer
-                  );
-                }}
-              >
-                <IconSettings size={16} />
-              </ActionIcon>
+              <Center>
+                <ActionIcon
+                  onClick={() => {
+                    setIsUpdatingDepartmentSigner(true);
+                    setOpenDepartmentSignerForm(true);
+                    setValue("signer_id", signer_id);
+                    setValue(
+                      "signer_team_department_id",
+                      signer_team_department_id
+                    );
+                    setValue("signer_team_member_id", signer_team_member_id);
+                    setValue(
+                      "signer_action",
+                      signer_action.toLocaleUpperCase()
+                    );
+                    setValue(
+                      "signer_is_primary_signer",
+                      signer_is_primary_signer
+                    );
+                  }}
+                >
+                  <IconSettings size={16} />
+                </ActionIcon>
+                <ActionIcon
+                  color="red"
+                  onClick={() => handleRemoveDepartmentSigner(signer_id)}
+                >
+                  <IconTrashFilled size={16} />
+                </ActionIcon>
+              </Center>
             ),
           },
         ]}

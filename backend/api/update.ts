@@ -1217,7 +1217,6 @@ export const updateRequestOtpId = async (
   if (error) throw error;
 };
 
-// update jira project
 export const updateDepartmentSigner = async (
   supabaseClient: SupabaseClient<Database>,
   params: SignerTableUpdate
@@ -1231,4 +1230,15 @@ export const updateDepartmentSigner = async (
   if (error) throw error;
 
   return { success: true, error: null };
+};
+
+export const removeDepartmentSigner = async (
+  supabaseClient: SupabaseClient<Database>,
+  signerId: string
+) => {
+  const { error } = await supabaseClient
+    .from("signer_table")
+    .update({ signer_is_disabled: true })
+    .eq("signer_id", signerId);
+  if (error) throw error;
 };

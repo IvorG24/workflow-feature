@@ -1948,17 +1948,34 @@ export const createDepartmentSigner = async (
   params: SignerTableInsert
 ) => {
   // check if duplicate
-  const { count, error: duplicateError } = await supabaseClient
+  const {
+    data: duplicateData,
+    count,
+    error: duplicateError,
+  } = await supabaseClient
     .from("signer_table")
-    .select("signer_id", { count: "exact", head: true })
+    .select("signer_id, signer_is_disabled", { count: "exact" })
     .eq("signer_team_project_id", `${params.signer_team_project_id}`)
     .eq("signer_team_department_id", `${params.signer_team_department_id}`)
-    .eq("signer_is_primary_signer", Boolean(params.signer_is_primary_signer));
+    .eq("signer_is_primary_signer", Boolean(params.signer_is_primary_signer))
+    .maybeSingle();
 
   if (duplicateError) throw duplicateError;
 
-  if (Number(count)) {
+  if (!duplicateData?.signer_is_disabled && Number(count)) {
     return null;
+  }
+
+  if (duplicateData?.signer_is_disabled) {
+    const { data, error } = await supabaseClient
+      .from("signer_table")
+      .update({ signer_is_disabled: false })
+      .eq("signer_id", duplicateData.signer_id)
+      .select("*");
+
+    if (error) throw error;
+
+    return data;
   }
 
   const { data, error } = await supabaseClient
