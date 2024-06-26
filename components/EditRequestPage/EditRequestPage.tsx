@@ -366,7 +366,10 @@ const EditRequestPage = ({
   // fetch currency option list
   useEffect(() => {
     const fetchCurrencyOptionList = async () => {
-      const { data } = await supabaseClient.from("currency_table").select("*");
+      const { data } = await supabaseClient
+        .schema("lookup_schema")
+        .from("currency_table")
+        .select("*");
       if (!data) return;
       const optionList = data.map((item) => ({
         value: item.currency_alphabetic_code,

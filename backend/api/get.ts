@@ -490,6 +490,7 @@ export const getItemList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select(
       `
@@ -577,7 +578,8 @@ export const getItemList = async (
       return {
         ...data,
         item_division_id_list: data.item_division_table.map(
-          (division) => division.item_division_value
+          (division: { item_division_value: string }) =>
+            division.item_division_value
         ),
         item_level_three_description:
           data.item_level_three_description.length !== 0
@@ -596,6 +598,7 @@ export const getAllItems = async (
 ) => {
   const { teamId, search } = params;
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_general_name")
     .eq("item_team_id", teamId)
@@ -623,6 +626,7 @@ export const getItemDescriptionList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_description_table")
     .select("*", {
       count: "exact",
@@ -663,6 +667,7 @@ export const getItemDescriptionFieldList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_description_field_table")
     .select(
       "*, item_description_field_uom: item_description_field_uom_table(item_description_field_uom)",
@@ -750,6 +755,7 @@ export const checkItemName = async (
   const { itemName, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("*", { count: "exact", head: true })
     .eq("item_general_name", itemName)
@@ -772,6 +778,7 @@ export const checkItemDescription = async (
   const { itemDescription, itemDescriptionUom, descriptionId } = params;
 
   let query = supabaseClient
+    .schema("item_schema")
     .from("item_description_field_table")
     .select(
       `*${
@@ -2181,6 +2188,7 @@ export const getCSI = async (
   const { csi, fieldId, divisionIdList } = params;
 
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_level_three_description")
     .ilike("csi_code_level_three_description", `${csi}%`)
@@ -2800,6 +2808,7 @@ export const getCSICodeOptionsForItems = async (
 ) => {
   const { divisionIdList } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .in("csi_code_division_id", divisionIdList);
@@ -2817,6 +2826,7 @@ export const getCSICode = async (
 ) => {
   const { csiCode } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .eq("csi_code_level_three_description", csiCode);
@@ -3978,6 +3988,7 @@ export const getCSIDescriptionOption = async (
 ) => {
   const { divisionId } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .eq("csi_code_division_id", divisionId)
@@ -4067,6 +4078,7 @@ export const getCSICodeOptionsForServices = async (
 ) => {
   const { description } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .eq("csi_code_division_description", description);
@@ -4478,6 +4490,7 @@ export const getCSIDescriptionOptionBasedOnDivisionId = async (
 ) => {
   const { divisionId } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_level_three_description, csi_code_division_id")
     .in("csi_code_division_id", divisionId)
@@ -4495,6 +4508,7 @@ export const getLevelThreeDescription = async (
 ) => {
   const { levelThreeDescription } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("*")
     .eq("csi_code_level_three_description", levelThreeDescription)
@@ -4550,7 +4564,10 @@ export const getQueryData = async (
 export const getQueryList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
-  const { data, error } = await supabaseClient.from("query_table").select("*");
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("query_table")
+    .select("*");
   if (error) throw error;
   return data;
 };
@@ -4724,6 +4741,7 @@ export const checkCSICodeDescriptionExists = async (
 ) => {
   const { csiCodeDescription } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_level_three_description")
     .ilike("csi_code_level_three_description", csiCodeDescription)
@@ -4742,6 +4760,7 @@ export const checkCSICodeItemExists = async (
 ) => {
   const { divisionId, itemId } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_division_table")
     .select("*")
     .eq("item_division_value", divisionId)
@@ -5186,6 +5205,7 @@ export const getItemOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_id, item_general_name")
     .eq("item_team_id", teamId)
@@ -5232,6 +5252,7 @@ export const getCSICodeOptions = async (
 ) => {
   const { index, limit, divisionIdList } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_id, csi_code_level_three_description")
     .order("csi_code_level_three_description")
@@ -5254,6 +5275,7 @@ export const getPedItemOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_id, item_general_name")
     .eq("item_team_id", teamId)
@@ -5784,6 +5806,7 @@ export const getOtherExpensesCSIDescriptionOptions = async (
 ) => {
   const { index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_id, csi_code_level_three_description")
     .eq("csi_code_division_id", "01")
@@ -5896,6 +5919,7 @@ export const getPedItemGeneralNameOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_id, item_general_name")
     .eq("item_team_id", teamId)
@@ -5917,19 +5941,15 @@ export const getItemCategoryOption = async (
     formId: string;
   }
 ) => {
-  const { formId } = params;
   const { data, error } = await supabaseClient
-    .from("item_category_table")
-    .select(
-      "item_category_id, item_category, item_category_signer: item_category_signer_id!inner(signer_form_id)"
-    )
-    .eq("item_category_is_available", true)
-    .eq("item_category_is_disabled", false)
-    .eq("item_category_signer.signer_form_id", formId)
-    .order("item_category", { ascending: true });
-
+    .rpc("get_item_category_option", { input_data: params })
+    .select("*");
   if (error) throw error;
-  return data;
+
+  return data as unknown as {
+    item_category: string;
+    item_category_id: string;
+  }[];
 };
 
 // Fetch all item form approver
@@ -5955,6 +5975,7 @@ export const checkItemCategory = async (
   const { category } = params;
 
   const { count, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_category_table")
     .select("*", { count: "exact", head: true })
     .eq("item_category", category)
@@ -6070,6 +6091,7 @@ export const getITAssetItemOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_table")
     .select("item_id, item_general_name")
     .eq("item_team_id", teamId)
@@ -6239,6 +6261,7 @@ export const getCsiTableSpecialFieldOption = async (
   const { search, fieldId } = params;
 
   let query = supabaseClient
+    .schema("lookup_schema")
     .from("csi_code_table")
     .select("csi_code_id, csi_code_section");
 
@@ -6289,6 +6312,7 @@ export const fetchFormslyLatestPrice = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("formsly_price_table")
     .select("formsly_price")
     .order("formsly_price_date_created", { ascending: false })
@@ -6376,6 +6400,7 @@ export const getEmployeePositionOptions = async (
 ) => {
   const { index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .select("employee_job_title_id, employee_job_title_label")
     .eq("employee_job_title_is_disabled", false)
@@ -6398,6 +6423,7 @@ export const getEmployeeOptions = async (
 ) => {
   const { index, limit, search } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("scic_employee_table")
     .select("scic_employee_id, scic_employee_hris_id_number")
     .ilike("scic_employee_hris_id_number", `%${search}%`)
@@ -6418,6 +6444,7 @@ export const getEmployeeName = async (
 ) => {
   const { employeeId } = params;
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("scic_employee_table")
     .select("*")
     .eq("scic_employee_hris_id_number", employeeId)
@@ -6544,6 +6571,7 @@ export const getJobTitleList = async (
 ) => {
   const { from, to, search } = params;
   let query = supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .select("*", { count: "exact" })
     .order("employee_job_title_label")

@@ -1187,6 +1187,7 @@ export const updateJobTitle = async (
 ) => {
   if (!params.employee_job_title_id) throw new Error();
   const { error } = await supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .update(params)
     .eq("employee_job_title_id", params.employee_job_title_id);

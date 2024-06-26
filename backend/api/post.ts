@@ -407,11 +407,13 @@ export const createItemDescriptionField = async (
     };
   });
   const { data: item, error: itemError } = await supabaseClient
+    .schema("item_schema")
     .from("item_description_field_table")
     .insert(itemDescriptionFieldInput)
     .select("*");
   if (itemError) throw itemError;
   const { data: uom, error: uomError } = await supabaseClient
+    .schema("item_schema")
     .from("item_description_field_uom_table")
     .insert(itemDescriptionFieldUomInput)
     .select("*");
@@ -1467,6 +1469,7 @@ export const createItemDivision = async (
 ) => {
   const { divisionId, itemId } = params;
   const { data, error } = await supabaseClient
+    .schema("item_schema")
     .from("item_division_table")
     .insert({ item_division_value: divisionId, item_division_item_id: itemId });
   if (error) throw error;
@@ -1923,6 +1926,7 @@ export const createJobTitle = async (
 ) => {
   // check if duplicate
   const { count, error: duplicateError } = await supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .select("employee_job_title_id", { count: "exact" })
     .eq("employee_job_title_label", params.employee_job_title_label);
@@ -1934,6 +1938,7 @@ export const createJobTitle = async (
   }
 
   const { data, error } = await supabaseClient
+    .schema("lookup_schema")
     .from("employee_job_title_table")
     .insert(params)
     .select("*");
