@@ -117,6 +117,7 @@ export default async function handler(
     const employeeNumber = jiraEmployeeNumberValue.split(".")[0]; // split to remove decimals
 
     const { data, error } = await supabase
+      .schema("lookup_schema")
       .from("scic_employee_table")
       .select("*")
       .eq("scic_employee_hris_id_number", employeeNumber)

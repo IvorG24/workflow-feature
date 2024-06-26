@@ -115,32 +115,33 @@ export type UserTableInsert =
 export type UserTableUpdate =
   Database["user_schema"]["Tables"]["user_table"]["Update"];
 
-export type ItemTableRow = Database["public"]["Tables"]["item_table"]["Row"];
+export type ItemTableRow =
+  Database["item_schema"]["Tables"]["item_table"]["Row"];
 export type ItemTableInsert =
-  Database["public"]["Tables"]["item_table"]["Insert"];
+  Database["item_schema"]["Tables"]["item_table"]["Insert"];
 export type ItemTableUpdate =
-  Database["public"]["Tables"]["item_table"]["Update"];
+  Database["item_schema"]["Tables"]["item_table"]["Update"];
 
 export type ItemDescriptionTableRow =
-  Database["public"]["Tables"]["item_description_table"]["Row"];
+  Database["item_schema"]["Tables"]["item_description_table"]["Row"];
 export type ItemDescriptionTableInsert =
-  Database["public"]["Tables"]["item_description_table"]["Insert"];
+  Database["item_schema"]["Tables"]["item_description_table"]["Insert"];
 export type ItemDescriptionTableUpdate =
-  Database["public"]["Tables"]["item_description_table"]["Update"];
+  Database["item_schema"]["Tables"]["item_description_table"]["Update"];
 
 export type ItemDescriptionFieldTableRow =
-  Database["public"]["Tables"]["item_description_field_table"]["Row"];
+  Database["item_schema"]["Tables"]["item_description_field_table"]["Row"];
 export type ItemDescriptionFieldTableInsert =
-  Database["public"]["Tables"]["item_description_field_table"]["Insert"];
+  Database["item_schema"]["Tables"]["item_description_field_table"]["Insert"];
 export type ItemDescriptionFieldTableUpdate =
-  Database["public"]["Tables"]["item_description_field_table"]["Update"];
+  Database["item_schema"]["Tables"]["item_description_field_table"]["Update"];
 
 export type ItemDescriptionFieldUOMTableRow =
-  Database["public"]["Tables"]["item_description_field_uom_table"]["Row"];
+  Database["item_schema"]["Tables"]["item_description_field_uom_table"]["Row"];
 export type ItemDescriptionFieldUOMTableInsert =
-  Database["public"]["Tables"]["item_description_field_uom_table"]["Insert"];
+  Database["item_schema"]["Tables"]["item_description_field_uom_table"]["Insert"];
 export type ItemDescriptionFieldUOMTableUpdate =
-  Database["public"]["Tables"]["item_description_field_uom_table"]["Update"];
+  Database["item_schema"]["Tables"]["item_description_field_uom_table"]["Update"];
 
 export type SupplierTableRow =
   Database["public"]["Tables"]["supplier_table"]["Row"];
@@ -164,11 +165,11 @@ export type TeamProjectTableUpdate =
   Database["public"]["Tables"]["team_project_table"]["Update"];
 
 export type CSICodeTableRow =
-  Database["public"]["Tables"]["csi_code_table"]["Row"];
+  Database["lookup_schema"]["Tables"]["csi_code_table"]["Row"];
 export type CSICodeTableInsert =
-  Database["public"]["Tables"]["csi_code_table"]["Insert"];
+  Database["lookup_schema"]["Tables"]["csi_code_table"]["Insert"];
 export type CSICodeTableUpdate =
-  Database["public"]["Tables"]["csi_code_table"]["Update"];
+  Database["lookup_schema"]["Tables"]["csi_code_table"]["Update"];
 
 export type ServiceTableRow =
   Database["service_schema"]["Tables"]["service_table"]["Row"];
@@ -345,7 +346,8 @@ export type MemoFormatAttachmentTableInsert =
 export type MemoFormatAttachmentTableUpdate =
   Database["public"]["Tables"]["memo_format_attachment_table"]["Update"];
 
-export type QueryTableRow = Database["public"]["Tables"]["query_table"]["Row"];
+export type QueryTableRow =
+  Database["lookup_schema"]["Tables"]["query_table"]["Row"];
 
 export type FormSLATableRow =
   Database["public"]["Tables"]["form_sla_table"]["Row"];
@@ -449,11 +451,11 @@ export type JiraItemCategoryUserTableUpdate =
   Database["public"]["Tables"]["jira_item_user_table"]["Update"];
 
 export type ItemCategoryTableRow =
-  Database["public"]["Tables"]["item_category_table"]["Row"];
+  Database["item_schema"]["Tables"]["item_category_table"]["Row"];
 export type ItemCategoryTableInsert =
-  Database["public"]["Tables"]["item_category_table"]["Insert"];
+  Database["item_schema"]["Tables"]["item_category_table"]["Insert"];
 export type ItemCategoryTableUpdate =
-  Database["public"]["Tables"]["item_category_table"]["Update"];
+  Database["item_schema"]["Tables"]["item_category_table"]["Update"];
 
 export type JiraOrganizationTableRow =
   Database["public"]["Tables"]["jira_organization_table"]["Row"];
@@ -477,21 +479,21 @@ export type SpecialFieldTemplateTableUpdate =
   Database["public"]["Tables"]["special_field_template_table"]["Update"];
 
 export type SCICEmployeeTableRow =
-  Database["public"]["Tables"]["scic_employee_table"]["Row"];
+  Database["lookup_schema"]["Tables"]["scic_employee_table"]["Row"];
 export type SCICEmployeeTableInsert =
-  Database["public"]["Tables"]["scic_employee_table"]["Insert"];
+  Database["lookup_schema"]["Tables"]["scic_employee_table"]["Insert"];
 export type SCICEmployeeTableUpdate =
-  Database["public"]["Tables"]["scic_employee_table"]["Update"];
+  Database["lookup_schema"]["Tables"]["scic_employee_table"]["Update"];
 
 export type TransactionTableRow =
   OneOfficeDatabase["transaction_schema"]["Tables"]["transaction_table"]["Row"];
 
 export type JobTitleTableRow =
-  Database["public"]["Tables"]["employee_job_title_table"]["Row"];
+  Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Row"];
 export type JobTitleTableInsert =
-  Database["public"]["Tables"]["employee_job_title_table"]["Insert"];
+  Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Insert"];
 export type JobTitleTableUpdate =
-  Database["public"]["Tables"]["employee_job_title_table"]["Update"];
+  Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Update"];
 
 // End: Database Table Types
 
