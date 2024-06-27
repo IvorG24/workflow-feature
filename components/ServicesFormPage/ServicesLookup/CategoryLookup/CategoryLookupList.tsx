@@ -177,6 +177,7 @@ const CategoryLookupList = ({
         table: lookup.table,
         id: categoryLookupId,
         status: value,
+        schema: lookup.schema,
       });
     } catch {
       notifications.show({

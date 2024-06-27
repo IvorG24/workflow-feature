@@ -218,11 +218,13 @@ export const toggleStatus = async (
     id: string;
     status: boolean;
     table: string;
+    schema: string;
   }
 ) => {
-  const { id, status, table } = params;
+  const { id, status, table, schema } = params;
 
   const { error } = await supabaseClient
+    .schema(schema)
     .from(`${table}_table`)
     .update({
       [`${table}_is_available`]: status,

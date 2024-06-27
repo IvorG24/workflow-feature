@@ -6,7 +6,7 @@ const ItemLookup = () => {
     {
       table: "item_unit_of_measurement",
       label: "Unit of Measurement",
-      schema: "public",
+      schema: "unit_of_measurement_schema",
     },
   ] as { table: string; label: string; schema: string }[];
 

@@ -178,6 +178,7 @@ const ItemCategoryList = ({
         table: "item_category",
         id: itemCategoryId,
         status: value,
+        schema: "public",
       });
     } catch {
       notifications.show({

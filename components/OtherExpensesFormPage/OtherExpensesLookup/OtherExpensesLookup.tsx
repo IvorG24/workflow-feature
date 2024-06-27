@@ -11,7 +11,7 @@ const OtherExpensesLookup = () => {
     {
       table: "general_unit_of_measurement",
       label: "Unit of Measurement",
-      schema: "public",
+      schema: "unit_of_measurement_schema",
     },
     { table: "supplier", label: "Supplier", schema: "public" },
   ] as { table: string; label: string; schema: string }[];

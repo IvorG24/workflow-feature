@@ -132,7 +132,7 @@ const EquipmentPartList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "equipment_part",
-        schema: "public",
+        schema: "equipment_schema",
       });
       handleFetch("", 1);
 
@@ -170,6 +170,7 @@ const EquipmentPartList = ({
         table: "equipment_part",
         id: equipmentPartId,
         status: value,
+        schema: "equipment_schema",
       });
     } catch {
       notifications.show({
