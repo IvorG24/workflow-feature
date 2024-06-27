@@ -317,7 +317,7 @@ const EditPettyCashVoucherRequestPage = ({
         `sections.${sectionIndex}.section_field.8.field_response`,
         false
       );
-      console.log(error);
+
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -518,7 +518,7 @@ const EditPettyCashVoucherRequestPage = ({
       }
     } catch (error) {
       setValue(`sections.3.section_field.0.field_response`, false);
-      console.log(error);
+
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

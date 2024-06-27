@@ -269,46 +269,47 @@ export type EquipmentComponentCategoryTableInsert =
 export type EquipmentComponentCategoryTableUpdate =
   Database["equipment_schema"]["Tables"]["equipment_component_category_table"]["Update"];
 
-export type MemoTableRow = Database["public"]["Tables"]["memo_table"]["Row"];
+export type MemoTableRow =
+  Database["memo_schema"]["Tables"]["memo_table"]["Row"];
 export type MemoTableInsert =
-  Database["public"]["Tables"]["memo_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_table"]["Insert"];
 export type MemoTableUpdate =
-  Database["public"]["Tables"]["memo_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_table"]["Update"];
 
 export type MemoSignerTableRow =
-  Database["public"]["Tables"]["memo_signer_table"]["Row"];
+  Database["memo_schema"]["Tables"]["memo_signer_table"]["Row"];
 export type MemoSignerTableInsert =
-  Database["public"]["Tables"]["memo_signer_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_signer_table"]["Insert"];
 export type MemoSignerTableUpdate =
-  Database["public"]["Tables"]["memo_signer_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_signer_table"]["Update"];
 
 export type MemoLineItemTableRow =
-  Database["public"]["Tables"]["memo_line_item_table"]["Row"];
+  Database["memo_schema"]["Tables"]["memo_line_item_table"]["Row"];
 export type MemoLineItemTableInsert =
-  Database["public"]["Tables"]["memo_line_item_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_line_item_table"]["Insert"];
 export type MemoLineItemTableUpdate =
-  Database["public"]["Tables"]["memo_line_item_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_line_item_table"]["Update"];
 
 export type MemoLineItemAttachmentTableRow =
-  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Row"];
+  Database["memo_schema"]["Tables"]["memo_line_item_attachment_table"]["Row"];
 export type MemoLineItemAttachmentTableInsert =
-  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_line_item_attachment_table"]["Insert"];
 export type MemoLineItemAttachmentTableUpdate =
-  Database["public"]["Tables"]["memo_line_item_attachment_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_line_item_attachment_table"]["Update"];
 
 export type MemoReadReceiptTableRow =
-  Database["public"]["Tables"]["memo_read_receipt_table"]["Row"];
+  Database["memo_schema"]["Tables"]["memo_read_receipt_table"]["Row"];
 export type MemoReadReceiptTableInsert =
-  Database["public"]["Tables"]["memo_read_receipt_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_read_receipt_table"]["Insert"];
 export type MemoReadReceiptTableUpdate =
-  Database["public"]["Tables"]["memo_read_receipt_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_read_receipt_table"]["Update"];
 
 export type MemoAgreementTableRow =
-  Database["public"]["Tables"]["memo_agreement_table"]["Row"];
+  Database["memo_schema"]["Tables"]["memo_agreement_table"]["Row"];
 export type MemoAgreementTableInsert =
-  Database["public"]["Tables"]["memo_agreement_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_agreement_table"]["Insert"];
 export type MemoAgreementTableUpdate =
-  Database["public"]["Tables"]["memo_agreement_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_agreement_table"]["Update"];
 export type OtherExpensesTypeTableRow =
   Database["other_expenses_schema"]["Tables"]["other_expenses_type_table"]["Row"];
 export type OtherExpensesTypeTableInsert =
@@ -326,25 +327,25 @@ export type UserValidIDTableUpdate =
   Database["user_schema"]["Tables"]["user_valid_id_table"]["Update"];
 
 export type MemoFormatTableRow =
-  Database["public"]["Tables"]["memo_format_section_table"]["Row"];
+  Database["memo_schema"]["Tables"]["memo_format_section_table"]["Row"];
 export type MemoFormatTableInsert =
-  Database["public"]["Tables"]["memo_format_section_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_format_section_table"]["Insert"];
 export type MemoFormatTableUpdate =
-  Database["public"]["Tables"]["memo_format_section_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_format_section_table"]["Update"];
 
 export type MemoFormatSubsectionTableRow =
-  Database["public"]["Tables"]["memo_format_subsection_table"]["Row"];
+  Database["memo_schema"]["Tables"]["memo_format_subsection_table"]["Row"];
 export type MemoFormatSubsectionTableInsert =
-  Database["public"]["Tables"]["memo_format_subsection_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_format_subsection_table"]["Insert"];
 export type MemoFormatSubsectionTableUpdate =
-  Database["public"]["Tables"]["memo_format_subsection_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_format_subsection_table"]["Update"];
 
 export type MemoFormatAttachmentTableRow =
-  Database["public"]["Tables"]["memo_format_attachment_table"]["Row"];
+  Database["memo_schema"]["Tables"]["memo_format_attachment_table"]["Row"];
 export type MemoFormatAttachmentTableInsert =
-  Database["public"]["Tables"]["memo_format_attachment_table"]["Insert"];
+  Database["memo_schema"]["Tables"]["memo_format_attachment_table"]["Insert"];
 export type MemoFormatAttachmentTableUpdate =
-  Database["public"]["Tables"]["memo_format_attachment_table"]["Update"];
+  Database["memo_schema"]["Tables"]["memo_format_attachment_table"]["Update"];
 
 export type QueryTableRow =
   Database["lookup_schema"]["Tables"]["query_table"]["Row"];
