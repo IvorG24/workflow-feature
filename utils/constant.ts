@@ -48,6 +48,7 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Subcon",
   "Request For Payment Code",
   "Bill of Quantity",
+  "Petty Cash Voucher Balance",
 ];
 
 export const SLA_LIST = [
