@@ -172,6 +172,7 @@ type RequestFormFieldsProps = {
     onSCICAuthorizationChange: (value: boolean) => void;
     onChargeToProjectBooleanChange: (value: boolean) => void;
     onModeOfPaymentChange: (value: string | null, sectionIndex: number) => void;
+    onTypeOfRequestChange: (value: string | null) => void;
   };
   equipmentServiceReportMethods?: {
     onProjectNameChange: (value: string | null) => void;
@@ -872,6 +873,10 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+                      break;
+
+                    case "Type of Request":
+                      pettyCashVoucherFormMethods?.onTypeOfRequestChange(value);
                       break;
                   }
                 }}

@@ -52,9 +52,9 @@ type Props = {
   duplicatableSectionIdList: string[];
   requestId: string;
   departmentOptions: OptionTableRow[];
-  expenseTypeOptions: OptionTableRow[];
   bankListOptions: OptionTableRow[];
   uomOptions: OptionTableRow[];
+  equipmentCodeOptions: OptionTableRow[];
 };
 
 const EditPettyCashVoucherRequestPage = ({
@@ -62,9 +62,9 @@ const EditPettyCashVoucherRequestPage = ({
   projectOptions,
   requestId,
   departmentOptions,
-  expenseTypeOptions,
   bankListOptions,
   uomOptions,
+  equipmentCodeOptions,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -428,11 +428,7 @@ const EditPettyCashVoucherRequestPage = ({
               ...chargeToProjectSection.section_field[0],
               field_option: projectOptions,
             },
-            {
-              ...chargeToProjectSection.section_field[1],
-              field_option: expenseTypeOptions,
-            },
-            chargeToProjectSection.section_field[2],
+            ...chargeToProjectSection.section_field.slice(1, 3),
           ],
         };
 
@@ -609,6 +605,68 @@ const EditPettyCashVoucherRequestPage = ({
     handleSCICAuthorizationBooleanChange(scicAuthorization as boolean);
   };
 
+  const handleTypeOfRequestChange = (value: string | null) => {
+    try {
+      const chargeToProjectSection = getValues(`sections.2`);
+      let chargeToProjectSectionFieldList =
+        chargeToProjectSection.section_field;
+
+      const addField = (fieldIndex: number) => {
+        const selectedField = form.form_section[2].section_field[fieldIndex];
+        if (selectedField.field_name === "Equipment Code") {
+          selectedField.field_option = equipmentCodeOptions;
+        }
+        chargeToProjectSectionFieldList = [
+          ...chargeToProjectSectionFieldList,
+          selectedField,
+        ];
+      };
+
+      const removeFieldById = (fieldId: string) => {
+        chargeToProjectSectionFieldList =
+          chargeToProjectSectionFieldList.filter(
+            (field) => field.field_id !== fieldId
+          );
+      };
+
+      if (value) {
+        const specifyOtherTypeOfRequestField =
+          chargeToProjectSectionFieldList.find(
+            (field) => field.field_name === "Specify Other Type of Request"
+          );
+        const equipmentCodeField = chargeToProjectSectionFieldList.find(
+          (field) => field.field_name === "Equipment Code"
+        );
+
+        switch (value) {
+          case "Other":
+            addField(3);
+            if (equipmentCodeField)
+              removeFieldById(equipmentCodeField.field_id);
+            break;
+          case "Spare Part":
+            addField(4);
+            if (specifyOtherTypeOfRequestField)
+              removeFieldById(specifyOtherTypeOfRequestField.field_id);
+            break;
+        }
+      } else {
+        chargeToProjectSectionFieldList =
+          chargeToProjectSection.section_field.slice(0, 3);
+      }
+
+      updateSection(2, {
+        ...chargeToProjectSection,
+        section_field: chargeToProjectSectionFieldList,
+      });
+    } catch (error) {
+      setValue(`sections.2.section_field.1.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
@@ -639,9 +697,6 @@ const EditPettyCashVoucherRequestPage = ({
                 break;
               case "Department":
                 field_option = departmentOptions;
-                break;
-              case "Type of Request":
-                field_option = expenseTypeOptions;
                 break;
               case "Payment Option":
                 field_option = bankListOptions;
@@ -738,6 +793,7 @@ const EditPettyCashVoucherRequestPage = ({
                       onModeOfPaymentChange: handleModeOfPaymentChange,
                       onSCICAuthorizationChange:
                         handleSCICAuthorizationBooleanChange,
+                      onTypeOfRequestChange: handleTypeOfRequestChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}

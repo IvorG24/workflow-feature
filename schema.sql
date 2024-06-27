@@ -5176,16 +5176,6 @@ RETURNS JSON as $$
           }
         });
 
-        const expenseTypes = plv8.execute(`SELECT * FROM expense_type_table WHERE expense_type_is_disabled = FALSE`);
-        const expenseTypeOptions = expenseTypes.map((expense, index) => {
-          return {
-            option_field_id: form.form_section[2].section_field[1].field_id,
-            option_id: expense.expense_type_id,
-            option_order: index,
-            option_value: expense.expense_type_label
-          }
-        });
-
         const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
         const bankListOptions = bankList.map((bank, index) => {
           return {
@@ -5206,13 +5196,23 @@ RETURNS JSON as $$
           }
         });
 
+        const equipmentCodeList = plv8.execute(`SELECT equipment_description_id, equipment_description_property_number_with_prefix FROM equipment_schema.equipment_description_view`);
+        const equipmentCodeOptions = equipmentCodeList.map((equipmentCode, index) => {
+          return {
+            option_field_id: form.form_section[2].section_field[4].field_id,
+            option_id: equipmentCode.equipment_description_id,
+            option_order: index,
+            option_value: equipmentCode.equipment_description_property_number_with_prefix
+          }
+        });
+
         returnData = {
           form,
           projectOptions,
           departmentOptions,
-          expenseTypeOptions,
           bankListOptions,
-          uomOptions
+          uomOptions,
+          equipmentCodeOptions
         }
         return;
       } else if (form.form_name === "Equipment Service Report") {
