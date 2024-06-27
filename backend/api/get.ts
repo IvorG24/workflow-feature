@@ -4112,6 +4112,7 @@ export const getTeamMemoCount = async (
   }
 ) => {
   const { count, error } = await supabaseClient
+    .schema("memo_schema")
     .from("memo_table")
     .select("*", { count: "exact" })
     .eq("memo_team_id", params.teamId);
@@ -4167,6 +4168,7 @@ export const getMemo = async (
   const { data, error } = await supabaseClient.rpc("get_memo_on_load", {
     input_data: params,
   });
+
   if (error || !data) throw Error;
 
   return data as MemoType;
@@ -4257,6 +4259,7 @@ export const getMemoFormat = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
+    .schema("memo_schema")
     .from("memo_format_section_table")
     .select(
       "*, format_subsection: memo_format_subsection_table(*, subsection_attachment: memo_format_attachment_table(*))"

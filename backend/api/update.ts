@@ -872,15 +872,18 @@ export const updateMemoFormat = async (
   }
 
   const { error: memoFormatSectionTableError } = await supabaseClient
+    .schema("memo_schema")
     .from("memo_format_section_table")
     .upsert(memoFormatSectionTableData);
 
   const { error: memoFormatSubsectionTableError } = await supabaseClient
+    .schema("memo_schema")
     .from("memo_format_subsection_table")
     .upsert(memoFormatSubsectionData);
 
   if (memoFormatAttachmentData.length > 0) {
     const { error } = await supabaseClient
+      .schema("memo_schema")
       .from("memo_format_attachment_table")
       .upsert(memoFormatAttachmentData);
 
@@ -893,6 +896,7 @@ export const updateMemoFormat = async (
 
   // delete removed attachments
   const { error: memoFormatAttachmentDeleteError } = await supabaseClient
+    .schema("memo_schema")
     .from("memo_format_attachment_table")
     .delete()
     .or(

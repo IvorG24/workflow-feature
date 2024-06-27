@@ -41,6 +41,7 @@ DROP SCHEMA IF EXISTS other_expenses_schema CASCADE;
 DROP SCHEMA IF EXISTS equipment_schema CASCADE;
 DROP SCHEMA IF EXISTS lookup_schema CASCADE;
 DROP SCHEMA IF EXISTS jira_schema CASCADE;
+DROP SCHEMA IF EXISTS memo_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
@@ -52,6 +53,7 @@ CREATE SCHEMA other_expenses_schema AUTHORIZATION postgres;
 CREATE SCHEMA equipment_schema AUTHORIZATION postgres;
 CREATE SCHEMA lookup_schema AUTHORIZATION postgres;
 CREATE SCHEMA jira_schema AUTHORIZATION postgres;
+CREATE SCHEMA memo_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
 
@@ -436,7 +438,7 @@ CREATE TABLE ticket_comment_table (
   ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 
-CREATE TABLE memo_table (
+CREATE TABLE memo_schema.memo_table (
   memo_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_subject VARCHAR(4000) NOT NULL,
   memo_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
@@ -447,63 +449,63 @@ CREATE TABLE memo_table (
   memo_reference_number UUID DEFAULT uuid_generate_v4() NOT NULL
 );
 
-CREATE TABLE memo_signer_table (
+CREATE TABLE memo_schema.memo_signer_table (
   memo_signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   memo_signer_is_primary BOOLEAN DEFAULT FALSE NOT NULL,
   memo_signer_order INT NOT NULL,
   memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  memo_signer_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL,
+  memo_signer_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL,
   memo_signer_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   memo_signer_date_signed TIMESTAMPTZ(0)
 );
 
-CREATE TABLE memo_line_item_table (
+CREATE TABLE memo_schema.memo_line_item_table (
   memo_line_item_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_line_item_content VARCHAR(4000) NOT NULL,
   memo_line_item_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
   memo_line_item_date_updated TIMESTAMPTZ(0),
   memo_line_item_order INT NOT NULL,
-  memo_line_item_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+  memo_line_item_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL
 );
 
-CREATE TABLE memo_line_item_attachment_table (
+CREATE TABLE memo_schema.memo_line_item_attachment_table (
   memo_line_item_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_line_item_attachment_name VARCHAR(4000) NOT NULL,
   memo_line_item_attachment_caption VARCHAR(4000),
   memo_line_item_attachment_storage_bucket VARCHAR(4000) NOT NULL,
   memo_line_item_attachment_public_url VARCHAR(4000) NOT NULL,
-  memo_line_item_attachment_line_item_id UUID REFERENCES memo_line_item_table(memo_line_item_id) ON DELETE CASCADE NOT NULL
+  memo_line_item_attachment_line_item_id UUID REFERENCES memo_schema.memo_line_item_table(memo_line_item_id) ON DELETE CASCADE NOT NULL
 );
 
-CREATE TABLE memo_date_updated_table (
+CREATE TABLE memo_schema.memo_date_updated_table (
   memo_date_updated_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_date_updated TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
-  memo_date_updated_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+  memo_date_updated_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL
 );
 
-CREATE TABLE memo_status_table (
+CREATE TABLE memo_schema.memo_status_table (
   memo_status_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   memo_status_date_updated TIMESTAMPTZ(0),
-  memo_status_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+  memo_status_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL
 );
 
-CREATE TABLE memo_read_receipt_table (
+CREATE TABLE memo_schema.memo_read_receipt_table (
   memo_read_receipt_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_read_receipt_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
   memo_read_receipt_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  memo_read_receipt_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+  memo_read_receipt_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL
 );
 
-CREATE TABLE memo_agreement_table (
+CREATE TABLE memo_schema.memo_agreement_table (
   memo_agreement_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_agreement_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
   memo_agreement_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  memo_agreement_memo_id UUID REFERENCES memo_table(memo_id) NOT NULL
+  memo_agreement_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL
 );
 
-CREATE TABLE memo_format_section_table(
+CREATE TABLE memo_schema.memo_format_section_table(
   memo_format_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_format_section_margin_top VARCHAR(20),
   memo_format_section_margin_right VARCHAR(20),
@@ -512,20 +514,20 @@ CREATE TABLE memo_format_section_table(
   memo_format_section_name VARCHAR(100)
 );
 
-CREATE TABLE memo_format_subsection_table(
+CREATE TABLE memo_schema.memo_format_subsection_table(
   memo_format_subsection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_format_subsection_name VARCHAR(100),
   memo_format_subsection_text VARCHAR(4000),
   memo_format_subsection_text_font_size VARCHAR(20),
-  memo_format_subsection_section_id UUID REFERENCES memo_format_section_table(memo_format_section_id)
+  memo_format_subsection_section_id UUID REFERENCES memo_schema.memo_format_section_table(memo_format_section_id)
 );
 
-CREATE TABLE memo_format_attachment_table(
+CREATE TABLE memo_schema.memo_format_attachment_table(
   memo_format_attachment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_format_attachment_name VARCHAR(4000) NOT NULL,
   memo_format_attachment_url VARCHAR(4000) NOT NULL,
   memo_format_attachment_order VARCHAR(20) NOT NULL,
-  memo_format_attachment_subsection_id UUID REFERENCES memo_format_subsection_table(memo_format_subsection_id)
+  memo_format_attachment_subsection_id UUID REFERENCES memo_schema.memo_format_subsection_table(memo_format_subsection_id)
 );
 
 CREATE TABLE history_schema.user_name_history_table(
@@ -7552,12 +7554,12 @@ RETURNS JSON AS $$
       lineItemData
     } = input_data;
 
-    const memo_count = plv8.execute(`SELECT COUNT(*) FROM memo_table WHERE memo_reference_number = '${memoData.memo_reference_number}'`)[0].count;
+    const memo_count = plv8.execute(`SELECT COUNT(*) FROM memo_schema.memo_table WHERE memo_reference_number = '${memoData.memo_reference_number}'`)[0].count;
     const memo_version = (Number(memo_count) + 1);
     memoData.memo_version = memo_version;
 
     new_memo_data = plv8.execute(`
-      INSERT INTO memo_table (
+      INSERT INTO memo_schema.memo_table (
         memo_team_id,
         memo_author_user_id,
         memo_subject,
@@ -7574,12 +7576,12 @@ RETURNS JSON AS $$
       RETURNING *;
     `)[0];
 
-    plv8.execute(`INSERT INTO memo_date_updated_table (memo_date_updated_memo_id) VALUES ('${new_memo_data.memo_id}')`);
-    plv8.execute(`INSERT INTO memo_status_table (memo_status_memo_id) VALUES ('${new_memo_data.memo_id}')`);
+    plv8.execute(`INSERT INTO memo_schema.memo_date_updated_table (memo_date_updated_memo_id) VALUES ('${new_memo_data.memo_id}')`);
+    plv8.execute(`INSERT INTO memo_schema.memo_status_table (memo_status_memo_id) VALUES ('${new_memo_data.memo_id}')`);
 
     const signerTableValues = signerData.map((signer) => `('${signer.memo_signer_is_primary}','${signer.memo_signer_order}','${signer.memo_signer_team_member_id}', '${new_memo_data.memo_id}')`).join(",");
 
-    plv8.execute(`INSERT INTO memo_signer_table (memo_signer_is_primary, memo_signer_order, memo_signer_team_member_id, memo_signer_memo_id) VALUES ${signerTableValues}`);
+    plv8.execute(`INSERT INTO memo_schema.memo_signer_table (memo_signer_is_primary, memo_signer_order, memo_signer_team_member_id, memo_signer_memo_id) VALUES ${signerTableValues}`);
 
     let lineItemTableValues = [];
     let lineItemAttachmentTableValues = [];
@@ -7598,7 +7600,7 @@ RETURNS JSON AS $$
     });
 
     plv8.execute(`
-      INSERT INTO memo_line_item_table (
+      INSERT INTO memo_schema.memo_line_item_table (
         memo_line_item_id,
         memo_line_item_content,
         memo_line_item_order,
@@ -7609,7 +7611,7 @@ RETURNS JSON AS $$
 
     if (lineItemAttachmentTableValues.length > 0) {
       plv8.execute(`
-        INSERT INTO memo_line_item_attachment_table (
+        INSERT INTO memo_schema.memo_line_item_attachment_table (
           memo_line_item_attachment_name,
           memo_line_item_attachment_caption,
           memo_line_item_attachment_storage_bucket,
@@ -7665,14 +7667,14 @@ RETURNS JSON AS $$
     if (currentUser) {
       const hasUserReadMemo = plv8.execute(`
         SELECT COUNT(*)
-        FROM memo_read_receipt_table
+        FROM memo_schema.memo_read_receipt_table
         WHERE memo_read_receipt_by_team_member_id = '${currentUser.team_member_id}'
         AND memo_read_receipt_memo_id = '${memo_id}';
       `)[0];
 
       if (Number(hasUserReadMemo.count) === 0) {
         plv8.execute(`
-          INSERT INTO memo_read_receipt_table (memo_read_receipt_by_team_member_id, memo_read_receipt_memo_id)
+          INSERT INTO memo_schema.memo_read_receipt_table (memo_read_receipt_by_team_member_id, memo_read_receipt_memo_id)
           VALUES ('${currentUser.team_member_id}', '${memo_id}')
         `);
       }
@@ -7680,10 +7682,10 @@ RETURNS JSON AS $$
 
     const memo_data_raw = plv8.execute(`
       SELECT *
-      FROM memo_table
+      FROM memo_schema.memo_table
       INNER JOIN user_schema.user_table ON user_table.user_id = memo_author_user_id
-      INNER JOIN memo_date_updated_table ON memo_date_updated_memo_id = memo_id
-      INNER JOIN memo_status_table ON memo_status_memo_id = memo_id
+      INNER JOIN memo_schema.memo_date_updated_table ON memo_date_updated_memo_id = memo_id
+      INNER JOIN memo_schema.memo_status_table ON memo_status_memo_id = memo_id
       WHERE memo_id = '${memo_id}' AND memo_is_disabled = false
       LIMIT 1;
     `)[0];
@@ -7731,7 +7733,7 @@ RETURNS JSON AS $$
         tm.*,
         ut.*,
         json_agg(sht.*) as signature_list
-      FROM memo_signer_table mst
+      FROM memo_schema.memo_signer_table mst
       INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
       INNER JOIN user_schema.user_table ut ON ut.user_id = tm.team_member_user_id
       LEFT JOIN history_schema.signature_history_table sht ON sht.signature_history_user_id = ut.user_id
@@ -7795,8 +7797,8 @@ RETURNS JSON AS $$
 
     const line_item_data_raw = plv8.execute(`
       SELECT *
-      FROM memo_line_item_table
-      LEFT JOIN memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id
+      FROM memo_schema.memo_line_item_table
+      LEFT JOIN memo_schema.memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id
       WHERE memo_line_item_memo_id = '${memo_id}'
     `);
 
@@ -7821,7 +7823,7 @@ RETURNS JSON AS $$
 
     const read_receipt_data = plv8.execute(`
       SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
-      FROM memo_read_receipt_table
+      FROM memo_schema.memo_read_receipt_table
       INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       LEFT JOIN user_schema. ON user_id = user_employee_number_user_id
@@ -7830,7 +7832,7 @@ RETURNS JSON AS $$
 
     const agreement_data = plv8.execute(`
       SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
-      FROM memo_agreement_table
+      FROM memo_schema.memo_agreement_table
       INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       LEFT JOIN user_schema.user_employee_number_table ON user_id = user_employee_number_user_id
@@ -7896,14 +7898,14 @@ RETURNS JSON AS $$
               )
             )
           ) AS memo_signer_list
-        FROM memo_table
+        FROM memo_schema.memo_table
         INNER JOIN user_schema.user_table ON user_table.user_id = memo_table.memo_author_user_id
-        INNER JOIN memo_date_updated_table ON memo_date_updated_memo_id = memo_table.memo_id
-        INNER JOIN memo_status_table ON memo_status_memo_id = memo_table.memo_id
-        LEFT JOIN memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
+        INNER JOIN memo_schema.memo_date_updated_table ON memo_date_updated_memo_id = memo_table.memo_id
+        INNER JOIN memo_schema.memo_status_table ON memo_status_memo_id = memo_table.memo_id
+        LEFT JOIN memo_schema.memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
         LEFT JOIN team_member_table ON team_member_table.team_member_id = memo_signer_table.memo_signer_team_member_id
         LEFT JOIN user_schema.user_table AS team_member_user_table ON team_member_user_table.user_id = team_member_table.team_member_user_id
-        LEFT JOIN memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_table.memo_id
+        LEFT JOIN memo_schema.memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_table.memo_id
         WHERE 
           memo_team_id = '${teamId}'
           AND memo_is_disabled = false
@@ -7923,11 +7925,11 @@ RETURNS JSON AS $$
 
     const memo_count = plv8.execute(`
       SELECT COUNT(DISTINCT memo_table.memo_id)
-      FROM memo_table
-      INNER JOIN memo_date_updated_table ON memo_date_updated_memo_id = memo_id
-      INNER JOIN memo_status_table ON memo_status_memo_id = memo_id
-      LEFT JOIN memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_id
-      LEFT JOIN memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_id
+      FROM memo_schema.memo_table
+      INNER JOIN memo_schema.memo_date_updated_table ON memo_date_updated_memo_id = memo_id
+      INNER JOIN memo_schema.memo_status_table ON memo_status_memo_id = memo_id
+      LEFT JOIN memo_schema.memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_id
+      LEFT JOIN memo_schema.memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_id
       WHERE  
           memo_team_id = '${teamId}'
           AND memo_is_disabled = false
@@ -7956,22 +7958,22 @@ RETURNS JSON AS $$
       memoLineItemIdFilter
     } = input_data;
 
-    plv8.execute(`UPDATE memo_table SET memo_subject = '${memo_subject}' WHERE memo_id = '${memo_id}'`);
+    plv8.execute(`UPDATE memo_schema.memo_table SET memo_subject = '${memo_subject}' WHERE memo_id = '${memo_id}'`);
 
-    plv8.execute(`UPDATE memo_date_updated_table SET memo_date_updated = NOW() WHERE memo_date_updated_memo_id = '${memo_id}'`);
+    plv8.execute(`UPDATE memo_schema.memo_date_updated_table SET memo_date_updated = NOW() WHERE memo_date_updated_memo_id = '${memo_id}'`);
 
-    plv8.execute(`DELETE FROM memo_signer_table WHERE memo_signer_memo_id = '${memo_id}'`);
+    plv8.execute(`DELETE FROM memo_schema.memo_signer_table WHERE memo_signer_memo_id = '${memo_id}'`);
 
-    plv8.execute(`DELETE FROM memo_line_item_table WHERE memo_line_item_memo_id = '${memo_id}'`);
+    plv8.execute(`DELETE FROM memo_schema.memo_line_item_table WHERE memo_line_item_memo_id = '${memo_id}'`);
 
-    plv8.execute(`DELETE FROM memo_line_item_attachment_table WHERE memo_line_item_attachment_line_item_id IN (${memoLineItemIdFilter})`);
+    plv8.execute(`DELETE FROM memo_schema.memo_line_item_attachment_table WHERE memo_line_item_attachment_line_item_id IN (${memoLineItemIdFilter})`);
 
-    plv8.execute(`INSERT INTO memo_signer_table (memo_signer_is_primary, memo_signer_order, memo_signer_team_member_id, memo_signer_memo_id) VALUES ${memoSignerTableValues}`);
+    plv8.execute(`INSERT INTO memo_schema.memo_signer_table (memo_signer_is_primary, memo_signer_order, memo_signer_team_member_id, memo_signer_memo_id) VALUES ${memoSignerTableValues}`);
 
-    plv8.execute(`INSERT INTO memo_line_item_table (memo_line_item_id, memo_line_item_content, memo_line_item_order, memo_line_item_memo_id) VALUES ${memoLineItemTableValues}`);
+    plv8.execute(`INSERT INTO memo_schema.memo_line_item_table (memo_line_item_id, memo_line_item_content, memo_line_item_order, memo_line_item_memo_id) VALUES ${memoLineItemTableValues}`);
 
     if (memoLineItemAttachmentTableValues) {
-      plv8.execute(`INSERT INTO memo_line_item_attachment_table (memo_line_item_attachment_name,memo_line_item_attachment_caption,memo_line_item_attachment_storage_bucket,memo_line_item_attachment_public_url,memo_line_item_attachment_line_item_id) VALUES ${memoLineItemAttachmentTableValues}`);
+      plv8.execute(`INSERT INTO memo_schema.memo_line_item_attachment_table (memo_line_item_attachment_name,memo_line_item_attachment_caption,memo_line_item_attachment_storage_bucket,memo_line_item_attachment_public_url,memo_line_item_attachment_line_item_id) VALUES ${memoLineItemAttachmentTableValues}`);
     }
  });
 $$ LANGUAGE plv8;
@@ -7996,7 +7998,7 @@ RETURNS JSON AS $$
     const memo_data_raw = plv8.execute(
       `
       SELECT *
-      FROM memo_table
+      FROM memo_schema.memo_table
       WHERE memo_id = '${memo_id}' AND memo_is_disabled = false
       LIMIT 1;
       `
@@ -8030,7 +8032,7 @@ RETURNS JSON AS $$
         tm.*,
         ut.*,
         json_agg(sht.*) as signature_list
-      FROM memo_signer_table mst
+      FROM memo_schema.memo_signer_table mst
       INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
       INNER JOIN user_schema.user_table ut ON ut.user_id = tm.team_member_user_id
       LEFT JOIN history_schema.signature_history_table sht ON sht.signature_history_user_id = ut.user_id
@@ -8073,8 +8075,8 @@ RETURNS JSON AS $$
 
     const line_item_data_raw = plv8.execute(`
         SELECT * 
-        FROM memo_line_item_table 
-        LEFT JOIN memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id 
+        FROM memo_schema.memo_line_item_table 
+        LEFT JOIN memo_schema.memo_line_item_attachment_table mat ON mat.memo_line_item_attachment_line_item_id = memo_line_item_id 
         WHERE memo_line_item_memo_id = '${memo_id}'
     `);
 
@@ -8122,13 +8124,13 @@ RETURNS JSON AS $$
 
     const memo_count = plv8.execute(`
       SELECT COUNT(*) 
-      FROM memo_table 
+      FROM memo_schema.memo_table 
       WHERE memo_reference_number = '${memo_reference_number}'
     `)[0].count;
     const memo_version = Number(memo_count) + 1;
 
     new_memo_data = plv8.execute(`
-      INSERT INTO memo_table (
+      INSERT INTO memo_schema.memo_table (
         memo_id,
         memo_team_id,
         memo_author_user_id,
@@ -8148,17 +8150,17 @@ RETURNS JSON AS $$
     `)[0];
 
     plv8.execute(`
-      INSERT INTO memo_date_updated_table (memo_date_updated_memo_id) 
+      INSERT INTO memo_schema.memo_date_updated_table (memo_date_updated_memo_id) 
       VALUES ('${new_memo_data.memo_id}')
     `);
 
     plv8.execute(`
-      INSERT INTO memo_status_table (memo_status_memo_id) 
+      INSERT INTO memo_schema.memo_status_table (memo_status_memo_id) 
       VALUES ('${new_memo_data.memo_id}')
     `);
 
     plv8.execute(`
-      INSERT INTO memo_signer_table (
+      INSERT INTO memo_schema.memo_signer_table (
         memo_signer_is_primary,
         memo_signer_order,
         memo_signer_team_member_id,
@@ -8168,7 +8170,7 @@ RETURNS JSON AS $$
     `);
 
     plv8.execute(`
-      INSERT INTO memo_line_item_table (
+      INSERT INTO memo_schema.memo_line_item_table (
         memo_line_item_id,
         memo_line_item_content,
         memo_line_item_order,
@@ -8179,7 +8181,7 @@ RETURNS JSON AS $$
 
     if (memoLineItemAttachmentTableValues) {
       plv8.execute(`
-        INSERT INTO memo_line_item_attachment_table (
+        INSERT INTO memo_schema.memo_line_item_attachment_table (
           memo_line_item_attachment_name,
           memo_line_item_attachment_caption,
           memo_line_item_attachment_storage_bucket,
@@ -11809,21 +11811,21 @@ plv8.subtransaction(function() {
     `
       SELECT
         COUNT(memo_agreement_id)
-      FROM memo_agreement_table
+      FROM memo_schema.memo_agreement_table
       WHERE
         memo_agreement_by_team_member_id = '${teamMemberId}'
         AND memo_agreement_memo_id = '${memoId}'
     `
   )[0].count;
 
-  if(count){
+  if(memoAgreementCount){
     returnData =  null;
     return;
   }
 
   const memoAgreementId = plv8.execute(
     `
-      INSERT INTO memo_agreement_table 
+      INSERT INTO memo_schema.memo_agreement_table 
       (memo_agreement_by_team_member_id, memo_agreement_memo_id) 
       VALUES
       ('${teamMemberId}', '${memoId}')
@@ -11835,12 +11837,11 @@ plv8.subtransaction(function() {
     `
       SELECT
         memo_agreement_table.*,
-        user_id
-        user_avatar
-        user_first_name
+        user_id,
+        user_avatar,
+        user_first_name,
         user_last_name
-        user_employee_number
-      FROM memo_agreement_table
+      FROM memo_schema.memo_agreement_table
       INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE 
@@ -11895,7 +11896,7 @@ plv8.subtransaction(function() {
 
   plv8.execute(
     `
-      UPDATE memo_signer_table
+      UPDATE memo_schema.memo_signer_table
       SET
         memo_signer_status = '${action}',
         memo_signer_date_signed = '${currentDate}'
@@ -11907,7 +11908,7 @@ plv8.subtransaction(function() {
   if(isPrimarySigner){
     plv8.execute(
       `
-        UPDATE memo_status_table
+        UPDATE memo_schema.memo_status_table
         SET
           memo_status = '${action}',
           memo_status_date_updated = '${currentDate}'
@@ -11921,17 +11922,17 @@ plv8.subtransaction(function() {
     const memoAgreementCount = plv8.execute(
       `
         SELECT COUNT(memo_agreement_id)
-        FROM memo_agreement_table
+        FROM memo_schema.memo_agreement_table
         WHERE
           memo_agreement_by_team_member_id = '${memoSignerTeamMemberId}'
           AND memo_agreement_memo_id = '${memoId}'
       `
     )[0].count;
 
-    if (memoAgreementCount === 0) {
+    if (Number(memoAgreementCount) === 0) {
       const memoAgreementId = plv8.execute(
         `
-          INSERT INTO memo_agreement_table 
+          INSERT INTO memo_schema.memo_agreement_table 
           (memo_agreement_by_team_member_id, memo_agreement_memo_id) 
           VALUES
           ('${memoSignerTeamMemberId}', '${memoId}')
@@ -11943,12 +11944,11 @@ plv8.subtransaction(function() {
         `
           SELECT
             memo_agreement_table.*,
-            user_id
-            user_avatar
-            user_first_name
+            user_id,
+            user_avatar,
+            user_first_name,
             user_last_name
-            user_employee_number
-          FROM memo_agreement_table
+          FROM memo_schema.memo_agreement_table
           INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
           INNER JOIN user_schema.user_table ON user_id = team_member_user_id
           WHERE 
@@ -12508,22 +12508,22 @@ ALTER TABLE history_schema.user_name_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE history_schema.signature_history_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE unit_of_measurement_schema.general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE service_schema.service_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_signer_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_line_item_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_line_item_attachment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_date_updated_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_status_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_agreement_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_signer_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_line_item_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_line_item_attachment_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_date_updated_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_status_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_agreement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_valid_id_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_schema.other_expenses_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE other_expenses_schema.other_expenses_type_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE unit_of_measurement_schema.item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_schema.item_level_three_description_table  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_format_section_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_format_section_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE memo_schema.memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.query_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_sla_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.csi_code_table ENABLE ROW LEVEL SECURITY;
@@ -12728,32 +12728,32 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_cate
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_table;
-DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_table;
-DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_table;
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_table;
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_table;
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_table;
 
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_signer_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_signer_table;
 
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_line_item_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_line_item_table;
 
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_line_item_attachment_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_line_item_attachment_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_date_updated_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_date_updated_table;
-DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_date_updated_table;
-DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_date_updated_table;
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_date_updated_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_date_updated_table;
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_date_updated_table;
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_date_updated_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_status_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_status_table;
-DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_status_table;
-DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_status_table;
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_status_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_status_table;
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_status_table;
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_status_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_read_receipt_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_read_receipt_table;
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_read_receipt_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_read_receipt_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_agreement_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_agreement_table;
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_agreement_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_agreement_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_schema.user_valid_id_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_valid_id_table;
@@ -12779,9 +12779,9 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_lev
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
 
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_section_table;
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_subsection_table;
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_format_attachment_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_section_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_subsection_table;
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_attachment_table;
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.query_table;
 
@@ -14497,22 +14497,22 @@ USING (
 );
 
 -- memo_table
-CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_table"
+CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."memo_table"
+CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for auth users" ON "public"."memo_table"
+CREATE POLICY "Allow UPDATE for auth users" ON "memo_schema"."memo_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_table"
+CREATE POLICY "Allow DELETE for auth users on own memo" ON "memo_schema"."memo_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14527,92 +14527,92 @@ USING (true)
 WITH CHECK (true);
 
 -- memo_line_item_table
-CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_line_item_table"
+CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_line_item_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
 -- memo_line_item_attachment_table
-CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_line_item_attachment_table"
+CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_line_item_attachment_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
 -- memo_date_updated_table
-CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_date_updated_table"
+CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_date_updated_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."memo_date_updated_table"
+CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_date_updated_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for auth users" ON "public"."memo_date_updated_table"
+CREATE POLICY "Allow UPDATE for auth users" ON "memo_schema"."memo_date_updated_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_date_updated_table"
+CREATE POLICY "Allow DELETE for auth users on own memo" ON "memo_schema"."memo_date_updated_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM memo_table
+    FROM memo_schema.memo_table
     WHERE memo_id = memo_date_updated_memo_id
     AND memo_author_user_id = auth.uid()
   )
 );
 
 -- memo_status_table
-CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_status_table"
+CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_status_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."memo_status_table"
+CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_status_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for auth users" ON "public"."memo_status_table"
+CREATE POLICY "Allow UPDATE for auth users" ON "memo_schema"."memo_status_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for auth users on own memo" ON "public"."memo_status_table"
+CREATE POLICY "Allow DELETE for auth users on own memo" ON "memo_schema"."memo_status_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM memo_table
+    FROM memo_schema.memo_table
     WHERE memo_id = memo_status_memo_id
     AND memo_author_user_id = auth.uid()
   )
 );
 
 -- memo_read_receipt_table
-CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_read_receipt_table"
+CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_read_receipt_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."memo_read_receipt_table"
+CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_read_receipt_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
 -- memo_agreement_table
-CREATE POLICY "Allow CREATE access for auth users" ON "public"."memo_agreement_table"
+CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_agreement_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."memo_agreement_table"
+CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_agreement_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
@@ -14828,19 +14828,19 @@ USING (
   )
 );
 
-CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_section_table"
+CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_format_section_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_subsection_table"
+CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_format_subsection_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_format_attachment_table"
+CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_format_attachment_table"
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
@@ -15763,5 +15763,10 @@ GRANT ALL ON ALL TABLES IN SCHEMA jira_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA jira_schema TO POSTGRES;
 GRANT ALL ON SCHEMA jira_schema TO postgres;
 GRANT ALL ON SCHEMA jira_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA memo_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA memo_schema TO POSTGRES;
+GRANT ALL ON SCHEMA memo_schema TO postgres;
+GRANT ALL ON SCHEMA memo_schema TO public;
 
 ----- END: PRIVILEGES
