@@ -21,7 +21,7 @@ const useRealtimeTicketStatus = (
         "postgres_changes",
         {
           event: "UPDATE",
-          schema: "public",
+          schema: "ticket_schema",
           table: "ticket_table",
           filter: `ticket_id=eq.${ticketId}`,
         },

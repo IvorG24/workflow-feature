@@ -75,11 +75,11 @@ const TicketResponseSection = ({
                 </Flex>
               )}
               {section.ticket_section_fields.map((field, fieldIdx) => {
-                if (!field.ticket_field_response) return <></>;
+                if (!field.ticket_field_response) return null;
                 return (
                   <Box
                     mt={sectionIdx === 0 && fieldIdx === 0 ? 0 : "sm"}
-                    key={fieldIdx}
+                    key={`${sectionIdx}-${fieldIdx}`}
                   >
                     <Text size={14} weight={600}>
                       {field.ticket_field_name}
