@@ -260,6 +260,7 @@ const ItemList = ({
         table: "item",
         id: itemId,
         status: value,
+        schema: "public",
       });
     } catch {
       notifications.show({

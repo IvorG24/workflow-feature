@@ -177,6 +177,7 @@ const EquipmentLookupList = ({
         table: lookup.table,
         id: equipmentLookupId,
         status: value,
+        schema: lookup.schema,
       });
     } catch {
       notifications.show({

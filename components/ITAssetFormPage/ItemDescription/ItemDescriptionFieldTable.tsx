@@ -168,6 +168,7 @@ const ItemDescriptionFieldTable = ({
         table: "item_description_field",
         id: fieldId,
         status: value,
+        schema: "public",
       });
     } catch {
       notifications.show({

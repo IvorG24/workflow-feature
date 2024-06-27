@@ -168,6 +168,7 @@ const OtherExpensesTypeList = ({
         table: "other_expenses_type",
         id: typeId,
         status: value,
+        schema: "other_expenses_schema",
       });
     } catch (e) {
       notifications.show({
