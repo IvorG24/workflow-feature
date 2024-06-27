@@ -10,7 +10,6 @@ import {
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { getPagination } from "@/utils/functions";
 import {
   JiraFormslyProjectType,
   JiraOrganizationTableRow,
@@ -189,7 +188,6 @@ const JiraFormslyProjectList = ({
         color: "green",
       });
     } catch (error) {
-      console.error(error);
       notifications.show({
         message: "Failed to assign to jira project",
         color: "red",
@@ -206,11 +204,10 @@ const JiraFormslyProjectList = ({
     index: number,
     search: string
   ) => {
-    const { from, to } = getPagination(index, ROW_PER_PAGE);
     const { data, count } = await getJiraFormslyProjectList(supabaseClient, {
       teamId: activeTeam.team_id,
-      from,
-      to,
+      page: index,
+      limit: ROW_PER_PAGE,
       search,
     });
 
@@ -254,7 +251,7 @@ const JiraFormslyProjectList = ({
       setIsLoading(true);
       setProjectActivePage(1);
       const { processedProjects, count } =
-        await handleFetchJiraFormslyProjectList(0, formData.search);
+        await handleFetchJiraFormslyProjectList(1, formData.search);
       setJiraFormslyProjectList(processedProjects as JiraFormslyProjectType[]);
       setJiraFormslyProjectCount(count);
     } catch (error) {
@@ -273,7 +270,7 @@ const JiraFormslyProjectList = ({
       setIsLoading(true);
       const { processedProjects, count } =
         await handleFetchJiraFormslyProjectList(
-          page - 1,
+          page,
           searchTeamProjectFormMethods.getValues().search
         );
       setJiraFormslyProjectList(processedProjects as JiraFormslyProjectType[]);

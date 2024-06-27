@@ -27,12 +27,14 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
         to: 256,
       });
 
-      const { data: initialJiraFormslyProjectList, count } =
-        await getJiraFormslyProjectList(supabaseClient, {
+      const jiraFormslyProjectData = await getJiraFormslyProjectList(
+        supabaseClient,
+        {
           teamId,
-          from: 0,
-          to: ROW_PER_PAGE,
-        });
+          page: 1,
+          limit: ROW_PER_PAGE,
+        }
+      );
 
       const jiraOrganizationData = await getJiraOrganizationList(
         supabaseClient,
@@ -55,53 +57,9 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
         }
       );
 
-      const jiraFormslyProjectList = initialJiraFormslyProjectList.map(
-        (project) => {
-          project.assigned_jira_project = {
-            ...project.assigned_jira_project,
-            jira_project: null,
-          } as JiraFormslyProjectType["assigned_jira_project"];
-          project.assigned_jira_organization = {
-            ...project.assigned_jira_organization,
-            jira_organization_team_project_organization: null,
-          } as JiraFormslyProjectType["assigned_jira_organization"];
-
-          const jiraProjectMatch = jiraProjectData.data.find(
-            (jiraProject) =>
-              jiraProject.jira_project_id ===
-              project.assigned_jira_project?.jira_project_id
-          );
-
-          const jiraOrganizationMatch = jiraOrganizationData.data.find(
-            (organization) =>
-              organization.jira_organization_id ===
-              project.assigned_jira_organization
-                ?.jira_organization_team_project_organization_id
-          );
-
-          if (jiraProjectMatch) {
-            project.assigned_jira_project = {
-              ...project.assigned_jira_project,
-              jira_project: jiraProjectMatch,
-            } as JiraFormslyProjectType["assigned_jira_project"];
-          } else if (jiraOrganizationMatch) {
-            project.assigned_jira_organization = {
-              ...project.assigned_jira_organization,
-              jira_organization_team_project_organization:
-                jiraOrganizationMatch,
-            } as JiraFormslyProjectType["assigned_jira_organization"];
-          }
-
-          return project;
-        }
-      );
-
       return {
         props: {
-          jiraFormslyProjectData: {
-            data: jiraFormslyProjectList,
-            count: count,
-          },
+          jiraFormslyProjectData,
           jiraProjectData,
           jiraUserAccountData,
           jiraItemCategoryData,

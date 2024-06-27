@@ -1590,6 +1590,7 @@ export const assignJiraFormslyProject = async (
   const { formslyProjectId, jiraProjectId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_formsly_project_table")
     .insert({
       formsly_project_id: formslyProjectId,
@@ -1618,6 +1619,7 @@ export const assignJiraUserToProject = async (
 
   // check for duplicate
   const { count, error: CountError } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_project_user_table")
     .select("jira_project_user_id", { count: "exact" })
     .eq("jira_project_user_account_id", userAccountId)
@@ -1634,6 +1636,7 @@ export const assignJiraUserToProject = async (
     )
   ) {
     const { count, error: CountError } = await supabaseClient
+      .schema("jira_schema")
       .from("jira_project_user_table")
       .select("jira_project_user_id", { count: "exact" })
       .eq("jira_project_user_role_id", userRoleId)
@@ -1650,6 +1653,7 @@ export const assignJiraUserToProject = async (
   }
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_project_user_table")
     .insert({
       jira_project_user_account_id: userAccountId,
@@ -1689,6 +1693,7 @@ const updateJiraItemCategory = async (
 ) => {
   if (!params.data.jira_item_user_id) throw new Error();
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_item_user_table")
     .update(params.data)
     .eq("jira_item_user_id", params.data.jira_item_user_id)
@@ -1712,6 +1717,7 @@ const insertJiraItemCategory = async (
   params: { data: JiraItemCategoryUserTableInsert }
 ) => {
   const { count } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_item_user_table")
     .select("jira_item_user_id", { count: "exact" })
     .eq(
@@ -1724,6 +1730,7 @@ const insertJiraItemCategory = async (
   }
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_item_user_table")
     .insert(params.data)
     .select(
@@ -1748,6 +1755,7 @@ export const createJiraProject = async (
 ) => {
   // check if duplicate
   const { count, error: duplicateError } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_project_table")
     .select("jira_project_id", { count: "exact" })
     .eq("jira_project_jira_id", params.jira_project_jira_id);
@@ -1759,6 +1767,7 @@ export const createJiraProject = async (
   }
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_project_table")
     .insert(params)
     .select("*");
@@ -1775,6 +1784,7 @@ export const createJiraUser = async (
 ) => {
   // check if duplicate
   const { count, error: duplicateError } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_user_account_table")
     .select("jira_user_account_id", { count: "exact" })
     .eq("jira_user_account_jira_id", params.jira_user_account_jira_id);
@@ -1786,6 +1796,7 @@ export const createJiraUser = async (
   }
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_user_account_table")
     .insert(params);
 
@@ -1800,6 +1811,7 @@ export const createJiraFormslyItemCategory = async (
   params: JiraItemCategoryTableInsert
 ) => {
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_item_category_table")
     .insert(params)
     .select(
@@ -1858,6 +1870,7 @@ export const createJiraOrganization = async (
 ) => {
   // check if duplicate
   const { count, error: duplicateError } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_organization_table")
     .select("jira_organization_id", { count: "exact", head: true })
     .eq("jira_organization_jira_id", params.jira_organization_jira_id);
@@ -1869,6 +1882,7 @@ export const createJiraOrganization = async (
   }
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_organization_table")
     .insert(params)
     .select();
@@ -1890,6 +1904,7 @@ export const assignJiraFormslyOrganization = async (
   if (!jiraOrganizationId) return null;
 
   const { data, error } = await supabaseClient
+    .schema("jira_schema")
     .from("jira_organization_team_project_table")
     .insert({
       jira_organization_team_project_project_id: formslyProjectId,
