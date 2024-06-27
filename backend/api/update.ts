@@ -423,6 +423,7 @@ export const assignTicket = async (
 ) => {
   const { ticketId, teamMemberId, currentTicketStatus } = params;
   const { count } = await supabaseClient
+    .schema("ticket_schema")
     .from("ticket_table")
     .select("", { count: "exact", head: true })
     .eq("ticket_id", ticketId)

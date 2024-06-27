@@ -4710,6 +4710,7 @@ export const getTicketCategoryList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
   const { data, error } = await supabaseClient
+    .schema("ticket_schema")
     .from("ticket_category_table")
     .select("*")
     .eq("ticket_category_is_disabled", false)
@@ -6192,6 +6193,7 @@ export const getTicket = async (
   }
 ) => {
   const { data } = await supabaseClient
+    .schema("ticket_schema")
     .from("ticket_table")
     .select("*")
     .eq("ticket_id", params.ticketId)

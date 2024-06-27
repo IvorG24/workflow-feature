@@ -979,6 +979,7 @@ export const createTicketComment = async (
   params: TicketCommentTableInsert
 ) => {
   const { data, error } = await supabaseClient
+    .schema("ticket_schema")
     .from("ticket_comment_table")
     .insert(params)
     .select("*")
