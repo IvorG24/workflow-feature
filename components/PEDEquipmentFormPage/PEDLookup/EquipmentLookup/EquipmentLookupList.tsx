@@ -95,7 +95,6 @@ const EquipmentLookupList = ({
       setEquipmentLookupList(data);
       setEquipmentLookupCount(Number(count));
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: `Error on fetching equipment ${lookup.label} list`,
         color: "red",
