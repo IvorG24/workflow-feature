@@ -5001,13 +5001,13 @@ RETURNS JSON as $$
           }
         });
 
-        const expenseTypes = plv8.execute(`SELECT * FROM expense_type_table WHERE expense_type_is_disabled = FALSE`);
-        const expenseOptions = expenseTypes.map((expense, index) => {
+        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankListOptions = bankList.map((bank, index) => {
           return {
-            option_field_id: form.form_section[1].section_field[2].field_id,
-            option_id: expense.expense_type_id,
+            option_field_id: form.form_section[1].section_field[8].field_id,
+            option_id: bank.bank_id,
             option_order: index,
-            option_value: expense.expense_type_label
+            option_value: bank.bank_label
           }
         });
 
@@ -5027,17 +5027,6 @@ RETURNS JSON as $$
           }
         });
 
-        const payeeSectionFieldList = form.form_section[1].section_field.map((field) => {
-          if (field.field_name === 'Type of Request') {
-            return {
-              ...field,
-              field_option: expenseOptions,
-            }
-          }
-
-          return field;
-        })
-
         returnData = {
           form: {
             ...form,
@@ -5046,13 +5035,11 @@ RETURNS JSON as $$
                 ...form.form_section[0],
                 section_field: firstSectionFieldList,
               },
-              {
-                ...form.form_section[1],
-                section_field: payeeSectionFieldList,
-              }
+              form.form_section[1]
             ],
           },
-          projectOptions
+          projectOptions,
+          bankListOptions
         }
         return;
       } else if (form.form_name === "Bill of Quantity") {

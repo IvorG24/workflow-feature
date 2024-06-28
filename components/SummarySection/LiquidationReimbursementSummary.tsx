@@ -53,7 +53,11 @@ const LiquidationReimbursementSummary = ({ summaryData }: Props) => {
                 `${summary.section_field[2].field_response?.request_response}`
               );
               const amount = safeParse(
-                `${summary.section_field[3].field_response?.request_response}`
+                `${
+                  summary.section_field.find(
+                    (field) => field.field_name === "Invoice Amount"
+                  )?.field_response?.request_response
+                }`
               );
 
               return (

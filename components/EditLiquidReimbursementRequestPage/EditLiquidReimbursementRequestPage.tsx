@@ -12,7 +12,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { Database } from "@/utils/database";
-import { safeParse } from "@/utils/functions";
+import { calculateInvoiceAmountWithVAT, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -52,6 +52,7 @@ export type FieldWithResponseArray = Field & {
 type Props = {
   form: FormType;
   projectOptions: OptionTableRow[];
+  bankListOptions: OptionTableRow[];
   duplicatableSectionIdList: string[];
   requestId: string;
 };
@@ -61,6 +62,7 @@ const EditLiquidReimbursementRequestPage = ({
   projectOptions,
   duplicatableSectionIdList,
   requestId,
+  bankListOptions,
 }: Props) => {
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -97,7 +99,7 @@ const EditLiquidReimbursementRequestPage = ({
     requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -244,10 +246,19 @@ const EditLiquidReimbursementRequestPage = ({
       const newSection = {
         ...sectionMatch,
         section_order: sectionLastIndex + 1,
-        section_field: duplicatedFieldsWithDuplicatableId,
+        section_field: duplicatedFieldsWithDuplicatableId.filter(
+          (field) =>
+            ![
+              "VAT",
+              "Account Name",
+              "Payment Option",
+              "Account Number",
+              "Specify Other Type of Request",
+            ].includes(field.field_name)
+        ),
       };
 
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };
@@ -352,6 +363,229 @@ const EditLiquidReimbursementRequestPage = ({
     }
   };
 
+  const handleInvoiceAmountChange = (value: number, sectionIndex: number) => {
+    try {
+      const currentPayeeSection = getValues(`sections.${sectionIndex}`);
+      const isWithVAT = Boolean(
+        currentPayeeSection.section_field.find(
+          (field) => field.field_name === "This payee have VAT?"
+        )?.field_response
+      );
+      const conditionalVatFieldIndex =
+        currentPayeeSection.section_field.findIndex(
+          (field) => field.field_name === "VAT"
+        );
+
+      const vatFieldIndex = currentPayeeSection.section_field.findIndex(
+        (field) => field.field_name === "VAT"
+      );
+      const costFieldIndex = currentPayeeSection.section_field.findIndex(
+        (field) => field.field_name === "Cost"
+      );
+
+      if (isWithVAT) {
+        const vatValue = calculateInvoiceAmountWithVAT(value);
+        if (conditionalVatFieldIndex === -1) {
+          updateSection(sectionIndex, {
+            ...currentPayeeSection,
+            section_field: [
+              ...currentPayeeSection.section_field,
+              form.form_section[1].section_field[6],
+            ],
+          });
+        }
+        setValue(
+          `sections.${sectionIndex}.section_field.${vatFieldIndex}.field_response`,
+          vatValue
+        );
+        setValue(
+          `sections.${sectionIndex}.section_field.${costFieldIndex}.field_response`,
+          value - vatValue
+        );
+      } else {
+        setValue(
+          `sections.${sectionIndex}.section_field.${costFieldIndex}.field_response`,
+          value
+        );
+      }
+    } catch (error) {
+      setValue(`sections.${sectionIndex}.section_field.4.field_response`, 0);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handlePayeeVatBooleanChange = (
+    value: boolean,
+    fieldIndex: number,
+    sectionIndex: number
+  ) => {
+    try {
+      const currentPayeeSection = getValues(`sections.${sectionIndex}`);
+      const invoiceAmountField = currentPayeeSection.section_field.find(
+        (field) => field.field_name === "Invoice Amount"
+      );
+      const invoiceAmount = Number(invoiceAmountField?.field_response);
+
+      const vatFieldIndex = currentPayeeSection.section_field.findIndex(
+        (field) => field.field_name === "VAT"
+      );
+      const costFieldIndex = currentPayeeSection.section_field.findIndex(
+        (field) => field.field_name === "Cost"
+      );
+
+      const vatConditionalField = {
+        ...form.form_section[1].section_field[6],
+        field_response: calculateInvoiceAmountWithVAT(invoiceAmount),
+      };
+
+      const updatedFields = [...currentPayeeSection.section_field];
+
+      if (value) {
+        // Add or update VAT field
+        if (vatFieldIndex === -1) {
+          updatedFields.push(vatConditionalField);
+        } else {
+          updatedFields[vatFieldIndex] = vatConditionalField;
+        }
+        setValue(
+          `sections.${sectionIndex}.section_field.${costFieldIndex}.field_response`,
+          invoiceAmount - vatConditionalField.field_response
+        );
+      } else {
+        // Remove VAT field if it exists
+        if (vatFieldIndex !== -1) {
+          updatedFields.splice(vatFieldIndex, 1);
+        }
+        setValue(
+          `sections.${sectionIndex}.section_field.${costFieldIndex}.field_response`,
+          invoiceAmount
+        );
+      }
+
+      updateSection(sectionIndex, {
+        ...currentPayeeSection,
+        section_field: updatedFields.sort(
+          (a, b) => a.field_order - b.field_order
+        ),
+      });
+    } catch (error) {
+      setValue(
+        `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+        false
+      );
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleModeOfPaymentChange = (
+    value: string | null,
+    fieldIndex: number,
+    sectionIndex: number
+  ) => {
+    try {
+      if (!value) return;
+
+      const selectedSection = getValues(`sections.${sectionIndex}`);
+      const paymentOptionField = {
+        ...form.form_section[1].section_field[9],
+        field_option: bankListOptions,
+      };
+
+      const isWithAccountConditionalField = [
+        "Bank Transfer",
+        "E-Cash",
+        "Telegraphic Transfer",
+      ].includes(value);
+      const isBankTransfer = value === "Bank Transfer";
+
+      let updatedFields = selectedSection.section_field.filter(
+        (field) =>
+          !["Payment Option", "Account Name", "Account Number"].includes(
+            field.field_name
+          )
+      );
+
+      const conditionalFieldList = form.form_section[1].section_field.filter(
+        (field) => ["Account Name", "Account Number"].includes(field.field_name)
+      );
+
+      if (isWithAccountConditionalField) {
+        const additionalFields = isBankTransfer
+          ? [paymentOptionField, ...conditionalFieldList]
+          : conditionalFieldList;
+
+        updatedFields = [...updatedFields, ...additionalFields];
+      }
+      removeSection(sectionIndex);
+      insertSection(sectionIndex, {
+        ...selectedSection,
+        section_field: updatedFields,
+      });
+    } catch (error) {
+      setValue(
+        `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
+        false
+      );
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleTypeOfRequestChange = (
+    value: string | null,
+    sectionIndex: number
+  ) => {
+    try {
+      const currentPayeeSection = getValues(`sections.${sectionIndex}`);
+      const specifyOtherTypeOfRequestField =
+        currentPayeeSection.section_field.find(
+          (field) => field.field_name === "Specify Other Type of Request"
+        );
+      let currentPayeeSectionFieldList = currentPayeeSection.section_field;
+
+      const addField = (fieldIndex: number) => {
+        const selectedField = form.form_section[1].section_field[fieldIndex];
+        currentPayeeSectionFieldList = [
+          ...currentPayeeSectionFieldList,
+          selectedField,
+        ];
+      };
+
+      const removeFieldById = (fieldId: string) => {
+        currentPayeeSectionFieldList = currentPayeeSectionFieldList.filter(
+          (field) => field.field_id !== fieldId
+        );
+      };
+
+      if (value === "Other") {
+        addField(3);
+      } else if (specifyOtherTypeOfRequestField) {
+        removeFieldById(specifyOtherTypeOfRequestField.field_id);
+      }
+
+      updateSection(sectionIndex, {
+        ...currentPayeeSection,
+        section_field: currentPayeeSectionFieldList.sort(
+          (a, b) => a.field_order - b.field_order
+        ),
+      });
+    } catch (error) {
+      setValue(`sections.${sectionIndex}.section_field.2.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
@@ -385,6 +619,18 @@ const EditLiquidReimbursementRequestPage = ({
             field.field_name === "Department" &&
             field.field_response === "Plants and Equipment"
         );
+
+        const isNotLiquidation = requestDetailsSectionFieldList.find(
+          (field) => field.field_name === "Request Type"
+        )?.field_response;
+
+        if (!safeParse(isNotLiquidation ?? "").includes("liquidation")) {
+          requestDetailsSectionFieldList =
+            requestDetailsSectionFieldList.filter(
+              (field) =>
+                !["Working Advances", "Ticket Link"].includes(field.field_name)
+            );
+        }
 
         if (!isPED) {
           requestDetailsSectionFieldList =
@@ -452,7 +698,11 @@ const EditLiquidReimbursementRequestPage = ({
             const response = field.field_response?.request_response
               ? safeParse(field.field_response?.request_response)
               : "";
-            const option: OptionTableRow[] = field.field_option ?? [];
+            let option: OptionTableRow[] = field.field_option ?? [];
+
+            if (field.field_name === "Payment Option") {
+              option = bankListOptions;
+            }
 
             if (response) {
               fieldList.push({
@@ -554,6 +804,10 @@ const EditLiquidReimbursementRequestPage = ({
                       onProjectNameChange: handleProjectNameChange,
                       onRequestTypeChange: handleRequestTypeChange,
                       onDepartmentChange: handleDepartmentChange,
+                      onTypeOfRequestChange: handleTypeOfRequestChange,
+                      onPayeeVatBooleanChange: handlePayeeVatBooleanChange,
+                      onInvoiceAmountChange: handleInvoiceAmountChange,
+                      onModeOfPaymentChange: handleModeOfPaymentChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}

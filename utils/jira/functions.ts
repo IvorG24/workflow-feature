@@ -404,6 +404,9 @@ export const formatJiraLRFRequisitionPayload = ({
   let jiraTicketPayload: JiraPayloadType = {
     form: {
       answers: {
+        "476": {
+          choices: [jiraProjectSiteId], // Requesting Project
+        },
         "471": {
           text: requestor, // Requestor Name
         },
@@ -440,9 +443,6 @@ export const formatJiraLRFRequisitionPayload = ({
           475: {
             choices: [department], // Department
           },
-          476: {
-            choices: [jiraProjectSiteId], // Requesting Project
-          },
           479: {
             text: costCode, // Cost code
           },
@@ -463,9 +463,6 @@ export const formatJiraLRFRequisitionPayload = ({
           ...jiraTicketPayload.form.answers,
           469: {
             choices: [department], // Department
-          },
-          468: {
-            choices: [jiraProjectSiteId], // Requesting Project
           },
           475: {
             text: purpose, // Purpose
