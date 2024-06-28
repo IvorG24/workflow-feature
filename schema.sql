@@ -42,6 +42,7 @@ DROP SCHEMA IF EXISTS equipment_schema CASCADE;
 DROP SCHEMA IF EXISTS lookup_schema CASCADE;
 DROP SCHEMA IF EXISTS jira_schema CASCADE;
 DROP SCHEMA IF EXISTS memo_schema CASCADE;
+DROP SCHEMA IF EXISTS ticket_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
@@ -54,6 +55,7 @@ CREATE SCHEMA equipment_schema AUTHORIZATION postgres;
 CREATE SCHEMA lookup_schema AUTHORIZATION postgres;
 CREATE SCHEMA jira_schema AUTHORIZATION postgres;
 CREATE SCHEMA memo_schema AUTHORIZATION postgres;
+CREATE SCHEMA ticket_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
 
@@ -370,22 +372,22 @@ CREATE TABLE comment_table (
   comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 
-CREATE TABLE ticket_category_table (
+CREATE TABLE ticket_schema.ticket_category_table (
   ticket_category_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   ticket_category VARCHAR(4000) NOT NULL, 
   ticket_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   ticket_category_is_active BOOLEAN DEFAULT true NOT NULL
 );
 
-CREATE TABLE ticket_section_table (
+CREATE TABLE ticket_schema.ticket_section_table (
   ticket_section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   ticket_section_name VARCHAR(4000) NOT NULL,
   ticket_section_is_duplicatable BOOLEAN DEFAULT false NOT NULL,
   
-  ticket_section_category_id UUID REFERENCES ticket_category_table(ticket_category_id) NOT NULL
+  ticket_section_category_id UUID REFERENCES ticket_schema.ticket_category_table(ticket_category_id) NOT NULL
 );
 
-CREATE TABLE ticket_field_table (
+CREATE TABLE ticket_schema.ticket_field_table (
   ticket_field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   ticket_field_name VARCHAR(4000) NOT NULL,
   ticket_field_type VARCHAR(4000) NOT NULL,
@@ -393,39 +395,39 @@ CREATE TABLE ticket_field_table (
   ticket_field_is_read_only BOOLEAN DEFAULT false NOT NULL,
   ticket_field_order INT NOT NULL,
   
-  ticket_field_section_id UUID REFERENCES ticket_section_table(ticket_section_id) NOT NULL
+  ticket_field_section_id UUID REFERENCES ticket_schema.ticket_section_table(ticket_section_id) NOT NULL
 );
 
-CREATE TABLE ticket_option_table (
+CREATE TABLE ticket_schema.ticket_option_table (
   ticket_option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   ticket_option_value VARCHAR(4000) NOT NULL,
   ticket_option_order INT NOT NULL,
   
-  ticket_option_field_id UUID REFERENCES ticket_field_table(ticket_field_id) NOT NULL
+  ticket_option_field_id UUID REFERENCES ticket_schema.ticket_field_table(ticket_field_id) NOT NULL
 );
 
-CREATE TABLE ticket_table (
+CREATE TABLE ticket_schema.ticket_table (
   ticket_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   ticket_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   ticket_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   ticket_status_date_updated TIMESTAMPTZ,
   ticket_is_disabled BOOLEAN DEFAULT false NOT NULL,
   
-  ticket_category_id UUID REFERENCES ticket_category_table(ticket_category_id) NOT NULL,
+  ticket_category_id UUID REFERENCES ticket_schema.ticket_category_table(ticket_category_id) NOT NULL,
   ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
   ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
 );
 
-CREATE TABLE ticket_response_table (
+CREATE TABLE ticket_schema.ticket_response_table (
   ticket_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   ticket_response_value VARCHAR(4000) NOT NULL,
   ticket_response_duplicatable_section_id UUID,
   
-  ticket_response_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
-  ticket_response_field_id UUID REFERENCES ticket_field_table(ticket_field_id) NOT NULL
+  ticket_response_ticket_id UUID REFERENCES ticket_schema.ticket_table(ticket_id) NOT NULL,
+  ticket_response_field_id UUID REFERENCES ticket_schema.ticket_field_table(ticket_field_id) NOT NULL
 );
 
-CREATE TABLE ticket_comment_table (
+CREATE TABLE ticket_schema.ticket_comment_table (
   ticket_comment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   ticket_comment_content VARCHAR(4000) NOT NULL,
   ticket_comment_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
@@ -434,7 +436,7 @@ CREATE TABLE ticket_comment_table (
   ticket_comment_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   ticket_comment_last_updated TIMESTAMPTZ,
 
-  ticket_comment_ticket_id UUID REFERENCES ticket_table(ticket_id) NOT NULL,
+  ticket_comment_ticket_id UUID REFERENCES ticket_schema.ticket_table(ticket_id) NOT NULL,
   ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 
@@ -5904,15 +5906,15 @@ RETURNS JSON AS $$
       teamId,
     } = input_data;
 
-    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
+    const categoryData = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
     
-    const sectionData = plv8.execute(`SELECT * FROM ticket_section_table WHERE ticket_section_category_id='${categoryData.ticket_category_id}'`);
+    const sectionData = plv8.execute(`SELECT * FROM ticket_schema.ticket_section_table WHERE ticket_section_category_id='${categoryData.ticket_category_id}'`);
     
     const sectionList = sectionData.map(section => {
       const fieldData = plv8.execute(
         `
           SELECT *
-          FROM ticket_field_table
+          FROM ticket_schema.ticket_field_table
           WHERE ticket_field_section_id = '${section.ticket_section_id}'
           ORDER BY ticket_field_order ASC
         `
@@ -5921,7 +5923,7 @@ RETURNS JSON AS $$
         const optionData = plv8.execute(
           `
             SELECT *
-            FROM ticket_option_table
+            FROM ticket_schema.ticket_option_table
             WHERE ticket_option_field_id = '${field.ticket_field_id}'
             ORDER BY ticket_option_order ASC
           `
@@ -6296,8 +6298,8 @@ RETURNS JSON as $$
     } = input_data;
 
     const ticket = plv8.execute(`SELECT tt.*, tct.ticket_category
-      FROM ticket_table tt
-      INNER JOIN ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
+      FROM ticket_schema.ticket_table tt
+      INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
       WHERE ticket_id='${ticketId}';
     `)[0];
 
@@ -6319,7 +6321,7 @@ RETURNS JSON as $$
     
     const ticketForm = plv8.execute(`SELECT get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
 
-    const responseData = plv8.execute(`SELECT * FROM ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
+    const responseData = plv8.execute(`SELECT * FROM ticket_schema.ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
 
     const originalTicketSections = ticketForm.ticket_sections.map(section=>({
         ...section,
@@ -6466,7 +6468,7 @@ RETURNS JSON as $$
           user_last_name, 
           user_username, 
           user_avatar
-        FROM ticket_comment_table 
+        FROM ticket_schema.ticket_comment_table 
         INNER JOIN team_member_table ON team_member_id = ticket_comment_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
@@ -6527,11 +6529,11 @@ RETURNS JSON as $$
     const isApprover = member.team_member_role === 'OWNER' || member.team_member_role === 'ADMIN';
     if (!isApprover) throw new Error("User is not an Approver");
     
-    plv8.execute(`UPDATE ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+    plv8.execute(`UPDATE ticket_schema.ticket_table SET ticket_status='UNDER REVIEW', ticket_status_date_updated = NOW(), ticket_approver_team_member_id = '${teamMemberId}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
 
     const updatedTicket = plv8.execute(`SELECT tt.*, tct.ticket_category
-          FROM ticket_table tt
-          INNER JOIN ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
+          FROM ticket_schema.ticket_table tt
+          INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tt.ticket_category_id
           WHERE ticket_id='${ticketId}';
         `)[0];
         
@@ -6588,7 +6590,7 @@ RETURNS JSON as $$
      rejectionMessage
     } = input_data;
 
-    returnData = plv8.execute(`UPDATE ticket_table SET ticket_status='${status.toUpperCase()}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
+    returnData = plv8.execute(`UPDATE ticket_schema.ticket_table SET ticket_status='${status.toUpperCase()}' WHERE ticket_id='${ticketId}' RETURNING *;`)[0];
 
  });
  return returnData;
@@ -6619,9 +6621,9 @@ RETURNS JSON AS $$
           SELECT DISTINCT
             ticket_table.*,
             ticket_category_table.ticket_category
-          FROM ticket_table
+          FROM ticket_schema.ticket_table
           INNER JOIN team_member_table ON ticket_requester_team_member_id = team_member_id
-          INNER JOIN ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
+          INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
           WHERE team_member_team_id = '${teamId}'
           ${requester}
           ${approver}
@@ -6636,7 +6638,7 @@ RETURNS JSON AS $$
       const ticket_count = plv8.execute(
         `
           SELECT DISTINCT COUNT(*)
-          FROM ticket_table
+          FROM ticket_schema.ticket_table
           INNER JOIN team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
           WHERE team_member_table.team_member_team_id = '${teamId}'
           ${requester}
@@ -8601,11 +8603,11 @@ RETURNS JSON AS $$
             DATE_TRUNC('month', tt.ticket_date_created) AS date,
             COUNT(*) AS report_count
         FROM 
-            ticket_response_table trt
-            INNER JOIN ticket_field_table  tft ON tft.ticket_field_id = trt.ticket_response_field_id 
-            INNER JOIN ticket_section_table  tst ON tst.ticket_section_id = tft.ticket_field_section_id 
-            INNER JOIN ticket_category_table  tct ON tct.ticket_category_id = tst.ticket_section_category_id 
-            INNER JOIN ticket_table  tt ON tt.ticket_id = trt.ticket_response_ticket_id 
+            ticket_schema.ticket_response_table trt
+            INNER JOIN ticket_schema.ticket_field_table  tft ON tft.ticket_field_id = trt.ticket_response_field_id 
+            INNER JOIN ticket_schema.ticket_section_table  tst ON tst.ticket_section_id = tft.ticket_field_section_id 
+            INNER JOIN ticket_schema.ticket_category_table  tct ON tct.ticket_category_id = tst.ticket_section_category_id 
+            INNER JOIN ticket_schema.ticket_table  tt ON tt.ticket_id = trt.ticket_response_ticket_id 
         WHERE 
             trt.ticket_response_value ILIKE '%' || '${reporteeId}' || '%'
             AND tft.ticket_field_name='Reportee'
@@ -8623,11 +8625,11 @@ RETURNS JSON AS $$
             DATE_TRUNC('day', tt.ticket_date_created) AS date,
             COUNT(*) AS report_count
         FROM 
-            ticket_response_table trt
-            INNER JOIN ticket_field_table tft ON tft.ticket_field_id = trt.ticket_response_field_id 
-            INNER JOIN ticket_section_table tst ON tst.ticket_section_id = tft.ticket_field_section_id 
-            INNER JOIN ticket_category_table tct ON tct.ticket_category_id = tst.ticket_section_category_id 
-            INNER JOIN ticket_table tt ON tt.ticket_id = trt.ticket_response_ticket_id 
+            ticket_schema.ticket_response_table trt
+            INNER JOIN ticket_schema.ticket_field_table tft ON tft.ticket_field_id = trt.ticket_response_field_id 
+            INNER JOIN ticket_schema.ticket_section_table tst ON tst.ticket_section_id = tft.ticket_field_section_id 
+            INNER JOIN ticket_schema.ticket_category_table tct ON tct.ticket_category_id = tst.ticket_section_category_id 
+            INNER JOIN ticket_schema.ticket_table tt ON tt.ticket_id = trt.ticket_response_ticket_id 
         WHERE 
             trt.ticket_response_value ILIKE '%' || '${reporteeId}' || '%'
             AND tft.ticket_field_name = 'Reportee'
@@ -8666,7 +8668,7 @@ RETURNS JSON AS $$
 
     const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
 
-    const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
+    const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category_is_disabled = false`);
 
     returnData = {teamMemberList, ticketList: ticketList.data, ticketListCount: ticketList.count, ticketCategoryList}
  });
@@ -8706,7 +8708,7 @@ RETURNS JSON AS $$
       `
     )[0];
 
-    const categoryList = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category_is_disabled = false`);
+    const categoryList = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category_is_disabled = false`);
 
     returnData = { member, categoryList }
  });
@@ -8790,11 +8792,11 @@ RETURNS JSON AS $$
       responseValues,
     } = input_data;
 
-    const categoryData = plv8.execute(`SELECT * FROM ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
+    const categoryData = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category='${category}' LIMIT 1;`)[0];
 
-    returnData = plv8.execute(`INSERT INTO ticket_table (ticket_id,ticket_requester_team_member_id,ticket_category_id) VALUES ('${ticketId}','${teamMemberId}','${categoryData.ticket_category_id}') RETURNING *;`)[0];
+    returnData = plv8.execute(`INSERT INTO ticket_schema.ticket_table (ticket_id,ticket_requester_team_member_id,ticket_category_id) VALUES ('${ticketId}','${teamMemberId}','${categoryData.ticket_category_id}') RETURNING *;`)[0];
 
-    plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
+    plv8.execute(`INSERT INTO ticket_schema.ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
     
  });
  return returnData;
@@ -8811,8 +8813,8 @@ RETURNS JSON AS $$
       responseValues,
     } = input_data;
 
-    plv8.execute(`DELETE FROM ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
-    plv8.execute(`INSERT INTO ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
+    plv8.execute(`DELETE FROM ticket_schema.ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
+    plv8.execute(`INSERT INTO ticket_schema.ticket_response_table (ticket_response_value,ticket_response_duplicatable_section_id,ticket_response_field_id,ticket_response_ticket_id) VALUES ${responseValues};`);
     
  });
  return returnData;
@@ -10190,7 +10192,7 @@ RETURNS JSON AS $$
       const closedCount = plv8.execute(
         `
           SELECT COUNT(ticket_id)
-          FROM ticket_table
+          FROM ticket_schema.ticket_table
           WHERE
             ticket_status = 'CLOSED'
             ${condition}
@@ -10199,7 +10201,7 @@ RETURNS JSON AS $$
       const underReviewCount = plv8.execute(
         `
           SELECT COUNT(ticket_id)
-          FROM ticket_table
+          FROM ticket_schema.ticket_table
           WHERE
             ticket_status = 'UNDER REVIEW'
             ${condition}
@@ -10208,7 +10210,7 @@ RETURNS JSON AS $$
       const incorrectCount = plv8.execute(
         `
           SELECT COUNT(ticket_id)
-          FROM ticket_table
+          FROM ticket_schema.ticket_table
           WHERE
             ticket_status = 'INCORRECT'
             ${condition}
@@ -12486,8 +12488,8 @@ ALTER TABLE team_group_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_group_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_comment_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_schema.ticket_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_schema.ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_schema.item_division_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_schema.item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_employee_number_table ENABLE ROW LEVEL SECURITY;
@@ -12514,11 +12516,11 @@ ALTER TABLE memo_schema.memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.query_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_sla_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.csi_code_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_section_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_field_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_option_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_response_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_schema.ticket_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_schema.ticket_section_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_schema.ticket_field_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_schema.ticket_option_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ticket_schema.ticket_response_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_schema.equipment_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_schema.equipment_brand_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE equipment_schema.equipment_model_table ENABLE ROW LEVEL SECURITY;
@@ -12660,15 +12662,15 @@ DROP POLICY IF EXISTS "Allow READ for anon" ON team_project_table;
 DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_schema.ticket_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_schema.ticket_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_comment_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_comment_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_comment_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_comment_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_comment_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_schema.ticket_comment_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_comment_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_schema.ticket_comment_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_choice_table;
@@ -12780,26 +12782,26 @@ DROP POLICY IF EXISTS "Allow CREATE access for all users" ON lookup_schema.csi_c
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON lookup_schema.csi_code_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON lookup_schema.csi_code_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_category_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_category_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_category_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_category_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_section_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_section_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_section_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_section_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_section_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_section_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_field_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_field_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_field_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_field_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_field_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_option_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_option_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_option_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_option_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_option_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_option_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_response_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_response_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_response_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON ticket_response_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_response_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_response_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_response_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON ticket_schema.ticket_response_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_category_table;
@@ -14027,22 +14029,22 @@ USING (
 
 --- TICKET_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_table"
+CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."ticket_table"
+CREATE POLICY "Allow READ for anon users" ON "ticket_schema"."ticket_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "public"."ticket_table"
+CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "ticket_schema"."ticket_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14055,22 +14057,22 @@ USING (
 
 --- TICKET_COMMENT_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_comment_table"
+CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_comment_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."ticket_comment_table"
+CREATE POLICY "Allow READ for anon users" ON "ticket_schema"."ticket_comment_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_comment_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_comment_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "public"."ticket_comment_table"
+CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "ticket_schema"."ticket_comment_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14875,16 +14877,16 @@ WITH CHECK (true);
 
 --- TICKET_CATEGORY_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_category_table"
+CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_category_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_category_table"
+CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_category_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_category_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_category_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
@@ -14892,16 +14894,16 @@ WITH CHECK (true);
 
 --- TICKET_SECTION_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_section_table"
+CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_section_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_section_table"
+CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_section_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_section_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_section_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
@@ -14909,16 +14911,16 @@ WITH CHECK (true);
 
 --- TICKET_FIELD_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_field_table"
+CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_field_table"
+CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_field_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_field_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_field_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
@@ -14926,16 +14928,16 @@ WITH CHECK (true);
 
 --- TICKET_OPTION_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_option_table"
+CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_option_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_option_table"
+CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_option_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_option_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_option_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
@@ -14943,22 +14945,22 @@ WITH CHECK (true);
 
 --- TICKET_RESPONSE_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."ticket_response_table"
+CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_response_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."ticket_response_table"
+CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_response_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."ticket_response_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_response_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for authenticated users" ON "public"."ticket_response_table"
+CREATE POLICY "Allow DELETE for authenticated users" ON "ticket_schema"."ticket_response_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated 
 USING(true);
@@ -15695,7 +15697,7 @@ DROP PUBLICATION if exists supabase_realtime;
 CREATE PUBLICATION supabase_realtime;
 COMMIT;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, user_schema.invitation_table, team_project_table, team_group_table, ticket_comment_table, ticket_table, team_table;
+ALTER PUBLICATION supabase_realtime ADD TABLE request_table, request_signer_table, comment_table, notification_table, team_member_table, user_schema.invitation_table, team_project_table, team_group_table, ticket_schema.ticket_comment_table, ticket_schema.ticket_table, team_table;
 
 -------- END: SUBSCRIPTION
 
@@ -15755,5 +15757,10 @@ GRANT ALL ON ALL TABLES IN SCHEMA memo_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA memo_schema TO POSTGRES;
 GRANT ALL ON SCHEMA memo_schema TO postgres;
 GRANT ALL ON SCHEMA memo_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA ticket_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA ticket_schema TO POSTGRES;
+GRANT ALL ON SCHEMA ticket_schema TO postgres;
+GRANT ALL ON SCHEMA ticket_schema TO public;
 
 ----- END: PRIVILEGES

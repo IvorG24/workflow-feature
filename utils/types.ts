@@ -193,18 +193,18 @@ export type ServiceScopeChoiceTableUpdate =
   Database["service_schema"]["Tables"]["service_scope_choice_table"]["Update"];
 
 export type TicketTableRow =
-  Database["public"]["Tables"]["ticket_table"]["Row"];
+  Database["ticket_schema"]["Tables"]["ticket_table"]["Row"];
 export type TicketTableInsert =
-  Database["public"]["Tables"]["ticket_table"]["Insert"];
+  Database["ticket_schema"]["Tables"]["ticket_table"]["Insert"];
 export type TicketTableUpdate =
-  Database["public"]["Tables"]["ticket_table"]["Update"];
+  Database["ticket_schema"]["Tables"]["ticket_table"]["Update"];
 
 export type TicketCommentTableRow =
-  Database["public"]["Tables"]["ticket_comment_table"]["Row"];
+  Database["ticket_schema"]["Tables"]["ticket_comment_table"]["Row"];
 export type TicketCommentTableInsert =
-  Database["public"]["Tables"]["ticket_comment_table"]["Insert"];
+  Database["ticket_schema"]["Tables"]["ticket_comment_table"]["Insert"];
 export type TicketCommentTableUpdate =
-  Database["public"]["Tables"]["ticket_comment_table"]["Update"];
+  Database["ticket_schema"]["Tables"]["ticket_comment_table"]["Update"];
 
 export type ServiceCategoryTableRow =
   Database["service_schema"]["Tables"]["service_category_table"]["Row"];
@@ -358,39 +358,39 @@ export type FormSLATableUpdate =
   Database["public"]["Tables"]["form_sla_table"]["Update"];
 
 export type TicketCategoryTableRow =
-  Database["public"]["Tables"]["ticket_category_table"]["Row"];
+  Database["ticket_schema"]["Tables"]["ticket_category_table"]["Row"];
 export type TicketCategoryTableInsert =
-  Database["public"]["Tables"]["ticket_category_table"]["Insert"];
+  Database["ticket_schema"]["Tables"]["ticket_category_table"]["Insert"];
 export type TicketCategoryTableUpdate =
-  Database["public"]["Tables"]["ticket_category_table"]["Update"];
+  Database["ticket_schema"]["Tables"]["ticket_category_table"]["Update"];
 
 export type TicketSectionTableRow =
-  Database["public"]["Tables"]["ticket_section_table"]["Row"];
+  Database["ticket_schema"]["Tables"]["ticket_section_table"]["Row"];
 export type TicketSectionTableInsert =
-  Database["public"]["Tables"]["ticket_section_table"]["Insert"];
+  Database["ticket_schema"]["Tables"]["ticket_section_table"]["Insert"];
 export type TicketSectionTableUpdate =
-  Database["public"]["Tables"]["ticket_section_table"]["Update"];
+  Database["ticket_schema"]["Tables"]["ticket_section_table"]["Update"];
 
 export type TicketFieldTableRow =
-  Database["public"]["Tables"]["ticket_field_table"]["Row"];
+  Database["ticket_schema"]["Tables"]["ticket_field_table"]["Row"];
 export type TicketFieldTableInsert =
-  Database["public"]["Tables"]["ticket_field_table"]["Insert"];
+  Database["ticket_schema"]["Tables"]["ticket_field_table"]["Insert"];
 export type TicketFieldTableUpdate =
-  Database["public"]["Tables"]["ticket_field_table"]["Update"];
+  Database["ticket_schema"]["Tables"]["ticket_field_table"]["Update"];
 
 export type TicketOptionTableRow =
-  Database["public"]["Tables"]["ticket_option_table"]["Row"];
+  Database["ticket_schema"]["Tables"]["ticket_option_table"]["Row"];
 export type TicketOptionTableInsert =
-  Database["public"]["Tables"]["ticket_option_table"]["Insert"];
+  Database["ticket_schema"]["Tables"]["ticket_option_table"]["Insert"];
 export type TicketOptionTableUpdate =
-  Database["public"]["Tables"]["ticket_option_table"]["Update"];
+  Database["ticket_schema"]["Tables"]["ticket_option_table"]["Update"];
 
 export type TicketResponseTableRow =
-  Database["public"]["Tables"]["ticket_response_table"]["Row"];
+  Database["ticket_schema"]["Tables"]["ticket_response_table"]["Row"];
 export type TicketResponseTableInsert =
-  Database["public"]["Tables"]["ticket_response_table"]["Insert"];
+  Database["ticket_schema"]["Tables"]["ticket_response_table"]["Insert"];
 export type TicketResponseTableUpdate =
-  Database["public"]["Tables"]["ticket_response_table"]["Update"];
+  Database["ticket_schema"]["Tables"]["ticket_response_table"]["Update"];
 
 export type AddressTableRow =
   Database["public"]["Tables"]["address_table"]["Row"];

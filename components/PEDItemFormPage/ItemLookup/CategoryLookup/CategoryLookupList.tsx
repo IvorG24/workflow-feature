@@ -139,7 +139,7 @@ const CategoryLookupList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: lookup.table,
-        schema: "public",
+        schema: lookup.schema,
       });
       handleFetch("", 1);
 

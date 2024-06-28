@@ -23,7 +23,7 @@ const useRealtimeTicketCommentList = (
         "postgres_changes",
         {
           event: "*",
-          schema: "public",
+          schema: "ticket_schema",
           table: "ticket_comment_table",
           filter: `ticket_comment_ticket_id=eq.${ticketId}`,
         },
