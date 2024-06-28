@@ -156,14 +156,14 @@ const ItemDescriptionFieldTable = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "item_description_field",
-        schema: "public",
+        schema: "item_schema",
       });
 
       notifications.show({
         message: "Field/s deleted.",
         color: "green",
       });
-    } catch {
+    } catch (e) {
       setRecords(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
@@ -190,7 +190,7 @@ const ItemDescriptionFieldTable = ({
         table: "item_description_field",
         id: fieldId,
         status: value,
-        schema: "public",
+        schema: "item_schema",
       });
     } catch {
       notifications.show({
