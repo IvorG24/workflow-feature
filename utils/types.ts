@@ -10,11 +10,11 @@ export type AttachmentTableUpdate =
   Database["public"]["Tables"]["attachment_table"]["Update"];
 
 export type CommentTableRow =
-  Database["public"]["Tables"]["comment_table"]["Row"];
+  Database["request_schema"]["Tables"]["comment_table"]["Row"];
 export type CommentTableInsert =
-  Database["public"]["Tables"]["comment_table"]["Insert"];
+  Database["request_schema"]["Tables"]["comment_table"]["Insert"];
 export type CommentTableUpdate =
-  Database["public"]["Tables"]["comment_table"]["Update"];
+  Database["request_schema"]["Tables"]["comment_table"]["Update"];
 
 export type DefaultFieldTableRow =
   Database["public"]["Tables"]["field_table"]["Row"];
@@ -55,7 +55,7 @@ export type OptionTableUpdate =
   Database["public"]["Tables"]["option_table"]["Update"];
 
 export type DefaultRequestResponseTableRow =
-  Database["public"]["Tables"]["request_response_table"]["Row"];
+  Database["request_schema"]["Tables"]["request_response_table"]["Row"];
 export type RequestResponseTableRow = Omit<
   DefaultRequestResponseTableRow,
   "request_response_prefix"
@@ -63,23 +63,23 @@ export type RequestResponseTableRow = Omit<
   request_response_prefix?: string | null;
 };
 export type RequestResponseTableInsert =
-  Database["public"]["Tables"]["request_response_table"]["Insert"];
+  Database["request_schema"]["Tables"]["request_response_table"]["Insert"];
 export type RequestResponseTableUpdate =
-  Database["public"]["Tables"]["request_response_table"]["Update"];
+  Database["request_schema"]["Tables"]["request_response_table"]["Update"];
 
 export type RequestSignerTableRow =
-  Database["public"]["Tables"]["request_signer_table"]["Row"];
+  Database["request_schema"]["Tables"]["request_signer_table"]["Row"];
 export type RequestSignerTableInsert =
-  Database["public"]["Tables"]["request_signer_table"]["Insert"];
+  Database["request_schema"]["Tables"]["request_signer_table"]["Insert"];
 export type RequestSignerTableUpdate =
-  Database["public"]["Tables"]["request_signer_table"]["Update"];
+  Database["request_schema"]["Tables"]["request_signer_table"]["Update"];
 
 export type RequestTableRow =
-  Database["public"]["Tables"]["request_table"]["Row"];
+  Database["request_schema"]["Tables"]["request_table"]["Row"];
 export type RequestTableInsert =
-  Database["public"]["Tables"]["request_table"]["Insert"];
+  Database["request_schema"]["Tables"]["request_table"]["Insert"];
 export type RequestTableUpdate =
-  Database["public"]["Tables"]["request_table"]["Update"];
+  Database["request_schema"]["Tables"]["request_table"]["Update"];
 
 export type SectionTableRow =
   Database["public"]["Tables"]["section_table"]["Row"];

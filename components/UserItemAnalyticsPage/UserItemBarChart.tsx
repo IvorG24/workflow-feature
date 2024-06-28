@@ -216,7 +216,9 @@ const UserItemBarChart: React.FC<HorizontalBarChartProps> = ({ data }) => {
   };
 
   return (
-    <Container h={data.length * 36}>
+    <Container
+      h={data.length === 1 ? (data.length + 1) * 36 : data.length * 36}
+    >
       <Bar
         ref={chartRef}
         data={chartData}

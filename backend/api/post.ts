@@ -326,6 +326,7 @@ export const createComment = async (
   params: CommentTableInsert
 ) => {
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("comment_table")
     .insert(params)
     .select("*")

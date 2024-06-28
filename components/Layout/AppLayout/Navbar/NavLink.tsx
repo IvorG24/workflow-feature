@@ -347,7 +347,7 @@ const ReviewAppNavLink = () => {
           status: "PENDING",
         }
       );
-
+      
       setUserNotificationCount(pendingRequestCount + unreadNotificationCount);
     };
     if (
