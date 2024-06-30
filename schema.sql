@@ -44,6 +44,7 @@ DROP SCHEMA IF EXISTS jira_schema CASCADE;
 DROP SCHEMA IF EXISTS memo_schema CASCADE;
 DROP SCHEMA IF EXISTS ticket_schema CASCADE;
 DROP SCHEMA IF EXISTS request_schema CASCADE;
+DROP SCHEMA IF EXISTS form_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
@@ -58,6 +59,7 @@ CREATE SCHEMA jira_schema AUTHORIZATION postgres;
 CREATE SCHEMA memo_schema AUTHORIZATION postgres;
 CREATE SCHEMA ticket_schema AUTHORIZATION postgres;
 CREATE SCHEMA request_schema AUTHORIZATION postgres;
+CREATE SCHEMA form_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMA
 
@@ -240,7 +242,7 @@ CREATE TABLE notification_table (
   notification_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
-CREATE TABLE form_table (
+CREATE TABLE form_schema.form_table (
   form_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   form_name VARCHAR(4000) NOT NULL,
   form_description VARCHAR(4000) NOT NULL,
@@ -257,36 +259,36 @@ CREATE TABLE form_table (
   form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
 );
 
-CREATE TABLE signer_table (
+CREATE TABLE form_schema.signer_table (
   signer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   signer_is_primary_signer BOOLEAN DEFAULT FALSE NOT NULL,
   signer_action VARCHAR(4000) NOT NULL,
   signer_order INT NOT NULL,
   signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  signer_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+  signer_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
   signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
   signer_team_project_id UUID REFERENCES team_project_table(team_project_id),
   signer_team_department_id UUID REFERENCES team_department_table(team_department_id)
 );
 
-CREATE TABLE section_table (
+CREATE TABLE form_schema.section_table (
   section_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   section_name VARCHAR(4000) NOT NULL,
   section_order INT NOT NULL,
   section_is_duplicatable BOOLEAN DEFAULT FALSE NOT NULL,
 
-  section_form_id UUID REFERENCES form_table(form_id) NOT NULL
+  section_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL
 );
 
-CREATE TABLE special_field_template_table (
+CREATE TABLE form_schema.special_field_template_table (
   special_field_template_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   special_field_template_name VARCHAR(4000) NOT NULL,
   special_field_template_description VARCHAR(4000),
   special_field_template_type VARCHAR(4000) NOT NULL
 );
 
-CREATE TABLE field_table (
+CREATE TABLE form_schema.field_table (
   field_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   field_name VARCHAR(4000) NOT NULL,
   field_is_required  BOOLEAN DEFAULT FALSE NOT NULL,
@@ -295,31 +297,31 @@ CREATE TABLE field_table (
   field_is_positive_metric BOOLEAN DEFAULT TRUE NOT NULL,
   field_is_read_only BOOLEAN DEFAULT FALSE NOT NULL,
 
-  field_section_id UUID REFERENCES section_table(section_id) NOT NULL,
-  field_special_field_template_id UUID REFERENCES special_field_template_table(special_field_template_id)
+  field_section_id UUID REFERENCES form_schema.section_table(section_id) NOT NULL,
+  field_special_field_template_id UUID REFERENCES form_schema.special_field_template_table(special_field_template_id)
 );
 
-CREATE TABLE option_table (
+CREATE TABLE form_schema.option_table (
   option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   option_value VARCHAR(4000) NOT NULL,
   option_order INT NOT NULL,
 
-  option_field_id UUID REFERENCES field_table(field_id) NOT NULL
+  option_field_id UUID REFERENCES form_schema.field_table(field_id) NOT NULL
 );
 
-CREATE TABLE form_sla_table (
+CREATE TABLE form_schema.form_sla_table (
   form_sla_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   form_sla_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   form_sla_date_updated TIMESTAMPTZ,
   form_sla_hours INT NOT NULL,
 
-  form_sla_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+  form_sla_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
   form_sla_team_id UUID REFERENCES team_table(team_id) NOT NULL
 );
 
-CREATE TABLE form_team_group_table (
+CREATE TABLE form_schema.form_team_group_table (
   form_team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  form_id UUID REFERENCES form_table(form_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  form_id UUID REFERENCES form_schema.form_table(form_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
   team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
 
   UNIQUE(form_id, team_group_id) 
@@ -338,7 +340,7 @@ CREATE TABLE request_schema.request_table (
   request_otp_id VARCHAR(4000),
 
   request_team_member_id UUID REFERENCES team_member_table(team_member_id),
-  request_form_id UUID REFERENCES form_table(form_id) NOT NULL,
+  request_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
   request_project_id UUID REFERENCES team_project_table(team_project_id)
 );
 
@@ -349,7 +351,7 @@ CREATE TABLE request_schema.request_response_table (
   request_response_prefix VARCHAR(4000),
 
   request_response_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  request_response_field_id UUID REFERENCES field_table(field_id) NOT NULL
+  request_response_field_id UUID REFERENCES form_schema.field_table(field_id) NOT NULL
 );
 
 CREATE TABLE request_schema.request_signer_table (
@@ -358,7 +360,7 @@ CREATE TABLE request_schema.request_signer_table (
   request_signer_status_date_updated TIMESTAMPTZ,
 
   request_signer_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  request_signer_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
+  request_signer_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
 );
 
 CREATE TABLE request_schema.comment_table (
@@ -557,7 +559,7 @@ CREATE TABLE item_schema.item_category_table (
   item_category_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   item_category_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  item_category_signer_id UUID REFERENCES signer_table(signer_id) NOT NULL
+  item_category_signer_id UUID REFERENCES form_schema.signer_table(signer_id) NOT NULL
 );
 
 CREATE TABLE item_schema.item_table (
@@ -591,7 +593,7 @@ CREATE TABLE item_schema.item_description_table (
   item_description_is_with_uom BOOLEAN DEFAULT FALSE NOT NULL,
   item_description_order INT NOT NULL,
 
-  item_description_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
+  item_description_field_id UUID REFERENCES form_schema.field_table(field_id) ON DELETE CASCADE NOT NULL,
   item_description_item_id UUID REFERENCES item_schema.item_table(item_id) ON DELETE CASCADE NOT NULL
 );
 
@@ -852,7 +854,7 @@ CREATE TABLE service_schema.service_scope_table (
   service_scope_type VARCHAR(4000) NOT NULL,
   service_scope_is_with_other BOOLEAN NOT NULL,
 
-  service_scope_field_id UUID REFERENCES field_table(field_id) ON DELETE CASCADE NOT NULL,
+  service_scope_field_id UUID REFERENCES form_schema.field_table(field_id) ON DELETE CASCADE NOT NULL,
   service_scope_service_id UUID REFERENCES service_schema.service_table(service_id) ON DELETE CASCADE NOT NULL
 );
 
@@ -960,12 +962,12 @@ plv8.subtransaction(function(){
   const team_owner = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${activeTeam}' AND team_member_role='OWNER'`)[0];
 
   // Fetch team formsly forms
-  const item_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-  const sourced_item_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Sourced Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-  const quotation_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-  const rir_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-  const ro_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
-  const transfer_receipt_form = plv8.execute(`SELECT * FROM form_table WHERE form_name='Transfer Receipt' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+  const item_form = plv8.execute(`SELECT * FROM form_schema.form_table WHERE form_name='Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+  const sourced_item_form = plv8.execute(`SELECT * FROM form_schema.form_table WHERE form_name='Sourced Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+  const quotation_form = plv8.execute(`SELECT * FROM form_schema.form_table WHERE form_name='Quotation' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+  const rir_form = plv8.execute(`SELECT * FROM form_schema.form_table WHERE form_name='Receiving Inspecting Report' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+  const ro_form = plv8.execute(`SELECT * FROM form_schema.form_table WHERE form_name='Release Order' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
+  const transfer_receipt_form = plv8.execute(`SELECT * FROM form_schema.form_table WHERE form_name='Transfer Receipt' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
 
   let item_requests;
   let searchCondition = '';
@@ -990,8 +992,8 @@ plv8.subtransaction(function(){
         return;
       }
 
-      const sectionId = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${quotation_form.form_id}' AND section_name='ID'`)[0];
-      const fieldId = plv8.execute(`SELECT field_id FROM field_table WHERE field_section_id='${sectionId.section_id}' AND field_name='Item ID'`)[0];
+      const sectionId = plv8.execute(`SELECT section_id FROM form_schema.section_table WHERE section_form_id='${quotation_form.form_id}' AND section_name='ID'`)[0];
+      const fieldId = plv8.execute(`SELECT field_id FROM form_schema.field_table WHERE field_section_id='${sectionId.section_id}' AND field_name='Item ID'`)[0];
 
       const itemCondition = quotationRequestIdList.map(requestId => `(request_response_request_id='${requestId.request_id}' AND request_response_field_id='${fieldId.field_id}')`).join(" OR ");
       const itemIdList = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE ${itemCondition}`);
@@ -1040,7 +1042,7 @@ plv8.subtransaction(function(){
 
     // Item request response with fields
     const item_response_fields = item_response.map(response => {
-      const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+      const field = plv8.execute(`SELECT field_name, field_type FROM form_schema.field_table WHERE field_id='${response.request_response_field_id}'`)[0];
 
       return {
         request_response: response.request_response,
@@ -1068,7 +1070,7 @@ plv8.subtransaction(function(){
         
         // Quotation request response with fields
         const quotation_response_fields = quotation_response.map(response => {
-          const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+          const field = plv8.execute(`SELECT field_name, field_type FROM form_schema.field_table WHERE field_id='${response.request_response_field_id}'`)[0];
           return {
             request_response: response.request_response,
             request_response_field_name: field.field_name,
@@ -1095,7 +1097,7 @@ plv8.subtransaction(function(){
             
             // rir request response with fields
             const rir_response_fields = rir_response.map(response => {
-              const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+              const field = plv8.execute(`SELECT field_name, field_type FROM form_schema.field_table WHERE field_id='${response.request_response_field_id}'`)[0];
               return {
                 request_response: response.request_response,
                 request_response_field_name: field.field_name,
@@ -1142,7 +1144,7 @@ plv8.subtransaction(function(){
         
         // Sourced Item request response with fields
         const sourced_item_response_fields = sourced_item_response.map(response => {
-          const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+          const field = plv8.execute(`SELECT field_name, field_type FROM form_schema.field_table WHERE field_id='${response.request_response_field_id}'`)[0];
           return {
             request_response: response.request_response,
             request_response_field_name: field.field_name,
@@ -1169,7 +1171,7 @@ plv8.subtransaction(function(){
             
             // ro request response with fields
             const ro_response_fields = ro_response.map(response => {
-              const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+              const field = plv8.execute(`SELECT field_name, field_type FROM form_schema.field_table WHERE field_id='${response.request_response_field_id}'`)[0];
               return {
                 request_response: response.request_response,
                 request_response_field_name: field.field_name,
@@ -1196,7 +1198,7 @@ plv8.subtransaction(function(){
                 
                 // transfer_receipt request response with fields
                 const transfer_receipt_response_fields = transfer_receipt_response.map(response => {
-                  const field = plv8.execute(`SELECT field_name, field_type FROM field_table WHERE field_id='${response.request_response_field_id}'`)[0];
+                  const field = plv8.execute(`SELECT field_name, field_type FROM form_schema.field_table WHERE field_id='${response.request_response_field_id}'`)[0];
                   return {
                     request_response: response.request_response,
                     request_response_field_name: field.field_name,
@@ -1314,7 +1316,7 @@ RETURNS JSON AS $$
       const requestCount = plv8.execute(
         `
           SELECT COUNT(*) FROM request_schema.request_table 
-          INNER JOIN form_table ON request_form_id = form_id
+          INNER JOIN form_schema.form_table ON request_form_id = form_id
           INNER JOIN team_member_table ON team_member_id = form_team_member_id
           WHERE
             team_member_team_id = '${teamId}'
@@ -1541,7 +1543,7 @@ RETURNS TEXT AS $$
             `
               SELECT COUNT(*) 
               FROM request_schema.request_signer_table
-              INNER JOIN signer_table ON signer_id = request_signer_signer_id
+              INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
               WHERE
                 request_signer_request_id = '${requestId}'
                 AND signer_is_primary_signer = true
@@ -1584,7 +1586,6 @@ RETURNS TEXT AS $$
  return request_status
 $$ LANGUAGE plv8;
 
-
 CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
   input_data JSON
 )
@@ -1598,15 +1599,15 @@ RETURNS VOID AS $$
       optionsValues
     } = input_data;
 
-    plv8.execute(`INSERT INTO form_table (form_id,form_name,form_description,form_app,form_is_formsly_form,form_is_hidden,form_team_member_id,form_is_disabled) VALUES ${formValues};`);
+    plv8.execute(`INSERT INTO form_schema.form_table (form_id,form_name,form_description,form_app,form_is_formsly_form,form_is_hidden,form_team_member_id,form_is_disabled) VALUES ${formValues};`);
     
-    plv8.execute(`INSERT INTO section_table (section_form_id,section_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues};`);
+    plv8.execute(`INSERT INTO form_schema.section_table (section_form_id,section_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues};`);
 
-    plv8.execute(`INSERT INTO field_table (field_id,field_is_read_only,field_is_required,field_name,field_order,field_section_id,field_type) VALUES ${fieldWithIdValues};`);
+    plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_is_read_only,field_is_required,field_name,field_order,field_section_id,field_type) VALUES ${fieldWithIdValues};`);
 
-    plv8.execute(`INSERT INTO field_table (field_is_read_only,field_is_required,field_name,field_order,field_section_id,field_type) VALUES ${fieldsWithoutIdValues};`);
+    plv8.execute(`INSERT INTO form_schema.field_table (field_is_read_only,field_is_required,field_name,field_order,field_section_id,field_type) VALUES ${fieldsWithoutIdValues};`);
 
-    plv8.execute(`INSERT INTO option_table (option_field_id,option_order,option_value) VALUES ${optionsValues};`);
+    plv8.execute(`INSERT INTO form_schema.option_table (option_field_id,option_order,option_value) VALUES ${optionsValues};`);
 
  });
 $$ LANGUAGE plv8;
@@ -1705,7 +1706,7 @@ RETURNS JSON AS $$
         `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
       ).join(",");
 
-    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
+    plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
     
     const item_description = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
 
@@ -1762,7 +1763,7 @@ RETURNS JSON AS $$
       `
     )[0];
 
-    const { section_id } = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
+    const { section_id } = plv8.execute(`SELECT section_id FROM form_schema.section_table WHERE section_form_id='${formId}' AND section_name='Item';`)[0];
     const itemDescriptionInput = [];
     const fieldInput = [];
 
@@ -1815,7 +1816,7 @@ RETURNS JSON AS $$
       )[0];
       plv8.execute(
         `
-          UPDATE field_table SET 
+          UPDATE form_schema.field_table SET 
             field_name = '${description.item_description_label}',
             field_order = ${description.item_description_order + 15}
           WHERE field_id = '${description.item_description_field_id}'
@@ -1844,7 +1845,7 @@ RETURNS JSON AS $$
     // add
     let addedDescription = [];
     if(fieldValues.length && itemDescriptionValues.length){
-      plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
+      plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
 
       addedDescription = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
     }
@@ -1890,7 +1891,7 @@ RETURNS JSON AS $$
     
     const service_result = plv8.execute(`INSERT INTO service_schema.service_table (service_name,service_is_available,service_team_id) VALUES ('${service_name}','${service_is_available}','${service_team_id}') RETURNING *;`)[0];
 
-    const {section_id} = plv8.execute(`SELECT section_id FROM section_table WHERE section_form_id='${formId}' AND section_name='Service';`)[0];
+    const {section_id} = plv8.execute(`SELECT section_id FROM form_schema.section_table WHERE section_form_id='${formId}' AND section_name='Service';`)[0];
 
     const serviceScopeInput = [];
     const fieldInput = [];
@@ -1926,7 +1927,7 @@ RETURNS JSON AS $$
       )
       .join(",");
 
-    plv8.execute(`INSERT INTO field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
+    plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues};`);
     const service_scope = plv8.execute(`INSERT INTO service_schema.service_scope_table (service_scope_name,service_scope_type,service_scope_is_with_other,service_scope_service_id,service_scope_field_id) VALUES ${serviceScopeValues} RETURNING *;`);
 
     item_data = {...service_result, service_scope: service_scope}
@@ -2030,7 +2031,7 @@ RETURNS Text as $$
 
     const item_count = plv8.execute(`SELECT COUNT(*) FROM item_schema.item_table WHERE item_team_id='${team_id}' AND item_is_available='true' AND item_is_disabled='false'`)[0];
 
-    const signer_count = plv8.execute(`SELECT COUNT(*) FROM signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
+    const signer_count = plv8.execute(`SELECT COUNT(*) FROM form_schema.signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
 
     if (!item_count.count) {
       return_data = "There must be at least one available item";
@@ -2055,7 +2056,7 @@ RETURNS Text as $$
 
     const service_count = plv8.execute(`SELECT COUNT(*) FROM service_schema.service_table WHERE service_team_id='${team_id}' AND service_is_available='true' AND service_is_disabled='false'`)[0];
 
-    const signer_count = plv8.execute(`SELECT COUNT(*) FROM signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
+    const signer_count = plv8.execute(`SELECT COUNT(*) FROM form_schema.signer_table WHERE signer_form_id='${form_id}' AND signer_is_disabled='false' AND signer_is_primary_signer='true'`)[0];
 
     if (!service_count.count) {
       return_data = "There must be at least one available service";
@@ -2150,7 +2151,7 @@ RETURNS JSON AS $$
       },
     } = input_data;
 
-    form_data = plv8.execute(`INSERT INTO form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}') RETURNING *`)[0];
+    form_data = plv8.execute(`INSERT INTO form_schema.form_table (form_app,form_description,form_name,form_team_member_id,form_id,form_is_signature_required,form_is_for_every_member) VALUES ('${formType}','${formDescription}','${formName}','${teamMemberId}','${formId}','${isSignatureRequired}','${isForEveryone}') RETURNING *`)[0];
 
     const sectionInput = [];
     const fieldInput = [];
@@ -2202,15 +2203,15 @@ RETURNS JSON AS $$
       )
       .join(",");
     
-    const section_query = `INSERT INTO section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
+    const section_query = `INSERT INTO form_schema.section_table (section_id,section_form_id,section_is_duplicatable,section_name,section_order) VALUES ${sectionValues}`;
 
-    const field_query = `INSERT INTO field_table (field_id,field_name,field_type,field_is_positive_metric,field_is_required,field_order,field_section_id,field_special_field_template_id) VALUES ${fieldValues}`;
+    const field_query = `INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_is_positive_metric,field_is_required,field_order,field_section_id,field_special_field_template_id) VALUES ${fieldValues}`;
 
-    const option_query = `INSERT INTO option_table (option_id,option_value,option_order,option_field_id) VALUES ${optionValues}`;
+    const option_query = `INSERT INTO form_schema.option_table (option_id,option_value,option_order,option_field_id) VALUES ${optionValues}`;
 
-    const signer_query = `INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order) VALUES ${signerValues}`;
+    const signer_query = `INSERT INTO form_schema.signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order) VALUES ${signerValues}`;
 
-    const form_group_query = `INSERT INTO form_team_group_table (form_id, team_group_id) VALUES ${groupValues}`;
+    const form_group_query = `INSERT INTO form_schema.form_team_group_table (form_id, team_group_id) VALUES ${groupValues}`;
 
     const all_query = `${section_query}; ${field_query}; ${optionInput.length>0?option_query:''}; ${signer_query}; ${groupList.length>0?form_group_query:''};`
     
@@ -2259,7 +2260,7 @@ RETURNS JSON AS $$
      selectedProjectId
     } = input_data;
 
-    plv8.execute(`UPDATE signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}' AND signer_team_project_id ${selectedProjectId ? `='${selectedProjectId}'` : "IS NULL"}`);
+    plv8.execute(`UPDATE form_schema.signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}' AND signer_team_project_id ${selectedProjectId ? `='${selectedProjectId}'` : "IS NULL"}`);
 
     const signerValues = signers
       .map(
@@ -2268,7 +2269,7 @@ RETURNS JSON AS $$
       )
       .join(",");
 
-    signer_data = plv8.execute(`INSERT INTO signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order,signer_is_disabled,signer_team_project_id) VALUES ${signerValues} ON CONFLICT ON CONSTRAINT signer_table_pkey DO UPDATE SET signer_team_member_id = excluded.signer_team_member_id, signer_action = excluded.signer_action, signer_is_primary_signer = excluded.signer_is_primary_signer, signer_order = excluded.signer_order, signer_is_disabled = excluded.signer_is_disabled, signer_team_project_id = excluded.signer_team_project_id RETURNING *;`);
+    signer_data = plv8.execute(`INSERT INTO form_schema.signer_table (signer_id,signer_form_id,signer_team_member_id,signer_action,signer_is_primary_signer,signer_order,signer_is_disabled,signer_team_project_id) VALUES ${signerValues} ON CONFLICT ON CONSTRAINT signer_table_pkey DO UPDATE SET signer_team_member_id = excluded.signer_team_member_id, signer_action = excluded.signer_action, signer_is_primary_signer = excluded.signer_is_primary_signer, signer_order = excluded.signer_order, signer_is_disabled = excluded.signer_is_disabled, signer_team_project_id = excluded.signer_team_project_id RETURNING *;`);
 
  });
  return signer_data;
@@ -2291,7 +2292,7 @@ RETURNS JSON AS $$
               SELECT request_response_table.* 
               FROM request_schema.request_response_table 
               INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-              INNER JOIN form_table ON request_form_id = form_id 
+              INNER JOIN form_schema.form_table ON request_form_id = form_id 
               WHERE 
                 request_status = 'APPROVED'
                 AND request_response = '${itemID}' 
@@ -2308,18 +2309,18 @@ RETURNS JSON AS $$
 
             requestResponse = plv8.execute(
                 `
-                    SELECT 
-                        request_response_table.*, 
-                        field_name 
-                    FROM request_schema.request_response_table 
-                    INNER JOIN field_table ON field_id = request_response_field_id 
-                    WHERE 
-                        (
-                            field_name = 'Quantity' 
-                            OR field_name = 'Item'
-                        ) 
-                        AND request_response_request_id IN (${requestIdList})
-                    ORDER BY request_response_duplicatable_section_id ASC
+                  SELECT 
+                    request_response_table.*, 
+                    field_name 
+                  FROM request_schema.request_response_table 
+                  INNER JOIN form_schema.field_table ON field_id = request_response_field_id 
+                  WHERE 
+                    (
+                      field_name = 'Quantity' 
+                      OR field_name = 'Item'
+                    ) 
+                    AND request_response_request_id IN (${requestIdList})
+                  ORDER BY request_response_duplicatable_section_id ASC
                 `
             );
         }
@@ -2441,7 +2442,7 @@ RETURNS JSON AS $$
               SELECT request_response_table.* 
               FROM request_schema.request_response_table 
               INNER JOIN request_schema.request_table ON request_response_request_id = request_id
-              INNER JOIN form_table ON request_form_id = form_id 
+              INNER JOIN form_schema.form_table ON request_form_id = form_id 
               WHERE 
                 request_table.request_status = 'APPROVED' 
                 AND request_response = '${sourcedItemId}' 
@@ -2549,7 +2550,7 @@ RETURNS JSON AS $$
               SELECT request_response_table.* 
               FROM request_schema.request_response_table 
               INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-              INNER JOIN form_table ON request_form_id = form_id
+              INNER JOIN form_schema.form_table ON request_form_id = form_id
               WHERE 
                 request_status = 'APPROVED' 
                 AND request_response = '${quotationId}' 
@@ -2660,7 +2661,7 @@ RETURNS JSON AS $$
             SELECT request_response_table.* 
             FROM request_schema.request_response_table 
             INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-            INNER JOIN form_table ON request_form_id = form_id 
+            INNER JOIN form_schema.form_table ON request_form_id = form_id 
             WHERE 
               request_response_table.request_response = '${releaseOrderItemId}' 
               AND request_table.request_status = 'APPROVED' 
@@ -2794,9 +2795,9 @@ RETURNS JSON AS $$
               request_form_id
           FROM request_view
           INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+          INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
           INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-          INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+          INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
           WHERE team_member_table.team_member_team_id = '${teamId}'
           AND request_is_disabled = false
           AND form_table.form_is_disabled = false
@@ -2813,9 +2814,9 @@ RETURNS JSON AS $$
           SELECT COUNT(DISTINCT request_id)
           FROM request_view
           INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_table ON request_view.request_form_id = form_table.form_id
+          INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
           INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-          INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+          INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
           WHERE team_member_table.team_member_team_id = '${teamId}'
           AND request_is_disabled = false
           AND form_table.form_is_disabled = false
@@ -2855,7 +2856,7 @@ RETURNS JSON AS $$
               signer_table.signer_is_primary_signer,
               signer_table.signer_team_member_id
             FROM request_schema.request_signer_table
-            INNER JOIN signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
             WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
           `
         ).map(signer => {
@@ -3081,13 +3082,13 @@ RETURNS VOID AS $$
      groupList
     } = input_data;
 
-    plv8.execute(`UPDATE form_table SET form_is_for_every_member='${isForEveryone?"TRUE":"FALSE"}' WHERE form_id='${formId}';`);
+    plv8.execute(`UPDATE form_schema.form_table SET form_is_for_every_member='${isForEveryone?"TRUE":"FALSE"}' WHERE form_id='${formId}';`);
 
-    plv8.execute(`DELETE FROM form_team_group_table WHERE form_id='${formId}';`);
+    plv8.execute(`DELETE FROM form_schema.form_team_group_table WHERE form_id='${formId}';`);
 
     const newGroupInsertValues = groupList.map((group) =>`('${group}','${formId}')`).join(",");
     
-    plv8.execute(`INSERT INTO form_team_group_table (team_group_id,form_id) VALUES ${newGroupInsertValues} RETURNING *;`);
+    plv8.execute(`INSERT INTO form_schema.form_team_group_table (team_group_id,form_id) VALUES ${newGroupInsertValues} RETURNING *;`);
   });
 $$ LANGUAGE plv8;
 
@@ -3174,7 +3175,7 @@ RETURNS VOID as $$
       WHERE tm.team_member_team_id='${team_id}'
       AND tm.team_member_id = it.invitation_from_team_member_id `);
 
-    plv8.execute(`UPDATE form_table ft
+    plv8.execute(`UPDATE form_schema.form_table ft
       SET form_is_disabled=TRUE
       FROM team_member_table tm
       WHERE tm.team_member_team_id='${team_id}'
@@ -3186,7 +3187,7 @@ RETURNS VOID as $$
       WHERE tm.team_member_team_id='${team_id}'
       AND tm.team_member_id = rt.request_team_member_id `);
 
-    plv8.execute(`UPDATE signer_table st
+    plv8.execute(`UPDATE form_schema.signer_table st
       SET signer_is_disabled=TRUE
       FROM team_member_table tm
       WHERE tm.team_member_team_id='${team_id}'
@@ -3305,7 +3306,7 @@ RETURNS JSON as $$
           form_is_formsly_form, 
           form_name
         FROM request_view
-        INNER JOIN form_table ON form_id = request_form_id
+        INNER JOIN form_schema.form_table ON form_id = request_form_id
         WHERE 
           ${idCondition}
           AND request_is_disabled = false
@@ -3326,8 +3327,8 @@ RETURNS JSON as $$
       const sectionIdWithDuplicatableSectionIdList = plv8.execute(
         `
           SELECT DISTINCT request_response_duplicatable_section_id, section_id, section_order FROM request_schema.request_response_table
-          INNER JOIN field_table ON field_id = request_response_field_id
-          INNER JOIN section_table ON section_id = field_section_id
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+          INNER JOIN form_schema.section_table ON section_id = field_section_id
           WHERE request_response_request_id = '${requestData.request_id}'
           ORDER BY section_order
         `
@@ -3723,7 +3724,7 @@ RETURNS JSON AS $$
 
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_table formt JOIN team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
+    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
 
     const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
@@ -3775,7 +3776,7 @@ RETURNS JSON as $$
       return returnData;
     };
 
-    const requestResponseData = plv8.execute(`SELECT request_response_table.*, field_name, field_order FROM request_schema.request_response_table INNER JOIN field_table ON field_id = request_response_field_id WHERE request_response_request_id='${requestId}'`);
+    const requestResponseData = plv8.execute(`SELECT request_response_table.*, field_name, field_order FROM request_schema.request_response_table INNER JOIN form_schema.field_table ON field_id = request_response_field_id WHERE request_response_request_id='${requestId}'`);
 
     const options = {};
     const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
@@ -3839,7 +3840,7 @@ RETURNS JSON as $$
           form_name
         FROM request_schema.request_response_table
         INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-        INNER JOIN form_table ON form_id= request_form_id
+        INNER JOIN form_schema.form_table ON form_id= request_form_id
         WHERE
           request_response='"${requestId}"'
           AND request_status='PENDING'
@@ -3871,7 +3872,7 @@ RETURNS JSON as $$
             request_id,
             request_formsly_id
           FROM request_schema.request_response_table
-          INNER JOIN field_table ON field_id = request_response_field_id
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
           INNER JOIN request_schema.request_table ON request_id = request_response_request_id
           WHERE
             request_response_request_id = '${request_id}'
@@ -4008,7 +4009,7 @@ RETURNS JSON as $$
           user_first_name,
           user_last_name,
           user_avatar
-        FROM form_table 
+        FROM form_schema.form_table 
         INNER JOIN team_member_table ON team_member_id = form_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
@@ -4021,7 +4022,7 @@ RETURNS JSON as $$
     const formListCount = plv8.execute(
       `
         SELECT COUNT(*)
-        FROM form_table 
+        FROM form_schema.form_table 
         INNER JOIN team_member_table ON team_member_id = form_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
@@ -4247,7 +4248,7 @@ RETURNS JSON as $$
           user_last_name, 
           user_avatar, 
           user_username
-        FROM form_table
+        FROM form_schema.form_table
         INNER JOIN team_member_table ON team_member_id = form_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
@@ -4269,7 +4270,7 @@ RETURNS JSON as $$
           user_first_name, 
           user_last_name, 
           user_avatar
-        FROM signer_table
+        FROM form_schema.signer_table
         INNER JOIN team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
@@ -4280,12 +4281,12 @@ RETURNS JSON as $$
     );
 
     const sectionData = [];
-    const formSection = plv8.execute(`SELECT * FROM section_table WHERE section_form_id = '${formId}' ORDER BY section_order ASC`);
+    const formSection = plv8.execute(`SELECT * FROM form_schema.section_table WHERE section_form_id = '${formId}' ORDER BY section_order ASC`);
     formSection.forEach(section => {
       const fieldData = plv8.execute(
         `
           SELECT *
-          FROM field_table
+          FROM form_schema.field_table
           WHERE field_section_id = '${section.section_id}'
           ORDER BY field_order ASC
           ${formData.form_name === 'Item' ? "LIMIT 10" : ""}
@@ -4321,7 +4322,7 @@ RETURNS JSON as $$
         } else {
             optionData = plv8.execute( `
               SELECT *
-              FROM option_table
+              FROM form_schema.option_table
               WHERE option_field_id = '${field.field_id}'
               ORDER BY option_order ASC
             `);
@@ -5164,7 +5165,7 @@ RETURNS JSON as $$
             SELECT 
               section_id 
             FROM 
-              section_table 
+              form_schema.section_table 
             WHERE 
               section_form_id = '${connectedRequest.request_form_id}' 
               AND section_name = 'Payee'
@@ -5181,7 +5182,7 @@ RETURNS JSON as $$
               user_first_name,
               user_last_name,
               user_avatar
-            FROM signer_table
+            FROM form_schema.signer_table
             INNER JOIN team_member_table ON team_member_id = signer_team_member_id
             INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
@@ -5523,7 +5524,7 @@ RETURNS JSON as $$
             SELECT 
               section_id 
             FROM 
-              section_table 
+              form_schema.section_table 
             WHERE 
               section_form_id = '${connectedRequest.request_form_id}' 
               AND section_name = 'Request'
@@ -5540,7 +5541,7 @@ RETURNS JSON as $$
               user_first_name,
               user_last_name,
               user_avatar
-            FROM signer_table
+            FROM form_schema.signer_table
             INNER JOIN team_member_table ON team_member_id = signer_team_member_id
             INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
@@ -5623,7 +5624,7 @@ RETURNS JSON as $$
             SELECT 
               section_id 
             FROM 
-              section_table 
+              form_schema.section_table 
             WHERE 
               section_form_id = '${connectedRequest.request_form_id}' 
           `)[0].section_id;
@@ -5647,7 +5648,7 @@ RETURNS JSON as $$
               user_first_name,
               user_last_name,
               user_avatar
-            FROM signer_table
+            FROM form_schema.signer_table
             INNER JOIN team_member_table ON team_member_id = signer_team_member_id
             INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
@@ -5729,7 +5730,7 @@ RETURNS JSON as $$
         FROM request_view
         INNER JOIN team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        INNER JOIN form_table ON form_id = request_form_id
+        INNER JOIN form_schema.form_table ON form_id = request_form_id
         LEFT JOIN team_project_table ON team_project_id = request_project_id
         WHERE 
           ${idCondition}
@@ -5755,7 +5756,7 @@ RETURNS JSON as $$
           user_job_title,
           attachment_value
         FROM request_schema.request_signer_table
-        INNER JOIN signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         INNER JOIN team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
@@ -5790,7 +5791,7 @@ RETURNS JSON as $$
     const sectionData = plv8.execute(
       `
         SELECT *
-        FROM section_table
+        FROM form_schema.section_table
         WHERE section_form_id = '${requestData.form_id}'
         ORDER BY section_order ASC
       `
@@ -5802,7 +5803,7 @@ RETURNS JSON as $$
         const fieldData = plv8.execute(
           `
             SELECT DISTINCT field_table.*
-            FROM field_table
+            FROM form_schema.field_table
             INNER JOIN request_schema.request_response_table ON request_response_field_id = field_id
             WHERE 
               field_section_id = '${section.section_id}'
@@ -5823,7 +5824,7 @@ RETURNS JSON as $$
           const optionData = plv8.execute(
             `
               SELECT *
-              FROM option_table
+              FROM form_schema.option_table
               WHERE option_field_id = '${field.field_id}'
               ORDER BY option_order ASC
             `
@@ -5858,7 +5859,7 @@ RETURNS JSON as $$
         const fieldData = plv8.execute(
           `
             SELECT *
-            FROM field_table
+            FROM form_schema.field_table
             WHERE field_section_id = '${section.section_id}'
             ORDER BY field_order ASC
           `
@@ -5867,7 +5868,7 @@ RETURNS JSON as $$
           const optionData = plv8.execute(
             `
               SELECT *
-              FROM option_table
+              FROM form_schema.option_table
               WHERE option_field_id = '${field.field_id}'
               ORDER BY option_order ASC
             `
@@ -6817,9 +6818,9 @@ plv8.subtransaction(function(){
   const generalNameFieldId = plv8.execute(
     `
       SELECT field_id
-      FROM field_table
-        INNER JOIN section_table ON section_id = field_section_id
-        INNER JOIN form_table ON form_id = section_form_id
+      FROM form_schema.field_table
+        INNER JOIN form_schema.section_table ON section_id = field_section_id
+        INNER JOIN form_schema.form_table ON form_id = section_form_id
         INNER JOIN team_member_table ON team_member_id = form_team_member_id
       WHERE 
         field_name = 'General Name' AND
@@ -6872,7 +6873,7 @@ plv8.subtransaction(function(){
           request_response_table.*,
           field_name
         FROM request_schema.request_response_table
-        INNER JOIN field_table ON field_id = request_response_field_id
+        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
         WHERE 
           request_response_request_id = '${item.request_response_request_id}' AND
           request_response_duplicatable_section_id ${
@@ -7280,7 +7281,7 @@ RETURNS JSON as $$
         signer_team_member_id, 
         COUNT(*) 
       FROM request_schema.request_signer_table
-      INNER JOIN signer_table ON signer_id = request_signer_signer_id
+      INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
       INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
       WHERE 
         request_is_disabled = false
@@ -7312,7 +7313,7 @@ RETURNS JSON as $$
       const pendingCount = Number(plv8.execute(`
         SELECT COUNT(*)
         FROM request_schema.request_signer_table
-        INNER JOIN signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
         WHERE 
           request_status = 'PENDING'
@@ -7323,7 +7324,7 @@ RETURNS JSON as $$
       const approvedCount = Number(plv8.execute(`
         SELECT COUNT(*)
         FROM request_schema.request_signer_table
-        INNER JOIN signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
         WHERE 
           request_status = 'APPROVED'
@@ -7334,7 +7335,7 @@ RETURNS JSON as $$
       const rejectedCount = Number(plv8.execute(`
         SELECT COUNT(*)
         FROM request_schema.request_signer_table
-        INNER JOIN signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
         WHERE 
           request_status = 'REJECTED'
@@ -7411,7 +7412,7 @@ RETURNS JSON AS $$
       const formData = plv8.execute(
         `
           SELECT *
-          FROM form_table
+          FROM form_schema.form_table
           INNER JOIN team_member_table ON team_member_id = form_team_member_id
           WHERE 
             team_member_team_id = '${teamId}'
@@ -7514,7 +7515,7 @@ RETURNS JSON AS $$
         ft.field_name,
         ft.field_section_id
       FROM request_schema.request_response_table rrt 
-      INNER JOIN field_table ft ON rrt.request_response_field_id = ft.field_id 
+      INNER JOIN form_schema.field_table ft ON rrt.request_response_field_id = ft.field_id 
       WHERE rrt.request_response_request_id IN (${requestListQuery})
       AND ft.field_name NOT IN (${skippedFieldQuery});
     `);
@@ -8414,7 +8415,7 @@ RETURNS JSON AS $$
 
             const field = plv8.execute(`
               SELECT * 
-              FROM field_table
+              FROM form_schema.field_table
               WHERE field_id = '${description.item_description_field_id}';
             `)[0];
 
@@ -8470,7 +8471,7 @@ RETURNS JSON AS $$
                 user_last_name,
                 user_avatar
               FROM item_schema.item_category_table
-              INNER JOIN signer_table ON signer_id = item_category_signer_id
+              INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
               INNER JOIN team_member_table ON team_member_id = signer_team_member_id
               INNER JOIN user_schema. ON user_id = team_member_user_id
               WHERE item_category_id = '${item.item_category_id}'
@@ -8619,10 +8620,10 @@ RETURNS JSON AS $$
     }
 
     const thresholdHours = plv8.execute(`
-        SELECT form_sla_hours FROM form_sla_table 
-        WHERE 
-          form_sla_team_id = '${teamId}'
-          AND form_sla_form_id = '${formId}';
+      SELECT form_sla_hours FROM form_schema.form_sla_table 
+      WHERE 
+        form_sla_team_id = '${teamId}'
+        AND form_sla_form_id = '${formId}';
     `)[0].form_sla_hours;
       
     const signerRequestList = plv8.execute(`
@@ -8638,7 +8639,7 @@ RETURNS JSON AS $$
           END AS status 
         FROM request_schema.request_signer_table rst
           INNER JOIN request_schema.request_table rt ON rt.request_id = rst.request_signer_request_id
-          INNER JOIN signer_table st ON st.signer_id = rst.request_signer_signer_id 
+          INNER JOIN form_schema.signer_table st ON st.signer_id = rst.request_signer_signer_id 
         WHERE
           rst.request_signer_status_date_updated IS NOT NULL
           AND rst.request_signer_signer_id = '${singerId}'
@@ -8653,7 +8654,7 @@ RETURNS JSON AS $$
         SELECT COUNT(*) AS total_count
         FROM request_schema.request_signer_table rst
           INNER JOIN request_schema.request_table rt ON rt.request_id = rst.request_signer_request_id
-          INNER JOIN signer_table st ON st.signer_id = rst.request_signer_signer_id 
+          INNER JOIN form_schema.signer_table st ON st.signer_id = rst.request_signer_signer_id 
         WHERE
           rst.request_signer_status_date_updated IS NOT NULL
           AND rst.request_signer_signer_id = '${singerId}'
@@ -9211,7 +9212,7 @@ RETURNS JSON as $$
         FROM request_view
         INNER JOIN team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        INNER JOIN form_table ON form_id = request_form_id
+        INNER JOIN form_schema.form_table ON form_id = request_form_id
         LEFT JOIN team_project_table ON team_project_id = request_project_id
         WHERE 
           ${idCondition}
@@ -9224,7 +9225,7 @@ RETURNS JSON as $$
     const sectionData = plv8.execute(
       `
         SELECT *
-        FROM section_table
+        FROM form_schema.section_table
         WHERE section_form_id = '${requestData.form_id}'
         ORDER BY section_order ASC
       `
@@ -9235,7 +9236,7 @@ RETURNS JSON as $$
         const fieldData = plv8.execute(
           `
             SELECT *
-            FROM field_table
+            FROM form_schema.field_table
             WHERE field_section_id = '${section.section_id}'
             ORDER BY field_order ASC
           `
@@ -9245,7 +9246,7 @@ RETURNS JSON as $$
           const optionData = plv8.execute(
             `
               SELECT *
-              FROM option_table
+              FROM form_schema.option_table
               WHERE option_field_id = '${field.field_id}'
               ORDER BY option_order ASC
             `
@@ -9281,7 +9282,7 @@ RETURNS JSON as $$
           const fieldData = plv8.execute(
             `
               SELECT *
-              FROM field_table
+              FROM form_schema.field_table
               WHERE field_section_id = '${section.section_id}'
               ORDER BY field_order ASC
             `
@@ -9322,7 +9323,7 @@ RETURNS JSON as $$
           user_job_title,
           attachment_value
         FROM request_schema.request_signer_table
-        INNER JOIN signer_table ON signer_id = request_signer_signer_id
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         INNER JOIN team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
@@ -9421,7 +9422,7 @@ plv8.subtransaction(function() {
   if (!fieldData) {
     const fieldList = plv8.execute(`
       SELECT DISTINCT field_table.*
-      FROM field_table
+      FROM form_schema.field_table
       INNER JOIN request_schema.request_response_table ON request_response_field_id = field_id
       WHERE ${specialSection.includes(sectionId) ? `
         field_section_id IN ('0672ef7d-849d-4bc7-81b1-7a5eefcc1451', 'b232d5a5-6212-405e-8d35-5f9127dca1aa', '64f87323-ac4a-4fb5-9d64-0be89806fdf9')` : `
@@ -9483,7 +9484,7 @@ plv8.subtransaction(function() {
         } else {
           requestOptionData = plv8.execute(`
             SELECT *
-            FROM option_table
+            FROM form_schema.option_table
             WHERE option_field_id = '${field.field_id}'
           `);
         }
@@ -9514,7 +9515,7 @@ plv8.subtransaction(function() {
       if (withOption) {
         requestOptionData = plv8.execute(`
           SELECT *
-          FROM option_table
+          FROM form_schema.option_table
           WHERE option_field_id = '${field.field_id}'
         `);
       }
@@ -9623,7 +9624,7 @@ RETURNS JSON as $$
           form_is_formsly_form, 
           form_name
         FROM request_view
-        INNER JOIN form_table ON form_id = request_form_id
+        INNER JOIN form_schema.form_table ON form_id = request_form_id
         WHERE 
           ${idCondition}
           AND request_is_disabled = false
@@ -9644,8 +9645,8 @@ RETURNS JSON as $$
       const sectionIdWithDuplicatableSectionIdList = plv8.execute(
         `
           SELECT DISTINCT request_response_duplicatable_section_id, section_id, section_order FROM request_schema.request_response_table
-          INNER JOIN field_table ON field_id = request_response_field_id
-          INNER JOIN section_table ON section_id = field_section_id
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+          INNER JOIN form_schema.section_table ON section_id = field_section_id
           WHERE request_response_request_id = '${requestData.request_id}'
           ORDER BY section_order
         `
@@ -9704,7 +9705,7 @@ RETURNS JSON as $$
             user_avatar
           FROM item_schema.item_table AS it
           INNER JOIN item_schema.item_category_table AS ict ON it.item_category_id = ict.item_category_id
-          INNER JOIN signer_table ON signer_id = item_category_signer_id
+          INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
           INNER JOIN team_member_table ON team_member_id = signer_team_member_id
           INNER JOIN user_schema.user_table ON user_id = team_member_user_id
           WHERE
@@ -9768,7 +9769,7 @@ RETURNS JSON as $$
                   item_description_is_with_uom
                 FROM item_schema.item_table
                 INNER JOIN item_schema.item_description_table ON item_description_item_id = item_id
-                INNER JOIN field_table ON field_id = item_description_field_id
+                INNER JOIN form_schema.field_table ON field_id = item_description_field_id
                 INNER JOIN item_schema.item_description_field_table AS idft ON idft.item_description_field_item_description_id = item_description_id
                 LEFT JOIN item_schema.item_description_field_uom_table ON item_description_field_uom_item_description_field_id = idft.item_description_field_id
                 WHERE
@@ -10055,7 +10056,7 @@ RETURNS VOID AS $$
     let signerData;
     signerData = plv8.execute(
       `
-        SELECT signer_id FROM signer_table 
+        SELECT signer_id FROM form_schema.signer_table 
         WHERE
           signer_is_primary_signer = false
           AND signer_form_id = '${formId}'
@@ -10067,7 +10068,7 @@ RETURNS VOID AS $$
     if(!signerData) {
       signerData = plv8.execute(
         `
-          INSERT INTO signer_table 
+          INSERT INTO form_schema.signer_table 
           (signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_form_id, signer_team_member_id, signer_team_project_id)
           VALUES
           (false, 'Approved', 5, true, '${formId}', '${teamMemberId}', null)
@@ -10103,7 +10104,7 @@ RETURNS VOID AS $$
     let signerData;
     signerData = plv8.execute(
       `
-        SELECT signer_id FROM signer_table 
+        SELECT signer_id FROM form_schema.signer_table 
         WHERE
           signer_is_primary_signer = false
           AND signer_form_id = '${formId}'
@@ -10115,7 +10116,7 @@ RETURNS VOID AS $$
     if(!signerData) {
       signerData = plv8.execute(
         `
-          INSERT INTO signer_table 
+          INSERT INTO form_schema.signer_table 
           (signer_is_primary_signer, signer_action, signer_order, signer_is_disabled, signer_form_id, signer_team_member_id, signer_team_project_id)
           VALUES
           (false, 'Approved', 5, true, '${formId}', '${teamMemberId}', null)
@@ -10226,7 +10227,7 @@ RETURNS JSON AS $$
       return plv8.execute(`
         SELECT COUNT(*) 
         FROM request_schema.request_signer_table 
-        INNER JOIN signer_table ON signer_id = request_signer_signer_id 
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id 
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id 
         WHERE 
           signer_team_member_id = '${teamMemberId}' 
@@ -10416,7 +10417,7 @@ plv8.subtransaction(function() {
     SELECT 
       field_table.*,
       request_response_duplicatable_section_id
-    FROM field_table
+    FROM form_schema.field_table
     INNER JOIN request_schema.request_response_table ON request_response_field_id = field_id
     WHERE 
       request_response_request_id = '${requestId}'
@@ -10517,7 +10518,7 @@ plv8.subtransaction(function() {
         signer_table.*,
         team_member_table.*,
         user_table.*
-      FROM signer_table
+      FROM form_schema.signer_table
       INNER JOIN team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE 
@@ -10707,7 +10708,7 @@ plv8.subtransaction(function() {
         user_first_name,
         user_last_name,
         user_avatar
-      FROM form_table
+      FROM form_schema.form_table
       INNER JOIN team_member_table ON team_member_id = form_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -10729,7 +10730,7 @@ plv8.subtransaction(function() {
     `
       SELECT
         COUNT(form_id)
-      FROM form_table
+      FROM form_schema.form_table
       INNER JOIN team_member_table ON team_member_id = form_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -10797,7 +10798,7 @@ plv8.subtransaction(function() {
         form_table.*,
         team_member_id,
         user_table.*
-      FROM form_table
+      FROM form_schema.form_table
       INNER JOIN team_member_table ON team_member_id = form_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -10811,7 +10812,7 @@ plv8.subtransaction(function() {
         ftgt.team_group_id,
         team_group_name,
         team_group_is_disabled
-      FROM form_team_group_table AS ftgt
+      FROM form_schema.form_team_group_table AS ftgt
       INNER JOIN team_group_table AS tgt ON tgt.team_group_id = ftgt.team_group_id
       WHERE
         form_id = '${formId}'
@@ -10830,7 +10831,7 @@ plv8.subtransaction(function() {
         signer_team_project_id,
         team_member_id,
         user_table.*
-      FROM signer_table
+      FROM form_schema.signer_table
       INNER JOIN team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -10916,7 +10917,7 @@ plv8.subtransaction(function() {
       FROM item_schema.item_table AS it
       LEFT JOIN item_schema.item_category_table AS ict ON ict.item_category_id = it.item_category_id
         AND item_category_is_disabled = false 
-      LEFT JOIN signer_table ON signer_id = ict.item_category_signer_id
+      LEFT JOIN form_schema.signer_table ON signer_id = ict.item_category_signer_id
       LEFT JOIN team_member_table ON team_member_id = signer_team_member_id
       LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -10933,7 +10934,7 @@ plv8.subtransaction(function() {
         item_schema.item_description_table.*,
         field_table.*
       FROM item_schema.item_description_table
-      INNER JOIN field_table ON field_id = item_description_field_id
+      INNER JOIN form_schema.field_table ON field_id = item_description_field_id
       WHERE
         item_description_item_id = '${itemData.item_id}'
         AND item_description_is_disabled = false
@@ -11316,7 +11317,7 @@ plv8.subtransaction(function() {
         user_first_name,
         user_last_name,
         user_avatar
-      FROM signer_table
+      FROM form_schema.signer_table
       INNER JOIN team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -11381,7 +11382,7 @@ plv8.subtransaction(function() {
         user_first_name,
         user_last_name,
         user_avatar
-      FROM signer_table
+      FROM form_schema.signer_table
       INNER JOIN team_project_table ON team_project_id = signer_team_project_id
       INNER JOIN team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
@@ -11730,7 +11731,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar
       FROM item_schema.item_category_table
-      INNER JOIN signer_table ON signer_id = item_category_signer_id
+      INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
       INNER JOIN team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
@@ -11747,7 +11748,7 @@ plv8.subtransaction(function() {
       SELECT
         COUNT(item_category_id)
       FROM item_schema.item_category_table
-      INNER JOIN signer_table ON signer_id = item_category_signer_id
+      INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
       WHERE
         item_category_is_disabled = false
         AND signer_form_id = '${formId}'
@@ -12416,7 +12417,7 @@ plv8.subtransaction(function() {
         item_category,
         signer_form_id
       FROM item_schema.item_category_table
-      INNER JOIN signer_table ON signer_id = item_category_signer_id
+      INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
       WHERE
         item_category_is_available = true
         AND item_category_is_disabled = false
@@ -12563,7 +12564,7 @@ plv8.subtransaction(function() {
     `
       SELECT COUNT(request_signer_id)
       FROM request_schema.request_signer_table
-      INNER JOIN signer_table ON signer_id = request_signer_signer_id
+      INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
       WHERE
         request_signer_request_id = '${requestId}'
         AND signer_is_primary_signer = true
@@ -12598,7 +12599,7 @@ plv8.subtransaction(function() {
     `
       SELECT COUNT(request_signer_id)
       FROM request_schema.request_signer_table
-      INNER JOIN signer_table ON signer_id = request_signer_signer_id
+      INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         AND signer_team_member_id = '${teamMemberId}'
       INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
         AND request_is_disabled = false
@@ -12771,6 +12772,91 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_form_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    app,
+    memberId
+  } = input_data;
+
+  const formData = plv8.execute(
+    `
+      SELECT
+        form_table.*,
+        team_member_table.*
+      FROM form_schema.form_table
+      INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        AND team_member_team_id = '${teamId}'
+      WHERE
+        form_is_disabled = false
+        AND form_app = '${app}'
+      ORDER BY form_date_created DESC
+    `
+  );
+
+  returnData = formData.map(form => {
+    const formTeamGroupData = plv8.execute(
+      `
+        SELECT tmgt.team_group_id
+        FROM form_schema.form_team_group_table AS ftgt
+        INNER JOIN team_group_table AS tmgt ON tmgt.team_group_id = ftgt.team_group_id
+        WHERE
+          form_id = '${form.form_id}'
+      `
+    );
+
+    const teamGroupData = formTeamGroupData.map(formTeamGroup => {
+      const teamMemberData = plv8.execute(
+        `
+          SELECT team_member_id
+          FROM team_group_member_table
+          WHERE 
+            team_group_id = '${formTeamGroup.team_group_id}'
+            AND team_member_id = '${memberId}'
+        `
+      );
+
+      return {
+        team_group: {
+          team_group_member: teamMemberData
+        }
+      }
+    });
+    
+    return {
+      form_app: form.form_app,
+      form_date_created: form.form_date_created,
+      form_description: form.form_description,
+      form_id: form.form_id,
+      form_is_disabled: form.form_is_disabled,
+      form_is_for_every_member: form.form_is_for_every_member,
+      form_is_formsly_form: form.form_is_formsly_form,
+      form_is_hidden: form.form_is_hidden,
+      form_is_signature_required: form.form_is_signature_required,
+      form_name: form.form_name,
+      form_sub_type: form.form_sub_type,
+      form_team_member_id: form.form_team_member_id,
+      form_type: form.form_type,
+      form_team_member: {
+        team_member_date_created: form.team_member_date_created,
+        team_member_id: form.team_member_id,
+        team_member_is_disabled: form.team_member_is_disabled,
+        team_member_role: form.team_member_role,
+        team_member_team_id: form.team_member_team_id,
+        team_member_user_id: form.team_member_user_id,
+      },
+      form_team_group: teamGroupData
+    }
+  });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES
@@ -12783,18 +12869,18 @@ ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_schema.request_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE field_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_schema.field_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_schema.form_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_schema.item_description_field_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_schema.item_description_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_schema.item_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE option_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_schema.option_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_schema.request_signer_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE section_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE signer_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_schema.section_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_schema.signer_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE supplier_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_schema.request_response_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_team_group_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_schema.form_team_group_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_group_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_group_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
@@ -12825,7 +12911,7 @@ ALTER TABLE memo_schema.memo_format_section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_schema.memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE memo_schema.memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.query_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_sla_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_schema.form_sla_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.csi_code_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_schema.ticket_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_schema.ticket_section_table ENABLE ROW LEVEL SECURITY;
@@ -12863,15 +12949,15 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON team_member_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON field_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON field_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON field_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON form_schema.field_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.field_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.field_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.field_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.form_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_field_table;
@@ -12888,25 +12974,25 @@ DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_tab
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON option_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON option_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON option_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON option_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.option_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_schema.request_signer_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_signer_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON request_schema.request_signer_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON request_schema.request_signer_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON section_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON section_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON section_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON section_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.section_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON signer_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON signer_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON signer_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON signer_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.signer_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON supplier_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON supplier_table;
@@ -12948,10 +13034,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON form_team_group_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_team_group_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON form_team_group_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON form_team_group_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_schema.form_team_group_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_member_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_member_table;
@@ -13085,9 +13171,9 @@ DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_att
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.query_table;
 
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON form_sla_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_sla_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON form_sla_table;
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON form_schema.form_sla_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.form_sla_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON form_schema.form_sla_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON lookup_schema.csi_code_table;
 DROP POLICY IF EXISTS "Allow READ access for anon users" ON lookup_schema.csi_code_table;
@@ -13200,23 +13286,23 @@ AS PERMISSIVE FOR ALL
 USING (true);
 
 --- FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."field_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "form_schema"."field_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."field_table"
+CREATE POLICY "Allow READ for anon users" ON "form_schema"."field_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."field_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING ( 
   (
     SELECT tt.team_member_team_id
-    FROM section_table AS st
-    JOIN form_table AS fot ON st.section_form_id = fot.form_id
+    FROM form_schema.section_table AS st
+    JOIN form_schema.form_table AS fot ON st.section_form_id = fot.form_id
     JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
     WHERE st.section_id = field_section_id
   ) IN (
@@ -13227,14 +13313,14 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."field_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."field_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING ( 
   (
     SELECT tt.team_member_team_id
-    FROM section_table AS st
-    JOIN form_table AS fot ON st.section_form_id = fot.form_id
+    FROM form_schema.section_table AS st
+    JOIN form_schema.form_table AS fot ON st.section_form_id = fot.form_id
     JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
     WHERE st.section_id = field_section_id
   ) IN (
@@ -13246,7 +13332,7 @@ USING (
 );
 
 --- FORM_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."form_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK ( 
@@ -13262,11 +13348,11 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "public"."form_table"
+CREATE POLICY "Allow READ for anon users" ON "form_schema"."form_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."form_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -13282,7 +13368,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."form_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."form_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -13446,15 +13532,15 @@ USING (
 );
 
 --- OPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."option_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM field_table as ft
-    JOIN section_table as st ON st.section_id = ft.field_section_id
-    JOIN form_table as fo ON fo.form_id = st.section_form_id
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
@@ -13462,19 +13548,19 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "public"."option_table"
+CREATE POLICY "Allow READ for anon users" ON "form_schema"."option_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."option_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM field_table as ft
-    JOIN section_table as st ON st.section_id = ft.field_section_id
-    JOIN form_table as fo ON fo.form_id = st.section_form_id
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
@@ -13482,15 +13568,15 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."option_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."option_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM field_table as ft
-    JOIN section_table as st ON st.section_id = ft.field_section_id
-    JOIN form_table as fo ON fo.form_id = st.section_form_id
+    FROM form_schema.field_table as ft
+    JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
+    JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
@@ -13553,13 +13639,13 @@ USING (
 );
 
 --- SECTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."section_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   (
     SELECT tm.team_member_team_id
-    FROM form_table as fo
+    FROM form_schema.form_table as fo
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = section_form_id
   ) IN (
@@ -13570,17 +13656,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "public"."section_table"
+CREATE POLICY "Allow READ for anon users" ON "form_schema"."section_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."section_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   (
     SELECT tm.team_member_team_id
-    FROM form_table as fo
+    FROM form_schema.form_table as fo
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = section_form_id
   ) = (
@@ -13591,13 +13677,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."section_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."section_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   (
     SELECT tm.team_member_team_id
-    FROM form_table as fo
+    FROM form_schema.form_table as fo
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = section_form_id
   ) = (
@@ -13609,13 +13695,13 @@ USING (
 );
 
 --- SIGNER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."signer_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   (
     SELECT tm.team_member_team_id
-    FROM form_table as fo
+    FROM form_schema.form_table as fo
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = signer_form_id
   ) IN (
@@ -13626,17 +13712,17 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "public"."signer_table"
+CREATE POLICY "Allow READ for anon users" ON "form_schema"."signer_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."signer_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   (
     SELECT tm.team_member_team_id
-    FROM form_table as fo
+    FROM form_schema.form_table as fo
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = signer_form_id
   ) IN (
@@ -13647,13 +13733,13 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."signer_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."signer_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   (
     SELECT tm.team_member_team_id
-    FROM form_table as fo
+    FROM form_schema.form_table as fo
     JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = signer_form_id
   ) IN (
@@ -14018,7 +14104,7 @@ TO authenticated
 USING (auth.uid() = user_id);
 
 --- FORM_TEAM_GROUP_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "form_schema"."form_team_group_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14032,7 +14118,7 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "public"."form_team_group_table"
+CREATE POLICY "Allow READ for authenticated team members" ON "form_schema"."form_team_group_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
@@ -14045,7 +14131,7 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "form_schema"."form_team_group_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14069,7 +14155,7 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."form_team_group_table"
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "form_schema"."form_team_group_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15154,16 +15240,16 @@ USING (true);
 
 --- FORM_SLA_TABLE
 
-CREATE POLICY "Allow CREATE access for all users" ON "public"."form_sla_table"
+CREATE POLICY "Allow CREATE access for all users" ON "form_schema"."form_sla_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."form_sla_table"
+CREATE POLICY "Allow READ for anon users" ON "form_schema"."form_sla_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."form_sla_table"
+CREATE POLICY "Allow UPDATE for authenticated users" ON "form_schema"."form_sla_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
@@ -16078,5 +16164,10 @@ GRANT ALL ON ALL TABLES IN SCHEMA request_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA request_schema TO POSTGRES;
 GRANT ALL ON SCHEMA request_schema TO postgres;
 GRANT ALL ON SCHEMA request_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA form_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA form_schema TO POSTGRES;
+GRANT ALL ON SCHEMA form_schema TO postgres;
+GRANT ALL ON SCHEMA form_schema TO public;
 
 ----- END: PRIVILEGES

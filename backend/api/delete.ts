@@ -10,6 +10,7 @@ export const deleteForm = async (
 ) => {
   const { formId } = params;
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("form_table")
     .update({ form_is_disabled: true })
     .eq("form_id", formId);
