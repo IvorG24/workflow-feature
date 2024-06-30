@@ -17,21 +17,22 @@ export type CommentTableUpdate =
   Database["request_schema"]["Tables"]["comment_table"]["Update"];
 
 export type DefaultFieldTableRow =
-  Database["public"]["Tables"]["field_table"]["Row"];
+  Database["form_schema"]["Tables"]["field_table"]["Row"];
 export type FieldTableRow = Omit<
   DefaultFieldTableRow,
   "field_special_field_template_id"
 > & { field_special_field_template_id?: string | null };
 export type FieldTableInsert =
-  Database["public"]["Tables"]["field_table"]["Insert"];
+  Database["form_schema"]["Tables"]["field_table"]["Insert"];
 export type FieldTableUpdate =
-  Database["public"]["Tables"]["field_table"]["Update"];
+  Database["form_schema"]["Tables"]["field_table"]["Update"];
 
-export type FormTableRow = Database["public"]["Tables"]["form_table"]["Row"];
+export type FormTableRow =
+  Database["form_schema"]["Tables"]["form_table"]["Row"];
 export type FormTableInsert =
-  Database["public"]["Tables"]["form_table"]["Insert"];
+  Database["form_schema"]["Tables"]["form_table"]["Insert"];
 export type FormTableUpdate =
-  Database["public"]["Tables"]["form_table"]["Update"];
+  Database["form_schema"]["Tables"]["form_table"]["Update"];
 
 export type InvitationTableRow =
   Database["user_schema"]["Tables"]["invitation_table"]["Row"];
@@ -48,11 +49,11 @@ export type NotificationTableUpdate =
   Database["public"]["Tables"]["notification_table"]["Update"];
 
 export type OptionTableRow =
-  Database["public"]["Tables"]["option_table"]["Row"];
+  Database["form_schema"]["Tables"]["option_table"]["Row"];
 export type OptionTableInsert =
-  Database["public"]["Tables"]["option_table"]["Insert"];
+  Database["form_schema"]["Tables"]["option_table"]["Insert"];
 export type OptionTableUpdate =
-  Database["public"]["Tables"]["option_table"]["Update"];
+  Database["form_schema"]["Tables"]["option_table"]["Update"];
 
 export type DefaultRequestResponseTableRow =
   Database["request_schema"]["Tables"]["request_response_table"]["Row"];
@@ -82,18 +83,18 @@ export type RequestTableUpdate =
   Database["request_schema"]["Tables"]["request_table"]["Update"];
 
 export type SectionTableRow =
-  Database["public"]["Tables"]["section_table"]["Row"];
+  Database["form_schema"]["Tables"]["section_table"]["Row"];
 export type SectionTableInsert =
-  Database["public"]["Tables"]["section_table"]["Insert"];
+  Database["form_schema"]["Tables"]["section_table"]["Insert"];
 export type SectionTableUpdate =
-  Database["public"]["Tables"]["section_table"]["Update"];
+  Database["form_schema"]["Tables"]["section_table"]["Update"];
 
 export type SignerTableRow =
-  Database["public"]["Tables"]["signer_table"]["Row"];
+  Database["form_schema"]["Tables"]["signer_table"]["Row"];
 export type SignerTableInsert =
-  Database["public"]["Tables"]["signer_table"]["Insert"];
+  Database["form_schema"]["Tables"]["signer_table"]["Insert"];
 export type SignerTableUpdate =
-  Database["public"]["Tables"]["signer_table"]["Update"];
+  Database["form_schema"]["Tables"]["signer_table"]["Update"];
 
 export type TeamMemberTableRow =
   Database["public"]["Tables"]["team_member_table"]["Row"];
@@ -351,11 +352,11 @@ export type QueryTableRow =
   Database["lookup_schema"]["Tables"]["query_table"]["Row"];
 
 export type FormSLATableRow =
-  Database["public"]["Tables"]["form_sla_table"]["Row"];
+  Database["form_schema"]["Tables"]["form_sla_table"]["Row"];
 export type FormSLATableInsert =
-  Database["public"]["Tables"]["form_sla_table"]["Insert"];
+  Database["form_schema"]["Tables"]["form_sla_table"]["Insert"];
 export type FormSLATableUpdate =
-  Database["public"]["Tables"]["form_sla_table"]["Update"];
+  Database["form_schema"]["Tables"]["form_sla_table"]["Update"];
 
 export type TicketCategoryTableRow =
   Database["ticket_schema"]["Tables"]["ticket_category_table"]["Row"];
@@ -473,11 +474,11 @@ export type JiraOrganizationTeamProjectTableUpdate =
   Database["jira_schema"]["Tables"]["jira_organization_team_project_table"]["Update"];
 
 export type SpecialFieldTemplateTableRow =
-  Database["public"]["Tables"]["special_field_template_table"]["Row"];
+  Database["form_schema"]["Tables"]["special_field_template_table"]["Row"];
 export type SpecialFieldTemplateTableInsert =
-  Database["public"]["Tables"]["special_field_template_table"]["Insert"];
+  Database["form_schema"]["Tables"]["special_field_template_table"]["Insert"];
 export type SpecialFieldTemplateTableUpdate =
-  Database["public"]["Tables"]["special_field_template_table"]["Update"];
+  Database["form_schema"]["Tables"]["special_field_template_table"]["Update"];
 
 export type SCICEmployeeTableRow =
   Database["lookup_schema"]["Tables"]["scic_employee_table"]["Row"];

@@ -1975,6 +1975,7 @@ export const createDepartmentSigner = async (
     count,
     error: duplicateError,
   } = await supabaseClient
+  .schema("form_schema")
     .from("signer_table")
     .select("signer_id, signer_is_disabled", { count: "exact" })
     .eq("signer_team_project_id", `${params.signer_team_project_id}`)
@@ -1990,6 +1991,7 @@ export const createDepartmentSigner = async (
 
   if (duplicateData?.signer_is_disabled) {
     const { data, error } = await supabaseClient
+    .schema("form_schema")
       .from("signer_table")
       .update({ signer_is_disabled: false })
       .eq("signer_id", duplicateData.signer_id)
@@ -2001,6 +2003,7 @@ export const createDepartmentSigner = async (
   }
 
   const { data, error } = await supabaseClient
+  .schema("form_schema")
     .from("signer_table")
     .insert(params)
     .select("*");

@@ -110,6 +110,7 @@ export const updateFormVisibility = async (
   const { formId, isHidden } = params;
 
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("form_table")
     .update({ form_is_hidden: isHidden })
     .eq("form_id", formId);
@@ -344,6 +345,7 @@ export const updateFormDescription = async (
   const { formId, description } = params;
 
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("form_table")
     .update({ form_description: description })
     .eq("form_id", formId);
@@ -981,6 +983,7 @@ export const updateSLAHours = async (
   const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
 
   const { data, error } = await supabaseClient
+    .schema("form_schema")
     .from("form_sla_table")
     .update({ form_sla_hours, form_sla_date_updated: `${currentDate}` })
     .eq("form_sla_id", form_sla_id)
@@ -1242,6 +1245,7 @@ export const updateDepartmentSigner = async (
 ) => {
   if (!params.signer_id) throw new Error();
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("signer_table")
     .update(params)
     .eq("signer_id", params.signer_id);
@@ -1256,6 +1260,7 @@ export const removeDepartmentSigner = async (
   signerId: string
 ) => {
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("signer_table")
     .update({ signer_is_disabled: true })
     .eq("signer_id", signerId);
