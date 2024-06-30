@@ -24,7 +24,7 @@ const useRealtimeRequestSignerList = (
         "postgres_changes",
         {
           event: "UPDATE",
-          schema: "public",
+          schema: "request_schema",
           table: "request_signer_table",
           filter: `request_signer_request_id=eq.${requestId}`,
         },

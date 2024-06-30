@@ -18,7 +18,6 @@ import { safeParse } from "@/utils/functions";
 import {
   addAmpersandBetweenWords,
   parseJSONIfValid,
-  regExp,
   startCase,
 } from "@/utils/string";
 import {
@@ -27,10 +26,6 @@ import {
   AttachmentBucketType,
   AttachmentTableRow,
   CSICodeTableRow,
-  CanvassAdditionalDetailsType,
-  CanvassLowestPriceType,
-  CanvassType,
-  ConnectedRequestItemType,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   EquipmentDescriptionTableRow,
@@ -63,7 +58,6 @@ import {
   ReferenceMemoType,
   RequestListItemType,
   RequestListOnLoad,
-  RequestProjectSignerType,
   RequestResponseTableRow,
   RequestTableRow,
   RequestWithResponseType,
@@ -1270,6 +1264,7 @@ export const checkRequest = async (
   });
 
   const { count, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .select("*", { count: "exact" })
     .or(requestCondition.slice(0, -2))
@@ -1290,6 +1285,7 @@ export const checkRequsitionRequestForReleaseOrder = async (
   const { itemId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .select("*", { count: "exact" })
     .eq("request_id", itemId)
@@ -1310,6 +1306,7 @@ export const checkIfRequestIsEditable = async (
   const { requestId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_signer_table")
     .select("request_signer_status")
     .eq("request_signer_request_id", requestId);
@@ -1332,6 +1329,7 @@ export const getResponseDataByKeyword = async (
 ) => {
   const { keyword, formId } = params;
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_response_table")
     .select(
       "*, response_field: request_response_field_id!inner(*), request_form: request_response_request_id!inner(request_id, request_form_id)"
@@ -1364,286 +1362,6 @@ export const checkIfOwnerOrAdmin = async (
   const role = data?.team_member_role;
   if (role === null) return false;
   return role === "ADMIN" || role === "OWNER";
-};
-
-// Get all formsly forward link form id
-export const getFormslyForwardLinkFormId = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-  }
-) => {
-  const { requestId } = params;
-
-  const { data, error } = await supabaseClient
-    .from("request_response_table")
-    .select(
-      "request_response_request: request_response_request_id!inner(request_id, request_formsly_id, request_status, request_form: request_form_id(form_name))"
-    )
-    .eq("request_response", `"${requestId}"`)
-    .eq("request_response_request.request_status", "APPROVED");
-  if (error) throw error;
-  const formattedData = data as unknown as {
-    request_response_request: {
-      request_id: string;
-      request_formsly_id: string;
-      request_form: {
-        form_name: string;
-      };
-    };
-  }[];
-
-  const requestList = {
-    Item: [] as ConnectedRequestItemType[],
-    "Sourced Item": [] as ConnectedRequestItemType[],
-    Quotation: [] as ConnectedRequestItemType[],
-    "Receiving Inspecting Report": [] as ConnectedRequestItemType[],
-    "Release Order": [] as ConnectedRequestItemType[],
-    "Transfer Receipt": [] as ConnectedRequestItemType[],
-    "Release Quantity": [] as ConnectedRequestItemType[],
-  };
-
-  formattedData.forEach((request) => {
-    const newFormattedData = {
-      request_id: request.request_response_request.request_id,
-      request_formsly_id: request.request_response_request.request_formsly_id,
-    };
-    switch (request.request_response_request.request_form.form_name) {
-      case "Item":
-        requestList["Item"].push(newFormattedData);
-        break;
-      case "Sourced Item":
-        requestList["Sourced Item"].push(newFormattedData);
-        break;
-      case "Quotation":
-        requestList["Quotation"].push(newFormattedData);
-        break;
-      case "Receiving Inspecting Report":
-        requestList["Receiving Inspecting Report"].push(newFormattedData);
-        break;
-      case "Release Order":
-        requestList["Release Order"].push(newFormattedData);
-        break;
-      case "Transfer Receipt":
-        requestList["Transfer Receipt"].push(newFormattedData);
-        break;
-      case "Release Quantity":
-        requestList["Release Quantity"].push(newFormattedData);
-        break;
-    }
-  });
-
-  return requestList;
-};
-
-// Get item response of an item request
-export const getItemResponseForQuotation = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { requestId: string }
-) => {
-  const { requestId } = params;
-
-  const { data: requestResponseData, error: requestResponseError } =
-    await supabaseClient
-      .from("request_response_table")
-      .select(
-        "*, request_response_field: request_response_field_id(field_name, field_order)"
-      )
-      .eq("request_response_request_id", requestId);
-
-  if (requestResponseError) throw requestResponseError;
-  const formattedRequestResponseData =
-    requestResponseData as unknown as (RequestResponseTableRow & {
-      request_response_field: { field_name: string; field_order: number };
-    })[];
-
-  const options: Record<
-    string,
-    {
-      name: string;
-      description: string;
-      quantity: number;
-      unit: string;
-    }
-  > = {};
-  const idForNullDuplicationId = uuidv4();
-  formattedRequestResponseData.forEach((response) => {
-    if (response.request_response_field) {
-      const fieldName = response.request_response_field.field_name;
-      const duplicatableSectionId =
-        response.request_response_duplicatable_section_id ??
-        idForNullDuplicationId;
-
-      if (response.request_response_field.field_order > 4) {
-        if (!options[duplicatableSectionId]) {
-          options[duplicatableSectionId] = {
-            name: "",
-            description: "",
-            quantity: 0,
-            unit: "",
-          };
-        }
-
-        if (fieldName === "General Name") {
-          options[duplicatableSectionId].name = JSON.parse(
-            response.request_response
-          );
-        } else if (fieldName === "Base Unit of Measurement") {
-          options[duplicatableSectionId].unit = JSON.parse(
-            response.request_response
-          );
-        } else if (fieldName === "Quantity") {
-          options[duplicatableSectionId].quantity = Number(
-            response.request_response
-          );
-        } else if (
-          fieldName === "GL Account" ||
-          fieldName === "CSI Code" ||
-          fieldName === "CSI Code Description" ||
-          fieldName === "Division Description" ||
-          fieldName === "Level 2 Major Group Description" ||
-          fieldName === "Level 2 Minor Group Description"
-        ) {
-        } else {
-          options[duplicatableSectionId].description += `${
-            options[duplicatableSectionId].description ? ", " : ""
-          }${fieldName}: ${JSON.parse(response.request_response)}`;
-        }
-      }
-    }
-  });
-  return options;
-};
-
-// Get item response of a quotation request
-export const getItemResponseForRIR = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { requestId: string }
-) => {
-  const { requestId } = params;
-
-  const { data: requestResponseData, error: requestResponseError } =
-    await supabaseClient
-      .from("request_response_table")
-      .select(
-        "*, request_response_field: request_response_field_id(field_name, field_order)"
-      )
-      .eq("request_response_request_id", requestId);
-
-  if (requestResponseError) throw requestResponseError;
-  const formattedRequestResponseData =
-    requestResponseData as unknown as (RequestResponseTableRow & {
-      request_response_field: { field_name: string; field_order: number };
-    })[];
-
-  const options: Record<
-    string,
-    {
-      item: string;
-      quantity: string;
-    }
-  > = {};
-  const idForNullDuplicationId = uuidv4();
-  formattedRequestResponseData.forEach((response) => {
-    if (response.request_response_field) {
-      const fieldName = response.request_response_field.field_name;
-      const duplicatableSectionId =
-        response.request_response_duplicatable_section_id ??
-        idForNullDuplicationId;
-
-      if (response.request_response_field.field_order > 12) {
-        if (!options[duplicatableSectionId]) {
-          options[duplicatableSectionId] = {
-            item: "",
-            quantity: "",
-          };
-        }
-
-        if (fieldName === "Item") {
-          options[duplicatableSectionId].item = JSON.parse(
-            response.request_response
-          );
-        } else if (fieldName === "Quantity") {
-          const matches = regExp.exec(options[duplicatableSectionId].item);
-
-          if (matches) {
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            options[
-              duplicatableSectionId
-            ].quantity = `${response.request_response} ${unit}`;
-          }
-        }
-      }
-    }
-  });
-  return options;
-};
-
-// Get item response of a item request
-export const getItemResponseForRO = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: { requestId: string }
-) => {
-  const { requestId } = params;
-
-  const { data: requestResponseData, error: requestResponseError } =
-    await supabaseClient
-      .from("request_response_table")
-      .select(
-        "*, request_response_field: request_response_field_id(field_name, field_order)"
-      )
-      .eq("request_response_request_id", requestId);
-
-  if (requestResponseError) throw requestResponseError;
-  const formattedRequestResponseData =
-    requestResponseData as unknown as (RequestResponseTableRow & {
-      request_response_field: { field_name: string; field_order: number };
-    })[];
-
-  const options: Record<
-    string,
-    {
-      item: string;
-      quantity: number;
-      sourceProject: string;
-    }
-  > = {};
-  const idForNullDuplicationId = uuidv4();
-  formattedRequestResponseData.forEach((response) => {
-    if (response.request_response_field) {
-      const fieldName = response.request_response_field.field_name;
-      const duplicatableSectionId =
-        response.request_response_duplicatable_section_id ??
-        idForNullDuplicationId;
-
-      if (response.request_response_field.field_order > 1) {
-        if (!options[duplicatableSectionId]) {
-          options[duplicatableSectionId] = {
-            item: "",
-            quantity: 0,
-            sourceProject: "",
-          };
-        }
-
-        if (fieldName === "Item") {
-          options[duplicatableSectionId].item = JSON.parse(
-            response.request_response
-          );
-        } else if (fieldName === "Quantity") {
-          options[duplicatableSectionId].quantity = JSON.parse(
-            response.request_response
-          );
-        } else if (fieldName === "Source Project") {
-          options[duplicatableSectionId].sourceProject = JSON.parse(
-            response.request_response
-          );
-        }
-      }
-    }
-  });
-
-  return options;
 };
 
 // Check if the approving or creating quotation or sourced item quantity are less than the item quantity
@@ -1758,36 +1476,21 @@ export const getRequestStatusCount = async (
     endDate: string;
   }
 ) => {
-  const { formId, teamId, startDate, endDate } = params;
-  const getCount = (status: string) =>
-    supabaseClient
-      .from("request_table")
-      .select(
-        `request_team_member: request_team_member_id!inner(team_member_team_id)`,
-        { count: "exact", head: true }
-      )
-      .eq("request_form_id", formId)
-      .eq("request_team_member.team_member_team_id", teamId)
-      .eq("request_status", status)
-      .gte("request_date_created", startDate)
-      .lte("request_date_created", endDate);
-
-  const data = await Promise.all(
-    REQUEST_STATUS_LIST.map(async (status) => {
-      const { count: statusCount } = await getCount(status);
-
-      return {
-        label: startCase(status.toLowerCase()),
-        value: statusCount || 0,
-      };
+  const { data, error } = await supabaseClient
+    .rpc("get_request_status_count", {
+      input_data: { ...params, requestStatusList: REQUEST_STATUS_LIST },
     })
-  );
+    .select("*");
+  if (error) throw error;
 
-  const totalCount = data.reduce((total, item) => item.value + total, 0);
+  const formattedData = data as unknown as {
+    data: { label: string; value: number }[];
+    totalCount: number;
+  };
 
   return {
-    data,
-    totalCount,
+    requestStatusCountData: formattedData.data,
+    totalCount: formattedData.totalCount,
   };
 };
 
@@ -1804,6 +1507,7 @@ export const getRequestorData = async (
 
   const getRequestCount = (status: string) =>
     supabaseClient
+      .schema("request_schema")
       .from("request_table")
       .select("*", { count: "exact", head: true })
       .eq("request_form_id", formId)
@@ -1826,246 +1530,6 @@ export const getRequestorData = async (
   return data;
 };
 
-export const getSignerData = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    formId: string;
-    teamMemberId: string;
-    startDate: string;
-    endDate: string;
-  }
-) => {
-  const { formId, teamMemberId, startDate, endDate } = params;
-  const getSignedRequestCount = (status: string) =>
-    supabaseClient
-      .from("request_signer_table")
-      .select(
-        "request: request_signer_request_id!inner(request_form_id, request_date_created), request_signer: request_signer_signer_id!inner(team_member: signer_team_member_id!inner(team_member_id, team_member_team_id)), request_signer_status",
-        { count: "exact", head: true }
-      )
-      .eq("request.request_form_id", formId)
-      .eq("request_signer_status", status)
-      .eq("request_signer.team_member.team_member_id", teamMemberId)
-      .gte("request.request_date_created", startDate)
-      .lte("request.request_date_created", endDate);
-
-  const data = await Promise.all(
-    REQUEST_STATUS_LIST.map(async (status) => {
-      const { count: statusCount } = await getSignedRequestCount(status);
-
-      return {
-        label: startCase(status.toLowerCase()),
-        value: statusCount || 0,
-      };
-    })
-  );
-
-  return data;
-};
-
-// Get all quotation request for the item
-export const getItemPendingQuotationRequestList = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-  }
-) => {
-  const { requestId } = params;
-
-  const { data, error } = await supabaseClient
-    .from("request_response_table")
-    .select(
-      `request_response_request: request_response_request_id!inner(
-        request_id, 
-        request_formsly_id,
-        request_status, 
-        request_form: request_form_id!inner(
-          form_name
-        )
-      )`
-    )
-    .eq("request_response", `"${requestId}"`)
-    .eq("request_response_request.request_status", "PENDING")
-    .eq("request_response_request.request_form.form_name", "Quotation");
-
-  if (error) throw error;
-  const formattedData = data as unknown as {
-    request_response_request: {
-      request_id: string;
-      request_formsly_id: string;
-    };
-  }[];
-  return formattedData.map((request) => request.request_response_request);
-};
-
-// Get canvass data
-export const getCanvassData = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-  }
-) => {
-  const { requestId } = params;
-
-  const items = await getItemResponseForQuotation(supabaseClient, {
-    requestId,
-  });
-  const itemOptions = Object.keys(items).map(
-    (item) =>
-      `${items[item].name} (${items[item].quantity} ${items[item].unit}) (${items[item].description})`
-  );
-
-  const canvassRequest = await getItemPendingQuotationRequestList(
-    supabaseClient,
-    { requestId }
-  );
-
-  const additionalChargeFields = [
-    "Delivery Fee",
-    "Bank Charge",
-    "Mobilization Charge",
-    "Demobilization Charge",
-    "Freight Charge",
-    "Hauling Charge",
-    "Handling Charge",
-    "Packing Charge",
-  ];
-
-  const summaryData: CanvassLowestPriceType = {};
-  let summaryAdditionalDetails: CanvassAdditionalDetailsType = [];
-  const quotationRequestList = await Promise.all(
-    canvassRequest.map(async ({ request_id, request_formsly_id }) => {
-      const { data: quotationResponseList, error: quotationResponseListError } =
-        await supabaseClient
-          .from("request_response_table")
-          .select(
-            "*, request_response_field: request_response_field_id!inner(field_name), request_response_request: request_response_request_id!inner(request_id,request_formsly_id)"
-          )
-          .eq("request_response_request_id", request_id)
-          .in("request_response_field.field_name", [
-            "Item",
-            "Price per Unit",
-            "Quantity",
-            "Lead Time",
-            "Payment Terms",
-            ...additionalChargeFields,
-          ]);
-      if (quotationResponseListError) throw quotationResponseListError;
-      summaryData[request_formsly_id] = 0;
-      summaryAdditionalDetails.push({
-        quotation_id: request_id,
-        formsly_id: request_formsly_id,
-        lead_time: 0,
-        payment_terms: "",
-      });
-      return quotationResponseList;
-    })
-  );
-
-  const formattedQuotationRequestList =
-    quotationRequestList as unknown as (RequestResponseTableRow & {
-      request_response_field: { field_name: string };
-      request_response_request: {
-        request_id: string;
-        request_formsly_id: string;
-      };
-    })[][];
-
-  const canvassData: CanvassType = {};
-  const lowestPricePerItem: CanvassLowestPriceType = {};
-  const requestAdditionalCharge: CanvassLowestPriceType = {};
-  let lowestAdditionalCharge = 999999999;
-
-  itemOptions.forEach((item) => {
-    canvassData[item] = [];
-    lowestPricePerItem[item] = 999999999;
-  });
-
-  formattedQuotationRequestList.forEach((request) => {
-    let currentItem = "";
-    let tempAdditionalCharge = 0;
-
-    request.forEach((response) => {
-      if (response.request_response_field.field_name === "Item") {
-        currentItem = JSON.parse(response.request_response);
-        canvassData[currentItem].push({
-          quotationId: response.request_response_request.request_formsly_id,
-          price: 0,
-          quantity: 0,
-        });
-      } else if (
-        response.request_response_field.field_name === "Price per Unit"
-      ) {
-        const price = Number(response.request_response);
-        canvassData[currentItem][canvassData[currentItem].length - 1].price =
-          price;
-        if (price < lowestPricePerItem[currentItem]) {
-          lowestPricePerItem[currentItem] = price;
-        }
-        summaryData[response.request_response_request.request_formsly_id] +=
-          price;
-      } else if (
-        response.request_response_field.field_name === "Payment Terms"
-      ) {
-        summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
-          if (request.quotation_id === response.request_response_request_id)
-            return {
-              ...request,
-              payment_terms: JSON.parse(response.request_response) as string,
-            };
-          else return request;
-        });
-      } else if (response.request_response_field.field_name === "Lead Time") {
-        summaryAdditionalDetails = summaryAdditionalDetails.map((request) => {
-          if (request.quotation_id === response.request_response_request_id)
-            return { ...request, lead_time: Number(response.request_response) };
-          else return request;
-        });
-      } else if (response.request_response_field.field_name === "Quantity") {
-        canvassData[currentItem][canvassData[currentItem].length - 1].quantity =
-          Number(response.request_response);
-      } else if (
-        additionalChargeFields.includes(
-          response.request_response_field.field_name
-        )
-      ) {
-        const price = Number(response.request_response);
-        summaryData[response.request_response_request.request_formsly_id] +=
-          price;
-        tempAdditionalCharge += price;
-      }
-    });
-
-    requestAdditionalCharge[
-      request[0].request_response_request.request_formsly_id
-    ] = tempAdditionalCharge;
-    if (tempAdditionalCharge < lowestAdditionalCharge) {
-      lowestAdditionalCharge = tempAdditionalCharge;
-    }
-  });
-
-  const sortedQuotation: Record<string, number> = Object.entries(summaryData)
-    .sort(([, a], [, b]) => a - b)
-    .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
-  const recommendedQuotationId = Object.keys(sortedQuotation)[0];
-  const request_id = canvassRequest.find(
-    (request) => request.request_formsly_id === recommendedQuotationId
-  )?.request_id;
-  return {
-    canvassData,
-    lowestPricePerItem,
-    summaryData,
-    summaryAdditionalDetails,
-    lowestQuotation: {
-      id: recommendedQuotationId,
-      request_id: request_id,
-      value: sortedQuotation[recommendedQuotationId],
-    },
-    requestAdditionalCharge,
-    lowestAdditionalCharge,
-  };
-};
-
 export const getRequestStatusMonthlyCount = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -2077,44 +1541,12 @@ export const getRequestStatusMonthlyCount = async (
 ) => {
   const { formId, teamId, startDate, endDate } = params;
 
-  const getMonthlyCount = async (startOfMonth: string, endOfMonth: string) => {
-    const getCount = (status: string) =>
-      supabaseClient
-        .from("request_table")
-        .select(
-          `request_team_member: request_team_member_id!inner(team_member_team_id)`,
-          { count: "exact", head: true }
-        )
-        .eq("request_is_disabled", false)
-        .eq("request_form_id", formId)
-        .eq("request_team_member.team_member_team_id", teamId)
-        .eq("request_status", status)
-        .gte("request_date_created", startOfMonth)
-        .lte("request_date_created", endOfMonth);
-
-    const { count: pendingCount } = await getCount("PENDING");
-    const { count: approvedCount } = await getCount("APPROVED");
-    const { count: rejectedCount } = await getCount("REJECTED");
-
-    const statusData = {
-      pending: pendingCount || 0,
-      approved: approvedCount || 0,
-      rejected: rejectedCount || 0,
-    };
-
-    return {
-      month: startOfMonth,
-      ...statusData,
-    };
-  };
-
   // Generate the list of month ranges within the specified date range
   // Generate the list of month ranges within the specified date range
   const startDateObj = moment(startDate);
   const endDateObj = moment(endDate).endOf("month");
 
   const monthRanges = [];
-
   while (startDateObj.isSameOrBefore(endDateObj, "month")) {
     const startOfMonth = startDateObj.clone().startOf("month");
     const endOfMonth = startDateObj.clone().endOf("month");
@@ -2129,27 +1561,37 @@ export const getRequestStatusMonthlyCount = async (
     startDateObj.add(1, "month");
   }
 
-  const monthlyData = await Promise.all(
-    monthRanges.map(async (range) => {
-      return getMonthlyCount(range.start_of_month, range.end_of_month);
+  const { data: monthlyData, error: monthlyError } = await supabaseClient
+    .rpc("get_request_status_monthly_count", {
+      input_data: {
+        formId,
+        teamId,
+        monthRanges,
+      },
     })
-  );
+    .select("*");
+  if (monthlyError) throw monthlyError;
 
-  const { count: totalCount } = await supabaseClient
-    .from("request_table")
-    .select(
-      `request_team_member: request_team_member_id!inner(team_member_team_id)`,
-      { count: "exact", head: true }
-    )
-    .eq("request_is_disabled", false)
-    .eq("request_form_id", formId)
-    .eq("request_team_member.team_member_team_id", teamId)
-    .gte("request_date_created", startDate)
-    .lte("request_date_created", endDate);
+  const { data: totalCount, error: totalError } = await supabaseClient
+    .rpc("get_request_total_count", {
+      input_data: {
+        formId,
+        teamId,
+        startDate,
+        endDate,
+      },
+    })
+    .select("*");
+  if (totalError) throw totalError;
 
   return {
-    data: monthlyData,
-    totalCount: totalCount,
+    data: monthlyData as unknown as {
+      month: string;
+      pending: number;
+      approved: number;
+      rejected: number;
+    }[],
+    totalCount: Number(totalCount),
   };
 };
 
@@ -2666,26 +2108,6 @@ export const getProjectSignerWithTeamMember = async (
   return data as unknown as FormType["form_signer"];
 };
 
-// Fetch request project id
-export const getRequestProjectIdAndName = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-  }
-) => {
-  const { requestId } = params;
-  const { data, error } = await supabaseClient
-    .from("request_table")
-    .select(
-      "request_project: request_project_id(team_project_id, team_project_name)"
-    )
-    .eq("request_id", requestId)
-    .single();
-  if (error) throw error;
-
-  return data.request_project;
-};
-
 // Fetch multiple request signer with team member based on project site
 export const getMultipleProjectSignerWithTeamMember = async (
   supabaseClient: SupabaseClient<Database>,
@@ -2722,81 +2144,6 @@ export const getFormSigner = async (
   if (error) throw error;
 
   return data;
-};
-
-// Fetch request project signer
-export const getRequestProjectSigner = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    requestId: string;
-    teamId: string;
-  }
-) => {
-  const { requestId, teamId } = params;
-  let requestProjectSigner = [];
-  const { data: projectList, error: projectListError } = await supabaseClient
-    .from("team_project_table")
-    .select("*")
-    .eq("team_project_team_id", teamId);
-  if (projectListError) throw projectListError;
-
-  const { data: noProjectSigner, error: noProjectSignerError } =
-    await supabaseClient
-      .from("request_signer_table")
-      .select(
-        "*, request_signer: request_signer_signer_id!inner(*, signer_team_project_id)"
-      )
-      .eq("request_signer_request_id", requestId)
-      .eq("request_signer.signer_is_disabled", false)
-      .is("request_signer.signer_team_project_id", null);
-
-  if (noProjectSignerError) throw noProjectSignerError;
-
-  if (noProjectSigner.length > 0) {
-    const signer = noProjectSigner[0];
-    const data = projectList.map((project) => ({
-      ...signer,
-      request_signer: {
-        ...signer.request_signer,
-        signer_team_project: {
-          team_project_name: project.team_project_name,
-        },
-      },
-    }));
-
-    requestProjectSigner = data as unknown as RequestProjectSignerType;
-  } else {
-    const { data: signerData, error } = await supabaseClient
-      .from("request_signer_table")
-      .select(
-        "*, request_signer: request_signer_signer_id!inner(*, signer_team_project: signer_team_project_id!inner(team_project_name))"
-      )
-      .eq("request_signer_request_id", requestId)
-      .eq("request_signer.signer_is_disabled", false);
-    if (error) throw error;
-
-    const signers = signerData as unknown as RequestProjectSignerType;
-
-    const projectsWithSigner = signers.map(
-      (signer) => signer.request_signer.signer_team_project.team_project_name
-    );
-    const projectsWithoutSigner = projectList
-      .map((project) => project.team_project_name)
-      .filter((project) => projectsWithSigner.includes(project));
-
-    const newSigners = projectsWithoutSigner.map((project) => ({
-      ...signers[0],
-      request_signer: {
-        ...signers[0].request_signer,
-        signer_team_project: {
-          team_project_name: project,
-        },
-      },
-    }));
-    requestProjectSigner = [...signers, ...newSigners];
-  }
-
-  return requestProjectSigner;
 };
 
 // Fetch all CSI Code based on division id
@@ -3217,6 +2564,7 @@ export const checkIfJiraIDIsUnique = async (
   const { value } = params;
 
   const { count, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .select("*", {
       count: "exact",
@@ -3239,6 +2587,7 @@ export const checkIfJiraLinkIsUnique = async (
   const { value } = params;
 
   const { count, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .select("*", {
       count: "exact",
@@ -3261,6 +2610,7 @@ export const checkIfOtpIdIsUnique = async (
   const { value } = params;
 
   const { count, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .select("*", {
       count: "exact",
@@ -3436,44 +2786,13 @@ export const getApproverRequestCount = async (
     withJiraId?: boolean;
   }
 ) => {
-  const { teamMemberId, status, withJiraId } = params;
-  let query = supabaseClient
-    .from("request_signer_table")
-    .select(
-      `
-        request_signer_status, 
-        request_signer: request_signer_signer_id!inner(
-          signer_team_member_id
-        ),
-        request: request_signer_request_id!inner(
-          request_jira_id
-        )
-      `,
-      { count: "exact", head: true }
-    )
-    .eq("request_signer.signer_team_member_id", teamMemberId)
-    .eq("request_signer_status", status)
-    .eq("request.request_is_disabled", false)
-    .neq("request.request_status", "CANCELED");
-
-  if (withJiraId !== undefined) {
-    switch (withJiraId) {
-      case true:
-        query = query.neq("request.request_jira_id", null);
-        break;
-      case false:
-        query = query.is("request.request_jira_id", null);
-        break;
-      default:
-        break;
-    }
-  }
-
-  const { count, error } = await query;
-
+  const { data, error } = await supabaseClient.rpc(
+    "get_approver_request_count",
+    { input_data: params }
+  );
   if (error) throw error;
 
-  return Number(count);
+  return Number(data);
 };
 
 // Get approver unresolved request count
@@ -3954,29 +3273,12 @@ export const getRequestTeamId = async (
     requestId: string;
   }
 ) => {
-  const { requestId } = params;
-
   const { data, error } = await supabaseClient
-    .from("request_table")
-    .select(
-      `request_team_member: request_team_member_id!inner(team_member_team_id)`
-    )
-    .eq("request_id", requestId)
-    .eq("request_is_disabled", false)
-    .maybeSingle();
-
+    .rpc("get_request_team_id", { input_data: params })
+    .select("*");
   if (error) throw error;
 
-  if (data) {
-    const requestData = data as unknown as {
-      request_team_member: {
-        team_member_team_id: string;
-      };
-    };
-    return requestData.request_team_member.team_member_team_id;
-  } else {
-    return null;
-  }
+  return data.length ? (data as unknown as string) : null;
 };
 
 // Fetch all CSI Code
@@ -5634,6 +4936,7 @@ export const getNonDuplictableSectionResponse = async (
 ) => {
   const { fieldIdList, requestId } = params;
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_response_table")
     .select(
       "request_response_field_id, request_response, request_response_prefix"
@@ -6125,6 +5428,7 @@ export const getFieldResponseByRequestId = async (
   const { requestId, fieldId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_response_table")
     .select("request_response")
     .eq("request_response_request_id", requestId)
@@ -6145,6 +5449,7 @@ export const getRequestTypeFieldResponse = async (
   const { requestId, fieldId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_response_table")
     .select("request_response")
     .eq("request_response_request_id", requestId)
@@ -6477,25 +5782,14 @@ export const checkIfAllPrimaryApprovedTheRequest = async (
     requestSignerId: string;
   }
 ) => {
-  const { requestId, requestSignerId } = params;
-  const { count, error } = await supabaseClient
-    .from("request_signer_table")
-    .select(
-      `
-        *, 
-        request_signer_signer: request_signer_signer_id!inner(
-          *
-        )
-      `,
-      { count: "exact" }
-    )
-    .eq("request_signer_request_id", requestId)
-    .eq("request_signer_signer.signer_is_primary_signer", true)
-    .neq("request_signer_id", requestSignerId)
-    .neq("request_signer_status", "APPROVED");
+  const { data, error } = await supabaseClient
+    .rpc("check_if_all_primary_approver_approved_the_request", {
+      input_data: params,
+    })
+    .select("*");
   if (error) throw error;
 
-  return !Boolean(count);
+  return data as unknown as boolean;
 };
 
 export const getJiraProjectByTeamProjectName = async (
@@ -6531,6 +5825,7 @@ export const getRequestStatus = async (
   params: { requestId: string }
 ) => {
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .select("request_status")
     .eq("request_id", params.requestId)
@@ -6575,6 +5870,7 @@ export const getRequestFieldResponse = async (
   }
 ) => {
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_response_table")
     .select("request_response, request_response_field_id")
     .eq("request_response_request_id", params.requestId)
@@ -6590,6 +5886,7 @@ export const getExistingConnectedRequest = async (
   parentRequestId: string
 ) => {
   const { data, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_response_table")
     .select("request_response, request: request_response_request_id!inner(*)")
     .eq("request_response", JSON.stringify(parentRequestId))
@@ -6639,6 +5936,7 @@ export const checkIfUserIsRequestOwner = async (
 ) => {
   const { requestId, teamMemberId } = params;
   const { count, error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .select("*", { count: "exact", head: true })
     .eq("request_id", requestId)
