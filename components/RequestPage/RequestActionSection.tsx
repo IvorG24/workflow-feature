@@ -65,18 +65,20 @@ const RequestActionSection = ({
         });
 
       if (isAllPrimaryApprovedTheRequest) {
-        const { jiraTicketId, jiraTicketLink } = await onCreateJiraTicket();
-        if (!jiraTicketId) {
-          notifications.show({
-            message: "Failed to create jira ticket",
-            color: "red",
-          });
-          return;
-        }
+        if (process.env.NODE_ENV === "production") {
+          const { jiraTicketId, jiraTicketLink } = await onCreateJiraTicket();
+          if (!jiraTicketId) {
+            notifications.show({
+              message: "Failed to create jira ticket",
+              color: "red",
+            });
+            return;
+          }
 
-        handleUpdateRequest("APPROVED", jiraTicketId, jiraTicketLink);
-      } else {
-        handleUpdateRequest("APPROVED");
+          handleUpdateRequest("APPROVED", jiraTicketId, jiraTicketLink);
+        } else {
+          handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
+        }
       }
     } catch (e) {
       notifications.show({
