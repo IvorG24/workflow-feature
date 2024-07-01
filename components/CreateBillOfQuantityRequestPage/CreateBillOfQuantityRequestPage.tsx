@@ -128,9 +128,12 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
           form.form_section[1].section_field[0].field_id;
         const typeOfRequestFieldId =
           form.form_section[1].section_field[1].field_id;
+        const invoiceAmountFieldId =
+          form.form_section[1].section_field[2].field_id;
+        const vatFieldId = form.form_section[1].section_field[3].field_id;
+        const costFieldId = form.form_section[1].section_field[4].field_id;
 
         const { duplicatableSectionIdList } = connectedRequest;
-
         const sortedDuplicatableSectionIdList = duplicatableSectionIdList
           .sort()
           .reverse();
@@ -161,7 +164,13 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
         }
 
         const filteredNewFields = newFields.filter((field) =>
-          ["Supplier Name/Payee", "Type of Request"].includes(field.field_name)
+          [
+            "Supplier Name/Payee",
+            "Type of Request",
+            "Invoice Amount",
+            "VAT",
+            "Cost",
+          ].includes(field.field_name)
         );
 
         const uniqueFieldIdList: string[] = [];
@@ -179,25 +188,42 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
             uniqueFieldIdList.push(field.field_id);
             switch (field.field_name) {
               case "Supplier Name/Payee":
-                field.field_order = 0;
+                field.field_order = 1;
                 field.field_is_read_only = true;
                 field.field_id = supplierNameFieldId;
                 break;
               case "Type of Request":
-                field.field_order = 1;
+                field.field_order = 2;
                 field.field_is_read_only = true;
                 field.field_id = typeOfRequestFieldId;
                 break;
+
+              case "Invoice Amount":
+                field.field_order = 3;
+                field.field_is_read_only = true;
+                field.field_id = invoiceAmountFieldId;
+                break;
+
+              case "VAT":
+                field.field_order = 4;
+                field.field_id = vatFieldId;
+                field.field_is_required = false;
+                break;
+
+              case "Cost":
+                field.field_order = 5;
+                field.field_id = costFieldId;
+                break;
+
               default:
                 break;
             }
-
             combinedFieldList.push(field);
           }
         });
 
         const boqFieldList = [
-          ...form.form_section[1].section_field.slice(2, 4).map((field) => ({
+          ...form.form_section[1].section_field.slice(5, 8).map((field) => ({
             ...field,
             field_response: [
               {
@@ -259,7 +285,9 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
                     : [];
 
                 if (sectionOrder > 0) {
-                  field.field_section_duplicatable_id = sectionDuplicatableId;
+                  field.field_section_duplicatable_id =
+                    connectedRequestSectionDuplicatableId ??
+                    sectionDuplicatableId;
                 }
 
                 return {

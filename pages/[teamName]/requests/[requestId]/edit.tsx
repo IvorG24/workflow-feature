@@ -147,6 +147,7 @@ const Page = ({
             projectOptions={projectOptions}
             duplicatableSectionIdList={duplicatableSectionIdList}
             requestId={requestId}
+            bankListOptions={bankListOptions}
           />
         );
 

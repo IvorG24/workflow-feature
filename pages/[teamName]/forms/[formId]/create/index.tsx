@@ -148,6 +148,7 @@ const Page = ({
           <CreateLiquidationReimbursementRequestPage
             form={form}
             projectOptions={projectOptions}
+            bankListOptions={bankListOptions}
           />
         );
       case "Bill of Quantity":

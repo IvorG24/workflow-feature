@@ -105,6 +105,18 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null) => void;
     onDepartmentChange: (value: string | null) => void;
+    onPayeeVatBooleanChange: (
+      value: boolean,
+      fieldIndex: number,
+      sectionIndex: number
+    ) => void;
+    onInvoiceAmountChange: (value: number, sectionIndex: number) => void;
+    onTypeOfRequestChange: (value: string | null, sectionIndex: number) => void;
+    onModeOfPaymentChange: (
+      value: string | null,
+      fieldIndex: number,
+      sectionIndex: number
+    ) => void;
   };
   personnelTransferRequisitionMethods?: {
     onMannerOfTransferChange: (

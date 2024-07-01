@@ -128,10 +128,8 @@ const LiquidationReimbursementRequestPage = ({
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
   const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
-  const canCreateBOQ =
-    requestStatus === "APPROVED" &&
-    isUserCostEngineer &&
-    selectedDepartment !== "Plants and Equipment";
+
+  const [canCreateBOQ, setCanCreateBOQ] = useState(false);
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
@@ -586,20 +584,34 @@ const LiquidationReimbursementRequestPage = ({
         supabaseClient,
         request.request_id
       );
-
+      setCanCreateBOQ(
+        requestStatus === "APPROVED" &&
+          isUserCostEngineer &&
+          selectedDepartment !== "Plants and Equipment" &&
+          !boqRequest
+      );
       if (boqRequest) {
         const { request_formsly_id_prefix, request_formsly_id_serial } =
           boqRequest;
-        const redirectUrl = `/${formatTeamNameToUrlKey(
-          activeTeam.team_name
-        )}/requests/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
+        const baseUrl = activeTeam.team_name
+          ? `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+          : `/public-request`;
+        const redirectUrl = `${baseUrl}/${request_formsly_id_prefix}-${request_formsly_id_serial}`;
+
         setBOQRequestRedirectUrl(redirectUrl);
       }
     };
-    if (requestStatus === "APPROVED" && activeTeam.team_name) {
+    if (requestStatus === "APPROVED") {
       fetchBOQRequest();
     }
-  }, [requestStatus, activeTeam.team_name]);
+  }, [
+    requestStatus,
+    activeTeam.team_name,
+    supabaseClient,
+    request.request_id,
+    isUserCostEngineer,
+    selectedDepartment,
+  ]);
 
   useEffect(() => {
     const fetchJiraTicketStatus = async (requestJiraId: string) => {

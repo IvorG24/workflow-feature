@@ -134,6 +134,18 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null) => void;
     onDepartmentChange: (value: string | null) => void;
+    onTypeOfRequestChange: (value: string | null, sectionIndex: number) => void;
+    onPayeeVatBooleanChange: (
+      value: boolean,
+      fieldIndex: number,
+      sectionIndex: number
+    ) => void;
+    onInvoiceAmountChange: (value: number, sectionIndex: number) => void;
+    onModeOfPaymentChange: (
+      value: string | null,
+      fieldIndex: number,
+      sectionIndex: number
+    ) => void;
   };
   personnelTransferRequisitionMethods?: {
     onTypeOfTransferChange: (value: string | null) => void;
@@ -542,6 +554,13 @@ const RequestFormFields = ({
                           sectionIndex
                         );
                         break;
+
+                      case "Invoice Amount":
+                        liquidationReimbursementFormMethods?.onInvoiceAmountChange(
+                          value as number,
+                          sectionIndex
+                        );
+                        break;
                     }
                   }}
                 />
@@ -609,6 +628,14 @@ const RequestFormFields = ({
                       pettyCashVoucherFormMethods &&
                         pettyCashVoucherFormMethods.onChargeToProjectBooleanChange(
                           value
+                        );
+                      break;
+                    case "This payee have VAT?":
+                      liquidationReimbursementFormMethods &&
+                        liquidationReimbursementFormMethods.onPayeeVatBooleanChange(
+                          value,
+                          fieldIndex,
+                          sectionIndex
                         );
                       break;
                   }
@@ -873,10 +900,19 @@ const RequestFormFields = ({
                         value,
                         sectionIndex
                       );
+                      liquidationReimbursementFormMethods?.onModeOfPaymentChange(
+                        value,
+                        fieldIndex,
+                        sectionIndex
+                      );
                       break;
 
                     case "Type of Request":
                       pettyCashVoucherFormMethods?.onTypeOfRequestChange(value);
+                      liquidationReimbursementFormMethods?.onTypeOfRequestChange(
+                        value,
+                        sectionIndex
+                      );
                       break;
                   }
                 }}

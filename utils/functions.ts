@@ -238,3 +238,7 @@ export const sendEmailTeamInvite = async ({
     console.error(error);
   }
 };
+
+export const calculateInvoiceAmountWithVAT = (amount: number) => {
+  return (amount / 1.12) * 0.12;
+};

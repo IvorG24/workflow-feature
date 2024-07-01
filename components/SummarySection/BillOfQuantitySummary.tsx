@@ -46,10 +46,10 @@ const BillOfQuantitySummary = ({ summaryData }: Props) => {
                 `${summary.section_field[1].field_response?.request_response}`
               );
               const costCode = safeParse(
-                `${summary.section_field[2].field_response?.request_response}`
+                `${summary.section_field[5].field_response?.request_response}`
               );
               const boqCode = safeParse(
-                `${summary.section_field[3].field_response?.request_response}`
+                `${summary.section_field[6].field_response?.request_response}`
               );
 
               return (
