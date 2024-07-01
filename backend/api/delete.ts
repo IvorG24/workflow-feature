@@ -10,6 +10,7 @@ export const deleteForm = async (
 ) => {
   const { formId } = params;
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("form_table")
     .update({ form_is_disabled: true })
     .eq("form_id", formId);
@@ -23,6 +24,7 @@ export const deleteRequest = async (
 ) => {
   const { requestId } = params;
   const { error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .update({ request_is_disabled: true })
     .eq("request_id", requestId);
@@ -36,6 +38,7 @@ export const deleteComment = async (
 ) => {
   const { commentId } = params;
   const { error: deleteCommentError } = await supabaseClient
+    .schema("request_schema")
     .from("comment_table")
     .update({ comment_is_disabled: true })
     .eq("comment_id", commentId);

@@ -161,6 +161,7 @@ const Section = ({
   useEffect(() => {
     const fetchSpecialFieldList = async () => {
       const { data } = await supabaseClient
+        .schema("form_schema")
         .from("special_field_template_table")
         .select("*");
       setSpecialFieldTemplateList(data ?? []);

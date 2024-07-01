@@ -21,7 +21,7 @@ const useRealtimeRequestStatus = (
         "postgres_changes",
         {
           event: "UPDATE",
-          schema: "public",
+          schema: "request_schema",
           table: "request_table",
           filter: `request_id=eq.${requestId}`,
         },

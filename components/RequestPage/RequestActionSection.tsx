@@ -57,6 +57,7 @@ const RequestActionSection = ({
       setIsLoading(true);
       // check if all primary approver approves the request
       if (!requestSignerId) return;
+
       const isAllPrimaryApprovedTheRequest =
         await checkIfAllPrimaryApprovedTheRequest(supabaseClient, {
           requestId: requestId,
@@ -77,7 +78,7 @@ const RequestActionSection = ({
       } else {
         handleUpdateRequest("APPROVED");
       }
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to approve item request",
         color: "red",

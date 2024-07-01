@@ -110,6 +110,7 @@ export const updateFormVisibility = async (
   const { formId, isHidden } = params;
 
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("form_table")
     .update({ form_is_hidden: isHidden })
     .eq("form_id", formId);
@@ -140,7 +141,6 @@ export const approveOrRejectRequest = async (
     })
     .select("*")
     .single();
-
   if (error) throw error;
 
   return data as string;
@@ -173,6 +173,7 @@ export const updateComment = async (
   const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
 
   const { error } = await supabaseClient
+    .schema("request_schema")
     .from("comment_table")
     .update({
       comment_content: newComment,
@@ -344,6 +345,7 @@ export const updateFormDescription = async (
   const { formId, description } = params;
 
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("form_table")
     .update({ form_description: description })
     .eq("form_id", formId);
@@ -408,6 +410,7 @@ export const updateOtpId = async (
 ) => {
   const { requestID, otpID } = params;
   const { error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .update({ request_otp_id: otpID })
     .eq("request_id", requestID);
@@ -980,6 +983,7 @@ export const updateSLAHours = async (
   const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
 
   const { data, error } = await supabaseClient
+    .schema("form_schema")
     .from("form_sla_table")
     .update({ form_sla_hours, form_sla_date_updated: `${currentDate}` })
     .eq("form_sla_id", form_sla_id)
@@ -1172,6 +1176,7 @@ export const updateRequestJiraId = async (
   const { requestId, jiraId, jiraLink } = params;
 
   const { error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .update({
       request_jira_id: jiraId,
@@ -1187,6 +1192,7 @@ export const updateRequestStatus = async (
 ) => {
   const { requestId, status } = params;
   const { error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .update({ request_status: status })
     .eq("request_id", requestId);
@@ -1224,6 +1230,7 @@ export const updateRequestOtpId = async (
   const formslyIdSerial = splitFormslyId[1];
 
   const { error } = await supabaseClient
+    .schema("request_schema")
     .from("request_table")
     .update({ request_otp_id: otpId })
     .eq("request_formsly_id_prefix", formslyIdPrefix)
@@ -1238,6 +1245,7 @@ export const updateDepartmentSigner = async (
 ) => {
   if (!params.signer_id) throw new Error();
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("signer_table")
     .update(params)
     .eq("signer_id", params.signer_id);
@@ -1252,6 +1260,7 @@ export const removeDepartmentSigner = async (
   signerId: string
 ) => {
   const { error } = await supabaseClient
+    .schema("form_schema")
     .from("signer_table")
     .update({ signer_is_disabled: true })
     .eq("signer_id", signerId);

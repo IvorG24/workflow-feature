@@ -87,6 +87,7 @@ const ItemAnalyticsPage = ({ items }: Props) => {
         })
         .select("*");
       if (error) throw error;
+
       const formattedData = data as unknown as {
         data: ResultType[];
         count: number;
@@ -237,7 +238,6 @@ const ItemAnalyticsPage = ({ items }: Props) => {
                 <tr>
                   <th>Request ID</th>
                   <th>Item Description</th>
-                  <th>CSI Code Description</th>
                   <th>Quantity</th>
                   <th>Unit of Measurement</th>
                   <th>Request Status</th>

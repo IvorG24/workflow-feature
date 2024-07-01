@@ -39,7 +39,6 @@ const ItemRow = ({ result }: Props) => {
     descriptionOpened,
     { close: descrpitionClose, open: descriptionOpen },
   ] = useDisclosure(false);
-  const [csiOpened, { close: csiClose, open: csiOpen }] = useDisclosure(false);
 
   const formatDescription = (
     item_description: {
@@ -108,23 +107,6 @@ const ItemRow = ({ result }: Props) => {
             <pre className={classes.preTag}>
               <Text>{formatDescriptionTooltip(result.item_description)}</Text>
             </pre>
-          </Popover.Dropdown>
-        </Popover>
-      </td>
-      <td>
-        <Popover position="top" withArrow shadow="xl" opened={csiOpened}>
-          <Popover.Target>
-            <Text
-              truncate
-              maw={150}
-              onMouseEnter={csiOpen}
-              onMouseLeave={csiClose}
-            >
-              {JSON.parse(result.csi_code_description)}
-            </Text>
-          </Popover.Target>
-          <Popover.Dropdown className={classes.popOverDropdown}>
-            <Text>{JSON.parse(result.csi_code_description)}</Text>
           </Popover.Dropdown>
         </Popover>
       </td>

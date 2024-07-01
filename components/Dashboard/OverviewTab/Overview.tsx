@@ -108,7 +108,7 @@ const Overview = ({
         setSignerOffset(1);
 
         // set request status tracker
-        const { data: requestStatusCountData, totalCount } =
+        const { requestStatusCountData, totalCount } =
           await getRequestStatusCount(supabaseClient, {
             formId: selectedForm,
             startDate: moment(startDateFilter).format(),
@@ -142,6 +142,7 @@ const Overview = ({
         const formMatch = formList.find(
           (form) => form.form_id === selectedForm
         );
+
         if (!formMatch) return;
         // set requestor data
         const { data: requestorList, error: requestorListError } =
@@ -172,7 +173,7 @@ const Overview = ({
         if (signerListError) throw signerListError;
         setSignerList(sigerList);
         setIsFetchingSigner(false);
-      } catch (error) {
+      } catch (e) {
         notifications.show({
           message:
             "There was a problem while fetching the data. Please try again later",

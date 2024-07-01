@@ -387,7 +387,7 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
           },
         };
       }
-  
+
       return getServerSidePropsFunc({
         context,
         supabaseClient,

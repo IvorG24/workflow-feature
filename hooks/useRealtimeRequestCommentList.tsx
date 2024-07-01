@@ -23,7 +23,7 @@ const useRealtimeRequestCommentList = (
         "postgres_changes",
         {
           event: "*",
-          schema: "public",
+          schema: "request_schema",
           table: "comment_table",
           filter: `comment_request_id=eq.${requestId}`,
         },

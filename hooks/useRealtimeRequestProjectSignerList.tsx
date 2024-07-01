@@ -30,7 +30,7 @@ const useRealtimeProjectRequestSignerList = (
         "postgres_changes",
         {
           event: "*",
-          schema: "public",
+          schema: "request_schema",
           table: "request_signer_table",
           filter: `request_signer_request_id=eq.${requestId}`,
         },
