@@ -4,7 +4,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   DEFAULT_REQUEST_LIST_LIMIT,
-  UNHIDEABLE_FORMLY_FORMS,
+  REQUEST_LIST_HIDDEN_FORMS,
 } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -82,7 +82,7 @@ const RequestListPage = ({
   });
 
   const filteredFormList = formList
-    .filter(({ form_name }) => !UNHIDEABLE_FORMLY_FORMS.includes(form_name))
+    .filter(({ form_name }) => !REQUEST_LIST_HIDDEN_FORMS.includes(form_name))
     .map(({ form_name: label, form_id: value }) => ({ label, value }));
 
   const { handleSubmit, getValues, control } = filterFormMethods;

@@ -51,6 +51,15 @@ export const UNHIDEABLE_FORMLY_FORMS = [
   "Petty Cash Voucher Balance",
 ];
 
+export const REQUEST_LIST_HIDDEN_FORMS = [
+  "Quotation",
+  "Receiving Inspecting Report",
+  "Release Order",
+  "Sourced Item",
+  "Transfer Receipt",
+  "Subcon",
+];
+
 export const SLA_LIST = [
   {
     title: "Approver",
