@@ -4256,7 +4256,7 @@ RETURNS JSON as $$
       `
     )[0];
     
-    const signerData = plv8.execute(
+        const signerData = plv8.execute(
       `
         SELECT
           signer_id, 
