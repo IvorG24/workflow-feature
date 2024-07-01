@@ -38,7 +38,7 @@ const useRealtimeTeamExpiration = (
         "postgres_changes",
         {
           event: "INSERT",
-          schema: "public",
+          schema: "team_schema",
           table: "team_transaction_table",
           filter: `team_transaction_team_id=eq.${teamId}`,
         },

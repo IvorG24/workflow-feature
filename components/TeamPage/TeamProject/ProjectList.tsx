@@ -116,7 +116,7 @@ const ProjectList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "team_project",
-        schema: "public",
+        schema: "team_schema",
       });
       setSelectedProject(null);
       handleFetch("", 1);

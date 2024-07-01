@@ -21,6 +21,7 @@ import {
   startCase,
 } from "@/utils/string";
 import {
+  AddressTableRow,
   AppType,
   ApproverUnresolvedRequestCountType,
   AttachmentBucketType,
@@ -144,6 +145,7 @@ export const getAllTeamOfUser = async (
 ) => {
   const { userId } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_member_table")
     .select("*, team:team_table(*)")
     .eq("team_member_is_disabled", false)
@@ -330,6 +332,7 @@ export const getTeam = async (
 ) => {
   const { teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_table")
     .select("*")
     .eq("team_id", teamId)
@@ -351,6 +354,7 @@ export const getUserTeamMemberData = async (
 ) => {
   const { userId, teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_member_table")
     .select("*")
     .eq("team_member_user_id", userId)
@@ -1215,6 +1219,7 @@ export const checkIfOwnerOrAdmin = async (
 ) => {
   const { userId, teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_member_table")
     .select("team_member_role")
     .eq("team_member_user_id", userId)
@@ -1439,6 +1444,7 @@ export const getSupplier = async (
 ) => {
   const { supplier, teamId, fieldId } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("supplier_table")
     .select("supplier")
     .eq("supplier_team_id", teamId)
@@ -1515,6 +1521,7 @@ export const getTeamGroupList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("team_schema")
     .from("team_group_table")
     .select("*", { count: "exact" })
     .eq("team_group_team_id", teamId)
@@ -1544,54 +1551,26 @@ export const getTeamProjectList = async (
     limit: number;
   }
 ) => {
-  const { teamId, search = "", page, limit } = params;
-  const start = (page - 1) * limit;
+  const { data, error } = await supabaseClient
+    .rpc("get_team_project_list", { input_data: params })
+    .select("*");
 
-  let query = supabaseClient
-    .from("team_project_table")
-    .select(
-      `
-        *,
-        team_project_site_map_attachment: team_project_site_map_attachment_id(*),
-        team_project_boq_attachment: team_project_boq_attachment_id(*),
-        team_project_address: team_project_address_id(*)
-      `,
-      { count: "exact" }
-    )
-    .eq("team_project_team_id", teamId)
-    .eq("team_project_is_disabled", false);
-
-  if (search) {
-    query = query.ilike("team_project_name", `%${search}%`);
-  }
-
-  query = query.order("team_project_name", { ascending: true });
-  query.limit(limit);
-  query.range(start, start + limit - 1);
-
-  const { data, count, error } = await query;
   if (error) throw error;
 
-  const formattedData = data as unknown as (TeamProjectTableRow & {
-    team_project_site_map_attachment: { attachment_value: string | null };
-  } & {
-    team_project_boq_attachment: { attachment_value: string | null };
-  })[];
+  const formattedData = data as unknown as {
+    data: (TeamProjectTableRow & {
+      team_project_address: AddressTableRow;
+    } & {
+      team_project_site_map_attachment: { attachment_value: string | null };
+    } & {
+      team_project_boq_attachment: { attachment_value: string | null };
+    })[];
+    count: number;
+  };
 
   return {
-    data: formattedData.map((value) => {
-      return {
-        ...value,
-        team_project_site_map_attachment_id:
-          value.team_project_site_map_attachment
-            ? value.team_project_site_map_attachment.attachment_value
-            : "",
-        team_project_boq_attachment_id: value.team_project_boq_attachment
-          ? value.team_project_boq_attachment.attachment_value
-          : "",
-      };
-    }),
-    count,
+    data: formattedData.data,
+    count: formattedData.count,
   };
 };
 
@@ -1606,6 +1585,7 @@ export const checkIfTeamGroupExists = async (
   const { groupName, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_group_table")
     .select("*", { count: "exact", head: true })
     .eq("team_group_name", groupName)
@@ -1627,6 +1607,7 @@ export const checkIfTeamProjectExists = async (
   const { projectName, teamId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_project_table")
     .select("*", { count: "exact", head: true })
     .eq("team_project_name", projectName)
@@ -1733,6 +1714,7 @@ export const getTeamMemberProjectList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("team_schema")
     .from("team_project_member_table")
     .select("team_project_member_id, team_project: team_project_id!inner(*)", {
       count: "exact",
@@ -1769,6 +1751,7 @@ export const getTeamMemberGroupList = async (
   const start = (page - 1) * limit;
 
   let query = supabaseClient
+    .schema("team_schema")
     .from("team_group_member_table")
     .select("team_group_member_id, team_group: team_group_id!inner(*)", {
       count: "exact",
@@ -1803,6 +1786,7 @@ export const getAllTeamGroups = async (
   const { teamId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_group_table")
     .select("*")
     .eq("team_group_team_id", teamId)
@@ -1820,6 +1804,7 @@ export const checkIfTeamGroupMember = async (
   const { teamMemberId, groupId } = params;
 
   const { count, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_group_member_table")
     .select("*", { count: "exact", head: true })
     .in("team_group_id", groupId)
@@ -1837,6 +1822,7 @@ export const getAllTeamMemberProjects = async (
   const { teamId, memberId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_project_table")
     .select(
       "*, team_project_member: team_project_member_table!inner(team_member_id)"
@@ -1857,6 +1843,7 @@ export const getAllTeamProjects = async (
   const { teamId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_project_table")
     .select("*")
     .eq("team_project_team_id", teamId)
@@ -2675,6 +2662,7 @@ export const getAllGroupOfTeamMember = async (
   const { teamMemberId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_group_member_table")
     .select(
       "team_group: team_group_id(team_group_name, team_group_is_disabled)"
@@ -2698,6 +2686,7 @@ export const checkIfTeamNameExists = async (
   const { teamName } = params;
 
   const { count, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_table")
     .select("*", { count: "exact" })
     .ilike("team_name", teamName);
@@ -3826,6 +3815,7 @@ export const getProjectByID = async (
   const { projectIdList } = params;
 
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_project_table")
     .select("*")
     .in("team_project_id", projectIdList);
@@ -4378,6 +4368,7 @@ export const getSupplierOptions = async (
 ) => {
   const { teamId, index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("supplier_table")
     .select("supplier_id, supplier")
     .eq("supplier_team_id", teamId)
@@ -4495,6 +4486,7 @@ export const getAllProjects = async (
 ) => {
   const { teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_project_table")
     .select("team_project_id, team_project_name")
     .eq("team_project_is_disabled", false)
@@ -4513,6 +4505,7 @@ export const getAllGroups = async (
 ) => {
   const { teamId } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_group_table")
     .select("team_group_id, team_group_name")
     .eq("team_group_is_disabled", false)
@@ -5423,6 +5416,7 @@ export const fetchTeamLatestTransaction = async (
   const { teamId } = params;
 
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_transaction_table")
     .select("*")
     .eq("team_transaction_team_id", teamId)
@@ -5459,6 +5453,7 @@ export const getTeamDepartmentOptions = async (
 ) => {
   const { index, limit } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_department_table")
     .select("team_department_id, team_department_name")
     .eq("team_department_is_disabled", false)

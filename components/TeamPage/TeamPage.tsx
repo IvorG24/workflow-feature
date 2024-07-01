@@ -262,7 +262,7 @@ const TeamPage = ({
       await deleteRow(supabaseClient, {
         rowId: [memberId],
         table: "team_member",
-        schema: "public",
+        schema: "team_schema",
       });
 
       notifications.show({

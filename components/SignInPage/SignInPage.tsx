@@ -122,7 +122,7 @@ const SignInPage = () => {
         return;
       }
       router.push("/onboarding");
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

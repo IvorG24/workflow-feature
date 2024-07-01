@@ -150,6 +150,7 @@ export const createTeam = async (
   params: TeamTableInsert
 ) => {
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_table")
     .insert(params)
     .select()
@@ -164,6 +165,7 @@ export const createTeamMember = async (
   params: TeamMemberTableInsert
 ) => {
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_member_table")
     .insert(params)
     .select();
@@ -177,6 +179,7 @@ export const createTeamMemberReturnTeamName = async (
   params: TeamMemberTableInsert
 ) => {
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_member_table")
     .insert(params)
     .select("*, team:team_table(team_name)");
@@ -818,6 +821,7 @@ export const createSupplier = async (
 ) => {
   const { supplierData } = params;
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("supplier_table")
     .insert(supplierData)
     .select()
@@ -832,6 +836,7 @@ export const createTeamGroup = async (
   params: TeamGroupTableInsert
 ) => {
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_group_table")
     .insert(params)
     .select("*")
@@ -1975,7 +1980,7 @@ export const createDepartmentSigner = async (
     count,
     error: duplicateError,
   } = await supabaseClient
-  .schema("form_schema")
+    .schema("form_schema")
     .from("signer_table")
     .select("signer_id, signer_is_disabled", { count: "exact" })
     .eq("signer_team_project_id", `${params.signer_team_project_id}`)
@@ -1991,7 +1996,7 @@ export const createDepartmentSigner = async (
 
   if (duplicateData?.signer_is_disabled) {
     const { data, error } = await supabaseClient
-    .schema("form_schema")
+      .schema("form_schema")
       .from("signer_table")
       .update({ signer_is_disabled: false })
       .eq("signer_id", duplicateData.signer_id)
@@ -2003,7 +2008,7 @@ export const createDepartmentSigner = async (
   }
 
   const { data, error } = await supabaseClient
-  .schema("form_schema")
+    .schema("form_schema")
     .from("signer_table")
     .insert(params)
     .select("*");
