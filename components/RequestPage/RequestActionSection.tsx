@@ -79,6 +79,8 @@ const RequestActionSection = ({
         } else {
           handleUpdateRequest("APPROVED", "DEV-TEST-ONLY", "DEV-TEST-ONLY");
         }
+      } else {
+        handleUpdateRequest("APPROVED");
       }
     } catch (e) {
       notifications.show({
