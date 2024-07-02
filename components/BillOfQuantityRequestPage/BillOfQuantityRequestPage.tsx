@@ -478,7 +478,6 @@ const BillOfQuantityRequestPage = ({
             combinedFieldList.push(field);
           }
         });
-
         const newSection = generateSectionWithDuplicateList([
           {
             ...request.request_form.form_section[1],
@@ -486,29 +485,27 @@ const BillOfQuantityRequestPage = ({
           },
         ]);
 
-        const formattedSection = newSection
-          .map((section) => {
-            let sectionOrder = section.section_order;
-            const sectionDuplicatableId =
-              section.section_field[0].field_response
-                ?.request_response_duplicatable_section_id;
+        const formattedSection = newSection.map((section) => {
+          let sectionOrder = section.section_order;
+          const sectionDuplicatableId =
+            section.section_field[0].field_response
+              ?.request_response_duplicatable_section_id;
 
-            if (sectionDuplicatableId) {
-              const sectionIndex = duplicatableSectionIdList.findIndex(
-                (id) => id === sectionDuplicatableId
-              );
+          if (sectionDuplicatableId) {
+            const sectionIndex = duplicatableSectionIdList.findIndex(
+              (id) => id === sectionDuplicatableId
+            );
 
-              sectionOrder = sectionIndex + 1;
-            } else {
-              sectionOrder = 0;
-            }
+            sectionOrder = sectionIndex + 1;
+          } else {
+            sectionOrder = 0;
+          }
 
-            return {
-              ...section,
-              section_order: sectionOrder,
-            };
-          })
-          .sort((a, b) => a.section_order - b.section_order);
+          return {
+            ...section,
+            section_order: sectionOrder,
+          };
+        });
         const newFormSection = [...formSection, ...formattedSection];
 
         setFormSection(newFormSection);

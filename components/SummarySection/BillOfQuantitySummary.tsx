@@ -33,6 +33,9 @@ const BillOfQuantitySummary = ({ summaryData }: Props) => {
             <tr>
               <th>Supplier Name/Payee</th>
               <th>Type of Request</th>
+              <th>Invoice Amount</th>
+              <th>VAT</th>
+              <th>Cost</th>
               <th>Cost Code</th>
               <th>BOQ Code</th>
             </tr>
@@ -45,6 +48,17 @@ const BillOfQuantitySummary = ({ summaryData }: Props) => {
               const type = safeParse(
                 `${summary.section_field[1].field_response?.request_response}`
               );
+              const invoiceAmount = safeParse(
+                `${summary.section_field[2].field_response?.request_response}`
+              );
+              const vat = safeParse(
+                `${
+                  summary.section_field[3].field_response?.request_response ?? 0
+                }`
+              );
+              const cost = safeParse(
+                `${summary.section_field[4].field_response?.request_response}`
+              );
               const costCode = safeParse(
                 `${summary.section_field[5].field_response?.request_response}`
               );
@@ -56,6 +70,9 @@ const BillOfQuantitySummary = ({ summaryData }: Props) => {
                 <tr key={index}>
                   <td>{payee}</td>
                   <td>{type}</td>
+                  <td>{invoiceAmount}</td>
+                  <td>{vat.toFixed(2)}</td>
+                  <td>{cost.toFixed(2)}</td>
                   <td>{costCode}</td>
                   <td>{boqCode}</td>
                 </tr>

@@ -52,6 +52,7 @@ const RequestResponse = ({
   const [linkDisplayValue, setLinkDisplayValue] = useState(
     response.value === "" ? "" : JSON.parse(response.value)
   );
+  const [ticketExists, setTicketExists] = useState(false);
 
   const formatTime = (timeString: string) => {
     const [hoursStr, minutesStr] = timeString.split(":");
@@ -66,12 +67,17 @@ const RequestResponse = ({
 
   useEffect(() => {
     const fetchRequestFormslyId = async () => {
-      if (validate(linkDisplayValue.toString())) {
+      if (
+        validate(linkDisplayValue.toString()) ||
+        response.label === "Ticket ID"
+      ) {
         const requestFormslyId = await getRequestFormslyId(supabaseClient, {
           requestId: linkDisplayValue,
         });
+
         if (requestFormslyId) {
           setLinkDisplayValue(requestFormslyId);
+          setTicketExists(true);
         }
       }
     };
@@ -108,11 +114,30 @@ const RequestResponse = ({
         );
       case "TEXT":
         return (
-          <TextInput
-            label={response.label}
-            value={parsedValue}
-            {...inputProps}
-          />
+          <Flex w="100%" align="flex-end" gap="xs">
+            <TextInput
+              label={response.label}
+              value={parsedValue}
+              {...inputProps}
+              sx={{ flex: 1 }}
+            />
+            {ticketExists && (
+              <ActionIcon
+                mb={4}
+                p={4}
+                variant="light"
+                color="blue"
+                onClick={() =>
+                  window.open(
+                    requestPath(parsedValue, team.team_name),
+                    "_blank"
+                  )
+                }
+              >
+                <IconExternalLink />
+              </ActionIcon>
+            )}
+          </Flex>
         );
       case "TEXTAREA":
         return (
