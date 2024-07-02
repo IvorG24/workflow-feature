@@ -92,6 +92,7 @@ export const removeMemberFromGroup = async (
     .join(",");
 
   const { error } = await supabaseClient
+    .schema("team_schema")
     .from("team_group_member_table")
     .delete()
     .or(condition);
@@ -115,6 +116,7 @@ export const removeMemberFromProject = async (
     .join(",");
 
   const { error } = await supabaseClient
+    .schema("team_schema")
     .from("team_project_member_table")
     .delete()
     .or(condition);

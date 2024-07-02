@@ -102,7 +102,7 @@ CREATE TABLE user_schema.user_table (
   user_signature_attachment_id UUID REFERENCES attachment_table(attachment_id)
 );
 
-CREATE TABLE team_table (
+CREATE TABLE team_schema.team_table (
   team_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   team_expiration DATE,
@@ -114,37 +114,37 @@ CREATE TABLE team_table (
   team_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
-CREATE TABLE team_transaction_table (
+CREATE TABLE team_schema.team_transaction_table (
   team_transaction_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_transaction_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   team_transaction_price INT NOT NULL,
   team_transaction_number_of_months INT NOT NULL,
   team_transaction_team_expiration_date DATE NOT NULL,
   
-  team_transaction_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  team_transaction_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
-CREATE TABLE team_member_table (
+CREATE TABLE team_schema.team_member_table (
   team_member_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_member_role VARCHAR(4000) DEFAULT 'MEMBER' NOT NULL,
   team_member_date_created DATE DEFAULT NOW() NOT NULL,
   team_member_is_disabled BOOL DEFAULT FALSE NOT NULL,
 
   team_member_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
-  team_member_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  team_member_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
   UNIQUE (team_member_team_id, team_member_user_id)
 );
 
-CREATE TABLE team_group_table (
+CREATE TABLE team_schema.team_group_table (
   team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   team_group_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   team_group_name VARCHAR(4000) NOT NULL,
   team_group_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  team_group_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  team_group_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
-CREATE TABLE team_project_table (
+CREATE TABLE team_schema.team_project_table (
   team_project_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   team_project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   team_project_name VARCHAR(4000) NOT NULL,
@@ -153,41 +153,41 @@ CREATE TABLE team_project_table (
 
   team_project_site_map_attachment_id UUID REFERENCES attachment_table(attachment_id),
   team_project_boq_attachment_id UUID REFERENCES attachment_table(attachment_id),
-  team_project_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  team_project_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
   team_project_address_id UUID REFERENCES address_table(address_id)
 );
 
-CREATE TABLE team_group_member_table (
+CREATE TABLE team_schema.team_group_member_table (
   team_group_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  team_member_id UUID REFERENCES team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-  team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_group_id UUID REFERENCES team_schema.team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
 
   UNIQUE(team_group_id, team_member_id) 
 );
 
-CREATE TABLE team_project_member_table (
+CREATE TABLE team_schema.team_project_member_table (
   team_project_member_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  team_member_id UUID REFERENCES team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-  team_project_id UUID REFERENCES team_project_table(team_project_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_project_id UUID REFERENCES team_schema.team_project_table(team_project_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
   
   UNIQUE(team_project_id, team_member_id) 
 );
 
-CREATE TABLE team_department_table (
+CREATE TABLE team_schema.team_department_table (
   team_department_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   team_department_name VARCHAR(4000) NOT NULL,
   team_department_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   team_department_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE supplier_table (
+CREATE TABLE team_schema.supplier_table (
   supplier_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   supplier_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   supplier VARCHAR(4000) NOT NULL,
   supplier_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   supplier_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   
-  supplier_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  supplier_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE user_schema.user_valid_id_table (
@@ -226,7 +226,7 @@ CREATE TABLE user_schema.invitation_table (
   invitation_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   invitation_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
 
-  invitation_from_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+  invitation_from_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
 );
 
 CREATE TABLE notification_table (
@@ -238,7 +238,7 @@ CREATE TABLE notification_table (
   notification_type VARCHAR(4000) NOT NULL,
   notification_app VARCHAR(4000) NOT NULL,
 
-  notification_team_id UUID REFERENCES team_table(team_id),
+  notification_team_id UUID REFERENCES team_schema.team_table(team_id),
   notification_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL
 );
 
@@ -256,7 +256,7 @@ CREATE TABLE form_schema.form_table (
   form_type VARCHAR(4000),
   form_sub_type VARCHAR(4000),
 
-  form_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+  form_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
 );
 
 CREATE TABLE form_schema.signer_table (
@@ -267,9 +267,9 @@ CREATE TABLE form_schema.signer_table (
   signer_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
   signer_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
-  signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  signer_team_project_id UUID REFERENCES team_project_table(team_project_id),
-  signer_team_department_id UUID REFERENCES team_department_table(team_department_id)
+  signer_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
+  signer_team_project_id UUID REFERENCES team_schema.team_project_table(team_project_id),
+  signer_team_department_id UUID REFERENCES team_schema.team_department_table(team_department_id)
 );
 
 CREATE TABLE form_schema.section_table (
@@ -316,13 +316,13 @@ CREATE TABLE form_schema.form_sla_table (
   form_sla_hours INT NOT NULL,
 
   form_sla_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
-  form_sla_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  form_sla_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE form_schema.form_team_group_table (
   form_team_group_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   form_id UUID REFERENCES form_schema.form_table(form_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-  team_group_id UUID REFERENCES team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  team_group_id UUID REFERENCES team_schema.team_group_table(team_group_id) ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
 
   UNIQUE(form_id, team_group_id) 
 );
@@ -339,9 +339,9 @@ CREATE TABLE request_schema.request_table (
   request_jira_link VARCHAR(4000),
   request_otp_id VARCHAR(4000),
 
-  request_team_member_id UUID REFERENCES team_member_table(team_member_id),
+  request_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
-  request_project_id UUID REFERENCES team_project_table(team_project_id)
+  request_project_id UUID REFERENCES team_schema.team_project_table(team_project_id)
 );
 
 CREATE TABLE request_schema.request_response_table (
@@ -373,7 +373,7 @@ CREATE TABLE request_schema.comment_table (
   comment_type VARCHAR(4000) NOT NULL,
 
   comment_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
-  comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+  comment_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
 );
 
 CREATE TABLE ticket_schema.ticket_category_table (
@@ -418,8 +418,8 @@ CREATE TABLE ticket_schema.ticket_table (
   ticket_is_disabled BOOLEAN DEFAULT false NOT NULL,
   
   ticket_category_id UUID REFERENCES ticket_schema.ticket_category_table(ticket_category_id) NOT NULL,
-  ticket_requester_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
-  ticket_approver_team_member_id UUID REFERENCES team_member_table(team_member_id)
+  ticket_requester_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
+  ticket_approver_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
 );
 
 CREATE TABLE ticket_schema.ticket_response_table (
@@ -441,7 +441,7 @@ CREATE TABLE ticket_schema.ticket_comment_table (
   ticket_comment_last_updated TIMESTAMPTZ,
 
   ticket_comment_ticket_id UUID REFERENCES ticket_schema.ticket_table(ticket_id) NOT NULL,
-  ticket_comment_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL
+  ticket_comment_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
 );
 
 CREATE TABLE memo_schema.memo_table (
@@ -450,7 +450,7 @@ CREATE TABLE memo_schema.memo_table (
   memo_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
   memo_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   memo_author_user_id UUID REFERENCES user_schema.user_table(user_id) NOT NULL,
-  memo_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  memo_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
   memo_version VARCHAR(4000) NOT NULL,
   memo_reference_number UUID DEFAULT uuid_generate_v4() NOT NULL
 );
@@ -460,7 +460,7 @@ CREATE TABLE memo_schema.memo_signer_table (
   memo_signer_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
   memo_signer_is_primary BOOLEAN DEFAULT FALSE NOT NULL,
   memo_signer_order INT NOT NULL,
-  memo_signer_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  memo_signer_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
   memo_signer_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL,
   memo_signer_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   memo_signer_date_signed TIMESTAMPTZ(0)
@@ -500,14 +500,14 @@ CREATE TABLE memo_schema.memo_status_table (
 CREATE TABLE memo_schema.memo_read_receipt_table (
   memo_read_receipt_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_read_receipt_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
-  memo_read_receipt_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  memo_read_receipt_by_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
   memo_read_receipt_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL
 );
 
 CREATE TABLE memo_schema.memo_agreement_table (
   memo_agreement_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   memo_agreement_date_created TIMESTAMPTZ(0) DEFAULT NOW() NOT NULL,
-  memo_agreement_by_team_member_id UUID REFERENCES team_member_table(team_member_id) NOT NULL,
+  memo_agreement_by_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
   memo_agreement_memo_id UUID REFERENCES memo_schema.memo_table(memo_id) NOT NULL
 );
 
@@ -573,7 +573,7 @@ CREATE TABLE item_schema.item_table (
   item_is_ped_item BOOLEAN DEFAULT FALSE NOT NULL,
   item_is_it_asset_item BOOLEAN DEFAULT FALSE NOT NULL,
 
-  item_team_id UUID REFERENCES team_table(team_id) NOT NULL,
+  item_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
   item_category_id UUID REFERENCES item_schema.item_category_table(item_category_id)
 );
 
@@ -631,7 +631,7 @@ CREATE TABLE jira_schema.jira_project_table (
 CREATE TABLE jira_schema.jira_formsly_project_table (
   jira_formsly_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_project_id UUID REFERENCES jira_schema.jira_project_table(jira_project_id) NOT NULL,
-  formsly_project_id UUID REFERENCES team_project_table(team_project_id) UNIQUE NOT NULL
+  formsly_project_id UUID REFERENCES team_schema.team_project_table(team_project_id) UNIQUE NOT NULL
 );
 
 CREATE TABLE jira_schema.jira_user_role_table (
@@ -653,7 +653,7 @@ CREATE TABLE jira_schema.jira_user_account_table (
 CREATE TABLE jira_schema.jira_project_user_table (
   jira_project_user_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   jira_project_user_account_id UUID REFERENCES jira_schema.jira_user_account_table(jira_user_account_id) NOT NULL,
-  jira_project_user_team_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL,
+  jira_project_user_team_project_id UUID REFERENCES team_schema.team_project_table(team_project_id) NOT NULL,
   jira_project_user_role_id UUID REFERENCES jira_schema.jira_user_role_table(jira_user_role_id) NOT NULL
 );
 
@@ -679,7 +679,7 @@ CREATE TABLE jira_schema.jira_organization_table (
 
 CREATE TABLE jira_schema.jira_organization_team_project_table (
   jira_organization_team_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  jira_organization_team_project_project_id UUID REFERENCES team_project_table(team_project_id) NOT NULL,
+  jira_organization_team_project_project_id UUID REFERENCES team_schema.team_project_table(team_project_id) NOT NULL,
   jira_organization_team_project_organization_id UUID REFERENCES jira_schema.jira_organization_table(jira_organization_id) NOT NULL
 );
 
@@ -740,7 +740,7 @@ CREATE TABLE equipment_schema.equipment_category_table (
   equipment_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_category_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  equipment_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  equipment_category_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE equipment_schema.equipment_brand_table (
@@ -750,7 +750,7 @@ CREATE TABLE equipment_schema.equipment_brand_table (
   equipment_brand_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_brand_is_available BOOLEAN DEFAULT true NOT NULL,
 
-  equipment_brand_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  equipment_brand_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE equipment_schema.equipment_model_table (
@@ -760,7 +760,7 @@ CREATE TABLE equipment_schema.equipment_model_table (
   equipment_model_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_model_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  equipment_model_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  equipment_model_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE equipment_schema.equipment_component_category_table (
@@ -770,7 +770,7 @@ CREATE TABLE equipment_schema.equipment_component_category_table (
   equipment_component_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_component_category_is_available BOOLEAN DEFAULT true NOT NULL,
 
-  equipment_component_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  equipment_component_category_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE equipment_schema.equipment_table (
@@ -782,7 +782,7 @@ CREATE TABLE equipment_schema.equipment_table (
   equipment_is_available BOOLEAN DEFAULT true NOT NULL,
   
   equipment_equipment_category_id UUID REFERENCES equipment_schema.equipment_category_table(equipment_category_id) ON DELETE CASCADE NOT NULL,
-  equipment_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  equipment_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE equipment_schema.equipment_description_table (
@@ -807,7 +807,7 @@ CREATE TABLE equipment_schema.equipment_general_name_table (
   equipment_general_name_is_available BOOLEAN DEFAULT TRUE NOT NULL,
   equipment_general_name_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-  equipment_general_name_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  equipment_general_name_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE unit_of_measurement_schema.equipment_unit_of_measurement_table (
@@ -817,7 +817,7 @@ CREATE TABLE unit_of_measurement_schema.equipment_unit_of_measurement_table (
   equipment_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   equipment_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
 
-  equipment_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  equipment_unit_of_measurement_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE equipment_schema.equipment_part_table (
@@ -842,7 +842,7 @@ CREATE TABLE service_schema.service_table (
   service_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
   service_name VARCHAR(4000) NOT NULL,
 
-  service_team_id UUID REFERENCES team_table(team_id) ON DELETE CASCADE NOT NULL
+  service_team_id UUID REFERENCES team_schema.team_table(team_id) ON DELETE CASCADE NOT NULL
 );
 
 CREATE TABLE service_schema.service_scope_table (
@@ -875,7 +875,7 @@ CREATE TABLE service_schema.service_category_table (
   service_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   service_category_is_available BOOLEAN DEFAULT true NOT NULL,
 
-  service_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  service_category_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE other_expenses_schema.other_expenses_category_table(
@@ -885,7 +885,7 @@ CREATE TABLE other_expenses_schema.other_expenses_category_table(
   other_expenses_category_is_disabled BOOLEAN DEFAULT false NOT NULL,
   other_expenses_category_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  other_expenses_category_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  other_expenses_category_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE other_expenses_schema.other_expenses_type_table(
@@ -905,7 +905,7 @@ CREATE TABLE unit_of_measurement_schema.capacity_unit_of_measurement_table(
   capacity_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   capacity_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  capacity_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  capacity_unit_of_measurement_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE unit_of_measurement_schema.general_unit_of_measurement_table (
@@ -915,7 +915,7 @@ CREATE TABLE unit_of_measurement_schema.general_unit_of_measurement_table (
   general_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   general_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
   
-  general_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  general_unit_of_measurement_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 CREATE TABLE unit_of_measurement_schema.item_unit_of_measurement_table (
@@ -925,7 +925,7 @@ CREATE TABLE unit_of_measurement_schema.item_unit_of_measurement_table (
   item_unit_of_measurement_is_disabled BOOLEAN DEFAULT false NOT NULL,
   item_unit_of_measurement_is_available BOOLEAN DEFAULT true NOT NULL,
 
-  item_unit_of_measurement_team_id UUID REFERENCES team_table(team_id) NOT NULL
+  item_unit_of_measurement_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 ----- END: TABLES
@@ -959,7 +959,7 @@ plv8.subtransaction(function(){
   const rowStart = (pageNumber - 1) * rowLimit;
 
   // Fetch owner of team
-  const team_owner = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${activeTeam}' AND team_member_role='OWNER'`)[0];
+  const team_owner = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${activeTeam}' AND team_member_role='OWNER'`)[0];
 
   // Fetch team formsly forms
   const item_form = plv8.execute(`SELECT * FROM form_schema.form_table WHERE form_name='Item' AND form_is_formsly_form=true AND form_team_member_id='${team_owner.team_member_id}'`)[0];
@@ -1053,7 +1053,7 @@ plv8.subtransaction(function(){
     });
 
     // Item team member
-    const item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${item.request_team_member_id}'`)[0];
+    const item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${item.request_team_member_id}'`)[0];
 
     const quotation_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}'`);
     let quotation_list = [];
@@ -1079,7 +1079,7 @@ plv8.subtransaction(function(){
         });
 
         // Quotation team member
-        const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
+        const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
 
         const rir_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${rir_form.form_id}'`);
         let rir_list = [];
@@ -1106,7 +1106,7 @@ plv8.subtransaction(function(){
             });
 
             // rir team member
-            const rir_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${rir.request_team_member_id}'`)[0];
+            const rir_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${rir.request_team_member_id}'`)[0];
 
             return {
               rir_request_id: rir.request_id,
@@ -1153,7 +1153,7 @@ plv8.subtransaction(function(){
         });
 
         // Sourced Item team member
-        const sourced_item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${sourced_item.request_team_member_id}'`)[0];
+        const sourced_item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${sourced_item.request_team_member_id}'`)[0];
 
         const ro_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${sourced_item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${ro_form.form_id}'`);
         let ro_list = [];
@@ -1180,7 +1180,7 @@ plv8.subtransaction(function(){
             });
 
             // ro team member
-            const ro_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${ro.request_team_member_id}'`)[0];
+            const ro_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${ro.request_team_member_id}'`)[0];
 
             const transfer_receipt_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${ro.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${transfer_receipt_form.form_id}'`);
             let transfer_receipt_list = [];
@@ -1207,7 +1207,7 @@ plv8.subtransaction(function(){
                 });
 
                 // transfer_receipt team member
-                const transfer_receipt_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${transfer_receipt.request_team_member_id}'`)[0];
+                const transfer_receipt_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${transfer_receipt.request_team_member_id}'`)[0];
 
                 return {
                   transfer_receipt_request_id: transfer_receipt.request_id,
@@ -1281,7 +1281,7 @@ RETURNS JSON AS $$
     }else{
       user_data = plv8.execute(`INSERT INTO user_schema.user_table (user_id,user_email,user_first_name,user_last_name,user_username,user_avatar,user_phone_number,user_job_title) VALUES ('${user_id}','${user_email}','${user_first_name}','${user_last_name}','${user_username}','${user_avatar}','${user_phone_number}','${user_job_title}') RETURNING *;`)[0];
     }
-    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM user_schema.invitation_table invt INNER JOIN team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
+    const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM user_schema.invitation_table invt INNER JOIN team_schema.team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_schema.team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
 
     if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
@@ -1317,14 +1317,14 @@ RETURNS JSON AS $$
         `
           SELECT COUNT(*) FROM request_schema.request_table 
           INNER JOIN form_schema.form_table ON request_form_id = form_id
-          INNER JOIN team_member_table ON team_member_id = form_team_member_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           WHERE
             team_member_team_id = '${teamId}'
         `
       )[0].count;
   
       formslyIdSerial = (Number(requestCount) + 1).toString(16).toUpperCase();
-      const project = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_id='${projectId}';`)[0];
+      const project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}';`)[0];
       
       if(formName==='Quotation') {
         endId = `Q`;
@@ -1380,7 +1380,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}';`);
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
@@ -1426,8 +1426,8 @@ RETURNS JSON AS $$
 
     plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
 
-    const team_member_data = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_id='${request_data.request_team_member_id}';`)[0];
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${team_member_data.team_member_team_id}'`)[0];
+    const team_member_data = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_id='${request_data.request_team_member_id}';`)[0];
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${team_member_data.team_member_team_id}'`)[0];
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
@@ -1504,7 +1504,7 @@ RETURNS TEXT AS $$
       `
     );
     
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${teamId}';`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}';`);
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
@@ -2009,7 +2009,7 @@ RETURNS TEXT as $$
     const user_data = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${user_id}' LIMIT 1`)[0];
     
     if(!user_data.user_active_team_id){
-      const team_member = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${user_id}' AND team_member_is_disabled='false' LIMIT 1`)[0];
+      const team_member = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id='${user_id}' AND team_member_is_disabled='false' LIMIT 1`)[0];
       if(team_member){
         active_team_id = team_member.team_member_team_id
       }
@@ -2077,8 +2077,8 @@ CREATE OR REPLACE FUNCTION transfer_ownership(
 RETURNS VOID  as $$
   plv8.subtransaction(function(){
 
-    plv8.execute(`UPDATE team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
-    plv8.execute(`UPDATE team_member_table SET team_member_role='APPROVER' WHERE team_member_id='${owner_id}'`);
+    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
+    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='APPROVER' WHERE team_member_id='${owner_id}'`);
  });
 $$ LANGUAGE plv8;
 
@@ -2091,13 +2091,13 @@ RETURNS JSON as $$
   let user_team_list
   plv8.subtransaction(function(){
 
-    const isUserPreviousMember = plv8.execute(`SELECT COUNT(*) FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}' AND team_member_is_disabled=TRUE`);
+    const isUserPreviousMember = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}' AND team_member_is_disabled=TRUE`);
     const userData = plv8.execute(`SELECT user_id, user_active_team_id FROM user_schema.user_table WHERE user_id='${user_id}'`)[0];
 
     if (isUserPreviousMember[0].count > 0) {
-      plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=FALSE WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}'`);
+      plv8.execute(`UPDATE team_schema.team_member_table SET team_member_is_disabled=FALSE WHERE team_member_team_id='${team_id}' AND team_member_user_id='${user_id}'`);
     } else {
-      plv8.execute(`INSERT INTO team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
+      plv8.execute(`INSERT INTO team_schema.team_member_table (team_member_team_id, team_member_user_id) VALUES ('${team_id}', '${user_id}')`);
     }
 
     if (!userData.user_active_team_id) {
@@ -2107,8 +2107,8 @@ RETURNS JSON as $$
     plv8.execute(`UPDATE user_schema.invitation_table SET invitation_status='ACCEPTED' WHERE invitation_id='${invitation_id}'`);
 
     user_team_list = plv8.execute(`SELECT tt.* 
-      FROM team_member_table as tm
-      JOIN team_table as tt ON tt.team_id = tm.team_member_team_id
+      FROM team_schema.team_member_table as tm
+      JOIN team_schema.team_table as tt ON tt.team_id = tm.team_member_team_id
       WHERE team_member_is_disabled=FALSE 
       AND team_member_user_id='${user_id}'
       ORDER BY tt.team_date_created DESC`)
@@ -2794,7 +2794,7 @@ RETURNS JSON AS $$
               request_otp_id,
               request_form_id
           FROM request_view
-          INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+          INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
           INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
           INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
           INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
@@ -2813,7 +2813,7 @@ RETURNS JSON AS $$
         `
           SELECT COUNT(DISTINCT request_id)
           FROM request_view
-          INNER JOIN team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+          INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
           INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
           INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
           INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
@@ -2905,7 +2905,7 @@ RETURNS JSON AS $$
     } = input_data;
 
     const projectInitialCount = plv8.execute(`
-      SELECT COUNT(*) FROM team_project_table 
+      SELECT COUNT(*) FROM team_schema.team_project_table 
       WHERE team_project_team_id = $1 
       AND team_project_code ILIKE '%' || $2 || '%';
     `, [teamProjectTeamId, teamProjectInitials])[0].count + 1n;
@@ -2923,7 +2923,7 @@ RETURNS JSON AS $$
 
     teamData = plv8.execute(
       `
-        INSERT INTO team_project_table 
+        INSERT INTO team_schema.team_project_table 
           (team_project_name, team_project_code, team_project_team_id, team_project_site_map_attachment_id, team_project_boq_attachment_id, team_project_address_id) 
         VALUES 
           ('${teamProjectName}', '${teamProjectCode}', '${teamProjectTeamId}', ${siteMapId ? `'${siteMapId}'` : null},  ${boqId ? `'${boqId}'` : null}, '${addressData.address_id}')
@@ -2955,7 +2955,7 @@ RETURNS JSON AS $$
 
     const teamMemberIdListValues = teamMemberIdList.map(memberId=>`'${memberId}'`).join(",");
 
-    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_group_member_table WHERE team_group_id='${groupId}' AND team_member_id IN (${teamMemberIdListValues});`);
+    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_schema.team_group_member_table WHERE team_group_id='${groupId}' AND team_member_id IN (${teamMemberIdListValues});`);
 
     const alreadyMemberId = alreadyMemberData.map(
       (member) => member.team_member_id
@@ -2978,20 +2978,20 @@ RETURNS JSON AS $$
       )
       .join(",");
 
-    const groupInsertData = plv8.execute(`INSERT INTO team_group_member_table (team_member_id,team_group_id) VALUES ${groupMemberValues} RETURNING *;`);
+    const groupInsertData = plv8.execute(`INSERT INTO team_schema.team_group_member_table (team_member_id,team_group_id) VALUES ${groupMemberValues} RETURNING *;`);
 
     const groupInsertValues = groupInsertData.map(group=>`('${group.team_group_member_id}','${group.team_member_id}','${group.team_group_id}')`).join(",");
 
-    const groupJoin = plv8.execute(`SELECT tgm.team_group_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_group_member_table tgm LEFT JOIN team_member_table tmemt ON tgm.team_member_id = tmemt.team_member_id WHERE (tgm.team_group_member_id,tgm.team_member_id,tgm.team_group_id) IN (${groupInsertValues}) GROUP BY tgm.team_group_member_id ,tmemt.team_member_id;`);
+    const groupJoin = plv8.execute(`SELECT tgm.team_group_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_schema.team_group_member_table tgm LEFT JOIN team_schema.team_member_table tmemt ON tgm.team_member_id = tmemt.team_member_id WHERE (tgm.team_group_member_id,tgm.team_member_id,tgm.team_group_id) IN (${groupInsertValues}) GROUP BY tgm.team_group_member_id ,tmemt.team_member_id;`);
 
     teamProjectIdList.forEach(projectId => {
       insertData.forEach(member => {
         plv8.execute(
           `
-            INSERT INTO team_project_member_table (team_member_id, team_project_id)
+            INSERT INTO team_schema.team_project_member_table (team_member_id, team_project_id)
             SELECT '${member.team_member_id}', '${projectId}'
             WHERE NOT EXISTS (
-              SELECT 1 FROM team_project_member_table
+              SELECT 1 FROM team_schema.team_project_member_table
               WHERE 
                 team_member_id = '${member.team_member_id}'
                 AND team_project_id = '${projectId}'
@@ -3020,7 +3020,7 @@ RETURNS JSON AS $$
 
     const teamMemberIdListValues = teamMemberIdList.map(memberId=>`'${memberId}'`).join(",")
 
-    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_project_member_table WHERE team_project_id='${projectId}' AND team_member_id IN (${teamMemberIdListValues});`);
+    const alreadyMemberData = plv8.execute(`SELECT team_member_id FROM team_schema.team_project_member_table WHERE team_project_id='${projectId}' AND team_member_id IN (${teamMemberIdListValues});`);
 
     const alreadyMemberId = alreadyMemberData.map(
       (member) => member.team_member_id
@@ -3043,20 +3043,20 @@ RETURNS JSON AS $$
       )
       .join(",");
 
-    const projectInsertData = plv8.execute(`INSERT INTO team_project_member_table (team_member_id,team_project_id) VALUES ${projectMemberValues} RETURNING *;`);
+    const projectInsertData = plv8.execute(`INSERT INTO team_schema.team_project_member_table (team_member_id,team_project_id) VALUES ${projectMemberValues} RETURNING *;`);
 
     const projectInsertValues = projectInsertData.map(project=>`('${project.team_project_member_id}','${project.team_member_id}','${project.team_project_id}')`).join(",")
 
-    const projectJoin = plv8.execute(`SELECT tpm.team_project_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_project_member_table tpm LEFT JOIN team_member_table tmemt ON tpm.team_member_id = tmemt.team_member_id WHERE (tpm.team_project_member_id,tpm.team_member_id,tpm.team_project_id) IN (${projectInsertValues}) GROUP BY tpm.team_project_member_id ,tmemt.team_member_id;`) 
+    const projectJoin = plv8.execute(`SELECT tpm.team_project_member_id, json_build_object( 'team_member_id', tmemt.team_member_id, 'team_member_date_created', tmemt.team_member_date_created, 'team_member_user', ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmemt.team_member_user_id ) ) AS team_member FROM team_schema.team_project_member_table tpm LEFT JOIN team_schema.team_member_table tmemt ON tpm.team_member_id = tmemt.team_member_id WHERE (tpm.team_project_member_id,tpm.team_member_id,tpm.team_project_id) IN (${projectInsertValues}) GROUP BY tpm.team_project_member_id ,tmemt.team_member_id;`) 
 
     teamGroupIdList.forEach(groupId => {
       insertData.forEach(member => {
         plv8.execute(
           `
-            INSERT INTO team_group_member_table (team_member_id, team_group_id)
+            INSERT INTO team_schema.team_group_member_table (team_member_id, team_group_id)
             SELECT '${member.team_member_id}', '${groupId}'
             WHERE NOT EXISTS (
-              SELECT 1 FROM team_group_member_table
+              SELECT 1 FROM team_schema.team_group_member_table
               WHERE 
                 team_member_id = '${member.team_member_id}'
                 AND team_group_id = '${groupId}'
@@ -3103,16 +3103,16 @@ RETURNS JSON AS $$
      groupId
     } = input_data;
 
-    const teamGroupMemberData = plv8.execute(`SELECT team_member_id FROM team_group_member_table where team_group_id='${groupId}';`);
+    const teamGroupMemberData = plv8.execute(`SELECT team_member_id FROM team_schema.team_group_member_table where team_group_id='${groupId}';`);
 
     const condition = teamGroupMemberData.map((member) => `'${member.team_member_id}'`).join(",");
 
     let teamMemberList = [];
     
     if(condition.length !== 0){
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition})`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_schema.team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition})`);
     }else{
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_schema.team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
     }
 
     member_data = teamMemberList.sort((a, b) =>
@@ -3133,16 +3133,16 @@ RETURNS JSON AS $$
      projectId
     } = input_data;
 
-    const teamProjectMemberData = plv8.execute(`SELECT team_member_id FROM team_project_member_table where team_project_id='${projectId}';`);
+    const teamProjectMemberData = plv8.execute(`SELECT team_member_id FROM team_schema.team_project_member_table where team_project_id='${projectId}';`);
 
     const condition = teamProjectMemberData.map((member) => `'${member.team_member_id}'`).join(",");
 
     let teamMemberList = []
     
     if(condition.length !== 0){
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition});`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_schema.team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE AND tmt.team_member_id NOT IN (${condition});`);
     }else{
-      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
+      teamMemberList = plv8.execute(`SELECT tmt.team_member_id, ( SELECT json_build_object( 'user_id', usert.user_id, 'user_first_name', usert.user_first_name, 'user_last_name', usert.user_last_name, 'user_avatar', usert.user_avatar, 'user_email', usert.user_email ) FROM user_schema.user_table usert WHERE usert.user_id = tmt.team_member_user_id AND usert.user_is_disabled = FALSE ) AS team_member_user FROM team_schema.team_member_table tmt WHERE tmt.team_member_team_id = '${teamId}' AND tmt.team_member_is_disabled = FALSE`);
     }
 
     member_data = teamMemberList.sort((a, b) =>
@@ -3159,49 +3159,49 @@ CREATE OR REPLACE FUNCTION delete_team(
 )
 RETURNS VOID as $$
   plv8.subtransaction(function(){
-    const user = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
+    const user = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
     const isUserOwner = user.team_member_role === 'OWNER';
 
     if (!isUserOwner) return;
 
 
-    plv8.execute(`UPDATE team_table SET team_is_disabled=TRUE WHERE team_id='${team_id}'`);
+    plv8.execute(`UPDATE team_schema.team_table SET team_is_disabled=TRUE WHERE team_id='${team_id}'`);
 
-    plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}'`);
+    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}'`);
 
     plv8.execute(`UPDATE invitation_table it
       SET invitation_is_disabled=TRUE
-      FROM team_member_table tm
+      FROM team_schema.team_member_table tm
       WHERE tm.team_member_team_id='${team_id}'
       AND tm.team_member_id = it.invitation_from_team_member_id `);
 
     plv8.execute(`UPDATE form_schema.form_table ft
       SET form_is_disabled=TRUE
-      FROM team_member_table tm
+      FROM team_schema.team_member_table tm
       WHERE tm.team_member_team_id='${team_id}'
       AND tm.team_member_id = ft.form_team_member_id `);
 
     plv8.execute(`UPDATE request_schema.request_table rt
       SET request_is_disabled=TRUE
-      FROM team_member_table tm
+      FROM team_schema.team_member_table tm
       WHERE tm.team_member_team_id='${team_id}'
       AND tm.team_member_id = rt.request_team_member_id `);
 
     plv8.execute(`UPDATE form_schema.signer_table st
       SET signer_is_disabled=TRUE
-      FROM team_member_table tm
+      FROM team_schema.team_member_table tm
       WHERE tm.team_member_team_id='${team_id}'
       AND tm.team_member_id = st.signer_team_member_id `);
 
     plv8.execute(`UPDATE request_schema.comment_table ct
       SET comment_is_disabled=TRUE
-      FROM team_member_table tm
+      FROM team_schema.team_member_table tm
       WHERE tm.team_member_team_id='${team_id}'
       AND tm.team_member_id = ct.comment_team_member_id `);
 
-    plv8.execute(`UPDATE team_group_table SET team_group_is_disabled=TRUE WHERE team_group_team_id='${team_id}'`);
+    plv8.execute(`UPDATE team_schema.team_group_table SET team_group_is_disabled=TRUE WHERE team_group_team_id='${team_id}'`);
 
-    plv8.execute(`UPDATE team_project_table SET team_project_is_disabled=TRUE WHERE team_project_team_id='${team_id}'`);
+    plv8.execute(`UPDATE team_schema.team_project_table SET team_project_is_disabled=TRUE WHERE team_project_team_id='${team_id}'`);
 
     plv8.execute(`UPDATE item_schema.item_table SET item_is_disabled=TRUE, item_is_available=FALSE WHERE item_team_id='${team_id}'`);
 
@@ -3219,7 +3219,7 @@ RETURNS VOID as $$
       AND it.item_team_id = '${team_id}'
       AND dt.item_description_item_id = it.item_id`);
 
-    const userTeamList = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_id='${team_member_id}' AND team_member_is_disabled=FALSE`);
+    const userTeamList = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_id='${team_member_id}' AND team_member_is_disabled=FALSE`);
 
     if (userTeamList.length > 0) {
       plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${user.team_member_user_id}'`);
@@ -3240,7 +3240,7 @@ RETURNS JSON as $$
       updateRole
     } = input_data;
     teamApproverIdList.forEach(id => {
-      const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
+      const member = plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
       const user = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${member.team_member_user_id}'`)[0];
 
       approverList.push({
@@ -3269,7 +3269,7 @@ RETURNS JSON as $$
       updateRole
     } = input_data;
     teamAdminIdList.forEach(id => {
-      const member = plv8.execute(`UPDATE team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
+      const member = plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='${updateRole}' WHERE team_member_id='${id}' RETURNING *`)[0];
       const user = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${member.team_member_user_id}'`)[0];
 
       adminList.push({
@@ -3389,7 +3389,7 @@ RETURNS JSON AS $$
             'user_job_title', usert.user_job_title,
             'user_employee_number', uent.user_employee_number
           ) AS team_member_user 
-        FROM team_member_table tmt 
+        FROM team_schema.team_member_table tmt 
         INNER JOIN user_schema.user_table usert ON usert.user_id = tmt.team_member_user_id
         LEFT JOIN user_schema.user_employee_number_table uent 
           ON uent.user_employee_number_user_id = usert.user_id
@@ -3400,28 +3400,28 @@ RETURNS JSON AS $$
 
     const userValidId = plv8.execute(`SELECT * FROM user_schema.user_valid_id_table WHERE user_valid_id_user_id='${member.team_member_user.user_id}';`)[0];
 
-    const memberGroupToSelect = plv8.execute(`SELECT tgmt2.team_group_member_id, tgt2.team_group_name FROM team_group_member_table tgmt2 INNER JOIN team_group_table tgt2 ON tgt2.team_group_id = tgmt2.team_group_id WHERE tgmt2.team_member_id='${teamMemberId}' ORDER BY tgt2.team_group_name ASC LIMIT 10`);
+    const memberGroupToSelect = plv8.execute(`SELECT tgmt2.team_group_member_id, tgt2.team_group_name FROM team_schema.team_group_member_table tgmt2 INNER JOIN team_schema.team_group_table tgt2 ON tgt2.team_group_id = tgmt2.team_group_id WHERE tgmt2.team_member_id='${teamMemberId}' ORDER BY tgt2.team_group_name ASC LIMIT 10`);
 
     let groupList = []
     let groupCount = 0
     if(memberGroupToSelect.length > 0){
       const memberGroupToSelectArray = memberGroupToSelect.map(group=>`'${group.team_group_member_id}'`).join(",")
 
-      groupList = plv8.execute(`SELECT tgmt.team_group_member_id , ( SELECT row_to_json(tgt) FROM team_group_table tgt WHERE tgt.team_group_id = tgmt.team_group_id) AS team_group FROM team_group_member_table tgmt WHERE tgmt.team_member_id='${teamMemberId}' AND tgmt.team_group_member_id IN (${memberGroupToSelectArray});`);
+      groupList = plv8.execute(`SELECT tgmt.team_group_member_id , ( SELECT row_to_json(tgt) FROM team_schema.team_group_table tgt WHERE tgt.team_group_id = tgmt.team_group_id) AS team_group FROM team_schema.team_group_member_table tgmt WHERE tgmt.team_member_id='${teamMemberId}' AND tgmt.team_group_member_id IN (${memberGroupToSelectArray});`);
 
-      groupCount = plv8.execute(`SELECT COUNT(*) FROM team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+      groupCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
     }
     
-    const memberProjectToSelect = plv8.execute(`SELECT tpmt2.team_project_member_id, tpt2.team_project_name FROM team_project_member_table tpmt2 INNER JOIN team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id WHERE tpmt2.team_member_id='${teamMemberId}' ORDER BY tpt2.team_project_name ASC LIMIT 10`);
+    const memberProjectToSelect = plv8.execute(`SELECT tpmt2.team_project_member_id, tpt2.team_project_name FROM team_schema.team_project_member_table tpmt2 INNER JOIN team_schema.team_project_table tpt2 ON tpt2.team_project_id = tpmt2.team_project_id WHERE tpmt2.team_member_id='${teamMemberId}' ORDER BY tpt2.team_project_name ASC LIMIT 10`);
 
     let projectList = []
     let projectCount = 0
     if(memberProjectToSelect.length > 0){
       const memberProjectToSelectArray = memberProjectToSelect.map(project=>`'${project.team_project_member_id}'`).join(",")
 
-      projectList = plv8.execute(`SELECT tpmt.team_project_member_id , ( SELECT row_to_json(tpt) FROM team_project_table tpt WHERE tpt.team_project_id = tpmt.team_project_id) AS team_project FROM team_project_member_table tpmt WHERE tpmt.team_member_id='${teamMemberId}' AND tpmt.team_project_member_id IN (${memberProjectToSelectArray});`);
+      projectList = plv8.execute(`SELECT tpmt.team_project_member_id , ( SELECT row_to_json(tpt) FROM team_schema.team_project_table tpt WHERE tpt.team_project_id = tpmt.team_project_id) AS team_project FROM team_schema.team_project_member_table tpmt WHERE tpmt.team_member_id='${teamMemberId}' AND tpmt.team_project_member_id IN (${memberProjectToSelectArray});`);
 
-      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
+      projectCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_member_table WHERE team_member_id='${teamMemberId}';`)[0].count
     }
 
     team_member_data = {member: member, userValidId, groupList, groupCount:`${groupCount}`, projectList, projectCount: `${projectCount}`}
@@ -3442,41 +3442,41 @@ RETURNS JSON AS $$
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     
-    const team = plv8.execute(`SELECT team_id, team_name, team_logo FROM team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
+    const team = plv8.execute(`SELECT team_id, team_name, team_logo FROM team_schema.team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
 
     const teamMembers = plv8.execute(
       `
         SELECT 
-            tmt.team_member_id, 
-            tmt.team_member_role, 
-            json_build_object( 
-                'user_id', usert.user_id, 
-                'user_first_name', usert.user_first_name, 
-                'user_last_name', usert.user_last_name, 
-                'user_avatar', usert.user_avatar, 
-                'user_email', usert.user_email,
-                'user_employee_number', uent.user_employee_number
-            ) AS team_member_user  
+          tmt.team_member_id, 
+          tmt.team_member_role, 
+          json_build_object( 
+            'user_id', usert.user_id, 
+            'user_first_name', usert.user_first_name, 
+            'user_last_name', usert.user_last_name, 
+            'user_avatar', usert.user_avatar, 
+            'user_email', usert.user_email,
+            'user_employee_number', uent.user_employee_number
+          ) AS team_member_user  
         FROM 
-            team_member_table tmt 
+          team_schema.team_member_table tmt 
         JOIN 
-            user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
+          user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
         LEFT JOIN 
-            user_schema.user_employee_number_table uent ON uent.user_employee_number_user_id = usert.user_id
-                AND uent.user_employee_number_is_disabled = false
+          user_schema.user_employee_number_table uent ON uent.user_employee_number_user_id = usert.user_id
+          AND uent.user_employee_number_is_disabled = false
         WHERE 
-            tmt.team_member_team_id = '${teamId}'
-            AND tmt.team_member_is_disabled = false 
-            AND usert.user_is_disabled = false
+          tmt.team_member_team_id = '${teamId}'
+          AND tmt.team_member_is_disabled = false 
+          AND usert.user_is_disabled = false
         ORDER BY
-            CASE tmt.team_member_role
-                WHEN 'OWNER' THEN 1
-                WHEN 'ADMIN' THEN 2
-                WHEN 'APPROVER' THEN 3
-                WHEN 'MEMBER' THEN 4
-            END ASC,
-            usert.user_first_name ASC,
-            usert.user_last_name ASC
+          CASE tmt.team_member_role
+            WHEN 'OWNER' THEN 1
+            WHEN 'ADMIN' THEN 2
+            WHEN 'APPROVER' THEN 3
+            WHEN 'MEMBER' THEN 4
+          END ASC,
+          usert.user_first_name ASC,
+          usert.user_last_name ASC
         LIMIT '${teamMemberLimit}'
       `
     );
@@ -3484,7 +3484,7 @@ RETURNS JSON AS $$
     const teamMembersCount = plv8.execute(
       `
         SELECT COUNT(*)
-        FROM team_member_table tmt 
+        FROM team_schema.team_member_table tmt 
         JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_team_id='${teamId}' 
@@ -3493,9 +3493,9 @@ RETURNS JSON AS $$
       `
     )[0].count;
 
-    const teamGroups = plv8.execute(`SELECT team_group_id, team_group_name, team_group_team_id FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false ORDER BY team_group_date_created DESC LIMIT 10;`);
+    const teamGroups = plv8.execute(`SELECT team_group_id, team_group_name, team_group_team_id FROM team_schema.team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false ORDER BY team_group_date_created DESC LIMIT 10;`);
 
-    const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
+    const teamGroupsCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_group_table WHERE team_group_team_id='${teamId}' AND team_group_is_disabled=false;`)[0].count;
 
     const teamProjects = plv8.execute(
       `
@@ -3504,7 +3504,7 @@ RETURNS JSON AS $$
           boq.attachment_value AS team_project_boq_attachment_id,
           site_map.attachment_value AS team_project_site_map_attachment_id,
           address_table.*
-        FROM team_project_table 
+        FROM team_schema.team_project_table 
         LEFT JOIN attachment_table boq ON (
           team_project_boq_attachment_id = boq.attachment_id
           AND boq.attachment_is_disabled = false
@@ -3524,7 +3524,7 @@ RETURNS JSON AS $$
       `
     );
 
-    const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
+    const teamProjectsCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false;`)[0].count;
 
     const pendingValidIDList = plv8.execute(`SELECT * FROM user_schema.user_valid_id_table WHERE user_valid_id_status='PENDING';`);
 
@@ -3596,7 +3596,7 @@ RETURNS JSON AS $$
             'user_email', usert.user_email,
             'user_employee_number', uent.user_employee_number
           ) AS team_member_user  
-        FROM team_member_table tmt 
+        FROM team_schema.team_member_table tmt 
         JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id
         LEFT JOIN user_schema.user_employee_number_table uent 
           ON uent.user_employee_number_user_id = usert.user_id
@@ -3626,7 +3626,7 @@ RETURNS JSON AS $$
     const teamMembersCount = plv8.execute(
       `
         SELECT COUNT(*)
-        FROM team_member_table tmt 
+        FROM team_schema.team_member_table tmt 
         JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           team_member_team_id='${teamId}' 
@@ -3700,7 +3700,7 @@ RETURNS JSON AS $$
 
     const itemList = plv8.execute(`SELECT * FROM item_schema.item_table WHERE item_team_id='${teamId}' AND item_is_disabled=false AND item_is_available=true ORDER BY item_general_name ASC;`);
 
-    const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC;`);
+    const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC;`);
     
     const itemNameList = itemList.map(item=>item.item_general_name);
     const projectNameList = projectList.map(project=>project.team_project_name);
@@ -3722,11 +3722,11 @@ RETURNS JSON AS $$
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
+    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
 
-    const projectList = plv8.execute(`SELECT * FROM team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
+    const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
     request_data = {teamMemberList,isFormslyTeam,projectList}
  });
@@ -4010,7 +4010,7 @@ RETURNS JSON as $$
           user_last_name,
           user_avatar
         FROM form_schema.form_table 
-        INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           team_member_team_id = '${teamId}'
@@ -4023,7 +4023,7 @@ RETURNS JSON as $$
       `
         SELECT COUNT(*)
         FROM form_schema.form_table 
-        INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           team_member_team_id = '${teamId}'
@@ -4040,7 +4040,7 @@ RETURNS JSON as $$
           user_id,
           user_first_name,
           user_last_name
-        FROM team_member_table
+        FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           team_member_team_id = '${teamId}'
@@ -4115,7 +4115,7 @@ RETURNS JSON as $$
           user_id,
           user_first_name,
           user_last_name
-        FROM team_member_table
+        FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
           team_member_team_id = '${teamId}'
@@ -4124,7 +4124,7 @@ RETURNS JSON as $$
         ORDER BY user_first_name, user_last_name ASC
       `
     );
-    const groupList = plv8.execute(`SELECT * FROM team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
+    const groupList = plv8.execute(`SELECT * FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
     const formId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
 
     returnData = {
@@ -4169,7 +4169,7 @@ RETURNS JSON as $$
           user_id,
           user_first_name,
           user_last_name
-        FROM team_member_table
+        FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
           team_member_team_id = '${teamId}'
@@ -4190,11 +4190,11 @@ RETURNS JSON as $$
       }
     })
 
-    const teamGroupList = plv8.execute(`SELECT team_group_id, team_group_name FROM team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false;`);
+    const teamGroupList = plv8.execute(`SELECT team_group_id, team_group_name FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false;`);
  
     if(isFormslyForm){
-      const teamProjectList = plv8.execute(`SELECT team_project_id, team_project_name FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit};`);
-      const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false;`)[0].count;
+      const teamProjectList = plv8.execute(`SELECT team_project_id, team_project_name FROM team_schema.team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false ORDER BY team_project_name ASC LIMIT ${limit};`);
+      const teamProjectListCount = plv8.execute(`SELECT COUNT(*) FROM team_schema.team_project_table WHERE team_project_team_id = '${teamId}' AND team_project_is_disabled = false;`)[0].count;
     
       returnData = {
         teamMemberList,
@@ -4227,7 +4227,7 @@ RETURNS JSON as $$
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
     if (!teamId) throw new Error("No team found");
 
-    const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
+    const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
     if (!teamMember) throw new Error("No team member found");
 
     const formData = plv8.execute(
@@ -4249,7 +4249,7 @@ RETURNS JSON as $$
           user_avatar, 
           user_username
         FROM form_schema.form_table
-        INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
           form_id = '${formId}'
@@ -4271,7 +4271,7 @@ RETURNS JSON as $$
           user_last_name, 
           user_avatar
         FROM form_schema.signer_table
-        INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE 
           signer_is_disabled = false
@@ -4299,33 +4299,33 @@ RETURNS JSON as $$
  
         if (field.field_special_field_template_id) {
           switch(field.field_special_field_template_id){
-                case "c3a2ab64-de3c-450f-8631-05f4cc7db890": 
-                    const teamMemberList = plv8.execute(`SELECT user_id, user_first_name, user_last_name FROM team_member_table INNER JOIN user_schema.user_table ON user_id = team_member_user_id WHERE team_member_team_id = '${teamId}' ORDER BY user_last_name`); 
-                    optionData = teamMemberList.map((item, index) => ({
-                        option_id: item.user_id,
-                        option_value: item.user_last_name + ', ' + item.user_first_name,
-                        option_order: index,
-                        option_field_id: field.field_id
-                    }));
-                    break;
+            case "c3a2ab64-de3c-450f-8631-05f4cc7db890": 
+              const teamMemberList = plv8.execute(`SELECT user_id, user_first_name, user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON user_id = team_member_user_id WHERE team_member_team_id = '${teamId}' ORDER BY user_last_name`); 
+              optionData = teamMemberList.map((item, index) => ({
+                option_id: item.user_id,
+                option_value: item.user_last_name + ', ' + item.user_first_name,
+                option_order: index,
+                option_field_id: field.field_id
+              }));
+              break;
 
-                case "ff007180-4367-4cf2-b259-7804867615a7":
-                    const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM lookup_schema.csi_code_table LIMIT 1000`); 
-                    optionData = csiCodeList.map((item, index) => ({
-                        option_id: item.csi_code_id,
-                        option_value: item.csi_code_section,
-                        option_order: index,
-                        option_field_id: field.field_id
-                    }));
-                    break;
-            }
+            case "ff007180-4367-4cf2-b259-7804867615a7":
+              const csiCodeList = plv8.execute(`SELECT csi_code_id, csi_code_section FROM lookup_schema.csi_code_table LIMIT 1000`); 
+              optionData = csiCodeList.map((item, index) => ({
+                option_id: item.csi_code_id,
+                option_value: item.csi_code_section,
+                option_order: index,
+                option_field_id: field.field_id
+              }));
+              break;
+          }
         } else {
-            optionData = plv8.execute( `
-              SELECT *
-              FROM form_schema.option_table
-              WHERE option_field_id = '${field.field_id}'
-              ORDER BY option_order ASC
-            `);
+          optionData = plv8.execute( `
+            SELECT *
+            FROM form_schema.option_table
+            WHERE option_field_id = '${field.field_id}'
+            ORDER BY option_order ASC
+          `);
         }
 
         return {
@@ -4388,8 +4388,8 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -4432,8 +4432,8 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -4558,8 +4558,8 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -4686,8 +4686,8 @@ RETURNS JSON as $$
             SELECT 
                 team_project_table.team_project_id,
                 team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -4791,8 +4791,8 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -4868,8 +4868,8 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -4912,8 +4912,8 @@ RETURNS JSON as $$
             SELECT 
                 team_project_table.team_project_id,
                 team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
             ORDER BY team_project_name;
@@ -4958,8 +4958,8 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -4976,7 +4976,7 @@ RETURNS JSON as $$
           };
         });
 
-        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_department_table WHERE team_department_is_disabled=FALSE`);
+        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_schema.team_department_table WHERE team_department_is_disabled=FALSE`);
 
         const departmentOptions = departments.map((department, index) => {
           return {
@@ -5023,7 +5023,7 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_table
+            FROM team_schema.team_project_table
             WHERE
               team_project_is_disabled = false
             ORDER BY team_project_name;
@@ -5050,8 +5050,8 @@ RETURNS JSON as $$
             SELECT 
                 team_project_table.team_project_id,
                 team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -5068,7 +5068,7 @@ RETURNS JSON as $$
           };
         });
 
-        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_department_table WHERE team_department_is_disabled=FALSE`);
+        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_schema.team_department_table WHERE team_department_is_disabled=FALSE`);
 
         const departmentOptions = departments.map((department, index) => {
           return {
@@ -5170,7 +5170,7 @@ RETURNS JSON as $$
               user_last_name,
               user_avatar
             FROM form_schema.signer_table
-            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
             INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
               signer_is_disabled = false
@@ -5219,7 +5219,7 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_table
+            FROM team_schema.team_project_table
             WHERE
               team_project_is_disabled = false
             ORDER BY team_project_name;
@@ -5235,7 +5235,7 @@ RETURNS JSON as $$
           };
         });
 
-        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_department_table WHERE team_department_is_disabled=FALSE`);
+        const departments = plv8.execute(`SELECT team_department_id, team_department_name FROM team_schema.team_department_table WHERE team_department_is_disabled=FALSE`);
         const departmentOptions = departments.map((department, index) => {
           return {
             option_field_id: form.form_section[1].section_field[2].field_id,
@@ -5290,8 +5290,8 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
               AND team_project_is_disabled = false
@@ -5313,7 +5313,7 @@ RETURNS JSON as $$
             SELECT 
               team_department_id,
               team_department_name
-            FROM team_department_table
+            FROM team_schema.team_department_table
             WHERE 
               team_department_is_disabled = false
             ORDER BY team_department_name;
@@ -5394,8 +5394,8 @@ RETURNS JSON as $$
             SELECT 
               team_project_table.team_project_id,
               team_project_table.team_project_name
-            FROM team_project_member_table
-            INNER JOIN team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
+            FROM team_schema.team_project_member_table
+            INNER JOIN team_schema.team_project_table ON team_project_table.team_project_id = team_project_member_table.team_project_id
             WHERE
               team_member_id = '${teamMember.team_member_id}'
             ORDER BY team_project_name;
@@ -5416,7 +5416,7 @@ RETURNS JSON as $$
             SELECT 
               team_department_id,
               team_department_name
-            FROM team_department_table
+            FROM team_schema.team_department_table
             WHERE 
               team_department_is_disabled = false
             ORDER BY team_department_name;
@@ -5437,7 +5437,7 @@ RETURNS JSON as $$
             SELECT 
               team_project_id,
               team_project_name
-            FROM team_project_table
+            FROM team_schema.team_project_table
             WHERE
               team_project_is_disabled = false
             ORDER BY team_project_name;
@@ -5529,7 +5529,7 @@ RETURNS JSON as $$
               user_last_name,
               user_avatar
             FROM form_schema.signer_table
-            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
             INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
               signer_is_disabled = false
@@ -5600,7 +5600,7 @@ RETURNS JSON as $$
           if (connectedRequestChargeToProject[0]) {
             connectedRequestChargeToProjectResponse = JSON.parse(connectedRequestChargeToProject[0].request_response);
 
-            const selectedProject = plv8.execute(`SELECT team_project_id FROM team_project_table WHERE team_project_name = '${connectedRequestChargeToProjectResponse}'`);
+            const selectedProject = plv8.execute(`SELECT team_project_id FROM team_schema.team_project_table WHERE team_project_name = '${connectedRequestChargeToProjectResponse}'`);
 
             if (selectedProject[0]) {
               connectedRequestChargeToProjectId = selectedProject[0].team_project_id;
@@ -5636,7 +5636,7 @@ RETURNS JSON as $$
               user_last_name,
               user_avatar
             FROM form_schema.signer_table
-            INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+            INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
             INNER JOIN user_schema.user_table ON user_id = team_member_user_id
             WHERE
               signer_is_disabled = false
@@ -5715,10 +5715,10 @@ RETURNS JSON as $$
           form_sub_type,
           team_project_name
         FROM request_view
-        INNER JOIN team_member_table ON team_member_id = request_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_schema.form_table ON form_id = request_form_id
-        LEFT JOIN team_project_table ON team_project_id = request_project_id
+        LEFT JOIN team_schema.team_project_table ON team_project_id = request_project_id
         WHERE 
           ${idCondition}
           AND request_is_disabled = false
@@ -5744,7 +5744,7 @@ RETURNS JSON as $$
           attachment_value
         FROM request_schema.request_signer_table
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
-        INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${requestData.request_id}'
@@ -5767,7 +5767,7 @@ RETURNS JSON as $$
           user_username, 
           user_avatar
         FROM request_schema.comment_table 
-        INNER JOIN team_member_table ON team_member_id = comment_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = comment_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           comment_request_id = '${requestData.request_id}'
@@ -6141,7 +6141,7 @@ RETURNS JSON AS $$
               'user_avatar', usert.user_avatar, 
               'user_email', usert.user_email 
             ) AS team_member_user  
-          FROM team_member_table tmt
+          FROM team_schema.team_member_table tmt
             JOIN user_schema.user_table usert ON usert.user_id = tmt.team_member_user_id
           WHERE 
             tmt.team_member_team_id = '${teamId}'
@@ -6391,7 +6391,7 @@ RETURNS JSON as $$
               'user_avatar', u.user_avatar
           )
       ) AS member
-      FROM team_member_table tm
+      FROM team_schema.team_member_table tm
       JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
       WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}';`)[0]
     
@@ -6499,7 +6499,7 @@ RETURNS JSON as $$
               'user_avatar', u.user_avatar
           )
       ) AS member
-      FROM team_member_table tm
+      FROM team_schema.team_member_table tm
       JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
       WHERE tm.team_member_id = '${ticket.ticket_approver_team_member_id}';`)[0]
     }
@@ -6517,7 +6517,7 @@ RETURNS JSON as $$
           'user_avatar', usert.user_avatar, 
           'user_email', usert.user_email 
         ) AS team_member_user  
-        FROM team_member_table tmt 
+        FROM team_schema.team_member_table tmt 
         JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_team_id='${teamId}' 
@@ -6545,7 +6545,7 @@ RETURNS JSON as $$
           user_username, 
           user_avatar
         FROM ticket_schema.ticket_comment_table 
-        INNER JOIN team_member_table ON team_member_id = ticket_comment_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = ticket_comment_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           ticket_comment_ticket_id = '${ticketId}'
@@ -6600,7 +6600,7 @@ RETURNS JSON as $$
       teamMemberId
     } = input_data;
     
-    const member = plv8.execute(`SELECT *  FROM team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
+    const member = plv8.execute(`SELECT *  FROM team_schema.team_member_table WHERE team_member_id='${teamMemberId}';`)[0];
 
     const isApprover = member.team_member_role === 'OWNER' || member.team_member_role === 'ADMIN';
     if (!isApprover) throw new Error("User is not an Approver");
@@ -6624,7 +6624,7 @@ RETURNS JSON as $$
           'user_avatar', usert.user_avatar, 
           'user_email', usert.user_email 
         ) AS team_member_user  
-        FROM team_member_table tmt 
+        FROM team_schema.team_member_table tmt 
         JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_id='${updatedTicket.ticket_requester_team_member_id}' 
@@ -6642,7 +6642,7 @@ RETURNS JSON as $$
           'user_avatar', usert.user_avatar, 
           'user_email', usert.user_email 
         ) AS team_member_user  
-        FROM team_member_table tmt 
+        FROM team_schema.team_member_table tmt 
         JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_id='${teamMemberId}' 
@@ -6698,7 +6698,7 @@ RETURNS JSON AS $$
             ticket_table.*,
             ticket_category_table.ticket_category
           FROM ticket_schema.ticket_table
-          INNER JOIN team_member_table ON ticket_requester_team_member_id = team_member_id
+          INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_id
           INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
           WHERE team_member_team_id = '${teamId}'
           ${requester}
@@ -6715,7 +6715,7 @@ RETURNS JSON AS $$
         `
           SELECT DISTINCT COUNT(*)
           FROM ticket_schema.ticket_table
-          INNER JOIN team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
+          INNER JOIN team_schema.team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
           WHERE team_member_table.team_member_team_id = '${teamId}'
           ${requester}
           ${approver}
@@ -6735,7 +6735,7 @@ RETURNS JSON AS $$
               user_table.user_last_name,
               user_table.user_username,
               user_table.user_avatar
-            FROM team_member_table
+            FROM team_schema.team_member_table
             INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
             WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
           `
@@ -6751,7 +6751,7 @@ RETURNS JSON AS $$
                 user_table.user_last_name,
                 user_table.user_username,
                 user_table.user_avatar
-              FROM team_member_table
+              FROM team_schema.team_member_table
               INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
               WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
             `
@@ -6808,7 +6808,7 @@ plv8.subtransaction(function(){
       FROM form_schema.field_table
         INNER JOIN form_schema.section_table ON section_id = field_section_id
         INNER JOIN form_schema.form_table ON form_id = section_form_id
-        INNER JOIN team_member_table ON team_member_id = form_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
       WHERE 
         field_name = 'General Name' AND
         team_member_team_id = '${teamId}' AND
@@ -6936,7 +6936,7 @@ plv8.subtransaction(function(){
         request_status,
         user_id
       FROM request_schema.request_table 
-      INNER JOIN team_member_table ON team_member_id = request_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE 
         request_id = '${requestId}' 
@@ -7012,7 +7012,7 @@ RETURNS JSON as $$
           user_last_name,
           user_avatar,
           user_email
-        FROM team_member_table
+        FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE team_member_id = '${requestor.request_team_member_id}'
       `)[0];
@@ -7293,7 +7293,7 @@ RETURNS JSON as $$
           user_last_name,
           user_avatar,
           user_email
-        FROM team_member_table
+        FROM team_schema.team_member_table
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE team_member_id = '${signer.signer_team_member_id}'
       `)[0];
@@ -7361,13 +7361,13 @@ CREATE OR REPLACE FUNCTION leave_team(
 )
 RETURNS VOID as $$
   plv8.subtransaction(function(){
-    const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
+    const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
     const isUserOwner = teamMember.team_member_role === 'OWNER';
     if(isUserOwner) throw new Error('Owner cannot leave the team');
 
-    plv8.execute(`UPDATE team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`);
+    plv8.execute(`UPDATE team_schema.team_member_table SET team_member_is_disabled=TRUE WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`);
 
-    const userTeamList = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id='${teamMember.team_member_user_id}' AND team_member_is_disabled=FALSE`);
+    const userTeamList = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id='${teamMember.team_member_user_id}' AND team_member_is_disabled=FALSE`);
 
     if (userTeamList.length > 0) {
       plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id='${userTeamList[0].team_member_team_id}' WHERE user_id='${teamMember.team_member_user_id}'`);
@@ -7391,7 +7391,7 @@ RETURNS JSON AS $$
 
     plv8.execute(`UPDATE user_schema.user_table SET user_active_team_id = '${teamId}' WHERE user_id = '${userId}'`);
 
-    const teamMember = plv8.execute(`SELECT * FROM team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
+    const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
 
     let formList = [];
 
@@ -7400,7 +7400,7 @@ RETURNS JSON AS $$
         `
           SELECT *
           FROM form_schema.form_table
-          INNER JOIN team_member_table ON team_member_id = form_team_member_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           WHERE 
             team_member_team_id = '${teamId}'
             AND form_is_disabled = false
@@ -7687,7 +7687,7 @@ RETURNS JSON AS $$
       `);
     }
 
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_table WHERE team_id='${memoData.memo_team_id}';`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${memoData.memo_team_id}';`);
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
     const memo_author_data = plv8.execute(`SELECT user_first_name, user_last_name FROM user_schema.user_table WHERE user_id = '${memoData.memo_author_user_id}' LIMIT 1`)[0];
 
@@ -7724,7 +7724,7 @@ RETURNS JSON AS $$
 
     const currentUser = plv8.execute(`
       SELECT *
-      FROM team_member_table
+      FROM team_schema.team_member_table
       WHERE team_member_user_id = '${current_user_id}'
       LIMIT 1
     `)[0];
@@ -7799,7 +7799,7 @@ RETURNS JSON AS $$
         ut.*,
         json_agg(sht.*) as signature_list
       FROM memo_schema.memo_signer_table mst
-      INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
+      INNER JOIN team_schema.team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
       INNER JOIN user_schema.user_table ut ON ut.user_id = tm.team_member_user_id
       LEFT JOIN history_schema.signature_history_table sht ON sht.signature_history_user_id = ut.user_id
       WHERE mst.memo_signer_memo_id = '${memo_id}'
@@ -7889,7 +7889,7 @@ RETURNS JSON AS $$
     const read_receipt_data = plv8.execute(`
       SELECT memo_read_receipt_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
       FROM memo_schema.memo_read_receipt_table
-      INNER JOIN team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       LEFT JOIN user_schema. ON user_id = user_employee_number_user_id
       WHERE memo_read_receipt_memo_id = '${memo_id}'
@@ -7898,7 +7898,7 @@ RETURNS JSON AS $$
     const agreement_data = plv8.execute(`
       SELECT memo_agreement_table.*, user_id, user_first_name, user_last_name, user_avatar, user_employee_number
       FROM memo_schema.memo_agreement_table
-      INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = memo_agreement_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       LEFT JOIN user_schema.user_employee_number_table ON user_id = user_employee_number_user_id
       WHERE memo_agreement_memo_id = '${memo_id}'
@@ -7968,7 +7968,7 @@ RETURNS JSON AS $$
         INNER JOIN memo_schema.memo_date_updated_table ON memo_date_updated_memo_id = memo_table.memo_id
         INNER JOIN memo_schema.memo_status_table ON memo_status_memo_id = memo_table.memo_id
         LEFT JOIN memo_schema.memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
-        LEFT JOIN team_member_table ON team_member_table.team_member_id = memo_signer_table.memo_signer_team_member_id
+        LEFT JOIN team_schema.team_member_table ON team_member_table.team_member_id = memo_signer_table.memo_signer_team_member_id
         LEFT JOIN user_schema.user_table AS team_member_user_table ON team_member_user_table.user_id = team_member_table.team_member_user_id
         LEFT JOIN memo_schema.memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_table.memo_id
         WHERE 
@@ -8054,7 +8054,7 @@ RETURNS JSON AS $$
 
     const currentUser = plv8.execute(`
       SELECT *
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE team_member_user_id = '${current_user_id}'
       LIMIT 1
@@ -8098,7 +8098,7 @@ RETURNS JSON AS $$
         ut.*,
         json_agg(sht.*) as signature_list
       FROM memo_schema.memo_signer_table mst
-      INNER JOIN team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
+      INNER JOIN team_schema.team_member_table tm ON tm.team_member_id = mst.memo_signer_team_member_id
       INNER JOIN user_schema.user_table ut ON ut.user_id = tm.team_member_user_id
       LEFT JOIN history_schema.signature_history_table sht ON sht.signature_history_user_id = ut.user_id
       WHERE mst.memo_signer_memo_id = '${memo_id}'
@@ -8459,7 +8459,7 @@ RETURNS JSON AS $$
                 user_avatar
               FROM item_schema.item_category_table
               INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
-              INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+              INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
               INNER JOIN user_schema. ON user_id = team_member_user_id
               WHERE item_category_id = '${item.item_category_id}'
             `
@@ -8740,7 +8740,7 @@ RETURNS JSON AS $$
     
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
     const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
 
@@ -8774,7 +8774,7 @@ RETURNS JSON AS $$
           'user_avatar', usert.user_avatar, 
           'user_email', usert.user_email 
         ) AS team_member_user  
-        FROM team_member_table tmt 
+        FROM team_schema.team_member_table tmt 
         JOIN user_schema.user_table usert ON tmt.team_member_user_id = usert.user_id 
         WHERE 
           tmt.team_member_team_id='${teamId}' 
@@ -9197,10 +9197,10 @@ RETURNS JSON as $$
           form_sub_type,
           team_project_name
         FROM request_view
-        INNER JOIN team_member_table ON team_member_id = request_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_schema.form_table ON form_id = request_form_id
-        LEFT JOIN team_project_table ON team_project_id = request_project_id
+        LEFT JOIN team_schema.team_project_table ON team_project_id = request_project_id
         WHERE 
           ${idCondition}
           AND request_is_disabled = false
@@ -9311,7 +9311,7 @@ RETURNS JSON as $$
           attachment_value
         FROM request_schema.request_signer_table
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
-        INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${requestData.request_id}'
@@ -9398,7 +9398,7 @@ plv8.subtransaction(function() {
   const teamId = plv8.execute(`
     SELECT team_member_team_id
     FROM request_schema.request_table
-    INNER JOIN team_member_table ON team_member_id = request_team_member_id
+    INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
     WHERE request_id = '${requestId}'
     LIMIT 1
   `)[0].team_member_team_id;
@@ -9442,7 +9442,7 @@ plv8.subtransaction(function() {
             case "c3a2ab64-de3c-450f-8631-05f4cc7db890":
               const teamMemberList = plv8.execute(`
                 SELECT user_id, user_first_name, user_last_name 
-                FROM team_member_table 
+                FROM team_schema.team_member_table 
                 INNER JOIN user_schema.user_table ON user_id = team_member_user_id 
                 WHERE team_member_team_id = '${teamId}' 
                 ORDER BY user_last_name
@@ -9562,7 +9562,7 @@ RETURNS JSON AS $$
           user_username, 
           user_avatar
         FROM request_schema.comment_table 
-        INNER JOIN team_member_table ON team_member_id = comment_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = comment_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           comment_request_id = '${request_id}'
@@ -9693,7 +9693,7 @@ RETURNS JSON as $$
           FROM item_schema.item_table AS it
           INNER JOIN item_schema.item_category_table AS ict ON it.item_category_id = ict.item_category_id
           INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
-          INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
           INNER JOIN user_schema.user_table ON user_id = team_member_user_id
           WHERE
             it.item_general_name = '${section.itemName}'
@@ -10318,7 +10318,7 @@ RETURNS VOID AS $$
     } = input_data;
     const existingData = plv8.execute(
       `
-        SELECT * FROM team_transaction_table
+        SELECT * FROM team_schema.team_transaction_table
         WHERE
           team_transaction_price = ${price}
           AND team_transaction_number_of_months = ${numberOfMonths}
@@ -10329,7 +10329,7 @@ RETURNS VOID AS $$
     if(existingData.length) return;
     
     plv8.execute(`
-      INSERT INTO team_transaction_table
+      INSERT INTO team_schema.team_transaction_table
       (
         team_transaction_price,
         team_transaction_number_of_months,
@@ -10455,7 +10455,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_job_title,
         user_avatar
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE 
         team_member_team_id = '${teamId}'
@@ -10506,7 +10506,7 @@ plv8.subtransaction(function() {
         team_member_table.*,
         user_table.*
       FROM form_schema.signer_table
-      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE 
         signer_form_id = '${formId}'
@@ -10696,7 +10696,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar
       FROM form_schema.form_table
-      INNER JOIN team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_team_id = '${teamId}'
@@ -10718,7 +10718,7 @@ plv8.subtransaction(function() {
       SELECT
         COUNT(form_id)
       FROM form_schema.form_table
-      INNER JOIN team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_team_id = '${teamId}'
@@ -10786,7 +10786,7 @@ plv8.subtransaction(function() {
         team_member_id,
         user_table.*
       FROM form_schema.form_table
-      INNER JOIN team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         form_id = '${formId}'
@@ -10800,7 +10800,7 @@ plv8.subtransaction(function() {
         team_group_name,
         team_group_is_disabled
       FROM form_schema.form_team_group_table AS ftgt
-      INNER JOIN team_group_table AS tgt ON tgt.team_group_id = ftgt.team_group_id
+      INNER JOIN team_schema.team_group_table AS tgt ON tgt.team_group_id = ftgt.team_group_id
       WHERE
         form_id = '${formId}'
         AND team_group_is_disabled = false
@@ -10819,7 +10819,7 @@ plv8.subtransaction(function() {
         team_member_id,
         user_table.*
       FROM form_schema.signer_table
-      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         signer_form_id = '${formId}'
@@ -10905,7 +10905,7 @@ plv8.subtransaction(function() {
       LEFT JOIN item_schema.item_category_table AS ict ON ict.item_category_id = it.item_category_id
         AND item_category_is_disabled = false 
       LEFT JOIN form_schema.signer_table ON signer_id = ict.item_category_signer_id
-      LEFT JOIN team_member_table ON team_member_id = signer_team_member_id
+      LEFT JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         it.item_team_id = '${teamId}'
@@ -11055,7 +11055,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar,
         user_email
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_team_id = '${teamId}'
@@ -11114,8 +11114,8 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar,
         user_email
-      FROM team_group_member_table AS tgmt
-      INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
+      FROM team_schema.team_group_member_table AS tgmt
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
       INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
       WHERE
         tgmt.team_group_id = '${groupId}'
@@ -11132,8 +11132,8 @@ plv8.subtransaction(function() {
     `
       SELECT
         COUNT(team_group_member_id)
-      FROM team_group_member_table AS tgmt
-      INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
+      FROM team_schema.team_group_member_table AS tgmt
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
       INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
       WHERE
         tgmt.team_group_id = '${groupId}'
@@ -11147,8 +11147,8 @@ plv8.subtransaction(function() {
       `
         SELECT
           team_project_name
-        FROM team_project_member_table AS tpmt
-        INNER JOIN team_project_table AS tpt ON tpt.team_project_id = tpmt.team_project_id
+        FROM team_schema.team_project_member_table AS tpmt
+        INNER JOIN team_schema.team_project_table AS tpt ON tpt.team_project_id = tpmt.team_project_id
         WHERE
           team_project_is_disabled = false
           AND team_member_id = '${teamGroupMember.team_member_id}'
@@ -11212,8 +11212,8 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar,
         user_email
-      FROM team_project_member_table AS tpmt
-      INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tpmt.team_member_id
+      FROM team_schema.team_project_member_table AS tpmt
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tpmt.team_member_id
       INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
       WHERE
         tpmt.team_project_id = '${projectId}'
@@ -11230,8 +11230,8 @@ plv8.subtransaction(function() {
     `
       SELECT
         COUNT(team_project_member_id)
-      FROM team_project_member_table AS tpmt
-      INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tpmt.team_member_id
+      FROM team_schema.team_project_member_table AS tpmt
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tpmt.team_member_id
       INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
       WHERE
         tpmt.team_project_id = '${projectId}'
@@ -11245,8 +11245,8 @@ plv8.subtransaction(function() {
       `
         SELECT
           team_group_name
-        FROM team_group_member_table AS tgmt
-        INNER JOIN team_group_table AS tpt ON tpt.team_group_id = tgmt.team_group_id
+        FROM team_schema.team_group_member_table AS tgmt
+        INNER JOIN team_schema.team_group_table AS tpt ON tpt.team_group_id = tgmt.team_group_id
         WHERE
           team_group_is_disabled = false
           AND team_member_id = '${teamProjectMember.team_member_id}'
@@ -11305,7 +11305,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar
       FROM form_schema.signer_table
-      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         signer_team_project_id = '${projectId}'
@@ -11370,8 +11370,8 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar
       FROM form_schema.signer_table
-      INNER JOIN team_project_table ON team_project_id = signer_team_project_id
-      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN team_schema.team_project_table ON team_project_id = signer_team_project_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_project_name IN (${projectNameCondition})
@@ -11435,7 +11435,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar,
         user_email
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_role = 'APPROVER'
@@ -11453,7 +11453,7 @@ plv8.subtransaction(function() {
     `
       SELECT 
         COUNT(team_member_id)
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_role = 'APPROVER'
@@ -11513,7 +11513,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar,
         user_email
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_role = 'ADMIN'
@@ -11531,7 +11531,7 @@ plv8.subtransaction(function() {
     `
       SELECT 
         COUNT(team_member_id)
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_role = 'ADMIN'
@@ -11581,7 +11581,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_avatar,
         user_email
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_team_id = '${teamId}'
@@ -11625,7 +11625,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_username,
         user_avatar
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_id = '${teamMemberId}'
@@ -11655,7 +11655,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_username,
         user_avatar
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_id = '${teamMemberId}'
@@ -11719,7 +11719,7 @@ plv8.subtransaction(function() {
         user_avatar
       FROM item_schema.item_category_table
       INNER JOIN form_schema.signer_table ON signer_id = item_category_signer_id
-      INNER JOIN team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         item_category_is_disabled = false
@@ -11793,7 +11793,7 @@ plv8.subtransaction(function() {
         user_last_name,
         user_username,
         user_avatar
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_team_id = '${teamId}'
@@ -11838,7 +11838,7 @@ plv8.subtransaction(function() {
         team_member_id,
         user_first_name,
         user_last_name
-      FROM team_member_table
+      FROM team_schema.team_member_table
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE
         team_member_role = 'APPROVER'
@@ -11907,7 +11907,7 @@ plv8.subtransaction(function() {
         user_first_name,
         user_last_name
       FROM memo_schema.memo_agreement_table
-      INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = memo_agreement_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
       WHERE 
         memo_agreement_id = '${memoAgreementId}'
@@ -12014,7 +12014,7 @@ plv8.subtransaction(function() {
             user_first_name,
             user_last_name
           FROM memo_schema.memo_agreement_table
-          INNER JOIN team_member_table ON team_member_id = memo_agreement_by_team_member_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = memo_agreement_by_team_member_id
           INNER JOIN user_schema.user_table ON user_id = team_member_user_id
           WHERE 
             memo_agreement_id = '${memoAgreementId}'
@@ -12156,7 +12156,7 @@ plv8.subtransaction(function() {
         invitation_date_created,
         team_member_team_id
       FROM user_schema.invitation_table
-      INNER JOIN team_member_table ON team_member_id = invitation_from_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = invitation_from_team_member_id
       WHERE
         team_member_team_id = '${teamId}'
         AND invitation_status = '${status}'
@@ -12171,7 +12171,7 @@ plv8.subtransaction(function() {
     `
       SELECT COUNT(invitation_id)
       FROM user_schema.invitation_table
-      INNER JOIN team_member_table ON team_member_id = invitation_from_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = invitation_from_team_member_id
       WHERE
         team_member_team_id = '${teamId}'
         AND invitation_status = '${status}'
@@ -12205,7 +12205,7 @@ plv8.subtransaction(function() {
         invitation_id,
         team_member_team_id
       FROM user_schema.invitation_table
-      INNER JOIN team_member_table ON team_member_id = invitation_from_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = invitation_from_team_member_id
       WHERE
         team_member_team_id = '${teamId}'
         AND invitation_is_disabled = false
@@ -12239,8 +12239,8 @@ plv8.subtransaction(function() {
         team_member_table.*,
         team_table.*
       FROM user_schema.invitation_table
-      INNER JOIN team_member_table ON team_member_id = invitation_from_team_member_id
-      INNER JOIN team_table ON team_id = team_member_team_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = invitation_from_team_member_id
+      INNER JOIN team_schema.team_table ON team_id = team_member_team_id
       WHERE
         invitation_id = '${invitationId}'
         AND invitation_is_disabled = false
@@ -12350,18 +12350,18 @@ plv8.subtransaction(function() {
     teamId
   } = input_data;
 
-  const projectTeamMemberIdList = plv8.execute(`SELECT team_member_id FROM team_project_member_table WHERE team_project_id='${projectId}'`);
+  const projectTeamMemberIdList = plv8.execute(`SELECT team_member_id FROM team_schema.team_project_member_table WHERE team_project_id='${projectId}'`);
 
   if (projectTeamMemberIdList.length <= 0) throw Error('Team member not found');
 
   const projectTeamMemberIdListQuery = projectTeamMemberIdList.map((project) => `'${project.team_member_id}'`).join(', ');
 
-  const costEngineerGroupId = plv8.execute(`SELECT team_group_id FROM team_group_table WHERE team_group_name='COST ENGINEER'`)[0].team_group_id;
+  const costEngineerGroupId = plv8.execute(`SELECT team_group_id FROM team_schema.team_group_table WHERE team_group_name='COST ENGINEER'`)[0].team_group_id;
 
   const projectCostEngineerList = plv8.execute(`
     SELECT tgm.team_member_id, tmt.team_member_user_id 
-    FROM team_group_member_table AS tgm 
-    INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id 
+    FROM team_schema.team_group_member_table AS tgm 
+    INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id 
     WHERE tgm.team_member_id IN (${projectTeamMemberIdListQuery}) 
     AND tgm.team_group_id = '${costEngineerGroupId}'`);
 
@@ -12383,7 +12383,6 @@ plv8.subtransaction(function() {
     `INSERT INTO notification_table 
     (notification_app, notification_content, notification_redirect_url, notification_team_id, notification_type, notification_user_id) 
     VALUES ${notificationValues};`);
-
 });
 $$ LANGUAGE plv8;
 
@@ -12449,7 +12448,7 @@ plv8.subtransaction(function() {
       SELECT
         team_project_id,
         team_project_name
-      FROM team_project_table
+      FROM team_schema.team_project_table
       WHERE
         team_project_team_id = '${teamId}'
       ORDER BY team_project_name
@@ -12460,7 +12459,7 @@ plv8.subtransaction(function() {
   const teamProjectCount = plv8.execute(
     `
       SELECT COUNT(team_project_id)
-      FROM team_project_table
+      FROM team_schema.team_project_table
       WHERE
         team_project_team_id = '${teamId}'
     `
@@ -12622,7 +12621,7 @@ plv8.subtransaction(function() {
       `
         SELECT COUNT(request_id)
         FROM request_schema.request_table
-        INNER JOIN team_member_table ON team_member_id = request_team_member_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
           AND team_member_team_id = '${teamId}'
         WHERE
           request_form_id = '${formId}'
@@ -12661,7 +12660,7 @@ plv8.subtransaction(function() {
     `
       SELECT team_member_team_id
       FROM request_schema.request_table
-      INNER JOIN team_member_table ON team_member_id = request_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
       WHERE
         request_id = '${requestId}'
         AND request_is_disabled = false
@@ -12693,7 +12692,7 @@ plv8.subtransaction(function() {
     `
       SELECT COUNT(request_id)
       FROM request_schema.request_table
-      INNER JOIN team_member_table ON team_member_id = request_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
         AND team_member_team_id = '${teamId}'
       WHERE
         request_is_disabled = false
@@ -12728,7 +12727,7 @@ plv8.subtransaction(function() {
         `
           SELECT COUNT(request_id)
           FROM request_schema.request_table
-          INNER JOIN team_member_table ON team_member_id = request_team_member_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
             AND team_member_team_id = '${teamId}'
           WHERE
             request_is_disabled = false
@@ -12777,7 +12776,7 @@ plv8.subtransaction(function() {
         form_table.*,
         team_member_table.*
       FROM form_schema.form_table
-      INNER JOIN team_member_table ON team_member_id = form_team_member_id
+      INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
         AND team_member_team_id = '${teamId}'
       WHERE
         form_is_disabled = false
@@ -12791,7 +12790,7 @@ plv8.subtransaction(function() {
       `
         SELECT tmgt.team_group_id
         FROM form_schema.form_team_group_table AS ftgt
-        INNER JOIN team_group_table AS tmgt ON tmgt.team_group_id = ftgt.team_group_id
+        INNER JOIN team_schema.team_group_table AS tmgt ON tmgt.team_group_id = ftgt.team_group_id
         WHERE
           form_id = '${form.form_id}'
       `
@@ -12801,7 +12800,7 @@ plv8.subtransaction(function() {
       const teamMemberData = plv8.execute(
         `
           SELECT team_member_id
-          FROM team_group_member_table
+          FROM team_schema.team_group_member_table
           WHERE 
             team_group_id = '${formTeamGroup.team_group_id}'
             AND team_member_id = '${memberId}'
@@ -12844,17 +12843,120 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_team_project_list(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = {};
+plv8.subtransaction(function() {
+  const {
+    teamId,
+    search,
+    page,
+    limit
+  } = input_data;
+
+  const start = (page - 1) * limit;
+
+  let searchCondition = '';
+  if(search){
+    searchCondition = `AND team_project_name ILIKE '%${search}%'`;
+  }
+
+  const teamProjectData = plv8.execute(
+    `
+      SELECT *
+      FROM team_schema.team_project_table
+      WHERE
+        team_project_team_id = '${teamId}'
+        AND team_project_is_disabled = false
+        ${searchCondition}
+      ORDER BY team_project_name
+      OFFSET ${start} LIMIT ${limit}
+    `
+  );
+
+  const teamProjectCount = plv8.execute(
+    `
+      SELECT COUNT(team_project_id)
+      FROM team_schema.team_project_table
+      WHERE
+        team_project_team_id = '${teamId}'
+        AND team_project_is_disabled = false
+        ${searchCondition}
+    `
+  )[0].count;
+
+  const teamProjectWithAttachmentData = teamProjectData.map(project => {
+    let addressData = [];
+    if(project.team_project_address_id){
+      addressData = plv8.execute(
+        `
+          SELECT *
+          FROM address_table
+          WHERE address_id = '${project.team_project_address_id}'
+          LIMIT 1
+        `
+      );
+    }
+    let siteMapData = [];
+    if(project.team_project_site_map_attachment_id){
+      siteMapData = plv8.execute(
+        `
+          SELECT attachment_value
+          FROM attachment_table
+          WHERE attachment_id = '${project.team_project_site_map_attachment_id}'
+          LIMIT 1
+        `
+      );
+    }
+    let boqData = [];
+    if(project.team_project_boq_attachment_id){
+      boqData = plv8.execute(
+        `
+          SELECT attachment_value
+          FROM attachment_table
+          WHERE attachment_id = '${project.team_project_boq_attachment_id}'
+          LIMIT 1
+        `
+      );
+    }
+
+    return {
+      team_project_address_id: project.team_project_address_id,
+      team_project_boq_attachment_id: project.team_project_boq_attachment_id,
+      team_project_code: project.team_project_code,
+      team_project_date_created: project.team_project_date_created,
+      team_project_id: project.team_project_id,
+      team_project_is_disabled: project.team_project_is_disabled,
+      team_project_name: project.team_project_name,
+      team_project_site_map_attachment_id: project.team_project_site_map_attachment_id,
+      team_project_team_id: project.team_project_team_id,
+      team_project_site_map_attachment_id: siteMapData.length ? siteMapData[0].attachment_value : "",
+      team_project_boq_attachment_id: boqData.length ? boqData[0].attachment_value : "",
+      team_project_address: addressData.length ? addressData[0] : {}
+    }
+  });
+
+  returnData = {
+    data: teamProjectWithAttachmentData,
+    count: Number(teamProjectCount)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES
 
 ALTER TABLE attachment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_member_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.team_member_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_schema.comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.invitation_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_schema.request_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.team_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_schema.user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_schema.field_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_schema.form_table ENABLE ROW LEVEL SECURITY;
@@ -12865,13 +12967,13 @@ ALTER TABLE form_schema.option_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_schema.request_signer_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_schema.section_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_schema.signer_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE supplier_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.supplier_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_schema.request_response_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_schema.form_team_group_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_group_member_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_group_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_project_member_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_project_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.team_group_member_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.team_group_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.team_project_member_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_schema.ticket_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ticket_schema.ticket_comment_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE item_schema.item_division_table ENABLE ROW LEVEL SECURITY;
@@ -12923,7 +13025,7 @@ ALTER TABLE jira_schema.jira_user_account_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_schema.jira_project_user_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_schema.jira_item_category_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_schema.jira_item_user_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_department_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.team_department_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_schema.jira_organization_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_schema.jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.employee_job_title_table ENABLE ROW LEVEL SECURITY;
@@ -12931,10 +13033,10 @@ ALTER TABLE lookup_schema.scic_employee_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_member_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON team_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_member_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_schema.team_member_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON form_schema.field_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.field_table;
@@ -12981,10 +13083,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.signer_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON supplier_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON supplier_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON supplier_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON supplier_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON team_schema.supplier_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_schema.comment_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.comment_table;
@@ -13011,10 +13113,10 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_tabl
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_schema.request_table;
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_schema.request_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON team_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON team_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own teams" ON team_table;
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_schema.team_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON team_schema.team_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON team_schema.team_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own teams" ON team_schema.team_table;
 
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.user_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_table;
@@ -13026,25 +13128,25 @@ DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_schema
 DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
 DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_member_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_group_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_group_member_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_group_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_group_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_group_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_group_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_group_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_group_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_group_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_group_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_group_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_member_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_project_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_member_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_project_member_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
 
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_project_table;
-DROP POLICY IF EXISTS "Allow READ for anon" ON team_project_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_project_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_project_table;
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_project_table;
+DROP POLICY IF EXISTS "Allow READ for anon" ON team_schema.team_project_table;
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_project_table;
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_project_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_schema.ticket_table;
@@ -13255,7 +13357,7 @@ DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN 
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_category_table;
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table;
 
-DROP POLICY IF EXISTS "Allow READ for anon users" ON team_department_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_department_table;
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_organization_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_organization_team_project_table;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
@@ -13290,11 +13392,11 @@ USING (
     SELECT tt.team_member_team_id
     FROM form_schema.section_table AS st
     JOIN form_schema.form_table AS fot ON st.section_form_id = fot.form_id
-    JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
+    JOIN team_schema.team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
     WHERE st.section_id = field_section_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13308,11 +13410,11 @@ USING (
     SELECT tt.team_member_team_id
     FROM form_schema.section_table AS st
     JOIN form_schema.form_table AS fot ON st.section_form_id = fot.form_id
-    JOIN team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
+    JOIN team_schema.team_member_table AS tt ON fot.form_team_member_id = tt.team_member_id
     WHERE st.section_id = field_section_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13325,11 +13427,11 @@ TO authenticated
 WITH CHECK ( 
   (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_id = form_team_member_id
   ) IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13345,11 +13447,11 @@ TO authenticated
 USING (
   (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_id = form_team_member_id
   ) IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13361,11 +13463,11 @@ TO authenticated
 USING (
   (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_id = form_team_member_id
   ) IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13380,8 +13482,8 @@ WITH CHECK (
     SELECT 1 
     FROM item_schema.item_description_table as id
     JOIN item_schema.item_table as it ON it.item_id = id.item_description_item_id
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13400,8 +13502,8 @@ USING (
     SELECT 1 
     FROM item_schema.item_description_table as id
     JOIN item_schema.item_table as it ON it.item_id = id.item_description_item_id
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13416,8 +13518,8 @@ USING (
     SELECT 1 
     FROM item_schema.item_description_table as id
     JOIN item_schema.item_table as it ON it.item_id = id.item_description_item_id
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13432,8 +13534,8 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13451,8 +13553,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13466,8 +13568,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13481,7 +13583,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -13498,7 +13600,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -13511,7 +13613,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -13528,7 +13630,7 @@ WITH CHECK (
     FROM form_schema.field_table as ft
     JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13548,7 +13650,7 @@ USING (
     FROM form_schema.field_table as ft
     JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13564,7 +13666,7 @@ USING (
     FROM form_schema.field_table as ft
     JOIN form_schema.section_table as st ON st.section_id = ft.field_section_id
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -13579,11 +13681,11 @@ WITH CHECK (
   (
     SELECT tm.team_member_team_id
     FROM request_schema.request_table as rt
-    JOIN team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
     WHERE rt.request_id = request_signer_request_id
   ) IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
   )
 );
@@ -13599,11 +13701,11 @@ USING (
   (
     SELECT tm.team_member_team_id
     FROM request_schema.request_table as rt
-    JOIN team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
     WHERE rt.request_id = request_signer_request_id
   ) IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
@@ -13616,11 +13718,11 @@ USING (
   (
     SELECT tm.team_member_team_id
     FROM request_schema.request_table as rt
-    JOIN team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
     WHERE rt.request_id = request_signer_request_id
   ) IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
   )
 );
@@ -13633,11 +13735,11 @@ WITH CHECK (
   (
     SELECT tm.team_member_team_id
     FROM form_schema.form_table as fo
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = section_form_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13654,11 +13756,11 @@ USING (
   (
     SELECT tm.team_member_team_id
     FROM form_schema.form_table as fo
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = section_form_id
   ) = (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13671,11 +13773,11 @@ USING (
   (
     SELECT tm.team_member_team_id
     FROM form_schema.form_table as fo
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = section_form_id
   ) = (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13689,11 +13791,11 @@ WITH CHECK (
   (
     SELECT tm.team_member_team_id
     FROM form_schema.form_table as fo
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = signer_form_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13710,11 +13812,11 @@ USING (
   (
     SELECT tm.team_member_team_id
     FROM form_schema.form_table as fo
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = signer_form_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13727,84 +13829,84 @@ USING (
   (
     SELECT tm.team_member_team_id
     FROM form_schema.form_table as fo
-    JOIN team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id
     WHERE fo.form_id = signer_form_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
 --- SUPPLIER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "team_schema"."supplier_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   supplier_team_id IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "public"."supplier_table"
+CREATE POLICY "Allow READ access for anon users" ON "team_schema"."supplier_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "team_schema"."supplier_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   supplier_team_id IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."supplier_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "team_schema"."supplier_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   supplier_team_id IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
 --- TEAM_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."team_member_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "team_schema"."team_member_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "public"."team_member_table"
+CREATE POLICY "Allow READ for anon users" ON "team_schema"."team_member_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "team_schema"."team_member_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   team_member_team_id IN (
-    SELECT team_member_team_id from team_member_table
+    SELECT team_member_team_id FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR team_member_user_id = auth.uid()
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "public"."team_member_table"
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "team_schema"."team_member_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   team_member_team_id IN (
-    SELECT team_member_team_id from team_member_table
+    SELECT team_member_team_id FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -13823,13 +13925,13 @@ USING (true);
 CREATE POLICY "Allow UPDATE for authenticated users based on team_member_id" ON "request_schema"."comment_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (comment_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()))
-WITH CHECK (comment_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()))
+WITH CHECK (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
 
 CREATE POLICY "Allow DELETE for authenticated users based on team_member_id" ON "request_schema"."comment_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (comment_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
 
 --- INVITATION_TABLE
 CREATE POLICY "Allow CREATE for authenticated users" ON "user_schema"."invitation_table"
@@ -13848,10 +13950,10 @@ USING (
   )
   OR EXISTS (
     SELECT 1
-    FROM public.team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = (
       SELECT team_member_team_id
-      FROM public.team_member_table
+      FROM team_schema.team_member_table
       WHERE team_member_id = invitation_from_team_member_id
       AND team_member_is_disabled = FALSE
       LIMIT 1
@@ -13867,10 +13969,10 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM public.team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = (
       SELECT team_member_team_id
-      FROM public.team_member_table
+      FROM team_schema.team_member_table
       WHERE team_member_id = invitation_from_team_member_id
       AND team_member_is_disabled = FALSE
       LIMIT 1
@@ -13886,10 +13988,10 @@ USING (
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM public.team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = (
       SELECT team_member_team_id
-      FROM public.team_member_table
+      FROM team_schema.team_member_table
       WHERE team_member_id = invitation_from_team_member_id
       AND team_member_is_disabled = FALSE
       LIMIT 1
@@ -13906,7 +14008,7 @@ WITH CHECK (
 CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON "user_schema"."invitation_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_member_table WHERE team_member_user_id = auth.uid()));
+USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
 
 --- NOTIFICATION_TABLE
 CREATE POLICY "Allow INSERT for authenticated users" ON "public"."notification_table"
@@ -13951,7 +14053,7 @@ USING (
     WHERE rt.request_id = request_response_request_id
   ) IN (
     SELECT team_member_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
   )
 )
@@ -13962,7 +14064,7 @@ WITH CHECK (
     WHERE rt.request_id = request_response_request_id
   ) IN (
     SELECT team_member_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
   ) 
 );
@@ -13978,13 +14080,13 @@ USING (
     WHERE rt.request_id = request_response_request_id
   ) IN (
     SELECT tmt.team_member_id
-    FROM team_member_table AS tmt
+    FROM team_schema.team_member_table AS tmt
     WHERE tmt.team_member_user_id = auth.uid()
   ) OR EXISTS (
     SELECT 1
-    FROM team_group_member_table AS tgm
-    INNER JOIN team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id
-    INNER JOIN team_group_table AS tg ON tg.team_group_id = tgm.team_group_id
+    FROM team_schema.team_group_member_table AS tgm
+    INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id
+    INNER JOIN team_schema.team_group_table AS tg ON tg.team_group_id = tgm.team_group_id
     WHERE tmt.team_member_user_id = auth.uid()
     AND tg.team_group_name = 'COST ENGINEER'
   )
@@ -14006,15 +14108,15 @@ TO authenticated
 USING (
   request_team_member_id IN (
     SELECT team_member_id  
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
   ) OR (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_id = request_team_member_id
   ) IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
@@ -14022,15 +14124,15 @@ USING (
 WITH CHECK (
   request_team_member_id IN (
     SELECT team_member_id  
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
   ) OR (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_id = request_team_member_id
   ) IN (
     SELECT team_member_team_id 
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid() 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
@@ -14042,29 +14144,29 @@ TO authenticated
 USING (
   request_team_member_id IN (
     SELECT team_member_id  
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
   )
 );
 
 --- TEAM_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."team_table"
+CREATE POLICY "Allow CREATE for authenticated users" ON "team_schema"."team_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for authenticated users" ON "public"."team_table"
+CREATE POLICY "Allow READ for authenticated users" ON "team_schema"."team_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users on own teams" ON "public"."team_table"
+CREATE POLICY "Allow UPDATE for authenticated users on own teams" ON "team_schema"."team_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (auth.uid() = team_user_id)
 WITH CHECK (auth.uid() = team_user_id);
 
-CREATE POLICY "Allow DELETE for authenticated users on own teams" ON "public"."team_table"
+CREATE POLICY "Allow DELETE for authenticated users on own teams" ON "team_schema"."team_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (auth.uid() = team_user_id);
@@ -14097,8 +14199,8 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT tt.team_group_team_id 
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
@@ -14111,8 +14213,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT tt.team_group_team_id 
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
   )
@@ -14124,8 +14226,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT tt.team_group_team_id 
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
@@ -14134,8 +14236,8 @@ USING (
 WITH CHECK (
   EXISTS (
     SELECT tt.team_group_team_id 
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
@@ -14148,8 +14250,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT tt.team_group_team_id 
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND tm.team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
@@ -14157,41 +14259,41 @@ USING (
 );
 
 --- TEAM_GROUP_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "team_schema"."team_group_member_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT tt.team_group_team_id
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_group_member_table"
+CREATE POLICY "Allow READ for authenticated team members" ON "team_schema"."team_group_member_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
   EXISTS (
     SELECT tt.team_group_team_id
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "team_schema"."team_group_member_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT tt.team_group_team_id
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
@@ -14200,22 +14302,22 @@ USING (
 WITH CHECK (
    EXISTS (
     SELECT tt.team_group_team_id
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_group_member_table"
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "team_schema"."team_group_member_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT tt.team_group_team_id
-    FROM team_group_table as tt
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
+    FROM team_schema.team_group_table as tt
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
     AND team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
@@ -14223,13 +14325,13 @@ USING (
 );
 
 --- TEAM_GROUP_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_group_table"
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "team_schema"."team_group_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
@@ -14237,26 +14339,26 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_group_table"
+CREATE POLICY "Allow READ for authenticated team members" ON "team_schema"."team_group_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
   ) 
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_group_table"
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "team_schema"."team_group_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
@@ -14266,7 +14368,7 @@ USING (
 WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
@@ -14274,13 +14376,13 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_group_table"
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "team_schema"."team_group_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_group_team_id
     AND tm.team_member_user_id = auth.uid()
@@ -14289,41 +14391,41 @@ USING (
 );
 
 --- TEAM_PROJECT_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "team_schema"."team_project_member_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT tp.team_project_team_id
-    FROM team_project_table as tp
-    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    FROM team_schema.team_project_table as tp
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "public"."team_project_member_table"
+CREATE POLICY "Allow READ for authenticated team members" ON "team_schema"."team_project_member_table"
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
   EXISTS (
     SELECT tp.team_project_team_id
-    FROM team_project_table as tp
-    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    FROM team_schema.team_project_table as tp
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "team_schema"."team_project_member_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT tp.team_project_team_id
-    FROM team_project_table as tp
-    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    FROM team_schema.team_project_table as tp
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
@@ -14333,21 +14435,21 @@ WITH CHECK (
   EXISTS (
     SELECT tp.team_project_team_id
     FROM team_project_table as tp
-    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_project_member_table"
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "team_schema"."team_project_member_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT tp.team_project_team_id
-    FROM team_project_table as tp
-    JOIN team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
+    FROM team_schema.team_project_table as tp
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
     AND team_member_role in ('OWNER', 'ADMIN')
@@ -14355,13 +14457,13 @@ USING (
 );
 
 --- TEAM_PROJECT_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "public"."team_project_table"
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "team_schema"."team_project_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
@@ -14369,17 +14471,17 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow READ for anon" ON "public"."team_project_table"
+CREATE POLICY "Allow READ for anon" ON "team_schema"."team_project_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "public"."team_project_table"
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "team_schema"."team_project_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
@@ -14389,7 +14491,7 @@ USING (
 WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
@@ -14397,13 +14499,13 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "public"."team_project_table"
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "team_schema"."team_project_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   EXISTS (
     SELECT tm.team_member_team_id
-    FROM team_member_table as tm
+    FROM team_schema.team_member_table as tm
     JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
     WHERE ut.user_active_team_id = team_project_team_id
     AND tm.team_member_user_id = auth.uid()
@@ -14434,7 +14536,7 @@ TO authenticated
 USING (
   ticket_requester_team_member_id IN (
     SELECT team_member_id  
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
   )
 );
@@ -14462,7 +14564,7 @@ TO authenticated
 USING (
   ticket_comment_team_member_id IN (
     SELECT team_member_id  
-    FROM team_member_table 
+    FROM team_schema.team_member_table 
     WHERE team_member_user_id = auth.uid()
   )
 );
@@ -14476,8 +14578,8 @@ WITH CHECK (
     SELECT 1 
     FROM service_schema.service_scope_table
     JOIN service_schema.service_table ON service_id = service_scope_service_id
-    JOIN team_table ON team_id = service_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = service_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14496,8 +14598,8 @@ USING (
     SELECT 1 
     FROM service_schema.service_scope_table
     JOIN service_schema.service_table ON service_id = service_scope_service_id
-    JOIN team_table ON team_id = service_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = service_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14512,8 +14614,8 @@ USING (
     SELECT 1 
     FROM service_schema.service_scope_table
     JOIN service_schema.service_table ON service_id = service_scope_service_id
-    JOIN team_table ON team_id = service_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = service_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14528,8 +14630,8 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM service_schema.service_table 
-    JOIN team_table ON team_id = service_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = service_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14547,8 +14649,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM service_schema.service_table
-    JOIN team_table ON team_id = service_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = service_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14562,8 +14664,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM service_schema.service_table
-    JOIN team_table ON team_id = service_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = service_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14577,7 +14679,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14594,7 +14696,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14607,7 +14709,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14622,8 +14724,8 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -14641,8 +14743,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -14656,8 +14758,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -14674,8 +14776,8 @@ WITH CHECK (
     FROM item_schema.item_description_field_table AS idf
     JOIN item_schema.item_description_table ON item_description_id = item_description_field_item_description_id
     JOIN item_schema.item_table ON item_id = item_description_item_id
-    JOIN team_table ON team_id = item_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = item_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14695,8 +14797,8 @@ USING (
     FROM item_schema.item_description_field_table AS idf
     JOIN item_schema.item_description_table ON item_description_id = item_description_field_item_description_id
     JOIN item_schema.item_table ON item_id = item_description_item_id
-    JOIN team_table ON team_id = item_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = item_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14712,8 +14814,8 @@ USING (
     FROM item_schema.item_description_field_table AS idf
     JOIN item_schema.item_description_table ON item_description_id = item_description_field_item_description_id
     JOIN item_schema.item_table ON item_id = item_description_item_id
-    JOIN team_table ON team_id = item_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = item_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14782,8 +14884,8 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14800,8 +14902,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14814,8 +14916,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14829,8 +14931,8 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14847,8 +14949,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -14861,8 +14963,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15013,8 +15115,8 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15031,8 +15133,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15046,8 +15148,8 @@ USING (
   EXISTS (
     SELECT 1 
     FROM other_expenses_schema.other_expenses_category_table
-    JOIN team_table ON other_expenses_category_team_id = team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON other_expenses_category_team_id = team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15062,8 +15164,8 @@ WITH CHECK (
   EXISTS (
     SELECT 1 
     FROM other_expenses_schema.other_expenses_category_table
-    JOIN team_table ON team_id = other_expenses_category_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15081,8 +15183,8 @@ USING (
   EXISTS (
     SELECT 1 
     FROM other_expenses_schema.other_expenses_category_table
-    JOIN team_table ON team_id = other_expenses_category_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15096,8 +15198,8 @@ USING (
   EXISTS (
     SELECT 1 
     FROM other_expenses_schema.other_expenses_category_table
-    JOIN team_table ON team_id = other_expenses_category_team_id
-    JOIN team_member_table ON team_member_team_id = team_id
+    JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15111,8 +15213,8 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15129,8 +15231,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15143,8 +15245,8 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1 
-    FROM team_table
-    JOIN team_member_table ON team_member_team_id = team_id
+    FROM team_schema.team_table
+    JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15159,8 +15261,8 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -15178,8 +15280,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -15193,8 +15295,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM item_schema.item_table as it
-    JOIN team_table as tt ON tt.team_id = it.item_team_id
-    JOIN team_member_table as tm ON tm.team_member_team_id = tt.team_id
+    JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
+    JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
     AND tm.team_member_user_id = auth.uid()
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
@@ -15356,7 +15458,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15373,7 +15475,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15386,7 +15488,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15400,7 +15502,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15417,7 +15519,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15430,7 +15532,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15444,7 +15546,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15461,7 +15563,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15474,7 +15576,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15488,7 +15590,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15505,7 +15607,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15518,7 +15620,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15532,7 +15634,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15549,7 +15651,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15562,7 +15664,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15577,8 +15679,8 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM equipment_schema.equipment_table
-    INNER JOIN team_table ON team_id = equipment_team_id
-    INNER JOIN team_member_table ON team_member_team_id = team_id
+    INNER JOIN team_schema.team_table ON team_id = equipment_team_id
+    INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15596,8 +15698,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM equipment_schema.equipment_table
-    INNER JOIN team_table ON team_id = equipment_team_id
-    INNER JOIN team_member_table ON team_member_team_id = team_id
+    INNER JOIN team_schema.team_table ON team_id = equipment_team_id
+    INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15611,8 +15713,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM equipment_schema.equipment_table
-    INNER JOIN team_table ON team_id = equipment_team_id
-    INNER JOIN team_member_table ON team_member_team_id = team_id
+    INNER JOIN team_schema.team_table ON team_id = equipment_team_id
+    INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15626,7 +15728,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15643,7 +15745,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15656,7 +15758,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15670,7 +15772,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15687,7 +15789,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15700,7 +15802,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15715,8 +15817,8 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM equipment_schema.equipment_table
-    INNER JOIN team_table ON team_id = equipment_team_id
-    INNER JOIN team_member_table ON team_member_team_id = team_id
+    INNER JOIN team_schema.team_table ON team_id = equipment_team_id
+    INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15734,8 +15836,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM equipment_schema.equipment_table
-    INNER JOIN team_table ON team_id = equipment_team_id
-    INNER JOIN team_member_table ON team_member_team_id = team_id
+    INNER JOIN team_schema.team_table ON team_id = equipment_team_id
+    INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15749,8 +15851,8 @@ USING (
   EXISTS (
     SELECT 1
     FROM equipment_schema.equipment_table
-    INNER JOIN team_table ON team_id = equipment_team_id
-    INNER JOIN team_member_table ON team_member_team_id = team_id
+    INNER JOIN team_schema.team_table ON team_id = equipment_team_id
+    INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15764,7 +15866,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15781,7 +15883,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15794,7 +15896,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
     AND team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
@@ -15839,11 +15941,11 @@ TO authenticated
 WITH CHECK (
   (
     SELECT team_project_team_id
-    FROM team_project_table
+    FROM team_schema.team_project_table
     WHERE team_project_table.team_project_id = formsly_project_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -15855,11 +15957,11 @@ TO authenticated
 USING (
   (
     SELECT team_project_team_id
-    FROM team_project_table
+    FROM team_schema.team_project_table
     WHERE team_project_table.team_project_id = formsly_project_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -15888,11 +15990,11 @@ TO authenticated
 WITH CHECK (
   (
     SELECT team_project_team_id
-    FROM team_project_table
+    FROM team_schema.team_project_table
     WHERE team_project_table.team_project_id = jira_project_user_team_project_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -15904,11 +16006,11 @@ TO authenticated
 USING (
   (
     SELECT team_project_team_id
-    FROM team_project_table
+    FROM team_schema.team_project_table
     WHERE team_project_table.team_project_id = jira_project_user_team_project_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -15920,11 +16022,11 @@ TO authenticated
 USING (
   (
     SELECT team_project_team_id
-    FROM team_project_table
+    FROM team_schema.team_project_table
     WHERE team_project_table.team_project_id = jira_project_user_team_project_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -15943,7 +16045,7 @@ TO authenticated
 USING (true);
 
 -- TEAM_DEPARTMENT_TABLE
-CREATE POLICY "Allow READ for anon users" ON "public"."team_department_table"
+CREATE POLICY "Allow READ for anon users" ON "team_schema"."team_department_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
@@ -15964,11 +16066,11 @@ TO authenticated
 WITH CHECK (
   (
     SELECT team_project_team_id
-    FROM team_project_table
+    FROM team_schema.team_project_table
     WHERE team_project_table.team_project_id = jira_organization_team_project_project_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -15980,11 +16082,11 @@ TO authenticated
 USING (
   (
     SELECT team_project_team_id
-    FROM team_project_table
+    FROM team_schema.team_project_table
     WHERE team_project_table.team_project_id = jira_organization_team_project_project_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -15996,11 +16098,11 @@ TO authenticated
 USING (
   (
     SELECT team_project_team_id
-    FROM team_project_table
+    FROM team_schema.team_project_table
     WHERE team_project_table.team_project_id = jira_organization_team_project_project_id
   ) IN (
     SELECT team_member_team_id
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -16018,7 +16120,7 @@ TO authenticated
 WITH CHECK (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -16031,7 +16133,7 @@ TO authenticated
 USING (
   EXISTS (
     SELECT 1
-    FROM team_member_table
+    FROM team_schema.team_member_table
     WHERE team_member_user_id = auth.uid()
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
@@ -16081,7 +16183,7 @@ DROP PUBLICATION if exists supabase_realtime;
 CREATE PUBLICATION supabase_realtime;
 COMMIT;
 
-ALTER PUBLICATION supabase_realtime ADD TABLE request_schema.request_table, request_schema.request_signer_table, request_schema.comment_table, notification_table, team_member_table, user_schema.invitation_table, team_project_table, team_group_table, ticket_schema.ticket_comment_table, ticket_schema.ticket_table, team_table;
+ALTER PUBLICATION supabase_realtime ADD TABLE request_schema.request_table, request_schema.request_signer_table, request_schema.comment_table, notification_table, team_schema.team_member_table, user_schema.invitation_table, team_schema.team_project_table, team_schema.team_group_table, ticket_schema.ticket_comment_table, ticket_schema.ticket_table, team_schema.team_table;
 
 -------- END: SUBSCRIPTION
 

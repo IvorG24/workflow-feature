@@ -43,6 +43,7 @@ export const updateTeam = async (
   params: TeamTableUpdate
 ) => {
   const { data, error } = await supabaseClient
+    .schema("team_schema")
     .from("team_table")
     .update(params)
     .eq("team_id", `${params.team_id}`)
@@ -191,6 +192,7 @@ export const updateTeamMemberRole = async (
 ) => {
   const { memberId, role } = params;
   const { error } = await supabaseClient
+    .schema("team_schema")
     .from("team_member_table")
     .update({
       team_member_role: role,

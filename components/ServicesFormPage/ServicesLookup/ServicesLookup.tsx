@@ -9,7 +9,7 @@ const ServicesLookup = () => {
       label: "Unit of Measurement",
       schema: "unit_of_measurement_schema",
     },
-    { table: "supplier", label: "Supplier", schema: "public" },
+    { table: "supplier", label: "Supplier", schema: "team_schema" },
   ] as { table: string; label: string; schema: string }[];
 
   return (

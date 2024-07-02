@@ -109,7 +109,7 @@ const GroupList = ({
       await deleteRow(supabaseClient, {
         rowId: checkList,
         table: "team_group",
-        schema: "public",
+        schema: "team_schema",
       });
       handleFetch("", 1);
       setSelectedGroup(null);

@@ -97,17 +97,18 @@ export type SignerTableUpdate =
   Database["form_schema"]["Tables"]["signer_table"]["Update"];
 
 export type TeamMemberTableRow =
-  Database["public"]["Tables"]["team_member_table"]["Row"];
+  Database["team_schema"]["Tables"]["team_member_table"]["Row"];
 export type TeamMemberTableInsert =
-  Database["public"]["Tables"]["team_member_table"]["Insert"];
+  Database["team_schema"]["Tables"]["team_member_table"]["Insert"];
 export type TeamMemberTableUpdate =
-  Database["public"]["Tables"]["team_member_table"]["Update"];
+  Database["team_schema"]["Tables"]["team_member_table"]["Update"];
 
-export type TeamTableRow = Database["public"]["Tables"]["team_table"]["Row"];
+export type TeamTableRow =
+  Database["team_schema"]["Tables"]["team_table"]["Row"];
 export type TeamTableInsert =
-  Database["public"]["Tables"]["team_table"]["Insert"];
+  Database["team_schema"]["Tables"]["team_table"]["Insert"];
 export type TeamTableUpdate =
-  Database["public"]["Tables"]["team_table"]["Update"];
+  Database["team_schema"]["Tables"]["team_table"]["Update"];
 
 export type UserTableRow =
   Database["user_schema"]["Tables"]["user_table"]["Row"];
@@ -145,25 +146,25 @@ export type ItemDescriptionFieldUOMTableUpdate =
   Database["item_schema"]["Tables"]["item_description_field_uom_table"]["Update"];
 
 export type SupplierTableRow =
-  Database["public"]["Tables"]["supplier_table"]["Row"];
+  Database["team_schema"]["Tables"]["supplier_table"]["Row"];
 export type SupplierTableInsert =
-  Database["public"]["Tables"]["supplier_table"]["Insert"];
+  Database["team_schema"]["Tables"]["supplier_table"]["Insert"];
 export type SupplierTableUpdate =
-  Database["public"]["Tables"]["supplier_table"]["Update"];
+  Database["team_schema"]["Tables"]["supplier_table"]["Update"];
 
 export type TeamGroupTableRow =
-  Database["public"]["Tables"]["team_group_table"]["Row"];
+  Database["team_schema"]["Tables"]["team_group_table"]["Row"];
 export type TeamGroupTableInsert =
-  Database["public"]["Tables"]["team_group_table"]["Insert"];
+  Database["team_schema"]["Tables"]["team_group_table"]["Insert"];
 export type TeamGroupTableUpdate =
-  Database["public"]["Tables"]["team_group_table"]["Update"];
+  Database["team_schema"]["Tables"]["team_group_table"]["Update"];
 
 export type TeamProjectTableRow =
-  Database["public"]["Tables"]["team_project_table"]["Row"];
+  Database["team_schema"]["Tables"]["team_project_table"]["Row"];
 export type TeamProjectTableInsert =
-  Database["public"]["Tables"]["team_project_table"]["Insert"];
+  Database["team_schema"]["Tables"]["team_project_table"]["Insert"];
 export type TeamProjectTableUpdate =
-  Database["public"]["Tables"]["team_project_table"]["Update"];
+  Database["team_schema"]["Tables"]["team_project_table"]["Update"];
 
 export type CSICodeTableRow =
   Database["lookup_schema"]["Tables"]["csi_code_table"]["Row"];
@@ -498,7 +499,7 @@ export type JobTitleTableUpdate =
   Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Update"];
 
 export type TeamDepartmentTableRow =
-  Database["public"]["Tables"]["team_department_table"]["Row"];
+  Database["team_schema"]["Tables"]["team_department_table"]["Row"];
 
 // End: Database Table Types
 
