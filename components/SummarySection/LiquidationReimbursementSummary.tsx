@@ -36,7 +36,7 @@ const LiquidationReimbursementSummary = ({ summaryData }: Props) => {
               <th>Date</th>
               <th>Supplier Name/Payee</th>
               <th>Type of Request</th>
-              <th>Amount</th>
+              <th>Invoice Amount</th>
             </tr>
           </thead>
           <tbody>

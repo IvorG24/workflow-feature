@@ -1895,16 +1895,21 @@ export const getRequestFormslyId = async (
     requestId: string;
   }
 ) => {
-  const { requestId } = params;
-  const { data, error } = await supabaseClient
-    .from("request_view")
-    .select("request_formsly_id")
-    .eq("request_id", requestId)
-    .maybeSingle();
-  if (error) throw error;
-  const requestFormslyId = data ? data.request_formsly_id : null;
+  const isUUID = validate(params.requestId);
+  let query = supabaseClient.from("request_view").select("request_formsly_id");
 
-  return requestFormslyId;
+  if (isUUID) {
+    query = query.eq("request_id", params.requestId);
+  } else {
+    query.eq("request_formsly_id", params.requestId);
+  }
+  query.limit(1);
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+
+  return data[0] ? data[0].request_formsly_id : null;
 };
 
 // Fetch request signer based on Source Project
