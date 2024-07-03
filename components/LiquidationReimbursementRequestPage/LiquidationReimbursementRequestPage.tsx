@@ -88,7 +88,10 @@ const LiquidationReimbursementRequestPage = ({
   >([]);
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [formSection, setFormSection] = useState(
-    generateSectionWithDuplicateList([request.request_form.form_section[0]])
+    generateSectionWithDuplicateList([
+      request.request_form.form_section[0],
+      request.request_form.form_section[2],
+    ])
   );
   const [boqRequestRedirectUrl, setBOQRequestRedirectUrl] = useState<
     string | null
@@ -556,6 +559,7 @@ const LiquidationReimbursementRequestPage = ({
           .sort((a, b) => a.section_order - b.section_order);
 
         const newFormSection = [...formSection, ...formattedSection];
+
         setFormSection(newFormSection);
         setIsLoading(false);
       };
@@ -695,7 +699,7 @@ const LiquidationReimbursementRequestPage = ({
             </Paper>
             <Accordion.Panel>
               <Stack spacing="xl" mt="lg">
-                {formSection.slice(1).map((section, idx) => {
+                {formSection.slice(2).map((section, idx) => {
                   return (
                     <RequestSection
                       key={section.section_id + idx}
@@ -710,6 +714,20 @@ const LiquidationReimbursementRequestPage = ({
             </Accordion.Panel>
           </Accordion.Item>
         </Accordion>
+
+        {formSection.filter(
+          (section) => section.section_name === "Payment"
+        )[0] && (
+          <RequestSection
+            section={
+              formSection.filter(
+                (section) => section.section_name === "Payment"
+              )[0]
+            }
+            isFormslyForm={true}
+            isOnlyWithResponse
+          />
+        )}
 
         {formSection.length > 0 && (
           <LiquidationReimbursementSummary

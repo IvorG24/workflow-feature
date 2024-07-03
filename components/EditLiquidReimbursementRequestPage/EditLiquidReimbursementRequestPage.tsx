@@ -439,6 +439,8 @@ const EditLiquidReimbursementRequestPage = ({
       const vatConditionalField = {
         ...form.form_section[1].section_field[6],
         field_response: calculateInvoiceAmountWithVAT(invoiceAmount),
+        field_section_duplicatable_id:
+          invoiceAmountField?.field_section_duplicatable_id,
       };
 
       const updatedFields = [...currentPayeeSection.section_field];
@@ -493,7 +495,7 @@ const EditLiquidReimbursementRequestPage = ({
 
       const selectedSection = getValues(`sections.${sectionIndex}`);
       const paymentOptionField = {
-        ...form.form_section[1].section_field[9],
+        ...form.form_section[2].section_field[1],
         field_option: bankListOptions,
       };
 
@@ -511,7 +513,7 @@ const EditLiquidReimbursementRequestPage = ({
           )
       );
 
-      const conditionalFieldList = form.form_section[1].section_field.filter(
+      const conditionalFieldList = form.form_section[2].section_field.filter(
         (field) => ["Account Name", "Account Number"].includes(field.field_name)
       );
 
@@ -620,15 +622,21 @@ const EditLiquidReimbursementRequestPage = ({
             field.field_response === "Plants and Equipment"
         );
 
-        const isNotLiquidation = requestDetailsSectionFieldList.find(
-          (field) => field.field_name === "Request Type"
-        )?.field_response;
+        const requestTypeResponse = safeParse(
+          `${
+            requestDetailsSectionFieldList.find(
+              (field) => field.field_name === "Request Type"
+            )?.field_response
+          }`
+        );
 
-        if (!safeParse(isNotLiquidation ?? "").includes("liquidation")) {
+        const isNotLiquidation = !requestTypeResponse.includes("liquidation");
+
+        if (isNotLiquidation) {
           requestDetailsSectionFieldList =
             requestDetailsSectionFieldList.filter(
               (field) =>
-                !["Working Advances", "Ticket Link"].includes(field.field_name)
+                !["Working Advances", "Ticket ID"].includes(field.field_name)
             );
         }
 
@@ -749,6 +757,49 @@ const EditLiquidReimbursementRequestPage = ({
           }
         );
 
+        const paymentSectionResponse = await getNonDuplictableSectionResponse(
+          supabaseClient,
+          {
+            requestId,
+            fieldIdList: form.form_section[2].section_field.map(
+              (field) => field.field_id
+            ),
+          }
+        );
+
+        let paymentSectionFieldList = form.form_section[2].section_field.map(
+          (field) => {
+            const response = paymentSectionResponse.find(
+              (response) =>
+                response.request_response_field_id === field.field_id
+            );
+            return {
+              ...field,
+              field_response: response
+                ? safeParse(response.request_response)
+                : "",
+            };
+          }
+        );
+
+        const modeOfPaymentResponse = paymentSectionFieldList[0].field_response;
+        const isWithAccountConditionalField = [
+          "Bank Transfer",
+          "E-Cash",
+          "Telegraphic Transfer",
+        ].includes(modeOfPaymentResponse);
+        const isBankTransfer = modeOfPaymentResponse === "Bank Transfer";
+
+        if (isWithAccountConditionalField) {
+          if (!isBankTransfer) {
+            paymentSectionFieldList = paymentSectionFieldList.filter(
+              (field) => field.field_name !== "Payment Option"
+            );
+          }
+        } else {
+          paymentSectionFieldList = [paymentSectionFieldList[0]];
+        }
+
         // fetch additional signer
         handleProjectNameChange(
           requestDetailsSectionFieldList[0].field_response
@@ -760,6 +811,7 @@ const EditLiquidReimbursementRequestPage = ({
             section_field: requestDetailsSectionFieldList,
           },
           ...sectionWithDuplicatableId,
+          { ...form.form_section[2], section_field: paymentSectionFieldList },
         ];
 
         replaceSection(finalInitialRequestDetails);
