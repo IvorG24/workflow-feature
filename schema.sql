@@ -5082,7 +5082,7 @@ RETURNS JSON as $$
         const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
         const bankListOptions = bankList.map((bank, index) => {
           return {
-            option_field_id: form.form_section[1].section_field[8].field_id,
+            option_field_id: form.form_section[2].section_field[0].field_id,
             option_id: bank.bank_id,
             option_order: index,
             option_value: bank.bank_label
@@ -5113,7 +5113,8 @@ RETURNS JSON as $$
                 ...form.form_section[0],
                 section_field: firstSectionFieldList,
               },
-              form.form_section[1]
+              form.form_section[1],
+              form.form_section[2]
             ],
           },
           projectOptions,
@@ -9219,7 +9220,7 @@ RETURNS JSON as $$
     );
 
     const formSection = sectionData.map((section, index) => {
-      if (index === 0 || (index === 2 && requestData.form_name === "IT Asset")) {
+      if (index === 0 || (index === 2 &&  ["IT Asset", "Liquidation Reimbursement"].includes(requestData.form_name))) {
         const fieldData = plv8.execute(
           `
             SELECT *
