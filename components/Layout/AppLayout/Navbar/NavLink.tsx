@@ -3,7 +3,7 @@ import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
+import { REQUEST_LIST_HIDDEN_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -59,7 +59,7 @@ const ReviewAppNavLink = () => {
   );
   const router = useRouter();
   const unhiddenForms = forms.filter(
-    (form) => !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name)
+    (form) => !REQUEST_LIST_HIDDEN_FORMS.includes(form.form_name)
   );
 
   const itemForm = forms.filter(
@@ -347,7 +347,7 @@ const ReviewAppNavLink = () => {
           status: "PENDING",
         }
       );
-      
+
       setUserNotificationCount(pendingRequestCount + unreadNotificationCount);
     };
     if (
