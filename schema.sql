@@ -11042,7 +11042,7 @@ plv8.subtransaction(function() {
 
   let searchCondition = '';
   if(search){
-    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`
+    searchCondition = `AND ((user_first_name || ' ' || user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
   }
 
   const teamMemberData = plv8.execute(
@@ -11101,7 +11101,7 @@ plv8.subtransaction(function() {
 
   let searchCondition = "";
   if(search){
-    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
+    searchCondition = `AND ((user_first_name || ' ' || user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
   }
   
   const teamGroupMemberData = plv8.execute(
@@ -11198,7 +11198,7 @@ plv8.subtransaction(function() {
 
   let searchCondition = "";
   if(search){
-    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
+    searchCondition = `AND ((user_first_name || ' ' || user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
   }
   
   const teamProjectMemberData = plv8.execute(
@@ -11447,7 +11447,7 @@ plv8.subtransaction(function() {
 
   let searchCondition = "";
   if(search){
-    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
+    searchCondition = `AND ((user_first_name || ' ' || user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
   }
 
   const teamMemberData = plv8.execute(
@@ -11525,7 +11525,7 @@ plv8.subtransaction(function() {
 
   let searchCondition = "";
   if(search){
-    searchCondition = `AND (user_first_name ILIKE '%${search}%' OR user_last_name ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
+    searchCondition = `AND ((user_first_name || ' ' || user_last_name) ILIKE '%${search}%' OR user_email ILIKE '%${search}%')`;
   }
 
   const teamMemberData = plv8.execute(
