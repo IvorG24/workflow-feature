@@ -236,22 +236,29 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
         <Flex justify="space-between" align="center">
           <Group>
             <Title order={3}>Jira Users</Title>
-
-            <TextInput
-              miw={250}
-              maxLength={4000}
-              placeholder="User Name"
-              rightSection={
-                <ActionIcon
-                  onClick={() =>
-                    handleSearchJiraUser(searchJiraUserFormMethods.getValues())
-                  }
-                >
-                  <IconSearch size={16} />
-                </ActionIcon>
-              }
-              {...searchJiraUserFormMethods.register("search")}
-            />
+            <form
+              onSubmit={searchJiraUserFormMethods.handleSubmit(
+                handleSearchJiraUser
+              )}
+            >
+              <TextInput
+                miw={250}
+                maxLength={4000}
+                placeholder="User Name"
+                rightSection={
+                  <ActionIcon
+                    onClick={() =>
+                      handleSearchJiraUser(
+                        searchJiraUserFormMethods.getValues()
+                      )
+                    }
+                  >
+                    <IconSearch size={16} />
+                  </ActionIcon>
+                }
+                {...searchJiraUserFormMethods.register("search")}
+              />
+            </form>
             <Button
               variant="light"
               leftIcon={<IconReload size={16} />}

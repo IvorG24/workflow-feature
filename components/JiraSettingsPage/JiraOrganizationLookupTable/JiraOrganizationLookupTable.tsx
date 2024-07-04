@@ -192,23 +192,29 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
           <Group>
             <Title order={3}>Jira Organization</Title>
 
-            <TextInput
-              miw={250}
-              maxLength={4000}
-              placeholder="Organization"
-              rightSection={
-                <ActionIcon
-                  onClick={() =>
-                    handleSearchJiraOrganization(
-                      searchJiraOrganizationFormMethods.getValues()
-                    )
-                  }
-                >
-                  <IconSearch size={16} />
-                </ActionIcon>
-              }
-              {...searchJiraOrganizationFormMethods.register("search")}
-            />
+            <form
+              onSubmit={searchJiraOrganizationFormMethods.handleSubmit(
+                handleSearchJiraOrganization
+              )}
+            >
+              <TextInput
+                miw={250}
+                maxLength={4000}
+                placeholder="Organization"
+                rightSection={
+                  <ActionIcon
+                    onClick={() =>
+                      handleSearchJiraOrganization(
+                        searchJiraOrganizationFormMethods.getValues()
+                      )
+                    }
+                  >
+                    <IconSearch size={16} />
+                  </ActionIcon>
+                }
+                {...searchJiraOrganizationFormMethods.register("search")}
+              />
+            </form>
             <Button
               variant="light"
               leftIcon={<IconReload size={16} />}

@@ -12481,6 +12481,7 @@ plv8.subtransaction(function() {
       FROM team_schema.team_project_table
       WHERE
         team_project_team_id = '${teamId}'
+        ${searchCondition}
       ORDER BY team_project_name
       OFFSET ${start} LIMIT ${limit}
     `

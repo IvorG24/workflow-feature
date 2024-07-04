@@ -306,23 +306,29 @@ const JiraFormslyItemCategoryList = ({
         <Group position="apart">
           <Group>
             <Title order={3}>Item Category</Title>
-            <TextInput
-              miw={250}
-              maxLength={4000}
-              placeholder="Item Name"
-              rightSection={
-                <ActionIcon
-                  onClick={() =>
-                    handleSearchJiraFormslyItemCategory(
-                      searchJiraFormslyItemCategoryMethods.getValues()
-                    )
-                  }
-                >
-                  <IconSearch size={16} />
-                </ActionIcon>
-              }
-              {...searchJiraFormslyItemCategoryMethods.register("search")}
-            />
+            <form
+              onSubmit={searchJiraFormslyItemCategoryMethods.handleSubmit(
+                handleSearchJiraFormslyItemCategory
+              )}
+            >
+              <TextInput
+                miw={250}
+                maxLength={4000}
+                placeholder="Item Name"
+                rightSection={
+                  <ActionIcon
+                    onClick={() =>
+                      handleSearchJiraFormslyItemCategory(
+                        searchJiraFormslyItemCategoryMethods.getValues()
+                      )
+                    }
+                  >
+                    <IconSearch size={16} />
+                  </ActionIcon>
+                }
+                {...searchJiraFormslyItemCategoryMethods.register("search")}
+              />
+            </form>
           </Group>
           <Button
             size="xs"
