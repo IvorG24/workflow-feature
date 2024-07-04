@@ -11318,7 +11318,31 @@ plv8.subtransaction(function() {
     query = query + ` AND signer_team_department_id = '${departmentId}'`
   }
 
-  const signerData = plv8.execute(query);
+  let signerData = plv8.execute(query);
+
+  if (signerData.length <= 0) {
+    signerData = plv8.execute(`
+      SELECT
+        signer_id,
+        signer_is_primary_signer,
+        signer_action,
+        signer_order,
+        signer_is_disabled,
+        signer_team_project_id,
+        team_member_id,
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_avatar
+      FROM form_schema.signer_table
+      INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        signer_team_project_id = '${projectId}'
+        AND signer_form_id = '${formId}'
+        AND signer_is_disabled = false
+    `)
+  }
 
   returnData = signerData.map(signer => {
     return {

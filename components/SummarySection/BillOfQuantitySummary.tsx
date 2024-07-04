@@ -51,19 +51,37 @@ const BillOfQuantitySummary = ({ summaryData }: Props) => {
               const invoiceAmount = safeParse(
                 `${summary.section_field[2].field_response?.request_response}`
               );
-              const vat = safeParse(
-                `${
-                  summary.section_field[3].field_response?.request_response ?? 0
-                }`
+              const vat = Number(
+                safeParse(
+                  `${
+                    summary.section_field.find(
+                      (field) => field.field_name === "VAT"
+                    )?.field_response?.request_response ?? 0
+                  }`
+                )
               );
-              const cost = safeParse(
-                `${summary.section_field[4].field_response?.request_response}`
+              const cost = Number(
+                safeParse(
+                  `${
+                    summary.section_field.find(
+                      (field) => field.field_name === "Cost"
+                    )?.field_response?.request_response ?? 0
+                  }`
+                )
               );
               const costCode = safeParse(
-                `${summary.section_field[5].field_response?.request_response}`
+                `${
+                  summary.section_field.find(
+                    (field) => field.field_name === "Cost Code"
+                  )?.field_response?.request_response
+                }`
               );
               const boqCode = safeParse(
-                `${summary.section_field[6].field_response?.request_response}`
+                `${
+                  summary.section_field.find(
+                    (field) => field.field_name === "Bill of Quantity Code"
+                  )?.field_response?.request_response
+                }`
               );
 
               return (
