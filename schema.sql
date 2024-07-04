@@ -4218,7 +4218,7 @@ CREATE OR REPLACE FUNCTION create_request_page_on_load(
 RETURNS JSON as $$
   let returnData;
   plv8.subtransaction(function(){
-    const {
+    const { 
       formId,
       userId,
       connectedRequestFormslyId
@@ -5149,7 +5149,7 @@ RETURNS JSON as $$
               AND request_response_duplicatable_section_id IS NOT NULL
           `).map(response => response.request_response_duplicatable_section_id);
 
-          const connectedRequestSectionId = plv8.execute(`
+          const connectedRequestPayeeSectionId = plv8.execute(`
             SELECT 
               section_id 
             FROM 
@@ -5205,7 +5205,7 @@ RETURNS JSON as $$
           },
           connectedRequest: {
             ...connectedRequest,
-            form_section: [connectedRequestSectionId],
+            form_section: [connectedRequestPayeeSectionId],
             duplicatableSectionIdList
           }
         };
@@ -5593,21 +5593,6 @@ RETURNS JSON as $$
             throw new Error('Request id not found');
           }
 
-          let connectedRequestChargeToProjectResponse = "";
-          let connectedRequestChargeToProjectId = "";
-
-          const connectedRequestChargeToProject = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${connectedRequest.request_id}' AND request_response_field_id='2bac0084-53f4-419f-aba7-fb1f77403e00'`);
-
-          if (connectedRequestChargeToProject[0]) {
-            connectedRequestChargeToProjectResponse = JSON.parse(connectedRequestChargeToProject[0].request_response);
-
-            const selectedProject = plv8.execute(`SELECT team_project_id FROM team_schema.team_project_table WHERE team_project_name = '${connectedRequestChargeToProjectResponse}'`);
-
-            if (selectedProject[0]) {
-              connectedRequestChargeToProjectId = selectedProject[0].team_project_id;
-            }
-          }
-
           const connectedRequestSectionId = plv8.execute(`
             SELECT 
               section_id 
@@ -5617,9 +5602,27 @@ RETURNS JSON as $$
               section_form_id = '${connectedRequest.request_form_id}' 
           `)[0].section_id;
 
-          const signerTeamProjectList = [connectedRequest.request_project_id]
+          let connectedRequestChargeToProjectId = "";
 
-          if (connectedRequestChargeToProjectId) {
+          const parentRequestIdField = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${connectedRequest.request_id}' AND request_response_field_id='9a112d6f-a34e-4767-b3c1-7f30af858f8f'`)[0];
+
+          if (parentRequestIdField) {
+            const parentRequestIdFieldResponse = parentRequestIdField.request_response.split('"').join('');
+            const connectedRequestChargeToProjectName = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${parentRequestIdFieldResponse}' AND request_response_field_id='2bac0084-53f4-419f-aba7-fb1f77403e00'`)[0];
+
+            if (connectedRequestChargeToProjectName) {
+                const parseProjectName = connectedRequestChargeToProjectName.request_response.split('"').join('');
+                const connectedRequestChargeToProject = plv8.execute(`SELECT team_project_id FROM team_schema.team_project_table WHERE team_project_name = '${parseProjectName}'`)[0];
+
+                if (connectedRequestChargeToProject) {
+                  connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
+                }   
+            }
+          }
+
+          const signerTeamProjectList = [connectedRequest.request_project_id]
+        
+          if (connectedRequestChargeToProjectId !== "") {
             signerTeamProjectList.push(connectedRequestChargeToProjectId)
           }
 
@@ -5672,7 +5675,9 @@ RETURNS JSON as $$
           connectedRequest: {
             ...connectedRequest,
             form_section: [connectedRequestSectionId]
-          }
+          },
+          signerTeamProjectList,
+          connectedRequestChargeToProjectId
         };
         } else {
           returnData = {
@@ -6960,7 +6965,7 @@ plv8.subtransaction(function(){
     `
   ).map(response => response.request_response_duplicatable_section_id);
   
-  formData = plv8.execute(`SELECT create_request_page_on_load('{ "formId": "${requestData.request_form_id}", "userId": "${userId}" }')`)[0].create_request_page_on_load;
+  formData = plv8.execute(`SELECT create_request_page_on_load('{ "formId": "${requestData.request_form_id}", "userId": "${userId}", "connectedRequestFormslyId": "${initialRequestId}" }')`)[0].create_request_page_on_load;
 
   returnData = {
     ...formData,
@@ -12476,6 +12481,7 @@ plv8.subtransaction(function() {
       FROM team_schema.team_project_table
       WHERE
         team_project_team_id = '${teamId}'
+        ${searchCondition}
       ORDER BY team_project_name
       OFFSET ${start} LIMIT ${limit}
     `

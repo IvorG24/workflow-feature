@@ -268,7 +268,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [team]);
+  }, [team, teamMember]);
 
   return (
     <Container>

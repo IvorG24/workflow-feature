@@ -194,23 +194,29 @@ const JiraProjectLookupTable = ({
           <Group>
             <Title order={3}>Jira Projects</Title>
 
-            <TextInput
-              miw={250}
-              maxLength={4000}
-              placeholder="Project Name"
-              rightSection={
-                <ActionIcon
-                  onClick={() =>
-                    handleSearchJiraProject(
-                      searchJiraProjectFormMethods.getValues()
-                    )
-                  }
-                >
-                  <IconSearch size={16} />
-                </ActionIcon>
-              }
-              {...searchJiraProjectFormMethods.register("search")}
-            />
+            <form
+              onSubmit={searchJiraProjectFormMethods.handleSubmit(
+                handleSearchJiraProject
+              )}
+            >
+              <TextInput
+                miw={250}
+                maxLength={4000}
+                placeholder="Project Name"
+                rightSection={
+                  <ActionIcon
+                    onClick={() =>
+                      handleSearchJiraProject(
+                        searchJiraProjectFormMethods.getValues()
+                      )
+                    }
+                  >
+                    <IconSearch size={16} />
+                  </ActionIcon>
+                }
+                {...searchJiraProjectFormMethods.register("search")}
+              />
+            </form>
             <Button
               variant="light"
               leftIcon={<IconReload size={16} />}
