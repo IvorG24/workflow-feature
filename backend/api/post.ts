@@ -1982,9 +1982,12 @@ export const createDepartmentSigner = async (
   } = await supabaseClient
     .schema("form_schema")
     .from("signer_table")
-    .select("signer_id, signer_is_disabled", { count: "exact" })
+    .select("signer_id, signer_is_disabled", {
+      count: "exact",
+    })
     .eq("signer_team_project_id", `${params.signer_team_project_id}`)
     .eq("signer_team_department_id", `${params.signer_team_department_id}`)
+    .eq("signer_team_member_id", `${params.signer_team_member_id}`)
     .eq("signer_is_primary_signer", Boolean(params.signer_is_primary_signer))
     .maybeSingle();
 
