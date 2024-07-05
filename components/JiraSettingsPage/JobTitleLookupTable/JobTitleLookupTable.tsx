@@ -169,24 +169,29 @@ const JobTitleLookupTable = () => {
         <Flex justify="space-between" align="center">
           <Group>
             <Title order={3}>Job Title List</Title>
-
-            <TextInput
-              miw={250}
-              maxLength={4000}
-              placeholder="Job Title"
-              rightSection={
-                <ActionIcon
-                  onClick={() =>
-                    handleSearchJiraJobList(
-                      searchJobTitleFormMethods.getValues()
-                    )
-                  }
-                >
-                  <IconSearch size={16} />
-                </ActionIcon>
-              }
-              {...searchJobTitleFormMethods.register("search")}
-            />
+            <form
+              onSubmit={searchJobTitleFormMethods.handleSubmit(
+                handleSearchJiraJobList
+              )}
+            >
+              <TextInput
+                miw={250}
+                maxLength={4000}
+                placeholder="Job Title"
+                rightSection={
+                  <ActionIcon
+                    onClick={() =>
+                      handleSearchJiraJobList(
+                        searchJobTitleFormMethods.getValues()
+                      )
+                    }
+                  >
+                    <IconSearch size={16} />
+                  </ActionIcon>
+                }
+                {...searchJobTitleFormMethods.register("search")}
+              />
+            </form>
             <Button
               variant="light"
               leftIcon={<IconReload size={16} />}

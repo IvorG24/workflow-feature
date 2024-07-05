@@ -391,13 +391,12 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
           safeParse(
             costCodeSection.section_field[1].field_response[0].request_response
           ) !== "TBA";
-
         setInvalidCostCode(isValidBoqCode && isValidCostCode);
         const updatedCostCodeSection = generateSectionWithDuplicateList([
           costCodeSection,
         ])[0];
-        setSectionWithDuplicateList((prev) => [
-          ...prev,
+        setSectionWithDuplicateList([
+          ...sectionWithDuplicateList,
           updatedCostCodeSection,
         ]);
       } else {

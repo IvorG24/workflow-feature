@@ -529,8 +529,11 @@ const EditPettyCashVoucherRequestPage = ({
   const handleSCICAuthorizationBooleanChange = (value: boolean) => {
     try {
       const currentRequestSectionList = getValues(`sections`);
+      const particularSectionExists = currentRequestSectionList.some(
+        (section) => section.section_name === "Particular Details"
+      );
 
-      if (value) {
+      if (value && !particularSectionExists) {
         const particularSection = form.form_section[5];
         const sectionWithProjectOptions = {
           ...particularSection,
@@ -550,9 +553,6 @@ const EditPettyCashVoucherRequestPage = ({
           { focusIndex: 0 }
         );
       } else if (!value) {
-        const particularSectionExists = getValues(
-          `sections.${currentRequestSectionList.length - 1}`
-        );
         if (particularSectionExists) {
           removeSection(currentRequestSectionList.length - 1);
         }
@@ -583,6 +583,14 @@ const EditPettyCashVoucherRequestPage = ({
     )?.field_response;
 
     handleChargeToProjectBooleanChange(isChargedToProject as boolean);
+
+    if (Boolean(isChargedToProject)) {
+      const typeOfRequestValue = safeParse(
+        `${sections[2].section_field[1].field_response}`
+      );
+
+      handleTypeOfRequestChange(typeOfRequestValue);
+    }
 
     const paymentDetailsSectionIndex = sections.findIndex(
       (section) => section.section_name === "Payment Details"
@@ -640,14 +648,29 @@ const EditPettyCashVoucherRequestPage = ({
 
         switch (value) {
           case "Other":
-            addField(3);
-            if (equipmentCodeField)
+            if (!specifyOtherTypeOfRequestField) {
+              addField(3);
+            }
+            if (equipmentCodeField) {
               removeFieldById(equipmentCodeField.field_id);
+            }
             break;
           case "Spare Part":
-            addField(4);
-            if (specifyOtherTypeOfRequestField)
+            if (!equipmentCodeField) {
+              addField(4);
+            }
+            if (specifyOtherTypeOfRequestField) {
               removeFieldById(specifyOtherTypeOfRequestField.field_id);
+            }
+            break;
+
+          default:
+            if (specifyOtherTypeOfRequestField) {
+              removeFieldById(specifyOtherTypeOfRequestField.field_id);
+            }
+            if (equipmentCodeField) {
+              removeFieldById(equipmentCodeField.field_id);
+            }
             break;
         }
       } else {
@@ -749,7 +772,6 @@ const EditPettyCashVoucherRequestPage = ({
 
         replaceSection(formSectionWithResponse);
         setInitialRequestDetails({ sections: formSectionWithResponse });
-
         handleUpdateConditionalSectionAndField(formSectionWithResponse);
       };
       fetchRequestDetails();
