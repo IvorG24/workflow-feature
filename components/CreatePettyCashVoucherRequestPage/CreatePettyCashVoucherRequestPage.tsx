@@ -190,7 +190,7 @@ const CreatePettyCashVoucherRequestPage = ({
       const isPed = selectedDepartment === "Plants and Equipment";
       const requestDetailsSection = getValues(`sections.1`);
       const pedConditionalField = form.form_section[1].section_field[10];
-      const pedConditionalFieldExists =
+      const pedConditionalFieldIndex =
         requestDetailsSection.section_field.findIndex(
           (field) =>
             field.field_name === "Is this request charged to the project?"
@@ -200,7 +200,7 @@ const CreatePettyCashVoucherRequestPage = ({
       );
 
       if (selectedProject) {
-        if (isPed) {
+        if (isPed && pedConditionalFieldIndex < 0) {
           updateSection(1, {
             ...requestDetailsSection,
             section_field: [
@@ -208,7 +208,7 @@ const CreatePettyCashVoucherRequestPage = ({
               pedConditionalField,
             ],
           });
-        } else if (!isPed && Boolean(pedConditionalFieldExists)) {
+        } else if (!isPed && pedConditionalFieldIndex > 0) {
           updateSection(1, {
             ...requestDetailsSection,
             section_field: requestDetailsSection.section_field.filter(

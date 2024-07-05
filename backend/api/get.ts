@@ -1914,6 +1914,7 @@ export const getProjectSigner = async (
     .select("*")
     .eq("signer_team_project_id", projectId)
     .eq("signer_form_id", formId)
+    .is("signer_team_department_id", null)
     .eq("signer_is_disabled", false);
 
   if (error) throw error;
