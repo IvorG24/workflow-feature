@@ -2260,7 +2260,7 @@ RETURNS JSON AS $$
      selectedProjectId
     } = input_data;
 
-    plv8.execute(`UPDATE form_schema.signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}' AND signer_team_project_id ${selectedProjectId ? `='${selectedProjectId}'` : "IS NULL"}`);
+    plv8.execute(`UPDATE form_schema.signer_table SET signer_is_disabled=true WHERE signer_form_id='${formId}' AND signer_team_project_id ${selectedProjectId ? `='${selectedProjectId}'` : "IS NULL"} AND signer_team_department_id IS NULL`);
 
     const signerValues = signers
       .map(
@@ -11321,6 +11321,8 @@ plv8.subtransaction(function() {
 
   if (departmentId) {
     query = query + ` AND signer_team_department_id = '${departmentId}'`
+  } else {
+    query = query + ` AND signer_team_department_id IS NULL`
   }
 
   let signerData = plv8.execute(query);
@@ -11345,6 +11347,7 @@ plv8.subtransaction(function() {
       WHERE
         signer_team_project_id = '${projectId}'
         AND signer_form_id = '${formId}'
+        AND signer_team_department_id IS NULL
         AND signer_is_disabled = false
     `)
   }
