@@ -5,6 +5,8 @@ import { FieldArrayWithId } from "react-hook-form";
 import TicketFormFields from "./TicketFormFields";
 
 type Props = {
+  loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
+  sectionIndex?: number;
   category: string;
   ticketSection: FieldArrayWithId<
     CreateTicketFormValues,
@@ -24,9 +26,17 @@ type Props = {
       value: string | null
     ) => void;
   };
+  itemRequestMethods?: {
+    onGeneralNameBlur: (value: string | null) => void;
+    onDivisionBlur: (value: string[] | null) => void;
+    onPEDItemChange: (value: boolean) => void;
+    onITAssetItemChange: (value: boolean) => void;
+  };
 };
 
 const TicketFormSection = ({
+  loadingFieldList,
+  sectionIndex,
   category,
   ticketSectionIdx,
   ticketSection,
@@ -34,6 +44,7 @@ const TicketFormSection = ({
   isEdit,
   requestItemCSIMethods,
   requestItemOptionMethods,
+  itemRequestMethods,
 }: Props) => {
   const { field_section_duplicatable_id } = ticketSection;
   return (
@@ -67,8 +78,16 @@ const TicketFormSection = ({
 
       {ticketSection.ticket_section_fields.map(
         (ticketField, ticketFieldIdx) => {
+          const isLoading = Boolean(
+            loadingFieldList?.find(
+              (loadingField) =>
+                loadingField.sectionIndex === sectionIndex &&
+                loadingField.fieldIndex === ticketFieldIdx
+            )
+          );
           return (
             <TicketFormFields
+              isLoading={isLoading}
               category={category}
               ticketField={ticketField}
               ticketFieldIdx={ticketFieldIdx}
@@ -76,6 +95,7 @@ const TicketFormSection = ({
               isEdit={isEdit}
               requestItemCSIMethods={requestItemCSIMethods}
               requestItemOptionMethods={requestItemOptionMethods}
+              itemRequestMethods={itemRequestMethods}
               key={
                 ticketField.ticket_field_id + ticketSection.ticket_section_id
               }

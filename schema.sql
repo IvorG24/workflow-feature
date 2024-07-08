@@ -1671,7 +1671,7 @@ RETURNS JSON AS $$
     const item_division_list_result = plv8.execute(`INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
 
     const itemDescriptionInput = [];
-    const fieldInput= [];
+    const fieldInput = [];
 
     itemDescription.forEach((description, index) => {
       const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
@@ -7117,8 +7117,10 @@ RETURNS JSON AS $$
           ${
             search && 
             `
-              AND equipment_general_name ILIKE '%${search}%'
-              OR equipment_part_number ILIKE '%${search}%'
+              AND (
+                equipment_general_name ILIKE '%${search}%'
+                OR equipment_part_number ILIKE '%${search}%'
+              )
             `
           }
         ORDER BY equipment_general_name
@@ -7151,8 +7153,10 @@ RETURNS JSON AS $$
           ${
             search && 
             `
-              AND equipment_general_name ILIKE '%${search}%'
-              OR equipment_part_number ILIKE '%${search}%'
+              AND (
+                equipment_general_name ILIKE '%${search}%'
+                OR equipment_part_number ILIKE '%${search}%'
+              )
             `
           }
       `
@@ -12978,6 +12982,110 @@ plv8.subtransaction(function() {
   }
 });
 return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_item_from_ticket_request(
+  input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      generalName,
+      unitOfMeasurement,
+      glAccount,
+      divisionList,
+      divisionDescription,
+      isPedItem,
+      isITAssetItem,
+      descriptionList,
+      teamId
+    } = input_data;
+    
+    const item_result = plv8.execute(
+      `
+        INSERT INTO item_schema.item_table 
+        (
+          item_general_name,
+          item_unit,
+          item_gl_account,
+          item_team_id,
+          item_is_ped_item, 
+          item_is_it_asset_item
+        ) 
+        VALUES 
+        (
+          '${generalName}',
+          '${unitOfMeasurement}',
+          '${glAccount}',
+          '${teamId}',
+          ${Boolean(isPedItem)},
+          ${Boolean(isITAssetItem)}
+        ) RETURNING *
+      `
+    )[0];
+
+    const itemDivisionInput = divisionList.map(division => {
+      return `('${division}', '${item_result.item_id}')`;
+    }).join(",");
+    let itemDivisionDescription;
+    if (divisionDescription) {
+      itemDivisionDescription = plv8.execute(
+        `
+          INSERT INTO item_schema.item_level_three_description_table 
+          (
+            item_level_three_description_item_id, 
+            item_level_three_description
+          ) 
+          VALUES (
+            '${item_result.item_id}', 
+            '${divisionDescription}'
+          ) 
+          RETURNING *
+        `
+      )[0].item_level_three_description;
+    }
+    const item_division_list_result = plv8.execute(`INSERT INTO item_schema.item_division_table (item_division_value, item_division_item_id) VALUES ${itemDivisionInput} RETURNING *`);
+
+    const itemDescriptionInput = [];
+    const fieldInput = [];
+
+    descriptionList.forEach((description, index) => {
+      const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      itemDescriptionInput.push({
+        item_description_id: descriptionId,
+        item_description_label: description.description,
+        item_description_item_id: item_result.item_id,
+        item_description_is_available: true,
+        item_description_field_id: fieldId,
+        item_description_is_with_uom: Boolean(description.isWithUom),
+        item_description_order: index + 1
+      });
+      fieldInput.push({
+        field_id: fieldId,
+        field_name: description.description,
+        field_type: "DROPDOWN",
+        field_order: index + 15,
+        field_section_id: '0672ef7d-849d-4bc7-81b1-7a5eefcc1451',
+        field_is_required: true,
+      });
+    });
+
+    const itemDescriptionValues = itemDescriptionInput
+      .map((item) =>
+        `('${item.item_description_id}','${item.item_description_label}','${item.item_description_item_id}','${item.item_description_is_available}','${item.item_description_field_id}','${item.item_description_is_with_uom}',${item.item_description_order})`
+      )
+      .join(",");
+
+    const fieldValues = fieldInput
+      .map((field) =>
+        `('${field.field_id}','${field.field_name}','${field.field_type}','${field.field_order}','${field.field_section_id}','${field.field_is_required}')`
+      ).join(",");
+
+    plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
+    
+    const item_description = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+ });
 $$ LANGUAGE plv8;
 
 -------- END: FUNCTIONS

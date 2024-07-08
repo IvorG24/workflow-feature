@@ -10,6 +10,7 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { Dispatch, SetStateAction, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import TicketForm from "../CreateTicketPage/TicketForm";
+import TicketItemRequestForm from "../TicketItemRequestForm/TicketItemRequestForm";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
 import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
 import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
@@ -293,6 +294,20 @@ const TicketOverride = ({
             onOverrideResponseComment={handleOverrideResponseComment}
           />
         );
+      case "Item Request":
+        return (
+          <TicketItemRequestForm
+            category={category}
+            memberId={memberId}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+            isEdit={true}
+            onOverrideTicket={onOverrideTicket}
+            onClose={onClose}
+            onOverrideResponseComment={handleOverrideResponseComment}
+          />
+        );
+
       default:
         return (
           <TicketForm
