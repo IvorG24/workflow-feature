@@ -67,11 +67,12 @@ export const deleteRow = async (
     condition += `${table}_id.eq.${id}, `;
   });
 
-  const { error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .schema(schema)
     .from(`${table}_table`)
     .update({ [`${table}_is_disabled`]: true })
-    .or(condition.slice(0, -2));
+    .or(condition.slice(0, -2))
+    .select("*");
 
   if (error) throw error;
 };

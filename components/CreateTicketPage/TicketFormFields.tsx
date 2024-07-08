@@ -3,11 +3,15 @@ import {
   MAX_FILE_SIZE_IN_MB,
   createTicketFilePlaceholder,
 } from "@/utils/constant";
+import { safeParse } from "@/utils/functions";
 import { formatCSICode } from "@/utils/string";
 import { CreateTicketFormValues, TicketSection } from "@/utils/types";
 import {
   Autocomplete,
+  Checkbox,
   FileInput,
+  Loader,
+  MultiSelect,
   Select,
   Text,
   TextInput,
@@ -18,6 +22,7 @@ import { Controller, useFormContext } from "react-hook-form";
 
 type Props = {
   category: string;
+  isLoading: boolean | undefined;
   ticketField: TicketSection["ticket_section_fields"][0];
   ticketFieldIdx: number;
   ticketSectionIdx: number;
@@ -32,16 +37,24 @@ type Props = {
       value: string | null
     ) => void;
   };
+  itemRequestMethods?: {
+    onGeneralNameBlur: (value: string | null) => void;
+    onDivisionBlur: (value: string[] | null) => void;
+    onPEDItemChange: (value: boolean) => void;
+    onITAssetItemChange: (value: boolean) => void;
+  };
 };
 
 const TicketFormFields = ({
   category,
+  isLoading,
   ticketField,
   ticketFieldIdx,
   ticketSectionIdx,
   isEdit,
   requestItemCSIMethods,
   requestItemOptionMethods,
+  itemRequestMethods,
 }: Props) => {
   const {
     register,
@@ -89,13 +102,44 @@ const TicketFormFields = ({
                     ticketField.ticket_field_name === "CSI Code"
                   ) {
                     value = formatCSICode(value);
-                  } else if (ticketField.ticket_field_name === "Part Number") {
+                  } else if (
+                    ticketField.ticket_field_name === "Part Number" ||
+                    "General Name"
+                  ) {
                     value = value.toUpperCase();
                   }
+
                   onChange(value);
+                }}
+                onBlur={(e) => {
+                  const value = e.currentTarget.value;
+                  switch (field.ticket_field_name) {
+                    case "General Name":
+                      itemRequestMethods &&
+                        itemRequestMethods.onGeneralNameBlur(value);
+                      break;
+                  }
                 }}
                 error={fieldError}
                 withAsterisk={field.ticket_field_is_required}
+                sx={{
+                  input: {
+                    textTransform:
+                      itemRequestMethods &&
+                      ["General Name", "Description"].includes(
+                        field.ticket_field_name
+                      )
+                        ? "uppercase"
+                        : "none",
+                  },
+                }}
+                rightSection={isLoading && <Loader size={16} />}
+                readOnly={field.ticket_field_is_read_only || isLoading}
+                variant={
+                  field.ticket_field_is_read_only || isLoading
+                    ? "filled"
+                    : "default"
+                }
               />
             )}
             rules={{ ...fieldRules }}
@@ -115,6 +159,13 @@ const TicketFormFields = ({
             minRows={3}
             error={fieldError}
             withAsterisk={field.ticket_field_is_required}
+            rightSection={isLoading && <Loader size={16} />}
+            readOnly={field.ticket_field_is_read_only || isLoading}
+            variant={
+              field.ticket_field_is_read_only || isLoading
+                ? "filled"
+                : "default"
+            }
           />
         );
 
@@ -157,6 +208,58 @@ const TicketFormFields = ({
                 clearable
                 error={fieldError}
                 searchable
+                rightSection={isLoading && <Loader size={16} />}
+                readOnly={field.ticket_field_is_read_only || isLoading}
+                variant={
+                  field.ticket_field_is_read_only || isLoading
+                    ? "filled"
+                    : "default"
+                }
+              />
+            )}
+            rules={{ ...fieldRules }}
+          />
+        );
+
+      case "MULTISELECT":
+        return (
+          <Controller
+            control={control}
+            name={`ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`}
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                value={value as string[]}
+                onChange={onChange}
+                onBlur={() => {
+                  switch (field.ticket_field_name) {
+                    case "Division":
+                      itemRequestMethods &&
+                        itemRequestMethods.onDivisionBlur(
+                          value as string[] | null
+                        );
+                      break;
+                  }
+                }}
+                data={ticketField.ticket_field_option}
+                limit={250}
+                nothingFound={<Text>Nothing found!</Text>}
+                withAsterisk={field.ticket_field_is_required}
+                {...inputProps}
+                sx={{
+                  display: Boolean(ticketField.ticket_field_hidden)
+                    ? "none"
+                    : "inline",
+                }}
+                clearable
+                error={fieldError}
+                searchable
+                rightSection={isLoading && <Loader size={16} />}
+                readOnly={field.ticket_field_is_read_only || isLoading}
+                variant={
+                  field.ticket_field_is_read_only || isLoading
+                    ? "filled"
+                    : "default"
+                }
               />
             )}
             rules={{ ...fieldRules }}
@@ -220,6 +323,44 @@ const TicketFormFields = ({
                 maxDropdownHeight={200}
                 sx={{ style: "upperCase" }}
                 {...inputProps}
+                rightSection={isLoading && <Loader size={16} />}
+                readOnly={field.ticket_field_is_read_only || isLoading}
+                variant={
+                  field.ticket_field_is_read_only || isLoading
+                    ? "filled"
+                    : "default"
+                }
+              />
+            )}
+            rules={{ ...fieldRules }}
+          />
+        );
+
+      case "CHECKBOX":
+        return (
+          <Controller
+            control={control}
+            name={`ticket_sections.${ticketSectionIdx}.ticket_section_fields.${ticketFieldIdx}.ticket_field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Checkbox
+                {...inputProps}
+                checked={safeParse(value as string) as boolean}
+                onChange={(e) => {
+                  const value = e.currentTarget.checked;
+                  switch (field.ticket_field_name) {
+                    case "PED Item":
+                      itemRequestMethods &&
+                        itemRequestMethods.onPEDItemChange(value);
+                      break;
+                    case "IT Asset Item":
+                      itemRequestMethods &&
+                        itemRequestMethods.onITAssetItemChange(value);
+                      break;
+                  }
+                  onChange(value);
+                }}
+                error={fieldError}
+                sx={{ input: { cursor: "pointer" } }}
               />
             )}
             rules={{ ...fieldRules }}
