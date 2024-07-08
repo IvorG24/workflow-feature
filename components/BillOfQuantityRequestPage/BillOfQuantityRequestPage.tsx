@@ -357,7 +357,7 @@ const BillOfQuantityRequestPage = ({
       );
 
       let workingAdvances = "";
-      let ticketUrl = "";
+      let ticketId = "";
 
       if (typeOfRequest.includes("Liquidation")) {
         const requestWorkingAdvances = safeParse(
@@ -369,7 +369,7 @@ const BillOfQuantityRequestPage = ({
             requestWorkingAdvances.toLowerCase()
         );
         workingAdvances = choiceMatch.id;
-        ticketUrl = safeParse(
+        ticketId = safeParse(
           sortedLrfRequestDetails[6].field_response[0].request_response
         );
       }
@@ -402,7 +402,7 @@ const BillOfQuantityRequestPage = ({
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",
         workingAdvances,
-        ticketUrl,
+        ticketId,
       });
 
       const jiraTicket = await createJiraTicket({

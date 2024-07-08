@@ -401,7 +401,7 @@ const LiquidationReimbursementRequestPage = ({
       );
 
       let workingAdvances = "";
-      let ticketUrl = "";
+      let ticketId = "";
 
       if (typeOfRequest.includes("Liquidation")) {
         const requestWorkingAdvances = safeParse(
@@ -413,7 +413,7 @@ const LiquidationReimbursementRequestPage = ({
             requestWorkingAdvances.toLowerCase()
         );
         workingAdvances = choiceMatch.id;
-        ticketUrl = safeParse(
+        ticketId = safeParse(
           sortedRequestDetails[6].field_response[0].request_response
         );
       }
@@ -446,7 +446,7 @@ const LiquidationReimbursementRequestPage = ({
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",
         workingAdvances,
-        ticketUrl,
+        ticketId,
         costCode,
         boqCode,
       });
