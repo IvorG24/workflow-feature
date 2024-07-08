@@ -10371,7 +10371,7 @@ RETURNS JSON AS $$
     const latestTransaction = plv8.execute(
       `
         SELECT team_transaction_team_expiration_date 
-        FROM team_transaction_table 
+        FROM team_schema.team_transaction_table 
         WHERE 
           team_transaction_team_id = '${teamId}'
         ORDER BY team_transaction_date_created DESC

@@ -68,6 +68,7 @@ const RequestListPage = ({
         idFilter: [],
       },
     });
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
   const [requestListTableColumnFilter, setRequestListTableColumnFilter] =
@@ -175,6 +176,13 @@ const RequestListPage = ({
   useEffect(() => {
     handlePagination(activePage);
   }, [activeTeam.team_id, teamMember]);
+
+  useEffect(() => {
+    if (localFilter.status !== undefined && isInitialLoad) {
+      handleFilterForms();
+      setIsInitialLoad(false);
+    }
+  }, [localFilter, isInitialLoad]);
 
   return (
     <Container maw={3840} h="100%">
