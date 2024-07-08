@@ -302,7 +302,8 @@ const RequestFormListPage = ({
           mih={170}
           mt="xl"
         >
-          {formList.length > 0 ? (
+          {formList.sort((a, b) => a.form_name.localeCompare(b.form_name))
+            .length > 0 ? (
             formList.map((form) => (
               <FormCard
                 form={form}

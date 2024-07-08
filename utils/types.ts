@@ -1942,7 +1942,7 @@ export type JiraLRFTicketPayloadProps = {
   typeOfRequest: string;
   requestFormType: string;
   workingAdvances: string;
-  ticketUrl: string;
+  ticketId: string;
   requestor: string;
   boqCode?: string;
   costCode?: string;

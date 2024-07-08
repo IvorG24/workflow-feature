@@ -6,7 +6,6 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import { Database } from "oneoffice-api";
 import { formatDate } from "../constant";
-import { addHttpsToUrlIfMissing } from "../functions";
 import {
   JiraESRTicketPayloadProps,
   JiraITAssetTicketPayloadProps,
@@ -391,7 +390,7 @@ export const formatJiraLRFRequisitionPayload = ({
   purpose,
   typeOfRequest,
   workingAdvances,
-  ticketUrl,
+  ticketId,
   requestor,
   boqCode,
   costCode,
@@ -417,7 +416,7 @@ export const formatJiraLRFRequisitionPayload = ({
           choices: [workingAdvances], // Working Advances
         },
         "444": {
-          text: addHttpsToUrlIfMissing(ticketUrl),
+          text: ticketId,
         },
         "473": {
           text: requestId, // Formsly Id

@@ -83,7 +83,8 @@ const RequestListPage = ({
 
   const filteredFormList = formList
     .filter(({ form_name }) => !REQUEST_LIST_HIDDEN_FORMS.includes(form_name))
-    .map(({ form_name: label, form_id: value }) => ({ label, value }));
+    .map(({ form_name: label, form_id: value }) => ({ label, value }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   const { handleSubmit, getValues, control } = filterFormMethods;
 
