@@ -135,13 +135,7 @@ const BillOfQuantityRequestPage = ({
         return;
       }
       if (!teamMember) return;
-      if (!jiraId || !jiraLink) {
-        notifications.show({
-          message: "Jira id or jira link is undefined",
-          color: "orange",
-        });
-        return;
-      }
+
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -158,11 +152,13 @@ const BillOfQuantityRequestPage = ({
       });
 
       // update parent lrf jira id and jira link
-      await updateRequestJiraId(supabaseClient, {
-        requestId: parentLrfRequestId,
-        jiraId,
-        jiraLink,
-      });
+      if (jiraId && jiraLink) {
+        await updateRequestJiraId(supabaseClient, {
+          requestId: parentLrfRequestId,
+          jiraId,
+          jiraLink,
+        });
+      }
 
       notifications.show({
         message: `Request ${status.toLowerCase()}.`,
