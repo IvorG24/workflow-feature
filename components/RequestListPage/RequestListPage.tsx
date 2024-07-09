@@ -68,6 +68,7 @@ const RequestListPage = ({
         idFilter: [],
       },
     });
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
   const [requestListTableColumnFilter, setRequestListTableColumnFilter] =
@@ -83,7 +84,8 @@ const RequestListPage = ({
 
   const filteredFormList = formList
     .filter(({ form_name }) => !REQUEST_LIST_HIDDEN_FORMS.includes(form_name))
-    .map(({ form_name: label, form_id: value }) => ({ label, value }));
+    .map(({ form_name: label, form_id: value }) => ({ label, value }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   const { handleSubmit, getValues, control } = filterFormMethods;
 
@@ -175,6 +177,13 @@ const RequestListPage = ({
   useEffect(() => {
     handlePagination(activePage);
   }, [activeTeam.team_id, teamMember]);
+
+  useEffect(() => {
+    if (localFilter.status !== undefined && isInitialLoad) {
+      handleFilterForms();
+      setIsInitialLoad(false);
+    }
+  }, [localFilter, isInitialLoad]);
 
   return (
     <Container maw={3840} h="100%">

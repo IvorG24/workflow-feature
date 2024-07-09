@@ -135,13 +135,7 @@ const BillOfQuantityRequestPage = ({
         return;
       }
       if (!teamMember) return;
-      if (!jiraId || !jiraLink) {
-        notifications.show({
-          message: "Jira id or jira link is undefined",
-          color: "orange",
-        });
-        return;
-      }
+
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
@@ -158,11 +152,13 @@ const BillOfQuantityRequestPage = ({
       });
 
       // update parent lrf jira id and jira link
-      await updateRequestJiraId(supabaseClient, {
-        requestId: parentLrfRequestId,
-        jiraId,
-        jiraLink,
-      });
+      if (jiraId && jiraLink) {
+        await updateRequestJiraId(supabaseClient, {
+          requestId: parentLrfRequestId,
+          jiraId,
+          jiraLink,
+        });
+      }
 
       notifications.show({
         message: `Request ${status.toLowerCase()}.`,
@@ -357,7 +353,7 @@ const BillOfQuantityRequestPage = ({
       );
 
       let workingAdvances = "";
-      let ticketUrl = "";
+      let ticketId = "";
 
       if (typeOfRequest.includes("Liquidation")) {
         const requestWorkingAdvances = safeParse(
@@ -369,7 +365,7 @@ const BillOfQuantityRequestPage = ({
             requestWorkingAdvances.toLowerCase()
         );
         workingAdvances = choiceMatch.id;
-        ticketUrl = safeParse(
+        ticketId = safeParse(
           sortedLrfRequestDetails[6].field_response[0].request_response
         );
       }
@@ -402,7 +398,7 @@ const BillOfQuantityRequestPage = ({
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",
         workingAdvances,
-        ticketUrl,
+        ticketId,
       });
 
       const jiraTicket = await createJiraTicket({

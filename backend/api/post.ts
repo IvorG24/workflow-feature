@@ -2036,3 +2036,28 @@ export const sendNotificationToCostEngineer = async (
   );
   if (error) throw error;
 };
+
+// create item from ticket request
+export const createItemFromTicketRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    generalName: string;
+    unitOfMeasurement: string;
+    glAccount: string;
+    divisionList: string[];
+    divisionDescription: string;
+    isPedItem: boolean;
+    isITAssetItem: boolean;
+    descriptionList: { description: string; isWithUom: boolean }[];
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "create_item_from_ticket_request",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data;
+};

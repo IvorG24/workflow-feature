@@ -21,6 +21,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useState } from "react";
+import TicketItemRequestForm from "../TicketItemRequestForm/TicketItemRequestForm";
 import TicketRequestCustomCSIForm from "../TicketRequestCustomCSIForm/TicketRequestCustomCSIForm";
 import TicketRequestItemCSIForm from "../TicketRequestItemCSIForm/TicketRequestItemCSIForm";
 import TicketRequestItemOptionForm from "../TicketRequestItemOptionForm/TicketRequestItemOptionForm";
@@ -103,6 +104,16 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
             setIsLoading={setIsLoading}
           />
         );
+      case "Item Request":
+        return (
+          <TicketItemRequestForm
+            category={category}
+            memberId={member.team_member_id}
+            ticketForm={ticketForm}
+            setIsLoading={setIsLoading}
+          />
+        );
+
       default:
         return (
           <TicketForm

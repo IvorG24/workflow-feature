@@ -61,6 +61,15 @@ const ReviewAppNavLink = () => {
   const unhiddenForms = forms.filter(
     (form) => !REQUEST_LIST_HIDDEN_FORMS.includes(form.form_name)
   );
+  const createRequestFormList = forms.filter(
+    (form) =>
+      ![
+        ...REQUEST_LIST_HIDDEN_FORMS,
+        "Petty Cash Voucher Balance",
+        "Request For Payment Code",
+        "Bill of Quantity",
+      ].includes(form.form_name)
+  );
 
   const itemForm = forms.filter(
     (form) => form.form_is_formsly_form && form.form_name === "Item"
@@ -111,7 +120,7 @@ const ReviewAppNavLink = () => {
 
           <Portal>
             <Menu.Dropdown>
-              {unhiddenForms
+              {createRequestFormList
                 .sort((a, b) => a.form_name.localeCompare(b.form_name))
                 .map((form) => (
                   <Menu.Item
@@ -171,16 +180,20 @@ const ReviewAppNavLink = () => {
                 View All
               </Menu.Item>
               <Divider />
-              {unhiddenForms.map((form) => (
-                <Menu.Item
-                  key={form.form_id}
-                  onClick={() =>
-                    router.push(`/${activeTeamNameToUrl}/forms/${form.form_id}`)
-                  }
-                >
-                  {form.form_name}
-                </Menu.Item>
-              ))}
+              {unhiddenForms
+                .sort((a, b) => a.form_name.localeCompare(b.form_name))
+                .map((form) => (
+                  <Menu.Item
+                    key={form.form_id}
+                    onClick={() =>
+                      router.push(
+                        `/${activeTeamNameToUrl}/forms/${form.form_id}`
+                      )
+                    }
+                  >
+                    {form.form_name}
+                  </Menu.Item>
+                ))}
             </Menu.Dropdown>
           </Portal>
         </Menu>

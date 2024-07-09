@@ -9,6 +9,7 @@ import {
   createCustomCSI,
   createItemDescriptionField,
   createItemDivision,
+  createItemFromTicketRequest,
   createNotification,
   createPedPartFromTicketRequest,
   createTicketComment,
@@ -17,6 +18,7 @@ import { updateTicketStatus } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
+import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey, parseJSONIfValid } from "@/utils/string";
 import {
   CreateTicketFormValues,
@@ -217,6 +219,8 @@ const TicketActionSection = ({
         return handleItemOptionClosing();
       case "Request PED Equipment Part":
         return handleRequestPedEquipmentPartClosing();
+      case "Item Request":
+        return handleItemRequestClosing();
       default:
         handleUpdateTicketStatus("CLOSED", null);
         return;
@@ -431,6 +435,71 @@ const TicketActionSection = ({
           ticketForm.ticket_sections[0].ticket_section_fields[6]
             .ticket_field_response as string
         ),
+        teamId: activeTeam.team_id,
+      });
+
+      handleUpdateTicketStatus("CLOSED", null);
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleItemRequestClosing = async () => {
+    try {
+      setIsLoading(true);
+      if (!teamMember) throw new Error();
+
+      await createItemFromTicketRequest(supabaseClient, {
+        generalName: safeParse(
+          ticketForm.ticket_sections[0].ticket_section_fields[0]
+            .ticket_field_response as string
+        ),
+        unitOfMeasurement: safeParse(
+          ticketForm.ticket_sections[0].ticket_section_fields[1]
+            .ticket_field_response as string
+        ),
+        glAccount: safeParse(
+          ticketForm.ticket_sections[0].ticket_section_fields[2]
+            .ticket_field_response as string
+        ),
+        divisionList: safeParse(
+          ticketForm.ticket_sections[0].ticket_section_fields[3]
+            .ticket_field_response as string
+        ).split(","),
+        divisionDescription: safeParse(
+          ticketForm.ticket_sections[0].ticket_section_fields[4]
+            .ticket_field_response as string
+        ),
+        isPedItem: Boolean(
+          safeParse(
+            ticketForm.ticket_sections[0].ticket_section_fields[5]
+              .ticket_field_response as string
+          )
+        ),
+        isITAssetItem: Boolean(
+          safeParse(
+            ticketForm.ticket_sections[0].ticket_section_fields[6]
+              .ticket_field_response as string
+          )
+        ),
+        descriptionList: ticketForm.ticket_sections.slice(1).map((section) => {
+          return {
+            description: safeParse(
+              section.ticket_section_fields[0].ticket_field_response as string
+            ),
+            isWithUom: Boolean(
+              safeParse(
+                section.ticket_section_fields[1].ticket_field_response as string
+              )
+            ),
+          };
+        }),
         teamId: activeTeam.team_id,
       });
 

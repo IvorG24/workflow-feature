@@ -128,13 +128,6 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
         return;
       }
       if (!teamMember) return;
-      if (!jiraId || !jiraLink) {
-        notifications.show({
-          message: "Jira id or jira link is undefined",
-          color: "orange",
-        });
-        return;
-      }
 
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
@@ -152,11 +145,13 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
       });
 
       // update parent lrf jira id and jira link
-      await updateRequestJiraId(supabaseClient, {
-        requestId: parentWavRequestId,
-        jiraId,
-        jiraLink,
-      });
+      if (jiraId && jiraLink) {
+        await updateRequestJiraId(supabaseClient, {
+          requestId: parentWavRequestId,
+          jiraId,
+          jiraLink,
+        });
+      }
 
       notifications.show({
         message: `Request ${status.toLowerCase()}.`,

@@ -84,6 +84,7 @@ const EquipmentPartList = ({
         limit: ROW_PER_PAGE,
         page,
       });
+
       setEquipmentPartList(data);
       setEquipmentPartCount(Number(count));
     } catch {
@@ -140,7 +141,7 @@ const EquipmentPartList = ({
         message: "Equipment Part/s deleted.",
         color: "green",
       });
-    } catch {
+    } catch (e) {
       setEquipmentPartList(savedRecord);
       setCheckList(saveCheckList);
       notifications.show({
