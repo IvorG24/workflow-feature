@@ -89,7 +89,13 @@ const LiquidationReimbursementRequestPage = ({
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [formSection, setFormSection] = useState(
     generateSectionWithDuplicateList([
-      request.request_form.form_section[0],
+      {
+        ...request.request_form.form_section[0],
+        section_field:
+          request.request_form.form_section[0].section_field.filter(
+            (field) => field.field_name !== "BOQ Code"
+          ),
+      },
       request.request_form.form_section[2],
     ])
   );

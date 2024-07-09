@@ -5630,7 +5630,7 @@ RETURNS JSON as $$
           `)[0];
 
           if (parentRequestIdField) {
-            const parentRequestIdFieldResponse = parentRequestIdField.request_response.replace(/"/g, '');
+            const parentRequestIdFieldResponse = parentRequestIdField.request_response.split('"').join('');
 
             const isUUID = (str) => {
               const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -5646,7 +5646,7 @@ RETURNS JSON as $$
               `)[0];
 
               if (connectedRequestChargeToProjectName) {
-                const parseProjectName = connectedRequestChargeToProjectName.request_response.replace(/"/g, '');
+                const parseProjectName = connectedRequestChargeToProjectName.request_response.split('"').join('');
                 const connectedRequestChargeToProject = plv8.execute(`
                   SELECT team_project_id 
                   FROM team_schema.team_project_table 
@@ -5654,7 +5654,7 @@ RETURNS JSON as $$
                 `)[0];
 
                 if (connectedRequestChargeToProject) {
-                  connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.replace(/"/g, '');
+                  connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
                 }
               }
             } else {
@@ -5665,7 +5665,7 @@ RETURNS JSON as $$
               `)[0];
 
               if (connectedRequestChargeToProject) {
-                connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.replace(/"/g, '');
+                connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
               }
             }
           }
@@ -5744,12 +5744,12 @@ RETURNS JSON as $$
         }
       }
     } else {
-      returnData = {
+        returnData = {
         form
-      }
+        }
     }
- });
- return returnData;
+});
+return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_request(
@@ -13144,6 +13144,104 @@ RETURNS VOID AS $$
     
     const item_description = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
  });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_pcv_summary_table(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const { 
+      userId
+    } = input_data;
+
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+
+    const requestList = plv8.execute(`
+        SELECT 
+        request_id,
+        request_formsly_id_prefix,
+        request_formsly_id_serial,
+        request_date_created,
+        request_status_date_updated,
+        request_jira_id,
+        ft.form_id,
+        ft.form_name
+        FROM request_schema.request_table
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+        INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+        WHERE
+            tmt.team_member_team_id = '${teamId}'
+            AND request_status = 'APPROVED'
+            AND request_is_disabled = FALSE
+            AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a', 'e10abdce-e012-45b6-bec4-e0133f1a8467')
+    `);
+
+    const requestListWithResponses = [];
+
+    requestList.forEach((request) => {
+        const responseList = plv8.execute(`
+        SELECT 
+            request_response, 
+            request_response_field_id, 
+            request_response_request_id,
+            request_response_duplicatable_section_id,
+            ft.field_name 
+        FROM 
+            request_schema.request_response_table 
+        INNER JOIN 
+            form_schema.field_table AS ft 
+            ON ft.field_id = request_response_field_id 
+        WHERE 
+            request_response_request_id = '${request.request_id}' 
+            AND ft.field_name IN (
+                'Supplier Name/Payee', 
+                'Type of Request',
+                'Invoice Amount',
+                'VAT',
+                'Cost',
+                'Equipment Code',
+                'Cost Code',
+                'Bill of Quantity Code'
+            )
+        `);
+
+        const requestWithResponses = {
+            ...request,
+            request_response_list: responseList
+        };
+
+        requestListWithResponses.push(requestWithResponses)
+    })
+
+    returnData = requestListWithResponses.sort((a, b) => b.form_name.localeCompare(a.form_name)).reduce((acc, current) => {
+        if (current.form_name === 'Bill of Quantity') {
+            const parentRequest = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${current.request_id}' AND request_response_field_id = 'eff42959-8552-4d7e-836f-f89018293ae8' LIMIT 1`)[0];
+
+            if (parentRequest) {
+                const parentRequestId = parentRequest.request_response.split('"').join('');
+                const parentRequestMatchIndex = acc.findIndex((request) => request.request_id === parentRequestId);
+
+                acc[parentRequestMatchIndex] = {
+                    ...acc[parentRequestMatchIndex],
+                    request_boq_data: {
+                        request_id: current.request_id,
+                        request_formsly_id: current.request_formsly_id_prefix + '-' + current.request_formsly_id_serial
+                    },
+                    request_response_list: current.request_response_list
+                }
+
+            }
+        } else {
+            acc.push(current)
+        }
+
+        return acc;
+    }, []);
+
+ });
+return returnData;
 $$ LANGUAGE plv8;
 
 -------- END: FUNCTIONS
