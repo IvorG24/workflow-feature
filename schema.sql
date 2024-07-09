@@ -13027,32 +13027,6 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION check_user_email(
-  input_data JSON
-)
-RETURNS JSON AS $$
-let returnData = [];
-plv8.subtransaction(function() {
-  const {
-    emailList,
-    teamId
-  } = input_data;
-
-  const emailListCondition = emailList.map(email => `'${email}'`).join(",");
-
-  returnData = plv8.execute(
-    `
-      SELECT user_email
-      FROM team_schema.team_member_table
-      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      WHERE
-        team_member_team_id = '${teamId}'
-        AND user_email IN (${emailListCondition})
-    `
-  ).map(data => user_email);
-});
-return returnData;
-
 CREATE OR REPLACE FUNCTION create_item_from_ticket_request(
   input_data JSON
 )
