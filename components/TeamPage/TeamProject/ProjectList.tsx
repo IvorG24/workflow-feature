@@ -1,8 +1,14 @@
 import { deleteRow } from "@/backend/api/delete";
-import { getFileUrl } from "@/backend/api/get";
+import { getFileUrl, getTeamMemberList } from "@/backend/api/get";
+import { addMemberToAllProject } from "@/backend/api/post";
+import { useActiveTeam } from "@/stores/useTeamStore";
 import { ROW_PER_PAGE } from "@/utils/constant";
 import { generateRandomId } from "@/utils/functions";
-import { AddressTableRow, TeamProjectWithAddressType } from "@/utils/types";
+import {
+  AddressTableRow,
+  TeamMemberType,
+  TeamProjectWithAddressType,
+} from "@/utils/types";
 import {
   ActionIcon,
   Badge,
@@ -11,17 +17,28 @@ import {
   Checkbox,
   Flex,
   Group,
+  LoadingOverlay,
+  Modal,
+  MultiSelect,
+  Stack,
   Text,
   TextInput,
   Title,
   createStyles,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { openConfirmModal } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconFile, IconPlus, IconSearch, IconTrash } from "@tabler/icons-react";
+import {
+  IconFile,
+  IconPlus,
+  IconSearch,
+  IconTrash,
+  IconUserPlus,
+} from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 const useStyles = createStyles((theme) => ({
   checkbox: {
@@ -74,12 +91,41 @@ const ProjectList = ({
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
+  const activeTeam = useActiveTeam();
 
   const [activePage, setActivePage] = useState(1);
   const [checkList, setCheckList] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [opened, { open, close }] = useDisclosure(false);
+  const [isFetchingTeamMembers, setIsFetchingTeamMembers] = useState(false);
+  const [teamMemberList, setTeamMemberList] = useState<TeamMemberType[]>([]);
+  const [isAddingToAllProjects, setIsAddingToAllProjects] = useState(false);
+  const [multiselectValue, setMultiSelectValue] = useState<string[]>([]);
 
   const headerCheckboxKey = generateRandomId();
+
+  const fetchProjectMembers = async () => {
+    setIsFetchingTeamMembers(true);
+    try {
+      const teamMemberList = await getTeamMemberList(supabaseClient, {
+        teamId: activeTeam.team_id,
+      });
+      setTeamMemberList(teamMemberList);
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsFetchingTeamMembers(false);
+    }
+  };
+
+  useEffect(() => {
+    if (opened) {
+      fetchProjectMembers();
+    }
+  }, [opened]);
 
   const handleCheckRow = (projectId: string) => {
     if (checkList.includes(projectId)) {
@@ -274,8 +320,88 @@ const ProjectList = ({
     return `${address.address_street}, ${address.address_barangay}, ${address.address_city}, ${address.address_province}, ${address.address_region}, ${address.address_zip_code}`;
   };
 
+  const handleAddMemberToAllProjects = async () => {
+    try {
+      setIsAddingToAllProjects(true);
+      let index = 0;
+      while (1) {
+        await addMemberToAllProject(supabaseClient, {
+          teamMemberIdList: multiselectValue.slice(index, index + 5),
+        });
+        index += 5;
+        if (index >= multiselectValue.length) break;
+      }
+      notifications.show({
+        message: "Team Member/s added.",
+        color: "green",
+      });
+      handleCloseModal();
+    } catch {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsAddingToAllProjects(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setMultiSelectValue([]);
+    close();
+    setIsAddingToAllProjects(false);
+  };
+
   return (
     <Box>
+      <Modal
+        opened={opened}
+        onClose={close}
+        title="Add Members to All Projects"
+        centered
+        size="lg"
+        closeOnEscape={false}
+        closeOnClickOutside={false}
+        withCloseButton={false}
+      >
+        <Stack>
+          <LoadingOverlay
+            mt="xl"
+            visible={isFetchingTeamMembers}
+            overlayBlur={2}
+          />
+          <MultiSelect
+            data={teamMemberList.map((member) => {
+              return {
+                label: `${member.team_member_user.user_first_name} ${member.team_member_user.user_last_name}`,
+                value: member.team_member_id,
+              };
+            })}
+            label="Team Member"
+            withinPortal={true}
+            searchable
+            clearable
+            onChange={setMultiSelectValue}
+            value={multiselectValue}
+          />
+          <Group position="right" spacing="xs">
+            <Button
+              onClick={handleCloseModal}
+              variant="light"
+              disabled={isAddingToAllProjects}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAddMemberToAllProjects}
+              loading={isAddingToAllProjects}
+            >
+              Submit
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
       <Flex align="center" justify="space-between" wrap="wrap" gap="xs">
         <Group className={classes.flexGrow}>
           <Title m={0} p={0} order={3}>
@@ -334,13 +460,23 @@ const ProjectList = ({
             </Button>
           ) : null}
           {isOwnerOrAdmin && (
-            <Button
-              rightIcon={<IconPlus size={16} />}
-              className={classes.flexGrow}
-              onClick={() => setIsCreatingProject(true)}
-            >
-              Add
-            </Button>
+            <Group>
+              <Button
+                variant="light"
+                rightIcon={<IconUserPlus size={16} />}
+                className={classes.flexGrow}
+                onClick={open}
+              >
+                Add Member to All Projects
+              </Button>
+              <Button
+                rightIcon={<IconPlus size={16} />}
+                className={classes.flexGrow}
+                onClick={() => setIsCreatingProject(true)}
+              >
+                Add
+              </Button>
+            </Group>
           )}
         </Group>
       </Flex>
