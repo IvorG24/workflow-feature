@@ -928,6 +928,11 @@ CREATE TABLE unit_of_measurement_schema.item_unit_of_measurement_table (
   item_unit_of_measurement_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
+CREATE TABLE lookup_schema.bank_list_table (
+  bank_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  bank_label VARCHAR(4000) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -5095,7 +5100,7 @@ RETURNS JSON as $$
           }
         });
 
-        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankList = plv8.execute(`SELECT * FROM lookup_schema.bank_list_table`);
         const bankListOptions = bankList.map((bank, index) => {
           return {
             option_field_id: form.form_section[2].section_field[0].field_id,
@@ -5262,7 +5267,7 @@ RETURNS JSON as $$
           }
         });
 
-        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankList = plv8.execute(`SELECT * FROM lookup_schema.bank_list_table`);
         const bankListOptions = bankList.map((bank, index) => {
           return {
             option_field_id: form.form_section[3].section_field[1].field_id,
@@ -13128,6 +13133,44 @@ RETURNS VOID AS $$
     plv8.execute(`INSERT INTO form_schema.field_table (field_id,field_name,field_type,field_order,field_section_id,field_is_required) VALUES ${fieldValues}`);
     
     const item_description = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
+ });
+$$ LANGUAGE plv8;.
+
+CREATE OR REPLACE FUNCTION add_team_member_to_all_project(
+  input_data JSON
+)
+RETURNS VOID AS $$
+  plv8.subtransaction(function(){
+    const {
+      teamMemberIdList
+    } = input_data;
+    
+    const teamProjectData = plv8.execute(
+      `
+        SELECT team_project_id
+        FROM team_schema.team_project_table
+        WHERE
+          team_project_is_disabled = false
+      `
+    );
+
+    teamMemberIdList.forEach(teamMemberId => {
+      teamProjectData.forEach(teamProject => {
+        plv8.execute(
+          `
+            INSERT INTO team_schema.team_project_member_table (team_member_id, team_project_id)
+            SELECT '${teamMemberId}', '${teamProject.team_project_id}'
+            WHERE NOT EXISTS (
+              SELECT team_project_member_id
+              FROM team_schema.team_project_member_table
+              WHERE 
+                team_member_id = '${teamMemberId}'
+                AND team_project_id = '${teamProject.team_project_id}'
+            )
+          `
+        )
+      })
+    });
  });
 $$ LANGUAGE plv8;
 
