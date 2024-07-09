@@ -5079,7 +5079,7 @@ RETURNS JSON as $$
           }
         });
 
-        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankList = plv8.execute(`SELECT * FROM lookup_schema.bank_list_table`);
         const bankListOptions = bankList.map((bank, index) => {
           return {
             option_field_id: form.form_section[2].section_field[0].field_id,
@@ -5246,7 +5246,7 @@ RETURNS JSON as $$
           }
         });
 
-        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankList = plv8.execute(`SELECT * FROM lookup_schema.bank_list_table`);
         const bankListOptions = bankList.map((bank, index) => {
           return {
             option_field_id: form.form_section[3].section_field[1].field_id,
