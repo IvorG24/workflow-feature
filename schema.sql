@@ -928,6 +928,11 @@ CREATE TABLE unit_of_measurement_schema.item_unit_of_measurement_table (
   item_unit_of_measurement_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
+CREATE TABLE lookup_schema.bank_list_table (
+  bank_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  bank_label VARCHAR(4000) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
