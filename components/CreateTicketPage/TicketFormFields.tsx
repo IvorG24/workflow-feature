@@ -104,7 +104,7 @@ const TicketFormFields = ({
                   ) {
                     value = formatCSICode(value);
                   } else if (
-                    ["Part Number", "General Name"].includes(
+                    ["Part Number", "General Name", "Description"].includes(
                       ticketField.ticket_field_name
                     )
                   ) {

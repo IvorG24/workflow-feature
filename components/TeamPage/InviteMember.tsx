@@ -1,4 +1,4 @@
-import { getTeamInvitation } from "@/backend/api/get";
+import { checkUserEmail, getTeamInvitation } from "@/backend/api/get";
 import { cancelTeamInvitation, createTeamInvitation } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
@@ -65,25 +65,35 @@ const InviteMember = ({ memberEmailList }: Props) => {
     try {
       if (!teamMember) return;
       setIsInvitingMember(true);
+      const alreadyMemberEmailList = await checkUserEmail(supabaseClient, {
+        emailList,
+        teamId: team.team_id,
+      });
+
+      const filteredEmailList = emailList.filter(
+        (email) => !alreadyMemberEmailList.includes(email)
+      );
 
       await createTeamInvitation(supabaseClient, {
-        emailList,
+        emailList: filteredEmailList,
         teamMemberId: teamMember.team_member_id,
         teamName: team.team_name,
       });
 
       await sendEmailTeamInvite({
-        emailList,
+        emailList: filteredEmailList,
         teamId: team.team_id,
         teamName: team.team_name,
       });
       await handleFetchPendingInviteList({ page: 1 });
+
       setEmailList([]);
+
       notifications.show({
         message: "Team member/s invited.",
         color: "green",
       });
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -233,6 +243,7 @@ const InviteMember = ({ memberEmailList }: Props) => {
               clearable
               clearSearchOnChange
               onChange={setEmailList}
+              value={emailList}
               getCreateLabel={(query) => (
                 <Flex align="center" gap={4}>
                   <IconMailPlus size={14} />

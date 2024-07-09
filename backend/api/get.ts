@@ -5792,3 +5792,18 @@ export const checkIfUserIsRequestOwner = async (
 
   return Number(count) > 0;
 };
+
+// Check if user email already exists
+export const checkUserEmail = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    emailList: string[];
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("check_user_email", { input_data: params })
+    .select("*");
+  if (error) throw error;
+  return data as string[];
+};
