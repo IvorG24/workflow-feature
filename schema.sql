@@ -1954,25 +1954,41 @@ RETURNS JSON AS $$
     emailList.forEach((email) => {
       const invitationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
 
-      const  checkInvitationCount = plv8.execute(`SELECT COUNT(*) FROM user_schema.invitation_table WHERE invitation_to_email='${email}' AND invitation_from_team_member_id='${teamMemberId}' AND invitation_is_disabled='false' AND invitation_status='PENDING';`)[0].count;
-        
-      if (!checkInvitationCount) {
-        invitationInput.push({
-          invitation_id: invitationId,
-          invitation_to_email: email,
-          invitation_from_team_member_id: teamMemberId,
-        });
-      }
+       plv8.execute(
+        `
+          DELETE FROM user_schema.invitation_table 
+          WHERE 
+            invitation_to_email = '${email}' 
+            AND invitation_status = 'PENDING'
+        `
+      );
+  
+      invitationInput.push({
+        invitation_id: invitationId,
+        invitation_to_email: email,
+        invitation_from_team_member_id: teamMemberId,
+      });
+  
+      const userData = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_email = '${email}' LIMIT 1`);
+      
+      if (userData.length) {
+        plv8.execute(
+          `
+            DELETE FROM notification_table 
+            WHERE 
+              notification_app = 'GENERAL'
+              AND notification_content = 'You have been invited to join ${teamName}'
+              AND notification_type = 'INVITE'
+              AND notification_user_id = '${userData[0].user_id}'
+          `
+        );
 
-      const checkUserData = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_email='${email}';`)[0];
-
-      if (checkUserData) {
         notificationInput.push({
           notification_app: "GENERAL",
           notification_content: `You have been invited to join ${teamName}`,
           notification_redirect_url: `/invitation/${invitationId}`,
           notification_type: "INVITE",
-          notification_user_id: checkUserData.user_id,
+          notification_user_id: userData[0].user_id,
         });
       }
     });
@@ -1993,7 +2009,7 @@ RETURNS JSON AS $$
           `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_type}','${notification.notification_user_id}')`
         )
         .join(",");
-
+      
       plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ${notificationValues};`);
     }
   });
@@ -12980,6 +12996,33 @@ plv8.subtransaction(function() {
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION check_user_email(
+  input_data JSON
+)
+RETURNS JSON AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+  const {
+    emailList,
+    teamId
+  } = input_data;
+
+  const emailListCondition = emailList.map(email => `'${email}'`).join(",");
+
+  returnData = plv8.execute(
+    `
+      SELECT user_email
+      FROM team_schema.team_member_table
+      INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        team_member_team_id = '${teamId}'
+        AND user_email IN (${emailListCondition})
+    `
+  ).map(data => user_email);
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 -------- END: FUNCTIONS
 
 -------- START: POLICIES
@@ -13135,7 +13178,7 @@ DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_memb
 DROP POLICY IF EXISTS "Allow INSERT for authenticated users" ON notification_table;
 DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" ON notification_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on notification_user_id" ON notification_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on notification_user_id" ON notification_table;
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON notification_table;
 
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_response_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_response_table;
@@ -14061,10 +14104,10 @@ TO authenticated
 USING (auth.uid() = notification_user_id)
 WITH CHECK (auth.uid() = notification_user_id);
 
-CREATE POLICY "Allow DELETE for authenticated users on notification_user_id" ON "public"."notification_table"
+CREATE POLICY "Allow DELETE for authenticated users" ON "public"."notification_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (auth.uid() = notification_user_id);
+USING (true);
 
 --- REQUEST_RESPONSE_TABLE
 CREATE POLICY "Allow CREATE access for all users" ON "request_schema"."request_response_table"
