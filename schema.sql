@@ -928,6 +928,11 @@ CREATE TABLE unit_of_measurement_schema.item_unit_of_measurement_table (
   item_unit_of_measurement_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
+CREATE TABLE lookup_schema.bank_list_table (
+  bank_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  bank_label VARCHAR(4000) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -5079,7 +5084,7 @@ RETURNS JSON as $$
           }
         });
 
-        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankList = plv8.execute(`SELECT * FROM lookup_schema.bank_list_table`);
         const bankListOptions = bankList.map((bank, index) => {
           return {
             option_field_id: form.form_section[2].section_field[0].field_id,
@@ -5246,7 +5251,7 @@ RETURNS JSON as $$
           }
         });
 
-        const bankList = plv8.execute(`SELECT * FROM bank_list_table`);
+        const bankList = plv8.execute(`SELECT * FROM lookup_schema.bank_list_table`);
         const bankListOptions = bankList.map((bank, index) => {
           return {
             option_field_id: form.form_section[3].section_field[1].field_id,
