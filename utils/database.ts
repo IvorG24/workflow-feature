@@ -1531,6 +1531,21 @@ export type Database = {
   };
   lookup_schema: {
     Tables: {
+      bank_list_table: {
+        Row: {
+          bank_id: string;
+          bank_label: string;
+        };
+        Insert: {
+          bank_id?: string;
+          bank_label: string;
+        };
+        Update: {
+          bank_id?: string;
+          bank_label?: string;
+        };
+        Relationships: [];
+      };
       csi_code_table: {
         Row: {
           csi_code_division_description: string;
@@ -2269,21 +2284,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      bank_list_table: {
-        Row: {
-          bank_id: string;
-          bank_label: string;
-        };
-        Insert: {
-          bank_id?: string;
-          bank_label: string;
-        };
-        Update: {
-          bank_id?: string;
-          bank_label?: string;
-        };
-        Relationships: [];
-      };
       expense_type_table: {
         Row: {
           expense_type_id: string;
@@ -2511,6 +2511,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      add_team_member_to_all_project: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: undefined;
+      };
       agree_to_memo: {
         Args: {
           input_data: Json;
@@ -2626,6 +2632,12 @@ export type Database = {
         Returns: string;
       };
       check_tranfer_receipt_item_quantity: {
+        Args: {
+          input_data: Json;
+        };
+        Returns: Json;
+      };
+      check_user_email: {
         Args: {
           input_data: Json;
         };

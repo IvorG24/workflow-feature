@@ -97,14 +97,16 @@ const TicketFormFields = ({
                 value={`${value}`}
                 onChange={(e) => {
                   let value = e.currentTarget.value;
+
                   if (
                     category === "Request Custom CSI" &&
                     ticketField.ticket_field_name === "CSI Code"
                   ) {
                     value = formatCSICode(value);
                   } else if (
-                    ticketField.ticket_field_name === "Part Number" ||
-                    "General Name"
+                    ["Part Number", "General Name", "Description"].includes(
+                      ticketField.ticket_field_name
+                    )
                   ) {
                     value = value.toUpperCase();
                   }
@@ -122,17 +124,6 @@ const TicketFormFields = ({
                 }}
                 error={fieldError}
                 withAsterisk={field.ticket_field_is_required}
-                sx={{
-                  input: {
-                    textTransform:
-                      itemRequestMethods &&
-                      ["General Name", "Description"].includes(
-                        field.ticket_field_name
-                      )
-                        ? "uppercase"
-                        : "none",
-                  },
-                }}
                 rightSection={isLoading && <Loader size={16} />}
                 readOnly={field.ticket_field_is_read_only || isLoading}
                 variant={

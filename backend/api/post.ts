@@ -2062,3 +2062,18 @@ export const createItemFromTicketRequest = async (
   if (error) throw error;
   return data;
 };
+
+export const addMemberToAllProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberIdList: string[];
+  }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("add_team_member_to_all_project", { input_data: params })
+    .select("*");
+
+  if (error) throw error;
+
+  return data as InvitationTableRow[];
+};
