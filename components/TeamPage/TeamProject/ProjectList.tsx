@@ -301,7 +301,11 @@ const ProjectList = ({
     {
       accessor: "team_project_address",
       title: "Address",
-      render: ({ team_project_id, team_project_address }) =>
+      render: ({
+        team_project_id,
+        team_project_address_id,
+        team_project_address,
+      }) =>
         team_project_address && (
           <Text
             className={classes.clickableColumn}
@@ -309,7 +313,7 @@ const ProjectList = ({
               handleColumnClick(team_project_id);
             }}
           >
-            {formatAddress(team_project_address)}
+            {team_project_address_id ? formatAddress(team_project_address) : ""}
           </Text>
         ),
     },
