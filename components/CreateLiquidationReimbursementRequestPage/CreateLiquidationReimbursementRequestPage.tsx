@@ -55,6 +55,16 @@ const CreateLiquidationReimbursementRequestPage = ({
 
   const { setIsLoading } = useLoadingActions();
 
+  const initialFormSectionList = [
+    {
+      ...form.form_section[0],
+      section_field: form.form_section[0].section_field.filter(
+        (field) => field.field_name !== "BOQ Code"
+      ),
+    },
+    ...form.form_section.slice(1),
+  ];
+
   const formDetails = {
     form_name: form.form_name,
     form_description: form.form_description,
@@ -198,10 +208,13 @@ const CreateLiquidationReimbursementRequestPage = ({
 
       if (addConditionalFields) {
         const liquidationAdditionalFields =
-          form.form_section[0].section_field.slice(5, 7);
+          initialFormSectionList[0].section_field.slice(5, 7);
         updateSection(0, {
           ...currentRequestDetails,
-          section_field: [...sectionFields, ...liquidationAdditionalFields],
+          section_field: [
+            ...sectionFields,
+            ...liquidationAdditionalFields,
+          ].sort((a, b) => a.field_order - b.field_order),
         });
         return;
       }
@@ -209,12 +222,15 @@ const CreateLiquidationReimbursementRequestPage = ({
       if (removeConditionalFields) {
         updateSection(0, {
           ...currentRequestDetails,
-          section_field: sectionFields.slice(0, 5),
+          section_field: sectionFields.filter(
+            (field) =>
+              !["Working Advances", "Ticket ID"].includes(field.field_name)
+          ),
         });
         return;
       }
     } catch (e) {
-      setValue(`sections.0.section_field.5.field_response`, "");
+      setValue(`sections.0.section_field.4.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -227,7 +243,7 @@ const CreateLiquidationReimbursementRequestPage = ({
       const currentRequestDetails = getValues(`sections.${0}`);
       const sectionFields = currentRequestDetails.section_field;
       const conditionalFieldExists = sectionFields.some(
-        (field) => field.field_name === "Cost Code"
+        (field) => field.field_name === "Equipment Code"
       );
       const valueIsPED = value?.toLowerCase().includes("plants and equipment");
 
@@ -235,20 +251,14 @@ const CreateLiquidationReimbursementRequestPage = ({
       const removeConditionalFields = !valueIsPED && conditionalFieldExists;
 
       if (addConditionalFields) {
-        const pedConditionalFields = form.form_section[0].section_field.slice(
-          7,
-          9
-        );
+        const equipmentCodeField = initialFormSectionList[0].section_field[7];
         updateSection(0, {
           ...currentRequestDetails,
-          section_field: [...sectionFields, ...pedConditionalFields],
+          section_field: [...sectionFields, equipmentCodeField],
         });
-        return;
-      }
-
-      if (removeConditionalFields) {
+      } else if (removeConditionalFields) {
         const updatedSectionFields = sectionFields.filter(
-          (field) => !["Cost Code", "BOQ Code"].includes(field.field_name)
+          (field) => field.field_name !== "Equipment Code"
         );
 
         const requestDetailsSection = {
@@ -256,9 +266,7 @@ const CreateLiquidationReimbursementRequestPage = ({
           section_field: updatedSectionFields,
         };
 
-        const payeeSection = getValues(`sections`).slice(1);
-        replaceSection([requestDetailsSection, ...payeeSection]);
-        return;
+        updateSection(0, requestDetailsSection);
       }
     } catch (e) {
       setValue(`sections.0.section_field.2.field_response`, "");
@@ -273,7 +281,7 @@ const CreateLiquidationReimbursementRequestPage = ({
     const sectionLastIndex = formSections
       .map((sectionItem) => sectionItem.section_id)
       .lastIndexOf(sectionId);
-    const sectionMatch = form.form_section.find(
+    const sectionMatch = initialFormSectionList.find(
       (section) => section.section_id === sectionId
     );
     if (sectionMatch) {
@@ -300,7 +308,9 @@ const CreateLiquidationReimbursementRequestPage = ({
         ),
       };
 
-      insertSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection, {
+        focusIndex: sectionLastIndex + 1,
+      });
       return;
     }
   };
@@ -343,7 +353,7 @@ const CreateLiquidationReimbursementRequestPage = ({
             ...currentPayeeSection,
             section_field: [
               ...currentPayeeSection.section_field,
-              form.form_section[1].section_field[6],
+              initialFormSectionList[1].section_field[6],
             ],
           });
         }
@@ -390,7 +400,7 @@ const CreateLiquidationReimbursementRequestPage = ({
       );
 
       const vatConditionalField = {
-        ...form.form_section[1].section_field[6],
+        ...initialFormSectionList[1].section_field[6],
         field_response: calculateInvoiceAmountWithVAT(invoiceAmount),
         field_section_duplicatable_id:
           invoiceAmountField?.field_section_duplicatable_id,
@@ -448,7 +458,7 @@ const CreateLiquidationReimbursementRequestPage = ({
 
       const selectedSection = getValues(`sections.${sectionIndex}`);
       const paymentOptionField = {
-        ...form.form_section[2].section_field[1],
+        ...initialFormSectionList[2].section_field[1],
         field_option: bankListOptions,
       };
 
@@ -466,9 +476,10 @@ const CreateLiquidationReimbursementRequestPage = ({
           )
       );
 
-      const conditionalFieldList = form.form_section[2].section_field.filter(
-        (field) => ["Account Name", "Account Number"].includes(field.field_name)
-      );
+      const conditionalFieldList =
+        initialFormSectionList[2].section_field.filter((field) =>
+          ["Account Name", "Account Number"].includes(field.field_name)
+        );
 
       if (isWithAccountConditionalField) {
         const additionalFields = isBankTransfer
@@ -477,15 +488,20 @@ const CreateLiquidationReimbursementRequestPage = ({
 
         updatedFields = [...updatedFields, ...additionalFields];
       }
+
       removeSection(sectionIndex);
-      insertSection(sectionIndex, {
-        ...selectedSection,
-        section_field: updatedFields,
-      });
+      insertSection(
+        sectionIndex,
+        {
+          ...selectedSection,
+          section_field: updatedFields,
+        },
+        { focusName: `sections.${sectionIndex}.section_field.1.field_response` }
+      );
     } catch (error) {
       setValue(
         `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
-        false
+        ""
       );
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -507,7 +523,8 @@ const CreateLiquidationReimbursementRequestPage = ({
       let currentPayeeSectionFieldList = currentPayeeSection.section_field;
 
       const addField = (fieldIndex: number) => {
-        const selectedField = form.form_section[1].section_field[fieldIndex];
+        const selectedField =
+          initialFormSectionList[1].section_field[fieldIndex];
         currentPayeeSectionFieldList = [
           ...currentPayeeSectionFieldList,
           selectedField,
@@ -526,6 +543,7 @@ const CreateLiquidationReimbursementRequestPage = ({
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
       }
 
+      setValue(`sections.${sectionIndex}.section_field.3.field_response`, 0);
       updateSection(sectionIndex, {
         ...currentPayeeSection,
         section_field: currentPayeeSectionFieldList.sort(
@@ -549,12 +567,12 @@ const CreateLiquidationReimbursementRequestPage = ({
 
         // remove conditional fields [working advances, ticket id]
         const requestDetailsSection = {
-          ...form.form_section[0],
-          section_field: form.form_section[0].section_field.slice(0, 5),
+          ...initialFormSectionList[0],
+          section_field: initialFormSectionList[0].section_field.slice(0, 5),
         };
         const payeeSection = {
-          ...form.form_section[1],
-          section_field: form.form_section[1].section_field.filter(
+          ...initialFormSectionList[1],
+          section_field: initialFormSectionList[1].section_field.filter(
             (field) =>
               !["VAT", "Specify Other Type of Request"].includes(
                 field.field_name
@@ -563,8 +581,8 @@ const CreateLiquidationReimbursementRequestPage = ({
         };
 
         const paymentSection = {
-          ...form.form_section[2],
-          section_field: [form.form_section[2].section_field[0]],
+          ...initialFormSectionList[2],
+          section_field: [initialFormSectionList[2].section_field[0]],
         };
 
         replaceSection([requestDetailsSection, payeeSection, paymentSection]);

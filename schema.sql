@@ -5089,6 +5089,16 @@ RETURNS JSON as $$
           }
         });
 
+        const equipmentCodeList = plv8.execute(`SELECT equipment_description_id, equipment_description_property_number_with_prefix FROM equipment_schema.equipment_description_view`);
+        const equipmentCodeOptions = equipmentCodeList.map((equipmentCode, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[7].field_id,
+            option_id: equipmentCode.equipment_description_id,
+            option_order: index,
+            option_value: equipmentCode.equipment_description_property_number_with_prefix
+          }
+        });
+
         const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
           if (field.field_name === 'Requesting Project') {
             return {
@@ -5100,7 +5110,12 @@ RETURNS JSON as $$
               ...field,
               field_option: departmentOptions,
             }
-          }  else {
+          } else if (field.field_name === 'Equipment Code') {
+            return {
+              ...field,
+              field_option: equipmentCodeOptions,
+            }
+          } else {
             return field;
           }
         });
@@ -5604,19 +5619,54 @@ RETURNS JSON as $$
 
           let connectedRequestChargeToProjectId = "";
 
-          const parentRequestIdField = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${connectedRequest.request_id}' AND request_response_field_id='9a112d6f-a34e-4767-b3c1-7f30af858f8f'`)[0];
+          const parentRequestIdField = plv8.execute(`
+            SELECT request_response 
+            FROM request_schema.request_response_table 
+            WHERE request_response_request_id = '${connectedRequest.request_id}' 
+              AND request_response_field_id IN (
+                '9a112d6f-a34e-4767-b3c1-7f30af858f8f', 
+                '2bac0084-53f4-419f-aba7-fb1f77403e00'
+              )
+          `)[0];
 
           if (parentRequestIdField) {
-            const parentRequestIdFieldResponse = parentRequestIdField.request_response.split('"').join('');
-            const connectedRequestChargeToProjectName = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${parentRequestIdFieldResponse}' AND request_response_field_id='2bac0084-53f4-419f-aba7-fb1f77403e00'`)[0];
+            const parentRequestIdFieldResponse = parentRequestIdField.request_response.replace(/"/g, '');
 
-            if (connectedRequestChargeToProjectName) {
-                const parseProjectName = connectedRequestChargeToProjectName.request_response.split('"').join('');
-                const connectedRequestChargeToProject = plv8.execute(`SELECT team_project_id FROM team_schema.team_project_table WHERE team_project_name = '${parseProjectName}'`)[0];
+            const isUUID = (str) => {
+              const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+              return uuidPattern.test(str);
+            };
+
+            if (isUUID(parentRequestIdFieldResponse)) {
+              const connectedRequestChargeToProjectName = plv8.execute(`
+                SELECT request_response 
+                FROM request_schema.request_response_table 
+                WHERE request_response_request_id = '${parentRequestIdFieldResponse}' 
+                  AND request_response_field_id = '2bac0084-53f4-419f-aba7-fb1f77403e00'
+              `)[0];
+
+              if (connectedRequestChargeToProjectName) {
+                const parseProjectName = connectedRequestChargeToProjectName.request_response.replace(/"/g, '');
+                const connectedRequestChargeToProject = plv8.execute(`
+                  SELECT team_project_id 
+                  FROM team_schema.team_project_table 
+                  WHERE team_project_name = '${parseProjectName}'
+                `)[0];
 
                 if (connectedRequestChargeToProject) {
-                  connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
-                }   
+                  connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.replace(/"/g, '');
+                }
+              }
+            } else {
+              const connectedRequestChargeToProject = plv8.execute(`
+                SELECT team_project_id 
+                FROM team_schema.team_project_table 
+                WHERE team_project_name = '${parentRequestIdFieldResponse}'
+              `)[0];
+
+              if (connectedRequestChargeToProject) {
+                connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.replace(/"/g, '');
+              }
             }
           }
 
@@ -5665,19 +5715,27 @@ RETURNS JSON as $$
                 }
               }
             }
-          })
+          });
+
+        const uniqueSignerList = [];
+
+        formattedSignerList.forEach((signer) => {
+            const signerIsDuplicate = uniqueSignerList.some((uniqueSigner) => uniqueSigner.signer_team_member.team_member_id === signer.signer_team_member.team_member_id);
+            if (!signerIsDuplicate) {
+            uniqueSignerList.push(signer)
+            }
+            return;
+        })
 
         returnData = {
-          form: {
-            ...form,
-            form_signer: formattedSignerList
-          },
-          connectedRequest: {
-            ...connectedRequest,
-            form_section: [connectedRequestSectionId]
-          },
-          signerTeamProjectList,
-          connectedRequestChargeToProjectId
+            form: {
+                ...form,
+                form_signer: uniqueSignerList
+            },
+            connectedRequest: {
+                ...connectedRequest,
+                form_section: [connectedRequestSectionId]
+            },
         };
         } else {
           returnData = {

@@ -3,8 +3,10 @@ import {
   getJiraAutomationDataByProjectId,
   getRequestComment,
 } from "@/backend/api/get";
+import { createComment } from "@/backend/api/post";
 import {
   approveOrRejectRequest,
+  cancelPCVRequestByCostEngineer,
   cancelRequest,
   updateRequestJiraId,
 } from "@/backend/api/update";
@@ -39,6 +41,7 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import CostEngineerSection from "./CostEngineerSection";
 
 type Props = {
   request: RequestWithResponseType;
@@ -98,7 +101,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
     signerList
       .map((signer) => signer.request_signer_status)
       .filter((status) => status !== "PENDING").length === 0 &&
-    (isUserOwner || isUserCostEngineer) &&
+    isUserOwner &&
     requestStatus === "PENDING";
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
@@ -374,6 +377,43 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
     }
   };
 
+  const handleCostEngineerRejectRequest = async (rejectionReason: string) => {
+    try {
+      if (!user || !teamMember) return;
+      setIsLoading(true);
+      const costEngineerFullname = `${user.user_first_name} ${user.user_last_name}`;
+
+      await cancelPCVRequestByCostEngineer(supabaseClient, {
+        requestId: request.request_id,
+        parentRequestId: parentWavRequestId,
+        requesterUserId: request.request_team_member.team_member_user.user_id,
+        costEngineerFullname,
+        teamName: activeTeam.team_name,
+        teamId: activeTeam.team_id,
+      });
+
+      const comment = {
+        comment_id: uuidv4(),
+        comment_date_created: new Date().toISOString(),
+        comment_content: `[${user.user_job_title}] ${costEngineerFullname} rejected this request. Reason: ${rejectionReason}`,
+        comment_type: `ACTION_REJECTED` as CommentType,
+        comment_team_member_id: teamMember.team_member_id,
+        comment_request_id: request.request_id,
+      };
+
+      await createComment(supabaseClient, comment);
+      setRequestStatus("CANCELED");
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     try {
       const costCodeSection = request.request_form.form_section[2];
@@ -482,6 +522,12 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
           );
         })}
 
+        {isUserCostEngineer && (
+          <CostEngineerSection
+            handleCostEngineerRejectRequest={handleCostEngineerRejectRequest}
+          />
+        )}
+
         {isRequestActionSectionVisible && (
           <RequestActionSection
             handleCancelRequest={handleCancelRequest}
@@ -492,7 +538,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
                 ? Boolean(isUserSigner.signer_is_primary_signer)
                 : false
             }
-            isEditable={isEditable} // todo: add edit request page
+            isEditable={isEditable}
             isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}

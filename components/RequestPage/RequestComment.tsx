@@ -216,13 +216,13 @@ const RequestComment = ({ comment, setCommentList }: RequestCommentProps) => {
                     {actionCommentIcon(comment.comment_type)}
                   </ThemeIcon>
                   <Stack m={0} p={0} spacing={0}>
-                    <Text>
-                      {`${commentContent} on ${formatDate(
+                    <Text>{`${commentContent}`}</Text>
+                    <Text color="dimmed" size={12}>
+                      {`${moment(
+                        comment.comment_date_created
+                      ).fromNow()} ${formatDate(
                         new Date(comment.comment_date_created)
                       )} ${formatTime(new Date(comment.comment_date_created))}`}
-                    </Text>
-                    <Text color="dimmed" size={12}>
-                      {moment(comment.comment_date_created).fromNow()}
                     </Text>
                   </Stack>
                 </Flex>

@@ -2,7 +2,7 @@ import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import { MemoFormatFormValues } from "@/components/MemoFormatEditor/MemoFormatEditor";
 import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { Database } from "@/utils/database";
-import { escapeQuotes } from "@/utils/string";
+import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import {
   AppType,
   EditMemoType,
@@ -35,7 +35,7 @@ import {
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { getCurrentDate, getMemoFormat } from "./get";
-import { uploadImage } from "./post";
+import { createNotification, uploadImage } from "./post";
 
 // Update Team
 export const updateTeam = async (
@@ -1267,4 +1267,46 @@ export const removeDepartmentSigner = async (
     .update({ signer_is_disabled: true })
     .eq("signer_id", signerId);
   if (error) throw error;
+};
+
+export const cancelPCVRequestByCostEngineer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+    parentRequestId: string;
+    requesterUserId: string;
+    costEngineerFullname: string;
+    teamName: string;
+    teamId: string;
+  }
+) => {
+  const {
+    requestId,
+    parentRequestId,
+    requesterUserId,
+    costEngineerFullname,
+    teamName,
+    teamId,
+  } = params;
+  const { error } = await supabaseClient
+    .schema("request_schema")
+    .from("request_table")
+    .update({ request_status: "CANCELED" })
+    .in("request_id", [requestId, parentRequestId]);
+  if (error) throw error;
+
+  // send notification to requestor
+
+  const notification = {
+    notification_app: "REQUEST",
+    notification_content: `${costEngineerFullname} rejected your request.`,
+    notification_redirect_url: `/${formatTeamNameToUrlKey(
+      teamName ?? ""
+    )}/requests/${requestId}`,
+    notification_team_id: teamId,
+    notification_type: "REJECT",
+    notification_user_id: requesterUserId,
+  };
+
+  await createNotification(supabaseClient, notification);
 };

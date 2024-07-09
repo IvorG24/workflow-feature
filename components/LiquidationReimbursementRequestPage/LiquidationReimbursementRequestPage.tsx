@@ -393,12 +393,6 @@ const LiquidationReimbursementRequestPage = ({
       const typeOfRequest = safeParse(
         sortedRequestDetails[4].field_response[0].request_response
       );
-      const costCode = safeParse(
-        sortedRequestDetails[7].field_response[0].request_response
-      );
-      const boqCode = safeParse(
-        sortedRequestDetails[8].field_response[0].request_response
-      );
 
       let workingAdvances = "";
       let ticketId = "";
@@ -447,8 +441,6 @@ const LiquidationReimbursementRequestPage = ({
         requestFormType: "BOQ",
         workingAdvances,
         ticketId,
-        costCode,
-        boqCode,
       });
 
       const jiraTicket = await createJiraTicket({

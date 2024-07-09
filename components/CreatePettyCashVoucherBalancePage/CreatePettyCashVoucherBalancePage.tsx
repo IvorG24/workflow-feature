@@ -8,7 +8,11 @@ import RequestFormSection from "@/components/CreateRequestPage/RequestFormSectio
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserProfile,
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -50,6 +54,7 @@ const CreatePettyCashVoucherBalancePage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
 
   const [requireCostEngineer, setRequireCostEngineer] = useState(false);
 
@@ -77,6 +82,8 @@ const CreatePettyCashVoucherBalancePage = ({
     ...signer,
     signer_action: signer.signer_action.toUpperCase(),
   }));
+
+  const isUserCostEngineer = teamMemberGroupList.includes("COST ENGINEER");
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
@@ -185,7 +192,7 @@ const CreatePettyCashVoucherBalancePage = ({
             section_name: `${form.form_section[2].section_name} - To be filled by Cost Engineer`,
             section_field: form.form_section[2].section_field.map((field) => ({
               ...field,
-              field_is_read_only: true,
+              field_is_read_only: !isUserCostEngineer,
               field_response: "TBA",
             })),
           });
