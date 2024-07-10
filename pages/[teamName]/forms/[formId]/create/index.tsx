@@ -42,6 +42,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         }
       );
+
       if (error) throw error;
 
       return {
