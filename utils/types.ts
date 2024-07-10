@@ -1944,8 +1944,6 @@ export type JiraLRFTicketPayloadProps = {
   workingAdvances: string;
   ticketId: string;
   requestor: string;
-  boqCode?: string;
-  costCode?: string;
 };
 
 export type ConnectedRequestFormProps = {
@@ -2022,3 +2020,25 @@ export type SchemaType =
   | "history_schema"
   | "other_expenses_schema"
   | "user_schema";
+
+export type LRFSpreadsheetData = {
+  request_id: string;
+  request_formsly_id_prefix: string;
+  request_formsly_id_serial: string;
+  request_date_created: string;
+  request_status_date_updated: string;
+  request_jira_id?: string;
+  form_id: string;
+  form_name: string;
+  request_response_list: {
+    request_response: string;
+    request_response_field_id: string;
+    request_response_request_id: string;
+    request_response_duplicatable_section_id: string | null;
+    field_name: string;
+  }[];
+  request_boq_data?: {
+    request_id: string;
+    request_formsly_id: string;
+  };
+};

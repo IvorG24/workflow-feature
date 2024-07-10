@@ -392,8 +392,6 @@ export const formatJiraLRFRequisitionPayload = ({
   workingAdvances,
   ticketId,
   requestor,
-  boqCode,
-  costCode,
 }: JiraLRFTicketPayloadProps) => {
   // if department = plants and equipment, use PED jira form
   const isPEDDepartment = department === "10164";
@@ -441,12 +439,6 @@ export const formatJiraLRFRequisitionPayload = ({
           ...jiraTicketPayload.form.answers,
           475: {
             choices: [department], // Department
-          },
-          479: {
-            text: costCode, // Cost code
-          },
-          480: {
-            text: boqCode, // BOQ code
           },
           15: {
             text: purpose, // Purpose

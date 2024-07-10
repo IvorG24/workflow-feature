@@ -465,57 +465,51 @@ const EditPettyCashVoucherRequestPage = ({
       if (!value) return;
 
       const selectedSection = getValues(`sections.${sectionIndex}`);
+      let currentSectionField = selectedSection.section_field;
+
+      const isBankTransfer = value === "Bank Transfer";
       const paymentOptionField = {
         ...form.form_section[3].section_field[1],
         field_option: bankListOptions,
       };
 
-      const isWithAccountConditionalField = [
-        "Bank Transfer",
-        "E-Cash",
-        "Telegraphic Transfer",
-      ].includes(value);
-
-      const isBankTransfer = value === "Bank Transfer";
-      const paymentOptionFieldExists = selectedSection.section_field.find(
-        (field) => field.field_name === "Payment Option"
-      );
-      const conditionalFieldExists = selectedSection.section_field.find(
-        (field) => field.field_name === "Account Name"
+      const conditionalFields = form.form_section[3].section_field.filter(
+        (field) => ["Account Name", "Account Number"].includes(field.field_name)
       );
 
-      if (isWithAccountConditionalField) {
-        if (isBankTransfer) {
-          updateSection(sectionIndex, {
-            ...selectedSection,
-            section_field: [
-              selectedSection.section_field[0],
-              paymentOptionField,
-              ...form.form_section[3].section_field.slice(2, 4),
-            ],
-          });
-        } else if (!isBankTransfer && paymentOptionFieldExists) {
-          updateSection(sectionIndex, {
-            ...selectedSection,
-            section_field: selectedSection.section_field.filter(
-              (field) => field.field_name !== "Payment Option"
-            ),
-          });
+      const fieldExists = (fieldName: string) =>
+        currentSectionField.some((field) => field.field_name === fieldName);
+
+      const addFields = (fields: Field[]) =>
+        (currentSectionField = [...currentSectionField, ...fields]);
+
+      const removeField = (fieldName: string) =>
+        (currentSectionField = currentSectionField.filter(
+          (field) => field.field_name !== fieldName
+        ));
+
+      if (isBankTransfer) {
+        if (fieldExists("Account Name")) {
+          addFields([paymentOptionField]);
         } else {
-          updateSection(sectionIndex, {
-            ...selectedSection,
-            section_field: [
-              selectedSection.section_field[0],
-              ...form.form_section[3].section_field.slice(2, 4),
-            ],
-          });
+          addFields([paymentOptionField, ...conditionalFields]);
         }
-      } else if (!isWithAccountConditionalField && conditionalFieldExists) {
-        updateSection(sectionIndex, {
-          ...selectedSection,
-          section_field: [selectedSection.section_field[0]],
-        });
+      } else {
+        if (!fieldExists("Account Name")) {
+          addFields(conditionalFields);
+        } else if (fieldExists("Payment Option")) {
+          removeField("Payment Option");
+        }
       }
+
+      currentSectionField.sort((a, b) => a.field_order - b.field_order);
+
+      removeSection(sectionIndex);
+      insertSection(
+        sectionIndex,
+        { ...selectedSection, section_field: currentSectionField },
+        { shouldFocus: false }
+      );
     } catch (error) {
       setValue(`sections.3.section_field.0.field_response`, false);
 
@@ -690,6 +684,32 @@ const EditPettyCashVoucherRequestPage = ({
       });
     }
   };
+
+  const handleQuantityOrUnitCostChange = (sectionIndex: number) => {
+    try {
+      const currentSectionFieldList = getValues(
+        `sections.${sectionIndex}`
+      ).section_field;
+
+      const quantityField =
+        (currentSectionFieldList[1].field_response as number) ?? 0;
+      const unitCostField =
+        (currentSectionFieldList[3].field_response as number) ?? 0;
+
+      const amount = quantityField * unitCostField;
+
+      setValue(
+        `sections.${sectionIndex}.section_field.4.field_response`,
+        amount
+      );
+    } catch (error) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     if (!team.team_id) return;
@@ -816,6 +836,8 @@ const EditPettyCashVoucherRequestPage = ({
                       onSCICAuthorizationChange:
                         handleSCICAuthorizationBooleanChange,
                       onTypeOfRequestChange: handleTypeOfRequestChange,
+                      onQuantityOrUnitCostChange:
+                        handleQuantityOrUnitCostChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}

@@ -1985,6 +1985,7 @@ export const createDepartmentSigner = async (
     .select("signer_id, signer_is_disabled", {
       count: "exact",
     })
+    .eq("signer_form_id", `${params.signer_form_id}`)
     .eq("signer_team_project_id", `${params.signer_team_project_id}`)
     .eq("signer_team_department_id", `${params.signer_team_department_id}`)
     .eq("signer_team_member_id", `${params.signer_team_member_id}`)

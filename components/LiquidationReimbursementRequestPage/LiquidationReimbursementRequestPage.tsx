@@ -89,7 +89,13 @@ const LiquidationReimbursementRequestPage = ({
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [formSection, setFormSection] = useState(
     generateSectionWithDuplicateList([
-      request.request_form.form_section[0],
+      {
+        ...request.request_form.form_section[0],
+        section_field:
+          request.request_form.form_section[0].section_field.filter(
+            (field) => field.field_name !== "BOQ Code"
+          ),
+      },
       request.request_form.form_section[2],
     ])
   );
@@ -393,12 +399,6 @@ const LiquidationReimbursementRequestPage = ({
       const typeOfRequest = safeParse(
         sortedRequestDetails[4].field_response[0].request_response
       );
-      const costCode = safeParse(
-        sortedRequestDetails[7].field_response[0].request_response
-      );
-      const boqCode = safeParse(
-        sortedRequestDetails[8].field_response[0].request_response
-      );
 
       let workingAdvances = "";
       let ticketId = "";
@@ -447,8 +447,6 @@ const LiquidationReimbursementRequestPage = ({
         requestFormType: "BOQ",
         workingAdvances,
         ticketId,
-        costCode,
-        boqCode,
       });
 
       const jiraTicket = await createJiraTicket({

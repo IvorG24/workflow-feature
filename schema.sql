@@ -5110,6 +5110,16 @@ RETURNS JSON as $$
           }
         });
 
+        const equipmentCodeList = plv8.execute(`SELECT equipment_description_id, equipment_description_property_number_with_prefix FROM equipment_schema.equipment_description_view`);
+        const equipmentCodeOptions = equipmentCodeList.map((equipmentCode, index) => {
+          return {
+            option_field_id: form.form_section[0].section_field[7].field_id,
+            option_id: equipmentCode.equipment_description_id,
+            option_order: index,
+            option_value: equipmentCode.equipment_description_property_number_with_prefix
+          }
+        });
+
         const firstSectionFieldList = form.form_section[0].section_field.map((field) => {
           if (field.field_name === 'Requesting Project') {
             return {
@@ -5121,7 +5131,12 @@ RETURNS JSON as $$
               ...field,
               field_option: departmentOptions,
             }
-          }  else {
+          } else if (field.field_name === 'Equipment Code') {
+            return {
+              ...field,
+              field_option: equipmentCodeOptions,
+            }
+          } else {
             return field;
           }
         });
@@ -5625,19 +5640,54 @@ RETURNS JSON as $$
 
           let connectedRequestChargeToProjectId = "";
 
-          const parentRequestIdField = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${connectedRequest.request_id}' AND request_response_field_id='9a112d6f-a34e-4767-b3c1-7f30af858f8f'`)[0];
+          const parentRequestIdField = plv8.execute(`
+            SELECT request_response 
+            FROM request_schema.request_response_table 
+            WHERE request_response_request_id = '${connectedRequest.request_id}' 
+              AND request_response_field_id IN (
+                '9a112d6f-a34e-4767-b3c1-7f30af858f8f', 
+                '2bac0084-53f4-419f-aba7-fb1f77403e00'
+              )
+          `)[0];
 
           if (parentRequestIdField) {
             const parentRequestIdFieldResponse = parentRequestIdField.request_response.split('"').join('');
-            const connectedRequestChargeToProjectName = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${parentRequestIdFieldResponse}' AND request_response_field_id='2bac0084-53f4-419f-aba7-fb1f77403e00'`)[0];
 
-            if (connectedRequestChargeToProjectName) {
+            const isUUID = (str) => {
+              const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+              return uuidPattern.test(str);
+            };
+
+            if (isUUID(parentRequestIdFieldResponse)) {
+              const connectedRequestChargeToProjectName = plv8.execute(`
+                SELECT request_response 
+                FROM request_schema.request_response_table 
+                WHERE request_response_request_id = '${parentRequestIdFieldResponse}' 
+                  AND request_response_field_id = '2bac0084-53f4-419f-aba7-fb1f77403e00'
+              `)[0];
+
+              if (connectedRequestChargeToProjectName) {
                 const parseProjectName = connectedRequestChargeToProjectName.request_response.split('"').join('');
-                const connectedRequestChargeToProject = plv8.execute(`SELECT team_project_id FROM team_schema.team_project_table WHERE team_project_name = '${parseProjectName}'`)[0];
+                const connectedRequestChargeToProject = plv8.execute(`
+                  SELECT team_project_id 
+                  FROM team_schema.team_project_table 
+                  WHERE team_project_name = '${parseProjectName}'
+                `)[0];
 
                 if (connectedRequestChargeToProject) {
                   connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
-                }   
+                }
+              }
+            } else {
+              const connectedRequestChargeToProject = plv8.execute(`
+                SELECT team_project_id 
+                FROM team_schema.team_project_table 
+                WHERE team_project_name = '${parentRequestIdFieldResponse}'
+              `)[0];
+
+              if (connectedRequestChargeToProject) {
+                connectedRequestChargeToProjectId = connectedRequestChargeToProject.team_project_id.split('"').join('');
+              }
             }
           }
 
@@ -5686,19 +5736,27 @@ RETURNS JSON as $$
                 }
               }
             }
-          })
+          });
+
+        const uniqueSignerList = [];
+
+        formattedSignerList.forEach((signer) => {
+            const signerIsDuplicate = uniqueSignerList.some((uniqueSigner) => uniqueSigner.signer_team_member.team_member_id === signer.signer_team_member.team_member_id);
+            if (!signerIsDuplicate) {
+            uniqueSignerList.push(signer)
+            }
+            return;
+        })
 
         returnData = {
-          form: {
-            ...form,
-            form_signer: formattedSignerList
-          },
-          connectedRequest: {
-            ...connectedRequest,
-            form_section: [connectedRequestSectionId]
-          },
-          signerTeamProjectList,
-          connectedRequestChargeToProjectId
+            form: {
+                ...form,
+                form_signer: uniqueSignerList
+            },
+            connectedRequest: {
+                ...connectedRequest,
+                form_section: [connectedRequestSectionId]
+            },
         };
         } else {
           returnData = {
@@ -5707,12 +5765,12 @@ RETURNS JSON as $$
         }
       }
     } else {
-      returnData = {
+        returnData = {
         form
-      }
+        }
     }
- });
- return returnData;
+});
+return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_request(
@@ -13172,6 +13230,204 @@ RETURNS VOID AS $$
       })
     });
  });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_lrf_summary_table(
+  input_data JSON
+)
+RETURNS JSON as $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const { 
+      userId,
+      limit,
+      page,
+      projectFilter
+    } = input_data;
+
+    const offset = (page - 1) * limit;
+    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+
+    const projectFilterCondition = projectFilter ? `AND request_project_id = '${projectFilter}'` : '';
+
+    const requestCount = plv8.execute(`
+        SELECT 
+            COUNT(*)
+        FROM request_schema.request_table
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+        INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+        WHERE
+            tmt.team_member_team_id = '${teamId}'
+            AND request_status = 'APPROVED'
+            AND request_is_disabled = FALSE
+            AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a')
+            ${projectFilterCondition}
+    `)[0].count;
+
+    const parentRequests = plv8.execute(`
+        SELECT 
+            request_id,
+            request_formsly_id_prefix,
+            request_formsly_id_serial,
+            request_date_created,
+            request_status_date_updated,
+            request_jira_id,
+            ft.form_id,
+            ft.form_name
+        FROM request_schema.request_table
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+        INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+        WHERE
+            tmt.team_member_team_id = '${teamId}'
+            AND request_status = 'APPROVED'
+            AND request_is_disabled = FALSE
+            AND request_form_id = '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a'
+            ${projectFilterCondition}
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+    `);
+
+    const requestListWithResponses = [];
+
+    parentRequests.forEach((parentRequest) => {
+        const responseList = plv8.execute(`
+            SELECT 
+                request_response, 
+                request_response_field_id, 
+                request_response_request_id,
+                request_response_duplicatable_section_id,
+                ft.field_name 
+            FROM 
+                request_schema.request_response_table 
+            INNER JOIN 
+                form_schema.field_table AS ft 
+                ON ft.field_id = request_response_field_id 
+            WHERE 
+                request_response_request_id = '${parentRequest.request_id}' 
+                AND ft.field_name IN (
+                    'Supplier Name/Payee', 
+                    'Type of Request',
+                    'Invoice Amount',
+                    'VAT',
+                    'Cost',
+                    'Equipment Code',
+                    'Cost Code',
+                    'Bill of Quantity Code'
+                )
+        `);
+
+        const parentRequestWithResponses = {
+            ...parentRequest,
+            request_response_list: responseList
+        };
+
+        const childRequests = plv8.execute(`
+            SELECT 
+                request_id,
+                request_formsly_id_prefix,
+                request_formsly_id_serial,
+                request_date_created,
+                request_status_date_updated,
+                request_jira_id,
+                ft.form_id,
+                ft.form_name
+            FROM request_schema.request_table
+            INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+            INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+            INNER JOIN request_schema.request_response_table AS rrt 
+                ON rrt.request_response_request_id = request_id
+                AND REPLACE(rrt.request_response, '"', '') = '${parentRequest.request_id}'
+            WHERE
+                tmt.team_member_team_id = '${teamId}'
+                AND request_status = 'APPROVED'
+                AND request_is_disabled = FALSE
+                AND request_form_id = 'e10abdce-e012-45b6-bec4-e0133f1a8467'
+        `);
+
+        if (childRequests.length > 0) {
+            const childRequestsWithResponses = childRequests.map((childRequest) => {
+                const childResponseList = plv8.execute(`
+                    SELECT 
+                        request_response, 
+                        request_response_field_id, 
+                        request_response_request_id,
+                        request_response_duplicatable_section_id,
+                        ft.field_name 
+                    FROM 
+                        request_schema.request_response_table 
+                    INNER JOIN 
+                        form_schema.field_table AS ft 
+                        ON ft.field_id = request_response_field_id 
+                    WHERE 
+                        request_response_request_id = '${childRequest.request_id}' 
+                        AND ft.field_name IN (
+                            'Supplier Name/Payee', 
+                            'Type of Request',
+                            'Invoice Amount',
+                            'VAT',
+                            'Cost',
+                            'Equipment Code',
+                            'Cost Code',
+                            'Bill of Quantity Code'
+                        )
+                `);
+
+                return {
+                    ...childRequest,
+                    request_response_list: childResponseList
+                };
+            });
+
+            requestListWithResponses.push(parentRequestWithResponses, ...childRequestsWithResponses);
+        } else {
+            requestListWithResponses.push(parentRequestWithResponses);
+        }
+    });
+
+    const reducedRequestListWithResponses = requestListWithResponses.sort((a, b) => b.form_name.localeCompare(a.form_name)).reduce((acc, current) => {
+        if (current.form_name === 'Bill of Quantity') {
+            const parentRequest = plv8.execute(`
+                SELECT request_response 
+                FROM request_schema.request_response_table 
+                WHERE request_response_request_id = '${current.request_id}' 
+                AND request_response_field_id = 'eff42959-8552-4d7e-836f-f89018293ae8' 
+                LIMIT 1
+            `)[0];
+
+            if (parentRequest) {
+                const parentRequestId = parentRequest.request_response.split('"').join('')
+                const parentRequestMatchIndex = acc.findIndex((request) => request.request_id === parentRequestId);
+
+                if (parentRequestMatchIndex !== -1) {
+                    acc[parentRequestMatchIndex] = {
+                        ...acc[parentRequestMatchIndex],
+                        request_boq_data: {
+                            request_id: current.request_id,
+                            request_formsly_id: current.request_formsly_id_prefix + '-' + current.request_formsly_id_serial
+                        },
+                        request_response_list: current.request_response_list
+                    };
+                }
+            }
+        } else {
+            acc.push(current);
+        }
+
+        return acc;
+    }, []);
+
+    const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC;`);
+
+    const projectListOptions = projectList.map(project=> ({value: project.team_project_id, label: project.team_project_name}));
+
+    returnData = {
+      data: reducedRequestListWithResponses,
+      count: parseInt(requestCount),
+      projectListOptions,
+      projectFilter
+    };
+ });
+return returnData;
 $$ LANGUAGE plv8;
 
 -------- END: FUNCTIONS
