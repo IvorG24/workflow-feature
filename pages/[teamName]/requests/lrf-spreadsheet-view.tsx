@@ -1,26 +1,24 @@
+import { getLRFSummaryData } from "@/backend/api/get";
 import LRFSpreadsheetView from "@/components/LRFSpreadsheetView/LRFSpreadsheetView";
 import Meta from "@/components/Meta/Meta";
+import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import { withActiveTeam } from "@/utils/server-side-protections";
-import { LRFSpreadsheetData } from "@/utils/types";
+import { LRFSpreadsheetData, OptionType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
   async ({ supabaseClient, user }) => {
     try {
-      const { data, error } = await supabaseClient.rpc(
-        "get_pcv_summary_table",
-        {
-          input_data: {
-            userId: user.id,
-          },
-        }
-      );
-      console.log(data);
-      if (error) throw error;
-
+      const data = await getLRFSummaryData(supabaseClient, {
+        userId: user.id,
+        limit: DEFAULT_NUMBER_SSOT_ROWS,
+        page: 1,
+      });
       return {
-        props: {
-          data: data as unknown as LRFSpreadsheetData[],
+        props: data as {
+          data: LRFSpreadsheetData[];
+          count: number;
+          projectListOptions: OptionType[];
         },
       };
     } catch (error) {
@@ -37,17 +35,21 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
 type Props = {
   data: LRFSpreadsheetData[];
+  count: number;
+  projectListOptions: OptionType[];
 };
 
-const Page = ({ data }: Props) => {
-  console.log(data);
+const Page = ({ data, projectListOptions }: Props) => {
   return (
     <>
       <Meta
         description="Spreadsheet View Page"
         url="/{teamName}/requests/lrf-spreadsheet-view"
       />
-      <LRFSpreadsheetView data={data} />
+      <LRFSpreadsheetView
+        initialData={data}
+        projectListOptions={projectListOptions}
+      />
     </>
   );
 };

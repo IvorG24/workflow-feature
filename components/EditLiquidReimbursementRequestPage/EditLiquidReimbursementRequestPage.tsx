@@ -648,7 +648,9 @@ const EditLiquidReimbursementRequestPage = ({
           }`
         );
 
-        const isNotLiquidation = !requestTypeResponse.includes("liquidation");
+        const isNotLiquidation = !requestTypeResponse
+          .toLowerCase()
+          .includes("liquidation");
 
         if (isNotLiquidation) {
           requestDetailsSectionFieldList =
@@ -661,7 +663,8 @@ const EditLiquidReimbursementRequestPage = ({
         if (!isPED) {
           requestDetailsSectionFieldList =
             requestDetailsSectionFieldList.filter(
-              (field) => !["Cost Code", "BOQ Code"].includes(field.field_name)
+              (field) =>
+                !["Equipment Code", "BOQ Code"].includes(field.field_name)
             );
         }
 

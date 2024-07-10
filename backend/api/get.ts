@@ -49,6 +49,7 @@ import {
   JiraItemCategoryDataType,
   JiraOrganizationTableRow,
   JiraProjectDataType,
+  LRFSpreadsheetData,
   MemoListItemType,
   MemoType,
   NotificationOnLoad,
@@ -5806,4 +5807,22 @@ export const checkUserEmail = async (
     .select("*");
   if (error) throw error;
   return data as string[];
+};
+
+export const getLRFSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    limit: number;
+    page: number;
+    projectFilter?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_lrf_summary_table", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data as { data: LRFSpreadsheetData[]; count: number };
 };

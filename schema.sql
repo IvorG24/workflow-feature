@@ -13232,28 +13232,27 @@ RETURNS VOID AS $$
  });
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_pcv_summary_table(
+CREATE OR REPLACE FUNCTION get_lrf_summary_table(
   input_data JSON
 )
 RETURNS JSON as $$
   let returnData;
   plv8.subtransaction(function(){
     const { 
-      userId
+      userId,
+      limit,
+      page,
+      projectFilter
     } = input_data;
 
+    const offset = (page - 1) * limit;
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
 
-    const requestList = plv8.execute(`
+    const projectFilterCondition = projectFilter ? `AND request_project_id = '${projectFilter}'` : '';
+
+    const requestCount = plv8.execute(`
         SELECT 
-        request_id,
-        request_formsly_id_prefix,
-        request_formsly_id_serial,
-        request_date_created,
-        request_status_date_updated,
-        request_jira_id,
-        ft.form_id,
-        ft.form_name
+            COUNT(*)
         FROM request_schema.request_table
         INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
         INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
@@ -13261,71 +13260,172 @@ RETURNS JSON as $$
             tmt.team_member_team_id = '${teamId}'
             AND request_status = 'APPROVED'
             AND request_is_disabled = FALSE
-            AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a', 'e10abdce-e012-45b6-bec4-e0133f1a8467')
+            AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a')
+            ${projectFilterCondition}
+    `)[0].count;
+
+    const parentRequests = plv8.execute(`
+        SELECT 
+            request_id,
+            request_formsly_id_prefix,
+            request_formsly_id_serial,
+            request_date_created,
+            request_status_date_updated,
+            request_jira_id,
+            ft.form_id,
+            ft.form_name
+        FROM request_schema.request_table
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+        INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+        WHERE
+            tmt.team_member_team_id = '${teamId}'
+            AND request_status = 'APPROVED'
+            AND request_is_disabled = FALSE
+            AND request_form_id = '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a'
+            ${projectFilterCondition}
+        LIMIT '${limit}'
+        OFFSET '${offset}'
     `);
 
     const requestListWithResponses = [];
 
-    requestList.forEach((request) => {
+    parentRequests.forEach((parentRequest) => {
         const responseList = plv8.execute(`
-        SELECT 
-            request_response, 
-            request_response_field_id, 
-            request_response_request_id,
-            request_response_duplicatable_section_id,
-            ft.field_name 
-        FROM 
-            request_schema.request_response_table 
-        INNER JOIN 
-            form_schema.field_table AS ft 
-            ON ft.field_id = request_response_field_id 
-        WHERE 
-            request_response_request_id = '${request.request_id}' 
-            AND ft.field_name IN (
-                'Supplier Name/Payee', 
-                'Type of Request',
-                'Invoice Amount',
-                'VAT',
-                'Cost',
-                'Equipment Code',
-                'Cost Code',
-                'Bill of Quantity Code'
-            )
+            SELECT 
+                request_response, 
+                request_response_field_id, 
+                request_response_request_id,
+                request_response_duplicatable_section_id,
+                ft.field_name 
+            FROM 
+                request_schema.request_response_table 
+            INNER JOIN 
+                form_schema.field_table AS ft 
+                ON ft.field_id = request_response_field_id 
+            WHERE 
+                request_response_request_id = '${parentRequest.request_id}' 
+                AND ft.field_name IN (
+                    'Supplier Name/Payee', 
+                    'Type of Request',
+                    'Invoice Amount',
+                    'VAT',
+                    'Cost',
+                    'Equipment Code',
+                    'Cost Code',
+                    'Bill of Quantity Code'
+                )
         `);
 
-        const requestWithResponses = {
-            ...request,
+        const parentRequestWithResponses = {
+            ...parentRequest,
             request_response_list: responseList
         };
 
-        requestListWithResponses.push(requestWithResponses)
-    })
+        const childRequests = plv8.execute(`
+            SELECT 
+                request_id,
+                request_formsly_id_prefix,
+                request_formsly_id_serial,
+                request_date_created,
+                request_status_date_updated,
+                request_jira_id,
+                ft.form_id,
+                ft.form_name
+            FROM request_schema.request_table
+            INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_team_member_id
+            INNER JOIN form_schema.form_table AS ft ON ft.form_id = request_form_id
+            INNER JOIN request_schema.request_response_table AS rrt 
+                ON rrt.request_response_request_id = request_id
+                AND REPLACE(rrt.request_response, '"', '') = '${parentRequest.request_id}'
+            WHERE
+                tmt.team_member_team_id = '${teamId}'
+                AND request_status = 'APPROVED'
+                AND request_is_disabled = FALSE
+                AND request_form_id = 'e10abdce-e012-45b6-bec4-e0133f1a8467'
+        `);
 
-    returnData = requestListWithResponses.sort((a, b) => b.form_name.localeCompare(a.form_name)).reduce((acc, current) => {
+        if (childRequests.length > 0) {
+            const childRequestsWithResponses = childRequests.map((childRequest) => {
+                const childResponseList = plv8.execute(`
+                    SELECT 
+                        request_response, 
+                        request_response_field_id, 
+                        request_response_request_id,
+                        request_response_duplicatable_section_id,
+                        ft.field_name 
+                    FROM 
+                        request_schema.request_response_table 
+                    INNER JOIN 
+                        form_schema.field_table AS ft 
+                        ON ft.field_id = request_response_field_id 
+                    WHERE 
+                        request_response_request_id = '${childRequest.request_id}' 
+                        AND ft.field_name IN (
+                            'Supplier Name/Payee', 
+                            'Type of Request',
+                            'Invoice Amount',
+                            'VAT',
+                            'Cost',
+                            'Equipment Code',
+                            'Cost Code',
+                            'Bill of Quantity Code'
+                        )
+                `);
+
+                return {
+                    ...childRequest,
+                    request_response_list: childResponseList
+                };
+            });
+
+            requestListWithResponses.push(parentRequestWithResponses, ...childRequestsWithResponses);
+        } else {
+            requestListWithResponses.push(parentRequestWithResponses);
+        }
+    });
+
+    const reducedRequestListWithResponses = requestListWithResponses.sort((a, b) => b.form_name.localeCompare(a.form_name)).reduce((acc, current) => {
         if (current.form_name === 'Bill of Quantity') {
-            const parentRequest = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${current.request_id}' AND request_response_field_id = 'eff42959-8552-4d7e-836f-f89018293ae8' LIMIT 1`)[0];
+            const parentRequest = plv8.execute(`
+                SELECT request_response 
+                FROM request_schema.request_response_table 
+                WHERE request_response_request_id = '${current.request_id}' 
+                AND request_response_field_id = 'eff42959-8552-4d7e-836f-f89018293ae8' 
+                LIMIT 1
+            `)[0];
 
             if (parentRequest) {
-                const parentRequestId = parentRequest.request_response.split('"').join('');
+                const parentRequestId = parentRequest.request_response.split('"').join('')
                 const parentRequestMatchIndex = acc.findIndex((request) => request.request_id === parentRequestId);
 
-                acc[parentRequestMatchIndex] = {
-                    ...acc[parentRequestMatchIndex],
-                    request_boq_data: {
-                        request_id: current.request_id,
-                        request_formsly_id: current.request_formsly_id_prefix + '-' + current.request_formsly_id_serial
-                    },
-                    request_response_list: current.request_response_list
+                if (parentRequestMatchIndex !== -1) {
+                    acc[parentRequestMatchIndex] = {
+                        ...acc[parentRequestMatchIndex],
+                        request_boq_data: {
+                            request_id: current.request_id,
+                            request_formsly_id: current.request_formsly_id_prefix + '-' + current.request_formsly_id_serial
+                        },
+                        request_response_list: current.request_response_list
+                    };
                 }
-
             }
         } else {
-            acc.push(current)
+            acc.push(current);
         }
 
         return acc;
     }, []);
 
+    const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_team_id='${teamId}' AND team_project_is_disabled=false ORDER BY team_project_name ASC;`);
+
+    const projectListOptions = projectList.map(project=> ({value: project.team_project_id, label: project.team_project_name}));
+
+    returnData = {
+      data: reducedRequestListWithResponses,
+      count: parseInt(requestCount),
+      projectListOptions,
+      projectFilter
+    };
  });
 return returnData;
 $$ LANGUAGE plv8;

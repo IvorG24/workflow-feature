@@ -18,6 +18,7 @@ import {
   Button,
   Container,
   Flex,
+  Menu,
   Space,
   Text,
   Title,
@@ -193,19 +194,36 @@ const RequestListPage = ({
           <Text>Manage your team requests here.</Text>
         </Box>
         {isFormslyTeam ? (
-          <Button
-            onClick={() =>
-              router.push(
-                `/${formatTeamNameToUrlKey(
-                  activeTeam.team_name
-                )}/requests/spreadsheet-view`
-              )
-            }
-            sx={{ flex: 1 }}
-            maw={300}
-          >
-            SSOT Spreadsheet View
-          </Button>
+          <Menu shadow="md" width={200}>
+            <Menu.Target>
+              <Button>Spreadsheet View</Button>
+            </Menu.Target>
+
+            <Menu.Dropdown>
+              <Menu.Item
+                onClick={() =>
+                  router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name
+                    )}/requests/spreadsheet-view`
+                  )
+                }
+              >
+                SSOT Spreadsheet View
+              </Menu.Item>
+              <Menu.Item
+                onClick={() =>
+                  router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name
+                    )}/requests/lrf-spreadsheet-view`
+                  )
+                }
+              >
+                Liquidation Spreadsheet View
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         ) : null}
         <Button
           variant="light"
