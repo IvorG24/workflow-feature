@@ -747,6 +747,9 @@ const EditPettyCashVoucherRequestPage = ({
               case "Unit of Measure":
                 field_option = uomOptions;
                 break;
+              case "Equipment Code":
+                field_option = equipmentCodeOptions;
+                break;
               default:
                 break;
             }

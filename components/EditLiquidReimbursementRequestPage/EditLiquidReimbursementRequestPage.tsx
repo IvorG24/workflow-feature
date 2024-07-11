@@ -620,8 +620,8 @@ const EditLiquidReimbursementRequestPage = ({
               (field) => field.field_id
             ),
           });
-        let requestDetailsSectionFieldList =
-          form.form_section[0].section_field.map((field) => {
+        let requestDetailsSectionFieldList = form.form_section[0].section_field
+          .map((field) => {
             const response = requestDetailsSectionResponse.find(
               (response) =>
                 response.request_response_field_id === field.field_id
@@ -632,7 +632,8 @@ const EditLiquidReimbursementRequestPage = ({
                 ? safeParse(response.request_response)
                 : "",
             };
-          });
+          })
+          .filter((field) => field.field_name !== "BOQ Code");
 
         const isPED = requestDetailsSectionFieldList.some(
           (field) =>
@@ -663,8 +664,7 @@ const EditLiquidReimbursementRequestPage = ({
         if (!isPED) {
           requestDetailsSectionFieldList =
             requestDetailsSectionFieldList.filter(
-              (field) =>
-                !["Equipment Code", "BOQ Code"].includes(field.field_name)
+              (field) => !["Equipment Code"].includes(field.field_name)
             );
         }
 
@@ -794,11 +794,18 @@ const EditLiquidReimbursementRequestPage = ({
               (response) =>
                 response.request_response_field_id === field.field_id
             );
+
+            let fieldOption: OptionTableRow[] = field.field_option;
+            if (field.field_name === "Payment Option") {
+              fieldOption = bankListOptions;
+            }
+
             return {
               ...field,
               field_response: response
                 ? safeParse(response.request_response)
                 : "",
+              field_option: fieldOption,
             };
           }
         );
