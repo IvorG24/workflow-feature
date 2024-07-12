@@ -1,14 +1,16 @@
--- Remove all policies for files
+----- Remove all policies for files
 DROP POLICY IF EXISTS objects_policy ON storage.objects;
 DROP POLICY IF EXISTS buckets_policy ON storage.buckets;
 
--- Delete file buckets created and files uploaded
+----- Delete file buckets created and files uploaded
 DELETE FROM storage.objects;
 DELETE FROM storage.buckets;
 
 -- Allow all to access storage
 CREATE POLICY objects_policy ON storage.objects FOR ALL TO PUBLIC USING (true) WITH CHECK (true);
 CREATE POLICY buckets_policy ON storage.buckets FOR ALL TO PUBLIC USING (true) WITH CHECK (true);
+
+----- START: STORAGES
 
 INSERT INTO storage.buckets (id, name) VALUES ('USER_AVATARS', 'USER_AVATARS');
 INSERT INTO storage.buckets (id, name) VALUES ('USER_SIGNATURES', 'USER_SIGNATURES');
@@ -20,6 +22,8 @@ INSERT INTO storage.buckets (id, name) VALUES ('TEAM_PROJECT_ATTACHMENTS', 'TEAM
 INSERT INTO storage.buckets (id, name) VALUES ('USER_VALID_IDS', 'USER_VALID_IDS');
 INSERT INTO storage.buckets (id, name) VALUES ('TICKET_ATTACHMENTS', 'TICKET_ATTACHMENTS');
 
+----- END: STORAGES
+
 UPDATE storage.buckets SET public = true;
 
 ----- START: EXTENSIONS
@@ -29,7 +33,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
 
 ----- END: EXTENSIONS
 
------ START: SCHEMA
+----- START: SCHEMAS
 
 DROP SCHEMA IF EXISTS public CASCADE;
 DROP SCHEMA IF EXISTS user_schema CASCADE;
@@ -45,6 +49,7 @@ DROP SCHEMA IF EXISTS memo_schema CASCADE;
 DROP SCHEMA IF EXISTS ticket_schema CASCADE;
 DROP SCHEMA IF EXISTS request_schema CASCADE;
 DROP SCHEMA IF EXISTS form_schema CASCADE;
+DROP SCHEMA IF EXISTS team_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
@@ -60,8 +65,9 @@ CREATE SCHEMA memo_schema AUTHORIZATION postgres;
 CREATE SCHEMA ticket_schema AUTHORIZATION postgres;
 CREATE SCHEMA request_schema AUTHORIZATION postgres;
 CREATE SCHEMA form_schema AUTHORIZATION postgres;
+CREATE SCHEMA team_schema AUTHORIZATION postgres;
 
------ END: SCHEMA
+----- END: SCHEMAS
 
 ----- START: TABLES
 
@@ -13192,7 +13198,7 @@ RETURNS VOID AS $$
     
     const item_description = plv8.execute(`INSERT INTO item_schema.item_description_table (item_description_id, item_description_label,item_description_item_id,item_description_is_available,item_description_field_id, item_description_is_with_uom, item_description_order) VALUES ${itemDescriptionValues} RETURNING *`);
  });
-$$ LANGUAGE plv8;.
+$$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION add_team_member_to_all_project(
   input_data JSON
@@ -13430,482 +13436,34 @@ RETURNS JSON as $$
 return returnData;
 $$ LANGUAGE plv8;
 
--------- END: FUNCTIONS
+----- END: FUNCTIONS
 
--------- START: POLICIES
+----- START: POLICIES
 
+--- attachment_table
 ALTER TABLE attachment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.team_member_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE request_schema.comment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_schema.invitation_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE request_schema.request_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.team_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_schema.user_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_schema.field_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_schema.form_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_schema.item_description_field_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_schema.item_description_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_schema.item_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_schema.option_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE request_schema.request_signer_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_schema.section_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_schema.signer_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.supplier_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE request_schema.request_response_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_schema.form_team_group_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.team_group_member_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.team_group_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.team_project_member_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.team_project_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_schema.ticket_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_schema.ticket_comment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_schema.item_division_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_schema.item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_schema.user_employee_number_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE history_schema.user_name_history_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE history_schema.signature_history_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE unit_of_measurement_schema.general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE service_schema.service_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_signer_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_line_item_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_line_item_attachment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_date_updated_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_status_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_agreement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_schema.user_valid_id_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE other_expenses_schema.other_expenses_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE other_expenses_schema.other_expenses_type_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE unit_of_measurement_schema.item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_schema.item_level_three_description_table  ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_format_section_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE memo_schema.memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lookup_schema.query_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_schema.form_sla_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lookup_schema.csi_code_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_schema.ticket_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_schema.ticket_section_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_schema.ticket_field_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_schema.ticket_option_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ticket_schema.ticket_response_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_schema.equipment_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_schema.equipment_brand_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_schema.equipment_model_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_schema.equipment_component_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_schema.equipment_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_schema.equipment_description_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE unit_of_measurement_schema.equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_schema.equipment_general_name_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE equipment_schema.equipment_part_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE unit_of_measurement_schema.capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_schema.jira_project_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_schema.jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_user_role_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_schema.jira_user_account_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_schema.jira_project_user_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_schema.jira_item_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_schema.jira_item_user_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.team_department_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_schema.jira_organization_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE jira_schema.jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lookup_schema.employee_job_title_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lookup_schema.scic_employee_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE form_schema.special_field_template_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE item_schema.item_category_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lookup_schema.bank_list_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lookup_schema.currency_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lookup_schema.formsly_price_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE service_schema.service_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE service_schema.service_scope_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE service_schema.service_scope_choice_table ENABLE ROW LEVEL SECURITY;
-ALTER TABLE team_schema.team_transaction_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_schema.team_member_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON form_schema.field_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.field_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.field_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.form_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.option_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_schema.request_signer_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_signer_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON request_schema.request_signer_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON request_schema.request_signer_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.section_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.signer_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON team_schema.supplier_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_schema.comment_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.comment_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on team_member_id" ON request_schema.comment_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on team_member_id" ON request_schema.comment_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.invitation_table;
-DROP POLICY IF EXISTS "Allow READ for users based on invitation_to_email" ON user_schema.invitation_table;
-DROP POLICY IF EXISTS "Allow UPDATE for users based on invitation_from_team_member_id" ON user_schema.invitation_table;
-DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_member_id" ON user_schema.invitation_table;
-
-DROP POLICY IF EXISTS "Allow INSERT for authenticated users" ON notification_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" ON notification_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on notification_user_id" ON notification_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON notification_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_response_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_response_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own request response" ON request_schema.request_response_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own request response" ON request_schema.request_response_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_schema.request_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_schema.request_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_schema.team_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON team_schema.team_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON team_schema.team_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own teams" ON team_schema.team_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.user_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_schema.form_team_group_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_group_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_group_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_group_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_group_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_group_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_project_member_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_project_table;
-DROP POLICY IF EXISTS "Allow READ for anon" ON team_schema.team_project_table;
-DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_project_table;
-DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_project_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_schema.ticket_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_schema.ticket_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_comment_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_schema.ticket_comment_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_comment_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_schema.ticket_comment_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_choice_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_division_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_field_uom_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.user_employee_number_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_employee_number_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_employee_number_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_employee_number_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.user_name_history_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.signature_history_table;
-DROP POLICY IF EXISTS "Enable read access for all users" ON history_schema.signature_history_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON unit_of_measurement_schema.general_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_table;
-DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_table;
-DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_table;
-
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_signer_table;
-
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_line_item_table;
-
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_line_item_attachment_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_date_updated_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_date_updated_table;
-DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_date_updated_table;
-DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_date_updated_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_status_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_status_table;
-DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_status_table;
-DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_status_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_read_receipt_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_read_receipt_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_agreement_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_agreement_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_schema.user_valid_id_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_valid_id_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_schema.user_valid_id_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_schema.other_expenses_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_schema.other_expenses_type_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON unit_of_measurement_schema.item_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_level_three_description_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
-
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_section_table;
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_subsection_table;
-DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_attachment_table;
-
-DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.query_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON form_schema.form_sla_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.form_sla_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON form_schema.form_sla_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON lookup_schema.csi_code_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON lookup_schema.csi_code_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON lookup_schema.csi_code_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_category_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_category_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_section_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_section_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_section_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_field_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_field_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_field_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_option_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_option_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_option_table;
-
-DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_response_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_response_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_response_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON ticket_schema.ticket_response_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_brand_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_model_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_component_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_schema.;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_description_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_general_name_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ONequipment_schema.equipment_general_name_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_part_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON address_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON address_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON address_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON address_table;
-
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_project_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_formsly_project_table;
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_formsly_project_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_formsly_project_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_user_role_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_user_account_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_project_user_table;
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_category_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table;
-
-DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_department_table;
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_organization_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_organization_team_project_table;
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
-DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
-
-DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.employee_job_title_table;
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.scic_employee_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.special_field_template_table;
-DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.special_field_template_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.special_field_template_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_category_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON item_schema.item_category_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_category_table;
-
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.bank_list_table;
-
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.currency_table;
-
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.formsly_price_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_scope_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_scope_choice_table;
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
-
-DROP POLICY IF EXISTS "Allow CRUD for authenticated users with OWNER role" ON team_schema.team_transaction_table;
-
---- ATTACHMENT_TABLE
-CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
+CREATE POLICY "Allow CRUD for anon users" ON attachment_table
 AS PERMISSIVE FOR ALL
 USING (true);
 
---- FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "form_schema"."field_table"
+--- form_schema.field_table
+ALTER TABLE form_schema.field_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON form_schema.field_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON form_schema.field_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "form_schema"."field_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.field_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.field_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."field_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.field_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.field_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING ( 
@@ -13923,7 +13481,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."field_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.field_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.field_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING ( 
@@ -13941,7 +13500,10 @@ USING (
   )
 );
 
---- FORM_TABLE
+--- form_schema.form_table
+ALTER TABLE form_schema.form_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."form_table"
 AS PERMISSIVE FOR INSERT
 TO authenticated
@@ -13958,10 +13520,12 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.form_table;
 CREATE POLICY "Allow READ for anon users" ON "form_schema"."form_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
 
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."form_table"
 AS PERMISSIVE FOR UPDATE
 TO authenticated
@@ -13978,6 +13542,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.form_table;
 CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."form_table"
 AS PERMISSIVE FOR DELETE
 TO authenticated
@@ -13994,8 +13559,11 @@ USING (
   )
 );
 
---- ITEM_DESCRIPTION_FIELD_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_table"
+---  item_schema.item_description_field_table
+ALTER TABLE item_schema.item_description_field_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14011,11 +13579,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_description_field_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_field_table;
+CREATE POLICY "Allow READ access for anon users" ON item_schema.item_description_field_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14031,7 +13601,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14047,8 +13618,11 @@ USING (
   )
 );
 
---- ITEM_DESCRIPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_table"
+--- item_schema.item_description_table
+ALTER TABLE item_schema.item_description_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14063,11 +13637,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_description_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_table;
+CREATE POLICY "Allow READ access for anon users" ON item_schema.item_description_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14082,7 +13658,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14097,8 +13674,11 @@ USING (
   )
 );
 
---- ITEM_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_table"
+--- item_schema.item_table
+ALTER TABLE item_schema.item_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14111,11 +13691,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_table;
+CREATE POLICY "Allow READ access for anon users" ON item_schema.item_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14128,7 +13710,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14141,8 +13724,11 @@ USING (
   )
 );
 
---- OPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."option_table"
+--- form_schema.option_table
+ALTER TABLE form_schema.option_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14158,11 +13744,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "form_schema"."option_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.option_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.option_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."option_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14178,7 +13766,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."option_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.option_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14194,8 +13783,11 @@ USING (
   )
 );
 
---- REQUEST_SIGNER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "request_schema"."request_signer_table"
+--- request_schema.request_signer_table
+ALTER TABLE request_schema.request_signer_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_schema.request_signer_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON request_schema.request_signer_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14211,11 +13803,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "request_schema"."request_signer_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_signer_table;
+CREATE POLICY "Allow READ for anon users" ON request_schema.request_signer_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON "request_schema"."request_signer_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON request_schema.request_signer_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or APPROVER role" ON request_schema.request_signer_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14232,7 +13826,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users" ON "request_schema"."request_signer_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON request_schema.request_signer_table;
+CREATE POLICY "Allow DELETE for authenticated users" ON request_schema.request_signer_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14248,8 +13843,11 @@ USING (
   )
 );
 
---- SECTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."section_table"
+--- form_schema.section_table
+ALTER TABLE form_schema.section_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14266,11 +13864,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "form_schema"."section_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.section_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.section_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."section_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14287,7 +13887,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."section_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.section_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14304,8 +13905,11 @@ USING (
   )
 );
 
---- SIGNER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."signer_table"
+--- form_schema.signer_table
+ALTER TABLE form_schema.signer_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14322,11 +13926,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "form_schema"."signer_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.signer_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.signer_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."signer_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14343,7 +13949,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "form_schema"."signer_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON form_schema.signer_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14360,8 +13967,11 @@ USING (
   )
 );
 
---- SUPPLIER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "team_schema"."supplier_table"
+--- team_schema.supplier_table
+ALTER TABLE team_schema.supplier_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14373,11 +13983,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "team_schema"."supplier_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON team_schema.supplier_table;
+CREATE POLICY "Allow READ access for anon users" ON team_schema.supplier_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "team_schema"."supplier_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14389,7 +14001,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "team_schema"."supplier_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.supplier_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14401,17 +14014,22 @@ USING (
   )
 );
 
---- TEAM_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "team_schema"."team_member_table"
+--- team_schema.team_member_table
+ALTER TABLE team_schema.team_member_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_schema.team_member_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON team_schema.team_member_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "team_schema"."team_member_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_member_table;
+CREATE POLICY "Allow READ for anon users" ON team_schema.team_member_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "team_schema"."team_member_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14422,7 +14040,8 @@ USING (
   ) OR team_member_user_id = auth.uid()
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "team_schema"."team_member_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14433,34 +14052,44 @@ USING (
   )
 );
 
---- COMMENT_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "request_schema"."comment_table"
+--- request_schema.comment_table
+ALTER TABLE request_schema.comment_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_schema.comment_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON request_schema.comment_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "request_schema"."comment_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.comment_table;
+CREATE POLICY "Allow READ for anon users" ON request_schema.comment_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users based on team_member_id" ON "request_schema"."comment_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on team_member_id" ON request_schema.comment_table;
+CREATE POLICY "Allow UPDATE for authenticated users based on team_member_id" ON request_schema.comment_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()))
 WITH CHECK (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
 
-CREATE POLICY "Allow DELETE for authenticated users based on team_member_id" ON "request_schema"."comment_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on team_member_id" ON request_schema.comment_table;
+CREATE POLICY "Allow DELETE for authenticated users based on team_member_id" ON request_schema.comment_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
 
---- INVITATION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "user_schema"."invitation_table"
+--- user_schema.invitation_table
+ALTER TABLE user_schema.invitation_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.invitation_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON user_schema.invitation_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for users based on invitation_to_email" ON "user_schema"."invitation_table"
+DROP POLICY IF EXISTS "Allow READ for users based on invitation_to_email" ON user_schema.invitation_table;
+CREATE POLICY "Allow READ for users based on invitation_to_email" ON user_schema.invitation_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
@@ -14484,7 +14113,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for users based on invitation_from_team_member_id" ON "user_schema"."invitation_table"
+DROP POLICY IF EXISTS "Allow UPDATE for users based on invitation_from_team_member_id" ON user_schema.invitation_table;
+CREATE POLICY "Allow UPDATE for users based on invitation_from_team_member_id" ON user_schema.invitation_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14526,45 +14156,57 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON "user_schema"."invitation_table"
+DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_member_id" ON user_schema.invitation_table;
+CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON user_schema.invitation_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
 
---- NOTIFICATION_TABLE
-CREATE POLICY "Allow INSERT for authenticated users" ON "public"."notification_table"
+--- notification_table
+ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users" ON notification_table;
+CREATE POLICY "Allow INSERT for authenticated users" ON notification_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for authenticated users on own notifications" ON "public"."notification_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" ON notification_table;
+CREATE POLICY "Allow READ for authenticated users on own notifications" ON notification_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (auth.uid() = notification_user_id);
 
-CREATE POLICY "Allow UPDATE for authenticated users on notification_user_id" ON "public"."notification_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on notification_user_id" ON notification_table;
+CREATE POLICY "Allow UPDATE for authenticated users on notification_user_id" ON notification_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (auth.uid() = notification_user_id)
 WITH CHECK (auth.uid() = notification_user_id);
 
-CREATE POLICY "Allow DELETE for authenticated users" ON "public"."notification_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON notification_table;
+CREATE POLICY "Allow DELETE for authenticated users" ON notification_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (true);
 
---- REQUEST_RESPONSE_TABLE
-CREATE POLICY "Allow CREATE access for all users" ON "request_schema"."request_response_table"
+--- request_schema.request_response_table
+ALTER TABLE request_schema.request_response_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_response_table;
+CREATE POLICY "Allow CREATE access for all users" ON request_schema.request_response_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "request_schema"."request_response_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_response_table;
+CREATE POLICY "Allow READ for anon users" ON request_schema.request_response_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own request response" ON request_schema.request_response_table;
 CREATE POLICY "Allow UPDATE for authenticated users on own request response"
-ON "request_schema"."request_response_table"
+ON request_schema.request_response_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14590,8 +14232,9 @@ WITH CHECK (
   ) 
 );
 
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own request response" ON request_schema.request_response_table;
 CREATE POLICY "Allow DELETE for authenticated users on own request response"
-ON "request_schema"."request_response_table"
+ON request_schema.request_response_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14613,17 +14256,22 @@ USING (
   )
 );
 
---- REQUEST_TABLE
-CREATE POLICY "Allow CREATE access for all users" ON "request_schema"."request_table"
+--- request_schema.request_table
+ALTER TABLE request_schema.request_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_table;
+CREATE POLICY "Allow CREATE access for all users" ON request_schema.request_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "request_schema"."request_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_table;
+CREATE POLICY "Allow READ for anon users" ON request_schema.request_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users on own requests" ON "request_schema"."request_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_schema.request_table;
+CREATE POLICY "Allow UPDATE for authenticated users on own requests" ON request_schema.request_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14659,7 +14307,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users on own requests" ON "request_schema"."request_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own requests" ON request_schema.request_table;
+CREATE POLICY "Allow DELETE for authenticated users on own requests" ON request_schema.request_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14670,51 +14319,66 @@ USING (
   )
 );
 
---- TEAM_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "team_schema"."team_table"
+--- team_schema.team_table
+ALTER TABLE team_schema.team_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON team_schema.team_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON team_schema.team_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for authenticated users" ON "team_schema"."team_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON team_schema.team_table;
+CREATE POLICY "Allow READ for authenticated users" ON team_schema.team_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users on own teams" ON "team_schema"."team_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON team_schema.team_table;
+CREATE POLICY "Allow UPDATE for authenticated users on own teams" ON team_schema.team_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (auth.uid() = team_user_id)
 WITH CHECK (auth.uid() = team_user_id);
 
-CREATE POLICY "Allow DELETE for authenticated users on own teams" ON "team_schema"."team_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own teams" ON team_schema.team_table;
+CREATE POLICY "Allow DELETE for authenticated users on own teams" ON team_schema.team_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (auth.uid() = team_user_id);
 
--- USER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "user_schema"."user_table"
+--- user_schema.user_table
+ALTER TABLE user_schema.user_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.user_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON user_schema.user_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "user_schema"."user_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_table;
+CREATE POLICY "Allow READ for anon users" ON user_schema.user_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "user_schema"."user_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_table;
+CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "user_schema"."user_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table;
+CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (auth.uid() = user_id);
 
---- FORM_TEAM_GROUP_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "form_schema"."form_team_group_table"
+--- form_schema.form_team_group_table
+ALTER TABLE form_schema.form_team_group_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14728,7 +14392,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "form_schema"."form_team_group_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON form_schema.form_team_group_table;
+CREATE POLICY "Allow READ for authenticated team members" ON form_schema.form_team_group_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
@@ -14741,7 +14406,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "form_schema"."form_team_group_table"
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON form_schema.form_team_group_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14765,7 +14431,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "form_schema"."form_team_group_table"
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON form_schema.form_team_group_table;
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON form_schema.form_team_group_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14779,8 +14446,11 @@ USING (
   )
 );
 
---- TEAM_GROUP_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "team_schema"."team_group_member_table"
+--- team_schema.team_group_member_table
+ALTER TABLE team_schema.team_group_member_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_group_member_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14794,7 +14464,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "team_schema"."team_group_member_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_group_member_table;
+CREATE POLICY "Allow READ for authenticated team members" ON team_schema.team_group_member_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
@@ -14807,7 +14478,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "team_schema"."team_group_member_table"
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_group_member_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14831,7 +14503,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "team_schema"."team_group_member_table"
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_group_member_table;
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_group_member_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14845,8 +14518,11 @@ USING (
   )
 );
 
---- TEAM_GROUP_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "team_schema"."team_group_table"
+--- team_schema.team_group_table
+ALTER TABLE team_schema.team_group_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_group_table;
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_group_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14860,7 +14536,8 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "team_schema"."team_group_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_group_table;
+CREATE POLICY "Allow READ for authenticated team members" ON team_schema.team_group_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
@@ -14873,7 +14550,8 @@ USING (
   ) 
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "team_schema"."team_group_table"
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_group_table;
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_group_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14897,7 +14575,8 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "team_schema"."team_group_table"
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_group_table;
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_group_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14911,8 +14590,11 @@ USING (
   ) 
 );
 
---- TEAM_PROJECT_MEMBER_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "team_schema"."team_project_member_table"
+--- team_schema.team_project_member_table
+ALTER TABLE team_schema.team_project_member_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_project_member_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14926,7 +14608,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for authenticated team members" ON "team_schema"."team_project_member_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated team members" ON team_schema.team_project_member_table;
+CREATE POLICY "Allow READ for authenticated team members" ON team_schema.team_project_member_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (
@@ -14939,7 +14622,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "team_schema"."team_project_member_table"
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_project_member_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14955,7 +14639,7 @@ USING (
 WITH CHECK (
   EXISTS (
     SELECT tp.team_project_team_id
-    FROM team_project_table as tp
+    FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
     AND tm.team_member_user_id = auth.uid()
@@ -14963,7 +14647,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "team_schema"."team_project_member_table"
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_project_member_table;
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_project_member_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -14977,8 +14662,11 @@ USING (
   )
 );
 
---- TEAM_PROJECT_TABLE
-CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON "team_schema"."team_project_table"
+--- team_schema.team_project_table
+ALTER TABLE team_schema.team_project_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_project_table;
+CREATE POLICY "Allow CREATE for OWNER or ADMIN roles" ON team_schema.team_project_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -14992,11 +14680,13 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow READ for anon" ON "team_schema"."team_project_table"
+DROP POLICY IF EXISTS "Allow READ for anon" ON team_schema.team_project_table;
+CREATE POLICY "Allow READ for anon" ON team_schema.team_project_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON "team_schema"."team_project_table"
+DROP POLICY IF EXISTS "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_project_table;
+CREATE POLICY "Allow UPDATE for OWNER or ADMIN roles" ON team_schema.team_project_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15020,7 +14710,8 @@ WITH CHECK (
   ) 
 );
 
-CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON "team_schema"."team_project_table"
+DROP POLICY IF EXISTS "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_project_table;
+CREATE POLICY "Allow DELETE for OWNER or ADMIN roles" ON team_schema.team_project_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15034,24 +14725,29 @@ USING (
   )
 );
 
---- TICKET_TABLE
+--- ticket_schema.ticket_table
+ALTER TABLE ticket_schema.ticket_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_table;
+CREATE POLICY "Allow CREATE access for all users" ON ticket_schema.ticket_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "ticket_schema"."ticket_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_schema.ticket_table;
+CREATE POLICY "Allow READ for anon users" ON ticket_schema.ticket_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON ticket_schema.ticket_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "ticket_schema"."ticket_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_schema.ticket_table;
+CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON ticket_schema.ticket_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15062,24 +14758,29 @@ USING (
   )
 );
 
---- TICKET_COMMENT_TABLE
+--- ticket_schema.ticket_comment_table
+ALTER TABLE ticket_schema.ticket_comment_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_comment_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_comment_table;
+CREATE POLICY "Allow CREATE access for all users" ON ticket_schema.ticket_comment_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "ticket_schema"."ticket_comment_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON ticket_schema.ticket_comment_table;
+CREATE POLICY "Allow READ for anon users" ON ticket_schema.ticket_comment_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_comment_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_comment_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON ticket_schema.ticket_comment_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON "ticket_schema"."ticket_comment_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own ticket" ON ticket_schema.ticket_comment_table;
+CREATE POLICY "Allow DELETE for authenticated users on own ticket" ON ticket_schema.ticket_comment_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15090,8 +14791,11 @@ USING (
   )
 );
 
---- SERVICE_SCOPE_CHOICE_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
+--- service_schema.service_scope_choice_table
+ALTER TABLE service_schema.service_scope_choice_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15107,11 +14811,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "service_schema"."service_scope_choice_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_choice_table;
+CREATE POLICY "Allow READ access for anon users" ON service_schema.service_scope_choice_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15127,7 +14833,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15143,8 +14850,11 @@ USING (
   )
 );
 
---- SERVICE_SCOPE_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
+--- service_schema.service_scope_table
+ALTER TABLE service_schema.service_scope_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15159,11 +14869,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "service_schema"."service_scope_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_table;
+CREATE POLICY "Allow READ access for anon users" ON service_schema.service_scope_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15178,7 +14890,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15193,8 +14906,11 @@ USING (
   )
 );
 
---- SERVICE_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
+--- service_schema.service_table
+ALTER TABLE service_schema.service_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15207,11 +14923,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "service_schema"."service_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_table;
+CREATE POLICY "Allow READ access for anon users" ON service_schema.service_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15224,7 +14942,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15237,8 +14956,11 @@ USING (
   )
 );
 
---- ITEM_DIVISION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_division_table"
+--- item_schema.item_division_table
+ALTER TABLE item_schema.item_division_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15253,11 +14975,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_division_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_division_table;
+CREATE POLICY "Allow READ access for anon users" ON item_schema.item_division_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_division_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15272,7 +14996,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_division_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_division_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15287,8 +15012,11 @@ USING (
   )
 );
 
---- item_description_field_uom_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_uom_table"
+--- item_schema.item_description_field_uom_table
+ALTER TABLE item_schema.item_description_field_uom_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15305,11 +15033,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_description_field_uom_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_description_field_uom_table;
+CREATE POLICY "Allow READ access for anon users" ON item_schema.item_description_field_uom_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_uom_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15326,7 +15056,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_description_field_uom_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_description_field_uom_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15343,17 +15074,22 @@ USING (
   )
 );
 
--- USER_EMPLOYEE_NUMBER_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "user_schema"."user_employee_number_table"
+--- user_schema.user_employee_number_table
+ALTER TABLE user_schema.user_employee_number_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON user_schema.user_employee_number_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON user_schema.user_employee_number_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "user_schema"."user_employee_number_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_employee_number_table;
+CREATE POLICY "Allow READ for anon users" ON user_schema.user_employee_number_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON "user_schema"."user_employee_number_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_employee_number_table;
+CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_employee_number_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15371,7 +15107,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON "user_schema"."user_employee_number_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_employee_number_table;
+CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON user_schema.user_employee_number_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15381,25 +15118,35 @@ USING (
     WHERE user_id = user_employee_number_user_id
   )
 );
---- USER_NAME_HISTORY_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "history_schema"."user_name_history_table"
+--- history_schema.user_name_history_table
+ALTER TABLE history_schema.user_name_history_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.user_name_history_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON history_schema.user_name_history_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
---- SIGNATURE_HISTORY_TABLE
-CREATE POLICY "Allow CREATE for authenticated users" ON "history_schema"."signature_history_table"
+--- history_schema.signature_history_table
+ALTER TABLE history_schema.signature_history_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON history_schema.signature_history_table;
+CREATE POLICY "Allow CREATE for authenticated users" ON history_schema.signature_history_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Enable read access for all users" ON "history_schema"."signature_history_table"
+DROP POLICY IF EXISTS "Enable read access for all users" ON history_schema.signature_history_table;
+CREATE POLICY "Enable read access for all users" ON history_schema.signature_history_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
---- general_unit_of_measurement_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."general_unit_of_measurement_table"
+--- unit_of_measurement_schema.general_unit_of_measurement_table
+ALTER TABLE unit_of_measurement_schema.general_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15413,11 +15160,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "unit_of_measurement_schema"."general_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON unit_of_measurement_schema.general_unit_of_measurement_table;
+CREATE POLICY "Allow READ for anon users" ON unit_of_measurement_schema.general_unit_of_measurement_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."general_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15431,7 +15180,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."general_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.general_unit_of_measurement_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15445,8 +15195,11 @@ USING (
   )
 );
 
---- service_category_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_category_table"
+--- service_schema.service_category_table
+ALTER TABLE service_schema.service_category_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15460,11 +15213,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "service_schema"."service_category_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_category_table;
+CREATE POLICY "Allow READ for anon users" ON service_schema.service_category_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_category_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15478,7 +15233,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_category_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON service_schema.service_category_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15492,67 +15248,88 @@ USING (
   )
 );
 
--- memo_table
-CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_table"
+--- memo_schema.memo_table
+ALTER TABLE memo_schema.memo_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_table;
+CREATE POLICY "Allow CREATE access for auth users" ON memo_schema.memo_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_table;
+CREATE POLICY "Allow READ for anon users" ON memo_schema.memo_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for auth users" ON "memo_schema"."memo_table"
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_table;
+CREATE POLICY "Allow UPDATE for auth users" ON memo_schema.memo_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for auth users on own memo" ON "memo_schema"."memo_table"
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_table;
+CREATE POLICY "Allow DELETE for auth users on own memo" ON memo_schema.memo_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
   memo_author_user_id = auth.uid()
 );
 
--- memo_signer_table
-CREATE POLICY "Allow CRUD for auth users" ON "public"."memo_signer_table"
+--- memo_schema.memo_signer_table
+ALTER TABLE memo_schema.memo_signer_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_signer_table;
+CREATE POLICY "Allow CRUD for auth users" ON memo_schema.memo_signer_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
--- memo_line_item_table
-CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_line_item_table"
+--- memo_schema.memo_line_item_table
+ALTER TABLE memo_schema.memo_line_item_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_line_item_table;
+CREATE POLICY "Allow CRUD for auth users" ON memo_schema.memo_line_item_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
--- memo_line_item_attachment_table
-CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_line_item_attachment_table"
+--- memo_schema.memo_line_item_attachment_table
+ALTER TABLE memo_schema.memo_line_item_attachment_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_line_item_attachment_table;
+CREATE POLICY "Allow CRUD for auth users" ON memo_schema.memo_line_item_attachment_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
--- memo_date_updated_table
-CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_date_updated_table"
+--- memo_schema.memo_date_updated_table
+ALTER TABLE memo_schema.memo_date_updated_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_date_updated_table;
+CREATE POLICY "Allow CREATE access for auth users" ON memo_schema.memo_date_updated_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_date_updated_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_date_updated_table;
+CREATE POLICY "Allow READ for anon users" ON memo_schema.memo_date_updated_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for auth users" ON "memo_schema"."memo_date_updated_table"
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_date_updated_table;
+CREATE POLICY "Allow UPDATE for auth users" ON memo_schema.memo_date_updated_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for auth users on own memo" ON "memo_schema"."memo_date_updated_table"
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_date_updated_table;
+CREATE POLICY "Allow DELETE for auth users on own memo" ON memo_schema.memo_date_updated_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15564,23 +15341,29 @@ USING (
   )
 );
 
--- memo_status_table
-CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_status_table"
+--- memo_schema.memo_status_table
+ALTER TABLE memo_schema.memo_status_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_status_table;
+CREATE POLICY "Allow CREATE access for auth users" ON memo_schema.memo_status_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_status_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_status_table;
+CREATE POLICY "Allow READ for anon users" ON memo_schema.memo_status_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for auth users" ON "memo_schema"."memo_status_table"
+DROP POLICY IF EXISTS "Allow UPDATE for auth users" ON memo_schema.memo_status_table;
+CREATE POLICY "Allow UPDATE for auth users" ON memo_schema.memo_status_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for auth users on own memo" ON "memo_schema"."memo_status_table"
+DROP POLICY IF EXISTS "Allow DELETE for auth users on own memo" ON memo_schema.memo_status_table;
+CREATE POLICY "Allow DELETE for auth users on own memo" ON memo_schema.memo_status_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15592,45 +15375,60 @@ USING (
   )
 );
 
--- memo_read_receipt_table
-CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_read_receipt_table"
+--- memo_schema.memo_read_receipt_table
+ALTER TABLE memo_schema.memo_read_receipt_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_read_receipt_table;
+CREATE POLICY "Allow CREATE access for auth users" ON memo_schema.memo_read_receipt_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_read_receipt_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_read_receipt_table;
+CREATE POLICY "Allow READ for anon users" ON memo_schema.memo_read_receipt_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
--- memo_agreement_table
-CREATE POLICY "Allow CREATE access for auth users" ON "memo_schema"."memo_agreement_table"
+--- memo_schema.memo_agreement_table
+ALTER TABLE memo_schema.memo_agreement_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE access for auth users" ON memo_schema.memo_agreement_table;
+CREATE POLICY "Allow CREATE access for auth users" ON memo_schema.memo_agreement_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "memo_schema"."memo_agreement_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON memo_schema.memo_agreement_table;
+CREATE POLICY "Allow READ for anon users" ON memo_schema.memo_agreement_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
---- USER_VALID_ID_TABLE
+--- user_schema.user_valid_id_table
+ALTER TABLE user_schema.user_valid_id_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "user_schema"."user_valid_id_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON user_schema.user_valid_id_table;
+CREATE POLICY "Allow CREATE access for all users" ON user_schema.user_valid_id_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "user_schema"."user_valid_id_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON user_schema.user_valid_id_table;
+CREATE POLICY "Allow READ for anon users" ON user_schema.user_valid_id_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "user_schema"."user_valid_id_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON user_schema.user_valid_id_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON user_schema.user_valid_id_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
---- other_expenses_category_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_category_table"
+--- other_expenses_schema.other_expenses_category_table
+ALTER TABLE other_expenses_schema.other_expenses_category_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15644,11 +15442,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "other_expenses_schema"."other_expenses_category_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_schema.other_expenses_category_table;
+CREATE POLICY "Allow READ for anon users" ON other_expenses_schema.other_expenses_category_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_category_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15662,7 +15462,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_category_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_category_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15677,8 +15478,11 @@ USING (
   )
 );
 
---- other_expenses_type_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_type_table"
+--- other_expenses_schema.other_expenses_type_table
+ALTER TABLE other_expenses_schema.other_expenses_type_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15693,11 +15497,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "other_expenses_schema"."other_expenses_type_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON other_expenses_schema.other_expenses_type_table;
+CREATE POLICY "Allow READ for anon users" ON other_expenses_schema.other_expenses_type_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_type_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15712,7 +15518,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "other_expenses_schema"."other_expenses_type_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON other_expenses_schema.other_expenses_type_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15727,8 +15534,11 @@ USING (
   )
 );
 
---- item_unit_of_measurement_table
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."item_unit_of_measurement_table"
+--- unit_of_measurement_schema.item_unit_of_measurement_table
+ALTER TABLE unit_of_measurement_schema.item_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15742,11 +15552,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "unit_of_measurement_schema"."item_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON unit_of_measurement_schema.item_unit_of_measurement_table;
+CREATE POLICY "Allow READ for anon users" ON unit_of_measurement_schema.item_unit_of_measurement_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."item_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15760,7 +15572,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."item_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.item_unit_of_measurement_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15774,8 +15587,11 @@ USING (
   )
 );
 
---- ITEM_LEVEL_THREE_DESCRIPTION
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_level_three_description_table"
+--- item_schema.item_level_three_description_table
+ALTER TABLE item_schema.item_level_three_description_table  ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15790,11 +15606,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "item_schema"."item_level_three_description_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON item_schema.item_level_three_description_table;
+CREATE POLICY "Allow READ access for anon users" ON item_schema.item_level_three_description_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_level_three_description_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15809,7 +15627,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_level_three_description_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON item_schema.item_level_three_description_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -15824,156 +15643,202 @@ USING (
   )
 );
 
-CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_format_section_table"
+--- memo_schema.memo_format_section_table
+ALTER TABLE memo_schema.memo_format_section_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_section_table;
+CREATE POLICY "Allow CRUD for auth users" ON memo_schema.memo_format_section_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_format_subsection_table"
+--- mmemo_schema.memo_format_subsection_table
+ALTER TABLE memo_schema.memo_format_subsection_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_subsection_table;
+CREATE POLICY "Allow CRUD for auth users" ON memo_schema.memo_format_subsection_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow CRUD for auth users" ON "memo_schema"."memo_format_attachment_table"
+--- memo_schema.memo_format_attachment_table
+ALTER TABLE memo_schema.memo_format_attachment_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for auth users" ON memo_schema.memo_format_attachment_table;
+CREATE POLICY "Allow CRUD for auth users" ON memo_schema.memo_format_attachment_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true)
 WITH CHECK (true);
 
---- QUERY_TABLE
+--- lookup_schema.query_table
+ALTER TABLE lookup_schema.query_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow READ for anon users" ON "lookup_schema"."query_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.query_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.query_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
---- FORM_SLA_TABLE
+--- form_schema.form_sla_table
+ALTER TABLE form_schema.form_sla_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "form_schema"."form_sla_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON form_schema.form_sla_table;
+CREATE POLICY "Allow CREATE access for all users" ON form_schema.form_sla_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for anon users" ON "form_schema"."form_sla_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.form_sla_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.form_sla_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "form_schema"."form_sla_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON form_schema.form_sla_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON form_schema.form_sla_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
---- CSI_CODE_TABLE
+--- lookup_schema.csi_code_table
+ALTER TABLE lookup_schema.csi_code_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "lookup_schema"."csi_code_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON lookup_schema.csi_code_table;
+CREATE POLICY "Allow CREATE access for all users" ON lookup_schema.csi_code_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "lookup_schema"."csi_code_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON lookup_schema.csi_code_table;
+CREATE POLICY "Allow READ access for anon users" ON lookup_schema.csi_code_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "lookup_schema"."csi_code_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON lookup_schema.csi_code_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON lookup_schema.csi_code_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
---- TICKET_CATEGORY_TABLE
+--- ticket_schema.ticket_category_table
+ALTER TABLE ticket_schema.ticket_category_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_category_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_category_table;
+CREATE POLICY "Allow CREATE access for all users" ON ticket_schema.ticket_category_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_category_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_category_table;
+CREATE POLICY "Allow READ access for anon users" ON ticket_schema.ticket_category_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_category_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_category_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON ticket_schema.ticket_category_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
---- TICKET_SECTION_TABLE
+--- ticket_schema.ticket_section_table
+ALTER TABLE ticket_schema.ticket_section_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_section_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_section_table;
+CREATE POLICY "Allow CREATE access for all users" ON ticket_schema.ticket_section_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_section_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_section_table;
+CREATE POLICY "Allow READ access for anon users" ON ticket_schema.ticket_section_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_section_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_section_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON ticket_schema.ticket_section_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
---- TICKET_FIELD_TABLE
+--- ticket_schema.ticket_field_table
+ALTER TABLE ticket_schema.ticket_field_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_field_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_field_table;
+CREATE POLICY "Allow CREATE access for all users" ON ticket_schema.ticket_field_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_field_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_field_table;
+CREATE POLICY "Allow READ access for anon users" ON ticket_schema.ticket_field_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_field_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_field_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON ticket_schema.ticket_field_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
---- TICKET_OPTION_TABLE
+--- ticket_schema.ticket_option_table
+ALTER TABLE ticket_schema.ticket_option_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_option_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_option_table;
+CREATE POLICY "Allow CREATE access for all users" ON ticket_schema.ticket_option_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_option_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_option_table;
+CREATE POLICY "Allow READ access for anon users" ON ticket_schema.ticket_option_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_option_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_option_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON ticket_schema.ticket_option_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
---- TICKET_RESPONSE_TABLE
+--- ticket_schema.ticket_response_table
+ALTER TABLE ticket_schema.ticket_response_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow CREATE access for all users" ON "ticket_schema"."ticket_response_table"
+DROP POLICY IF EXISTS "Allow CREATE access for all users" ON ticket_schema.ticket_response_table;
+CREATE POLICY "Allow CREATE access for all users" ON ticket_schema.ticket_response_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ access for anon users" ON "ticket_schema"."ticket_response_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON ticket_schema.ticket_response_table;
+CREATE POLICY "Allow READ access for anon users" ON ticket_schema.ticket_response_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "ticket_schema"."ticket_response_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users" ON ticket_schema.ticket_response_table;
+CREATE POLICY "Allow UPDATE for authenticated users" ON ticket_schema.ticket_response_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated 
 USING(true)
 WITH CHECK (true);
 
-CREATE POLICY "Allow DELETE for authenticated users" ON "ticket_schema"."ticket_response_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON ticket_schema.ticket_response_table;
+CREATE POLICY "Allow DELETE for authenticated users" ON ticket_schema.ticket_response_table
 AS PERMISSIVE FOR DELETE
 TO authenticated 
 USING(true);
 
---- EQUIPMENT_CATEGORY_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_category_table"
+--- equipment_schema.equipment_category_table
+ALTER TABLE equipment_schema.equipment_category_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -15986,11 +15851,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_category_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_category_table;
+CREATE POLICY "Allow READ access for anon users" ON equipment_schema.equipment_category_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_category_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16003,7 +15870,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_category_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_category_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16016,8 +15884,11 @@ USING (
   )
 );
 
---- EQUIPMENT_BRAND_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_brand_table"
+--- equipment_schema.equipment_brand_table
+ALTER TABLE equipment_schema.equipment_brand_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16030,11 +15901,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_brand_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_brand_table;
+CREATE POLICY "Allow READ access for anon users" ON equipment_schema.equipment_brand_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_brand_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16047,7 +15920,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_brand_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_brand_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16060,8 +15934,11 @@ USING (
   )
 );
 
---- EQUIPMENT_MODEL_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_model_table"
+--- equipment_schema.equipment_model_table
+ALTER TABLE equipment_schema.equipment_model_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16074,11 +15951,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_model_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_model_table;
+CREATE POLICY "Allow READ access for anon users" ON equipment_schema.equipment_model_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_model_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16091,7 +15970,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_model_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_model_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16104,8 +15984,11 @@ USING (
   )
 );
 
---- EQUIPMENT_COMPONENT_CATEGORY_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_component_category_table"
+--- equipment_schema.equipment_component_category_table
+ALTER TABLE equipment_schema.equipment_component_category_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16118,11 +16001,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_component_category_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_component_category_table;
+CREATE POLICY "Allow READ access for anon users" ON equipment_schema.equipment_component_category_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_component_category_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16135,7 +16020,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_component_category_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_component_category_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16148,8 +16034,11 @@ USING (
   )
 );
 
---- EQUIPMENT_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_table"
+--- equipment_schema.equipment_table
+ALTER TABLE equipment_schema.equipment_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16162,11 +16051,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_table;
+CREATE POLICY "Allow READ access for anon users" ON equipment_schema.equipment_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16179,7 +16070,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16192,8 +16084,11 @@ USING (
   )
 );
 
---- EQUIPMENT_DESCRIPTION_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_description_table"
+--- equipment_schema.equipment_description_table
+ALTER TABLE equipment_schema.equipment_description_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16208,11 +16103,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_description_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_description_table;
+CREATE POLICY "Allow READ access for anon users" ON equipment_schema.equipment_description_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_description_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16227,7 +16124,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_description_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_description_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16242,8 +16140,11 @@ USING (
   )
 );
 
---- EQUIPMENT_UNIT_OF_MEASUREMENT_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."equipment_unit_of_measurement_table"
+--- unit_of_measurement_schema.equipment_unit_of_measurement_table
+ALTER TABLE unit_of_measurement_schema.equipment_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16256,11 +16157,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "unit_of_measurement_schema"."equipment_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
+CREATE POLICY "Allow READ access for anon users" ON unit_of_measurement_schema.equipment_unit_of_measurement_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."equipment_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16273,7 +16176,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."equipment_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.equipment_unit_of_measurement_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16286,8 +16190,11 @@ USING (
   )
 );
 
---- EQUIPMENT_GENERAL_NAME_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_general_name_table"
+--- equipment_schema.equipment_general_name_table
+ALTER TABLE equipment_schema.equipment_general_name_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16300,11 +16207,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_general_name_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_general_name_table;
+CREATE POLICY "Allow READ access for anon users" ON equipment_schema.equipment_general_name_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_general_name_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16317,7 +16226,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_general_name_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_general_name_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16330,8 +16240,11 @@ USING (
   )
 );
 
---- EQUIPMENT_PART_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_part_table"
+--- equipment_schema.equipment_part_table
+ALTER TABLE equipment_schema.equipment_part_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16346,11 +16259,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "equipment_schema"."equipment_part_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON equipment_schema.equipment_part_table;
+CREATE POLICY "Allow READ access for anon users" ON equipment_schema.equipment_part_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_part_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16365,7 +16280,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "equipment_schema"."equipment_part_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON equipment_schema.equipment_part_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16380,8 +16296,11 @@ USING (
   )
 );
 
---- CAPACITY_UNIT_OF_MEASUREMENT_TABLE
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."capacity_unit_of_measurement_table"
+--- unit_of_measurement_schema.capacity_unit_of_measurement_table
+ALTER TABLE unit_of_measurement_schema.capacity_unit_of_measurement_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16394,11 +16313,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ access for anon users" ON "unit_of_measurement_schema"."capacity_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow READ access for anon users" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
+CREATE POLICY "Allow READ access for anon users" ON unit_of_measurement_schema.capacity_unit_of_measurement_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."capacity_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16411,7 +16332,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "unit_of_measurement_schema"."capacity_unit_of_measurement_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON unit_of_measurement_schema.capacity_unit_of_measurement_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16424,39 +16346,34 @@ USING (
   )
 );
 
--- address_table
-CREATE POLICY "Allow CREATE for authenticated users" ON "public"."address_table"
-AS PERMISSIVE FOR INSERT
+--- address_table
+ALTER TABLE address_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON address_table;
+CREATE POLICY "Allow CRUD for authenticated users" ON address_table
+AS PERMISSIVE FOR ALL
 TO authenticated
 WITH CHECK (true);
 
-CREATE POLICY "Allow READ for authenticated users" ON "public"."address_table"
-AS PERMISSIVE FOR SELECT
-TO authenticated
-USING (true);
+--- jira_schema.jira_project_table
+ALTER TABLE jira_schema.jira_project_table ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow UPDATE for authenticated users" ON "public"."address_table"
-AS PERMISSIVE FOR UPDATE
-TO authenticated
-USING (true);
-
-CREATE POLICY "Allow DELETE for authenticated users" ON "public"."address_table"
-AS PERMISSIVE FOR DELETE
-TO authenticated
-USING (true);
-
--- JIRA_PROJECT_TABLE
-CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_project_table"
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_project_table;
+CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_project_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
--- JIRA_FORMSLY_PROJECT_TABLE
-CREATE POLICY "Allow READ for anon users" ON "jira_schema"."jira_formsly_project_table"
+-- jira_schema.jira_formsly_project_table
+ALTER TABLE jira_schema.jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_formsly_project_table;
+CREATE POLICY "Allow READ for anon users" ON jira_schema.jira_formsly_project_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_formsly_project_table"
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_formsly_project_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_formsly_project_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16472,7 +16389,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_formsly_project_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_formsly_project_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_formsly_project_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16488,24 +16406,34 @@ USING (
   )
 );
 
--- JIRA_USER_ROLE_TABLE
-CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_user_role_table"
+--- jira_schema.
+ALTER TABLE jira_schema.jira_user_role_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_user_role_table;
+CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_user_role_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
--- JIRA_USER_ACCOUNT_TABLE
-CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_user_account_table"
+--- JIRA_USER_ACCOUNT_TABLE
+ALTER TABLE jira_schema.jira_user_account_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_user_account_table;
+CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_user_account_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
--- JIRA_PROJECT_USER_TABLE
-CREATE POLICY "Allow READ for anon users" ON "jira_schema"."jira_project_user_table"
+--- jira_schema.jira_project_user_table
+ALTER TABLE jira_schema.jira_project_user_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_project_user_table;
+CREATE POLICY "Allow READ for anon users" ON jira_schema.jira_project_user_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_project_user_table"
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16521,7 +16449,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_project_user_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16537,7 +16466,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_project_user_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_project_user_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16553,35 +16483,51 @@ USING (
   )
 );
 
--- JIRA_ITEM_CATEGORY_TABLE
-CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_item_category_table"
+--- jira_schema.jira_item_category_table
+ALTER TABLE jira_schema.jira_item_category_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_category_table;
+CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_item_category_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
--- JIRA_ITEM_USER_TABLE
-CREATE POLICY "Allow CRUD for authenticated users " ON "jira_schema"."jira_item_user_table"
+--- jira_schema.jira_item_user_table
+ALTER TABLE jira_schema.jira_item_user_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table;
+CREATE POLICY "Allow CRUD for authenticated users " ON jira_schema.jira_item_user_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
--- TEAM_DEPARTMENT_TABLE
-CREATE POLICY "Allow READ for anon users" ON "team_schema"."team_department_table"
+--- team_schema.team_department_table
+ALTER TABLE team_schema.team_department_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_department_table;
+CREATE POLICY "Allow READ for anon users" ON team_schema.team_department_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
--- jira_organization_table
-CREATE POLICY "Allow CRUD for authenticated users" ON "jira_schema"."jira_organization_table"
+--- jira_schema.jira_organization_table
+ALTER TABLE jira_schema.jira_organization_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_organization_table;
+CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_organization_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
 
--- jira_organization_team_project_table
-CREATE POLICY "Allow READ for anon users" ON "jira_schema"."jira_organization_team_project_table"
+--- jira_organization_team_project_table
+ALTER TABLE jira_schema.jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON jira_schema.jira_organization_team_project_table;
+CREATE POLICY "Allow READ for anon users" ON jira_schema.jira_organization_team_project_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_organization_team_project_table"
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16597,7 +16543,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_organization_team_project_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16613,7 +16560,8 @@ USING (
   )
 );
 
-CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON "jira_schema"."jira_organization_team_project_table"
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" ON jira_schema.jira_organization_team_project_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
@@ -16629,13 +16577,17 @@ USING (
   )
 );
 
--- employee_job_title_table
-CREATE POLICY "Allow READ for anon users" ON "lookup_schema"."employee_job_title_table"
+--- lookup_schema.employee_job_title_table
+ALTER TABLE lookup_schema.employee_job_title_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.employee_job_title_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.employee_job_title_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
 CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" 
-ON "lookup_schema"."employee_job_title_table"
+ON lookup_schema.employee_job_title_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16647,8 +16599,9 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
 CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" 
-ON "lookup_schema"."employee_job_title_table"
+ON lookup_schema.employee_job_title_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16660,13 +16613,19 @@ USING (
   )
 );
 
--- scic_employee_table
-CREATE POLICY "Allow READ for anon users" ON "lookup_schema"."scic_employee_table"
+--- lookup_schema.scic_employee_table
+ALTER TABLE lookup_schema.scic_employee_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.scic_employee_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.scic_employee_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
---- special_field_template_table;
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."special_field_template_table"
+--- form_schema.special_field_template_table
+ALTER TABLE form_schema.special_field_template_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.special_field_template_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.special_field_template_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16680,11 +16639,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "form_schema"."special_field_template_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.special_field_template_table;
+CREATE POLICY "Allow READ for anon users" ON form_schema.special_field_template_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."special_field_template_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.special_field_template_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.special_field_template_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16698,8 +16659,11 @@ USING (
   )
 );
 
---- item_category_table;
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_category_table"
+--- item_schema.item_category_table
+ALTER TABLE item_schema.item_category_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_category_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_category_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16716,11 +16680,13 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for anon users" ON "item_schema"."item_category_table"
+DROP POLICY IF EXISTS "Allow READ for anon users" ON item_schema.item_category_table;
+CREATE POLICY "Allow READ for anon users" ON item_schema.item_category_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_category_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_category_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_category_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16737,26 +16703,38 @@ USING (
   )
 );
 
---- bank_list_table;
-CREATE POLICY "Allow READ for authenticated users" ON "lookup_schema"."bank_list_table"
+--- lookup_schema.bank_list_table
+ALTER TABLE lookup_schema.bank_list_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.bank_list_table;
+CREATE POLICY "Allow READ for authenticated users" ON lookup_schema.bank_list_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
---- currency_table;
-CREATE POLICY "Allow READ for authenticated users" ON "lookup_schema"."currency_table"
+--- lookup_schema.currency_table
+ALTER TABLE lookup_schema.currency_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.currency_table;
+CREATE POLICY "Allow READ for authenticated users" ON lookup_schema.currency_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
---- formsly_price_table;
-CREATE POLICY "Allow READ for authenticated users" ON "lookup_schema"."formsly_price_table"
+--- lookup_schema.formsly_price_table
+ALTER TABLE lookup_schema.formsly_price_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.formsly_price_table;
+CREATE POLICY "Allow READ for authenticated users" ON lookup_schema.formsly_price_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
---- service_table;
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
+--- service_schema.service_table
+ALTER TABLE service_schema.service_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16770,12 +16748,14 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for authenticated users" ON "service_schema"."service_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_table;
+CREATE POLICY "Allow READ for authenticated users" ON service_schema.service_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16789,8 +16769,11 @@ USING (
   )
 );
 
---- service_scope_table;
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
+--- service_schema.service_scope_table
+ALTER TABLE service_schema.service_scope_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16806,12 +16789,14 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for authenticated users" ON "service_schema"."service_scope_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_scope_table;
+CREATE POLICY "Allow READ for authenticated users" ON service_schema.service_scope_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16827,8 +16812,11 @@ USING (
   )
 );
 
---- service_scope_choice_table;
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
+--- service_schema.service_scope_choice_table
+ALTER TABLE service_schema.service_scope_choice_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table
 AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -16845,12 +16833,14 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY "Allow READ for authenticated users" ON "service_schema"."service_scope_choice_table"
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_scope_choice_table;
+CREATE POLICY "Allow READ for authenticated users" ON service_schema.service_scope_choice_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -16867,8 +16857,11 @@ USING (
   )
 );
 
---- team_transaction_table;
-CREATE POLICY "Allow CRUD for authenticated users with OWNER role" ON "team_schema"."team_transaction_table"
+--- team_transaction_table
+ALTER TABLE team_schema.team_transaction_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users with OWNER role" ON team_schema.team_transaction_table;
+CREATE POLICY "Allow CRUD for authenticated users with OWNER role" ON team_schema.team_transaction_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (
@@ -16882,17 +16875,17 @@ USING (
   )
 );
 
--------- END: POLICIES
+----- END: POLICIES
 
----------- START: INDEXES
+----- START: INDEXES
 
 CREATE INDEX request_response_request_id_idx ON request_schema.request_response_table (request_response, request_response_request_id);
 CREATE INDEX request_list_idx ON request_schema.request_table (request_id, request_date_created, request_form_id, request_team_member_id, request_status);
 CREATE INDEX request_response_idx ON request_schema.request_response_table (request_response_request_id, request_response_field_id, request_response_duplicatable_section_id);
 
--------- END: INDEXES
+----- END: INDEXES
 
----------- START: VIEWS
+----- START: VIEWS
 
 CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description FROM lookup_schema.csi_code_table;
 CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_schema.request_table;
@@ -16911,9 +16904,9 @@ INNER JOIN
 ON 
   equipment_id = equipment_description_equipment_id;
 
--------- END: VIEWS
+----- END: VIEWS
 
--------- START: SUBSCRIPTION
+----- START: SUBSCRIPTIONS
 
 DROP PUBLICATION if exists supabase_realtime;
 
@@ -16922,7 +16915,7 @@ COMMIT;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE request_schema.request_table, request_schema.request_signer_table, request_schema.comment_table, notification_table, team_schema.team_member_table, user_schema.invitation_table, team_schema.team_project_table, team_schema.team_group_table, ticket_schema.ticket_comment_table, ticket_schema.ticket_table, team_schema.team_table;
 
--------- END: SUBSCRIPTION
+----- END: SUBSCRIPTIONS
 
 ----- START: PRIVILEGES
 
