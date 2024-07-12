@@ -4499,7 +4499,7 @@ RETURNS JSON as $$
             SELECT 
               csi_code_division_id,
               csi_code_division_description
-            FROM distinct_division_view;
+            FROM distinct_division_view
           `
         );
 
@@ -13514,6 +13514,15 @@ ALTER TABLE jira_schema.jira_organization_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jira_schema.jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.employee_job_title_table ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lookup_schema.scic_employee_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE form_schema.special_field_template_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE item_schema.item_category_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lookup_schema.bank_list_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lookup_schema.currency_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE lookup_schema.formsly_price_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE service_schema.service_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE service_schema.service_scope_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE service_schema.service_scope_choice_table ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_schema.team_transaction_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 
@@ -13852,6 +13861,34 @@ DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.employee_job_
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
 DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.scic_employee_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON form_schema.special_field_template_table;
+DROP POLICY IF EXISTS "Allow READ for anon users" ON form_schema.special_field_template_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON form_schema.special_field_template_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_category_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON item_schema.item_category_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON item_schema.item_category_table;
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.bank_list_table;
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.currency_table;
+
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON lookup_schema.formsly_price_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_scope_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_table;
+
+DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_scope_choice_table;
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_scope_choice_table;
+
+DROP POLICY IF EXISTS "Allow CRUD for authenticated users with OWNER role" ON team_schema.team_transaction_table;
 
 --- ATTACHMENT_TABLE
 CREATE POLICY "Allow CRUD for anon users" ON "public"."attachment_table"
@@ -16623,11 +16660,227 @@ USING (
   )
 );
 
-
 -- scic_employee_table
 CREATE POLICY "Allow READ for anon users" ON "lookup_schema"."scic_employee_table"
 AS PERMISSIVE FOR SELECT
 USING (true);
+
+--- special_field_template_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."special_field_template_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE 
+      team_member_user_id = auth.uid()
+      AND team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
+  )
+);
+
+CREATE POLICY "Allow READ for anon users" ON "form_schema"."special_field_template_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "form_schema"."special_field_template_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE 
+      team_member_user_id = auth.uid()
+      AND team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
+  )
+);
+
+--- item_category_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_category_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  (
+    SELECT team_member_team_id
+    FROM form_schema.signer_table
+    JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+    WHERE signer_id = item_category_signer_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for anon users" ON "item_schema"."item_category_table"
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "item_schema"."item_category_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT team_member_team_id
+    FROM form_schema.signer_table
+    JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+    WHERE signer_id = item_category_signer_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- bank_list_table;
+CREATE POLICY "Allow READ for authenticated users" ON "lookup_schema"."bank_list_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+--- currency_table;
+CREATE POLICY "Allow READ for authenticated users" ON "lookup_schema"."currency_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+--- formsly_price_table;
+CREATE POLICY "Allow READ for authenticated users" ON "lookup_schema"."formsly_price_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+--- service_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE 
+      team_member_user_id = auth.uid()
+      AND team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id = service_team_id
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated users" ON "service_schema"."service_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE 
+      team_member_user_id = auth.uid()
+      AND team_member_role IN ('OWNER', 'ADMIN')
+      AND team_member_team_id = service_team_id
+  )
+);
+
+--- service_scope_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  (
+    SELECT service_team_id
+    FROM service_schema.service_table
+    WHERE service_id = service_scope_service_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated users" ON "service_schema"."service_scope_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT service_team_id
+    FROM service_schema.service_table
+    WHERE service_id = service_scope_service_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- service_scope_choice_table;
+CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  (
+    SELECT service_team_id
+    FROM service_schema.service_scope_table
+    JOIN service_schema.service_table ON service_id = service_scope_service_id
+    WHERE service_scope_id = service_scope_choice_service_scope_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+CREATE POLICY "Allow READ for authenticated users" ON "service_schema"."service_scope_choice_table"
+AS PERMISSIVE FOR SELECT
+TO authenticated
+USING (true);
+
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON "service_schema"."service_scope_choice_table"
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  (
+    SELECT service_team_id
+    FROM service_schema.service_scope_table
+    JOIN service_schema.service_table ON service_id = service_scope_service_id
+    WHERE service_scope_id = service_scope_choice_service_scope_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
+--- team_transaction_table;
+CREATE POLICY "Allow CRUD for authenticated users with OWNER role" ON "team_schema"."team_transaction_table"
+AS PERMISSIVE FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE 
+      team_member_user_id = auth.uid()
+      AND team_member_role IN ('OWNER')
+      AND team_member_team_id = team_transaction_team_id
+  )
+);
 
 -------- END: POLICIES
 
