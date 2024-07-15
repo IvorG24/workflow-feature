@@ -22,7 +22,12 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconPlus, IconSearch, IconSettings } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconReload,
+  IconSearch,
+  IconSettings,
+} from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -212,6 +217,13 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
                 {...searchJiraOrganizationFormMethods.register("search")}
               />
             </form>
+            <Button
+              variant="light"
+              leftIcon={<IconReload size={16} />}
+              onClick={() => handlePagination(activePage)}
+            >
+              Refresh
+            </Button>
           </Group>
 
           <Button

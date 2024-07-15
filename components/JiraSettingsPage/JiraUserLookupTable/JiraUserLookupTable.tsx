@@ -26,6 +26,7 @@ import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconPlus,
+  IconReload,
   IconSearch,
   IconSettings,
   IconTrash,
@@ -260,6 +261,13 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
                 {...searchJiraUserFormMethods.register("search")}
               />
             </form>
+            <Button
+              variant="light"
+              leftIcon={<IconReload size={16} />}
+              onClick={() => handlePagination(activePage)}
+            >
+              Refresh
+            </Button>
           </Group>
 
           <Button
