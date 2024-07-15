@@ -388,7 +388,6 @@ const LiquidationReimbursementRequestPage = ({
       if (!fields) {
         throw new Error("Jira form is not defined.");
       }
-      const departmentList = fields["475"].choices;
       const typeList = fields["442"].choices;
       const workingAdvanceList = fields["445"].choices;
 
@@ -422,19 +421,14 @@ const LiquidationReimbursementRequestPage = ({
           sortedRequestDetails[6].field_response[0].request_response
         );
       }
-
-      const departmentId = departmentList.find(
-        (departmentItem: { id: string; name: string }) =>
-          departmentItem.name.toLowerCase() === selectedDepartment.toLowerCase()
-      );
       const typeOfRequestId = typeList.find(
         (typeOfRequestItem: { id: string; name: string }) =>
           typeOfRequestItem.name.toLowerCase() === typeOfRequest.toLowerCase()
       );
 
-      if (!departmentId || !typeOfRequestId) {
+      if (!typeOfRequestId) {
         notifications.show({
-          message: "Department or type of request is undefined.",
+          message: "Jira type of request is undefined.",
           color: "red",
         });
         return { success: false, data: null };
@@ -446,7 +440,7 @@ const LiquidationReimbursementRequestPage = ({
         requestor: `${user.user_first_name} ${user.user_last_name}`,
         jiraProjectSiteId:
           jiraAutomationData.jiraProjectData.jira_project_jira_id,
-        department: departmentId.id,
+        department: selectedDepartment,
         purpose,
         typeOfRequest: typeOfRequestId.id,
         requestFormType: "BOQ",

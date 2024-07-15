@@ -80,7 +80,7 @@ const RequestResponse = ({
         response.label === "Ticket ID"
       ) {
         const requestFormslyId = await getRequestFormslyId(supabaseClient, {
-          requestId: linkDisplayValue,
+          requestId: linkDisplayValue.trim(),
         });
 
         if (requestFormslyId) {

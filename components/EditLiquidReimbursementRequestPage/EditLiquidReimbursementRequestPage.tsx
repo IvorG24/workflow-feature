@@ -747,8 +747,7 @@ const EditLiquidReimbursementRequestPage = ({
         if (!isPED) {
           requestDetailsSectionFieldList =
             requestDetailsSectionFieldList.filter(
-              (field) =>
-                !["Equipment Code", "BOQ Code"].includes(field.field_name)
+              (field) => !["Equipment Code"].includes(field.field_name)
             );
         }
 
@@ -889,9 +888,9 @@ const EditLiquidReimbursementRequestPage = ({
                 response.request_response_field_id === field.field_id
             );
 
-            let option = field.field_option;
+            let fieldOption: OptionTableRow[] = field.field_option;
             if (field.field_name === "Payment Option") {
-              option = bankListOptions;
+              fieldOption = bankListOptions;
             }
 
             return {
@@ -900,7 +899,7 @@ const EditLiquidReimbursementRequestPage = ({
                 ? safeParse(response.request_response)
                 : "",
               field_is_read_only: canEditVatField,
-              field_option: option,
+              field_option: fieldOption,
             };
           }
         );

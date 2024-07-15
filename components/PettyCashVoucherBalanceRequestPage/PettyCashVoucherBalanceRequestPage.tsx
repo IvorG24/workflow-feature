@@ -2,6 +2,7 @@ import { deleteRequest } from "@/backend/api/delete";
 import {
   getJiraAutomationDataByProjectId,
   getRequestComment,
+  getRequestFieldResponse,
 } from "@/backend/api/get";
 import { createComment } from "@/backend/api/post";
 import {
@@ -73,6 +74,8 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
   });
   const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [invalidCostCode, setInvalidCostCode] = useState(true);
+  const [canCostEngineerTakeAction, setCanCostEngineerTakeAction] =
+    useState(false);
   const { setIsLoading } = useLoadingActions();
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -479,6 +482,40 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
     }
   }, [requestJira.id]);
 
+  useEffect(() => {
+    try {
+      const checkIfCostEngineerIsRequired = async () => {
+        const lrfDepartmentField = await getRequestFieldResponse(
+          supabaseClient,
+          {
+            requestId: parentWavRequestId,
+            fieldId: ["694465de-8aa9-4361-be52-f8c091c13fde"],
+          }
+        );
+
+        if (lrfDepartmentField.length <= 0) return;
+
+        const lrfDepartmentFieldResponse = safeParse(
+          `${lrfDepartmentField[0].request_response}`
+        );
+
+        const isPED =
+          lrfDepartmentFieldResponse.toLowerCase() === "plants and equipment";
+
+        setCanCostEngineerTakeAction(
+          isPED && isUserCostEngineer && requestStatus === "PENDING"
+        );
+      };
+
+      checkIfCostEngineerIsRequired();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  }, [isUserCostEngineer, parentWavRequestId, requestStatus, supabaseClient]);
+
   return (
     <Container>
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
@@ -522,7 +559,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
           );
         })}
 
-        {isUserCostEngineer && (
+        {canCostEngineerTakeAction && (
           <CostEngineerSection
             handleCostEngineerRejectRequest={handleCostEngineerRejectRequest}
           />
