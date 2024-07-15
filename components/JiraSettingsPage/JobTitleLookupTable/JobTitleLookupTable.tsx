@@ -1,3 +1,4 @@
+import { deleteJobTittle } from "@/backend/api/delete";
 import { getJobTitleList } from "@/backend/api/get";
 import { createJobTitle } from "@/backend/api/post";
 import { updateJobTitle } from "@/backend/api/update";
@@ -16,9 +17,11 @@ import {
   Flex,
   Group,
   Paper,
+  Text,
   TextInput,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -26,6 +29,7 @@ import {
   IconReload,
   IconSearch,
   IconSettings,
+  IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useEffect, useState } from "react";
@@ -155,6 +159,37 @@ const JobTitleLookupTable = () => {
     }
   };
 
+  const handleDeleteJobTitle = async (JobTitleId: string) => {
+    try {
+      setIsLoading(true);
+      await deleteJobTittle(supabaseClient, JobTitleId);
+      setJobTitleList((prev) =>
+        prev.filter((proj) => proj.employee_job_title_id !== JobTitleId)
+      );
+      setJobTitleListCount((prev) => prev - 1);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to delete jira user.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openConfirmDeleteJobTitleModal = (jira_project_id: string) => {
+    modals.openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">Are you sure you want to delete this Job title?</Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: async () => await handleDeleteJobTitle(jira_project_id),
+      centered: true,
+      confirmProps: { color: "red" },
+    });
+  };
+
   useEffect(() => {
     const fetchJobList = async () => {
       await handlePagination(1);
@@ -237,22 +272,33 @@ const JobTitleLookupTable = () => {
               title: "Action",
               width: 80,
               render: ({ employee_job_title_id, employee_job_title_label }) => (
-                <ActionIcon
-                  onClick={() => {
-                    setOpenJobTitleLookupFormModal(true);
-                    setIsUpdatingJobTitle(true);
-                    updateOrCreateJobTitle.setValue(
-                      "employee_job_title_id",
-                      employee_job_title_id
-                    );
-                    updateOrCreateJobTitle.setValue(
-                      "employee_job_title_label",
-                      employee_job_title_label
-                    );
-                  }}
-                >
-                  <IconSettings size={16} />
-                </ActionIcon>
+                <Flex>
+                  <ActionIcon
+                    onClick={() => {
+                      setOpenJobTitleLookupFormModal(true);
+                      setIsUpdatingJobTitle(true);
+                      updateOrCreateJobTitle.setValue(
+                        "employee_job_title_id",
+                        employee_job_title_id
+                      );
+                      updateOrCreateJobTitle.setValue(
+                        "employee_job_title_label",
+                        employee_job_title_label
+                      );
+                    }}
+                  >
+                    <IconSettings size={16} />
+                  </ActionIcon>
+
+                  <ActionIcon
+                    onClick={() =>
+                      openConfirmDeleteJobTitleModal(employee_job_title_id)
+                    }
+                    color="red"
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Flex>
               ),
             },
           ]}
