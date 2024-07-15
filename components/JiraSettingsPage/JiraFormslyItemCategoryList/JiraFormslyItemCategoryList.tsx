@@ -125,28 +125,13 @@ const JiraFormslyItemCategoryList = ({
 
       if (isUpdatingJiraFormslyItemCategory) {
         setIsUpdatingJiraFormslyItemCategory(false);
-        const updatedJiraItemCategory = await updateJiraItemCategory(
-          supabaseClient,
-          data
-        );
-        const updatedJiraItemCategoryIndex = jiraItemCategoryList.findIndex(
-          (item) => item.jira_item_category_id
-        );
-
-        if (updatedJiraItemCategory) {
-          jiraItemCategoryList[updatedJiraItemCategoryIndex] =
-            updatedJiraItemCategory;
-        }
+        await updateJiraItemCategory(supabaseClient, data);
       } else {
         await createJiraFormslyItemCategory(
           supabaseClient,
           data as JiraItemCategoryTableInsert
         );
-        handlePagination(activePage);
       }
-
-      setOpenJiraFormslyItemCategoryForm(false);
-      updateJiraFormslyItemCategoryMethods.reset();
 
       notifications.show({
         message: `Successfully ${
@@ -154,6 +139,11 @@ const JiraFormslyItemCategoryList = ({
         } item category.`,
         color: "green",
       });
+
+      setOpenJiraFormslyItemCategoryForm(false);
+      updateJiraFormslyItemCategoryMethods.reset();
+
+      handlePagination(activePage);
     } catch (error) {
       notifications.show({
         message: "Failed to update item category",
