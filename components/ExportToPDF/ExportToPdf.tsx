@@ -12,6 +12,7 @@ import { Flex, Loader } from "@mantine/core";
 import { Font, usePDF } from "@react-pdf/renderer/lib/react-pdf.browser.cjs";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
+import ITAssetPdfDocumentTableVersion from "./ITAssetPdfDocumentTableVersion";
 import ItemPdfDocumentTableVersion from "./ItemPdfDocumentTableVersion";
 import OtherExpensesPdfDocumentTableVersion from "./OtherExpensesPdfDocumentTableVersion";
 import PEDEquipmentPdfDocumentTableVersion from "./PEDEquipmentPdfDocumentTableVersion";
@@ -239,6 +240,16 @@ const ExportToPdf = ({
             />
           );
         }
+      case "IT Asset":
+        return (
+          <ITAssetPdfDocumentTableVersion
+            requestDetails={requestDetails}
+            requestorDetails={requestorDetails}
+            requestIDs={requestIDs}
+            requestItems={requestItems}
+            approverDetails={approverDetails}
+          />
+        );
     }
   };
 

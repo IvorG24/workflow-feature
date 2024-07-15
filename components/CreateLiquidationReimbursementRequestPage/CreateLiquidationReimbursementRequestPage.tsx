@@ -50,9 +50,7 @@ const CreateLiquidationReimbursementRequestPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const activeTeam = useActiveTeam();
-
   const requestorProfile = useUserProfile();
-
   const { setIsLoading } = useLoadingActions();
 
   const initialFormSectionList = [
@@ -216,10 +214,7 @@ const CreateLiquidationReimbursementRequestPage = ({
             ...liquidationAdditionalFields,
           ].sort((a, b) => a.field_order - b.field_order),
         });
-        return;
-      }
-
-      if (removeConditionalFields) {
+      } else if (removeConditionalFields) {
         updateSection(0, {
           ...currentRequestDetails,
           section_field: sectionFields.filter(
@@ -227,7 +222,23 @@ const CreateLiquidationReimbursementRequestPage = ({
               !["Working Advances", "Ticket ID"].includes(field.field_name)
           ),
         });
-        return;
+      }
+      // remove payment if pure liquidation type
+      const valueIsPureLiquidation = value?.toLowerCase() === "liquidation";
+      const paymentSectionIsRemoved =
+        getValues(`sections`).some(
+          (section) => section.section_name === "Payment"
+        ) === false;
+
+      if (valueIsPureLiquidation) {
+        const paymentSectionIndex = getValues(`sections`).findIndex(
+          (section) => section.section_name === "Payment"
+        );
+        removeSection(paymentSectionIndex);
+      } else if (!valueIsPureLiquidation && paymentSectionIsRemoved) {
+        insertSection(formSections.length, form.form_section[2], {
+          shouldFocus: false,
+        });
       }
     } catch (e) {
       setValue(`sections.0.section_field.4.field_response`, "");
@@ -321,8 +332,27 @@ const CreateLiquidationReimbursementRequestPage = ({
         section.section_field[0].field_section_duplicatable_id ===
         sectionDuplicatableId
     );
+
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
+      if (
+        formSections.filter((section) => section.section_name === "Payee")
+          .length === 1
+      ) {
+        const payeeMatchIndex = formSections.findIndex(
+          (section) => section.section_name === "Payee"
+        );
+        const updatedSectionFieldList = formSections[
+          payeeMatchIndex
+        ].section_field.map((field) => ({
+          ...field,
+          field_section_duplicatable_id: undefined,
+        }));
+        updateSection(payeeMatchIndex, {
+          ...formSections[payeeMatchIndex],
+          section_field: updatedSectionFieldList,
+        });
+      }
     }
   };
 
@@ -430,12 +460,17 @@ const CreateLiquidationReimbursementRequestPage = ({
         );
       }
 
-      updateSection(sectionIndex, {
-        ...currentPayeeSection,
-        section_field: updatedFields.sort(
-          (a, b) => a.field_order - b.field_order
-        ),
-      });
+      removeSection(sectionIndex);
+      insertSection(
+        sectionIndex,
+        {
+          ...currentPayeeSection,
+          section_field: updatedFields.sort(
+            (a, b) => a.field_order - b.field_order
+          ),
+        },
+        { shouldFocus: false }
+      );
     } catch (error) {
       setValue(
         `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
@@ -541,15 +576,31 @@ const CreateLiquidationReimbursementRequestPage = ({
         addField(3);
       } else if (specifyOtherTypeOfRequestField) {
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
+      } else if (value === "Materials") {
+        const requestTypeValue =
+          getValues(`sections`)[0].section_field[4].field_response;
+        const isPureLiquidation = requestTypeValue === "Liquidation";
+        // add rir number if true
+        if (isPureLiquidation) {
+          addField(8);
+        }
       }
 
-      setValue(`sections.${sectionIndex}.section_field.3.field_response`, 0);
-      updateSection(sectionIndex, {
-        ...currentPayeeSection,
-        section_field: currentPayeeSectionFieldList.sort(
-          (a, b) => a.field_order - b.field_order
-        ),
-      });
+      if (value !== "Materials") {
+        removeFieldById("15996ad6-e34e-4aa7-954b-565ed1c0ead0");
+      }
+
+      removeSection(sectionIndex);
+      insertSection(
+        sectionIndex,
+        {
+          ...currentPayeeSection,
+          section_field: currentPayeeSectionFieldList.sort(
+            (a, b) => a.field_order - b.field_order
+          ),
+        },
+        { shouldFocus: false }
+      );
     } catch (error) {
       setValue(`sections.${sectionIndex}.section_field.2.field_response`, "");
       notifications.show({
@@ -574,7 +625,7 @@ const CreateLiquidationReimbursementRequestPage = ({
           ...initialFormSectionList[1],
           section_field: initialFormSectionList[1].section_field.filter(
             (field) =>
-              !["VAT", "Specify Other Type of Request"].includes(
+              !["VAT", "Specify Other Type of Request", "RIR Number"].includes(
                 field.field_name
               )
           ),

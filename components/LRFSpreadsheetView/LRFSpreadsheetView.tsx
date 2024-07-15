@@ -131,6 +131,8 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
   }) => (
     <tr>
       <td>{`${item.request_formsly_id_prefix}-${item.request_formsly_id_serial}`}</td>
+      <td>{item.jira_project_jira_label}</td>
+      <td>{item.request_department_code}</td>
       <td>{item.request_jira_id}</td>
       <td>
         {formatDate(new Date(item.request_date_created))}{" "}
@@ -169,8 +171,7 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
               <th>Invoice Amount</th>
               <th>VAT</th>
               <th>Cost</th>
-              <th>Equipment Code</th>
-              <th>Cost Code</th>
+              <th>Equipment/Cost Code</th>
               <th>BOQ Code</th>
             </tr>
           </thead>
@@ -208,15 +209,25 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
       "Invoice Amount",
       "VAT",
       "Cost",
-      "Equipment Code",
-      "Cost Code",
+      "Equipment/Cost Code",
       "Bill of Quantity Code",
     ];
 
     return fields.map((field) => {
-      const response = responseList.find(
-        (response) => response.field_name === field
-      )?.request_response;
+      let response: string | undefined;
+
+      if (field === "Equipment/Cost Code") {
+        response =
+          responseList.find(
+            (response) => response.field_name === "Equipment Code"
+          )?.request_response ||
+          responseList.find((response) => response.field_name === "Cost Code")
+            ?.request_response;
+      } else {
+        response = responseList.find(
+          (response) => response.field_name === field
+        )?.request_response;
+      }
 
       const value = safeParse(response ?? "");
 
@@ -251,6 +262,8 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
             <thead>
               <tr>
                 <th>Request ID</th>
+                <th>Project Code</th>
+                <th>Department Code</th>
                 <th>Jira ID</th>
                 <th>Date Created</th>
                 <th>BOQ Request</th>

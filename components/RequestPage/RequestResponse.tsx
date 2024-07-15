@@ -65,6 +65,14 @@ const RequestResponse = ({
     return `${formattedHours}:${formattedMinutes}`;
   };
 
+  const getRequestPath = (requestId: string) => {
+    if (team.team_name) {
+      return requestPath(requestId, team.team_name);
+    } else {
+      return `${process.env.NEXT_PUBLIC_SITE_URL}/public-request/${requestId}`;
+    }
+  };
+
   useEffect(() => {
     const fetchRequestFormslyId = async () => {
       if (
@@ -104,9 +112,7 @@ const RequestResponse = ({
               p={4}
               variant="light"
               color="blue"
-              onClick={() =>
-                window.open(requestPath(parsedValue, team.team_name), "_blank")
-              }
+              onClick={() => window.open(getRequestPath(parsedValue), "_blank")}
             >
               <IconExternalLink />
             </ActionIcon>
@@ -128,10 +134,7 @@ const RequestResponse = ({
                 variant="light"
                 color="blue"
                 onClick={() =>
-                  window.open(
-                    requestPath(parsedValue, team.team_name),
-                    "_blank"
-                  )
+                  window.open(getRequestPath(parsedValue), "_blank")
                 }
               >
                 <IconExternalLink />

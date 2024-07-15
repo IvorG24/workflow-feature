@@ -19,7 +19,10 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import {
+  ALLOWED_USER_TO_EDIT_LRF_REQUESTS,
+  formatDate,
+} from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
@@ -128,11 +131,13 @@ const LiquidationReimbursementRequestPage = ({
     isUserSigner.request_signer_status === "PENDING" &&
     requestStatus !== "CANCELED";
   const isEditable =
-    signerList
+    (signerList
       .map((signer) => signer.request_signer_status)
       .filter((status) => status !== "PENDING").length === 0 &&
-    isUserOwner &&
-    requestStatus === "PENDING";
+      isUserOwner &&
+      requestStatus === "PENDING") ||
+    (["PENDING", "APPROVED"].includes(requestStatus) &&
+      user?.user_email === ALLOWED_USER_TO_EDIT_LRF_REQUESTS);
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
@@ -556,7 +561,18 @@ const LiquidationReimbursementRequestPage = ({
           })
           .sort((a, b) => a.section_order - b.section_order);
 
-        const newFormSection = [...formSection, ...formattedSection];
+        const isPureLiquidation =
+          safeParse(
+            `${
+              formSection[0].section_field[4].field_response
+                ?.request_response ?? ""
+            }`
+          ) === "Liquidation";
+
+        const newFormSection = [...formSection, ...formattedSection].filter(
+          (section) =>
+            isPureLiquidation ? section.section_name !== "Payment" : true
+        );
 
         setFormSection(newFormSection);
         setIsLoading(false);
