@@ -75,6 +75,14 @@ const LiquidationReimbursementRequestPage = ({
   const router = useRouter();
   const { setIsLoading } = useLoadingActions();
 
+  const isPureLiquidation =
+    safeParse(
+      `${
+        request.request_form.form_section[0].section_field[4].field_response[0]
+          .request_response ?? ""
+      }`
+    ) === "Liquidation";
+
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
       ...signer.request_signer_signer,
@@ -478,6 +486,7 @@ const LiquidationReimbursementRequestPage = ({
 
   useEffect(() => {
     try {
+      setIsLoading(true);
       const fetchSections = async () => {
         const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
@@ -487,7 +496,6 @@ const LiquidationReimbursementRequestPage = ({
           .reverse();
         let index = 0;
         while (1) {
-          setIsLoading(true);
           const duplicatableSectionIdCondition = sortedDuplicatableSectionIdList
             .slice(index, index + 5)
             .map((dupId) => `'${dupId}'`)
@@ -555,21 +563,8 @@ const LiquidationReimbursementRequestPage = ({
           })
           .sort((a, b) => a.section_order - b.section_order);
 
-        const isPureLiquidation =
-          safeParse(
-            `${
-              formSection[0].section_field[4].field_response
-                ?.request_response ?? ""
-            }`
-          ) === "Liquidation";
-
-        const newFormSection = [...formSection, ...formattedSection].filter(
-          (section) =>
-            isPureLiquidation ? section.section_name !== "Payment" : true
-        );
-
+        const newFormSection = [...formSection, ...formattedSection];
         setFormSection(newFormSection);
-        setIsLoading(false);
       };
       const fetchComments = async () => {
         const data = await getRequestComment(supabaseClient, {
@@ -579,13 +574,12 @@ const LiquidationReimbursementRequestPage = ({
       };
       fetchSections();
       fetchComments();
+      setIsLoading(false);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -723,19 +717,20 @@ const LiquidationReimbursementRequestPage = ({
           </Accordion.Item>
         </Accordion>
 
-        {formSection.filter(
-          (section) => section.section_name === "Payment"
-        )[0] && (
-          <RequestSection
-            section={
-              formSection.filter(
-                (section) => section.section_name === "Payment"
-              )[0]
-            }
-            isFormslyForm={true}
-            isOnlyWithResponse
-          />
-        )}
+        {!isPureLiquidation &&
+          formSection.filter(
+            (section) => section.section_name === "Payment"
+          )[0] && (
+            <RequestSection
+              section={
+                formSection.filter(
+                  (section) => section.section_name === "Payment"
+                )[0]
+              }
+              isFormslyForm={true}
+              isOnlyWithResponse
+            />
+          )}
 
         {formSection.length > 0 && (
           <LiquidationReimbursementSummary
