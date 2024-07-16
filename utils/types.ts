@@ -2041,4 +2041,6 @@ export type LRFSpreadsheetData = {
     request_id: string;
     request_formsly_id: string;
   };
+  request_department_code: string;
+  jira_project_jira_label: string;
 };

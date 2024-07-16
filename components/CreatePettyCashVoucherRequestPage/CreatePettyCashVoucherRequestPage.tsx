@@ -438,10 +438,12 @@ const CreatePettyCashVoucherRequestPage = ({
         chargeToProjectSectionFieldList =
           chargeToProjectSection.section_field.slice(0, 3);
       }
-
-      updateSection(2, {
+      removeSection(2);
+      insertSection(2, {
         ...chargeToProjectSection,
-        section_field: chargeToProjectSectionFieldList,
+        section_field: chargeToProjectSectionFieldList.sort(
+          (a, b) => a.field_order - b.field_order
+        ),
       });
     } catch (error) {
       setValue(`sections.2.section_field.1.field_response`, "");
@@ -547,7 +549,6 @@ const CreatePettyCashVoucherRequestPage = ({
       );
     } catch (error) {
       setValue(`sections.3.section_field.0.field_response`, false);
-
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

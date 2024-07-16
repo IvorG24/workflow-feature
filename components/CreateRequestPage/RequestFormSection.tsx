@@ -111,6 +111,7 @@ type RequestFormSectionProps = {
       sectionIndex: number
     ) => void;
     onInvoiceAmountChange: (value: number, sectionIndex: number) => void;
+    onVatFieldChange?: (value: number, sectionIndex: number) => void;
     onTypeOfRequestChange: (value: string | null, sectionIndex: number) => void;
     onModeOfPaymentChange: (
       value: string | null,

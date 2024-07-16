@@ -19,7 +19,10 @@ import {
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { formatDate } from "@/utils/constant";
+import {
+  ALLOWED_USER_TO_EDIT_LRF_REQUESTS,
+  formatDate,
+} from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
@@ -71,6 +74,14 @@ const LiquidationReimbursementRequestPage = ({
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { setIsLoading } = useLoadingActions();
+
+  const isPureLiquidation =
+    safeParse(
+      `${
+        request.request_form.form_section[0].section_field[4].field_response[0]
+          .request_response ?? ""
+      }`
+    ) === "Liquidation";
 
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
@@ -128,11 +139,13 @@ const LiquidationReimbursementRequestPage = ({
     isUserSigner.request_signer_status === "PENDING" &&
     requestStatus !== "CANCELED";
   const isEditable =
-    signerList
+    (signerList
       .map((signer) => signer.request_signer_status)
       .filter((status) => status !== "PENDING").length === 0 &&
-    isUserOwner &&
-    requestStatus === "PENDING";
+      isUserOwner &&
+      requestStatus === "PENDING") ||
+    (["PENDING", "APPROVED"].includes(requestStatus) &&
+      user?.user_email === ALLOWED_USER_TO_EDIT_LRF_REQUESTS);
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
   const isUserRequester = teamMemberGroupList.includes("REQUESTER");
@@ -473,6 +486,7 @@ const LiquidationReimbursementRequestPage = ({
 
   useEffect(() => {
     try {
+      setIsLoading(true);
       const fetchSections = async () => {
         const newFields: RequestWithResponseType["request_form"]["form_section"][0]["section_field"] =
           [];
@@ -482,7 +496,6 @@ const LiquidationReimbursementRequestPage = ({
           .reverse();
         let index = 0;
         while (1) {
-          setIsLoading(true);
           const duplicatableSectionIdCondition = sortedDuplicatableSectionIdList
             .slice(index, index + 5)
             .map((dupId) => `'${dupId}'`)
@@ -551,9 +564,7 @@ const LiquidationReimbursementRequestPage = ({
           .sort((a, b) => a.section_order - b.section_order);
 
         const newFormSection = [...formSection, ...formattedSection];
-
         setFormSection(newFormSection);
-        setIsLoading(false);
       };
       const fetchComments = async () => {
         const data = await getRequestComment(supabaseClient, {
@@ -563,13 +574,12 @@ const LiquidationReimbursementRequestPage = ({
       };
       fetchSections();
       fetchComments();
+      setIsLoading(false);
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -707,19 +717,20 @@ const LiquidationReimbursementRequestPage = ({
           </Accordion.Item>
         </Accordion>
 
-        {formSection.filter(
-          (section) => section.section_name === "Payment"
-        )[0] && (
-          <RequestSection
-            section={
-              formSection.filter(
-                (section) => section.section_name === "Payment"
-              )[0]
-            }
-            isFormslyForm={true}
-            isOnlyWithResponse
-          />
-        )}
+        {!isPureLiquidation &&
+          formSection.filter(
+            (section) => section.section_name === "Payment"
+          )[0] && (
+            <RequestSection
+              section={
+                formSection.filter(
+                  (section) => section.section_name === "Payment"
+                )[0]
+              }
+              isFormslyForm={true}
+              isOnlyWithResponse
+            />
+          )}
 
         {formSection.length > 0 && (
           <LiquidationReimbursementSummary

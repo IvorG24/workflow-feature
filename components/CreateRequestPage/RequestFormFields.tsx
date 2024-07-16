@@ -141,6 +141,7 @@ type RequestFormFieldsProps = {
       sectionIndex: number
     ) => void;
     onInvoiceAmountChange: (value: number, sectionIndex: number) => void;
+    onVatFieldChange?: (value: number, sectionIndex: number) => void;
     onModeOfPaymentChange: (
       value: string | null,
       fieldIndex: number,
@@ -563,6 +564,14 @@ const RequestFormFields = ({
                         );
                         break;
 
+                      case "VAT":
+                        liquidationReimbursementFormMethods?.onVatFieldChange &&
+                          liquidationReimbursementFormMethods?.onVatFieldChange(
+                            value as number,
+                            sectionIndex
+                          );
+                        break;
+
                       case "Quantity":
                         pettyCashVoucherFormMethods?.onQuantityOrUnitCostChange(
                           sectionIndex
@@ -658,6 +667,7 @@ const RequestFormFields = ({
                 mt="xs"
                 sx={{ label: { cursor: "pointer" } }}
                 error={fieldError}
+                disabled={field.field_is_read_only}
               />
             )}
             rules={{ ...fieldRules }}
@@ -1067,6 +1077,7 @@ const RequestFormFields = ({
                   error={fieldError}
                   minDate={formslyFormName ? new Date() : undefined}
                   valueFormat="YYYY-MM-DD"
+                  readOnly={field.field_is_read_only}
                 />
               );
             }}
