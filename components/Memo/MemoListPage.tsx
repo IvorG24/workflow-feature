@@ -1,26 +1,27 @@
 import { getMemoList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
+import { DEFAULT_REQUEST_LIST_LIMIT, formatDate } from "@/utils/constant";
+import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
+import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import { MemoListItemType, TeamMemberType } from "@/utils/types";
 import {
   ActionIcon,
   Alert,
+  Anchor,
+  Avatar,
+  Badge,
   Box,
   Button,
   Container,
-  Divider,
+  CopyButton,
   Flex,
-  Grid,
   Group,
   Loader,
   LoadingOverlay,
   MultiSelect,
   Pagination,
-  Paper,
-  ScrollArea,
   Space,
-  Stack,
   Text,
   TextInput,
   Title,
@@ -31,14 +32,16 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconAlertCircle,
+  IconCopy,
   IconSearch,
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import ListTable from "../ListTable/ListTable";
 import MemoFormatEditor from "../MemoFormatEditor/MemoFormatEditor";
-import MemoListItemRow from "./MemoListItemRow";
+import MemoItemListSignerList from "./MemoListItemSignerList";
 
 type Props = {
   memoList: MemoListItemType[];
@@ -331,47 +334,144 @@ const MemoListPage = ({
         />
         {/* memo list */}
         {memoList.length > 0 ? (
-          <Paper withBorder>
-            <ScrollArea h="fit-content" type="auto">
-              <Stack spacing={0} miw={1074}>
-                <Box
-                  sx={(theme) => ({
-                    backgroundColor:
-                      theme.colorScheme === "dark"
-                        ? theme.colors.dark[5]
-                        : theme.colors.gray[1],
-                  })}
-                >
-                  <Grid m={0} px="sm" justify="space-between">
-                    <Grid.Col span={2}>
-                      <Text weight={600}>Reference Number</Text>
-                    </Grid.Col>
-                    <Grid.Col span={2}>
-                      <Text weight={600}>Subject</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Status</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Author</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Approver</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Date Created</Text>
-                    </Grid.Col>
-                  </Grid>
-                </Box>
-                {memoList.map((memo, idx) => (
-                  <Box key={memo.memo_id}>
-                    <MemoListItemRow memo={memo} />
-                    {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? <Divider /> : null}
-                  </Box>
-                ))}
-              </Stack>
-            </ScrollArea>
-          </Paper>
+          <>
+            <ListTable
+              idAccessor="memo_id"
+              records={memoList}
+              fetching={isLoading}
+              page={activePage}
+              onPageChange={handlePagination}
+              totalRecords={memoListCount}
+              recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
+              columns={[
+                {
+                  accessor: "memo_id",
+                  title: "ID",
+                  width: 180,
+                  render: (memo) => {
+                    return (
+                      <Flex gap="md" align="center">
+                        <Text size="xs" truncate maw={150}>
+                          <Anchor
+                            href={`/${formatTeamNameToUrlKey(
+                              activeTeam.team_name ?? ""
+                            )}/memo/${memo.memo_id}`}
+                            target="_blank"
+                          >
+                            {String(memo.memo_reference_number)}
+                          </Anchor>
+                        </Text>
+
+                        <CopyButton value={String(memo.memo_reference_number)}>
+                          {({ copied, copy }) => (
+                            <Tooltip
+                              label={
+                                copied
+                                  ? "Copied"
+                                  : `Copy ${memo.memo_reference_number}`
+                              }
+                              onClick={copy}
+                            >
+                              <ActionIcon>
+                                <IconCopy size={16} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )}
+                        </CopyButton>
+                      </Flex>
+                    );
+                  },
+                },
+                {
+                  accessor: "memo_subject",
+                  title: "Subject",
+                  width: 180,
+                },
+                {
+                  accessor: "memo_status",
+                  title: "Status",
+                  width: 180,
+                  render: (memo) => {
+                    return (
+                      <Badge
+                        variant="filled"
+                        color={getStatusToColor(String(memo.memo_status))}
+                      >
+                        {String(memo.memo_status)}
+                      </Badge>
+                    );
+                  },
+                },
+                {
+                  accessor: "memo_author_user_id",
+                  title: "Author",
+                  width: 180,
+                  render: (memo) => {
+                    const { memo_author_user, memo_author_user_id } = memo as {
+                      memo_author_user: {
+                        user_first_name: string;
+                        user_last_name: string;
+                        user_avatar: string | null;
+                      };
+                      memo_author_user_id: string;
+                    };
+                    const { user_first_name, user_last_name, user_avatar } =
+                      memo_author_user;
+                    const authorFullname = `${user_first_name} ${user_last_name}`;
+                    const defaultAvatarProps = {
+                      color: "blue",
+                      size: "sm",
+                      radius: "xl",
+                    };
+
+                    return (
+                      <Flex px={0} gap={8} wrap="wrap">
+                        <Avatar
+                          src={user_avatar}
+                          {...defaultAvatarProps}
+                          color={getAvatarColor(
+                            Number(`${memo_author_user_id.charCodeAt(0)}`)
+                          )}
+                        >
+                          {getInitials(authorFullname)}
+                        </Avatar>
+                        <Text>{String(authorFullname)}</Text>
+                      </Flex>
+                    );
+                  },
+                },
+                {
+                  accessor: "memo_signer_list",
+                  title: "Approver",
+                  width: 180,
+                  render: (memo) => {
+                    const { memo_signer_list } = memo as {
+                      memo_signer_list: MemoListItemType["memo_signer_list"];
+                    };
+                    return (
+                      <MemoItemListSignerList signerList={memo_signer_list} />
+                    );
+                  },
+                },
+                {
+                  accessor: "memo_date_created",
+                  title: "Date Created",
+                  width: 180,
+                  render: (memo) => {
+                    if (!memo.memo_date_created) {
+                      return null;
+                    }
+
+                    return (
+                      <Text>
+                        {formatDate(new Date(String(memo.memo_date_created)))}
+                      </Text>
+                    );
+                  },
+                },
+              ]}
+            />
+          </>
         ) : (
           <Text align="center" size={24} weight="bolder" color="dimmed">
             <Alert
