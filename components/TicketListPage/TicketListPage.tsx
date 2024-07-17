@@ -44,6 +44,8 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
 import TicketListFilter from "./TicketListFilter";
+import sortBy from "lodash.sortby";
+import { DataTableSortStatus } from "mantine-datatable";
 
 export type FilterFormValues = {
   search: string;
@@ -87,6 +89,11 @@ const TicketListPage = ({
   const [ticketListCount, setTicketListCount] = useState(
     inititalTicketListCount
   );
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "name",
+    direction: "asc",
+  });
+
   const [localFilter, setLocalFilter] = useLocalStorage<TicketListLocalFilter>({
     key: "formsly-ticket-list-filter",
     defaultValue: {
@@ -206,6 +213,12 @@ const TicketListPage = ({
     }
   };
 
+  // sorting
+  useEffect(() => {
+    const data = sortBy(ticketList, sortStatus.columnAccessor);
+    setTicketList(sortStatus.direction === "desc" ? data.reverse() : data);
+  }, [sortStatus]);
+
   useEffect(() => {
     handlePagination();
   }, [activePage, localFilter]);
@@ -266,11 +279,14 @@ const TicketListPage = ({
             onPageChange={setActivePage}
             totalRecords={ticketListCount}
             recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
+            sortStatus={sortStatus}
+            onSortStatusChange={setSortStatus}
             columns={[
               {
                 accessor: "ticket_id",
                 title: "ID",
                 width: 180,
+                sortable: true,
                 render: (ticket) => {
                   return (
                     <Flex gap="md" align="center">
@@ -308,16 +324,19 @@ const TicketListPage = ({
                 accessor: "ticket_category",
                 title: "Ticket Category",
                 width: 180,
+                sortable: true,
               },
               {
                 accessor: "ticket_status",
                 title: "Status",
                 width: 180,
+                sortable: true,
               },
               {
                 accessor: "ticket_requester_team_member_id",
                 title: "Requester",
                 width: 180,
+                sortable: true,
                 render: (ticket) => {
                   const { ticket_requester } = ticket as {
                     ticket_requester: {
@@ -336,6 +355,7 @@ const TicketListPage = ({
                 accessor: "ticket_approver_team_member_id",
                 title: "Approver",
                 width: 180,
+                sortable: true,
                 render: (ticket) => {
                   const { ticket_approver } = ticket as {
                     ticket_approver: {
@@ -354,6 +374,7 @@ const TicketListPage = ({
                 accessor: "ticket_date_created",
                 title: "Date Created",
                 width: 180,
+                sortable: true,
                 render: (ticket) => {
                   if (!ticket.ticket_date_created) {
                     return null;
@@ -370,6 +391,7 @@ const TicketListPage = ({
                 accessor: "ticket_status_date_updated",
                 title: "Date Updated",
                 width: 180,
+                sortable: true,
                 render: (ticket) => {
                   if (!ticket.ticket_status_date_updated) {
                     return null;

@@ -10,6 +10,14 @@ type DataTableProps<T = Record<string, unknown>> = {
   totalRecords: number | undefined;
   columns: DataTableColumn<T>[];
   recordsPerPage: number;
+  sortStatus: {
+    columnAccessor: string;
+    direction: "asc" | "desc";
+  };
+  onSortStatusChange?: (sortStatus: {
+    columnAccessor: string;
+    direction: "asc" | "desc";
+  }) => void;
 };
 
 const useStyles = createStyles((theme) => ({

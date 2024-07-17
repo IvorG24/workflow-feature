@@ -41,6 +41,8 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
 import MemoFormatEditor from "../MemoFormatEditor/MemoFormatEditor";
+import { DataTableSortStatus } from "mantine-datatable";
+import sortBy from "lodash.sortby";
 
 type Props = {
   memoList: MemoListItemType[];
@@ -112,6 +114,10 @@ const MemoListPage = ({
     status: undefined,
     isAscendingSort: false,
     searchFilter: "",
+  });
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "name",
+    direction: "asc",
   });
 
   const { handleSubmit, getValues, control, register } =
@@ -193,6 +199,12 @@ const MemoListPage = ({
       setIsLoading(false);
     }
   };
+
+  // sorting
+  useEffect(() => {
+    const data = sortBy(memoList, sortStatus.columnAccessor);
+    setMemoList(sortStatus.direction === "desc" ? data.reverse() : data);
+  }, [sortStatus]);
 
   useEffect(() => {
     handlePagination();
@@ -343,11 +355,14 @@ const MemoListPage = ({
             onPageChange={setActivePage}
             totalRecords={memoListCount}
             recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
+            sortStatus={sortStatus}
+            onSortStatusChange={setSortStatus}
             columns={[
               {
                 accessor: "memo_id",
                 title: "ID",
                 width: 180,
+                sortable: true,
                 render: (memo) => {
                   return (
                     <Flex gap="md" align="center">
@@ -387,16 +402,19 @@ const MemoListPage = ({
                 accessor: "memo_subject",
                 title: "Subject",
                 width: 180,
+                sortable: true,
               },
               {
                 accessor: "memo_status",
                 title: "Status",
                 width: 180,
+                sortable: true,
               },
               {
                 accessor: "memo_author_user_id",
                 title: "Author",
                 width: 180,
+                sortable: true,
                 render: (memo) => {
                   const { memo_author_user } = memo as {
                     memo_author_user: {
@@ -416,6 +434,7 @@ const MemoListPage = ({
                 accessor: "memo_signer_list",
                 title: "Approver",
                 width: 180,
+                sortable: true,
                 render: (memo) => {
                   const { memo_signer_list } = memo as ApproverType;
                   const { memo_signer_team_member } = memo_signer_list[0];
@@ -429,6 +448,7 @@ const MemoListPage = ({
                 accessor: "memo_date_created",
                 title: "Date Created",
                 width: 180,
+                sortable: true,
                 render: (memo) => {
                   if (!memo.memo_date_created) {
                     return null;
