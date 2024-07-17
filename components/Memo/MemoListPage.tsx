@@ -239,7 +239,6 @@ const MemoListPage = ({
             </Flex>
           </Flex>
           <Divider my="md" />
-
           <Transition
             mounted={isFilter}
             transition="slide-down"
@@ -334,15 +333,7 @@ const MemoListPage = ({
           </Transition>
         </form>
 
-        <Space h="xl" />
-
         <Box h="fit-content" pos="relative">
-          <LoadingOverlay
-            visible={isLoading}
-            overlayBlur={0}
-            overlayOpacity={0.2}
-            loader={<Loader variant="dots" />}
-          />
           {/* memo list */}
           {memoList.length > 0 ? (
             <>
