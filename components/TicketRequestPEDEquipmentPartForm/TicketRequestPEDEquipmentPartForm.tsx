@@ -105,7 +105,7 @@ const TicketRequestPEDEquipmentPartForm = ({
         color: "green",
       });
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/tickets/${
           ticket.ticket_id
         }`

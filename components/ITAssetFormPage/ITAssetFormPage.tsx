@@ -353,8 +353,8 @@ const ITAssetFormPage = ({
         </Title>
         <Group>
           <Button
-            onClick={() =>
-              router.push({
+            onClick={async () =>
+              await router.push({
                 pathname: `/${formatTeamNameToUrlKey(
                   team.team_name
                 )}/dashboard/`,
@@ -368,8 +368,8 @@ const ITAssetFormPage = ({
 
           {isGroupMember || initialGroupBoolean ? (
             <Button
-              onClick={() =>
-                router.push(
+              onClick={async () =>
+                await router.push(
                   `/${formatTeamNameToUrlKey(
                     team.team_name
                   )}/forms/${formId}/create`

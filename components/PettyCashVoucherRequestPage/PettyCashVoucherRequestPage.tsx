@@ -250,7 +250,9 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         message: "Request deleted.",
         color: "green",
       });
-      router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
+      await router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -286,7 +288,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
-      onConfirm: () => router.push(redirectUrl),
+      onConfirm: async () => await router.push(redirectUrl),
     });
 
   const handleCreatePCVBalanceRequest = async () => {
@@ -306,7 +308,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         });
         return;
       }
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
           wavBalanceForm.form_id
         }/create?wav=${request.request_formsly_id}`
@@ -465,7 +467,9 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
               <Button
                 size="xs"
                 variant="outline"
-                onClick={() => router.push(pcvBalanceRequestRedirectUrl)}
+                onClick={async () =>
+                  await router.push(pcvBalanceRequestRedirectUrl)
+                }
               >
                 View PCV Balance
               </Button>

@@ -335,7 +335,7 @@ const EditItemRequestPage = ({
             optionList: OptionTableRow[];
           }[];
         }[] = [];
-        
+
         index = 0;
         while (1) {
           const optionData = await getItemRequestConditionalOptions(
@@ -546,7 +546,7 @@ const EditItemRequestPage = ({
         color: "green",
       });
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`

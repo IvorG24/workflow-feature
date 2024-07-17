@@ -201,8 +201,8 @@ const RequestListPage = ({
 
             <Menu.Dropdown>
               <Menu.Item
-                onClick={() =>
-                  router.push(
+                onClick={async () =>
+                  await router.push(
                     `/${formatTeamNameToUrlKey(
                       activeTeam.team_name
                     )}/requests/spreadsheet-view`
@@ -212,8 +212,8 @@ const RequestListPage = ({
                 SSOT Spreadsheet View
               </Menu.Item>
               <Menu.Item
-                onClick={() =>
-                  router.push(
+                onClick={async () =>
+                  await router.push(
                     `/${formatTeamNameToUrlKey(
                       activeTeam.team_name
                     )}/requests/lrf-spreadsheet-view`

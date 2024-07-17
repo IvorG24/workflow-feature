@@ -436,8 +436,8 @@ const MemoPage = ({ memo }: Props) => {
         <Group spacing="sm">
           {isUserAuthor && currentMemoStatus === "PENDING" && (
             <Button
-              onClick={() =>
-                router.push(
+              onClick={async () =>
+                await router.push(
                   `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${
                     memo.memo_id
                   }/edit`
@@ -449,8 +449,8 @@ const MemoPage = ({ memo }: Props) => {
           )}
           <Button
             variant="light"
-            onClick={() =>
-              router.push(
+            onClick={async () =>
+              await router.push(
                 `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${
                   memo.memo_id
                 }/reference`

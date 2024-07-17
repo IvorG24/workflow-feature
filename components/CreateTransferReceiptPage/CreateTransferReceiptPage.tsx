@@ -225,7 +225,7 @@ const CreateTransferReceiptPage = ({
           message: "Request created.",
           color: "green",
         });
-        router.push(
+        await router.push(
           `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
             request.request_id
           }`

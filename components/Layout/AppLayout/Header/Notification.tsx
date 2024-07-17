@@ -99,7 +99,7 @@ const Notification = () => {
                     notificationId: notification.notification_id,
                   });
                 }
-                router.push(`${notification.notification_redirect_url}`);
+                await router.push(`${notification.notification_redirect_url}`);
               }}
               align="center"
               gap="xs"
@@ -126,7 +126,7 @@ const Notification = () => {
         <Button
           variant="subtle"
           compact
-          onClick={() => router.push(`/user/notification`)}
+          onClick={async () => await router.push(`/user/notification`)}
         >
           View all
         </Button>

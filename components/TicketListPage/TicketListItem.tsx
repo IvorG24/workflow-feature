@@ -145,8 +145,8 @@ const TicketListItem = ({ ticket }: Props) => {
         <Group position="center">
           <ActionIcon
             color="blue"
-            onClick={() =>
-              router.push(
+            onClick={async () =>
+              await router.push(
                 `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
               )
             }

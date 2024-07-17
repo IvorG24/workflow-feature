@@ -71,9 +71,9 @@ const CreateTeamPage = () => {
             fullWidth
             variant="filled"
             mt="md"
-            onClick={() => {
+            onClick={async () => {
               modals.closeAll();
-              router.push("/user/notification?onboarding=true");
+              await router.push("/user/notification?onboarding=true");
             }}
           >
             <Box>

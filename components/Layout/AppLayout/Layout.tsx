@@ -138,7 +138,7 @@ const Layout = ({ children }: LayoutProps) => {
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
-        router.push("/500");
+        await router.push("/500");
       }
     };
 

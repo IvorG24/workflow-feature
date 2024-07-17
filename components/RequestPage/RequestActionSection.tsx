@@ -262,8 +262,8 @@ const RequestActionSection = ({
         {!isUserRequester === false && (
           <Button
             fullWidth
-            onClick={() =>
-              router.push(
+            onClick={async () =>
+              await router.push(
                 `/${formatTeamNameToUrlKey(
                   activeTeam.team_name ?? ""
                 )}/requests/${router.query.requestId}/edit?referenceOnly=true`
@@ -300,8 +300,8 @@ const RequestActionSection = ({
           <Button
             variant="outline"
             fullWidth
-            onClick={() =>
-              router.push(
+            onClick={async () =>
+              await router.push(
                 `/${formatTeamNameToUrlKey(
                   activeTeam.team_name ?? ""
                 )}/requests/${router.query.requestId}/edit`

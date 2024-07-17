@@ -61,8 +61,8 @@ const FormCard = ({ form, onDeleteForm, onHideForm }: Props) => {
       <Flex direction="column" justify="space-between" mih={150}>
         <Flex direction="column">
           <Anchor
-            onClick={() =>
-              router.push(
+            onClick={async () =>
+              await router.push(
                 `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
                   form.form_id
                 }`

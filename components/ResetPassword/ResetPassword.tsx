@@ -43,7 +43,7 @@ const ResetPasswordPage = () => {
           message: "Unauthorized submission.",
           color: "red",
         });
-        router.push("/sign-in");
+        await router.push("/sign-in");
         return;
       }
 
@@ -61,7 +61,7 @@ const ResetPasswordPage = () => {
         message: "Password updated.",
         color: "green",
       });
-      router.push("/userActiveTeam");
+      await router.push("/userActiveTeam");
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

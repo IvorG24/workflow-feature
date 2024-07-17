@@ -48,7 +48,7 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
 
         <Flex h="100%" w="100%" align="center" justify="space-between">
           <Group>
-            <UnstyledButton onClick={() => router.push("/")}>
+            <UnstyledButton onClick={async () => await router.push("/")}>
               <Image
                 src={`/logo-request-${theme.colorScheme.toLowerCase()}.svg`}
                 width={127}

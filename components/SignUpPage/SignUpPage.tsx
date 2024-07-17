@@ -116,7 +116,9 @@ const SignUpPage = () => {
         withCloseButton: false,
       });
       reset();
-      router.push(`/sign-up/success?confirmationId=${newUserData.user?.id}`);
+      await router.push(
+        `/sign-up/success?confirmationId=${newUserData.user?.id}`
+      );
     } catch (error) {
       console.error(error);
       notifications.show({

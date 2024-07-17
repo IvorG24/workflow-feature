@@ -77,7 +77,7 @@ const Error404Page = () => {
               size="md"
               mt="xl"
               className={classes.control}
-              onClick={() => router.push("/")}
+              onClick={async () => await router.push("/")}
             >
               Get to home page
             </Button>

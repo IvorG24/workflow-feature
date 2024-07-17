@@ -60,8 +60,8 @@ const Header = ({ openNavbar, setOpenNavbar }: HeaderProps) => {
         </MediaQuery>
 
         <UnstyledButton
-          onClick={() =>
-            router.push(
+          onClick={async () =>
+            await router.push(
               `/${formatTeamNameToUrlKey(activeTeam.team_name)}/dashboard`
             )
           }

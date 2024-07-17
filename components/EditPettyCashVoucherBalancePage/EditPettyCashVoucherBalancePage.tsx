@@ -156,7 +156,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
         color: "green",
       });
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`

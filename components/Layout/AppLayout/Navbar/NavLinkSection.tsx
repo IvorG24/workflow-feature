@@ -63,7 +63,7 @@ const NavLinkSection = ({
             icon={link.icon ? link.icon : null}
             px="xl"
             active={router.pathname === link.href}
-            onClick={() => router.push(link.href)}
+            onClick={async () => await router.push(link.href)}
             rightSection={rightSection ? rightSection : <></>}
             {...props}
           />
