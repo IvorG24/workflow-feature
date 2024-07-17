@@ -241,6 +241,16 @@ const MemoListPage = ({
               miw={250}
               maw={320}
             />
+            <Button
+              variant="light"
+              leftIcon={<IconReload size={16} />}
+              onClick={() => {
+                setActivePage(1);
+                handleFilterMemo();
+              }}
+            >
+              Refresh
+            </Button>
             <Flex gap="sm" wrap="wrap" align="center">
               <p>Filter</p>
               <Switch
@@ -258,17 +268,7 @@ const MemoListPage = ({
             timingFunction="ease-in-out"
           >
             {() => (
-              <Flex gap="sm" wrap="wrap" align="center">
-                <Button
-                  variant="light"
-                  leftIcon={<IconReload size={16} />}
-                  onClick={() => {
-                    setActivePage(1);
-                    handleFilterMemo();
-                  }}
-                >
-                  Refresh
-                </Button>
+              <Flex gap="sm" wrap="wrap" align="center" my="sm">
                 <Controller
                   control={control}
                   name="status"

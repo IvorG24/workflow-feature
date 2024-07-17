@@ -114,6 +114,13 @@ const TicketListFilter = ({
           miw={250}
           maw={320}
         />
+        <Button
+          variant="light"
+          leftIcon={<IconReload size={16} />}
+          onClick={() => handleFilterTicketList()}
+        >
+          Refresh
+        </Button>
         <Flex gap="sm" wrap="wrap" align="center">
           <p>Filter</p>
           <Switch
@@ -134,13 +141,6 @@ const TicketListFilter = ({
       >
         {() => (
           <Flex gap="sm" wrap="wrap">
-            <Button
-              variant="light"
-              leftIcon={<IconReload size={16} />}
-              onClick={() => handleFilterTicketList()}
-            >
-              Refresh
-            </Button>
             <Controller
               control={control}
               name="categoryList"
