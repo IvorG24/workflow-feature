@@ -20,7 +20,6 @@ import {
   Loader,
   LoadingOverlay,
   MultiSelect,
-  Pagination,
   Space,
   Text,
   TextInput,
@@ -340,7 +339,7 @@ const MemoListPage = ({
               records={memoList}
               fetching={isLoading}
               page={activePage}
-              onPageChange={handlePagination}
+              onPageChange={setActivePage}
               totalRecords={memoListCount}
               recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
               columns={[
@@ -484,15 +483,6 @@ const MemoListPage = ({
           </Text>
         )}
       </Box>
-
-      <Flex justify="flex-end">
-        <Pagination
-          value={activePage}
-          onChange={setActivePage}
-          total={Math.ceil(memoListCount / DEFAULT_REQUEST_LIST_LIMIT)}
-          mt="xl"
-        />
-      </Flex>
       <MemoFormatEditor
         opened={memoFormatEditorIsOpened}
         close={closeMemoFormatEditor}

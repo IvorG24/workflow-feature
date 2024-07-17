@@ -28,7 +28,6 @@ import {
   Flex,
   Loader,
   LoadingOverlay,
-  Pagination,
   Text,
   Title,
   Tooltip,
@@ -279,7 +278,7 @@ const TicketListPage = ({
               records={ticketList}
               fetching={isFetchingTicketList}
               page={activePage}
-              onPageChange={handlePagination}
+              onPageChange={setActivePage}
               totalRecords={ticketListCount}
               recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
               columns={[
@@ -492,15 +491,6 @@ const TicketListPage = ({
           </Text>
         )}
       </Box>
-
-      <Flex justify="flex-end">
-        <Pagination
-          value={activePage}
-          onChange={setActivePage}
-          total={Math.ceil(ticketListCount / DEFAULT_TICKET_LIST_LIMIT)}
-          mt="xl"
-        />
-      </Flex>
     </Container>
   );
 };
