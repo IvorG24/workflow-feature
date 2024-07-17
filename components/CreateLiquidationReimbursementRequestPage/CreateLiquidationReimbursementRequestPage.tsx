@@ -460,17 +460,12 @@ const CreateLiquidationReimbursementRequestPage = ({
         );
       }
 
-      removeSection(sectionIndex);
-      insertSection(
-        sectionIndex,
-        {
-          ...currentPayeeSection,
-          section_field: updatedFields.sort(
-            (a, b) => a.field_order - b.field_order
-          ),
-        },
-        { shouldFocus: false }
-      );
+      updateSection(sectionIndex, {
+        ...currentPayeeSection,
+        section_field: updatedFields.sort(
+          (a, b) => a.field_order - b.field_order
+        ),
+      });
     } catch (error) {
       setValue(
         `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
