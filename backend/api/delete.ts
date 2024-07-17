@@ -67,7 +67,7 @@ export const deleteRow = async (
     condition += `${table}_id.eq.${id}, `;
   });
 
-  const { data, error } = await supabaseClient
+  const { error } = await supabaseClient
     .schema(schema)
     .from(`${table}_table`)
     .update({ [`${table}_is_disabled`]: true })
@@ -152,6 +152,45 @@ export const deleteJiraUser = async (
     .from("jira_user_account_table")
     .delete()
     .eq("jira_user_account_id", jiraUserAccountId);
+
+  if (error) throw error;
+};
+
+export const deleteJiraProject = async (
+  supabaseClient: SupabaseClient<Database>,
+  jira_project_id: string
+) => {
+  const { error } = await supabaseClient
+    .schema("jira_schema")
+    .from("jira_project_table")
+    .delete()
+    .eq("jira_project_id", jira_project_id);
+
+  if (error) throw error;
+};
+
+export const deleteJiraOrganization = async (
+  supabaseClient: SupabaseClient<Database>,
+  jira_organization_id: string
+) => {
+  const { error } = await supabaseClient
+    .schema("jira_schema")
+    .from("jira_organization_table")
+    .delete()
+    .eq("jira_organization_id", jira_organization_id);
+
+  if (error) throw error;
+};
+
+export const deleteJobTittle = async (
+  supabaseClient: SupabaseClient<Database>,
+  jira_job_id: string
+) => {
+  const { error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("employee_job_title_table")
+    .delete()
+    .eq("employee_job_title_id", jira_job_id);
 
   if (error) throw error;
 };

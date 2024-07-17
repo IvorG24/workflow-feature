@@ -1,3 +1,4 @@
+import { deleteJiraProject } from "@/backend/api/delete";
 import { getJiraProjectList } from "@/backend/api/get";
 import { createJiraProject } from "@/backend/api/post";
 import { updateJiraProject } from "@/backend/api/update";
@@ -16,9 +17,11 @@ import {
   Flex,
   Group,
   Paper,
+  Text,
   TextInput,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -26,6 +29,7 @@ import {
   IconReload,
   IconSearch,
   IconSettings,
+  IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useState } from "react";
@@ -187,6 +191,39 @@ const JiraProjectLookupTable = ({
     }
   };
 
+  const handleDeleteJiraProject = async (jiraProjectId: string) => {
+    try {
+      setIsLoading(true);
+      await deleteJiraProject(supabaseClient, jiraProjectId);
+      setJiraProjectList((prev) =>
+        prev.filter((proj) => proj.jira_project_id !== jiraProjectId)
+      );
+      setJiraProjectCount((prev) => prev - 1);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to delete jira user.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openConfirmDeleteJiraProjectModal = (jira_project_id: string) => {
+    modals.openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you want to delete this jira Project?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: async () => await handleDeleteJiraProject(jira_project_id),
+      centered: true,
+      confirmProps: { color: "red" },
+    });
+  };
+
   return (
     <Box>
       <Paper p="xl" shadow="xs" pos="relative">
@@ -270,26 +307,36 @@ const JiraProjectLookupTable = ({
                 jira_project_jira_id,
                 jira_project_jira_label,
               }) => (
-                <ActionIcon
-                  onClick={() => {
-                    setOpenJiraProjectLookupFormModal(true);
-                    setIsUpdatingJiraProject(true);
-                    updateOrCreateJiraProjectFormMethods.setValue(
-                      "jira_project_id",
-                      jira_project_id
-                    );
-                    updateOrCreateJiraProjectFormMethods.setValue(
-                      "jira_project_jira_id",
-                      jira_project_jira_id
-                    );
-                    updateOrCreateJiraProjectFormMethods.setValue(
-                      "jira_project_jira_label",
-                      jira_project_jira_label
-                    );
-                  }}
-                >
-                  <IconSettings size={16} />
-                </ActionIcon>
+                <Flex>
+                  <ActionIcon
+                    onClick={() => {
+                      setOpenJiraProjectLookupFormModal(true);
+                      setIsUpdatingJiraProject(true);
+                      updateOrCreateJiraProjectFormMethods.setValue(
+                        "jira_project_id",
+                        jira_project_id
+                      );
+                      updateOrCreateJiraProjectFormMethods.setValue(
+                        "jira_project_jira_id",
+                        jira_project_jira_id
+                      );
+                      updateOrCreateJiraProjectFormMethods.setValue(
+                        "jira_project_jira_label",
+                        jira_project_jira_label
+                      );
+                    }}
+                  >
+                    <IconSettings size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    onClick={() =>
+                      openConfirmDeleteJiraProjectModal(jira_project_id)
+                    }
+                    color="red"
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Flex>
               ),
             },
           ]}
