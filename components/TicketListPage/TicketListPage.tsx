@@ -7,7 +7,7 @@ import {
   formatDate,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
 import { getAvatarColor, getStatusToColor } from "@/utils/styling";
 import {
   TeamMemberWithUserType,
@@ -25,6 +25,7 @@ import {
   Button,
   Container,
   CopyButton,
+  createStyles,
   Flex,
   Loader,
   LoadingOverlay,
@@ -47,6 +48,12 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
 import TicketListFilter from "./TicketListFilter";
+
+const useStyles = createStyles(() => ({
+  requester: {
+    border: "solid 2px white",
+  },
+}));
 
 export type FilterFormValues = {
   search: string;
@@ -79,6 +86,7 @@ const TicketListPage = ({
   teamMemberList,
   ticketCategoryList,
 }: Props) => {
+  const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
@@ -348,15 +356,14 @@ const TicketListPage = ({
                         user_avatar: string | null;
                         user_last_name: string;
                         user_first_name: string;
-                        team_member_id: string;
+                        user_id: string;
                       };
                     };
-
                     const {
                       user_avatar,
                       user_last_name,
                       user_first_name,
-                      team_member_id,
+                      user_id,
                     } = ticket_requester;
 
                     const defaultAvatarProps = {
@@ -368,12 +375,15 @@ const TicketListPage = ({
                     return (
                       <Flex px={0} gap={8} wrap="wrap">
                         <Avatar
-                          src={user_avatar || null}
+                          src={user_avatar}
                           {...defaultAvatarProps}
                           color={getAvatarColor(
-                            Number(`${team_member_id.charCodeAt(0)}`)
+                            Number(`${user_id.charCodeAt(0)}`)
                           )}
-                        ></Avatar>
+                          className={classes.requester}
+                        >
+                          {getInitials(`${user_first_name} ${user_last_name}`)}
+                        </Avatar>
                         <Text>{`${user_first_name} ${user_last_name}`}</Text>
                       </Flex>
                     );
@@ -389,12 +399,12 @@ const TicketListPage = ({
                         user_avatar: string | null;
                         user_last_name: string;
                         user_first_name: string;
-                        team_member_id: string;
+                        user_id: string;
                       };
                     };
                     const {
                       user_avatar,
-                      team_member_id,
+                      user_id,
                       user_first_name,
                       user_last_name,
                     } = ticket_approver;
@@ -410,9 +420,12 @@ const TicketListPage = ({
                           src={user_avatar}
                           {...defaultAvatarProps}
                           color={getAvatarColor(
-                            Number(`${team_member_id.charCodeAt(0)}`)
+                            Number(`${user_id.charCodeAt(0)}`)
                           )}
-                        ></Avatar>
+                          className={classes.requester}
+                        >
+                          {getInitials(`${user_first_name} ${user_last_name}`)}
+                        </Avatar>
                         <Text>{`${user_first_name} ${user_last_name}`}</Text>
                       </Flex>
                     );
