@@ -1,3 +1,4 @@
+import { createStyles } from "@mantine/core";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 
 type DataTableProps<T = Record<string, unknown>> = {
@@ -11,24 +12,34 @@ type DataTableProps<T = Record<string, unknown>> = {
   recordsPerPage: number;
 };
 
+const useStyles = createStyles((theme) => ({
+  root: {
+    border: `1px dashed ${theme.colors.black}`,
+    borderRadius: theme.radius.md,
+  },
+  header: {
+    "&& th": { color: "white", backgroundColor: theme.colors.blue[5] },
+  },
+}));
+
 const ListTable = (props: DataTableProps) => {
+  const { classes } = useStyles();
   return (
     <DataTable
+      classNames={classes}
+      withColumnBorders
+      borderColor={"#CDD1D6"}
+      rowBorderColor={"#CDD1D6"}
+      highlightOnHover
       fontSize={16}
-      withBorder={true}
-      sx={{
-        thead: {
-          tr: {
-            backgroundColor: "transparent",
-          },
-        },
-      }}
+      withBorder
       styles={(theme) => ({
         header: {
           background:
             theme.colorScheme === "dark"
               ? theme.colors.dark[5]
               : theme.colors.gray[1],
+          color: "red",
         },
       })}
       minHeight={390}

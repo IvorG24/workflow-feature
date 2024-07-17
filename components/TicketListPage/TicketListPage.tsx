@@ -7,8 +7,7 @@ import {
   formatDate,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey, getInitials } from "@/utils/string";
-import { getAvatarColor, getStatusToColor } from "@/utils/styling";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   TeamMemberWithUserType,
   TicketCategoryTableRow,
@@ -19,16 +18,14 @@ import {
   ActionIcon,
   Alert,
   Anchor,
-  Avatar,
-  Badge,
   Box,
   Button,
   Container,
   CopyButton,
-  createStyles,
   Flex,
   Loader,
   LoadingOverlay,
+  Paper,
   Text,
   Title,
   Tooltip,
@@ -40,7 +37,6 @@ import {
   IconAlertCircle,
   IconArrowsMaximize,
   IconCopy,
-  IconReload,
   IconReportAnalytics,
 } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
@@ -48,12 +44,6 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
 import TicketListFilter from "./TicketListFilter";
-
-const useStyles = createStyles(() => ({
-  requester: {
-    border: "solid 2px white",
-  },
-}));
 
 export type FilterFormValues = {
   search: string;
@@ -86,7 +76,6 @@ const TicketListPage = ({
   teamMemberList,
   ticketCategoryList,
 }: Props) => {
-  const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
@@ -232,21 +221,16 @@ const TicketListPage = ({
 
   return (
     <Container maw={3840} h="100%">
-      <Flex align="center" gap="xl" wrap="wrap">
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
           <Title order={4}>Ticket List Page</Title>
           <Text> Manage your team requests here.</Text>
         </Box>
-        <Button
-          variant="light"
-          leftIcon={<IconReload size={16} />}
-          onClick={() => handleFilterTicketList()}
-        >
-          Refresh
-        </Button>
+
         {["ADMIN", "OWNER"].includes(teamMember?.team_member_role ?? "") && (
           <Button
             leftIcon={<IconReportAnalytics size={16} />}
+            variant="light"
             onClick={async () =>
               await router.push(
                 `/${formatTeamNameToUrlKey(
@@ -259,251 +243,201 @@ const TicketListPage = ({
           </Button>
         )}
       </Flex>
-      <Box my="sm">
-        <FormProvider {...filterFormMethods}>
-          <form onSubmit={handleSubmit(handleFilterTicketList)}>
-            <TicketListFilter
-              ticketCategoryList={ticketCategoryList}
-              handleFilterTicketList={handleFilterTicketList}
-              teamMemberList={teamMemberList}
-              localFilter={localFilter}
-              setLocalFilter={setLocalFilter}
-            />
-          </form>
-        </FormProvider>
-      </Box>
-      <Box h="fit-content" pos="relative">
-        <LoadingOverlay
-          visible={isFetchingTicketList}
-          overlayBlur={0}
-          overlayOpacity={0.2}
-          loader={<Loader variant="dots" />}
-        />
-        {ticketList.length > 0 ? (
-          <>
-            <ListTable
-              idAccessor="ticket_id"
-              records={ticketList}
-              fetching={isFetchingTicketList}
-              page={activePage}
-              onPageChange={setActivePage}
-              totalRecords={ticketListCount}
-              recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
-              columns={[
-                {
-                  accessor: "ticket_id",
-                  title: "ID",
-                  width: 180,
-                  render: (ticket) => {
-                    return (
-                      <Flex gap="md" align="center">
-                        <Text size="xs" truncate maw={150}>
-                          <Anchor
-                            href={`/${formatTeamNameToUrlKey(
-                              activeTeam.team_name ?? ""
-                            )}/memo/${ticket.memo_id}`}
-                            target="_blank"
-                          >
-                            {String(ticket.ticket_id)}
-                          </Anchor>
-                        </Text>
-
-                        <CopyButton value={String(ticket.ticket_id)}>
-                          {({ copied, copy }) => (
-                            <Tooltip
-                              label={
-                                copied ? "Copied" : `Copy ${ticket.ticket_id}`
-                              }
-                              onClick={copy}
+      <Paper p="md">
+        <Box my="sm">
+          <FormProvider {...filterFormMethods}>
+            <form onSubmit={handleSubmit(handleFilterTicketList)}>
+              <TicketListFilter
+                ticketCategoryList={ticketCategoryList}
+                handleFilterTicketList={handleFilterTicketList}
+                teamMemberList={teamMemberList}
+                localFilter={localFilter}
+                setLocalFilter={setLocalFilter}
+              />
+            </form>
+          </FormProvider>
+        </Box>
+        <Box h="fit-content" pos="relative">
+          <LoadingOverlay
+            visible={isFetchingTicketList}
+            overlayBlur={0}
+            overlayOpacity={0.2}
+            loader={<Loader variant="dots" />}
+          />
+          {ticketList.length > 0 ? (
+            <>
+              <ListTable
+                idAccessor="ticket_id"
+                records={ticketList}
+                fetching={isFetchingTicketList}
+                page={activePage}
+                onPageChange={setActivePage}
+                totalRecords={ticketListCount}
+                recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
+                columns={[
+                  {
+                    accessor: "ticket_id",
+                    title: "ID",
+                    width: 180,
+                    render: (ticket) => {
+                      return (
+                        <Flex gap="md" align="center">
+                          <Text size="xs" truncate maw={150}>
+                            <Anchor
+                              href={`/${formatTeamNameToUrlKey(
+                                activeTeam.team_name ?? ""
+                              )}/tickets/${ticket.ticket_id}`}
+                              target="_blank"
+                              color="black"
                             >
-                              <ActionIcon>
-                                <IconCopy size={16} />
-                              </ActionIcon>
-                            </Tooltip>
-                          )}
-                        </CopyButton>
-                      </Flex>
-                    );
+                              {String(ticket.ticket_id)}
+                            </Anchor>
+                          </Text>
+
+                          <CopyButton value={String(ticket.ticket_id)}>
+                            {({ copied, copy }) => (
+                              <Tooltip
+                                label={
+                                  copied ? "Copied" : `Copy ${ticket.ticket_id}`
+                                }
+                                onClick={copy}
+                              >
+                                <ActionIcon>
+                                  <IconCopy size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                          </CopyButton>
+                        </Flex>
+                      );
+                    },
                   },
-                },
-                {
-                  accessor: "ticket_category",
-                  title: "Ticket Category",
-                  width: 180,
-                },
-                {
-                  accessor: "ticket_status",
-                  title: "Status",
-                  width: 180,
-                  render: (ticket) => {
-                    return (
-                      <Badge
-                        variant="filled"
-                        color={getStatusToColor(String(ticket.ticket_status))}
-                      >
-                        {String(ticket.ticket_status)}
-                      </Badge>
-                    );
+                  {
+                    accessor: "ticket_category",
+                    title: "Ticket Category",
+                    width: 180,
                   },
-                },
-                {
-                  accessor: "ticket_requester_team_member_id",
-                  title: "Requester",
-                  width: 180,
-                  render: (ticket) => {
-                    const { ticket_requester } = ticket as {
-                      ticket_requester: {
-                        user_avatar: string | null;
-                        user_last_name: string;
-                        user_first_name: string;
-                        user_id: string;
+                  {
+                    accessor: "ticket_status",
+                    title: "Status",
+                    width: 180,
+                  },
+                  {
+                    accessor: "ticket_requester_team_member_id",
+                    title: "Requester",
+                    width: 180,
+                    render: (ticket) => {
+                      const { ticket_requester } = ticket as {
+                        ticket_requester: {
+                          user_avatar: string | null;
+                          user_last_name: string;
+                          user_first_name: string;
+                          user_id: string;
+                        };
                       };
-                    };
-                    const {
-                      user_avatar,
-                      user_last_name,
-                      user_first_name,
-                      user_id,
-                    } = ticket_requester;
+                      const { user_last_name, user_first_name } =
+                        ticket_requester;
 
-                    const defaultAvatarProps = {
-                      color: "blue",
-                      size: "sm",
-                      radius: "xl",
-                    };
-
-                    return (
-                      <Flex px={0} gap={8} wrap="wrap">
-                        <Avatar
-                          src={user_avatar}
-                          {...defaultAvatarProps}
-                          color={getAvatarColor(
-                            Number(`${user_id.charCodeAt(0)}`)
-                          )}
-                          className={classes.requester}
-                        >
-                          {getInitials(`${user_first_name} ${user_last_name}`)}
-                        </Avatar>
+                      return (
                         <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                      </Flex>
-                    );
+                      );
+                    },
                   },
-                },
-                {
-                  accessor: "ticket_approver_team_member_id",
-                  title: "Approver",
-                  width: 180,
-                  render: (ticket) => {
-                    const { ticket_approver } = ticket as {
-                      ticket_approver: {
-                        user_avatar: string | null;
-                        user_last_name: string;
-                        user_first_name: string;
-                        user_id: string;
+                  {
+                    accessor: "ticket_approver_team_member_id",
+                    title: "Approver",
+                    width: 180,
+                    render: (ticket) => {
+                      const { ticket_approver } = ticket as {
+                        ticket_approver: {
+                          user_avatar: string | null;
+                          user_last_name: string;
+                          user_first_name: string;
+                          user_id: string;
+                        };
                       };
-                    };
-                    const {
-                      user_avatar,
-                      user_id,
-                      user_first_name,
-                      user_last_name,
-                    } = ticket_approver;
-                    const defaultAvatarProps = {
-                      color: "blue",
-                      size: "sm",
-                      radius: "xl",
-                    };
+                      const { user_first_name, user_last_name } =
+                        ticket_approver;
 
-                    return (
-                      <Flex px={0} gap={8} wrap="wrap">
-                        <Avatar
-                          src={user_avatar}
-                          {...defaultAvatarProps}
-                          color={getAvatarColor(
-                            Number(`${user_id.charCodeAt(0)}`)
-                          )}
-                          className={classes.requester}
-                        >
-                          {getInitials(`${user_first_name} ${user_last_name}`)}
-                        </Avatar>
+                      return (
                         <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                      </Flex>
-                    );
+                      );
+                    },
                   },
-                },
-                {
-                  accessor: "ticket_date_created",
-                  title: "Date Created",
-                  width: 180,
-                  render: (ticket) => {
-                    if (!ticket.ticket_date_created) {
-                      return null;
-                    }
+                  {
+                    accessor: "ticket_date_created",
+                    title: "Date Created",
+                    width: 180,
+                    render: (ticket) => {
+                      if (!ticket.ticket_date_created) {
+                        return null;
+                      }
 
-                    return (
-                      <Text>
-                        {formatDate(
-                          new Date(String(ticket.ticket_date_created))
-                        )}
-                      </Text>
-                    );
+                      return (
+                        <Text>
+                          {formatDate(
+                            new Date(String(ticket.ticket_date_created))
+                          )}
+                        </Text>
+                      );
+                    },
                   },
-                },
-                {
-                  accessor: "ticket_status_date_updated",
-                  title: "Date Updated",
-                  width: 180,
-                  render: (ticket) => {
-                    if (!ticket.ticket_status_date_updated) {
-                      return null;
-                    }
+                  {
+                    accessor: "ticket_status_date_updated",
+                    title: "Date Updated",
+                    width: 180,
+                    render: (ticket) => {
+                      if (!ticket.ticket_status_date_updated) {
+                        return null;
+                      }
 
-                    return (
-                      <Text>
-                        {formatDate(
-                          new Date(String(ticket.ticket_status_date_updated))
-                        )}
-                      </Text>
-                    );
+                      return (
+                        <Text>
+                          {formatDate(
+                            new Date(String(ticket.ticket_status_date_updated))
+                          )}
+                        </Text>
+                      );
+                    },
                   },
-                },
-                {
-                  accessor: "ticket_id" + "ticket_date_created",
-                  title: "View",
-                  width: 180,
-                  render: (ticket) => {
-                    const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    );
-                    return (
-                      <ActionIcon
-                        color="blue"
-                        onClick={() =>
-                          router.push(
-                            `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
-                          )
-                        }
-                      >
-                        <IconArrowsMaximize size={16} />
-                      </ActionIcon>
-                    );
+                  {
+                    accessor: "ticket_id" + "ticket_date_created",
+                    title: "View",
+                    width: 180,
+                    render: (ticket) => {
+                      const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
+                        activeTeam.team_name ?? ""
+                      );
+                      return (
+                        <ActionIcon
+                          color="gray"
+                          onClick={() =>
+                            router.push(
+                              `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
+                            )
+                          }
+                        >
+                          <IconArrowsMaximize size={16} />
+                        </ActionIcon>
+                      );
+                    },
                   },
-                },
-              ]}
-            />
-          </>
-        ) : (
-          <Text align="center" size={24} weight="bolder" color="dimmed">
-            <Alert
-              icon={<IconAlertCircle size="1rem" />}
-              color="orange"
-              mt="xs"
-            >
-              No tickets found.
-            </Alert>
-          </Text>
-        )}
-      </Box>
+                ]}
+              />
+            </>
+          ) : (
+            <Text align="center" size={24} weight="bolder" color="dimmed">
+              <Alert
+                icon={<IconAlertCircle size="1rem" />}
+                color="orange"
+                mt="xs"
+              >
+                No tickets found.
+              </Alert>
+            </Text>
+          )}
+        </Box>
+      </Paper>
     </Container>
   );
 };
