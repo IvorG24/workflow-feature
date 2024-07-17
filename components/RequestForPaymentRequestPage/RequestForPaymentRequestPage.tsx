@@ -363,7 +363,9 @@ const RequestForPaymentRequestPage = ({
         message: "Request deleted.",
         color: "green",
       });
-      router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
+      await router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -384,7 +386,7 @@ const RequestForPaymentRequestPage = ({
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
-      onConfirm: () => router.push(redirectUrl),
+      onConfirm: async () => await router.push(redirectUrl),
     });
 
   const handleCreateRFPCodeRequest = async () => {
@@ -404,7 +406,7 @@ const RequestForPaymentRequestPage = ({
         });
         return;
       }
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
           rfpCodeForm.form_id
         }/create?rfp=${request.request_formsly_id}`

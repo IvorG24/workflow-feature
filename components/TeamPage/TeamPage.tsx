@@ -323,7 +323,7 @@ const TeamPage = ({
         (team) => team.team_id !== teamId
       );
       setTeamList(updatedTeamList);
-      router.push("/");
+      await router.push("/");
     } catch (error) {
       notifications.show({
         message: "Error: cannot leave team",
@@ -345,8 +345,10 @@ const TeamPage = ({
         {isOwner ? (
           <Button
             variant="light"
-            onClick={() =>
-              router.push(`/${formatTeamNameToUrlKey(team.team_name)}/invoice`)
+            onClick={async () =>
+              await router.push(
+                `/${formatTeamNameToUrlKey(team.team_name)}/invoice`
+              )
             }
           >
             Invoice History

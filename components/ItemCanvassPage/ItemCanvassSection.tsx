@@ -50,8 +50,8 @@ const ItemCanvassSection = ({ canvassRequest }: Props) => {
             <Center mt="md">
               <Button
                 rightIcon={<IconFileAnalytics size={20} />}
-                onClick={() =>
-                  router.push(
+                onClick={async () =>
+                  await router.push(
                     `/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
                     )}requests/${router.query.requestId}/canvass`

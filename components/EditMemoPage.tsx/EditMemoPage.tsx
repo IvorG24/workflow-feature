@@ -121,7 +121,7 @@ const EditMemoPage = ({ memo, teamMemoSignerList }: Props) => {
 
       await updateMemo(supabaseClient, editMemoParams as EditMemoType);
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${data.memo_id}`
       );
     } catch (e) {

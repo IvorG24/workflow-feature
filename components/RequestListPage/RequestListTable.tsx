@@ -780,8 +780,8 @@ const RequestListTable = ({
                 maw={120}
                 mx="auto"
                 color="blue"
-                onClick={() =>
-                  router.push(
+                onClick={async () =>
+                  await router.push(
                     `/${formatTeamNameToUrlKey(
                       activeTeam.team_name ?? ""
                     )}/requests/${requestId}`

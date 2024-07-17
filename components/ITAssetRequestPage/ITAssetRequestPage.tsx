@@ -249,7 +249,9 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         message: "Request deleted.",
         color: "green",
       });
-      router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
+      await router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

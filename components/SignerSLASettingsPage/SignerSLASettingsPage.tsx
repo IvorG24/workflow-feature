@@ -67,7 +67,7 @@ const SignerSLASettingsPage = ({
     },
   ].map((item, index) => (
     <Anchor
-      onClick={() => router.push(item.href)}
+      onClick={async () => await router.push(item.href)}
       color={item.active ? "dimmed" : "blue"}
       key={index}
     >

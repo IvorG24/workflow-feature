@@ -115,13 +115,13 @@ const SignInPage = () => {
             teamId: `${teamId}`,
             userEmail: `${invitedEmail}`,
           });
-          router.push(`/user/invitation/${invitationId}`);
+          await router.push(`/user/invitation/${invitationId}`);
         } else {
-          router.push(`/userActiveTeam`);
+          await router.push(`/userActiveTeam`);
         }
         return;
       }
-      router.push("/onboarding");
+      await router.push("/onboarding");
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

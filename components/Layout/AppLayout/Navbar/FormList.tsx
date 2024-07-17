@@ -56,8 +56,8 @@ const FormList = () => {
         <Group mb="sm" position="apart">
           <Text mb={4} size="xs" weight={400}>
             <Anchor
-              onClick={() =>
-                router.push(
+              onClick={async () =>
+                await router.push(
                   `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms`
                 )
               }
@@ -72,8 +72,8 @@ const FormList = () => {
           <Button
             variant="light"
             size="xs"
-            onClick={() =>
-              router.push(
+            onClick={async () =>
+              await router.push(
                 `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/build`
               )
             }
@@ -114,8 +114,8 @@ const FormList = () => {
                 key={form.form_id}
                 label={form.form_name}
                 rightSection={<IconPlus size={14} />}
-                onClick={() =>
-                  router.push(
+                onClick={async () =>
+                  await router.push(
                     `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
                       form.form_id
                     }/create`

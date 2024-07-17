@@ -153,7 +153,7 @@ const CreateMemoFormPage = ({ user, teamMemoSignerList }: Props) => {
       };
 
       const newMemo = await createTeamMemo(supabaseClient, createMemoParams);
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${
           newMemo.memo_id
         }`

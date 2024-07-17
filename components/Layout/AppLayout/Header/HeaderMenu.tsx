@@ -98,7 +98,7 @@ const HeaderMenu = () => {
           <Menu.Item
             icon={<IconUserCircle size={14} />}
             data-cy="header-profile-page-button"
-            onClick={() => router.push("/user/settings")}
+            onClick={async () => await router.push("/user/settings")}
           >
             Profile
           </Menu.Item>
@@ -119,7 +119,7 @@ const HeaderMenu = () => {
           <Menu.Label>Support</Menu.Label>
           <Menu.Item
             icon={<IconHelpCircle size={16} />}
-            onClick={() => router.push("/help")}
+            onClick={async () => await router.push("/help")}
           >
             Help
           </Menu.Item>

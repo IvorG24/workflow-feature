@@ -291,7 +291,9 @@ const LiquidationReimbursementRequestPage = ({
         message: "Request deleted.",
         color: "green",
       });
-      router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
+      await router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -312,7 +314,7 @@ const LiquidationReimbursementRequestPage = ({
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
-      onConfirm: () => router.push(redirectUrl),
+      onConfirm: async () => await router.push(redirectUrl),
     });
 
   const handleCreateBOQRequest = async () => {
@@ -332,7 +334,7 @@ const LiquidationReimbursementRequestPage = ({
         });
         return;
       }
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/forms/${
           boqForm.form_id
         }/create?lrf=${request.request_formsly_id}`
@@ -676,7 +678,7 @@ const LiquidationReimbursementRequestPage = ({
               <Button
                 size="xs"
                 variant="outline"
-                onClick={() => router.push(boqRequestRedirectUrl)}
+                onClick={async () => await router.push(boqRequestRedirectUrl)}
               >
                 View BOQ
               </Button>

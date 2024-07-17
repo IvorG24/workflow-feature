@@ -102,8 +102,8 @@ const ReviewAppNavLink = () => {
               fw={400}
               leftIcon={<IconTicket {...defaultIconProps} />}
               variant="transparent"
-              onClick={() =>
-                router.push(`/${activeTeamNameToUrl}/tickets/create`)
+              onClick={async () =>
+                await router.push(`/${activeTeamNameToUrl}/tickets/create`)
               }
             >
               Create Ticket
@@ -112,7 +112,9 @@ const ReviewAppNavLink = () => {
               fw={400}
               leftIcon={<IconFileDescription {...defaultIconProps} />}
               variant="transparent"
-              onClick={() => router.push(`/${activeTeamNameToUrl}/memo/create`)}
+              onClick={async () =>
+                await router.push(`/${activeTeamNameToUrl}/memo/create`)
+              }
             >
               Create Memo
             </Button>
@@ -125,8 +127,8 @@ const ReviewAppNavLink = () => {
                 .map((form) => (
                   <Menu.Item
                     key={form.form_id}
-                    onClick={() =>
-                      router.push(
+                    onClick={async () =>
+                      await router.push(
                         `/${activeTeamNameToUrl}/forms/${form.form_id}/create`
                       )
                     }
@@ -164,7 +166,9 @@ const ReviewAppNavLink = () => {
               fw={400}
               leftIcon={<IconFilePlus {...defaultIconProps} />}
               variant="transparent"
-              onClick={() => router.push(`/${activeTeamNameToUrl}/forms/build`)}
+              onClick={async () =>
+                await router.push(`/${activeTeamNameToUrl}/forms/build`)
+              }
             >
               Build Form
             </Button>
@@ -174,7 +178,9 @@ const ReviewAppNavLink = () => {
             <Menu.Dropdown>
               <Menu.Item
                 key={"all-form"}
-                onClick={() => router.push(`/${activeTeamNameToUrl}/forms/`)}
+                onClick={async () =>
+                  await router.push(`/${activeTeamNameToUrl}/forms/`)
+                }
                 c="blue"
               >
                 View All
@@ -185,8 +191,8 @@ const ReviewAppNavLink = () => {
                 .map((form) => (
                   <Menu.Item
                     key={form.form_id}
-                    onClick={() =>
-                      router.push(
+                    onClick={async () =>
+                      await router.push(
                         `/${activeTeamNameToUrl}/forms/${form.form_id}`
                       )
                     }

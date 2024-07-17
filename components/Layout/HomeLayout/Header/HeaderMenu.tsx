@@ -67,7 +67,7 @@ const HeaderMenu = () => {
             <UnstyledButton
               key={index}
               className={classes.link}
-              onClick={() => router.push(tab.link)}
+              onClick={async () => await router.push(tab.link)}
             >
               {tab.label}
             </UnstyledButton>
@@ -76,10 +76,15 @@ const HeaderMenu = () => {
       </MediaQuery>
       <MediaQuery smallerThan="sm" styles={{ display: "none" }}>
         <Group>
-          <Button variant="outline" onClick={() => router.push("/sign-in")}>
+          <Button
+            variant="outline"
+            onClick={async () => await router.push("/sign-in")}
+          >
             Log in
           </Button>
-          <Button onClick={() => router.push("/sign-up")}>Sign up</Button>
+          <Button onClick={async () => await router.push("/sign-up")}>
+            Sign up
+          </Button>
         </Group>
       </MediaQuery>
     </>

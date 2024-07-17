@@ -64,8 +64,8 @@ const CostEngineerSection = ({ handleCostEngineerRejectRequest }: Props) => {
         <Button
           fullWidth
           disabled={isLoading}
-          onClick={() =>
-            router.push(
+          onClick={async () =>
+            await router.push(
               `/${formatTeamNameToUrlKey(
                 activeTeam.team_name ?? ""
               )}/requests/${router.query.requestId}/edit`

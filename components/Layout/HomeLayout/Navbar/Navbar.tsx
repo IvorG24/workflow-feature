@@ -56,8 +56,8 @@ const Navbar = ({ openNavbar, setOpenNavbar }: NavbarProps) => {
               icon={link.icon ? link.icon : null}
               key={`navLink-${idx}`}
               px="xl"
-              onClick={(e) => {
-                router.push(link.href);
+              onClick={async (e) => {
+                await router.push(link.href);
                 setOpenNavbar(e);
               }}
             />
@@ -66,16 +66,16 @@ const Navbar = ({ openNavbar, setOpenNavbar }: NavbarProps) => {
         <Stack mt="md">
           <Button
             variant="outline"
-            onClick={(e) => {
-              router.push("/sign-in");
+            onClick={async (e) => {
+              await router.push("/sign-in");
               setOpenNavbar(e);
             }}
           >
             Log in
           </Button>
           <Button
-            onClick={(e) => {
-              router.push("/sign-up");
+            onClick={async (e) => {
+              await router.push("/sign-up");
               setOpenNavbar(e);
             }}
           >
