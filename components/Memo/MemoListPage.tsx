@@ -200,7 +200,7 @@ const MemoListPage = ({
 
   return (
     <Container maw={3840} h="100%">
-      <Group>
+      <Group pb="sm">
         <Box>
           <Title order={4}>Memo List Page</Title>
           <Text>Manage your team memo here.</Text>
