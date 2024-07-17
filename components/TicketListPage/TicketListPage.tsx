@@ -258,184 +258,156 @@ const TicketListPage = ({
           </FormProvider>
         </Box>
         <Box h="fit-content" pos="relative">
-          <LoadingOverlay
-            visible={isFetchingTicketList}
-            overlayBlur={0}
-            overlayOpacity={0.2}
-            loader={<Loader variant="dots" />}
-          />
-          {ticketList.length > 0 ? (
-            <>
-              <ListTable
-                idAccessor="ticket_id"
-                records={ticketList}
-                fetching={isFetchingTicketList}
-                page={activePage}
-                onPageChange={setActivePage}
-                totalRecords={ticketListCount}
-                recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
-                columns={[
-                  {
-                    accessor: "ticket_id",
-                    title: "ID",
-                    width: 180,
-                    render: (ticket) => {
-                      return (
-                        <Flex gap="md" align="center">
-                          <Text size="xs" truncate maw={150}>
-                            <Anchor
-                              href={`/${formatTeamNameToUrlKey(
-                                activeTeam.team_name ?? ""
-                              )}/tickets/${ticket.ticket_id}`}
-                              target="_blank"
-                              color="black"
-                            >
-                              {String(ticket.ticket_id)}
-                            </Anchor>
-                          </Text>
-
-                          <CopyButton value={String(ticket.ticket_id)}>
-                            {({ copied, copy }) => (
-                              <Tooltip
-                                label={
-                                  copied ? "Copied" : `Copy ${ticket.ticket_id}`
-                                }
-                                onClick={copy}
-                              >
-                                <ActionIcon>
-                                  <IconCopy size={16} />
-                                </ActionIcon>
-                              </Tooltip>
-                            )}
-                          </CopyButton>
-                        </Flex>
-                      );
-                    },
-                  },
-                  {
-                    accessor: "ticket_category",
-                    title: "Ticket Category",
-                    width: 180,
-                  },
-                  {
-                    accessor: "ticket_status",
-                    title: "Status",
-                    width: 180,
-                  },
-                  {
-                    accessor: "ticket_requester_team_member_id",
-                    title: "Requester",
-                    width: 180,
-                    render: (ticket) => {
-                      const { ticket_requester } = ticket as {
-                        ticket_requester: {
-                          user_avatar: string | null;
-                          user_last_name: string;
-                          user_first_name: string;
-                          user_id: string;
-                        };
-                      };
-                      const { user_last_name, user_first_name } =
-                        ticket_requester;
-
-                      return (
-                        <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                      );
-                    },
-                  },
-                  {
-                    accessor: "ticket_approver_team_member_id",
-                    title: "Approver",
-                    width: 180,
-                    render: (ticket) => {
-                      const { ticket_approver } = ticket as {
-                        ticket_approver: {
-                          user_avatar: string | null;
-                          user_last_name: string;
-                          user_first_name: string;
-                          user_id: string;
-                        };
-                      };
-                      const { user_first_name, user_last_name } =
-                        ticket_approver;
-
-                      return (
-                        <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                      );
-                    },
-                  },
-                  {
-                    accessor: "ticket_date_created",
-                    title: "Date Created",
-                    width: 180,
-                    render: (ticket) => {
-                      if (!ticket.ticket_date_created) {
-                        return null;
-                      }
-
-                      return (
-                        <Text>
-                          {formatDate(
-                            new Date(String(ticket.ticket_date_created))
-                          )}
-                        </Text>
-                      );
-                    },
-                  },
-                  {
-                    accessor: "ticket_status_date_updated",
-                    title: "Date Updated",
-                    width: 180,
-                    render: (ticket) => {
-                      if (!ticket.ticket_status_date_updated) {
-                        return null;
-                      }
-
-                      return (
-                        <Text>
-                          {formatDate(
-                            new Date(String(ticket.ticket_status_date_updated))
-                          )}
-                        </Text>
-                      );
-                    },
-                  },
-                  {
-                    accessor: "ticket_id" + "ticket_date_created",
-                    title: "View",
-                    width: 180,
-                    render: (ticket) => {
-                      const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
-                        activeTeam.team_name ?? ""
-                      );
-                      return (
-                        <ActionIcon
-                          color="gray"
-                          onClick={() =>
-                            router.push(
-                              `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
-                            )
-                          }
+          <ListTable
+            idAccessor="ticket_id"
+            records={ticketList}
+            fetching={isFetchingTicketList}
+            page={activePage}
+            onPageChange={setActivePage}
+            totalRecords={ticketListCount}
+            recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
+            columns={[
+              {
+                accessor: "ticket_id",
+                title: "ID",
+                width: 180,
+                render: (ticket) => {
+                  return (
+                    <Flex gap="md" align="center">
+                      <Text size="xs" truncate maw={150}>
+                        <Anchor
+                          href={`/${formatTeamNameToUrlKey(
+                            activeTeam.team_name ?? ""
+                          )}/tickets/${ticket.ticket_id}`}
+                          target="_blank"
+                          color="black"
                         >
-                          <IconArrowsMaximize size={16} />
-                        </ActionIcon>
-                      );
-                    },
-                  },
-                ]}
-              />
-            </>
-          ) : (
-            <Text align="center" size={24} weight="bolder" color="dimmed">
-              <Alert
-                icon={<IconAlertCircle size="1rem" />}
-                color="orange"
-                mt="xs"
-              >
-                No tickets found.
-              </Alert>
-            </Text>
-          )}
+                          {String(ticket.ticket_id)}
+                        </Anchor>
+                      </Text>
+
+                      <CopyButton value={String(ticket.ticket_id)}>
+                        {({ copied, copy }) => (
+                          <Tooltip
+                            label={
+                              copied ? "Copied" : `Copy ${ticket.ticket_id}`
+                            }
+                            onClick={copy}
+                          >
+                            <ActionIcon>
+                              <IconCopy size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
+                      </CopyButton>
+                    </Flex>
+                  );
+                },
+              },
+              {
+                accessor: "ticket_category",
+                title: "Ticket Category",
+                width: 180,
+              },
+              {
+                accessor: "ticket_status",
+                title: "Status",
+                width: 180,
+              },
+              {
+                accessor: "ticket_requester_team_member_id",
+                title: "Requester",
+                width: 180,
+                render: (ticket) => {
+                  const { ticket_requester } = ticket as {
+                    ticket_requester: {
+                      user_avatar: string | null;
+                      user_last_name: string;
+                      user_first_name: string;
+                      user_id: string;
+                    };
+                  };
+                  const { user_last_name, user_first_name } = ticket_requester;
+
+                  return <Text>{`${user_first_name} ${user_last_name}`}</Text>;
+                },
+              },
+              {
+                accessor: "ticket_approver_team_member_id",
+                title: "Approver",
+                width: 180,
+                render: (ticket) => {
+                  const { ticket_approver } = ticket as {
+                    ticket_approver: {
+                      user_avatar: string | null;
+                      user_last_name: string;
+                      user_first_name: string;
+                      user_id: string;
+                    };
+                  };
+                  const { user_first_name, user_last_name } = ticket_approver;
+
+                  return <Text>{`${user_first_name} ${user_last_name}`}</Text>;
+                },
+              },
+              {
+                accessor: "ticket_date_created",
+                title: "Date Created",
+                width: 180,
+                render: (ticket) => {
+                  if (!ticket.ticket_date_created) {
+                    return null;
+                  }
+
+                  return (
+                    <Text>
+                      {formatDate(new Date(String(ticket.ticket_date_created)))}
+                    </Text>
+                  );
+                },
+              },
+              {
+                accessor: "ticket_status_date_updated",
+                title: "Date Updated",
+                width: 180,
+                render: (ticket) => {
+                  if (!ticket.ticket_status_date_updated) {
+                    return null;
+                  }
+
+                  return (
+                    <Text>
+                      {formatDate(
+                        new Date(String(ticket.ticket_status_date_updated))
+                      )}
+                    </Text>
+                  );
+                },
+              },
+              {
+                accessor: "ticket_id" + "ticket_date_created",
+                title: "View",
+                width: 180,
+                render: (ticket) => {
+                  const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  );
+                  return (
+                    <ActionIcon
+                      color="gray"
+                      onClick={() =>
+                        router.push(
+                          `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
+                        )
+                      }
+                    >
+                      <IconArrowsMaximize size={16} />
+                    </ActionIcon>
+                  );
+                },
+              },
+            ]}
+          />
         </Box>
       </Paper>
     </Container>
