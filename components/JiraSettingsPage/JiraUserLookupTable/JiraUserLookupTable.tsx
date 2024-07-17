@@ -191,6 +191,8 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
 
       setOpenJiraUserLookupFormModal(false);
       updateOrCreateJiraUserFormMethods.reset();
+
+      handlePagination(activePage);
     } catch (error) {
       console.error(error);
       notifications.show({

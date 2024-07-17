@@ -182,6 +182,8 @@ const JiraProjectLookupTable = ({
 
       setOpenJiraProjectLookupFormModal(false);
       updateOrCreateJiraProjectFormMethods.reset();
+
+      handlePagination(activePage);
     } catch (error) {
       console.error(error);
       notifications.show({

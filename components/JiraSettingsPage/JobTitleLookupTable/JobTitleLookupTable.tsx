@@ -148,6 +148,8 @@ const JobTitleLookupTable = () => {
 
       setOpenJobTitleLookupFormModal(false);
       updateOrCreateJobTitle.reset();
+
+      handlePagination(activePage);
     } catch (error) {
       console.error(error);
       notifications.show({

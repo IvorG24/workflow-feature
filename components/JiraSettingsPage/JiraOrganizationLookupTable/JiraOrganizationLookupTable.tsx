@@ -179,6 +179,8 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
 
       setOpenJiraOrganizationLookupFormModal(false);
       updateOrCreateJiraOrganization.reset();
+
+      handlePagination(activePage);
     } catch (error) {
       console.error(error);
       notifications.show({
