@@ -16,15 +16,12 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
-  Alert,
   Anchor,
   Box,
   Button,
   Container,
   CopyButton,
   Flex,
-  Loader,
-  LoadingOverlay,
   Paper,
   Text,
   Title,
@@ -34,18 +31,16 @@ import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
-  IconAlertCircle,
   IconArrowsMaximize,
   IconCopy,
   IconReportAnalytics,
 } from "@tabler/icons-react";
+import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
 import TicketListFilter from "./TicketListFilter";
-import sortBy from "lodash.sortby";
-import { DataTableSortStatus } from "mantine-datatable";
 
 export type FilterFormValues = {
   search: string;
@@ -215,8 +210,124 @@ const TicketListPage = ({
 
   // sorting
   useEffect(() => {
-    const data = sortBy(ticketList, sortStatus.columnAccessor);
-    setTicketList(sortStatus.direction === "desc" ? data.reverse() : data);
+    if (sortStatus.columnAccessor === "ticket_id") {
+      console.log("here");
+      const result = ticketList.sort((a, b) =>
+        sortStatus.direction === "asc"
+          ? a.ticket_id.localeCompare(b.ticket_id)
+          : sortStatus.direction === "desc"
+          ? b.ticket_id.localeCompare(a.ticket_id)
+          : 0
+      );
+      setTicketList(result);
+    }
+    if (sortStatus.columnAccessor === "ticket_category") {
+      const result = ticketList.sort((a, b) =>
+        sortStatus.direction === "asc"
+          ? a.ticket_category.localeCompare(b.ticket_category)
+          : sortStatus.direction === "desc"
+          ? b.ticket_category.localeCompare(a.ticket_category)
+          : 0
+      );
+      setTicketList(result);
+    }
+    if (sortStatus.columnAccessor === "ticket_status") {
+      const result = ticketList.sort((a, b) =>
+        sortStatus.direction === "asc"
+          ? a.ticket_status.localeCompare(b.ticket_status)
+          : sortStatus.direction === "desc"
+          ? b.ticket_status.localeCompare(a.ticket_status)
+          : 0
+      );
+      setTicketList(result);
+    }
+    if (sortStatus.columnAccessor === "ticket_requester") {
+      const result = ticketList.sort((a, b) => {
+        const firstNameA = a.ticket_requester.user_first_name.toUpperCase();
+        const firstNameB = b.ticket_requester.user_first_name.toUpperCase();
+
+        if (sortStatus.direction === "asc") {
+          if (firstNameA < firstNameB) {
+            return -1;
+          }
+          if (firstNameA > firstNameB) {
+            return 1;
+          }
+          return 0;
+        } else if (sortStatus.direction === "desc") {
+          if (firstNameA > firstNameB) {
+            return -1;
+          }
+          if (firstNameA < firstNameB) {
+            return 1;
+          }
+          return 0;
+        } else {
+          return 0;
+        }
+      });
+      setTicketList(result);
+    }
+    if (sortStatus.columnAccessor === "ticket_approver_team_member_id") {
+      const result = ticketList.sort((a, b) => {
+        const firstNameA = a.ticket_approver.user_first_name.toUpperCase();
+        const firstNameB = b.ticket_approver.user_first_name.toUpperCase();
+
+        if (sortStatus.direction === "asc") {
+          if (firstNameA < firstNameB) {
+            return -1;
+          }
+          if (firstNameA > firstNameB) {
+            return 1;
+          }
+          return 0;
+        } else if (sortStatus.direction === "desc") {
+          if (firstNameA > firstNameB) {
+            return -1;
+          }
+          if (firstNameA < firstNameB) {
+            return 1;
+          }
+          return 0;
+        } else {
+          return 0;
+        }
+      });
+      setTicketList(result);
+    }
+    if (sortStatus.columnAccessor === "ticket_date_created") {
+      const result = ticketList.sort((a, b) =>
+        sortStatus.direction === "asc"
+          ? a.ticket_date_created.localeCompare(b.ticket_date_created)
+          : sortStatus.direction === "desc"
+          ? b.ticket_date_created.localeCompare(a.ticket_date_created)
+          : 0
+      );
+      setTicketList(result);
+    }
+    if (sortStatus.columnAccessor === "ticket_status_date_updated") {
+      const result = ticketList.sort((a, b) => {
+        // guard clause
+        if (
+          a.ticket_status_date_updated === null ||
+          b.ticket_status_date_updated === null
+        ) {
+          return 0;
+        }
+
+        return sortStatus.direction === "asc"
+          ? a.ticket_status_date_updated.localeCompare(
+              b.ticket_status_date_updated
+            )
+          : sortStatus.direction === "desc"
+          ? b.ticket_status_date_updated.localeCompare(
+              a.ticket_status_date_updated
+            )
+          : 0;
+      });
+
+      setTicketList(result);
+    }
   }, [sortStatus]);
 
   useEffect(() => {

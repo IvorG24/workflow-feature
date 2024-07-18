@@ -41,6 +41,7 @@ const ListTable = (props: DataTableProps) => {
       highlightOnHover
       fontSize={16}
       withBorder
+      textSelectionDisabled
       styles={(theme) => ({
         header: {
           background:

@@ -6,7 +6,6 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import { MemoListItemType, TeamMemberType } from "@/utils/types";
 import {
   ActionIcon,
-  Alert,
   Anchor,
   Box,
   Button,
@@ -15,34 +14,29 @@ import {
   Divider,
   Flex,
   Group,
-  Loader,
-  LoadingOverlay,
   MultiSelect,
-  Space,
+  Paper,
   Switch,
   Text,
   TextInput,
   Title,
   Tooltip,
-  Paper,
   Transition,
 } from "@mantine/core";
 import { useDisclosure, useFocusWithin } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
-  IconAlertCircle,
   IconCopy,
   IconEyeFilled,
-  IconSearch,
   IconReload,
+  IconSearch,
 } from "@tabler/icons-react";
+import { DataTableSortStatus } from "mantine-datatable";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
 import MemoFormatEditor from "../MemoFormatEditor/MemoFormatEditor";
-import { DataTableSortStatus } from "mantine-datatable";
-import sortBy from "lodash.sortby";
 
 type Props = {
   memoList: MemoListItemType[];
@@ -202,8 +196,101 @@ const MemoListPage = ({
 
   // sorting
   useEffect(() => {
-    const data = sortBy(memoList, sortStatus.columnAccessor);
-    setMemoList(sortStatus.direction === "desc" ? data.reverse() : data);
+    if (sortStatus.columnAccessor === "memo_id") {
+      const result = [...memoList].sort((a, b) => {
+        return sortStatus.direction === "asc"
+          ? a.memo_id.localeCompare(b.memo_id)
+          : b.memo_id.localeCompare(a.memo_id);
+      });
+
+      setMemoList(result);
+    }
+    if (sortStatus.columnAccessor === "memo_subject") {
+      const result = memoList.sort((a, b) =>
+        sortStatus.direction === "asc"
+          ? a.memo_subject.localeCompare(b.memo_subject)
+          : sortStatus.direction === "desc"
+          ? b.memo_subject.localeCompare(a.memo_subject)
+          : 0
+      );
+      setMemoList(result);
+    }
+    if (sortStatus.columnAccessor === "memo_status") {
+      const result = [...memoList].sort((a, b) => {
+        return sortStatus.direction === "asc"
+          ? a.memo_status.localeCompare(b.memo_status)
+          : b.memo_status.localeCompare(a.memo_status);
+      });
+
+      setMemoList(result);
+    }
+
+    if (sortStatus.columnAccessor === "memo_author_user_id") {
+      const result = [...memoList].sort((a, b) => {
+        const firstNameA = a.memo_author_user.user_first_name.toUpperCase();
+        const firstNameB = b.memo_author_user.user_first_name.toUpperCase();
+        if (sortStatus.direction === "asc") {
+          if (firstNameA < firstNameB) {
+            return -1;
+          }
+          if (firstNameA > firstNameB) {
+            return 1;
+          }
+          return 0;
+        } else if (sortStatus.direction === "desc") {
+          if (firstNameA > firstNameB) {
+            return -1;
+          }
+          if (firstNameA < firstNameB) {
+            return 1;
+          }
+          return 0;
+        } else {
+          return 0;
+        }
+      });
+
+      setMemoList(result);
+    }
+
+    if (sortStatus.columnAccessor === "memo_signer_list") {
+      const result = [...memoList].sort((a, b) => {
+        const firstNameA =
+          a.memo_signer_list[0].memo_signer_team_member.user.user_first_name.toUpperCase();
+        const firstNameB =
+          b.memo_signer_list[0].memo_signer_team_member.user.user_first_name.toUpperCase();
+        if (sortStatus.direction === "asc") {
+          if (firstNameA < firstNameB) {
+            return -1;
+          }
+          if (firstNameA > firstNameB) {
+            return 1;
+          }
+          return 0;
+        } else if (sortStatus.direction === "desc") {
+          if (firstNameA > firstNameB) {
+            return -1;
+          }
+          if (firstNameA < firstNameB) {
+            return 1;
+          }
+          return 0;
+        } else {
+          return 0;
+        }
+      });
+
+      setMemoList(result);
+    }
+    if (sortStatus.columnAccessor === "memo_date_created") {
+      const result = [...memoList].sort((a, b) => {
+        return sortStatus.direction === "asc"
+          ? a.memo_date_created.localeCompare(b.memo_date_created)
+          : b.memo_date_created.localeCompare(a.memo_date_created);
+      });
+
+      setMemoList(result);
+    }
   }, [sortStatus]);
 
   useEffect(() => {
