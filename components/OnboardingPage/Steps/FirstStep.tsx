@@ -25,6 +25,7 @@ type Props = {
   avatarFile: File | null;
   setAvatarFile: Dispatch<SetStateAction<File | null>>;
   handleChangeStep: (action: "PREVIOUS" | "NEXT") => Promise<void>;
+  handleEmployeeNumberChange: (value: string | null) => void;
 };
 
 const FirstStep = ({
@@ -33,6 +34,7 @@ const FirstStep = ({
   avatarFile,
   setAvatarFile,
   handleChangeStep,
+  handleEmployeeNumberChange,
 }: Props) => {
   const isMobileScreen = useMediaQuery("(max-width: 475px)");
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -128,6 +130,9 @@ const FirstStep = ({
                     placeholder="00001"
                     value={Number(value) || ""}
                     onChange={onChange}
+                    onBlur={() =>
+                      handleEmployeeNumberChange(value ? `${value}` : null)
+                    }
                     hideControls
                     error={errors.user_employee_number?.message}
                     required

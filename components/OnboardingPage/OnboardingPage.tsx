@@ -3,6 +3,7 @@ import {
   fetchCity,
   fetchProvince,
   fetchRegion,
+  getEmployeeName,
   getUserPendingInvitation,
 } from "@/backend/api/get";
 import {
@@ -366,6 +367,26 @@ const OnboardingPage = ({ user }: Props) => {
     }
   };
 
+  const handleEmployeeNumberChange = async (value: string | null) => {
+    try {
+      if (!value) return;
+      const employee = await getEmployeeName(supabaseClient, {
+        employeeId: value,
+      });
+
+      if (!employee) return;
+
+      setValue("user_first_name", employee.scic_employee_first_name);
+      setValue("user_last_name", employee.scic_employee_last_name);
+    } catch (error) {
+      console.log(error);
+      notifications.show({
+        message: "Failed to fetch employee data",
+        color: "orange",
+      });
+    }
+  };
+
   const handleChangeStep = async (action: "PREVIOUS" | "NEXT") => {
     setIsLoading(true);
     switch (action) {
@@ -396,6 +417,7 @@ const OnboardingPage = ({ user }: Props) => {
             avatarFile={avatarFile}
             setAvatarFile={setAvatarFile}
             handleChangeStep={handleChangeStep}
+            handleEmployeeNumberChange={handleEmployeeNumberChange}
           />
         );
 
