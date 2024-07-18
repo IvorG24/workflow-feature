@@ -110,8 +110,8 @@ const MemoListPage = ({
     searchFilter: "",
   });
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "name",
-    direction: "asc",
+    columnAccessor: "memo_date_created",
+    direction: "desc",
   });
 
   const { handleSubmit, getValues, control, register } =
@@ -196,101 +196,38 @@ const MemoListPage = ({
 
   // sorting
   useEffect(() => {
-    if (sortStatus.columnAccessor === "memo_id") {
-      const result = [...memoList].sort((a, b) => {
-        return sortStatus.direction === "asc"
-          ? a.memo_id.localeCompare(b.memo_id)
-          : b.memo_id.localeCompare(a.memo_id);
-      });
+    const getSortedMemoHandler = async (
+      columnAccessor: string,
+      sort: "ascending" | "descending"
+    ) => {
+      try {
+        if (!activeTeam.team_id) return;
+        setIsLoading(true);
 
-      setMemoList(result);
-    }
-    if (sortStatus.columnAccessor === "memo_subject") {
-      const result = memoList.sort((a, b) =>
-        sortStatus.direction === "asc"
-          ? a.memo_subject.localeCompare(b.memo_subject)
-          : sortStatus.direction === "desc"
-          ? b.memo_subject.localeCompare(a.memo_subject)
-          : 0
-      );
-      setMemoList(result);
-    }
-    if (sortStatus.columnAccessor === "memo_status") {
-      const result = [...memoList].sort((a, b) => {
-        return sortStatus.direction === "asc"
-          ? a.memo_status.localeCompare(b.memo_status)
-          : b.memo_status.localeCompare(a.memo_status);
-      });
+        const { data, count } = await getMemoList(supabaseClient, {
+          teamId: activeTeam.team_id,
+          page: activePage,
+          limit: 13,
+          columnAccessor,
+          sort,
+        });
 
-      setMemoList(result);
-    }
+        setMemoListCount(count);
+        setMemoList(data);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    if (sortStatus.columnAccessor === "memo_author_user_id") {
-      const result = [...memoList].sort((a, b) => {
-        const firstNameA = a.memo_author_user.user_first_name.toUpperCase();
-        const firstNameB = b.memo_author_user.user_first_name.toUpperCase();
-        if (sortStatus.direction === "asc") {
-          if (firstNameA < firstNameB) {
-            return -1;
-          }
-          if (firstNameA > firstNameB) {
-            return 1;
-          }
-          return 0;
-        } else if (sortStatus.direction === "desc") {
-          if (firstNameA > firstNameB) {
-            return -1;
-          }
-          if (firstNameA < firstNameB) {
-            return 1;
-          }
-          return 0;
-        } else {
-          return 0;
-        }
-      });
-
-      setMemoList(result);
-    }
-
-    if (sortStatus.columnAccessor === "memo_signer_list") {
-      const result = [...memoList].sort((a, b) => {
-        const firstNameA =
-          a.memo_signer_list[0].memo_signer_team_member.user.user_first_name.toUpperCase();
-        const firstNameB =
-          b.memo_signer_list[0].memo_signer_team_member.user.user_first_name.toUpperCase();
-        if (sortStatus.direction === "asc") {
-          if (firstNameA < firstNameB) {
-            return -1;
-          }
-          if (firstNameA > firstNameB) {
-            return 1;
-          }
-          return 0;
-        } else if (sortStatus.direction === "desc") {
-          if (firstNameA > firstNameB) {
-            return -1;
-          }
-          if (firstNameA < firstNameB) {
-            return 1;
-          }
-          return 0;
-        } else {
-          return 0;
-        }
-      });
-
-      setMemoList(result);
-    }
-    if (sortStatus.columnAccessor === "memo_date_created") {
-      const result = [...memoList].sort((a, b) => {
-        return sortStatus.direction === "asc"
-          ? a.memo_date_created.localeCompare(b.memo_date_created)
-          : b.memo_date_created.localeCompare(a.memo_date_created);
-      });
-
-      setMemoList(result);
-    }
+    getSortedMemoHandler(
+      sortStatus.columnAccessor,
+      sortStatus.direction === "desc" ? "descending" : "ascending"
+    );
   }, [sortStatus]);
 
   useEffect(() => {
@@ -351,7 +288,7 @@ const MemoListPage = ({
           <Transition
             mounted={isFilter}
             transition="slide-down"
-            duration={500}
+            duration={100}
             timingFunction="ease-in-out"
           >
             {() => (
@@ -449,7 +386,6 @@ const MemoListPage = ({
                 accessor: "memo_id",
                 title: "ID",
                 width: 180,
-                sortable: true,
                 render: (memo) => {
                   return (
                     <Flex gap="md" align="center">
@@ -489,7 +425,6 @@ const MemoListPage = ({
                 accessor: "memo_subject",
                 title: "Subject",
                 width: 180,
-                sortable: true,
               },
               {
                 accessor: "memo_status",
@@ -501,7 +436,6 @@ const MemoListPage = ({
                 accessor: "memo_author_user_id",
                 title: "Author",
                 width: 180,
-                sortable: true,
                 render: (memo) => {
                   const { memo_author_user } = memo as {
                     memo_author_user: {
@@ -521,7 +455,6 @@ const MemoListPage = ({
                 accessor: "memo_signer_list",
                 title: "Approver",
                 width: 180,
-                sortable: true,
                 render: (memo) => {
                   const { memo_signer_list } = memo as ApproverType;
                   const { memo_signer_team_member } = memo_signer_list[0];

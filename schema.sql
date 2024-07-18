@@ -8024,7 +8024,8 @@ RETURNS JSON AS $$
       approverFilter,
       status,
       sort,
-      searchFilter
+      searchFilter,
+      columnAccessor,
     } = input_data;
 
     const start = (page - 1) * limit;
@@ -8078,7 +8079,7 @@ RETURNS JSON AS $$
           user_table.user_id,
           memo_status_table.memo_status,
           memo_date_updated_table.memo_date_updated
-        ORDER BY memo_table.memo_date_created ${sort}
+        ORDER BY ${columnAccessor} ${sort}
         OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
       `
     );

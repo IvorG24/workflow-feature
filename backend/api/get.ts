@@ -3323,6 +3323,7 @@ export const getMemoList = async (
     status?: string[];
     sort?: "ascending" | "descending";
     searchFilter?: string;
+    columnAccessor?: string;
   }
 ) => {
   const {
@@ -3334,6 +3335,7 @@ export const getMemoList = async (
     status,
     sort = "descending",
     searchFilter,
+    columnAccessor = "memo_table.memo_date_created",
   } = params;
 
   const authorFilterCondition = authorFilter
@@ -3353,6 +3355,8 @@ export const getMemoList = async (
     ?.map((status) => `memo_status = '${status}'`)
     .join(" OR ");
 
+  console.log({ columnAccessor, sort });
+
   const { data, error } = await supabaseClient.rpc("get_memo_list", {
     input_data: {
       teamId,
@@ -3367,6 +3371,7 @@ export const getMemoList = async (
         : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       searchFilter: searchFilter ? addAmpersandBetweenWords(searchFilter) : "",
+      columnAccessor,
     },
   });
 
