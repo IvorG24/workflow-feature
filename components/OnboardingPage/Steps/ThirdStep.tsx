@@ -75,7 +75,7 @@ const ThirdStep = ({
                 render={({ field: { onChange, value } }) => (
                   <Select
                     label="City"
-                    placeholder="Select ID type"
+                    placeholder="Select a city"
                     data={cityOptions}
                     required
                     clearable
