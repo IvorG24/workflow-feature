@@ -5815,7 +5815,7 @@ export const getLRFSummaryData = async (
     userId: string;
     limit: number;
     page: number;
-    projectFilter?: string;
+    projectFilter?: string[];
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_lrf_summary_table", {
