@@ -472,8 +472,8 @@ export const getItemList = async (
     .from("item_table")
     .select(
       `
-        *, 
-        item_division_table!inner(*), 
+        *,
+        item_division_table!inner(*),
         item_description: item_description_table!inner(*),
         item_level_three_description: item_level_three_description_table(*)
       `,
@@ -3355,8 +3355,6 @@ export const getMemoList = async (
     ?.map((status) => `memo_status = '${status}'`)
     .join(" OR ");
 
-  console.log({ columnAccessor, sort });
-
   const { data, error } = await supabaseClient.rpc("get_memo_list", {
     input_data: {
       teamId,
@@ -3493,7 +3491,7 @@ export const getTypeList = async (
     .from(`other_expenses_type_table`)
     .select(
       `
-        *, 
+        *,
         other_expenses_type_category: other_expenses_type_category_id!inner(
           other_expenses_category
         )
@@ -4155,7 +4153,7 @@ export const getEquipmentSectionChoices = async (
         equipment_id,
         equipment_equipment_category: equipment_equipment_category_id!inner(equipment_category),
         equipment_name,
-        equipment_description: 
+        equipment_description:
           equipment_description_table!inner(
             equipment_description_brand: equipment_description_brand_id(
               equipment_brand
@@ -5152,10 +5150,10 @@ export const getFormSection = async (
     .from("section_table")
     .select(
       `
-        *, 
-        section_field: 
+        *,
+        section_field:
         field_table(
-          *, 
+          *,
           field_option: option_table(*)
         )
       `

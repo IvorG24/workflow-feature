@@ -224,8 +224,14 @@ const MemoListPage = ({
       }
     };
 
+    const columnAccessor = () => {
+      if (sortStatus.columnAccessor === "memo_author_user_id") {
+        return `user_table.user_first_name ${sortStatus.direction.toUpperCase()}, user_table.user_last_name `;
+      }
+      return sortStatus.columnAccessor;
+    };
     getSortedMemoHandler(
-      sortStatus.columnAccessor,
+      columnAccessor(),
       sortStatus.direction === "desc" ? "descending" : "ascending"
     );
   }, [sortStatus]);
@@ -425,6 +431,7 @@ const MemoListPage = ({
                 accessor: "memo_subject",
                 title: "Subject",
                 width: 180,
+                sortable: true,
               },
               {
                 accessor: "memo_status",
@@ -436,6 +443,7 @@ const MemoListPage = ({
                 accessor: "memo_author_user_id",
                 title: "Author",
                 width: 180,
+                sortable: true,
                 render: (memo) => {
                   const { memo_author_user } = memo as {
                     memo_author_user: {
