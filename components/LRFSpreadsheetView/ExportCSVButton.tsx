@@ -149,6 +149,7 @@ const ExportCSVButton = ({ data }: { data: LRFSpreadsheetData[] }) => {
         data={csvData}
         headers={headers}
         filename={"lrf_data.csv"}
+        target="_blank"
       >
         Export to CSV
       </CSVLink>

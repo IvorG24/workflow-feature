@@ -50,9 +50,13 @@ const LRFSpreadsheetTable = ({
   const { classes } = useStyles();
   return (
     <Stack>
-      <Paper p="xs">
-        <ScrollArea type="auto" scrollbarSize={10} pos="relative">
-          <LoadingOverlay visible={loading} overlayBlur={3} />
+      <Paper p="xs" pos="relative">
+        <ScrollArea type="auto" scrollbarSize={10}>
+          <LoadingOverlay
+            visible={loading}
+            overlayBlur={0}
+            overlayOpacity={0}
+          />
           <Table withBorder withColumnBorders className={classes.parentTable}>
             <thead>
               <tr>
