@@ -13249,13 +13249,18 @@ RETURNS JSON as $$
       userId,
       limit,
       page,
-      projectFilter
+      projectFilter,
+      startDate,
+      endDate,
+      sortFilter
     } = input_data;
 
     const offset = (page - 1) * limit;
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
 
-    const projectFilterCondition = projectFilter ? `AND request_project_id = '${projectFilter}'` : '';
+    const projectFilterCondition = projectFilter ? `AND request_project_id IN (${projectFilter})` : '';
+    const startDateCondition = startDate ? `AND request_date_created >= '${startDate}'` : '';
+    const endDateCondition = endDate ? `AND request_date_created <= '${endDate}'` : '';
 
     const requestCount = plv8.execute(`
         SELECT 
@@ -13269,6 +13274,8 @@ RETURNS JSON as $$
             AND request_is_disabled = FALSE
             AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a')
             ${projectFilterCondition}
+            ${startDateCondition}
+            ${endDateCondition}
     `)[0].count;
 
     const parentRequests = plv8.execute(`
@@ -13291,7 +13298,9 @@ RETURNS JSON as $$
             AND request_is_disabled = FALSE
             AND request_form_id = '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a'
             ${projectFilterCondition}
-        ORDER BY request_date_created ASC
+            ${startDateCondition}
+            ${endDateCondition}
+        ORDER BY request_date_created ${sortFilter}
         LIMIT '${limit}'
         OFFSET '${offset}'
     `);
