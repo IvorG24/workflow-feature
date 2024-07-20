@@ -6779,25 +6779,46 @@ RETURNS JSON AS $$
         sort,
         category,
         search,
+        columnAccessor
       } = input_data;
 
       const start = (page - 1) * limit;
 
       const ticket_list = plv8.execute(
         `
-          SELECT DISTINCT
+          SELECT *
+          FROM (
+            SELECT DISTINCT
             ticket_table.*,
-            ticket_category_table.ticket_category
-          FROM ticket_schema.ticket_table
-          INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_id
-          INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
-          WHERE team_member_team_id = '${teamId}'
-          ${requester}
-          ${approver}
-          ${status}
-          ${category}
-          ${search}
-          ORDER BY ticket_date_created ${sort} 
+            ticket_category_table.ticket_category,
+            JSONB_BUILD_OBJECT(
+                'user_id', user_table_requester.user_id,
+                'user_first_name', user_table_requester.user_first_name,
+                'user_last_name', user_table_requester.user_last_name,
+                'user_username', user_table_requester.user_username,
+                'user_avatar', user_table_requester.user_avatar
+            ) AS ticket_requester_user,
+            JSONB_BUILD_OBJECT(
+                'user_id', user_table_approver.user_id,
+                'user_first_name', user_table_approver.user_first_name,
+                'user_last_name', user_table_approver.user_last_name,
+                'user_username', user_table_approver.user_username,
+                'user_avatar', user_table_approver.user_avatar
+            ) AS ticket_approver_user
+            FROM ticket_schema.ticket_table
+            INNER JOIN team_schema.team_member_table AS requester_member ON ticket_requester_team_member_id = requester_member.team_member_id
+            INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id
+            INNER JOIN user_schema.user_table AS user_table_requester ON requester_member.team_member_user_id = user_table_requester.user_id
+            LEFT JOIN team_schema.team_member_table AS approver_member ON ticket_approver_team_member_id = approver_member.team_member_id
+            LEFT JOIN user_schema.user_table AS user_table_approver ON approver_member.team_member_user_id = user_table_approver.user_id
+            WHERE requester_member.team_member_team_id = '${teamId}'
+            ${requester}
+            ${approver}
+            ${status}
+            ${category}
+            ${search}
+          ) AS subquery
+          ORDER BY ${columnAccessor} ${sort} 
           OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
         `
       );
@@ -6816,48 +6837,8 @@ RETURNS JSON AS $$
         `
       )[0];
 
-      const ticket_data = ticket_list.map(ticket => {
-        const ticket_requester = plv8.execute(
-          `
-            SELECT 
-              team_member_table.team_member_id, 
-              user_table.user_id,
-              user_table.user_first_name,
-              user_table.user_last_name,
-              user_table.user_username,
-              user_table.user_avatar
-            FROM team_schema.team_member_table
-            INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-            WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
-          `
-        )[0];
-        let ticket_approver = {}
-        if(ticket.ticket_approver_team_member_id){
-          ticket_approver = plv8.execute(
-            `
-              SELECT 
-                team_member_table.team_member_id, 
-                user_table.user_id,
-                user_table.user_first_name,
-                user_table.user_last_name,
-                user_table.user_username,
-                user_table.user_avatar
-              FROM team_schema.team_member_table
-              INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-              WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
-            `
-          )[0];
-        }
-
-        return {
-          ...ticket,
-          ticket_requester,
-          ticket_approver,
-        }
-      });
-
       returnData = {
-        data: ticket_data, 
+        data: ticket_list, 
         count: Number(ticket_count.count)
       };
     });
@@ -8838,7 +8819,7 @@ RETURNS JSON AS $$
     
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
+    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC", "columnAccessor": "ticket_date_created"}');`)[0].fetch_ticket_list;
 
     const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category_is_disabled = false`);
 

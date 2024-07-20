@@ -1302,23 +1302,34 @@ export type CreateTicketPageOnLoad = {
   categoryList: TicketCategoryTableRow[];
 };
 
+export type TicketRequesterUserType = {
+  user_id: string;
+  user_avatar: string | null;
+  user_username: string;
+  user_last_name: string;
+  user_first_name: string;
+};
+
+export type TicketApproverUserType = {
+  user_id: string;
+  user_avatar: string | null;
+  user_username: string;
+  user_last_name: string;
+  user_first_name: string;
+};
+
 export type TicketListType = ({
-  ticket_requester: {
-    team_member_id: string;
-    user_id: string;
-    user_first_name: string;
-    user_last_name: string;
-    user_avatar: string | null;
-    user_email: string;
-  };
-  ticket_approver: {
-    team_member_id: string;
-    user_id: string;
-    user_first_name: string;
-    user_last_name: string;
-    user_avatar: string | null;
-    user_email: string;
-  };
+  ticket_id: string;
+  ticket_status: "PENDING" | "UNDER REVIEW" | "INCORRECT" | "CLOSED";
+  ticket_date_created: string;
+  ticket_status_date_updated: string | null;
+  ticket_is_disabled: boolean;
+  ticket_category_id: string;
+  ticket_requester_team_member_id: string;
+  ticket_approver_team_member_id: string;
+  ticket_category: string;
+  ticket_requester_user: TicketRequesterUserType;
+  ticket_approver_user: TicketApproverUserType;
 } & TicketTableRow & { ticket_category: string })[];
 
 export type TicketType = {

@@ -2539,6 +2539,7 @@ export const getTicketList = async (
     category?: string[];
     sort?: "ascending" | "descending";
     search?: string;
+    columnAccessor?: string;
   }
 ) => {
   const {
@@ -2551,6 +2552,7 @@ export const getTicketList = async (
     category,
     sort = "descending",
     search = "",
+    columnAccessor = "ticket_date_created",
   } = params;
 
   const requesterCondition = requester
@@ -2584,6 +2586,7 @@ export const getTicketList = async (
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: searchCondition ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
+      columnAccessor,
     },
   });
 

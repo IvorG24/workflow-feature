@@ -10,8 +10,10 @@ import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   TeamMemberWithUserType,
+  TicketApproverUserType,
   TicketCategoryTableRow,
   TicketListType,
+  TicketRequesterUserType,
   TicketStatusType,
 } from "@/utils/types";
 import {
@@ -85,8 +87,8 @@ const TicketListPage = ({
     inititalTicketListCount
   );
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "name",
-    direction: "asc",
+    columnAccessor: "ticket_date_created",
+    direction: "desc",
   });
 
   const [localFilter, setLocalFilter] = useLocalStorage<TicketListLocalFilter>({
@@ -210,124 +212,50 @@ const TicketListPage = ({
 
   // sorting
   useEffect(() => {
-    if (sortStatus.columnAccessor === "ticket_id") {
-      console.log("here");
-      const result = ticketList.sort((a, b) =>
-        sortStatus.direction === "asc"
-          ? a.ticket_id.localeCompare(b.ticket_id)
-          : sortStatus.direction === "desc"
-          ? b.ticket_id.localeCompare(a.ticket_id)
-          : 0
-      );
-      setTicketList(result);
-    }
-    if (sortStatus.columnAccessor === "ticket_category") {
-      const result = ticketList.sort((a, b) =>
-        sortStatus.direction === "asc"
-          ? a.ticket_category.localeCompare(b.ticket_category)
-          : sortStatus.direction === "desc"
-          ? b.ticket_category.localeCompare(a.ticket_category)
-          : 0
-      );
-      setTicketList(result);
-    }
-    if (sortStatus.columnAccessor === "ticket_status") {
-      const result = ticketList.sort((a, b) =>
-        sortStatus.direction === "asc"
-          ? a.ticket_status.localeCompare(b.ticket_status)
-          : sortStatus.direction === "desc"
-          ? b.ticket_status.localeCompare(a.ticket_status)
-          : 0
-      );
-      setTicketList(result);
-    }
-    if (sortStatus.columnAccessor === "ticket_requester") {
-      const result = ticketList.sort((a, b) => {
-        const firstNameA = a.ticket_requester.user_first_name.toUpperCase();
-        const firstNameB = b.ticket_requester.user_first_name.toUpperCase();
+    const getSortedTicketHandler = async (
+      columnAccessor: string,
+      sort: "ascending" | "descending"
+    ) => {
+      try {
+        if (!activeTeam.team_id) return;
+        setIsFetchingTicketList(true);
 
-        if (sortStatus.direction === "asc") {
-          if (firstNameA < firstNameB) {
-            return -1;
-          }
-          if (firstNameA > firstNameB) {
-            return 1;
-          }
-          return 0;
-        } else if (sortStatus.direction === "desc") {
-          if (firstNameA > firstNameB) {
-            return -1;
-          }
-          if (firstNameA < firstNameB) {
-            return 1;
-          }
-          return 0;
-        } else {
-          return 0;
-        }
-      });
-      setTicketList(result);
-    }
-    if (sortStatus.columnAccessor === "ticket_approver_team_member_id") {
-      const result = ticketList.sort((a, b) => {
-        const firstNameA = a.ticket_approver.user_first_name.toUpperCase();
-        const firstNameB = b.ticket_approver.user_first_name.toUpperCase();
+        const { data, count } = await getTicketList(supabaseClient, {
+          teamId: activeTeam.team_id,
+          page: activePage,
+          limit: DEFAULT_TICKET_LIST_LIMIT,
+          sort,
+          columnAccessor,
+        });
 
-        if (sortStatus.direction === "asc") {
-          if (firstNameA < firstNameB) {
-            return -1;
-          }
-          if (firstNameA > firstNameB) {
-            return 1;
-          }
-          return 0;
-        } else if (sortStatus.direction === "desc") {
-          if (firstNameA > firstNameB) {
-            return -1;
-          }
-          if (firstNameA < firstNameB) {
-            return 1;
-          }
-          return 0;
-        } else {
-          return 0;
-        }
-      });
-      setTicketList(result);
-    }
-    if (sortStatus.columnAccessor === "ticket_date_created") {
-      const result = ticketList.sort((a, b) =>
-        sortStatus.direction === "asc"
-          ? a.ticket_date_created.localeCompare(b.ticket_date_created)
-          : sortStatus.direction === "desc"
-          ? b.ticket_date_created.localeCompare(a.ticket_date_created)
-          : 0
-      );
-      setTicketList(result);
-    }
-    if (sortStatus.columnAccessor === "ticket_status_date_updated") {
-      const result = ticketList.sort((a, b) => {
-        // guard clause
-        if (
-          a.ticket_status_date_updated === null ||
-          b.ticket_status_date_updated === null
-        ) {
-          return 0;
-        }
+        setTicketListCount(count);
+        setTicketList(data);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsFetchingTicketList(false);
+      }
+    };
 
-        return sortStatus.direction === "asc"
-          ? a.ticket_status_date_updated.localeCompare(
-              b.ticket_status_date_updated
-            )
-          : sortStatus.direction === "desc"
-          ? b.ticket_status_date_updated.localeCompare(
-              a.ticket_status_date_updated
-            )
-          : 0;
-      });
+    const columnAccessor = () => {
+      // requester
+      if (sortStatus.columnAccessor === "ticket_requester_team_member_id") {
+        return `(ticket_requester_user->>'user_first_name') || ' ' || (ticket_requester_user->>'user_last_name')`;
+      }
+      if (sortStatus.columnAccessor === "ticket_approver_team_member_id") {
+        return `(ticket_approver_user->>'user_first_name') || ' ' || (ticket_approver_user->>'user_last_name')`;
+      }
 
-      setTicketList(result);
-    }
+      return sortStatus.columnAccessor;
+    };
+    getSortedTicketHandler(
+      columnAccessor(),
+      sortStatus.direction === "desc" ? "descending" : "ascending"
+    );
+    console.log(sortStatus)
   }, [sortStatus]);
 
   useEffect(() => {
@@ -397,7 +325,6 @@ const TicketListPage = ({
                 accessor: "ticket_id",
                 title: "ID",
                 width: 180,
-                sortable: true,
                 render: (ticket) => {
                   return (
                     <Flex gap="md" align="center">
@@ -449,15 +376,9 @@ const TicketListPage = ({
                 width: 180,
                 sortable: true,
                 render: (ticket) => {
-                  const { ticket_requester } = ticket as {
-                    ticket_requester: {
-                      user_avatar: string | null;
-                      user_last_name: string;
-                      user_first_name: string;
-                      user_id: string;
-                    };
-                  };
-                  const { user_last_name, user_first_name } = ticket_requester;
+                  const { ticket_requester_user } = ticket;
+                  const { user_first_name, user_last_name } =
+                    ticket_requester_user as TicketApproverUserType;
 
                   return <Text>{`${user_first_name} ${user_last_name}`}</Text>;
                 },
@@ -468,15 +389,13 @@ const TicketListPage = ({
                 width: 180,
                 sortable: true,
                 render: (ticket) => {
-                  const { ticket_approver } = ticket as {
-                    ticket_approver: {
-                      user_avatar: string | null;
-                      user_last_name: string;
-                      user_first_name: string;
-                      user_id: string;
-                    };
-                  };
-                  const { user_first_name, user_last_name } = ticket_approver;
+                  const { ticket_approver_user } = ticket;
+                  const { user_first_name, user_last_name } =
+                    ticket_approver_user as TicketRequesterUserType;
+
+                  if (user_first_name === null || user_last_name === null) {
+                    return null;
+                  }
 
                   return <Text>{`${user_first_name} ${user_last_name}`}</Text>;
                 },
@@ -518,7 +437,7 @@ const TicketListPage = ({
                 },
               },
               {
-                accessor: "ticket_id" + "ticket_date_created",
+                accessor: "ticket_id" + " ",
                 title: "View",
                 width: 180,
                 render: (ticket) => {
