@@ -1,7 +1,7 @@
 import { getMemoList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_REQUEST_LIST_LIMIT, formatDate } from "@/utils/constant";
+import { DEFAULT_REQUEST_LIST_LIMIT, DEFAULT_TICKET_LIST_LIMIT, formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { MemoListItemType, TeamMemberType } from "@/utils/types";
 import {
@@ -114,37 +114,41 @@ const MemoListPage = ({
     direction: "desc",
   });
 
-  const { handleSubmit, getValues, control, register } =
+  const { handleSubmit, getValues, control, register, setValue } =
     useForm<FilterFormValues>({
       defaultValues: filter,
     });
 
-  const handleFilterMemo = async (
-    {
-      authorFilter,
-      approverFilter,
-      status,
-      isAscendingSort,
-      searchFilter,
-    }: FilterFormValues = getValues()
-  ) => {
+  const columnAccessor = () => {
+    if (sortStatus.columnAccessor === "memo_author_user_id") {
+      return `user_table.user_first_name ${sortStatus.direction.toUpperCase()}, user_table.user_last_name `;
+    }
+    return sortStatus.columnAccessor;
+  };
+
+  const handlePagination = async ({ overidePage }: { overidePage?: number  } = {}) => {
     try {
       if (!activeTeam.team_id) return;
       setIsLoading(true);
 
+      const {approverFilter, authorFilter, isAscendingSort, searchFilter, status} = getValues()
+
       const { data, count } = await getMemoList(supabaseClient, {
         teamId: activeTeam.team_id,
-        page: activePage,
-        limit: 13,
+        page: overidePage !== undefined ? overidePage : activePage || 1,
+        limit: DEFAULT_TICKET_LIST_LIMIT,
         authorFilter:
           authorFilter && authorFilter.length > 0 ? authorFilter : undefined,
         approverFilter:
           approverFilter && approverFilter.length > 0
             ? approverFilter
             : undefined,
-        status: status && status.length > 0 ? status : undefined,
-        sort: isAscendingSort ? "ascending" : "descending",
+        columnAccessor: columnAccessor(),
         searchFilter,
+        sort: isAscendingSort
+        ? "ascending"
+        : ("descending" as "ascending" | "descending"),
+        status
       });
 
       setMemoList(data);
@@ -166,79 +170,20 @@ const MemoListPage = ({
     const filterMatch = filter[`${key}`];
 
     if (value !== filterMatch) {
-      handleFilterMemo();
+      handlePagination();
       setFilter((prev) => ({ ...prev, [`${key}`]: value }));
-    }
-  };
-
-  const handlePagination = async () => {
-    try {
-      if (!activeTeam.team_id) return;
-      setIsLoading(true);
-
-      const { data, count } = await getMemoList(supabaseClient, {
-        teamId: activeTeam.team_id,
-        page: activePage,
-        limit: 13,
-      });
-
-      setMemoList(data);
-      setMemoListCount(count || 0);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   // sorting
   useEffect(() => {
-    const getSortedMemoHandler = async (
-      columnAccessor: string,
-      sort: "ascending" | "descending"
-    ) => {
-      try {
-        if (!activeTeam.team_id) return;
-        setIsLoading(true);
-
-        const { data, count } = await getMemoList(supabaseClient, {
-          teamId: activeTeam.team_id,
-          page: activePage,
-          limit: 13,
-          columnAccessor,
-          sort,
-        });
-
-        setMemoListCount(count);
-        setMemoList(data);
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    const columnAccessor = () => {
-      if (sortStatus.columnAccessor === "memo_author_user_id") {
-        return `user_table.user_first_name ${sortStatus.direction.toUpperCase()}, user_table.user_last_name `;
-      }
-      return sortStatus.columnAccessor;
-    };
-    getSortedMemoHandler(
-      columnAccessor(),
-      sortStatus.direction === "desc" ? "descending" : "ascending"
-    );
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
+    setFilter((prev) => {
+      return {...prev, isAscendingSort: sortStatus.direction === "asc" ? false : true}
+    })
+   
+    handlePagination()
   }, [sortStatus]);
-
-  useEffect(() => {
-    handlePagination();
-  }, [activePage]);
 
   return (
     <Container maw={3840} h="100%">
@@ -257,7 +202,9 @@ const MemoListPage = ({
       </Group>
       {/* memo filters */}
       <Paper p="md">
-        <form onSubmit={handleSubmit(handleFilterMemo)}>
+        <form onSubmit={handleSubmit(() => {
+          handlePagination({overidePage: 1})
+        })}>
           <Flex gap="sm" wrap="wrap" align="center">
             <TextInput
               placeholder="Search memo"
@@ -276,7 +223,7 @@ const MemoListPage = ({
               leftIcon={<IconReload size={16} />}
               onClick={() => {
                 setActivePage(1);
-                handleFilterMemo();
+                handlePagination();
               }}
             >
               Refresh
@@ -382,7 +329,10 @@ const MemoListPage = ({
             records={memoList}
             fetching={isLoading}
             page={activePage}
-            onPageChange={setActivePage}
+            onPageChange={(page) => {
+              setActivePage(page)
+              handlePagination({overidePage: page});
+            }}
             totalRecords={memoListCount}
             recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
             sortStatus={sortStatus}

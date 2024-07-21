@@ -221,7 +221,6 @@ const TicketListPage = ({
                 teamMemberList={teamMemberList}
                 localFilter={localFilter}
                 setLocalFilter={setLocalFilter}
-
               />
             </form>
           </FormProvider>
