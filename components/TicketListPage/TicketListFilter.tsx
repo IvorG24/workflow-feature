@@ -1,17 +1,17 @@
 import { TeamMemberWithUserType, TicketCategoryTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  Button,
   Divider,
   Flex,
   MultiSelect,
   Switch,
   TextInput,
   Transition,
-  Button,
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
-import { IconEyeFilled, IconSearch, IconReload } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { IconEyeFilled, IconReload, IconSearch } from "@tabler/icons-react";
+import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FilterFormValues, TicketListLocalFilter } from "./TicketListPage";
 
@@ -26,7 +26,7 @@ type Props = {
       | TicketListLocalFilter
       | ((prevState: TicketListLocalFilter) => TicketListLocalFilter)
   ) => void;
-};
+}
 
 type FilterSelectedValuesType = {
   requesterList: string[];
@@ -42,6 +42,7 @@ const TicketListFilter = ({
   teamMemberList,
   handleFilterTicketList,
 }: Props) => {
+
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
     clearable: true,
@@ -54,9 +55,8 @@ const TicketListFilter = ({
   const { ref: approverRef, focused: approverRefFocused } = useFocusWithin();
   const { ref: categoryRef, focused: categoryRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
-  const [filterSelectedValues, setFilterSelectedValues] =
-    useState<FilterSelectedValuesType>(localFilter);
   const [isFilter, setIsfilter] = useState(false);
+
 
   const memberList = teamMemberList.map((member) => ({
     value: member.team_member_id,
@@ -75,29 +75,21 @@ const TicketListFilter = ({
     label: category.ticket_category,
   }));
 
-  const { register, control, setValue } = useFormContext<FilterFormValues>();
+  const { register, control } = useFormContext<FilterFormValues>();
 
   const handleFilterChange = async (
     key: keyof FilterSelectedValuesType,
     value: string[] | boolean = []
   ) => {
-    const filterMatch = filterSelectedValues[`${key}`];
+    const filterMatch = localFilter[`${key}`];
 
     if (value !== filterMatch) {
       // if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterTicketList();
       setLocalFilter({ ...localFilter, [key]: value });
-      setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
     }
   };
 
-  useEffect(() => {
-    // assign values to filter form localstorage
-    Object.entries(localFilter).forEach(([key, value]) => {
-      setValue(key as keyof FilterFormValues, value);
-    });
-    setFilterSelectedValues(localFilter as unknown as FilterSelectedValuesType);
-  }, [localFilter, setValue]);
 
   return (
     <>

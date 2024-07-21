@@ -29,7 +29,6 @@ import {
   Title,
   Tooltip,
 } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -60,6 +59,7 @@ export type TicketListLocalFilter = {
   categoryList: string[];
   status: string[] | undefined;
   isAscendingSort: boolean;
+  columnAccessor: string
 };
 
 type Props = {
@@ -91,80 +91,42 @@ const TicketListPage = ({
     direction: "desc",
   });
 
-  const [localFilter, setLocalFilter] = useLocalStorage<TicketListLocalFilter>({
-    key: "formsly-ticket-list-filter",
-    defaultValue: {
+  const [localFilter, setLocalFilter] = useState<TicketListLocalFilter>({
       search: "",
       categoryList: [],
       requesterList: [],
       status: undefined,
       approverList: [],
       isAscendingSort: false,
-    },
+      columnAccessor: 'ticket_date_created'
   });
 
   const filterFormMethods = useForm<FilterFormValues>({
-    defaultValues: localFilter,
+    defaultValues: {
+      search: "",
+      categoryList: [],
+      requesterList: [],
+      status: undefined,
+      approverList: [],
+      isAscendingSort: false,
+  },
     mode: "onChange",
   });
 
-  const { handleSubmit, getValues } = filterFormMethods;
+  const { handleSubmit, getValues, setValue } = filterFormMethods;
 
-  const handleFilterTicketList = async (
-    {
-      search,
-      requesterList,
-      approverList,
-      categoryList,
-      status,
-      isAscendingSort,
-    }: FilterFormValues = getValues()
-  ) => {
-    try {
-      setIsFetchingTicketList(true);
-      if (!activeTeam.team_id) {
-        console.warn(
-          "RequestListPage handleFilterFormsError: active team_id not found"
-        );
-        return;
-      }
-      setActivePage(1);
-      const params = {
-        teamId: activeTeam.team_id,
-        page: 1,
-        limit: DEFAULT_TICKET_LIST_LIMIT,
-        requester:
-          requesterList && requesterList.length > 0 ? requesterList : undefined,
-        approver:
-          approverList && approverList.length > 0 ? approverList : undefined,
-        category:
-          categoryList && categoryList.length > 0 ? categoryList : undefined,
-        status:
-          status && status.length > 0
-            ? (status as TicketStatusType[])
-            : undefined,
-        search: search,
-        sort: isAscendingSort
-          ? "ascending"
-          : ("descending" as "ascending" | "descending"),
-      };
-
-      const { data, count } = await getTicketList(supabaseClient, params);
-
-      setTicketList(data);
-      setTicketListCount(count || 0);
-    } catch (error) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingTicketList(false);
+  // this function will return a valid postgress for sort by
+  const columnAccessor = () => {
+    // requester
+    if (sortStatus.columnAccessor === "ticket_requester_team_member_id") {
+      return `(ticket_requester_user->>'user_first_name') || ' ' || (ticket_requester_user->>'user_last_name')`;
     }
+    return sortStatus.columnAccessor;
   };
 
-  const handlePagination = async () => {
-    try {
+  // this function will handle pagination and filteration
+  const handlePagination = async ({ overidePage }: { overidePage?: number  } = {}) => {
+     try {
       setIsFetchingTicketList(true);
       if (!activeTeam.team_id) return;
 
@@ -179,7 +141,7 @@ const TicketListPage = ({
 
       const params = {
         teamId: activeTeam.team_id,
-        page: activePage,
+        page: overidePage !== undefined ? overidePage : activePage || 1,
         limit: DEFAULT_TICKET_LIST_LIMIT,
         requester:
           requesterList && requesterList.length > 0 ? requesterList : undefined,
@@ -195,6 +157,7 @@ const TicketListPage = ({
         sort: isAscendingSort
           ? "ascending"
           : ("descending" as "ascending" | "descending"),
+        columnAccessor: columnAccessor()
       };
 
       const { data, count } = await getTicketList(supabaseClient, params);
@@ -210,66 +173,17 @@ const TicketListPage = ({
     }
   };
 
-  // sorting
+  // soroting
   useEffect(() => {
-    const getSortedTicketHandler = async (
-      columnAccessor: string,
-      sort: "ascending" | "descending"
-    ) => {
-      try {
-        if (!activeTeam.team_id) return;
-        setIsFetchingTicketList(true);
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
+    setLocalFilter((prev) => {
+      return {...prev, isAscendingSort: sortStatus.direction === "asc" ? false : true}
+    })
 
-        const { data, count } = await getTicketList(supabaseClient, {
-          teamId: activeTeam.team_id,
-          page: activePage,
-          limit: DEFAULT_TICKET_LIST_LIMIT,
-          sort,
-          columnAccessor,
-        });
-
-        setTicketListCount(count);
-        setTicketList(data);
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      } finally {
-        setIsFetchingTicketList(false);
-      }
-    };
-
-    const columnAccessor = () => {
-      // requester
-      if (sortStatus.columnAccessor === "ticket_requester_team_member_id") {
-        return `(ticket_requester_user->>'user_first_name') || ' ' || (ticket_requester_user->>'user_last_name')`;
-      }
-      if (sortStatus.columnAccessor === "ticket_approver_team_member_id") {
-        return `(ticket_approver_user->>'user_first_name') || ' ' || (ticket_approver_user->>'user_last_name')`;
-      }
-
-      return sortStatus.columnAccessor;
-    };
-    getSortedTicketHandler(
-      columnAccessor(),
-      sortStatus.direction === "desc" ? "descending" : "ascending"
-    );
-    console.log(sortStatus)
+    handlePagination()
   }, [sortStatus]);
 
-  useEffect(() => {
-    handlePagination();
-  }, [activePage, localFilter]);
 
-  useEffect(() => {
-    const localStorageFilter = localStorage.getItem(
-      "formsly-ticket-list-filter"
-    );
-    if (localStorageFilter) {
-      handleFilterTicketList(localFilter);
-    }
-  }, [activeTeam.team_id, teamMember, localFilter]);
 
   return (
     <Container maw={3840} h="100%">
@@ -298,13 +212,16 @@ const TicketListPage = ({
       <Paper p="md">
         <Box my="sm">
           <FormProvider {...filterFormMethods}>
-            <form onSubmit={handleSubmit(handleFilterTicketList)}>
+            <form onSubmit={handleSubmit(() => {
+              handlePagination({overidePage: 1})
+            })}>
               <TicketListFilter
                 ticketCategoryList={ticketCategoryList}
-                handleFilterTicketList={handleFilterTicketList}
+                handleFilterTicketList={handlePagination}
                 teamMemberList={teamMemberList}
                 localFilter={localFilter}
                 setLocalFilter={setLocalFilter}
+
               />
             </form>
           </FormProvider>
@@ -315,7 +232,10 @@ const TicketListPage = ({
             records={ticketList}
             fetching={isFetchingTicketList}
             page={activePage}
-            onPageChange={setActivePage}
+            onPageChange={(page) => {
+              setActivePage(page)
+              handlePagination({overidePage: page});
+            }}
             totalRecords={ticketListCount}
             recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
             sortStatus={sortStatus}
@@ -387,7 +307,6 @@ const TicketListPage = ({
                 accessor: "ticket_approver_team_member_id",
                 title: "Approver",
                 width: 180,
-                sortable: true,
                 render: (ticket) => {
                   const { ticket_approver_user } = ticket;
                   const { user_first_name, user_last_name } =
