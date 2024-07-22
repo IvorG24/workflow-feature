@@ -1,3 +1,4 @@
+import { deleteJiraOrganization } from "@/backend/api/delete";
 import { getJiraOrganizationList } from "@/backend/api/get";
 import { createJiraOrganization } from "@/backend/api/post";
 import { updateJiraOrganization } from "@/backend/api/update";
@@ -20,6 +21,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -27,6 +29,7 @@ import {
   IconReload,
   IconSearch,
   IconSettings,
+  IconTrash,
 } from "@tabler/icons-react";
 import { DataTable } from "mantine-datatable";
 import { useState } from "react";
@@ -176,6 +179,8 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
 
       setOpenJiraOrganizationLookupFormModal(false);
       updateOrCreateJiraOrganization.reset();
+
+      handlePagination(activePage);
     } catch (error) {
       console.error(error);
       notifications.show({
@@ -183,6 +188,40 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
         color: "red",
       });
     }
+  };
+
+  const handleDeleteJiraOrganization = async (jiraOrganizationId: string) => {
+    try {
+      setIsLoading(true);
+      await deleteJiraOrganization(supabaseClient, jiraOrganizationId);
+      setJiraOrganizationList((prev) =>
+        prev.filter((proj) => proj.jira_organization_id !== jiraOrganizationId)
+      );
+      setJiraOrganizationCount((prev) => prev - 1);
+    } catch (error) {
+      notifications.show({
+        message: "Failed to delete jira user.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openConfirmDeleteJiraOrganizationModal = (jira_project_id: string) => {
+    modals.openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you want to delete this jira Organization?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: async () =>
+        await handleDeleteJiraOrganization(jira_project_id),
+      centered: true,
+      confirmProps: { color: "red" },
+    });
   };
 
   return (
@@ -270,26 +309,38 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
                 jira_organization_jira_id,
                 jira_organization_jira_label,
               }) => (
-                <ActionIcon
-                  onClick={() => {
-                    setOpenJiraOrganizationLookupFormModal(true);
-                    setIsUpdatingJiraOrganization(true);
-                    updateOrCreateJiraOrganization.setValue(
-                      "jira_organization_id",
-                      jira_organization_id
-                    );
-                    updateOrCreateJiraOrganization.setValue(
-                      "jira_organization_jira_id",
-                      jira_organization_jira_id
-                    );
-                    updateOrCreateJiraOrganization.setValue(
-                      "jira_organization_jira_label",
-                      jira_organization_jira_label
-                    );
-                  }}
-                >
-                  <IconSettings size={16} />
-                </ActionIcon>
+                <Flex>
+                  <ActionIcon
+                    onClick={() => {
+                      setOpenJiraOrganizationLookupFormModal(true);
+                      setIsUpdatingJiraOrganization(true);
+                      updateOrCreateJiraOrganization.setValue(
+                        "jira_organization_id",
+                        jira_organization_id
+                      );
+                      updateOrCreateJiraOrganization.setValue(
+                        "jira_organization_jira_id",
+                        jira_organization_jira_id
+                      );
+                      updateOrCreateJiraOrganization.setValue(
+                        "jira_organization_jira_label",
+                        jira_organization_jira_label
+                      );
+                    }}
+                  >
+                    <IconSettings size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    onClick={() =>
+                      openConfirmDeleteJiraOrganizationModal(
+                        jira_organization_id
+                      )
+                    }
+                    color="red"
+                  >
+                    <IconTrash size={16} />
+                  </ActionIcon>
+                </Flex>
               ),
             },
           ]}

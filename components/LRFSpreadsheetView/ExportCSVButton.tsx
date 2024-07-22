@@ -22,6 +22,8 @@ type CSVData = {
 const ExportCSVButton = ({ data }: { data: LRFSpreadsheetData[] }) => {
   const headers = [
     { label: "Request ID", key: "request_id" },
+    { label: "Project Code", key: "request_project_code" },
+    { label: "Department Code", key: "request_department_code" },
     { label: "Jira ID", key: "request_jira_id" },
     { label: "Date Created", key: "request_date_created" },
     { label: "BOQ Request", key: "request_boq_id" },
@@ -68,6 +70,8 @@ const ExportCSVButton = ({ data }: { data: LRFSpreadsheetData[] }) => {
       groupedResponses.forEach((response) => {
         const newCsvData = {
           request_id: `${item.request_formsly_id_prefix}-${item.request_formsly_id_serial}`,
+          request_project_code: item.jira_project_jira_label,
+          request_department_code: item.request_department_code,
           request_jira_id: item.request_jira_id,
           request_date_created: `${formatDate(
             new Date(item.request_date_created)
@@ -145,6 +149,7 @@ const ExportCSVButton = ({ data }: { data: LRFSpreadsheetData[] }) => {
         data={csvData}
         headers={headers}
         filename={"lrf_data.csv"}
+        target="_blank"
       >
         Export to CSV
       </CSVLink>

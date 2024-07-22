@@ -3,7 +3,7 @@ import {
   getProjectSignerWithTeamMember,
   getSectionInRequestPage,
 } from "@/backend/api/get";
-import { createRequest, editRequest } from "@/backend/api/post";
+import { createComment, createRequest, editRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
@@ -11,6 +11,7 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
+import { ALLOWED_USER_TO_EDIT_LRF_REQUESTS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { calculateInvoiceAmountWithVAT, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -33,6 +34,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
@@ -68,6 +70,8 @@ const EditLiquidReimbursementRequestPage = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
+  const user = useUser();
+  const canEditVatField = user?.email === ALLOWED_USER_TO_EDIT_LRF_REQUESTS;
 
   const isReferenceOnly = Boolean(router.query.referenceOnly);
 
@@ -79,18 +83,14 @@ const EditLiquidReimbursementRequestPage = ({
       signer_action: signer.signer_action.toUpperCase(),
     }))
   );
-
   const [isFetchingSigner, setIsFetchingSigner] = useState(false);
-
+  const [isUpdatedByAccountant, setIsUpdatedByAccountant] = useState(false);
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
 
   const initialFormSectionList = [
     {
       ...form.form_section[0],
-      section_field: form.form_section[0].section_field.filter(
-        (field) => field.field_name !== "BOQ Code"
-      ),
     },
     ...form.form_section.slice(1),
   ];
@@ -140,7 +140,6 @@ const EditLiquidReimbursementRequestPage = ({
       )?.option_id as string;
 
       const additionalSignerList: FormType["form_signer"] = [];
-
       let request: RequestTableRow;
       if (isReferenceOnly) {
         request = await createRequest(supabaseClient, {
@@ -165,6 +164,16 @@ const EditLiquidReimbursementRequestPage = ({
           formName: form.form_name,
           teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
         });
+
+        if (isUpdatedByAccountant) {
+          await createComment(supabaseClient, {
+            comment_request_id: requestId,
+            comment_team_member_id: teamMember.team_member_id,
+            comment_type: "REQUEST_COMMENT",
+            comment_content: `${requestorProfile?.user_first_name} ${requestorProfile?.user_last_name} updated the VAT value of Payee sections.`,
+            comment_id: uuidv4(),
+          });
+        }
       }
 
       notifications.show({
@@ -172,7 +181,7 @@ const EditLiquidReimbursementRequestPage = ({
         color: "green",
       });
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
@@ -281,8 +290,27 @@ const EditLiquidReimbursementRequestPage = ({
         section.section_field[0].field_section_duplicatable_id ===
         sectionDuplicatableId
     );
+
     if (sectionMatchIndex) {
       removeSection(sectionMatchIndex);
+      if (
+        formSections.filter((section) => section.section_name === "Payee")
+          .length === 1
+      ) {
+        const payeeMatchIndex = formSections.findIndex(
+          (section) => section.section_name === "Payee"
+        );
+        const updatedSectionFieldList = formSections[
+          payeeMatchIndex
+        ].section_field.map((field) => ({
+          ...field,
+          field_section_duplicatable_id: undefined,
+        }));
+        updateSection(payeeMatchIndex, {
+          ...formSections[payeeMatchIndex],
+          section_field: updatedSectionFieldList,
+        });
+      }
     }
   };
 
@@ -312,10 +340,7 @@ const EditLiquidReimbursementRequestPage = ({
             ...liquidationAdditionalFields,
           ].sort((a, b) => a.field_order - b.field_order),
         });
-        return;
-      }
-
-      if (removeConditionalFields) {
+      } else if (removeConditionalFields) {
         updateSection(0, {
           ...currentRequestDetails,
           section_field: sectionFields.filter(
@@ -323,7 +348,23 @@ const EditLiquidReimbursementRequestPage = ({
               !["Working Advances", "Ticket ID"].includes(field.field_name)
           ),
         });
-        return;
+      }
+      // remove payment if pure liquidation type
+      const valueIsPureLiquidation = value?.toLowerCase() === "liquidation";
+      const paymentSectionIsRemoved =
+        getValues(`sections`).some(
+          (section) => section.section_name === "Payment"
+        ) === false;
+
+      if (valueIsPureLiquidation) {
+        const paymentSectionIndex = getValues(`sections`).findIndex(
+          (section) => section.section_name === "Payment"
+        );
+        removeSection(paymentSectionIndex);
+      } else if (!valueIsPureLiquidation && paymentSectionIsRemoved) {
+        insertSection(formSections.length, form.form_section[2], {
+          shouldFocus: false,
+        });
       }
     } catch (e) {
       setValue(`sections.0.section_field.4.field_response`, "");
@@ -588,17 +629,59 @@ const EditLiquidReimbursementRequestPage = ({
         addField(3);
       } else if (specifyOtherTypeOfRequestField) {
         removeFieldById(specifyOtherTypeOfRequestField.field_id);
+      } else if (value === "Materials") {
+        const requestTypeValue =
+          getValues(`sections`)[0].section_field[4].field_response;
+        const isPureLiquidation = requestTypeValue === "Liquidation";
+        // add rir number if true
+        if (isPureLiquidation) {
+          addField(8);
+        }
       }
 
-      setValue(`sections.${sectionIndex}.section_field.3.field_response`, 0);
-      updateSection(sectionIndex, {
-        ...currentPayeeSection,
-        section_field: currentPayeeSectionFieldList.sort(
-          (a, b) => a.field_order - b.field_order
-        ),
-      });
+      if (value !== "Materials") {
+        removeFieldById("15996ad6-e34e-4aa7-954b-565ed1c0ead0");
+      }
+
+      removeSection(sectionIndex);
+      insertSection(
+        sectionIndex,
+        {
+          ...currentPayeeSection,
+          section_field: currentPayeeSectionFieldList.sort(
+            (a, b) => a.field_order - b.field_order
+          ),
+        },
+        { shouldFocus: false }
+      );
     } catch (error) {
       setValue(`sections.${sectionIndex}.section_field.2.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    }
+  };
+
+  const handleVatFieldChange = (value: number, sectionIndex: number) => {
+    try {
+      const currentPayeeSection = getValues(`sections.${sectionIndex}`);
+
+      const costFieldIndex = currentPayeeSection.section_field.findIndex(
+        (field) => field.field_name === "Cost"
+      );
+      const invoiceAmountIndex = currentPayeeSection.section_field.findIndex(
+        (field) => field.field_name === "Invoice Amount"
+      );
+      setValue(
+        `sections.${sectionIndex}.section_field.${costFieldIndex}.field_response`,
+        Number(
+          currentPayeeSection.section_field[invoiceAmountIndex].field_response
+        ) - value
+      );
+      setIsUpdatedByAccountant(true);
+    } catch (error) {
+      setValue(`sections.${sectionIndex}.section_field.4.field_response`, 0);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -620,8 +703,8 @@ const EditLiquidReimbursementRequestPage = ({
               (field) => field.field_id
             ),
           });
-        let requestDetailsSectionFieldList = form.form_section[0].section_field
-          .map((field) => {
+        let requestDetailsSectionFieldList =
+          form.form_section[0].section_field.map((field) => {
             const response = requestDetailsSectionResponse.find(
               (response) =>
                 response.request_response_field_id === field.field_id
@@ -631,9 +714,9 @@ const EditLiquidReimbursementRequestPage = ({
               field_response: response
                 ? safeParse(response.request_response)
                 : "",
+              field_is_read_only: canEditVatField,
             };
-          })
-          .filter((field) => field.field_name !== "BOQ Code");
+          });
 
         const isPED = requestDetailsSectionFieldList.some(
           (field) =>
@@ -728,9 +811,18 @@ const EditLiquidReimbursementRequestPage = ({
               ? safeParse(field.field_response?.request_response)
               : "";
             let option: OptionTableRow[] = field.field_option ?? [];
+            let isReadOnly = field.field_is_read_only;
 
             if (field.field_name === "Payment Option") {
               option = bankListOptions;
+            }
+
+            if (canEditVatField) {
+              if (field.field_name === "VAT") {
+                isReadOnly = false;
+              } else {
+                isReadOnly = true;
+              }
             }
 
             if (response) {
@@ -738,6 +830,7 @@ const EditLiquidReimbursementRequestPage = ({
                 ...field,
                 field_response: response,
                 field_option: option,
+                field_is_read_only: isReadOnly,
               });
             }
           });
@@ -805,6 +898,7 @@ const EditLiquidReimbursementRequestPage = ({
               field_response: response
                 ? safeParse(response.request_response)
                 : "",
+              field_is_read_only: canEditVatField,
               field_option: fieldOption,
             };
           }
@@ -840,7 +934,11 @@ const EditLiquidReimbursementRequestPage = ({
           },
           ...sectionWithDuplicatableId,
           { ...form.form_section[2], section_field: paymentSectionFieldList },
-        ];
+        ].filter((section) =>
+          requestTypeResponse === "Liquidation"
+            ? section.section_name !== "Payment"
+            : true
+        );
 
         replaceSection(finalInitialRequestDetails);
         setInitialRequestDetails({ sections: finalInitialRequestDetails });
@@ -888,11 +986,13 @@ const EditLiquidReimbursementRequestPage = ({
                       onPayeeVatBooleanChange: handlePayeeVatBooleanChange,
                       onInvoiceAmountChange: handleInvoiceAmountChange,
                       onModeOfPaymentChange: handleModeOfPaymentChange,
+                      onVatFieldChange: handleVatFieldChange,
                     }}
                     formslyFormName={form.form_name}
                     isEdit={!isReferenceOnly}
                   />
                   {section.section_is_duplicatable &&
+                    !canEditVatField &&
                     idx === sectionLastIndex && (
                       <Button
                         mt="md"

@@ -148,7 +148,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
         color: "green",
       });
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`

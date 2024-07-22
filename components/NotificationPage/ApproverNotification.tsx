@@ -73,7 +73,9 @@ const ApproverNotification = ({ approverUnresolvedRequestCount }: Props) => {
       ...localFilter,
       isApproversView: true,
     });
-    router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
+    await router.push(
+      `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+    );
   };
 
   return (

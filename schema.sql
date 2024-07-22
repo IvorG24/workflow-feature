@@ -5153,7 +5153,7 @@ RETURNS JSON as $$
             form_section: [
               {
                 ...form.form_section[0],
-                section_field: firstSectionFieldList,
+                section_field: firstSectionFieldList.filter((field) => field.field_name !== 'BOQ Code'),
               },
               form.form_section[1],
               form.form_section[2]
@@ -7017,8 +7017,9 @@ plv8.subtransaction(function(){
   )[0];
  
   if(!referenceOnly){
-    if (requestData.request_status !== 'PENDING') throw new Error("Request can't be edited") 
-    if (!userId === requestData.user_id) throw new Error("Requests can only be edited by the request creator") 
+    const isNotLRF = requestData.request_form_id !== '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a';
+    if (requestData.request_status !== 'PENDING' && isNotLRF) throw new Error("Request can't be edited") 
+    if (!userId === requestData.user_id && isNotLRF) throw new Error("Requests can only be edited by the request creator") 
   }
 
   const duplicatableSectionIdList = plv8.execute(
@@ -13230,13 +13231,18 @@ RETURNS JSON as $$
       userId,
       limit,
       page,
-      projectFilter
+      projectFilter,
+      startDate,
+      endDate,
+      sortFilter
     } = input_data;
 
     const offset = (page - 1) * limit;
     const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
 
-    const projectFilterCondition = projectFilter ? `AND request_project_id = '${projectFilter}'` : '';
+    const projectFilterCondition = projectFilter ? `AND request_project_id IN (${projectFilter})` : '';
+    const startDateCondition = startDate ? `AND request_date_created >= '${startDate}'` : '';
+    const endDateCondition = endDate ? `AND request_date_created <= '${endDate}'` : '';
 
     const requestCount = plv8.execute(`
         SELECT 
@@ -13250,6 +13256,8 @@ RETURNS JSON as $$
             AND request_is_disabled = FALSE
             AND request_form_id IN ('582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a')
             ${projectFilterCondition}
+            ${startDateCondition}
+            ${endDateCondition}
     `)[0].count;
 
     const parentRequests = plv8.execute(`
@@ -13260,6 +13268,7 @@ RETURNS JSON as $$
             request_date_created,
             request_status_date_updated,
             request_jira_id,
+            request_project_id,
             ft.form_id,
             ft.form_name
         FROM request_schema.request_table
@@ -13271,6 +13280,9 @@ RETURNS JSON as $$
             AND request_is_disabled = FALSE
             AND request_form_id = '582fefa5-3c47-4c2e-85c8-6ba0d6ccd55a'
             ${projectFilterCondition}
+            ${startDateCondition}
+            ${endDateCondition}
+        ORDER BY request_date_created ${sortFilter}
         LIMIT '${limit}'
         OFFSET '${offset}'
     `);
@@ -13300,13 +13312,26 @@ RETURNS JSON as $$
                     'Cost',
                     'Equipment Code',
                     'Cost Code',
-                    'Bill of Quantity Code'
+                    'Bill of Quantity Code',
+                    'Department'
                 )
         `);
 
+        const requestDepartment = JSON.parse(responseList.find((response) => response.field_name === 'Department')?.request_response);
+        const requestDepartmentCode = plv8.execute(`SELECT team_department_code FROM team_schema.team_department_table WHERE team_department_name = '${requestDepartment}'`)[0].team_department_code;
+
+        let jiraProjectCode = "";
+        const jiraProject = plv8.execute(`SELECT jpt.jira_project_jira_label FROM jira_schema.jira_formsly_project_table AS jfp INNER JOIN jira_schema.jira_project_table AS jpt ON jpt.jira_project_id = jfp.jira_project_id WHERE jfp.formsly_project_id = '${parentRequest.request_project_id}'`);
+
+        if (jiraProject[0]?.jira_project_jira_label) {
+          jiraProjectCode = jiraProject[0].jira_project_jira_label
+        }
+
         const parentRequestWithResponses = {
             ...parentRequest,
-            request_response_list: responseList
+            request_response_list: responseList,
+            request_department_code: requestDepartmentCode,
+            jira_project_jira_label: jiraProjectCode
         };
 
         const childRequests = plv8.execute(`
@@ -14234,7 +14259,7 @@ USING (
     INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id
     INNER JOIN team_schema.team_group_table AS tg ON tg.team_group_id = tgm.team_group_id
     WHERE tmt.team_member_user_id = auth.uid()
-    AND tg.team_group_name = 'COST ENGINEER'
+    AND tg.team_group_name IN ('COST ENGINEER', 'ACCOUNTANT')
   )
 );
 
@@ -16595,6 +16620,20 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON lookup_schema.employee_job_title_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER or ADMIN role" 
+ON lookup_schema.employee_job_title_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = auth.uid()
+    AND team_member_role IN ('OWNER', 'ADMIN')
+  )
+);
+
 --- lookup_schema.scic_employee_table
 ALTER TABLE lookup_schema.scic_employee_table ENABLE ROW LEVEL SECURITY;
 
@@ -16970,5 +17009,10 @@ GRANT ALL ON ALL TABLES IN SCHEMA form_schema TO PUBLIC;
 GRANT ALL ON ALL TABLES IN SCHEMA form_schema TO POSTGRES;
 GRANT ALL ON SCHEMA form_schema TO postgres;
 GRANT ALL ON SCHEMA form_schema TO public;
+
+GRANT ALL ON ALL TABLES IN SCHEMA team_schema TO PUBLIC;
+GRANT ALL ON ALL TABLES IN SCHEMA team_schema TO POSTGRES;
+GRANT ALL ON SCHEMA team_schema TO postgres;
+GRANT ALL ON SCHEMA team_schema TO public;
 
 ----- END: PRIVILEGES

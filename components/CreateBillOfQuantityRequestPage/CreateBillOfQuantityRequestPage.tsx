@@ -97,7 +97,7 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
         color: "green",
       });
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}/requests/${
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
@@ -118,7 +118,7 @@ const CreateBillOfQuantityRequestPage = ({ form, connectedRequest }: Props) => {
       try {
         if (!activeTeam.team_id) return;
         if (!connectedRequest) {
-          router.push(
+          await router.push(
             `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
           );
           return;

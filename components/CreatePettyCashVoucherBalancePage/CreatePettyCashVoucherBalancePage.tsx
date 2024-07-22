@@ -125,7 +125,7 @@ const CreatePettyCashVoucherBalancePage = ({
         color: "green",
       });
 
-      router.push(redirectUrl);
+      await router.push(redirectUrl);
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -142,7 +142,7 @@ const CreatePettyCashVoucherBalancePage = ({
       try {
         if (!activeTeam.team_id) return;
         if (!connectedRequest) {
-          router.push(
+          await router.push(
             `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
           );
           return;

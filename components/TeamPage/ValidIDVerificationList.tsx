@@ -44,8 +44,8 @@ const ValidIDVerificationList = ({ pendingValidIDList }: Props) => {
                       </Text>
 
                       <Button
-                        onClick={() =>
-                          router.push(
+                        onClick={async () =>
+                          await router.push(
                             `/user/valid-id-verification/${userValidID.user_valid_id_id}`
                           )
                         }

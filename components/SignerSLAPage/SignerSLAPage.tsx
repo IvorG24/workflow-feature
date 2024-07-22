@@ -51,7 +51,7 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
     <Anchor
       color={item.active ? "dimmed" : "blue"}
       key={index}
-      onClick={() => router.push(item.href)}
+      onClick={async () => await router.push(item.href)}
     >
       {item.title}
     </Anchor>
@@ -152,8 +152,8 @@ const SignerSLAPage = ({ slaFormList }: Props) => {
           {isAdminOrOwner && (
             <Button
               variant="light"
-              onClick={() =>
-                router.push(
+              onClick={async () =>
+                await router.push(
                   `/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
                   )}/sla/approver/settings`

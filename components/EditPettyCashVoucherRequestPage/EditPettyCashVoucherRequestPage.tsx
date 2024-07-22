@@ -167,7 +167,7 @@ const EditPettyCashVoucherRequestPage = ({
         color: "green",
       });
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
@@ -642,39 +642,31 @@ const EditPettyCashVoucherRequestPage = ({
 
         switch (value) {
           case "Other":
-            if (!specifyOtherTypeOfRequestField) {
-              addField(3);
-            }
-            if (equipmentCodeField) {
+            addField(3);
+            if (equipmentCodeField)
               removeFieldById(equipmentCodeField.field_id);
-            }
             break;
           case "Spare Part":
-            if (!equipmentCodeField) {
-              addField(4);
-            }
-            if (specifyOtherTypeOfRequestField) {
+            addField(4);
+            if (specifyOtherTypeOfRequestField)
               removeFieldById(specifyOtherTypeOfRequestField.field_id);
-            }
             break;
 
           default:
-            if (specifyOtherTypeOfRequestField) {
-              removeFieldById(specifyOtherTypeOfRequestField.field_id);
-            }
-            if (equipmentCodeField) {
-              removeFieldById(equipmentCodeField.field_id);
-            }
+            chargeToProjectSectionFieldList =
+              chargeToProjectSection.section_field.slice(0, 3);
             break;
         }
       } else {
         chargeToProjectSectionFieldList =
           chargeToProjectSection.section_field.slice(0, 3);
       }
-
-      updateSection(2, {
+      removeSection(2);
+      insertSection(2, {
         ...chargeToProjectSection,
-        section_field: chargeToProjectSectionFieldList,
+        section_field: chargeToProjectSectionFieldList.sort(
+          (a, b) => a.field_order - b.field_order
+        ),
       });
     } catch (error) {
       setValue(`sections.2.section_field.1.field_response`, "");

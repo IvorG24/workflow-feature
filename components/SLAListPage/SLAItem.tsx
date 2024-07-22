@@ -16,8 +16,8 @@ const SLAItem = ({ title, description, href }: Props) => {
     <Card shadow="md" maw={250} mih={150}>
       <Card.Section p="md" pb="xs">
         <Anchor
-          onClick={() =>
-            router.push(
+          onClick={async () =>
+            await router.push(
               `/${formatTeamNameToUrlKey(activeTeam.team_name ?? "")}${href}`
             )
           }

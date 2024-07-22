@@ -13,6 +13,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         userId: user.id,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
         page: 1,
+        sortFilter: "DESC",
       });
       return {
         props: data as {

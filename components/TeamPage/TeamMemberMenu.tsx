@@ -55,7 +55,9 @@ const TeamMemberMenu = ({
         <Menu.Item
           c="indigo"
           icon={<IconUserShare {...defaultMenuIconProps} />}
-          onClick={() => router.push(`/member/${member.team_member_id}`)}
+          onClick={async () =>
+            await router.push(`/member/${member.team_member_id}`)
+          }
         >
           View Profile
         </Menu.Item>

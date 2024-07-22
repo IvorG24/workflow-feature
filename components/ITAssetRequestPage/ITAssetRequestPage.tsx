@@ -46,6 +46,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import ExportToPdfMenu from "../ExportToPDF/ExportToPdfMenu";
 import RequestCommentList from "../RequestPage/RequestCommentList";
 import ITAssetSummary from "../SummarySection/ITAssetSummary";
 
@@ -248,7 +249,9 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         message: "Request deleted.",
         color: "green",
       });
-      router.push(`/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`);
+      await router.push(
+        `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
+      );
     } catch (error) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -487,6 +490,11 @@ const ITAssetRequestPage = ({ request, duplicatableSectionIdList }: Props) => {
         <Title order={2} color="dimmed">
           Request
         </Title>
+        <ExportToPdfMenu
+          isFormslyForm={request.request_form.form_is_formsly_form}
+          formName={request.request_form.form_name}
+          requestId={request.request_formsly_id ?? request.request_id}
+        />
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection

@@ -79,7 +79,7 @@ const DeleteTeamSection = ({ totalMembers }: Props) => {
       setTimeout(router.reload, 500);
 
       if (updatedTeamList.length <= 0) {
-        router.push("/create-team");
+        await router.push("/create-team");
       }
     } catch (error) {
       notifications.show({

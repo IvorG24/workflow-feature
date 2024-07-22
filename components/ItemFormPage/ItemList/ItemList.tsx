@@ -425,8 +425,8 @@ const ItemList = ({
                 <Menu.Label>Analytics</Menu.Label>
 
                 <Menu.Item
-                  onClick={() =>
-                    router.push(
+                  onClick={async () =>
+                    await router.push(
                       `/${formatTeamNameToUrlKey(
                         activeTeam.team_name
                       )}/item-analytics`
@@ -436,8 +436,8 @@ const ItemList = ({
                   Item
                 </Menu.Item>
                 <Menu.Item
-                  onClick={() =>
-                    router.push(
+                  onClick={async () =>
+                    await router.push(
                       `/${formatTeamNameToUrlKey(
                         activeTeam.team_name
                       )}/user-item-analytics`
@@ -447,8 +447,8 @@ const ItemList = ({
                   User Issued Items
                 </Menu.Item>
                 <Menu.Item
-                  onClick={() =>
-                    router.push(
+                  onClick={async () =>
+                    await router.push(
                       `/${formatTeamNameToUrlKey(
                         activeTeam.team_name
                       )}/common-queries`

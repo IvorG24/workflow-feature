@@ -140,7 +140,7 @@ const EditRequestPage = ({
         message: `Request ${isReferenceOnly ? "created" : "edited"}.`,
         color: "green",
       });
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(team.team_name ?? "")}/requests/${
           request.request_id
         }`

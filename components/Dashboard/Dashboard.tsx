@@ -173,8 +173,8 @@ const Dashboard = ({ ticketListCount }: Props) => {
                 <Text>{`Your team have (${ticketListCount}) pending tickets.`}</Text>
                 <Button
                   size="xs"
-                  onClick={() =>
-                    router.push(
+                  onClick={async () =>
+                    await router.push(
                       `/${formatTeamNameToUrlKey(
                         activeTeam.team_name ?? ""
                       )}/tickets`

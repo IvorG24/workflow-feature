@@ -1,84 +1,67 @@
 import { getLRFSummaryData } from "@/backend/api/get";
-import {
-  DEFAULT_NUMBER_SSOT_ROWS,
-  formatDate,
-  formatTime,
-} from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
+import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import { LRFSpreadsheetData, OptionType } from "@/utils/types";
-import {
-  Box,
-  Button,
-  Center,
-  createStyles,
-  Group,
-  LoadingOverlay,
-  Paper,
-  ScrollArea,
-  Select,
-  Stack,
-  Table,
-  Title,
-} from "@mantine/core";
+import { ActionIcon, Box, Group, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
-import { IconChevronDown } from "@tabler/icons-react";
-import { useState } from "react";
+import { IconSortAscending, IconSortDescending } from "@tabler/icons-react";
+import moment from "moment";
+import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
 import ExportCSVButton from "./ExportCSVButton";
-
-const useStyles = createStyles((theme) => ({
-  parentTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.blue[6]
-          : theme.colors.red[3],
-      height: 48,
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.red[9]
-          : theme.colors.red[0],
-    },
-    "& td": {
-      minWidth: 130,
-      width: "100%",
-    },
-  },
-}));
+import LRFFilterMenu from "./LRFFilterMenu";
+import LRFSpreadsheetTable from "./LRFSpreadsheetTable/LRFSpreadsheetTable";
 
 type Props = {
   initialData: LRFSpreadsheetData[];
   projectListOptions: OptionType[];
 };
 
+export type FilterFormValues = {
+  projectFilter: string[];
+  dateFilter: [Date | null, Date | null];
+};
+
 const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
   const user = useUser();
-  const { classes } = useStyles();
   const supabaseClient = useSupabaseClient();
-
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [projectFilter, setProjectFilter] = useState<string | null>(null);
+  const [sortAscending, setSortAscending] = useState(false);
+  const [renderCsvDownload, setRenderCsvDownload] = useState(false);
+
+  const filterFormMethods = useForm<FilterFormValues>();
 
   const fetchData = async ({
     currentPage,
-    projectFilter,
+    projectFilter = [],
+    dateFilter = [null, null],
+    sortFilter = sortAscending,
   }: {
     currentPage: number;
-    projectFilter?: string;
+    projectFilter: string[];
+    dateFilter: FilterFormValues["dateFilter"];
+    sortFilter: boolean;
   }) => {
     try {
       if (!user) return;
       setLoading(true);
 
+      const projectFilterCondition = projectFilter
+        ? projectFilter.map((project) => `'${project}'`).join(",")
+        : "";
+
+      const startDate = dateFilter[0] ? moment(dateFilter[0]).format() : null;
+      const endDate = dateFilter[1] ? moment(dateFilter[1]).format() : null;
       const { data: newData } = await getLRFSummaryData(supabaseClient, {
         userId: user.id,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
         page: currentPage,
-        projectFilter: projectFilter ?? undefined,
+        projectFilter: projectFilterCondition,
+        startDate: startDate ?? undefined,
+        endDate: endDate ?? undefined,
+        sortFilter: sortFilter ? "ASC" : "DESC",
       });
 
       return newData;
@@ -93,12 +76,27 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
     }
   };
 
-  const handleFilterData = async (value: string | null) => {
-    setProjectFilter(value);
+  const handleFilterData = async (data: FilterFormValues) => {
     setPage(1);
     const newData = await fetchData({
       currentPage: 1,
-      projectFilter: value ?? undefined,
+      ...data,
+      sortFilter: sortAscending,
+    });
+
+    if (!newData) throw Error;
+
+    setData(newData);
+  };
+
+  const handleSortData = async () => {
+    setSortAscending(!sortAscending);
+    setPage(1);
+    const currentFilters = filterFormMethods.getValues();
+    const newData = await fetchData({
+      currentPage: 1,
+      ...currentFilters,
+      sortFilter: !sortAscending,
     });
 
     if (!newData) throw Error;
@@ -108,173 +106,58 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
 
   const handlePagination = async (currentPage: number) => {
     setPage(currentPage);
+    const currentFilters = filterFormMethods.getValues();
     const newData = await fetchData({
       currentPage,
-      projectFilter: projectFilter ?? undefined,
+      ...currentFilters,
+      sortFilter: sortAscending,
     });
 
     if (newData && newData.length > 0) {
       setPage(currentPage);
     }
-
     if (!newData) throw Error;
 
     setData((prev) => [...prev, ...newData]);
   };
 
-  const MainTableRow = ({
-    item,
-    index,
-  }: {
-    item: LRFSpreadsheetData;
-    index: number;
-  }) => (
-    <tr>
-      <td>{`${item.request_formsly_id_prefix}-${item.request_formsly_id_serial}`}</td>
-      <td>{item.request_jira_id}</td>
-      <td>
-        {formatDate(new Date(item.request_date_created))}{" "}
-        {formatTime(new Date(item.request_date_created))}
-      </td>
-      <td>
-        {item.request_boq_data
-          ? item.request_boq_data.request_formsly_id
-          : "N/A"}
-      </td>
-      <td style={{ padding: 0 }}>
-        {renderNestedTable({
-          requestResponseList: item.request_response_list,
-          parentIndex: index,
-        })}
-      </td>
-    </tr>
-  );
-
-  const renderNestedTable = ({
-    requestResponseList,
-    parentIndex,
-  }: {
-    requestResponseList: LRFSpreadsheetData["request_response_list"];
-    parentIndex: number;
-  }) => {
-    const groupedRows = renderNestedRows(requestResponseList);
-
-    return (
-      <Table withColumnBorders>
-        {parentIndex === 0 && (
-          <thead>
-            <tr>
-              <th>Supplier Name/Payee</th>
-              <th>Type of Request</th>
-              <th>Invoice Amount</th>
-              <th>VAT</th>
-              <th>Cost</th>
-              <th>Equipment Code</th>
-              <th>Cost Code</th>
-              <th>BOQ Code</th>
-            </tr>
-          </thead>
-        )}
-        <tbody>{groupedRows}</tbody>
-      </Table>
-    );
-  };
-
-  const renderNestedRows = (
-    responseList: LRFSpreadsheetData["request_response_list"]
-  ) => {
-    const groupedData = responseList.reduce((acc, current) => {
-      const key =
-        current.request_response_request_id +
-        (current.request_response_duplicatable_section_id || "");
-      if (!acc[key]) {
-        acc[key] = [];
-      }
-      acc[key].push(current);
-      return acc;
-    }, {} as { [key: string]: LRFSpreadsheetData["request_response_list"] });
-
-    return Object.values(groupedData).map((responses, index) => (
-      <tr key={index}>{renderCells(responses)}</tr>
-    ));
-  };
-
-  const renderCells = (
-    responseList: LRFSpreadsheetData["request_response_list"]
-  ) => {
-    const fields = [
-      "Supplier Name/Payee",
-      "Type of Request",
-      "Invoice Amount",
-      "VAT",
-      "Cost",
-      "Equipment Code",
-      "Cost Code",
-      "Bill of Quantity Code",
-    ];
-
-    return fields.map((field) => {
-      const response = responseList.find(
-        (response) => response.field_name === field
-      )?.request_response;
-
-      const value = safeParse(response ?? "");
-
-      const isNumber = !isNaN(value) && value !== "";
-
-      return <td key={field}>{isNumber ? Number(value).toFixed(2) : value}</td>;
-    });
-  };
+  useEffect(() => {
+    if (window !== undefined) {
+      setRenderCsvDownload(true);
+    }
+  }, []);
 
   return (
-    <Stack>
+    <Stack pos="relative">
       <Box>
         <Group>
           <Title order={2} color="dimmed">
             Liquidation Spreadsheet View
           </Title>
-          <Select
-            placeholder="Filter by Project"
-            data={projectListOptions}
-            value={projectFilter}
-            onChange={handleFilterData}
-            allowDeselect
-            clearable
-          />
-          {data.length > 0 && <ExportCSVButton data={data} />}
+          <ActionIcon variant="filled" size="lg" onClick={handleSortData}>
+            {sortAscending ? (
+              <IconSortAscending size={24} />
+            ) : (
+              <IconSortDescending size={24} />
+            )}
+          </ActionIcon>
+          <FormProvider {...filterFormMethods}>
+            <LRFFilterMenu
+              projectListOptions={projectListOptions}
+              handleFilterData={handleFilterData}
+            />
+          </FormProvider>
+          {renderCsvDownload && data.length > 0 && (
+            <ExportCSVButton data={data} />
+          )}
         </Group>
       </Box>
-      <Paper p="xs">
-        <ScrollArea type="auto" scrollbarSize={10} pos="relative">
-          <LoadingOverlay visible={loading} overlayBlur={3} />
-          <Table withBorder withColumnBorders className={classes.parentTable}>
-            <thead>
-              <tr>
-                <th>Request ID</th>
-                <th>Jira ID</th>
-                <th>Date Created</th>
-                <th>BOQ Request</th>
-                <th>Payee</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((item, index) => (
-                <MainTableRow key={item.request_id} item={item} index={index} />
-              ))}
-            </tbody>
-          </Table>
-        </ScrollArea>
-        <Center mt="md">
-          <Button
-            leftIcon={<IconChevronDown size={16} />}
-            onClick={() => handlePagination(page + 1)}
-            disabled={loading}
-            variant="subtle"
-          >
-            {loading ? "Loading..." : "Load More"}
-          </Button>
-        </Center>
-      </Paper>
+      <LRFSpreadsheetTable
+        data={data}
+        loading={loading}
+        page={page}
+        handlePagination={handlePagination}
+      />
     </Stack>
   );
 };

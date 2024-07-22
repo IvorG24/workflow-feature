@@ -1381,3 +1381,6 @@ export const CSI_HIDDEN_FIELDS = [
   "Level 2 Minor Group Description",
   "CSI Division",
 ];
+
+export const ALLOWED_USER_TO_EDIT_LRF_REQUESTS =
+  "accounting.ca@staclara.com.ph";

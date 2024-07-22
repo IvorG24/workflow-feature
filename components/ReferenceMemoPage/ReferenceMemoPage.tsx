@@ -125,7 +125,7 @@ const ReferenceMemoPage = ({ memo, teamMemoSignerList }: Props) => {
         referenceMemoParams as ReferenceMemoType
       );
 
-      router.push(
+      await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/memo/${
           newMemo.memo_id
         }`

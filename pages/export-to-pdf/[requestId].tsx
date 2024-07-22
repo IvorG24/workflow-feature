@@ -121,7 +121,6 @@ const Page = ({ request }: Props) => {
         );
 
         setApproverDetails(data);
-        setIsFetchingApprover(false);
       };
       if (request) {
         fetchApproverDetails();
@@ -131,8 +130,10 @@ const Page = ({ request }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsFetchingApprover(false);
     }
-  }, [request]);
+  }, [request, supabaseClient]);
 
   const originalSectionList = request.request_form.form_section;
   const sectionWithDuplicateList =

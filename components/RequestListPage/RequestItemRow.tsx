@@ -210,8 +210,8 @@ const RequestItemRow = ({ request, teamMemberList }: Props) => {
         <Group position="center">
           <ActionIcon
             color="blue"
-            onClick={() =>
-              router.push(
+            onClick={async () =>
+              await router.push(
                 `/${formatTeamNameToUrlKey(
                   activeTeam.team_name ?? ""
                 )}/requests/${requestId}`

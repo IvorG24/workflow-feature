@@ -10,11 +10,10 @@ import {
 
 const HelpPage = () => {
   return (
-    <Container bg="white" h="100%" fluid>
-      <Container py={64}>
+    <Container h="100%" fluid>
+      <Container p="xl" bg="white">
         <Stack>
           <Title order={3}>Formsly Support</Title>
-
           <Accordion variant="separated">
             {helpPageData.map((item) => (
               <Accordion.Item key={item.id} value={item.id}>
