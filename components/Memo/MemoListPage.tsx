@@ -23,23 +23,25 @@ import {
   Text,
   TextInput,
   Title,
-  Tooltip,
-  Transition
+  Tooltip
 } from "@mantine/core";
 import { useDisclosure, useFocusWithin } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
+  IconArrowsMaximize,
   IconCopy,
   IconEyeFilled,
   IconReload,
   IconSearch,
 } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import ListTable from "../ListTable/ListTable";
 import MemoFormatEditor from "../MemoFormatEditor/MemoFormatEditor";
+import MemoItemListSignerList from "./MemoListItemSignerList";
 
 type Props = {
   memoList: MemoListItemType[];
@@ -55,21 +57,7 @@ type FilterFormValues = {
   searchFilter: string;
 };
 
-type ApproverType = {
-  memo_signer_list: {
-    memo_signer_team_member: {
-      user: {
-        user_first_name: string;
-        user_last_name: string;
-        user_id: string;
-        user_avatar: string | null;
-      };
-    };
-  }[];
-};
-
-
-const getTicketStatusColor = (status: string) => {
+export const getMemoStatusColor = (status: string) => {
   switch (status) {
     case "APPROVED":
       return "green";
@@ -90,6 +78,7 @@ const MemoListPage = ({
   memoListCount: initialMemoListCount,
   teamMemberList,
 }: Props) => {
+  const router = useRouter();
   const userTeamMemberData = useUserTeamMember();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
@@ -262,88 +251,81 @@ const MemoListPage = ({
             </Flex>
           </Flex>
           <Divider my="md" />
-          <Transition
-            mounted={isFilter}
-            transition="slide-down"
-            duration={100}
-            timingFunction="ease-in-out"
-          >
-            {() => (
-              <Flex gap="sm" wrap="wrap" align="center" my="sm">
-                <Controller
-                  control={control}
-                  name="status"
-                  render={({ field: { value, onChange } }) => (
-                    <MultiSelect
-                      data={statusList}
-                      placeholder="Status"
-                      ref={statusRef}
-                      value={value}
-                      onChange={(value) => {
-                        onChange(value);
-                        if (!statusRefFocused)
-                          handleFilterChange("status", value);
-                      }}
-                      onDropdownClose={() =>
-                        handleFilterChange("status", value as string[])
-                      }
-                      miw={250}
-                      maw={320}
-                    />
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name="authorFilter"
-                  render={({ field: { value, onChange } }) => (
-                    <MultiSelect
-                      searchable
-                      clearable
-                      data={authorList}
-                      placeholder="Author"
-                      ref={authorRef}
-                      value={value}
-                      onChange={(value) => {
-                        onChange(value);
-                        if (!authorRefFocused)
-                          handleFilterChange("authorFilter", value);
-                      }}
-                      onDropdownClose={() =>
-                        handleFilterChange("authorFilter", value as string[])
-                      }
-                      miw={250}
-                      maw={320}
-                    />
-                  )}
-                />
+          {isFilter && 
+            <Flex gap="sm" wrap="wrap" align="center" my="sm">
+              <Controller
+                control={control}
+                name="status"
+                render={({ field: { value, onChange } }) => (
+                  <MultiSelect
+                    data={statusList}
+                    placeholder="Status"
+                    ref={statusRef}
+                    value={value}
+                    onChange={(value) => {
+                      onChange(value);
+                      if (!statusRefFocused)
+                        handleFilterChange("status", value);
+                    }}
+                    onDropdownClose={() =>
+                      handleFilterChange("status", value as string[])
+                    }
+                    miw={250}
+                    maw={320}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="authorFilter"
+                render={({ field: { value, onChange } }) => (
+                  <MultiSelect
+                    searchable
+                    clearable
+                    data={authorList}
+                    placeholder="Author"
+                    ref={authorRef}
+                    value={value}
+                    onChange={(value) => {
+                      onChange(value);
+                      if (!authorRefFocused)
+                        handleFilterChange("authorFilter", value);
+                    }}
+                    onDropdownClose={() =>
+                      handleFilterChange("authorFilter", value as string[])
+                    }
+                    miw={250}
+                    maw={320}
+                  />
+                )}
+              />
 
-                <Controller
-                  control={control}
-                  name="approverFilter"
-                  render={({ field: { value, onChange } }) => (
-                    <MultiSelect
-                      searchable
-                      clearable
-                      data={approverList}
-                      placeholder="Approver"
-                      ref={approverRef}
-                      value={value}
-                      onChange={(value) => {
-                        onChange(value);
-                        if (!approverRefFocused)
-                          handleFilterChange("approverFilter", value);
-                      }}
-                      onDropdownClose={() =>
-                        handleFilterChange("approverFilter", value as string[])
-                      }
-                      miw={250}
-                      maw={320}
-                    />
-                  )}
-                />
-              </Flex>
-            )}
-          </Transition>
+              <Controller
+                control={control}
+                name="approverFilter"
+                render={({ field: { value, onChange } }) => (
+                  <MultiSelect
+                    searchable
+                    clearable
+                    data={approverList}
+                    placeholder="Approver"
+                    ref={approverRef}
+                    value={value}
+                    onChange={(value) => {
+                      onChange(value);
+                      if (!approverRefFocused)
+                        handleFilterChange("approverFilter", value);
+                    }}
+                    onDropdownClose={() =>
+                      handleFilterChange("approverFilter", value as string[])
+                    }
+                    miw={250}
+                    maw={320}
+                  />
+                )}
+              />
+            </Flex>
+          }
         </form>
 
         <Box h="fit-content" pos="relative">
@@ -375,7 +357,7 @@ const MemoListPage = ({
                             activeTeam.team_name ?? ""
                           )}/memo/${memo.memo_id}`}
                           target="_blank"
-                          color="black"
+                          color="blue"
                         >
                           {String(memo.memo_reference_number)}
                         </Anchor>
@@ -404,30 +386,30 @@ const MemoListPage = ({
               {
                 accessor: "memo_subject",
                 title: "Subject",
-                width: 180,
                 sortable: true,
               },
               {
                 accessor: "memo_status",
                 title: "Status",
-                width: 180,
                 sortable: true,
                 render: (memo) => {
                   const {memo_status} = memo as {memo_status: string}
                   return (
+                    <Flex justify="center">
+
                     <Badge
                       variant="filled"
-                      color={getTicketStatusColor(memo_status)}
+                      color={getMemoStatusColor(memo_status)}
                     >
                       {memo_status}
                     </Badge>
+                    </Flex>
                   )
                 }
               },
               {
                 accessor: "memo_author_user_id",
                 title: "Author",
-                width: 180,
                 sortable: true,
                 render: (memo) => {
                   const { memo_author_user } = memo as {
@@ -444,13 +426,17 @@ const MemoListPage = ({
                   return (
                     <Flex px={0} gap={8} wrap="wrap">
                       <Avatar
-                        src={user_avatar || null}
-                        {...defaultAvatarProps}
-                        color={getAvatarColor(
-                          Number(`${user_id.charCodeAt(0)}`)
-                        )}
-                      ></Avatar>
-                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                            {...defaultAvatarProps}
+                            color={getAvatarColor(
+                              Number(`${user_id.charCodeAt(0)}`)
+                            )}
+                            src={user_avatar}
+                        >
+                        {(
+                          user_first_name[0] + user_last_name[0]
+                        ).toUpperCase()}
+                      </Avatar>
+                      <Text >{`${user_first_name} ${user_last_name}`}</Text>
                     </Flex>
                   )
                 },
@@ -458,31 +444,16 @@ const MemoListPage = ({
               {
                 accessor: "memo_signer_list",
                 title: "Approver",
-                width: 180,
                 render: (memo) => {
-                  const { memo_signer_list } = memo as ApproverType;
-                  const { memo_signer_team_member } = memo_signer_list[0];
-                  const { user } = memo_signer_team_member;
-                  const { user_first_name, user_last_name, user_avatar, user_id } = user;
-
+                  const { memo_signer_list } = memo as MemoListItemType;
                   return (
-                    <Flex px={0} gap={8} wrap="wrap">
-                      <Avatar
-                        src={user_avatar || null}
-                        {...defaultAvatarProps}
-                        color={getAvatarColor(
-                          Number(`${user_id.charCodeAt(0)}`)
-                        )}
-                      ></Avatar>
-                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                    </Flex>
-                  );
+                    <MemoItemListSignerList signerList={memo_signer_list} />
+                  )
                 },
               },
               {
                 accessor: "memo_date_created",
                 title: "Date Created",
-                width: 180,
                 sortable: true,
                 render: (memo) => {
                   if (!memo.memo_date_created) {
@@ -490,9 +461,33 @@ const MemoListPage = ({
                   }
 
                   return (
-                    <Text>
-                      {formatDate(new Date(String(memo.memo_date_created)))}
-                    </Text>
+                    <Flex justify="center">
+                      <Text>
+                        {formatDate(new Date(String(memo.memo_date_created)))}
+                      </Text>
+                    </Flex>
+                  );
+                },
+              },
+              {
+                accessor: "memo_id" + "memo_date_created",
+                title: "View",
+                render: (ticket) => {
+                  return (
+                    <Flex justify="center">
+                      <ActionIcon
+                        color="blue"
+                        onClick={() =>
+                          router.push(
+                            `/${formatTeamNameToUrlKey(
+                              activeTeam.team_name ?? ""
+                            )}/memo/${ticket.memo_id}`
+                          )
+                        }
+                      >
+                        <IconArrowsMaximize size={16} />
+                      </ActionIcon>
+                    </Flex>
                   );
                 },
               },

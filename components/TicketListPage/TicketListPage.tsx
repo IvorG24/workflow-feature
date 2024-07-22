@@ -277,7 +277,7 @@ const TicketListPage = ({
                             activeTeam.team_name ?? ""
                           )}/tickets/${ticket.ticket_id}`}
                           target="_blank"
-                          color="black"
+                          color="blue"
                         >
                           {String(ticket.ticket_id)}
                         </Anchor>
@@ -304,30 +304,29 @@ const TicketListPage = ({
               {
                 accessor: "ticket_category",
                 title: "Ticket Category",
-                width: 180,
                 sortable: true,
               },
               {
                 accessor: "ticket_status",
                 title: "Status",
-                width: 180,
                 sortable: true,
                 render: (ticket) => {
                   const {ticket_status} = ticket as {ticket_status: string}
                   return (
-                    <Badge
-                      variant="filled"
-                      color={getTicketStatusColor(ticket_status)}
-                    >
-                      {ticket_status}
-                    </Badge>
+                    <Flex justify="center">
+                      <Badge
+                        variant="filled"
+                        color={getTicketStatusColor(ticket_status)}
+                      >
+                        {ticket_status}
+                      </Badge>
+                    </Flex>
                   )
                 }
               },
               {
                 accessor: "ticket_requester_team_member_id",
                 title: "Requester",
-                width: 180,
                 sortable: true,
                 render: (ticket) => {
                   const { ticket_requester_user } = ticket;
@@ -336,15 +335,19 @@ const TicketListPage = ({
 
                     
                   return (
-                    <Flex px={0} gap={8} wrap="wrap">
+                    <Flex px={0} gap={8} wrap="wrap" align='center'>
                       <Avatar
-                        src={user_avatar || null}
-                        {...defaultAvatarProps}
-                        color={getAvatarColor(
-                          Number(`${user_id.charCodeAt(0)}`)
-                        )}
-                      ></Avatar>
-                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                            {...defaultAvatarProps}
+                            color={getAvatarColor(
+                              Number(`${user_id.charCodeAt(0)}`)
+                            )}
+                            src={user_avatar}
+                        >
+                        {(
+                          user_first_name[0] + user_last_name[0]
+                        ).toUpperCase()}
+                      </Avatar>
+                      <Text >{`${user_first_name} ${user_last_name}`}</Text>
                     </Flex>
                   )
                 },
@@ -352,26 +355,28 @@ const TicketListPage = ({
               {
                 accessor: "ticket_approver_team_member_id",
                 title: "Approver",
-                width: 180,
                 render: (ticket) => {
-                  const { ticket_approver_user } = ticket;
-                  const { user_first_name, user_last_name, user_id, user_avatar } =
-                    ticket_approver_user as TicketRequesterUserType;
+                  const { ticket_approver_user, ticket_status } = ticket as {ticket_status: string, ticket_approver_user: TicketRequesterUserType};
+                  const { user_first_name, user_last_name, user_id, user_avatar } = ticket_approver_user ;
 
-                  if (user_first_name === null || user_last_name === null) {
+                  if (user_first_name === null || user_last_name === null || ticket_status === null) {
                     return null;
                   }
 
                   return (
                     <Flex px={0} gap={8} wrap="wrap">
                       <Avatar
-                        src={user_avatar || null}
-                        {...defaultAvatarProps}
-                        color={getAvatarColor(
-                          Number(`${user_id.charCodeAt(0)}`)
-                        )}
-                      ></Avatar>
-                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                            {...defaultAvatarProps}
+                            color={getAvatarColor(
+                              Number(`${user_id.charCodeAt(0)}`)
+                            )}
+                            src={user_avatar}
+                        >
+                        {(
+                          user_first_name[0] + user_last_name[0]
+                        ).toUpperCase()}
+                      </Avatar>
+                      <Text >{`${user_first_name} ${user_last_name}`} dd</Text>
                   </Flex>
                   )
                 },
@@ -379,7 +384,6 @@ const TicketListPage = ({
               {
                 accessor: "ticket_date_created",
                 title: "Date Created",
-                width: 180,
                 sortable: true,
                 render: (ticket) => {
                   if (!ticket.ticket_date_created) {
@@ -387,16 +391,17 @@ const TicketListPage = ({
                   }
 
                   return (
-                    <Text>
-                      {formatDate(new Date(String(ticket.ticket_date_created)))}
-                    </Text>
+                    <Flex justify="center">
+                      <Text>
+                        {formatDate(new Date(String(ticket.ticket_date_created)))}
+                      </Text>
+                    </Flex>
                   );
                 },
               },
               {
                 accessor: "ticket_status_date_updated",
                 title: "Date Updated",
-                width: 180,
                 sortable: true,
                 render: (ticket) => {
                   if (!ticket.ticket_status_date_updated) {
@@ -404,33 +409,36 @@ const TicketListPage = ({
                   }
 
                   return (
-                    <Text>
-                      {formatDate(
-                        new Date(String(ticket.ticket_status_date_updated))
-                      )}
-                    </Text>
+                    <Flex justify="center">
+                      <Text>
+                        {formatDate(
+                          new Date(String(ticket.ticket_status_date_updated))
+                        )}
+                      </Text>
+                    </Flex>
                   );
                 },
               },
               {
-                accessor: "ticket_id" + " ",
+                accessor: "ticket_id" + "ticket_status_date_updated",
                 title: "View",
-                width: 180,
                 render: (ticket) => {
                   const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
                   );
                   return (
-                    <ActionIcon
-                      color="gray"
-                      onClick={() =>
-                        router.push(
-                          `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
-                        )
-                      }
-                    >
-                      <IconArrowsMaximize size={16} />
-                    </ActionIcon>
+                    <Flex justify="center">
+                      <ActionIcon
+                        color="blue"
+                        onClick={() =>
+                          router.push(
+                            `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
+                          )
+                        }
+                      >
+                        <IconArrowsMaximize size={16} />
+                      </ActionIcon>
+                    </Flex >
                   );
                 },
               },

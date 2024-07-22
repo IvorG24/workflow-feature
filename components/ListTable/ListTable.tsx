@@ -23,8 +23,7 @@ type DataTableProps<T = Record<string, unknown>> = {
 
 const useStyles = createStyles((theme) => ({
   root: {
-    border: `1px dashed ${theme.colors.black}`,
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.sm,
   },
   header: {
     "&& th": {
@@ -33,6 +32,7 @@ const useStyles = createStyles((theme) => ({
       transition: "background-color 0.3s ease",
       "&:hover": {
         backgroundColor: theme.colors.blue[9],
+        color: theme.colors.blue[3]
       },
     },
   },
@@ -49,20 +49,10 @@ const ListTable = (props: DataTableProps) => {
       highlightOnHover
       fontSize={16}
       withBorder
-      textSelectionDisabled
       sortIcons={{
-        sorted: <IconCaretUp size={14} fill="black" color="black" />,
-        unsorted: <IconCaretDown size={14} fill="black" color="black" />,
+        sorted: <IconCaretUp size={14} fill="white" color="white" />,
+        unsorted: <IconCaretDown size={14} fill="white" color="white" />,
       }}
-      styles={(theme) => ({
-        header: {
-          background:
-            theme.colorScheme === "dark"
-              ? theme.colors.dark[5]
-              : theme.colors.gray[1],
-          color: "red",
-        },
-      })}
       minHeight={390}
       {...props}
     />

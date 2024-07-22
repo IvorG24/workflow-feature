@@ -6,8 +6,7 @@ import {
   Flex,
   MultiSelect,
   Switch,
-  TextInput,
-  Transition,
+  TextInput
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconEyeFilled, IconReload, IconSearch } from "@tabler/icons-react";
@@ -125,114 +124,107 @@ const TicketListFilter = ({
 
       <Divider my="md" />
 
-      <Transition
-        mounted={isFilter}
-        transition="slide-down"
-        duration={500}
-        timingFunction="ease-in-out"
-      >
-        {() => (
-          <Flex gap="sm" wrap="wrap">
-            <Controller
-              control={control}
-              name="categoryList"
-              render={({ field: { value, onChange } }) => (
-                <MultiSelect
-                  data={categoryList}
-                  placeholder="Category"
-                  ref={categoryRef}
-                  value={value}
-                  onChange={(value) => {
-                    onChange(value);
-                    if (!categoryRefFocused)
-                      handleFilterChange("categoryList", value);
-                  }}
-                  onDropdownClose={() =>
-                    handleFilterChange("categoryList", value)
-                  }
-                  {...inputFilterProps}
-                  sx={{ flex: 1 }}
-                  miw={250}
-                  maw={320}
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="status"
-              render={({ field: { value, onChange } }) => (
-                <MultiSelect
-                  data={statusList}
-                  placeholder="Status"
-                  ref={statusRef}
-                  value={value}
-                  onChange={(value) => {
-                    onChange(value);
-                    if (!statusRefFocused) handleFilterChange("status", value);
-                  }}
-                  onDropdownClose={() =>
-                    handleFilterChange("status", value as string[])
-                  }
-                  {...inputFilterProps}
-                  sx={{ flex: 1 }}
-                  miw={250}
-                  maw={320}
-                />
-              )}
-            />
+      {isFilter && 
+        <Flex gap="sm" wrap="wrap">
+          <Controller
+            control={control}
+            name="categoryList"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                data={categoryList}
+                placeholder="Category"
+                ref={categoryRef}
+                value={value}
+                onChange={(value) => {
+                  onChange(value);
+                  if (!categoryRefFocused)
+                    handleFilterChange("categoryList", value);
+                }}
+                onDropdownClose={() =>
+                  handleFilterChange("categoryList", value)
+                }
+                {...inputFilterProps}
+                sx={{ flex: 1 }}
+                miw={250}
+                maw={320}
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="status"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                data={statusList}
+                placeholder="Status"
+                ref={statusRef}
+                value={value}
+                onChange={(value) => {
+                  onChange(value);
+                  if (!statusRefFocused) handleFilterChange("status", value);
+                }}
+                onDropdownClose={() =>
+                  handleFilterChange("status", value as string[])
+                }
+                {...inputFilterProps}
+                sx={{ flex: 1 }}
+                miw={250}
+                maw={320}
+              />
+            )}
+          />
 
-            <Controller
-              control={control}
-              name="requesterList"
-              render={({ field: { value, onChange } }) => (
-                <MultiSelect
-                  placeholder="Requester"
-                  ref={requestorRef}
-                  data={memberList}
-                  value={value}
-                  onChange={(value) => {
-                    onChange(value);
-                    if (!requestorRefFocused)
-                      handleFilterChange("requesterList", value);
-                  }}
-                  onDropdownClose={() =>
-                    handleFilterChange("requesterList", value)
-                  }
-                  {...inputFilterProps}
-                  sx={{ flex: 1 }}
-                  miw={250}
-                  maw={320}
-                />
-              )}
-            />
+          <Controller
+            control={control}
+            name="requesterList"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                placeholder="Requester"
+                ref={requestorRef}
+                data={memberList}
+                value={value}
+                onChange={(value) => {
+                  onChange(value);
+                  if (!requestorRefFocused)
+                    handleFilterChange("requesterList", value);
+                }}
+                onDropdownClose={() =>
+                  handleFilterChange("requesterList", value)
+                }
+                {...inputFilterProps}
+                sx={{ flex: 1 }}
+                miw={250}
+                maw={320}
+              />
+            )}
+          />
 
-            <Controller
-              control={control}
-              name="approverList"
-              render={({ field: { value, onChange } }) => (
-                <MultiSelect
-                  placeholder="Approver"
-                  ref={approverRef}
-                  data={memberList}
-                  value={value}
-                  onChange={(value) => {
-                    onChange(value);
-                    if (!approverRefFocused)
-                      handleFilterChange("approverList", value);
-                  }}
-                  onDropdownClose={() =>
-                    handleFilterChange("approverList", value)
-                  }
-                  {...inputFilterProps}
-                  sx={{ flex: 1 }}
-                  miw={250}
-                  maw={320}
-                />
-              )}
-            />
-          </Flex>
-        )}
-      </Transition>
+          <Controller
+            control={control}
+            name="approverList"
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                placeholder="Approver"
+                ref={approverRef}
+                data={memberList}
+                value={value}
+                onChange={(value) => {
+                  onChange(value);
+                  if (!approverRefFocused)
+                    handleFilterChange("approverList", value);
+                }}
+                onDropdownClose={() =>
+                  handleFilterChange("approverList", value)
+                }
+                {...inputFilterProps}
+                sx={{ flex: 1 }}
+                miw={250}
+                maw={320}
+              />
+            )}
+          />
+        </Flex>
+      }
     </>
   );
 };
