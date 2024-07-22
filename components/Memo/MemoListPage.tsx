@@ -3,10 +3,13 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_REQUEST_LIST_LIMIT, DEFAULT_TICKET_LIST_LIMIT, formatDate } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { getAvatarColor } from "@/utils/styling";
 import { MemoListItemType, TeamMemberType } from "@/utils/types";
 import {
   ActionIcon,
   Anchor,
+  Avatar,
+  Badge,
   Box,
   Button,
   Container,
@@ -21,7 +24,7 @@ import {
   TextInput,
   Title,
   Tooltip,
-  Transition,
+  Transition
 } from "@mantine/core";
 import { useDisclosure, useFocusWithin } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -58,9 +61,28 @@ type ApproverType = {
       user: {
         user_first_name: string;
         user_last_name: string;
+        user_id: string;
+        user_avatar: string | null;
       };
     };
   }[];
+};
+
+
+const getTicketStatusColor = (status: string) => {
+  switch (status) {
+    case "APPROVED":
+      return "green";
+
+    case "PENDING":
+      return "blue";
+
+    case "REJECTED":
+      return "red";
+
+    default:
+      break;
+  }
 };
 
 const MemoListPage = ({
@@ -93,6 +115,8 @@ const MemoListPage = ({
     { value: "PENDING", label: "Pending" },
     { value: "REJECTED", label: "Rejected" },
   ];
+
+  const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
 
   const [
     memoFormatEditorIsOpened,
@@ -388,6 +412,17 @@ const MemoListPage = ({
                 title: "Status",
                 width: 180,
                 sortable: true,
+                render: (memo) => {
+                  const {memo_status} = memo as {memo_status: string}
+                  return (
+                    <Badge
+                      variant="filled"
+                      color={getTicketStatusColor(memo_status)}
+                    >
+                      {memo_status}
+                    </Badge>
+                  )
+                }
               },
               {
                 accessor: "memo_author_user_id",
@@ -400,13 +435,25 @@ const MemoListPage = ({
                       user_first_name: string;
                       user_last_name: string;
                       user_avatar: string | null;
+                      user_id: string
                     };
                     memo_author_user_id: string;
                   };
-                  const { user_first_name, user_last_name } = memo_author_user;
+                  const { user_first_name, user_last_name, user_avatar, user_id } = memo_author_user;
                   const authorFullname = `${user_first_name} ${user_last_name}`;
 
-                  return <Text>{String(authorFullname)}</Text>;
+                  return (
+                    <Flex px={0} gap={8} wrap="wrap">
+                      <Avatar
+                        src={user_avatar || null}
+                        {...defaultAvatarProps}
+                        color={getAvatarColor(
+                          Number(`${user_id.charCodeAt(0)}`)
+                        )}
+                      ></Avatar>
+                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                    </Flex>
+                  )
                 },
               },
               {
@@ -417,9 +464,20 @@ const MemoListPage = ({
                   const { memo_signer_list } = memo as ApproverType;
                   const { memo_signer_team_member } = memo_signer_list[0];
                   const { user } = memo_signer_team_member;
-                  const { user_first_name, user_last_name } = user;
+                  const { user_first_name, user_last_name, user_avatar, user_id } = user;
 
-                  return <Text>{`${user_first_name} ${user_last_name}`}</Text>;
+                  return (
+                    <Flex px={0} gap={8} wrap="wrap">
+                      <Avatar
+                        src={user_avatar || null}
+                        {...defaultAvatarProps}
+                        color={getAvatarColor(
+                          Number(`${user_id.charCodeAt(0)}`)
+                        )}
+                      ></Avatar>
+                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                    </Flex>
+                  );
                 },
               },
               {

@@ -8,6 +8,7 @@ import {
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { getAvatarColor } from "@/utils/styling";
 import {
   TeamMemberWithUserType,
   TicketApproverUserType,
@@ -19,6 +20,8 @@ import {
 import {
   ActionIcon,
   Anchor,
+  Avatar,
+  Badge,
   Box,
   Button,
   Container,
@@ -27,7 +30,7 @@ import {
   Paper,
   Text,
   Title,
-  Tooltip,
+  Tooltip
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -67,6 +70,25 @@ type Props = {
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   ticketCategoryList: TicketCategoryTableRow[];
+};
+
+const getTicketStatusColor = (status: string) => {
+  switch (status) {
+    case "CLOSED":
+      return "green";
+
+    case "PENDING":
+      return "blue";
+
+    case "INCORRECT":
+      return "red";
+
+    case "UNDER REVIEW":
+      return "orange";
+
+    default:
+      break;
+  }
 };
 
 const TicketListPage = ({
@@ -114,6 +136,8 @@ const TicketListPage = ({
   });
 
   const { handleSubmit, getValues, setValue } = filterFormMethods;
+
+  const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
 
   // this function will return a valid postgress for sort by
   const columnAccessor = () => {
@@ -288,6 +312,17 @@ const TicketListPage = ({
                 title: "Status",
                 width: 180,
                 sortable: true,
+                render: (ticket) => {
+                  const {ticket_status} = ticket as {ticket_status: string}
+                  return (
+                    <Badge
+                      variant="filled"
+                      color={getTicketStatusColor(ticket_status)}
+                    >
+                      {ticket_status}
+                    </Badge>
+                  )
+                }
               },
               {
                 accessor: "ticket_requester_team_member_id",
@@ -296,10 +331,22 @@ const TicketListPage = ({
                 sortable: true,
                 render: (ticket) => {
                   const { ticket_requester_user } = ticket;
-                  const { user_first_name, user_last_name } =
+                  const { user_first_name, user_last_name, user_avatar, user_id } =
                     ticket_requester_user as TicketApproverUserType;
 
-                  return <Text>{`${user_first_name} ${user_last_name}`}</Text>;
+                    
+                  return (
+                    <Flex px={0} gap={8} wrap="wrap">
+                      <Avatar
+                        src={user_avatar || null}
+                        {...defaultAvatarProps}
+                        color={getAvatarColor(
+                          Number(`${user_id.charCodeAt(0)}`)
+                        )}
+                      ></Avatar>
+                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                    </Flex>
+                  )
                 },
               },
               {
@@ -308,14 +355,25 @@ const TicketListPage = ({
                 width: 180,
                 render: (ticket) => {
                   const { ticket_approver_user } = ticket;
-                  const { user_first_name, user_last_name } =
+                  const { user_first_name, user_last_name, user_id, user_avatar } =
                     ticket_approver_user as TicketRequesterUserType;
 
                   if (user_first_name === null || user_last_name === null) {
                     return null;
                   }
 
-                  return <Text>{`${user_first_name} ${user_last_name}`}</Text>;
+                  return (
+                    <Flex px={0} gap={8} wrap="wrap">
+                      <Avatar
+                        src={user_avatar || null}
+                        {...defaultAvatarProps}
+                        color={getAvatarColor(
+                          Number(`${user_id.charCodeAt(0)}`)
+                        )}
+                      ></Avatar>
+                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                  </Flex>
+                  )
                 },
               },
               {
