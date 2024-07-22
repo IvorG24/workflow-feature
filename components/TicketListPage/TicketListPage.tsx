@@ -347,7 +347,12 @@ const TicketListPage = ({
                           user_first_name[0] + user_last_name[0]
                         ).toUpperCase()}
                       </Avatar>
-                      <Text >{`${user_first_name} ${user_last_name}`}</Text>
+                      <Anchor
+                        href={`/member/${ticket.ticket_requester_team_member_id}`}
+                        target="_blank"
+                      >
+                        <Text >{`${user_first_name} ${user_last_name}`} dd</Text>
+                      </Anchor>
                     </Flex>
                   )
                 },
@@ -362,7 +367,7 @@ const TicketListPage = ({
                   if (user_first_name === null || user_last_name === null || ticket_status === null) {
                     return null;
                   }
-
+                  
                   return (
                     <Flex px={0} gap={8} wrap="wrap">
                       <Avatar
@@ -376,7 +381,12 @@ const TicketListPage = ({
                           user_first_name[0] + user_last_name[0]
                         ).toUpperCase()}
                       </Avatar>
-                      <Text >{`${user_first_name} ${user_last_name}`} dd</Text>
+                      <Anchor
+                        href={`/member/${ticket.ticket_approver_team_member_id}`}
+                        target="_blank"
+                      >
+                        <Text >{`${user_first_name} ${user_last_name}`} dd</Text>
+                      </Anchor>
                   </Flex>
                   )
                 },

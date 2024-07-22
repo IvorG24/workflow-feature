@@ -1,6 +1,6 @@
 import { getAvatarColor } from "@/utils/styling";
 import { MemoListItemType, ReceiverStatusType } from "@/utils/types";
-import { Avatar, Badge, createStyles, Flex, Modal, Text, Tooltip } from "@mantine/core";
+import { Anchor, Avatar, Badge, createStyles, Flex, Modal, Text, Tooltip } from "@mantine/core";
 import { useDisclosure } from '@mantine/hooks';
 import { getMemoStatusColor } from './MemoListPage';
 
@@ -41,7 +41,13 @@ const MemoItemListSignerList = ({ signerList }: Props) => {
             user.user_first_name[0] + user.user_last_name[0]
           ).toUpperCase()}
         </Avatar>
-        <Text >{`${user.user_first_name} ${user.user_last_name}`} </Text>
+
+        <Anchor
+          href={`/member/${signerList[0].memo_signer_team_member.team_member_id}`}
+          target="_blank"
+        >
+          <Text >{`${user.user_first_name} ${user.user_last_name}`} </Text>
+        </Anchor>
     </Flex>
     )
   }
@@ -52,7 +58,6 @@ const MemoItemListSignerList = ({ signerList }: Props) => {
     <Modal opened={opened} onClose={close} title="Approver">
         {signerList.map((signer) => {
           const user = signer.memo_signer_team_member.user;
-
           return (
             <div key={signer.memo_signer_id}>
               <Flex px={0} justify={"space-between"} gap={10} mb={10}>
@@ -75,7 +80,12 @@ const MemoItemListSignerList = ({ signerList }: Props) => {
                       user.user_first_name[0] + user.user_last_name[0]
                     ).toUpperCase()}
                   </Avatar>
-                  <Text>{`${user.user_first_name} ${user.user_last_name}`}</Text>
+                  <Anchor
+                    href={`/member/${signer.memo_signer_team_member.team_member_id}`}
+                    target="_blank"
+                  >
+                    <Text >{`${user.user_first_name} ${user.user_last_name}`} </Text>
+                  </Anchor>
                 </Flex>
                 <Flex justify="center">
 
