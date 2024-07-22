@@ -440,7 +440,6 @@ const MemoListPage = ({
                     memo_author_user_id: string;
                   };
                   const { user_first_name, user_last_name, user_avatar, user_id } = memo_author_user;
-                  const authorFullname = `${user_first_name} ${user_last_name}`;
 
                   return (
                     <Flex px={0} gap={8} wrap="wrap">
