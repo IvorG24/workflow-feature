@@ -2800,7 +2800,8 @@ RETURNS JSON AS $$
         isApproversView,
         teamMemberId,
         project,
-        idFilter
+        idFilter,
+        columnAccessor
       } = input_data;
 
       const start = (page - 1) * limit;
@@ -2832,7 +2833,7 @@ RETURNS JSON AS $$
 
       let sort_request_list_query = 
         `
-          ORDER BY request_view.request_date_created ${sort} 
+          ORDER BY ${columnAccessor} ${sort}
           OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
         `;
 

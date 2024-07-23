@@ -11,7 +11,7 @@ import {
   RequestListFilterValues,
   RequestListItemType,
   TeamMemberWithUserType,
-  TeamProjectTableRow,
+  TeamProjectTableRow
 } from "@/utils/types";
 import {
   Box,
@@ -19,20 +19,19 @@ import {
   Container,
   Flex,
   Menu,
+  Paper,
   Space,
   Text,
-  Title,
+  Title
 } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { IconReload } from "@tabler/icons-react";
+import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import RequestListFilter from "./RequestListFilter";
 import RequestListTable from "./RequestListTable";
-import RequestListTableColumnFilter from "./RequestListTableColumnFilter";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
@@ -54,29 +53,19 @@ const RequestListPage = ({
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
   const [requestListCount, setRequestListCount] = useState(0);
-  const [localFilter, setLocalFilter] =
-    useLocalStorage<RequestListFilterValues>({
-      key: "formsly-request-list-filter",
-      defaultValue: {
-        search: "",
-        requestor: [],
-        approver: [],
-        form: [],
-        status: undefined,
-        isAscendingSort: false,
-        isApproversView: false,
-        project: [],
-        idFilter: [],
-      },
-    });
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-
-  const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
-  const [requestListTableColumnFilter, setRequestListTableColumnFilter] =
-    useLocalStorage<string[]>({
-      key: "request-list-table-column-filter",
-      defaultValue: [],
-    });
+  const [localFilter, setLocalFilter] = useState<RequestListFilterValues>(
+  {
+    search: "",
+    requestor: [],
+    approver: [],
+    form: [],
+    status: undefined,
+    isAscendingSort: false,
+    isApproversView: false,
+    project: [],
+    idFilter: [],
+  });
+  const [requestListTableColumnFilter] = useState<string[]>([]);
 
   const filterFormMethods = useForm<RequestListFilterValues>({
     defaultValues: localFilter,
@@ -88,9 +77,15 @@ const RequestListPage = ({
     .map(({ form_name: label, form_id: value }) => ({ label, value }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
-  const { handleSubmit, getValues, control } = filterFormMethods;
+  const { handleSubmit, getValues, control, setValue } = filterFormMethods;
 
   const selectedFormFilter = useWatch({ name: "form", control });
+
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "request_view.request_date_created",
+    direction: "desc",
+  });
+
 
   const handleFetchRequestList = async (page: number) => {
     try {
@@ -132,6 +127,7 @@ const RequestListPage = ({
         isApproversView,
         isAscendingSort,
         teamMemberId: teamMember.team_member_id,
+        columnAccessor: sortStatus.columnAccessor
       };
 
       const { data, count } = await getRequestList(supabaseClient, params);
@@ -179,16 +175,9 @@ const RequestListPage = ({
     handlePagination(activePage);
   }, [activeTeam.team_id, teamMember]);
 
-  useEffect(() => {
-    if (localFilter.status !== undefined && isInitialLoad) {
-      handleFilterForms();
-      setIsInitialLoad(false);
-    }
-  }, [localFilter, isInitialLoad]);
-
   return (
     <Container maw={3840} h="100%">
-      <Flex align="center" gap="xl" wrap="wrap">
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
           <Title order={4}>Request List Page</Title>
           <Text>Manage your team requests here.</Text>
@@ -196,7 +185,9 @@ const RequestListPage = ({
         {isFormslyTeam ? (
           <Menu shadow="md" width={200}>
             <Menu.Target>
-              <Button>Spreadsheet View</Button>
+              <Button            
+              variant="light"
+              >Spreadsheet View</Button>
             </Menu.Target>
 
             <Menu.Dropdown>
@@ -225,24 +216,8 @@ const RequestListPage = ({
             </Menu.Dropdown>
           </Menu>
         ) : null}
-        <Button
-          variant="light"
-          leftIcon={<IconReload size={16} />}
-          onClick={() => {
-            handleFilterForms();
-          }}
-        >
-          Refresh
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => setShowTableColumnFilter(true)}
-        >
-          {" "}
-          Show/Hide Table Columns
-        </Button>
       </Flex>
-      <Space h="sm" />
+      <Paper p="md">
       <FormProvider {...filterFormMethods}>
         <form onSubmit={handleSubmit(handleFilterForms)}>
           <RequestListFilter
@@ -266,15 +241,12 @@ const RequestListPage = ({
           handlePagination={handlePagination}
           checkIfColumnIsHidden={checkIfColumnIsHidden}
           selectedFormFilter={selectedFormFilter}
+          sortStatus={sortStatus}
+          setSortStatus={setSortStatus}
+          setValue={setValue}
         />
       </Box>
-      <RequestListTableColumnFilter
-        showTableColumnFilter={showTableColumnFilter}
-        setShowTableColumnFilter={setShowTableColumnFilter}
-        requestListTableColumnFilter={requestListTableColumnFilter}
-        setRequestListTableColumnFilter={setRequestListTableColumnFilter}
-        selectedFormFilter={selectedFormFilter}
-      />
+      </Paper>
     </Container>
   );
 };
