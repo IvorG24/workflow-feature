@@ -15,7 +15,7 @@ import {
   TicketCategoryTableRow,
   TicketListType,
   TicketRequesterUserType,
-  TicketStatusType,
+  TicketStatusType
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -331,8 +331,7 @@ const TicketListPage = ({
                 render: (ticket) => {
                   const { ticket_requester_user } = ticket;
                   const { user_first_name, user_last_name, user_avatar, user_id } =
-                    ticket_requester_user as TicketApproverUserType;
-
+                    ticket_requester_user as TicketRequesterUserType;
                     
                   return (
                     <Flex px={0} gap={8} wrap="wrap" align='center'>
@@ -361,7 +360,7 @@ const TicketListPage = ({
                 accessor: "ticket_approver_team_member_id",
                 title: "Approver",
                 render: (ticket) => {
-                  const { ticket_approver_user, ticket_status } = ticket as {ticket_status: string, ticket_approver_user: TicketRequesterUserType};
+                  const { ticket_approver_user, ticket_status } = ticket as {ticket_status: string, ticket_approver_user: TicketApproverUserType};
                   const { user_first_name, user_last_name, user_id, user_avatar } = ticket_approver_user ;
 
                   if (user_first_name === null || user_last_name === null || ticket_status === null) {

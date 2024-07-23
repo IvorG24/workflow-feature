@@ -24,17 +24,22 @@ type DataTableProps<T = Record<string, unknown>> = {
 const useStyles = createStyles((theme) => ({
   root: {
     borderRadius: theme.radius.sm,
-  },
-  header: {
     "&& th": {
       color: "white",
       backgroundColor: theme.colors.blue[5],
       transition: "background-color 0.3s ease",
       "&:hover": {
         backgroundColor: theme.colors.blue[9],
-        color: theme.colors.blue[3]
+        color: 'white',
+        '& svg': {
+          fill: 'white',
+          color: 'white'
+        },
       },
     },
+    "&& td": {
+      borderBottom: '1px solid #CDD1D6'
+    }
   },
 }));
 

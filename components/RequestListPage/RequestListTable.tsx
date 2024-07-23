@@ -60,10 +60,10 @@ type Props = {
   isFetchingRequestList: boolean;
   selectedFormFilter: string[] | undefined;
   handlePagination: (p: number) => void;
-  checkIfColumnIsHidden: (column: string) => boolean;
   sortStatus: DataTableSortStatus;
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>
   setValue:  UseFormSetValue<RequestListFilterValues>
+  localFilter: RequestListFilterValues
 };
 
 const useStyles = createStyles(() => ({
@@ -85,11 +85,11 @@ const RequestListTable = ({
   activePage,
   isFetchingRequestList,
   handlePagination,
-  checkIfColumnIsHidden,
   selectedFormFilter,
   sortStatus,
   setSortStatus,
-  setValue
+  setValue,
+  localFilter
 }: Props) => {
   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
@@ -401,7 +401,6 @@ const RequestListTable = ({
               accessor: "request_id",
               title: "Request ID",
               width: 180,
-              hidden: checkIfColumnIsHidden("request_id"),
               render: ({ request_id, request_formsly_id }) => {
                 const requestId =
                   request_formsly_id === "-" ? request_id : request_formsly_id;
@@ -441,7 +440,7 @@ const RequestListTable = ({
             {
               accessor: "request_jira_id",
               title: "JIRA ID",
-              hidden: checkIfColumnIsHidden("request_jira_id"),
+              hidden: localFilter.idFilter?.some((i) => i === 'jira'),
               render: ({ request_jira_id, request_jira_link }) => {
 
                 if (request_jira_id === null){
@@ -476,7 +475,6 @@ const RequestListTable = ({
             {
               accessor: "request_id_status",
               title: "JIRA Status",
-              hidden: checkIfColumnIsHidden("request_jira_status"),
               render: ({ request_jira_id }) => {
 
                 if (request_jira_id === null) {
@@ -502,31 +500,34 @@ const RequestListTable = ({
                     disabled={!Boolean(jiraStatusMatch)}
                     label={jiraStatusMatch && jiraStatusMatch.status}
                   >
-                    <Box maw={120} sx={{ cursor: "pointer" }}>
-                      {String(request_jira_id) && (
-                        <Badge
-                          w={120}
-                          key={String(request_jira_id)}
-                          variant={jiraStatusMatch ? "light" : "filled"}
-                          color={badgeColor}
-                          onClick={() =>
-                            handleFetchJiraTicketStatus(String(request_jira_id))
-                          }
-                        >
-                          {isBeingFetched ? (
-                            <Loader
-                              color={jiraStatusMatch ? "blue" : "white"}
-                              variant="dots"
-                              size={24}
-                            />
-                          ) : jiraStatusMatch ? (
-                            jiraStatusMatch.status
-                          ) : (
-                            "Show Status"
-                          )}
-                        </Badge>
-                      )}
-                    </Box>
+                    <Flex justify="center">
+                      <Box maw={120} sx={{ cursor: "pointer" }}>
+                        {String(request_jira_id) && (
+                          <Badge
+                            w={120}
+                            key={String(request_jira_id)}
+                            variant={jiraStatusMatch ? "light" : "filled"}
+                            color={badgeColor}
+                            onClick={() =>
+                              handleFetchJiraTicketStatus(String(request_jira_id))
+                            }
+                          >
+                            {isBeingFetched ? (
+                              <Loader
+                                color={jiraStatusMatch ? "blue" : "white"}
+                                variant="dots"
+                                size={24}
+                              />
+                            ) : jiraStatusMatch ? (
+                              jiraStatusMatch.status
+                            ) : (
+                              "Show Status"
+                            )}
+                          </Badge>
+                        )}
+                      </Box>
+                    </Flex>
+                    
                   </Tooltip>
                 );
               },
@@ -534,7 +535,7 @@ const RequestListTable = ({
             {
               accessor: "request_otp_id",
               title: "OTP ID",
-              hidden: checkIfColumnIsHidden("request_otp_id"),
+              hidden: localFilter.idFilter?.some((i) => i === 'otp'),
               render: ({
                 request_otp_id,
                 request_team_member_id,
@@ -587,20 +588,22 @@ const RequestListTable = ({
                             <Text truncate w={90}>
                               {currentOtp?.otpId}
                             </Text>
-                            <CopyButton value={currentOtp?.otpId as string}>
-                              {({ copied, copy }) => (
-                                <Tooltip
-                                  label={
-                                    copied ? "Copied" : `Copy ${currentOtp?.otpId}`
-                                  }
-                                  onClick={copy}
-                                >
-                                  <ActionIcon>
-                                    <IconCopy size={16} />
-                                  </ActionIcon>
-                                </Tooltip>
-                              )}
-                            </CopyButton>
+                            {currentOtp?.otpId && 
+                              <CopyButton value={currentOtp?.otpId as string}>
+                                {({ copied, copy }) => (
+                                  <Tooltip
+                                    label={
+                                      copied ? "Copied" : `Copy ${currentOtp?.otpId}`
+                                    }
+                                    onClick={copy}
+                                  >
+                                    <ActionIcon>
+                                      <IconCopy size={16} />
+                                    </ActionIcon>
+                                  </Tooltip>
+                                )}
+                              </CopyButton>
+                            }
                           </>
                         )}
                       </Flex>
@@ -612,7 +615,6 @@ const RequestListTable = ({
             {
               accessor: "request_form_id",
               title: "Form Name",
-              hidden: checkIfColumnIsHidden("request_form_name"),
               sortable: true,
               render: ({ request_form_id }) => {
                 const formMatch = formList.find(
@@ -629,7 +631,7 @@ const RequestListTable = ({
               accessor: "request_ped_equipment_number",
               title: "PED Equipment Number",
               hidden:
-                !isPEDForm || checkIfColumnIsHidden("request_ped_equipment_number"),
+                !isPEDForm,
               render: ({ request_id }) => {
                 const pedEquipmentNumberMatch = pedEquipmentNumberList.find(
                   (ped) => ped.request_id === request_id
@@ -689,18 +691,18 @@ const RequestListTable = ({
             {
               accessor: "request_status",
               title: "Formsly Status",
-              hidden: checkIfColumnIsHidden("request_status"),
               sortable: true,
               render: ({ request_status }) => (
-                <Badge variant="filled" color={getStatusToColor(String(request_status))}>
-                  {String(request_status)}
-                </Badge>
+                <Flex justify="center">
+                  <Badge variant="filled" color={getStatusToColor(String(request_status))}>
+                    {String(request_status)}
+                  </Badge>
+                </Flex>
               ),
             },
             {
               accessor: "request_team_member_id",
               title: "Requested By",
-              hidden: checkIfColumnIsHidden("request_team_member_id"),
               sortable: true,
               render: ({ request_team_member_id }) => {
                 const requestor = teamMemberList.find(
@@ -742,7 +744,6 @@ const RequestListTable = ({
             {
               accessor: "request_signer",
               title: "Approver",
-              hidden: checkIfColumnIsHidden("request_signer"),
               render: (request) => {
                 const { request_signer } = request as {request_signer: requestSignerType[]}
                 const signerList = request_signer.map((signer: requestSignerType) => {
@@ -769,7 +770,6 @@ const RequestListTable = ({
             {
               accessor: "request_date_created",
               title: "Date Created",
-              hidden: checkIfColumnIsHidden("request_date_created"),
               sortable: true,
               render: ({ request_date_created }) => (
                 <Text>{formatDate(new Date(String(request_date_created)))}</Text>
@@ -779,7 +779,6 @@ const RequestListTable = ({
               accessor: "view",
               title: "View",
               textAlignment: "center",
-              hidden: checkIfColumnIsHidden("view"),
               render: ({ request_id, request_formsly_id }) => {
                 const requestId =
                   request_formsly_id === "-" ? request_id : request_formsly_id;

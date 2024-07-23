@@ -65,7 +65,6 @@ const RequestListPage = ({
     project: [],
     idFilter: [],
   });
-  const [requestListTableColumnFilter] = useState<string[]>([]);
 
   const filterFormMethods = useForm<RequestListFilterValues>({
     defaultValues: localFilter,
@@ -166,11 +165,6 @@ const RequestListPage = ({
     }
   };
 
-  const checkIfColumnIsHidden = (column: string) => {
-    const isHidden = requestListTableColumnFilter.includes(column);
-    return isHidden;
-  };
-
   useEffect(() => {
     handlePagination(activePage);
   }, [activeTeam.team_id, teamMember]);
@@ -239,11 +233,11 @@ const RequestListPage = ({
           activePage={activePage}
           isFetchingRequestList={isFetchingRequestList}
           handlePagination={handlePagination}
-          checkIfColumnIsHidden={checkIfColumnIsHidden}
           selectedFormFilter={selectedFormFilter}
           sortStatus={sortStatus}
           setSortStatus={setSortStatus}
           setValue={setValue}
+          localFilter={localFilter}
         />
       </Box>
       </Paper>
