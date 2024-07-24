@@ -424,7 +424,7 @@ const MemoListPage = ({
                   const { user_first_name, user_last_name, user_avatar, user_id } = memo_author_user;
 
                   return (
-                    <Flex px={0} gap={8} wrap="wrap">
+                    <Flex px={0} gap={8} align='center'>
                       <Avatar
                             {...defaultAvatarProps}
                             color={getAvatarColor(

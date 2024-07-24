@@ -711,7 +711,7 @@ const RequestListTable = ({
                   : null;
     
                 return requestorUserData ? (
-                  <Flex px={0} gap={8}>
+                  <Flex px={0} gap={8} align='center'>
                     <Avatar
                       // src={requestor.user_avatar}
                       {...defaultAvatarProps}

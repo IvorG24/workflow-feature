@@ -29,7 +29,7 @@ const MemoItemListSignerList = ({ signerList }: Props) => {
   if (signerList.length === 1) {
     const user = signerList[0].memo_signer_team_member.user
     return (
-      <Flex px={0} gap={8} wrap="wrap">
+      <Flex px={0} gap={8} align='center'>
         <Avatar
               {...defaultAvatarProps}
               color={getAvatarColor(

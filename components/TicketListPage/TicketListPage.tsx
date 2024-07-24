@@ -334,7 +334,7 @@ const TicketListPage = ({
                     ticket_requester_user as TicketRequesterUserType;
                     
                   return (
-                    <Flex px={0} gap={8} wrap="wrap" align='center'>
+                    <Flex px={0} gap={8} align='center'>
                       <Avatar
                             {...defaultAvatarProps}
                             color={getAvatarColor(
@@ -368,7 +368,7 @@ const TicketListPage = ({
                   }
                   
                   return (
-                    <Flex px={0} gap={8} wrap="wrap">
+                    <Flex px={0} gap={8} align='center'>
                       <Avatar
                             {...defaultAvatarProps}
                             color={getAvatarColor(

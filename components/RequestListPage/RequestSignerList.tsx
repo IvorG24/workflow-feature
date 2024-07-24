@@ -39,6 +39,32 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
   const otherSigners = signerList.slice(3);
   const [opened, { open, close }] = useDisclosure(false);
 
+  if (signerList.length === 1) {
+    const user = signerList[0].signer_team_member_user
+
+    return (
+      <Flex px={0} gap={8} align='center'>
+        <Avatar
+              {...defaultAvatarProps}
+              color={getAvatarColor(
+                Number(`${user.user_id.charCodeAt(0)}`)
+              )}
+          >
+          {(
+            user.user_first_name[0] + user.user_last_name[0]
+          ).toUpperCase()}
+        </Avatar>
+
+        <Anchor
+          href={`/member/${signerList[0].request_signer.signer_team_member_id}`}
+          target="_blank"
+        >
+          <Text >{`${user.user_first_name} ${user.user_last_name}`} </Text>
+        </Anchor>
+    </Flex>
+    )
+  }
+
   return (
     <Tooltip.Group openDelay={300} closeDelay={100}>
       <Modal opened={opened} onClose={close} title="Approver" centered>
