@@ -1,5 +1,4 @@
 import { createStyles } from "@mantine/core";
-import { IconCaretDown, IconCaretUp } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
 
 type DataTableProps<T = Record<string, unknown>> = {
@@ -28,9 +27,13 @@ const useStyles = createStyles((theme) => ({
       color: "white",
       backgroundColor: theme.colors.blue[5],
       transition: "background-color 0.3s ease",
+      '& svg': {
+          fill: 'white',
+          color: 'white'
+        },
       "&:hover": {
-        backgroundColor: theme.colors.blue[9],
-        color: 'white',
+        backgroundColor: '#0042ab !important',
+        color: 'white !important',
         '& svg': {
           fill: 'white',
           color: 'white'
@@ -54,10 +57,6 @@ const ListTable = (props: DataTableProps) => {
       highlightOnHover
       fontSize={16}
       withBorder
-      sortIcons={{
-        sorted: <IconCaretUp size={14} fill="white" color="white" />,
-        unsorted: <IconCaretDown size={14} fill="white" color="white" />,
-      }}
       minHeight={390}
       {...props}
     />

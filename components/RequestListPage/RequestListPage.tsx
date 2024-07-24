@@ -80,7 +80,7 @@ const RequestListPage = ({
   const selectedFormFilter = useWatch({ name: "form", control });
 
   const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
-    columnAccessor: "request_view.request_date_created",
+    columnAccessor: "request_date_created",
     direction: "desc",
   });
 
