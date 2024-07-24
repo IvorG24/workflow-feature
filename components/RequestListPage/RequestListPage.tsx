@@ -85,6 +85,14 @@ const RequestListPage = ({
   });
 
 
+  const columnAccessor = () => {
+    // requester
+    if (sortStatus.columnAccessor === "request_team_member_id") {
+      return `(ticket_requested_user->>'user_first_name') || ' ' || (ticket_requested_user->>'user_last_name')`;
+    }
+    return sortStatus.columnAccessor;
+  };
+
   const handleFetchRequestList = async (page: number) => {
     try {
       setIsFetchingRequestList(true);
@@ -125,7 +133,7 @@ const RequestListPage = ({
         isApproversView,
         isAscendingSort,
         teamMemberId: teamMember.team_member_id,
-        columnAccessor: sortStatus.columnAccessor
+        columnAccessor: columnAccessor()
       };
 
       const { data, count } = await getRequestList(supabaseClient, params);

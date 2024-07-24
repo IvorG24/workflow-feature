@@ -613,16 +613,13 @@ const RequestListTable = ({
               },
             },
             {
-              accessor: "request_form_id",
+              accessor: "form_name",
               title: "Form Name",
               sortable: true,
-              render: ({ request_form_id }) => {
-                const formMatch = formList.find(
-                  (form) => form.form_id === request_form_id
-                );
+              render: ({form_name}) => {
                 return (
                   <Text truncate maw={150}>
-                    {formMatch?.form_name}
+                    {String(form_name)}
                   </Text>
                 );
               },

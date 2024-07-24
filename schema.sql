@@ -2811,7 +2811,9 @@ RETURNS JSON AS $$
 
       let fetch_request_list_query = 
         `
-          SELECT DISTINCT
+          SELECT *
+          FROM (
+            SELECT DISTINCT
               request_id, 
               request_formsly_id,
               request_date_created, 
@@ -2820,15 +2822,25 @@ RETURNS JSON AS $$
               request_jira_id,
               request_jira_link,
               request_otp_id,
-              request_form_id
-          FROM request_view
-          INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-          INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-          INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
+              request_form_id,
+              form_name,
+              JSONB_BUILD_OBJECT(
+                  'user_id', user_table_requester.user_id,
+                  'user_first_name', user_table_requester.user_first_name,
+                  'user_last_name', user_table_requester.user_last_name,
+                  'user_username', user_table_requester.user_username,
+                  'user_avatar', user_table_requester.user_avatar
+              ) AS ticket_requested_user
+            FROM request_view
+            INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+            INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+            INNER JOIN user_schema.user_table AS user_table_requester ON team_member_user_id = user_table_requester.user_id 
+            INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+            INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            WHERE team_member_table.team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
+            AND request_is_disabled = false
+            AND form_table.form_is_disabled = false
+          ) AS subquery
         `;
 
       let sort_request_list_query = 
@@ -2882,15 +2894,21 @@ RETURNS JSON AS $$
               request_signer_table.request_signer_id, 
               request_signer_table.request_signer_status, 
               signer_table.signer_is_primary_signer,
-              signer_table.signer_team_member_id
+              signer_table.signer_team_member_id,
+              user_first_name,
+              user_last_name
             FROM request_schema.request_signer_table
             INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+            INNER JOIN team_schema.team_member_table ON signer_team_member_id = team_member_table.team_member_id
+            INNER JOIN user_schema.user_table ON team_member_user_id = user_table.user_id
             WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
           `
         ).map(signer => {
           return {
             request_signer_id: signer.request_signer_id,
             request_signer_status: signer.request_signer_status,
+            request_signe_first_name: signer.user_first_name,
+            request_signe_last_name: signer.user_last_name,
             request_signer: {
                 signer_team_member_id: signer.signer_team_member_id,
                 signer_is_primary_signer: signer.signer_is_primary_signer
