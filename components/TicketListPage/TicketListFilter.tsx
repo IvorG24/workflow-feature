@@ -125,7 +125,7 @@ const TicketListFilter = ({
       <Divider my="md" />
 
       {isFilter && 
-        <Flex gap="sm" wrap="wrap">
+        <Flex gap="sm" wrap="wrap" mb="sm">
           <Controller
             control={control}
             name="categoryList"

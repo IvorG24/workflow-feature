@@ -252,7 +252,7 @@ const MemoListPage = ({
           </Flex>
           <Divider my="md" />
           {isFilter && 
-            <Flex gap="sm" wrap="wrap" align="center" my="sm">
+            <Flex gap="sm" wrap="wrap" align="center" mb="sm">
               <Controller
                 control={control}
                 name="status"
