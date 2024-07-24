@@ -16,7 +16,7 @@ import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   getAvatarColor,
   getJiraTicketStatusColor,
-  getStatusToColor,
+  getStatusToColor
 } from "@/utils/styling";
 import {
   RequestListFilterValues,
@@ -40,7 +40,7 @@ import {
   Stack,
   Text,
   Tooltip,
-  UnstyledButton,
+  UnstyledButton
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -698,44 +698,37 @@ const RequestListTable = ({
               ),
             },
             {
-              accessor: "request_team_member_id",
+              accessor: "user_id",
               title: "Requested By",
               sortable: true,
-              render: ({ request_team_member_id }) => {
-                const requestor = teamMemberList.find(
-                  (member) => member.team_member_id === request_team_member_id
-                );
-    
-                const requestorUserData = requestor
-                  ? requestor.team_member_user
-                  : null;
-    
-                return requestorUserData ? (
+              render: (ticket) => {
+
+                const { user_id, user_first_name, user_last_name, request_team_member_id} = ticket as {user_id: string, user_first_name: string, user_last_name: string, request_team_member_id: string}
+
+                return (
                   <Flex px={0} gap={8} align='center'>
                     <Avatar
                       // src={requestor.user_avatar}
                       {...defaultAvatarProps}
                       color={getAvatarColor(
-                        Number(`${requestorUserData.user_id.charCodeAt(0)}`)
+                        Number(`${user_id.charCodeAt(0)}`)
                       )}
                       className={classes.requestor}
                       onClick={() =>
                         window.open(`/member/${request_team_member_id}`)
                       }
                     >
-                      {requestorUserData.user_first_name[0] +
-                        requestorUserData.user_last_name[0]}
+                      {user_first_name[0] +
+                        user_last_name[0]}
                     </Avatar>
                     <Anchor
                       href={`/member/${request_team_member_id}`}
                       target="_blank"
                     >
-                      <Text>{`${requestorUserData?.user_first_name} ${requestorUserData?.user_last_name}`}</Text>
+                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
                     </Anchor>
                   </Flex>
-                ) : (
-                  <></>
-                );
+                ) 
               },
             },
             {

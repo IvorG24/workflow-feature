@@ -1189,6 +1189,11 @@ export type RequestListItemType = {
   request_form_id: string;
   request_team_member_id: string;
   request_signer: requestSignerType[];
+  user_id: string;
+  user_first_name: string;
+  user_last_name: string;
+  user_avatar: string | null;
+  form_name: string; 
 };
 
 export type ConnectedRequestItemType = {
