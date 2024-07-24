@@ -2830,7 +2830,7 @@ RETURNS JSON AS $$
                   'user_last_name', user_table_requester.user_last_name,
                   'user_username', user_table_requester.user_username,
                   'user_avatar', user_table_requester.user_avatar
-              ) AS ticket_requested_user
+              ) AS request_requested_user
             FROM request_view
             INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
             INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id

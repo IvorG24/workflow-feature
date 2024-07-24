@@ -88,7 +88,7 @@ const RequestListPage = ({
   const columnAccessor = () => {
     // requester
     if (sortStatus.columnAccessor === "request_team_member_id") {
-      return `(ticket_requested_user->>'user_first_name') || ' ' || (ticket_requested_user->>'user_last_name')`;
+      return `(request_requested_user->>'user_first_name') || ' ' || (request_requested_user->>'user_last_name')`;
     }
     return sortStatus.columnAccessor;
   };
