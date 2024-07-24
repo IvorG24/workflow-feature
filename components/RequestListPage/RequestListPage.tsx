@@ -20,7 +20,6 @@ import {
   Flex,
   Menu,
   Paper,
-  Space,
   Text,
   Title
 } from "@mantine/core";
@@ -224,7 +223,6 @@ const RequestListPage = ({
           />
         </form>
       </FormProvider>
-      <Space h="sm" />
       <Box h="fit-content">
         <RequestListTable
           requestList={requestList}

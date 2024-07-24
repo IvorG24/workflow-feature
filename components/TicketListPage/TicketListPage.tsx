@@ -234,7 +234,7 @@ const TicketListPage = ({
         )}
       </Flex>
       <Paper p="md">
-        <Box my="sm">
+        <Box >
           <FormProvider {...filterFormMethods}>
             <form onSubmit={handleSubmit(() => {
               handlePagination({overidePage: 1})
@@ -384,7 +384,7 @@ const TicketListPage = ({
                         href={`/member/${ticket.ticket_approver_team_member_id}`}
                         target="_blank"
                       >
-                        <Text >{`${user_first_name} ${user_last_name}`} dd</Text>
+                        <Text >{`${user_first_name} ${user_last_name}`}</Text>
                       </Anchor>
                   </Flex>
                   )
