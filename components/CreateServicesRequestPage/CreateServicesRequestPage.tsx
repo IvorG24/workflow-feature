@@ -6,6 +6,7 @@ import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
+import useSaveToLocalStorage from "@/hooks/useSavetoLocalStorage";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -105,6 +106,33 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       form_section: getValues("sections").map((section) => ({
         ...section,
         section_field: section.section_field.map((field) => {
+          const fieldResponse = field.field_response as string | undefined;
+          if (field.field_type === "DROPDOWN" && fieldResponse) {
+            return {
+              ...field,
+              field_option: field.field_option?.[0]
+                ? [
+                    {
+                      ...field.field_option[0],
+                      option_value: fieldResponse,
+                    },
+                  ]
+                : field.field_option,
+            };
+          }
+          if (field.field_name === "Requesting Project" && fieldResponse) {
+            return {
+              ...field,
+              field_option: field.field_option?.[0]
+                ? [
+                    {
+                      ...field.field_option[0],
+                      option_value: fieldResponse,
+                    },
+                  ]
+                : field.field_option,
+            };
+          }
           return field;
         }),
       })),
@@ -170,44 +198,51 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
               ],
             },
           ]);
+        } else {
+          const newSections =
+            localFormState?.form_section.map((section, sectionIndex) => {
+              const categoryOption =
+                form.form_section[1]?.section_field[0].field_option;
+              const unitOption =
+                form.form_section[1]?.section_field[3].field_option;
+
+              return {
+                ...section,
+                section_field: section.section_field.map(
+                  (field, fieldIndex) => {
+                    const fieldName =
+                      localFormState.form_section[sectionIndex].section_field[
+                        fieldIndex
+                      ].field_name;
+
+                    let newFieldOption = field.field_option;
+                    switch (fieldName) {
+                      case "Preferred Supplier":
+                        newFieldOption = supplierOptionlist;
+                        break;
+                      case "Category":
+                        newFieldOption = categoryOption;
+                        break;
+                      case "Requesting Project":
+                        newFieldOption = projectOptions;
+                        break;
+                      case "Measurement":
+                        newFieldOption = unitOption;
+                        break;
+                      default:
+                        break;
+                    }
+
+                    return {
+                      ...field,
+                      field_option: newFieldOption,
+                    };
+                  }
+                ),
+              };
+            }) || [];
+          replaceSection(newSections);
         }
-
-        const localSection = localFormState?.form_section;
-        const newSections = localSection?.map((section) => ({
-          ...section,
-          section_field: section.section_field.map((field) => {
-            if (field.field_name === "Preffered Supplier") {
-              return {
-                ...field,
-                field_option: supplierOptionlist,
-              };
-            } else if (field.field_name === "Requesting Project") {
-              return {
-                ...field,
-                field_option: projectOptions,
-              };
-            } else {
-              return field;
-            }
-          }),
-        }));
-        console.log(newSections);
-
-        // replaceSection([
-        //   localFormState?.form_section.map((section,sectionIndex)=>
-
-        //   ),
-        //   {
-        //     ...form.form_section[1],
-        //     section_field: [
-        //       ...form.form_section[1].section_field.slice(0, 4),
-        //       {
-        //         ...form.form_section[1].section_field[9],
-        //         field_option: supplierOptionlist,
-        //       },
-        //     ],
-        //   },
-        // ]);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -218,8 +253,10 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       }
     };
     fetchOptions();
-  }, [team]);
+  }, [team, formId, replaceSection, localFormState]);
   useBeforeunload(() => saveToLocalStorage());
+
+  useSaveToLocalStorage({ saveToLocalStorage });
   const handleCreateRequest = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
       notifications.show({
