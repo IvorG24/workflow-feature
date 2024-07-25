@@ -6793,38 +6793,31 @@ RETURNS JSON AS $$
 
       const ticket_list = plv8.execute(
         `
-          SELECT *
-          FROM (
-            SELECT DISTINCT
-            ticket_table.*,
-            ticket_category_table.ticket_category,
-            JSONB_BUILD_OBJECT(
-                'user_id', user_table_requester.user_id,
-                'user_first_name', user_table_requester.user_first_name,
-                'user_last_name', user_table_requester.user_last_name,
-                'user_username', user_table_requester.user_username,
-                'user_avatar', user_table_requester.user_avatar
-            ) AS ticket_requester_user,
-            JSONB_BUILD_OBJECT(
-                'user_id', user_table_approver.user_id,
-                'user_first_name', user_table_approver.user_first_name,
-                'user_last_name', user_table_approver.user_last_name,
-                'user_username', user_table_approver.user_username,
-                'user_avatar', user_table_approver.user_avatar
-            ) AS ticket_approver_user
-            FROM ticket_schema.ticket_table
-            INNER JOIN team_schema.team_member_table AS requester_member ON ticket_requester_team_member_id = requester_member.team_member_id
-            INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id
-            INNER JOIN user_schema.user_table AS user_table_requester ON requester_member.team_member_user_id = user_table_requester.user_id
-            LEFT JOIN team_schema.team_member_table AS approver_member ON ticket_approver_team_member_id = approver_member.team_member_id
-            LEFT JOIN user_schema.user_table AS user_table_approver ON approver_member.team_member_user_id = user_table_approver.user_id
-            WHERE requester_member.team_member_team_id = '${teamId}'
-            ${requester}
-            ${approver}
-            ${status}
-            ${category}
-            ${search}
-          ) AS subquery
+          SELECT DISTINCT
+          ticket_table.*,
+          ticket_category_table.ticket_category,
+          user_table_requester.user_id as requester_user_id,
+          user_table_requester.user_first_name as requester_user_first_name,
+          user_table_requester.user_last_name as requester_user_last_name,
+          user_table_requester.user_username as requester_user_username,
+          user_table_requester.user_avatar as requester_user_avatar,
+          user_table_approver.user_id as approver_user_id,
+          user_table_approver.user_first_name as approver_user_first_name,
+          user_table_approver.user_last_name as approver_user_last_name,
+          user_table_approver.user_username as approver_user_username,
+          user_table_approver.user_avatar as approver_user_avatar
+          FROM ticket_schema.ticket_table
+          INNER JOIN team_schema.team_member_table AS requester_member ON ticket_requester_team_member_id = requester_member.team_member_id
+          INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id
+          INNER JOIN user_schema.user_table AS user_table_requester ON requester_member.team_member_user_id = user_table_requester.user_id
+          LEFT JOIN team_schema.team_member_table AS approver_member ON ticket_approver_team_member_id = approver_member.team_member_id
+          LEFT JOIN user_schema.user_table AS user_table_approver ON approver_member.team_member_user_id = user_table_approver.user_id
+          WHERE requester_member.team_member_team_id = '${teamId}'
+          ${requester}
+          ${approver}
+          ${status}
+          ${category}
+          ${search}
           ORDER BY ${columnAccessor} ${sort} 
           OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
         `
@@ -6844,8 +6837,37 @@ RETURNS JSON AS $$
         `
       )[0];
 
+      const format_ticket = ticket_list.map((ticket) => {
+        return {
+          ticket_approver_team_member_id: ticket.ticket_approver_team_member_id,
+          ticket_approver_user: {
+            user_avatar: ticket.approver_user_avatar,
+            user_first_name: ticket.approver_user_first_name,
+            user_id: ticket.approver_user_id,
+            user_last_name: ticket.approver_user_last_name,
+            user_username: ticket.approver_user_username 
+          },
+          ticket_category: ticket.ticket_category,
+          ticket_category_id: ticket.ticket_category_id,
+          ticket_date_created: ticket.ticket_date_created,
+          ticket_id: ticket.ticket_id,
+          ticket_is_disabled: ticket.ticket_is_disabled,
+          ticket_requester_team_member_id: ticket.ticket_requester_team_member_id,
+          ticket_requester_user: {
+            user_avatar: ticket.requester_user_avatar,
+            user_first_name: ticket.requester_user_first_name,
+            user_id: ticket.requester_user_id,
+            user_last_name: ticket.requester_user_last_name,
+            user_username: ticket.requester_user_username
+          },
+          ticket_status: ticket.ticket_status,
+          ticket_status_date_updated: ticket.ticket_status_date_updated
+        }
+      })
+
+
       returnData = {
-        data: ticket_list, 
+        data: format_ticket, 
         count: Number(ticket_count.count)
       };
     });

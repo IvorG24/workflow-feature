@@ -143,7 +143,7 @@ const TicketListPage = ({
   const columnAccessor = () => {
     // requester
     if (sortStatus.columnAccessor === "ticket_requester_team_member_id") {
-      return `(ticket_requester_user->>'user_first_name') || ' ' || (ticket_requester_user->>'user_last_name')`;
+      return `requester_user_first_name ${sortStatus.direction.toUpperCase()}, requester_user_last_name `
     }
     return sortStatus.columnAccessor;
   };
@@ -350,7 +350,7 @@ const TicketListPage = ({
                         href={`/member/${ticket.ticket_requester_team_member_id}`}
                         target="_blank"
                       >
-                        <Text >{`${user_first_name} ${user_last_name}`} dd</Text>
+                        <Text >{`${user_first_name} ${user_last_name}`}</Text>
                       </Anchor>
                     </Flex>
                   )
