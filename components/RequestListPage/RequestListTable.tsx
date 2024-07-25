@@ -420,7 +420,7 @@ const RequestListTable = ({
                     <CopyButton
                       value={`${BASE_URL}/${formatTeamNameToUrlKey(
                         activeTeam.team_name ?? ""
-                      )}/requests/${request_formsly_id}`}
+                      )}/requests/${requestId}`}
                     >
                       {({ copied, copy }) => (
                         <Tooltip
