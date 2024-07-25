@@ -8014,7 +8014,7 @@ RETURNS JSON AS $$
       status,
       sort,
       searchFilter,
-      columnAccessor,
+      columnAccessor
     } = input_data;
 
     const start = (page - 1) * limit;
@@ -8025,37 +8025,15 @@ RETURNS JSON AS $$
           memo_table.*,
           memo_status_table.memo_status as memo_status,
           memo_date_updated_table.memo_date_updated as memo_date_updated,
-          JSONB_BUILD_OBJECT(
-            'user_id', user_table.user_id,
-            'user_avatar', user_table.user_avatar,
-            'user_first_name', user_table.user_first_name,
-            'user_last_name', user_table.user_last_name
-          ) AS memo_author_user,
-          ARRAY_AGG(
-           DISTINCT JSONB_BUILD_OBJECT(
-              'memo_signer_id', memo_signer_id,
-              'memo_signer_status', memo_signer_status,
-              'memo_signer_is_primary', memo_signer_is_primary,
-              'memo_signer_order', memo_signer_order,
-              'memo_signer_team_member', JSONB_BUILD_OBJECT(
-                'team_member_id', team_member_table.team_member_id,
-                'user', JSONB_BUILD_OBJECT(
-                  'user_id', team_member_user_table.user_id,
-                  'user_first_name', team_member_user_table.user_first_name,
-                  'user_last_name', team_member_user_table.user_last_name,
-                  'user_avatar', team_member_user_table.user_avatar
-                )
-              )
-            )
-          ) AS memo_signer_list
-        FROM memo_schema.memo_table
-        INNER JOIN user_schema.user_table ON user_table.user_id = memo_table.memo_author_user_id
-        INNER JOIN memo_schema.memo_date_updated_table ON memo_date_updated_memo_id = memo_table.memo_id
-        INNER JOIN memo_schema.memo_status_table ON memo_status_memo_id = memo_table.memo_id
-        LEFT JOIN memo_schema.memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
-        LEFT JOIN team_schema.team_member_table ON team_member_table.team_member_id = memo_signer_table.memo_signer_team_member_id
-        LEFT JOIN user_schema.user_table AS team_member_user_table ON team_member_user_table.user_id = team_member_table.team_member_user_id
-        LEFT JOIN memo_schema.memo_line_item_table ON memo_line_item_table.memo_line_item_memo_id = memo_table.memo_id
+          request_table.user_id as author_user_id,
+          request_table.user_avatar as author_user_avatar,
+          request_table.user_first_name as author_user_first_name,
+          request_table.user_last_name as author_user_last_name
+          FROM memo_schema.memo_table
+          INNER JOIN user_schema.user_table ON user_table.user_id = memo_table.memo_author_user_id
+          INNER JOIN memo_schema.memo_date_updated_table ON memo_date_updated_memo_id = memo_table.memo_id
+          INNER JOIN memo_schema.memo_status_table ON memo_status_memo_id = memo_table.memo_id
+          INNER JOIN user_schema.user_table AS request_table ON memo_author_user_id = request_Table.user_id
         WHERE 
           memo_team_id = '${teamId}'
           AND memo_is_disabled = false
@@ -8063,11 +8041,6 @@ RETURNS JSON AS $$
           ${approverFilter}
           ${status}
           ${searchFilter ? `AND to_tsvector(memo_subject || ' ' || memo_line_item_table.memo_line_item_content) @@ to_tsquery('${searchFilter}')` : ''}
-        GROUP BY 
-          memo_id,
-          user_table.user_id,
-          memo_status_table.memo_status,
-          memo_date_updated_table.memo_date_updated
         ORDER BY ${columnAccessor} ${sort}
         OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
       `
@@ -8089,7 +8062,57 @@ RETURNS JSON AS $$
           ${searchFilter ? `AND to_tsvector(memo_line_item_table.memo_line_item_content) @@ to_tsquery('${searchFilter}')` : ''}
     `)[0];
 
-    return_value = {data: memo_list, count: Number(memo_count.count)}
+    const formatMemo = memo_list.map((memo) => {
+
+      const memo_signer_list = plv8.execute(`
+        SELECT 
+          ARRAY_AGG(
+            DISTINCT JSONB_BUILD_OBJECT(
+              'memo_signer_id', memo_signer_id,
+              'memo_signer_status', memo_signer_status,
+              'memo_signer_is_primary', memo_signer_is_primary,
+              'memo_signer_order', memo_signer_order,
+              'memo_signer_team_member', JSONB_BUILD_OBJECT(
+                'team_member_id', team_member_table.team_member_id,
+                'user', JSONB_BUILD_OBJECT(
+                  'user_id', team_member_user_table.user_id,
+                  'user_first_name', team_member_user_table.user_first_name,
+                  'user_last_name', team_member_user_table.user_last_name,
+                  'user_avatar', team_member_user_table.user_avatar
+                )
+              )
+            )
+          ) AS memo_signer_list
+        FROM memo_schema.memo_table
+        LEFT JOIN memo_schema.memo_signer_table ON memo_signer_table.memo_signer_memo_id = memo_table.memo_id
+        LEFT JOIN team_schema.team_member_table ON team_member_table.team_member_id = memo_signer_table.memo_signer_team_member_id
+        LEFT JOIN user_schema.user_table AS team_member_user_table ON team_member_user_table.user_id = team_member_table.team_member_user_id
+        WHERE 
+        memo_id = '${memo.memo_id}'
+      `) 
+
+      return {
+        memo_author_user_id: memo.memo_author_user_id,
+        memo_date_created: memo.memo_date_created,
+        memo_date_updated: memo.memo_date_updated,
+        memo_id: memo.memo_id,
+        memo_is_disabled: memo.memo_is_disabled,
+        memo_reference_number: memo.memo_reference_number,
+        memo_status: memo.memo_status,
+        memo_subject: memo.memo_subject,
+        memo_team_id: memo.memo_team_id,
+        memo_version: memo.memo_version,
+        memo_author_user: {
+          user_id: memo.author_user_id,
+          user_avatar: memo.author_user_avatar,
+          user_first_name: memo.author_user_first_name,
+          user_last_name: memo.author_user_last_name
+        },
+        memo_signer_list: memo_signer_list[0].memo_signer_list
+      }
+    })
+
+    return_value = {data: formatMemo, count: Number(memo_count.count)}
  });
  return return_value;
 $$ LANGUAGE plv8;
