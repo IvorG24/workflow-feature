@@ -701,9 +701,9 @@ const RequestListTable = ({
               accessor: "user_id",
               title: "Requested By",
               sortable: true,
-              render: (ticket) => {
+              render: (request) => {
 
-                const { user_id, user_first_name, user_last_name, request_team_member_id} = ticket as {user_id: string, user_first_name: string, user_last_name: string, request_team_member_id: string}
+                const { user_id, user_first_name, user_last_name, request_team_member_id} = request as {user_id: string, user_first_name: string, user_last_name: string, request_team_member_id: string}
 
                 return (
                   <Flex px={0} gap={8} align='center'>

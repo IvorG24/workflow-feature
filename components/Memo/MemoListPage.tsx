@@ -348,28 +348,28 @@ const MemoListPage = ({
                 accessor: "memo_id",
                 title: "ID",
                 width: 180,
-                render: (memo) => {
+                render: ({memo_id, memo_reference_number}) => {
                   return (
                     <Flex gap="md" align="center">
                       <Text size="xs" truncate maw={150}>
                         <Anchor
                           href={`/${formatTeamNameToUrlKey(
                             activeTeam.team_name ?? ""
-                          )}/memo/${memo.memo_id}`}
+                          )}/memo/${memo_id}`}
                           target="_blank"
                           color="blue"
                         >
-                          {String(memo.memo_reference_number)}
+                          {String(memo_reference_number)}
                         </Anchor>
                       </Text>
 
-                      <CopyButton value={String(memo.memo_reference_number)}>
+                      <CopyButton value={String(memo_reference_number)}>
                         {({ copied, copy }) => (
                           <Tooltip
                             label={
                               copied
                                 ? "Copied"
-                                : `Copy ${memo.memo_reference_number}`
+                                : `Copy ${memo_reference_number}`
                             }
                             onClick={copy}
                           >
@@ -392,16 +392,15 @@ const MemoListPage = ({
                 accessor: "memo_status",
                 title: "Status",
                 sortable: true,
-                render: (memo) => {
-                  const {memo_status} = memo as {memo_status: string}
+                render: ({memo_status}) => {
                   return (
                     <Flex justify="center">
 
                     <Badge
                       variant="filled"
-                      color={getMemoStatusColor(memo_status)}
+                      color={getMemoStatusColor(String(memo_status))}
                     >
-                      {memo_status}
+                      {String(memo_status)}
                     </Badge>
                     </Flex>
                   )
@@ -455,15 +454,15 @@ const MemoListPage = ({
                 accessor: "memo_date_created",
                 title: "Date Created",
                 sortable: true,
-                render: (memo) => {
-                  if (!memo.memo_date_created) {
+                render: ({memo_date_created}) => {
+                  if (!memo_date_created) {
                     return null;
                   }
 
                   return (
                     <Flex justify="center">
                       <Text>
-                        {formatDate(new Date(String(memo.memo_date_created)))}
+                        {formatDate(new Date(String(memo_date_created)))}
                       </Text>
                     </Flex>
                   );
@@ -472,7 +471,7 @@ const MemoListPage = ({
               {
                 accessor: "memo_id" + "memo_date_created",
                 title: "View",
-                render: (ticket) => {
+                render: ({memo_id}) => {
                   return (
                     <Flex justify="center">
                       <ActionIcon
@@ -481,7 +480,7 @@ const MemoListPage = ({
                           router.push(
                             `/${formatTeamNameToUrlKey(
                               activeTeam.team_name ?? ""
-                            )}/memo/${ticket.memo_id}`
+                            )}/memo/${memo_id}`
                           )
                         }
                       >

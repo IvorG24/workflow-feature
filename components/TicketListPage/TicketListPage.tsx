@@ -268,26 +268,26 @@ const TicketListPage = ({
                 accessor: "ticket_id",
                 title: "ID",
                 width: 180,
-                render: (ticket) => {
+                render: ({ticket_id}) => {
                   return (
                     <Flex gap="md" align="center">
                       <Text size="xs" truncate maw={150}>
                         <Anchor
                           href={`/${formatTeamNameToUrlKey(
                             activeTeam.team_name ?? ""
-                          )}/tickets/${ticket.ticket_id}`}
+                          )}/tickets/${ticket_id}`}
                           target="_blank"
                           color="blue"
                         >
-                          {String(ticket.ticket_id)}
+                          {String(ticket_id)}
                         </Anchor>
                       </Text>
 
-                      <CopyButton value={String(ticket.ticket_id)}>
+                      <CopyButton value={String(ticket_id)}>
                         {({ copied, copy }) => (
                           <Tooltip
                             label={
-                              copied ? "Copied" : `Copy ${ticket.ticket_id}`
+                              copied ? "Copied" : `Copy ${ticket_id}`
                             }
                             onClick={copy}
                           >
@@ -310,15 +310,14 @@ const TicketListPage = ({
                 accessor: "ticket_status",
                 title: "Status",
                 sortable: true,
-                render: (ticket) => {
-                  const {ticket_status} = ticket as {ticket_status: string}
+                render: ({ticket_status}) => {
                   return (
                     <Flex justify="center">
                       <Badge
                         variant="filled"
-                        color={getTicketStatusColor(ticket_status)}
+                        color={getTicketStatusColor(String(ticket_status))}
                       >
-                        {ticket_status}
+                        {String(ticket_status)}
                       </Badge>
                     </Flex>
                   )
@@ -359,9 +358,8 @@ const TicketListPage = ({
               {
                 accessor: "ticket_approver_team_member_id",
                 title: "Approver",
-                render: (ticket) => {
-                  const { ticket_approver_user, ticket_status } = ticket as {ticket_status: string, ticket_approver_user: TicketApproverUserType};
-                  const { user_first_name, user_last_name, user_id, user_avatar } = ticket_approver_user ;
+                render: ({ticket_approver_user, ticket_status, ticket_approver_team_member_id}) => {
+                  const { user_first_name, user_last_name, user_id, user_avatar } = ticket_approver_user as TicketApproverUserType;
 
                   if (user_first_name === null || user_last_name === null || ticket_status === null) {
                     return null;
@@ -381,7 +379,7 @@ const TicketListPage = ({
                         ).toUpperCase()}
                       </Avatar>
                       <Anchor
-                        href={`/member/${ticket.ticket_approver_team_member_id}`}
+                        href={`/member/${ticket_approver_team_member_id}`}
                         target="_blank"
                       >
                         <Text >{`${user_first_name} ${user_last_name}`}</Text>
@@ -394,15 +392,15 @@ const TicketListPage = ({
                 accessor: "ticket_date_created",
                 title: "Date Created",
                 sortable: true,
-                render: (ticket) => {
-                  if (!ticket.ticket_date_created) {
+                render: ({ticket_date_created}) => {
+                  if (!ticket_date_created) {
                     return null;
                   }
 
                   return (
                     <Flex justify="center">
                       <Text>
-                        {formatDate(new Date(String(ticket.ticket_date_created)))}
+                        {formatDate(new Date(String(ticket_date_created)))}
                       </Text>
                     </Flex>
                   );
@@ -412,8 +410,8 @@ const TicketListPage = ({
                 accessor: "ticket_status_date_updated",
                 title: "Date Updated",
                 sortable: true,
-                render: (ticket) => {
-                  if (!ticket.ticket_status_date_updated) {
+                render: ({ticket_status_date_updated}) => {
+                  if (!ticket_status_date_updated) {
                     return null;
                   }
 
@@ -421,7 +419,7 @@ const TicketListPage = ({
                     <Flex justify="center">
                       <Text>
                         {formatDate(
-                          new Date(String(ticket.ticket_status_date_updated))
+                          new Date(String(ticket_status_date_updated))
                         )}
                       </Text>
                     </Flex>
@@ -431,7 +429,7 @@ const TicketListPage = ({
               {
                 accessor: "ticket_id" + "ticket_status_date_updated",
                 title: "View",
-                render: (ticket) => {
+                render: ({ticket_id}) => {
                   const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
                   );
@@ -441,7 +439,7 @@ const TicketListPage = ({
                         color="blue"
                         onClick={() =>
                           router.push(
-                            `/${activeTeamNameToUrlKey}/tickets/${ticket.ticket_id}`
+                            `/${activeTeamNameToUrlKey}/tickets/${ticket_id}`
                           )
                         }
                       >
