@@ -120,19 +120,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
                 : field.field_option,
             };
           }
-          if (field.field_name === "Requesting Project" && fieldResponse) {
-            return {
-              ...field,
-              field_option: field.field_option?.[0]
-                ? [
-                    {
-                      ...field.field_option[0],
-                      option_value: fieldResponse,
-                    },
-                  ]
-                : field.field_option,
-            };
-          }
           return field;
         }),
       })),
@@ -141,122 +128,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
 
     setLocalFormState(updatedForm);
   };
-  useEffect(() => {
-    if (localFormState) {
-      removeSection();
-      replaceSection(localFormState.form_section);
-      setSignerList(localFormState.form_signer);
-    } else {
-      replaceSection(form.form_section);
-      setSignerList(
-        form.form_signer.map((signer) => ({
-          ...signer,
-          signer_action: signer.signer_action.toUpperCase(),
-        }))
-      );
-    }
-  }, [form, localFormState, replaceSection]);
 
-  useEffect(() => {
-    const fetchOptions = async () => {
-      setIsLoading(true);
-      try {
-        if (!team.team_id) return;
-        let index = 0;
-        const supplierOptionlist: OptionTableRow[] = [];
-        while (1) {
-          const supplierData = await getSupplierOptions(supabaseClient, {
-            teamId: team.team_id,
-            index,
-            limit: FETCH_OPTION_LIMIT,
-          });
-          const supplierOptions = supplierData.map((supplier, index) => {
-            return {
-              option_field_id: form.form_section[1].section_field[0].field_id,
-              option_id: supplier.supplier_id,
-              option_order: index,
-              option_value: supplier.supplier,
-            };
-          });
-          supplierOptionlist.push(...supplierOptions);
-
-          if (supplierOptions.length < FETCH_OPTION_LIMIT) break;
-          index += FETCH_OPTION_LIMIT;
-        }
-        setPreferredSupplierOptions(supplierOptionlist);
-        if (!localStorage.getItem(`${formId}`)) {
-          replaceSection([
-            form.form_section[0],
-            {
-              ...form.form_section[1],
-              section_field: [
-                ...form.form_section[1].section_field.slice(0, 4),
-                {
-                  ...form.form_section[1].section_field[9],
-                  field_option: supplierOptionlist,
-                },
-              ],
-            },
-          ]);
-        } else {
-          const newSections =
-            localFormState?.form_section.map((section, sectionIndex) => {
-              const categoryOption =
-                form.form_section[1]?.section_field[0].field_option;
-              const unitOption =
-                form.form_section[1]?.section_field[3].field_option;
-
-              return {
-                ...section,
-                section_field: section.section_field.map(
-                  (field, fieldIndex) => {
-                    const fieldName =
-                      localFormState.form_section[sectionIndex].section_field[
-                        fieldIndex
-                      ].field_name;
-
-                    let newFieldOption = field.field_option;
-                    switch (fieldName) {
-                      case "Preferred Supplier":
-                        newFieldOption = supplierOptionlist;
-                        break;
-                      case "Category":
-                        newFieldOption = categoryOption;
-                        break;
-                      case "Requesting Project":
-                        newFieldOption = projectOptions;
-                        break;
-                      case "Measurement":
-                        newFieldOption = unitOption;
-                        break;
-                      default:
-                        break;
-                    }
-
-                    return {
-                      ...field,
-                      field_option: newFieldOption,
-                    };
-                  }
-                ),
-              };
-            }) || [];
-          replaceSection(newSections);
-        }
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchOptions();
-  }, [team, formId, replaceSection, localFormState]);
-  useBeforeunload(() => saveToLocalStorage());
-
-  useSaveToLocalStorage({ saveToLocalStorage });
   const handleCreateRequest = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
       notifications.show({
@@ -401,6 +273,137 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       setIsFetchingSigner(false);
     }
   };
+
+  useEffect(() => {
+    if (localFormState) {
+      removeSection();
+      replaceSection(localFormState.form_section);
+      setSignerList(localFormState.form_signer);
+    } else {
+      replaceSection(form.form_section);
+      setSignerList(
+        form.form_signer.map((signer) => ({
+          ...signer,
+          signer_action: signer.signer_action.toUpperCase(),
+        }))
+      );
+    }
+  }, [form, localFormState, replaceSection]);
+
+  useEffect(() => {
+    const resetLocalStorage = async () => {
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      if (!session) {
+        removeLocalState();
+      }
+    };
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      try {
+        if (!team.team_id) return;
+        let index = 0;
+        const supplierOptionlist: OptionTableRow[] = [];
+        while (1) {
+          const supplierData = await getSupplierOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const supplierOptions = supplierData.map((supplier, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: supplier.supplier_id,
+              option_order: index,
+              option_value: supplier.supplier,
+            };
+          });
+          supplierOptionlist.push(...supplierOptions);
+
+          if (supplierOptions.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setPreferredSupplierOptions(supplierOptionlist);
+        if (!localStorage.getItem(`${formId}`)) {
+          replaceSection([
+            form.form_section[0],
+            {
+              ...form.form_section[1],
+              section_field: [
+                ...form.form_section[1].section_field.slice(0, 4),
+                {
+                  ...form.form_section[1].section_field[9],
+                  field_option: supplierOptionlist,
+                },
+              ],
+            },
+          ]);
+        } else {
+          const newSections =
+            localFormState?.form_section.map((section, sectionIndex) => {
+              const categoryOption =
+                form.form_section[1]?.section_field[0].field_option;
+              const unitOption =
+                form.form_section[1]?.section_field[3].field_option;
+
+              return {
+                ...section,
+                section_field: section.section_field.map(
+                  (field, fieldIndex) => {
+                    const fieldName =
+                      localFormState.form_section[sectionIndex].section_field[
+                        fieldIndex
+                      ].field_name;
+
+                    let newFieldOption = field.field_option;
+                    switch (fieldName) {
+                      case "Preferred Supplier":
+                        newFieldOption = supplierOptionlist;
+                        break;
+                      case "Category":
+                        newFieldOption = categoryOption;
+                        break;
+                      case "Requesting Project":
+                        newFieldOption = projectOptions;
+                        break;
+                      case "Unit of Measurement":
+                        newFieldOption = unitOption;
+                        break;
+                      default:
+                        break;
+                    }
+
+                    return {
+                      ...field,
+                      field_option: newFieldOption,
+                    };
+                  }
+                ),
+              };
+            }) || [];
+
+          const requestProjectValue = localFormState?.form_section[0]
+            .section_field[0].field_response as string | null;
+          handleProjectNameChange(requestProjectValue);
+          replaceSection(newSections);
+        }
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOptions();
+    resetLocalStorage();
+  }, [team, formId, replaceSection, localFormState, removeLocalState]);
+  useBeforeunload(() => saveToLocalStorage());
+
+  useSaveToLocalStorage({ saveToLocalStorage });
 
   return (
     <Container>
