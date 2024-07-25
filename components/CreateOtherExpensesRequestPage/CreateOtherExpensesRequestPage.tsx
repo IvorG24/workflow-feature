@@ -366,6 +366,15 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
     }
   }, [form, localFormState, replaceSection]);
   useEffect(() => {
+    const resetLocalStorage = async () => {
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      if (!session) {
+        removeLocalState();
+      }
+    };
     const fetchOptions = async () => {
       setIsLoading(true);
       try {
@@ -479,8 +488,9 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
         setIsLoading(false);
       }
     };
+    resetLocalStorage();
     fetchOptions();
-  }, [team, replaceSection, formId, localFormState]);
+  }, [team, replaceSection, formId, localFormState, removeLocalState]);
 
   useBeforeunload(() => saveToLocalStorage());
   useSaveToLocalStorage({ saveToLocalStorage });
