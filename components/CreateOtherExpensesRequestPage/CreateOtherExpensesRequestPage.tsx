@@ -464,19 +464,19 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
                 ),
               };
             }) || [];
+          const projectRequest = localFormState?.form_section[0]
+            .section_field[0].field_response as string | null;
+          handleProjectNameChange(projectRequest);
           removeSection();
           replaceSection(newSections);
           localFormState?.form_section.forEach((section, index) => {
             if (index === 0) return;
             const categoryField = section.section_field[0];
             const category = categoryField.field_response as string | null;
-            const projectRequest = localFormState?.form_section[0]
-              .section_field[0].field_response as string | null;
 
             if (!category) return;
 
             handleCategoryChange(index, category);
-            handleProjectNameChange(projectRequest);
           });
         }
       } catch (e) {
