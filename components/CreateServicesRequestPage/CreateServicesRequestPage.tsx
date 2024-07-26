@@ -387,6 +387,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
           const requestProjectValue = localFormState?.form_section[0]
             .section_field[0].field_response as string | null;
           handleProjectNameChange(requestProjectValue);
+          removeSection();
           replaceSection(newSections);
         }
       } catch (e) {
