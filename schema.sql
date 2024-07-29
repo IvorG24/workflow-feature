@@ -13781,7 +13781,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13800,7 +13800,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13820,7 +13820,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13842,7 +13842,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13859,7 +13859,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13879,7 +13879,7 @@ WITH CHECK (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13901,7 +13901,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13918,7 +13918,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13937,7 +13937,7 @@ WITH CHECK (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13958,7 +13958,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13974,7 +13974,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13991,7 +13991,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14010,7 +14010,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14024,7 +14024,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14044,7 +14044,7 @@ WITH CHECK (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14066,7 +14066,7 @@ USING (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14083,7 +14083,7 @@ USING (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14104,7 +14104,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14126,7 +14126,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
@@ -14144,7 +14144,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14164,7 +14164,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14187,7 +14187,7 @@ USING (
   ) = (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14205,7 +14205,7 @@ USING (
   ) = (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14226,7 +14226,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14249,7 +14249,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14267,7 +14267,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14283,7 +14283,7 @@ WITH CHECK (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14301,7 +14301,7 @@ USING (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14314,7 +14314,7 @@ USING (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14340,9 +14340,9 @@ TO authenticated
 USING (
   team_member_team_id IN (
     SELECT team_member_team_id FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
-  ) OR team_member_user_id = auth.uid()
+  ) OR team_member_user_id = (SELECT auth.uid())
 );
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table;
@@ -14352,7 +14352,7 @@ TO authenticated
 USING (
   team_member_team_id IN (
     SELECT team_member_team_id FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14375,14 +14375,14 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on team_member
 CREATE POLICY "Allow UPDATE for authenticated users based on team_member_id" ON request_schema.comment_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()))
-WITH CHECK (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
+USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())))
+WITH CHECK (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())));
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on team_member_id" ON request_schema.comment_table;
 CREATE POLICY "Allow DELETE for authenticated users based on team_member_id" ON request_schema.comment_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
+USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())));
 
 --- user_schema.invitation_table
 ALTER TABLE user_schema.invitation_table ENABLE ROW LEVEL SECURITY;
@@ -14401,7 +14401,7 @@ USING (
   invitation_to_email = (
     SELECT user_email 
     FROM user_schema.user_table 
-    WHERE user_id = auth.uid()
+    WHERE user_id = (SELECT auth.uid())
   )
   OR EXISTS (
     SELECT 1
@@ -14413,7 +14413,7 @@ USING (
       AND team_member_is_disabled = FALSE
       LIMIT 1
     )
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14433,12 +14433,12 @@ USING (
       AND team_member_is_disabled = FALSE
       LIMIT 1
     )
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR invitation_to_email = (
     SELECT user_email 
     FROM user_schema.user_table 
-    WHERE user_id = auth.uid()
+    WHERE user_id = (SELECT auth.uid())
   )
 )
 WITH CHECK (
@@ -14452,12 +14452,12 @@ WITH CHECK (
       AND team_member_is_disabled = FALSE
       LIMIT 1
     )
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR invitation_to_email = (
     SELECT user_email 
     FROM user_schema.user_table 
-    WHERE user_id = auth.uid()
+    WHERE user_id = (SELECT auth.uid())
   )
 );
 
@@ -14465,7 +14465,7 @@ DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_memb
 CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON user_schema.invitation_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
+USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())));
 
 --- notification_table
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
@@ -14480,14 +14480,14 @@ DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" 
 CREATE POLICY "Allow READ for authenticated users on own notifications" ON notification_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
-USING (auth.uid() = notification_user_id);
+USING ((SELECT auth.uid()) = notification_user_id);
 
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on notification_user_id" ON notification_table;
 CREATE POLICY "Allow UPDATE for authenticated users on notification_user_id" ON notification_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (auth.uid() = notification_user_id)
-WITH CHECK (auth.uid() = notification_user_id);
+USING ((SELECT auth.uid()) = notification_user_id)
+WITH CHECK ((SELECT auth.uid()) = notification_user_id);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON notification_table;
 CREATE POLICY "Allow DELETE for authenticated users" ON notification_table
@@ -14522,7 +14522,7 @@ USING (
   ) IN (
     SELECT team_member_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 )
 WITH CHECK (
@@ -14533,7 +14533,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   ) 
 );
 
@@ -14550,13 +14550,13 @@ USING (
   ) IN (
     SELECT tmt.team_member_id
     FROM team_schema.team_member_table AS tmt
-    WHERE tmt.team_member_user_id = auth.uid()
+    WHERE tmt.team_member_user_id = (SELECT auth.uid())
   ) OR EXISTS (
     SELECT 1
     FROM team_schema.team_group_member_table AS tgm
     INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id
     INNER JOIN team_schema.team_group_table AS tg ON tg.team_group_id = tgm.team_group_id
-    WHERE tmt.team_member_user_id = auth.uid()
+    WHERE tmt.team_member_user_id = (SELECT auth.uid())
     AND tg.team_group_name IN ('COST ENGINEER', 'ACCOUNTANT')
   )
 );
@@ -14583,7 +14583,7 @@ USING (
   request_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   ) OR (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
@@ -14591,7 +14591,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
 )
@@ -14599,7 +14599,7 @@ WITH CHECK (
   request_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   ) OR (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
@@ -14607,7 +14607,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
@@ -14620,7 +14620,7 @@ USING (
   request_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14643,14 +14643,14 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON tea
 CREATE POLICY "Allow UPDATE for authenticated users on own teams" ON team_schema.team_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (auth.uid() = team_user_id)
-WITH CHECK (auth.uid() = team_user_id);
+USING ((SELECT auth.uid()) = team_user_id)
+WITH CHECK ((SELECT auth.uid()) = team_user_id);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own teams" ON team_schema.team_table;
 CREATE POLICY "Allow DELETE for authenticated users on own teams" ON team_schema.team_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (auth.uid() = team_user_id);
+USING ((SELECT auth.uid()) = team_user_id);
 
 --- user_schema.user_table
 ALTER TABLE user_schema.user_table ENABLE ROW LEVEL SECURITY;
@@ -14670,14 +14670,14 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON
 CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING ((SELECT auth.uid()) = user_id)
+WITH CHECK ((SELECT auth.uid()) = user_id);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table;
 CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (auth.uid() = user_id);
+USING ((SELECT auth.uid()) = user_id);
 
 --- form_schema.form_team_group_table
 ALTER TABLE form_schema.form_team_group_table ENABLE ROW LEVEL SECURITY;
@@ -14692,7 +14692,7 @@ WITH CHECK (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14707,7 +14707,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14721,7 +14721,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 )
@@ -14731,7 +14731,7 @@ WITH CHECK (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14746,7 +14746,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14764,7 +14764,7 @@ WITH CHECK (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14779,7 +14779,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14793,7 +14793,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 )
@@ -14803,7 +14803,7 @@ WITH CHECK (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14818,7 +14818,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14834,9 +14834,9 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14849,9 +14849,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
   ) 
 );
 
@@ -14863,9 +14863,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 )
@@ -14873,9 +14873,9 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14888,9 +14888,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14908,7 +14908,7 @@ WITH CHECK (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14923,7 +14923,7 @@ USING (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14937,7 +14937,7 @@ USING (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 )
@@ -14947,7 +14947,7 @@ WITH CHECK (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14962,7 +14962,7 @@ USING (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14978,9 +14978,9 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14998,9 +14998,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 )
@@ -15008,9 +15008,9 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -15023,9 +15023,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15059,7 +15059,7 @@ USING (
   ticket_requester_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -15092,7 +15092,7 @@ USING (
   ticket_comment_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -15111,7 +15111,7 @@ WITH CHECK (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15133,7 +15133,7 @@ USING (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15150,7 +15150,7 @@ USING (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15169,13 +15169,13 @@ WITH CHECK (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_table;
-CREATE POLICY "Allow READ access for anon users" ON service_schema.service_scope_table
+DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_scope_table;
+CREATE POLICY "Allow READ for anon users" ON service_schema.service_scope_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
@@ -15190,7 +15190,7 @@ USING (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15206,7 +15206,7 @@ USING (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15223,13 +15223,13 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_table;
-CREATE POLICY "Allow READ access for anon users" ON service_schema.service_table
+DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_table;
+CREATE POLICY "Allow READ for anon users" ON service_schema.service_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
@@ -15242,7 +15242,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15256,7 +15256,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15275,7 +15275,7 @@ WITH CHECK (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15296,7 +15296,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15312,7 +15312,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15333,7 +15333,7 @@ WITH CHECK (
     JOIN team_schema.team_table ON team_id = item_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15356,7 +15356,7 @@ USING (
     JOIN team_schema.team_table ON team_id = item_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15374,7 +15374,7 @@ USING (
     JOIN team_schema.team_table ON team_id = item_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15460,7 +15460,7 @@ WITH CHECK (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15480,7 +15480,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15495,7 +15495,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15513,7 +15513,7 @@ WITH CHECK (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15533,7 +15533,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15548,7 +15548,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15579,7 +15579,7 @@ CREATE POLICY "Allow DELETE for auth users on own memo" ON memo_schema.memo_tabl
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
-  memo_author_user_id = auth.uid()
+  memo_author_user_id = (SELECT auth.uid())
 );
 
 --- memo_schema.memo_signer_table
@@ -15642,7 +15642,7 @@ USING (
     SELECT 1
     FROM memo_schema.memo_table
     WHERE memo_id = memo_date_updated_memo_id
-    AND memo_author_user_id = auth.uid()
+    AND memo_author_user_id = (SELECT auth.uid())
   )
 );
 
@@ -15676,7 +15676,7 @@ USING (
     SELECT 1
     FROM memo_schema.memo_table
     WHERE memo_id = memo_status_memo_id
-    AND memo_author_user_id = auth.uid()
+    AND memo_author_user_id = (SELECT auth.uid())
   )
 );
 
@@ -15742,7 +15742,7 @@ WITH CHECK (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15762,7 +15762,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15778,7 +15778,7 @@ USING (
     JOIN team_schema.team_table ON other_expenses_category_team_id = team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15797,7 +15797,7 @@ WITH CHECK (
     JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15818,7 +15818,7 @@ USING (
     JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15834,7 +15834,7 @@ USING (
     JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15852,7 +15852,7 @@ WITH CHECK (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15872,7 +15872,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15887,7 +15887,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15906,7 +15906,7 @@ WITH CHECK (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15927,7 +15927,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15943,7 +15943,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16151,7 +16151,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16170,7 +16170,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16184,7 +16184,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16201,7 +16201,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16220,7 +16220,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16234,7 +16234,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16251,7 +16251,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16270,7 +16270,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16284,7 +16284,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16301,7 +16301,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16320,7 +16320,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16334,7 +16334,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16351,7 +16351,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16370,7 +16370,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16384,7 +16384,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16403,7 +16403,7 @@ WITH CHECK (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16424,7 +16424,7 @@ USING (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16440,7 +16440,7 @@ USING (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16457,7 +16457,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16476,7 +16476,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16490,7 +16490,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16507,7 +16507,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16526,7 +16526,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16540,7 +16540,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16559,7 +16559,7 @@ WITH CHECK (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16580,7 +16580,7 @@ USING (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16596,7 +16596,7 @@ USING (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16613,7 +16613,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16632,7 +16632,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16646,7 +16646,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16689,7 +16689,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16706,7 +16706,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16749,7 +16749,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16766,7 +16766,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16783,7 +16783,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16801,7 +16801,7 @@ USING (true);
 ALTER TABLE jira_schema.jira_item_user_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table;
-CREATE POLICY "Allow CRUD for authenticated users " ON jira_schema.jira_item_user_table
+CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
@@ -16843,7 +16843,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16860,7 +16860,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16877,7 +16877,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16899,7 +16899,7 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16913,7 +16913,7 @@ USING (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16927,7 +16927,7 @@ USING (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16952,7 +16952,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE 
-      team_member_user_id = auth.uid()
+      team_member_user_id = (SELECT auth.uid())
       AND team_member_role IN ('OWNER', 'ADMIN')
       AND team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
   )
@@ -16972,7 +16972,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE 
-      team_member_user_id = auth.uid()
+      team_member_user_id = (SELECT auth.uid())
       AND team_member_role IN ('OWNER', 'ADMIN')
       AND team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
   )
@@ -16994,7 +16994,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -17017,7 +17017,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -17049,45 +17049,6 @@ AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
---- service_schema.service_table
-ALTER TABLE service_schema.service_table ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
-AS PERMISSIVE FOR INSERT
-TO authenticated
-WITH CHECK (
-  EXISTS (
-    SELECT 1
-    FROM team_schema.team_member_table
-    WHERE 
-      team_member_user_id = auth.uid()
-      AND team_member_role IN ('OWNER', 'ADMIN')
-      AND team_member_team_id = service_team_id
-  )
-);
-
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_table;
-CREATE POLICY "Allow READ for authenticated users" ON service_schema.service_table
-AS PERMISSIVE FOR SELECT
-TO authenticated
-USING (true);
-
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
-AS PERMISSIVE FOR UPDATE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1
-    FROM team_schema.team_member_table
-    WHERE 
-      team_member_user_id = auth.uid()
-      AND team_member_role IN ('OWNER', 'ADMIN')
-      AND team_member_team_id = service_team_id
-  )
-);
-
 --- service_schema.service_scope_table
 ALTER TABLE service_schema.service_scope_table ENABLE ROW LEVEL SECURITY;
 
@@ -17103,7 +17064,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -17126,7 +17087,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -17147,7 +17108,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -17171,7 +17132,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -17188,7 +17149,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE 
-      team_member_user_id = auth.uid()
+      team_member_user_id = (SELECT auth.uid())
       AND team_member_role IN ('OWNER')
       AND team_member_team_id = team_transaction_team_id
   )
