@@ -945,16 +945,20 @@ CREATE TABLE lookup_schema.bank_list_table (
 
 CREATE OR REPLACE FUNCTION get_current_date()
 RETURNS TIMESTAMPTZ
+SET search_path TO ''
 AS $$
 BEGIN
     RETURN NOW();
 END;
 $$ LANGUAGE plpgsql;
 
+
 CREATE OR REPLACE FUNCTION get_ssot(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let ssot_data;
 plv8.subtransaction(function(){
   const {
@@ -1271,7 +1275,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_user(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let user_data;
   plv8.subtransaction(function(){
     const {
@@ -1304,7 +1310,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_request(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let request_data;
   plv8.subtransaction(function(){
     const {
@@ -1417,7 +1425,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION edit_request(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let request_data;
   plv8.subtransaction(function(){
     const {
@@ -1463,7 +1473,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION approve_or_reject_request(
   input_data JSON
 )
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
   let request_status;
   plv8.subtransaction(function(){
     const {
@@ -1600,7 +1612,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       formValues,
@@ -1626,7 +1640,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let item_data;
   plv8.subtransaction(function(){
     const {
@@ -1734,7 +1750,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let item_data;
   plv8.subtransaction(function(){
     const {
@@ -1886,7 +1904,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_service(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let item_data;
   plv8.subtransaction(function(){
     const {
@@ -1950,7 +1970,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_team_invitation(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let invitation_data;
   plv8.subtransaction(function(){
     const {
@@ -2030,7 +2052,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_user_active_team_id(
   user_id TEXT
 )
-RETURNS TEXT as $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
   let active_team_id;
   plv8.subtransaction(function(){
     const user_data = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${user_id}' LIMIT 1`)[0];
@@ -2051,7 +2075,9 @@ CREATE OR REPLACE FUNCTION check_item_form_status(
   team_id TEXT,
   form_id TEXT
 )
-RETURNS Text as $$
+RETURNS Text 
+SET search_path TO ''
+AS $$
   let return_data;
   plv8.subtransaction(function(){
 
@@ -2076,7 +2102,9 @@ CREATE OR REPLACE FUNCTION check_subcon_form_status(
   team_id TEXT,
   form_id TEXT
 )
-RETURNS Text as $$
+RETURNS Text 
+SET search_path TO ''
+AS $$
   let return_data;
   plv8.subtransaction(function(){
 
@@ -2101,7 +2129,9 @@ CREATE OR REPLACE FUNCTION transfer_ownership(
   owner_id TEXT,
   member_id TEXT
 )
-RETURNS VOID  as $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
 
     plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
@@ -2114,7 +2144,9 @@ CREATE OR REPLACE FUNCTION accept_team_invitation(
   team_id TEXT,
   user_id TEXT
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let user_team_list
   plv8.subtransaction(function(){
 
@@ -2150,7 +2182,9 @@ CREATE OR REPLACE FUNCTION cancel_request(
   comment_type TEXT,
   comment_content TEXT
 )
-RETURNS VOID as $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     plv8.execute(`UPDATE request_schema.request_table SET request_status='CANCELED', request_status_date_updated = NOW() WHERE request_id='${request_id}'`);
     plv8.execute(`INSERT INTO request_schema.comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${request_id}', '${member_id}','${comment_type}', '${comment_content}')`);
@@ -2160,7 +2194,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_request_form(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let form_data;
   plv8.subtransaction(function(){
     const {
@@ -2250,7 +2286,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_all_notification(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let notification_data;
   plv8.subtransaction(function(){
     const {
@@ -2278,7 +2316,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_form_signer(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let signer_data;
   plv8.subtransaction(function(){
     const {
@@ -2305,616 +2345,626 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_item_quantity(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-            itemID,
-            itemFieldList,
-            quantityFieldList
-        } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let item_data
+  plv8.subtransaction(function(){
+    const {
+      itemID,
+      itemFieldList,
+      quantityFieldList
+    } = input_data;
 
-        const request = plv8.execute(
-            `
-              SELECT request_response_table.* 
-              FROM request_schema.request_response_table 
-              INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-              INNER JOIN form_schema.form_table ON request_form_id = form_id 
-              WHERE 
-                request_status = 'APPROVED'
-                AND request_response = '${itemID}' 
-                AND form_is_formsly_form = true 
-                AND (form_name = 'Quotation' OR form_name = 'Sourced Item')
-            `
-        );
-        
-        let requestResponse = []
-        if(request.length > 0) {
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
+    const request = plv8.execute(
+      `
+        SELECT request_response_table.* 
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
+        INNER JOIN form_schema.form_table ON request_form_id = form_id 
+        WHERE 
+          request_status = 'APPROVED'
+          AND request_response = '${itemID}' 
+          AND form_is_formsly_form = true 
+          AND (form_name = 'Quotation' OR form_name = 'Sourced Item')
+      `
+    );
+    
+    let requestResponse = []
+    if(request.length > 0) {
+      const requestIdList = request.map(
+          (response) => `'${response.request_response_request_id}'`
+      ).join(",");
 
-            requestResponse = plv8.execute(
-                `
-                  SELECT 
-                    request_response_table.*, 
-                    field_name 
-                  FROM request_schema.request_response_table 
-                  INNER JOIN form_schema.field_table ON field_id = request_response_field_id 
-                  WHERE 
-                    (
-                      field_name = 'Quantity' 
-                      OR field_name = 'Item'
-                    ) 
-                    AND request_response_request_id IN (${requestIdList})
-                  ORDER BY request_response_duplicatable_section_id ASC
-                `
-            );
-        }
+      requestResponse = plv8.execute(
+        `
+          SELECT 
+            request_response_table.*, 
+            field_name 
+          FROM request_schema.request_response_table 
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id 
+          WHERE 
+            (
+              field_name = 'Quantity' 
+              OR field_name = 'Item'
+            ) 
+            AND request_response_request_id IN (${requestIdList})
+          ORDER BY request_response_duplicatable_section_id ASC
+        `
+      );
+    }
 
-        const requestResponseItem = [];
-        const requestResponseQuantity = [];
+    const requestResponseItem = [];
+    const requestResponseQuantity = [];
 
-        requestResponse.forEach((response) => {
-            if (response.field_name === "Item") {
-                requestResponseItem.push(response);
-            } else if (response.field_name === "Quantity") {
-                requestResponseQuantity.push(response);
-            }
-        });
-
-        requestResponseItem.push(...itemFieldList);
-        requestResponseQuantity.push(...quantityFieldList);
-
-        const itemList = [];
-        const quantityList = [];
-
-        const descriptionMatcher = (options, currentItem) => {
-            const regex = /\(([^()]+)\)/g;
-            let returnData = "";
-            for (const option of options) {
-              const currentItemResult = currentItem.match(regex);
-              const currentItemIndex = currentItem.indexOf("(");
-              const currentItemGeneralName = currentItem.slice(0, currentItemIndex - 1);
-              const currentItemDescriptionList =
-                currentItemResult && currentItemResult[1].slice(1, -1).split(", ");
-        
-              const optionIndex = option.indexOf("(");
-              const optionGeneralName = option.slice(0, optionIndex - 1);
-        
-              if (
-                currentItemGeneralName === optionGeneralName &&
-                currentItemDescriptionList
-              ) {
-                let match = true;
-                for (const description of currentItemDescriptionList) {
-                  if (!option.includes(description)) {
-                    match = false;
-                    break;
-                  }
-                }
-                if (match) {
-                  returnData = option;
-                  break;
-                }
-              }
-            }
-            return returnData;
-        };
-        
-  
-        for (let i = 0; i < requestResponseItem.length; i++) {
-            const currentItem = descriptionMatcher(itemList, requestResponseItem[i].request_response) || requestResponseItem[i].request_response;
-            if (itemList.includes(currentItem)) {
-                const quantityIndex = itemList.indexOf(currentItem);
-                quantityList[quantityIndex] += Number(
-                    requestResponseQuantity[i].request_response
-                );
-            } else {
-                itemList.push(currentItem);
-                quantityList.push(Number(requestResponseQuantity[i].request_response));
-            }
-        }
-
-        const returnData = [];
-        const regExp = /\(([^)]+)\)/;
-        for (let i = 0; i < itemList.length; i++) {
-            const matches = regExp.exec(itemList[i]);
-            if (!matches) continue;
-
-            const quantityMatch = matches[1].match(/(\d+)/);
-            if (!quantityMatch) continue;
-
-            const expectedQuantity = Number(quantityMatch[1]);
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            if (quantityList[i] > expectedQuantity) {
-            const quantityMatch = itemList[i].match(/(\d+)/);
-            if (!quantityMatch) return;
-
-            returnData.push(
-                `${JSON.parse(
-                itemList[i].replace(
-                    quantityMatch[1],
-                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                )
-                )} exceeds quantity limit by ${(
-                quantityList[i] - expectedQuantity
-                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-            );
-            }
-        }
-        item_data = returnData;
-        
+    requestResponse.forEach((response) => {
+      if (response.field_name === "Item") {
+        requestResponseItem.push(response);
+      } else if (response.field_name === "Quantity") {
+        requestResponseQuantity.push(response);
+      }
     });
-    return item_data;
+
+    requestResponseItem.push(...itemFieldList);
+    requestResponseQuantity.push(...quantityFieldList);
+
+    const itemList = [];
+    const quantityList = [];
+
+    const descriptionMatcher = (options, currentItem) => {
+      const regex = /\(([^()]+)\)/g;
+      let returnData = "";
+      for (const option of options) {
+        const currentItemResult = currentItem.match(regex);
+        const currentItemIndex = currentItem.indexOf("(");
+        const currentItemGeneralName = currentItem.slice(0, currentItemIndex - 1);
+        const currentItemDescriptionList =
+          currentItemResult && currentItemResult[1].slice(1, -1).split(", ");
+  
+        const optionIndex = option.indexOf("(");
+        const optionGeneralName = option.slice(0, optionIndex - 1);
+  
+        if (
+          currentItemGeneralName === optionGeneralName &&
+          currentItemDescriptionList
+        ) {
+          let match = true;
+          for (const description of currentItemDescriptionList) {
+            if (!option.includes(description)) {
+              match = false;
+              break;
+            }
+          }
+          if (match) {
+            returnData = option;
+            break;
+          }
+        }
+      }
+      return returnData;
+    };
+    
+
+    for (let i = 0; i < requestResponseItem.length; i++) {
+      const currentItem = descriptionMatcher(itemList, requestResponseItem[i].request_response) || requestResponseItem[i].request_response;
+      if (itemList.includes(currentItem)) {
+        const quantityIndex = itemList.indexOf(currentItem);
+        quantityList[quantityIndex] += Number(
+            requestResponseQuantity[i].request_response
+        );
+      } else {
+        itemList.push(currentItem);
+        quantityList.push(Number(requestResponseQuantity[i].request_response));
+      }
+    }
+
+    const returnData = [];
+    const regExp = /\(([^)]+)\)/;
+    for (let i = 0; i < itemList.length; i++) {
+      const matches = regExp.exec(itemList[i]);
+      if (!matches) continue;
+
+      const quantityMatch = matches[1].match(/(\d+)/);
+      if (!quantityMatch) continue;
+
+      const expectedQuantity = Number(quantityMatch[1]);
+      const unit = matches[1].replace(/\d+/g, "").trim();
+
+      if (quantityList[i] > expectedQuantity) {
+      const quantityMatch = itemList[i].match(/(\d+)/);
+      if (!quantityMatch) return;
+
+      returnData.push(
+        `${JSON.parse(
+        itemList[i].replace(
+          quantityMatch[1],
+          Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        )
+        )} exceeds quantity limit by ${(
+          quantityList[i] - expectedQuantity
+        ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+      );
+      }
+    }
+    item_data = returnData;
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_ro_item_quantity(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-            sourcedItemId,
-            itemFieldId,
-            quantityFieldId,
-            itemFieldList,
-            quantityFieldList
-        } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let item_data
+  plv8.subtransaction(function(){
+    const {
+      sourcedItemId,
+      itemFieldId,
+      quantityFieldId,
+      itemFieldList,
+      quantityFieldList
+    } = input_data;
 
-        const request = plv8.execute(
-            `
-              SELECT request_response_table.* 
-              FROM request_schema.request_response_table 
-              INNER JOIN request_schema.request_table ON request_response_request_id = request_id
-              INNER JOIN form_schema.form_table ON request_form_id = form_id 
-              WHERE 
-                request_table.request_status = 'APPROVED' 
-                AND request_response = '${sourcedItemId}' 
-                AND form_is_formsly_form = true 
-                AND form_name = 'Release Order'
-            `
-        );
-        
-        let requestResponse = []
-        if(request.length > 0) {
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
+    const request = plv8.execute(
+      `
+        SELECT request_response_table.* 
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_response_request_id = request_id
+        INNER JOIN form_schema.form_table ON request_form_id = form_id 
+        WHERE 
+          request_table.request_status = 'APPROVED' 
+          AND request_response = '${sourcedItemId}' 
+          AND form_is_formsly_form = true 
+          AND form_name = 'Release Order'
+      `
+    );
+      
+    let requestResponse = []
+    if(request.length > 0) {
+      const requestIdList = request.map(
+        (response) => `'${response.request_response_request_id}'`
+      ).join(",");
 
-            requestResponse = plv8.execute(
-                `
-                  SELECT * FROM request_schema.request_response_table 
-                  WHERE 
-                    (
-                      request_response_field_id = '${itemFieldId}' 
-                      OR request_response_field_id = '${quantityFieldId}'
-                    ) 
-                    AND request_response_request_id IN (${requestIdList})
-                  ORDER BY request_response_duplicatable_section_id ASC
-                `
-            );
-        }
+      requestResponse = plv8.execute(
+        `
+          SELECT * FROM request_schema.request_response_table 
+          WHERE 
+            (
+              request_response_field_id = '${itemFieldId}' 
+              OR request_response_field_id = '${quantityFieldId}'
+            ) 
+            AND request_response_request_id IN (${requestIdList})
+          ORDER BY request_response_duplicatable_section_id ASC
+        `
+      );
+    }
 
-        const requestResponseItem = [];
-        const requestResponseQuantity = [];
+    const requestResponseItem = [];
+    const requestResponseQuantity = [];
 
-        requestResponse.forEach((response) => {
-            if (response.request_response_field_id === itemFieldId) {
-              requestResponseItem.push(response);
-            } else if (response.request_response_field_id === quantityFieldId) {
-              requestResponseQuantity.push(response);
-            }
-        });
-
-        requestResponseItem.push(...itemFieldList);
-        requestResponseQuantity.push(...quantityFieldList);
-
-        const itemList = [];
-        const quantityList = [];
-
-        for (let i = 0; i < requestResponseItem.length; i++) {
-            if (itemList.includes(requestResponseItem[i].request_response)) {
-                const quantityIndex = itemList.indexOf(requestResponseItem[i].request_response);
-                quantityList[quantityIndex] += Number(requestResponseQuantity[i].request_response);
-            } else {
-                itemList.push(requestResponseItem[i].request_response);
-                quantityList.push(Number(requestResponseQuantity[i].request_response));
-            }
-        }
-
-        const returnData = [];
-        const regExp = /\(([^)]+)\)/;
-        for (let i = 0; i < itemList.length; i++) {
-            const matches = regExp.exec(itemList[i]);
-            if (!matches) continue;
-
-            const quantityMatch = matches[1].match(/(\d+)/);
-            if (!quantityMatch) continue;
-
-            const expectedQuantity = Number(quantityMatch[1]);
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            if (quantityList[i] > expectedQuantity) {
-                const quantityMatch = itemList[i].match(/(\d+)/);
-                if (!quantityMatch) return;
-
-                returnData.push(
-                    `${JSON.parse(
-                    itemList[i].replace(
-                        quantityMatch[1],
-                        Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    )
-                    )} exceeds quantity limit by ${(
-                        quantityList[i] - expectedQuantity
-                    ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-                );
-            }
-        }
-        item_data = returnData
+    requestResponse.forEach((response) => {
+      if (response.request_response_field_id === itemFieldId) {
+        requestResponseItem.push(response);
+      } else if (response.request_response_field_id === quantityFieldId) {
+        requestResponseQuantity.push(response);
+      }
     });
-    return item_data;
+
+    requestResponseItem.push(...itemFieldList);
+    requestResponseQuantity.push(...quantityFieldList);
+
+    const itemList = [];
+    const quantityList = [];
+
+    for (let i = 0; i < requestResponseItem.length; i++) {
+      if (itemList.includes(requestResponseItem[i].request_response)) {
+        const quantityIndex = itemList.indexOf(requestResponseItem[i].request_response);
+        quantityList[quantityIndex] += Number(requestResponseQuantity[i].request_response);
+      } else {
+        itemList.push(requestResponseItem[i].request_response);
+        quantityList.push(Number(requestResponseQuantity[i].request_response));
+      }
+    }
+
+    const returnData = [];
+    const regExp = /\(([^)]+)\)/;
+    for (let i = 0; i < itemList.length; i++) {
+      const matches = regExp.exec(itemList[i]);
+      if (!matches) continue;
+
+      const quantityMatch = matches[1].match(/(\d+)/);
+      if (!quantityMatch) continue;
+
+      const expectedQuantity = Number(quantityMatch[1]);
+      const unit = matches[1].replace(/\d+/g, "").trim();
+
+      if (quantityList[i] > expectedQuantity) {
+        const quantityMatch = itemList[i].match(/(\d+)/);
+        if (!quantityMatch) return;
+
+        returnData.push(
+          `${JSON.parse(
+          itemList[i].replace(
+            quantityMatch[1],
+            Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          )
+          )} exceeds quantity limit by ${(
+            quantityList[i] - expectedQuantity
+          ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+        );
+      }
+    }
+    item_data = returnData
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_rir_item_quantity(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-            quotationId,
-            itemFieldId,
-            quantityFieldId,
-            itemFieldList,
-            quantityFieldList
-        } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let item_data
+  plv8.subtransaction(function(){
+    const {
+      quotationId,
+      itemFieldId,
+      quantityFieldId,
+      itemFieldList,
+      quantityFieldList
+    } = input_data;
 
-        const request = plv8.execute(
-            `
-              SELECT request_response_table.* 
-              FROM request_schema.request_response_table 
-              INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-              INNER JOIN form_schema.form_table ON request_form_id = form_id
-              WHERE 
-                request_status = 'APPROVED' 
-                AND request_response = '${quotationId}' 
-                AND form_is_formsly_form = true 
-                AND form_name = 'Receiving Inspecting Report'
-            `
-        );
-        
-        let requestResponse = [];
-        if(request.length > 0) {
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
+    const request = plv8.execute(
+      `
+        SELECT request_response_table.* 
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
+        INNER JOIN form_schema.form_table ON request_form_id = form_id
+        WHERE 
+          request_status = 'APPROVED' 
+          AND request_response = '${quotationId}' 
+          AND form_is_formsly_form = true 
+          AND form_name = 'Receiving Inspecting Report'
+      `
+    );
+    
+    let requestResponse = [];
+    if(request.length > 0) {
+      const requestIdList = request.map(
+        (response) => `'${response.request_response_request_id}'`
+      ).join(",");
 
-            requestResponse = plv8.execute(
-              `
-                SELECT * FROM request_schema.request_response_table 
-                WHERE 
-                  (
-                    request_response_field_id = '${itemFieldId}' 
-                    OR request_response_field_id = '${quantityFieldId}'
-                  ) 
-                  AND request_response_request_id IN (${requestIdList})
-                ORDER BY request_response_duplicatable_section_id ASC
-              `
-            );
-            const requestResponseItem = [];
-            const requestResponseQuantity = [];
+      requestResponse = plv8.execute(
+        `
+          SELECT * FROM request_schema.request_response_table 
+          WHERE 
+            (
+              request_response_field_id = '${itemFieldId}' 
+              OR request_response_field_id = '${quantityFieldId}'
+            ) 
+            AND request_response_request_id IN (${requestIdList})
+          ORDER BY request_response_duplicatable_section_id ASC
+        `
+      );
+      const requestResponseItem = [];
+      const requestResponseQuantity = [];
 
-            requestResponse.forEach((response) => {
-                if (response.request_response_field_id === itemFieldId) {
-                requestResponseItem.push(response);
-                } else if (response.request_response_field_id === quantityFieldId) {
-                requestResponseQuantity.push(response);
-                }
-            });
-
-            requestResponseItem.push(...itemFieldList);
-            requestResponseQuantity.push(...quantityFieldList);
-
-            const itemList = [];
-            const quantityList = [];
-
-            for (let i = 0; i < requestResponseItem.length; i++) {
-                if (itemList.includes(requestResponseItem[i].request_response)) {
-                const quantityIndex = itemList.indexOf(
-                    requestResponseItem[i].request_response
-                );
-                quantityList[quantityIndex] += Number(
-                    requestResponseQuantity[i].request_response
-                );
-                } else {
-                itemList.push(requestResponseItem[i].request_response);
-                quantityList.push(Number(requestResponseQuantity[i].request_response));
-                }
-            }
-
-            const returnData = [];
-            const regExp = /\(([^)]+)\)/;
-            for (let i = 0; i < itemList.length; i++) {
-                const matches = regExp.exec(itemList[i]);
-                if (!matches) continue;
-
-                const quantityMatch = matches[1].match(/(\d+)/);
-                if (!quantityMatch) continue;
-
-                const expectedQuantity = Number(quantityMatch[1]);
-                const unit = matches[1].replace(/\d+/g, "").trim();
-
-                if (quantityList[i] > expectedQuantity) {
-                const quantityMatch = itemList[i].match(/(\d+)/);
-                if (!quantityMatch) return;
-
-                returnData.push(
-                    `${JSON.parse(
-                    itemList[i].replace(
-                        quantityMatch[1],
-                        Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    )
-                    )} exceeds quantity limit by ${(
-                    quantityList[i] - expectedQuantity
-                    ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-                );
-                }
-            }
-            item_data = returnData
+      requestResponse.forEach((response) => {
+        if (response.request_response_field_id === itemFieldId) {
+          requestResponseItem.push(response);
+        } else if (response.request_response_field_id === quantityFieldId) {
+          requestResponseQuantity.push(response);
         }
-    });
-    return item_data;
+      });
+
+      requestResponseItem.push(...itemFieldList);
+      requestResponseQuantity.push(...quantityFieldList);
+
+      const itemList = [];
+      const quantityList = [];
+
+      for (let i = 0; i < requestResponseItem.length; i++) {
+        if (itemList.includes(requestResponseItem[i].request_response)) {
+          const quantityIndex = itemList.indexOf(
+            requestResponseItem[i].request_response
+          );
+          quantityList[quantityIndex] += Number(
+            requestResponseQuantity[i].request_response
+          );
+        } else {
+          itemList.push(requestResponseItem[i].request_response);
+          quantityList.push(Number(requestResponseQuantity[i].request_response));
+        }
+      }
+
+      const returnData = [];
+      const regExp = /\(([^)]+)\)/;
+      for (let i = 0; i < itemList.length; i++) {
+        const matches = regExp.exec(itemList[i]);
+        if (!matches) continue;
+
+        const quantityMatch = matches[1].match(/(\d+)/);
+        if (!quantityMatch) continue;
+
+        const expectedQuantity = Number(quantityMatch[1]);
+        const unit = matches[1].replace(/\d+/g, "").trim();
+
+        if (quantityList[i] > expectedQuantity) {
+        const quantityMatch = itemList[i].match(/(\d+)/);
+          if (!quantityMatch) return;
+          returnData.push(
+              `${JSON.parse(
+              itemList[i].replace(
+                quantityMatch[1],
+                Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              )
+              )} exceeds quantity limit by ${(
+                quantityList[i] - expectedQuantity
+              ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+          );
+        }
+      }
+      item_data = returnData
+    }
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_tranfer_receipt_item_quantity(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-          releaseOrderItemId,
-          itemFieldId,
-          quantityFieldId,
-          itemFieldList,
-          quantityFieldList
-        } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let item_data
+  plv8.subtransaction(function(){
+    const {
+      releaseOrderItemId,
+      itemFieldId,
+      quantityFieldId,
+      itemFieldList,
+      quantityFieldList
+    } = input_data;
 
-        const request = plv8.execute(
-          `
-            SELECT request_response_table.* 
-            FROM request_schema.request_response_table 
-            INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-            INNER JOIN form_schema.form_table ON request_form_id = form_id 
-            WHERE 
-              request_response_table.request_response = '${releaseOrderItemId}' 
-              AND request_table.request_status = 'APPROVED' 
-              AND form_table.form_is_formsly_form = true 
-              AND form_table.form_name = 'Transfer Receipt'
-          `
-        );
-        
-        let requestResponse = []
-        if(request.length > 0) {
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
-            requestResponse = plv8.execute(
-              `
-                SELECT * 
-                FROM request_schema.request_response_table
-                WHERE 
-                  (
-                    request_response_field_id = '${itemFieldId}' 
-                    OR request_response_field_id = '${quantityFieldId}'
-                  ) 
-                AND request_response_request_id IN (${requestIdList})
-                ORDER BY request_response_duplicatable_section_id ASC
-            `
-          );
-        }
+    const request = plv8.execute(
+      `
+        SELECT request_response_table.* 
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
+        INNER JOIN form_schema.form_table ON request_form_id = form_id 
+        WHERE 
+          request_response_table.request_response = '${releaseOrderItemId}' 
+          AND request_table.request_status = 'APPROVED' 
+          AND form_table.form_is_formsly_form = true 
+          AND form_table.form_name = 'Transfer Receipt'
+      `
+    );
+      
+    let requestResponse = []
+    if(request.length > 0) {
+      const requestIdList = request.map(
+        (response) => `'${response.request_response_request_id}'`
+      ).join(",");
+      requestResponse = plv8.execute(
+        `
+          SELECT * 
+          FROM request_schema.request_response_table
+          WHERE 
+            (
+              request_response_field_id = '${itemFieldId}' 
+              OR request_response_field_id = '${quantityFieldId}'
+            ) 
+          AND request_response_request_id IN (${requestIdList})
+          ORDER BY request_response_duplicatable_section_id ASC
+        `
+      );
+    }
 
-        const requestResponseItem = [];
-        const requestResponseQuantity = [];
+    const requestResponseItem = [];
+    const requestResponseQuantity = [];
 
-        requestResponse.forEach((response) => {
-            if (response.request_response_field_id === itemFieldId) {
-            requestResponseItem.push(response);
-            } else if (response.request_response_field_id === quantityFieldId) {
-            requestResponseQuantity.push(response);
-            }
-        });
-
-        requestResponseItem.push(...itemFieldList);
-        requestResponseQuantity.push(...quantityFieldList);
-
-        const itemList = [];
-        const quantityList = [];
-
-        for (let i = 0; i < requestResponseItem.length; i++) {
-            if (itemList.includes(requestResponseItem[i].request_response)) {
-            const quantityIndex = itemList.indexOf(
-                requestResponseItem[i].request_response
-            );
-            quantityList[quantityIndex] += Number(
-                requestResponseQuantity[i].request_response
-            );
-            } else {
-            itemList.push(requestResponseItem[i].request_response);
-            quantityList.push(Number(requestResponseQuantity[i].request_response));
-            }
-        }
-
-        const returnData = [];
-        const regExp = /\(([^)]+)\)/;
-        for (let i = 0; i < itemList.length; i++) {
-            const matches = regExp.exec(itemList[i]);
-            if (!matches) continue;
-
-            const quantityMatch = matches[1].match(/(\d+)/);
-            if (!quantityMatch) continue;
-
-            const expectedQuantity = Number(quantityMatch[1]);
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            if (quantityList[i] > expectedQuantity) {
-            const quantityMatch = itemList[i].match(/(\d+)/);
-            if (!quantityMatch) return;
-
-            returnData.push(
-                `${JSON.parse(
-                itemList[i].replace(
-                    quantityMatch[1],
-                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                )
-                )} exceeds quantity limit by ${(
-                quantityList[i] - expectedQuantity
-                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-            );
-            }
-        }
-        item_data = returnData
+    requestResponse.forEach((response) => {
+      if (response.request_response_field_id === itemFieldId) {
+        requestResponseItem.push(response);
+      } else if (response.request_response_field_id === quantityFieldId) {
+        requestResponseQuantity.push(response);
+      }
     });
-    return item_data;
+
+    requestResponseItem.push(...itemFieldList);
+    requestResponseQuantity.push(...quantityFieldList);
+
+    const itemList = [];
+    const quantityList = [];
+
+    for (let i = 0; i < requestResponseItem.length; i++) {
+      if (itemList.includes(requestResponseItem[i].request_response)) {
+        const quantityIndex = itemList.indexOf(
+          requestResponseItem[i].request_response
+        );
+        quantityList[quantityIndex] += Number(
+          requestResponseQuantity[i].request_response
+        );
+      } else {
+        itemList.push(requestResponseItem[i].request_response);
+        quantityList.push(Number(requestResponseQuantity[i].request_response));
+      }
+    }
+
+    const returnData = [];
+    const regExp = /\(([^)]+)\)/;
+    for (let i = 0; i < itemList.length; i++) {
+      const matches = regExp.exec(itemList[i]);
+      if (!matches) continue;
+
+      const quantityMatch = matches[1].match(/(\d+)/);
+      if (!quantityMatch) continue;
+
+      const expectedQuantity = Number(quantityMatch[1]);
+      const unit = matches[1].replace(/\d+/g, "").trim();
+
+      if (quantityList[i] > expectedQuantity) {
+        const quantityMatch = itemList[i].match(/(\d+)/);
+        if (!quantityMatch) return;
+
+        returnData.push(
+          `${JSON.parse(
+          itemList[i].replace(
+              quantityMatch[1],
+              Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          )
+          )} exceeds quantity limit by ${(
+          quantityList[i] - expectedQuantity
+          ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+        );
+      }
+    }
+    item_data = returnData
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION fetch_request_list(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let return_value
-    plv8.subtransaction(function(){
-      const {
-        teamId,
-        page,
-        limit,
-        requestor,
-        approver,
-        status,
-        form,
-        sort,
-        search,
-        isApproversView,
-        teamMemberId,
-        project,
-        idFilter
-      } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      page,
+      limit,
+      requestor,
+      approver,
+      status,
+      form,
+      sort,
+      search,
+      isApproversView,
+      teamMemberId,
+      project,
+      idFilter
+    } = input_data;
 
-      const start = (page - 1) * limit;
+    const start = (page - 1) * limit;
 
-      let request_list = [];
-      let request_count = 0;
+    let request_list = [];
+    let request_count = 0;
 
-      let fetch_request_list_query = 
+    let fetch_request_list_query = 
+      `
+        SELECT DISTINCT
+          request_id, 
+          request_formsly_id,
+          request_date_created, 
+          request_status,
+          request_team_member_id,
+          request_jira_id,
+          request_jira_link,
+          request_otp_id,
+          request_form_id
+        FROM request_view
+        INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+        INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+        INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+        INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+        WHERE team_member_table.team_member_team_id = '${teamId}'
+        AND request_is_disabled = false
+        AND form_table.form_is_disabled = false
+      `;
+
+    let sort_request_list_query = 
+      `
+        ORDER BY request_view.request_date_created ${sort} 
+        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+      `;
+
+    let request_list_count_query = 
+      `
+        SELECT COUNT(DISTINCT request_id)
+        FROM request_view
+        INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+        INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+        INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+        INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+        WHERE team_member_table.team_member_team_id = '${teamId}'
+        AND request_is_disabled = false
+        AND form_table.form_is_disabled = false
+      `;
+
+    if (!isApproversView) {
+      const nonApproverFilterQuery = 
         `
-          SELECT DISTINCT
-              request_id, 
-              request_formsly_id,
-              request_date_created, 
-              request_status,
-              request_team_member_id,
-              request_jira_id,
-              request_jira_link,
-              request_otp_id,
-              request_form_id
-          FROM request_view
-          INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-          INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+          ${requestor}
+          ${approver}
+          ${status}
+          ${form}
+          ${project}
+          ${idFilter}
+          ${search}
+        `;
+
+      request_list = plv8.execute(fetch_request_list_query + nonApproverFilterQuery + sort_request_list_query);
+      request_count = plv8.execute(request_list_count_query + ' ' + nonApproverFilterQuery)[0];
+    } else {
+      const approverFilterQuery = 
+        `
+          AND signer_team_member_id = '${teamMemberId}'
+          AND request_signer_status = 'PENDING'
+          AND request_status != 'CANCELED'
+        `;
+      request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
+      request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
+    }
+
+    const request_data = request_list.map(request => {
+      const request_signer = plv8.execute(
+        `
+          SELECT 
+            request_signer_table.request_signer_id, 
+            request_signer_table.request_signer_status, 
+            signer_table.signer_is_primary_signer,
+            signer_table.signer_team_member_id
+          FROM request_schema.request_signer_table
           INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-        `;
-
-      let sort_request_list_query = 
+          WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
         `
-          ORDER BY request_view.request_date_created ${sort} 
-          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-        `;
-
-      let request_list_count_query = 
-        `
-          SELECT COUNT(DISTINCT request_id)
-          FROM request_view
-          INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-          INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-          INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-        `;
-
-      if (!isApproversView) {
-        const nonApproverFilterQuery = 
-          `
-            ${requestor}
-            ${approver}
-            ${status}
-            ${form}
-            ${project}
-            ${idFilter}
-            ${search}
-          `;
-
-        request_list = plv8.execute(fetch_request_list_query + nonApproverFilterQuery + sort_request_list_query);
-        request_count = plv8.execute(request_list_count_query + ' ' + nonApproverFilterQuery)[0];
-      } else {
-        const approverFilterQuery = 
-          `
-            AND signer_team_member_id = '${teamMemberId}'
-            AND request_signer_status = 'PENDING'
-            AND request_status != 'CANCELED'
-          `;
-        request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
-        request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
-      }
-
-      const request_data = request_list.map(request => {
-        const request_signer = plv8.execute(
-          `
-            SELECT 
-              request_signer_table.request_signer_id, 
-              request_signer_table.request_signer_status, 
-              signer_table.signer_is_primary_signer,
-              signer_table.signer_team_member_id
-            FROM request_schema.request_signer_table
-            INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-            WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
-          `
-        ).map(signer => {
-          return {
-            request_signer_id: signer.request_signer_id,
-            request_signer_status: signer.request_signer_status,
-            request_signer: {
-                signer_team_member_id: signer.signer_team_member_id,
-                signer_is_primary_signer: signer.signer_is_primary_signer
-            }
-          }
-        });
-
+      ).map(signer => {
         return {
-          ...request,
-          request_signer: request_signer,
+          request_signer_id: signer.request_signer_id,
+          request_signer_status: signer.request_signer_status,
+          request_signer: {
+              signer_team_member_id: signer.signer_team_member_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer
+          }
         }
       });
 
-      return_value = {
-        data: request_data, 
-        count: Number(request_count.count)
-      };
+      return {
+        ...request,
+        request_signer: request_signer,
+      }
     });
-    return return_value
+
+    return_value = {
+      data: request_data, 
+      count: Number(request_count.count)
+    };
+  });
+  return return_value
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_team_project(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let team_project_data;
   plv8.subtransaction(function(){
     const {
@@ -2971,7 +3021,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION insert_group_member(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let group_data;
   plv8.subtransaction(function(){
     const {
@@ -3036,7 +3088,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION insert_project_member(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let project_data;
   plv8.subtransaction(function(){
     const {
@@ -3101,7 +3155,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_form_group(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
      formId,
@@ -3122,7 +3178,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_all_team_members_without_group_members(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let member_data;
   plv8.subtransaction(function(){
     const {
@@ -3152,7 +3210,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_all_team_members_without_project_members(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let member_data;
   plv8.subtransaction(function(){
     const {
@@ -3184,7 +3244,9 @@ CREATE OR REPLACE FUNCTION delete_team(
   team_id TEXT,
   team_member_id TEXT
 )
-RETURNS VOID as $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const user = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
     const isUserOwner = user.team_member_role === 'OWNER';
@@ -3259,7 +3321,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_multiple_approver(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let approverList = [];
   plv8.subtransaction(function(){
     const {
@@ -3288,7 +3352,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_multiple_admin(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let adminList = [];
   plv8.subtransaction(function(){
     const {
@@ -3317,7 +3383,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION request_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -3394,7 +3462,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_member_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let team_member_data;
   plv8.subtransaction(function(){
     const {
@@ -3459,7 +3529,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let team_data;
   plv8.subtransaction(function(){
     const {
@@ -3598,7 +3670,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_member_with_filter(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let team_data;
   plv8.subtransaction(function(){
     const {
@@ -3674,7 +3748,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_notification_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let notification_data;
   plv8.subtransaction(function(){
     const {
@@ -3710,7 +3786,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ssot_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let ssot_data;
   plv8.subtransaction(function(){
     const {
@@ -3740,7 +3818,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_list_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let request_data;
   plv8.subtransaction(function(){
     const {
@@ -3763,7 +3843,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION canvass_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -4017,7 +4099,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION form_list_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -4126,7 +4210,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION build_form_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -4176,7 +4262,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION form_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -4242,7 +4330,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_request_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const { 
@@ -5782,7 +5872,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request(
   request_id TEXT
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const idCondition = plv8.execute(`SELECT generate_request_id_condition('${request_id}')`)[0].generate_request_id_condition;
@@ -6065,7 +6157,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ticket_form(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6396,7 +6490,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_custom_csi_validity(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6456,7 +6552,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ticket_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6683,7 +6781,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION assign_ticket(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6748,7 +6848,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_ticket_status(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6766,58 +6868,76 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_ticket_list(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let return_value
-    plv8.subtransaction(function(){
-      const {
-        teamId,
-        page,
-        limit,
-        requester,
-        approver,
-        status,
-        sort,
-        category,
-        search,
-      } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      page,
+      limit,
+      requester,
+      approver,
+      status,
+      sort,
+      category,
+      search,
+    } = input_data;
 
-      const start = (page - 1) * limit;
+    const start = (page - 1) * limit;
 
-      const ticket_list = plv8.execute(
-        `
-          SELECT DISTINCT
-            ticket_table.*,
-            ticket_category_table.ticket_category
-          FROM ticket_schema.ticket_table
-          INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_id
-          INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
-          WHERE team_member_team_id = '${teamId}'
-          ${requester}
-          ${approver}
-          ${status}
-          ${category}
-          ${search}
-          ORDER BY ticket_date_created ${sort} 
-          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-        `
-      );
+    const ticket_list = plv8.execute(
+      `
+        SELECT DISTINCT
+          ticket_table.*,
+          ticket_category_table.ticket_category
+        FROM ticket_schema.ticket_table
+        INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_id
+        INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
+        WHERE team_member_team_id = '${teamId}'
+        ${requester}
+        ${approver}
+        ${status}
+        ${category}
+        ${search}
+        ORDER BY ticket_date_created ${sort} 
+        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+      `
+    );
 
-      const ticket_count = plv8.execute(
+    const ticket_count = plv8.execute(
+      `
+        SELECT DISTINCT COUNT(*)
+        FROM ticket_schema.ticket_table
+        INNER JOIN team_schema.team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
+        WHERE team_member_table.team_member_team_id = '${teamId}'
+        ${requester}
+        ${approver}
+        ${status}
+        ${category}
+        ${search}
+      `
+    )[0];
+
+    const ticket_data = ticket_list.map(ticket => {
+      const ticket_requester = plv8.execute(
         `
-          SELECT DISTINCT COUNT(*)
-          FROM ticket_schema.ticket_table
-          INNER JOIN team_schema.team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          ${requester}
-          ${approver}
-          ${status}
-          ${category}
-          ${search}
+          SELECT 
+            team_member_table.team_member_id, 
+            user_table.user_id,
+            user_table.user_first_name,
+            user_table.user_last_name,
+            user_table.user_username,
+            user_table.user_avatar
+          FROM team_schema.team_member_table
+          INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
+          WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
         `
       )[0];
-
-      const ticket_data = ticket_list.map(ticket => {
-        const ticket_requester = plv8.execute(
+      let ticket_approver = {}
+      if(ticket.ticket_approver_team_member_id){
+        ticket_approver = plv8.execute(
           `
             SELECT 
               team_member_table.team_member_id, 
@@ -6828,46 +6948,32 @@ RETURNS JSON AS $$
               user_table.user_avatar
             FROM team_schema.team_member_table
             INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-            WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
+            WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
           `
         )[0];
-        let ticket_approver = {}
-        if(ticket.ticket_approver_team_member_id){
-          ticket_approver = plv8.execute(
-            `
-              SELECT 
-                team_member_table.team_member_id, 
-                user_table.user_id,
-                user_table.user_first_name,
-                user_table.user_last_name,
-                user_table.user_username,
-                user_table.user_avatar
-              FROM team_schema.team_member_table
-              INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-              WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
-            `
-          )[0];
-        }
+      }
 
-        return {
-          ...ticket,
-          ticket_requester,
-          ticket_approver,
-        }
-      });
-
-      returnData = {
-        data: ticket_data, 
-        count: Number(ticket_count.count)
-      };
+      return {
+        ...ticket,
+        ticket_requester,
+        ticket_approver,
+      }
     });
-    return returnData
+
+    returnData = {
+      data: ticket_data, 
+      count: Number(ticket_count.count)
+    };
+  });
+  return returnData
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION analyze_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData;
 plv8.subtransaction(function(){
   const {
@@ -6998,7 +7104,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_edit_request_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData;
 plv8.subtransaction(function(){
   const {
@@ -7065,7 +7173,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_dashboard_top_requestor(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7160,7 +7270,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_equipment_part_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7259,7 +7371,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_section_choices(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7346,7 +7460,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_dashboard_top_signer(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7455,7 +7571,9 @@ CREATE OR REPLACE FUNCTION leave_team(
   team_id TEXT,
   team_member_id TEXT
 )
-RETURNS VOID as $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
     const isUserOwner = teamMember.team_member_role === 'OWNER';
@@ -7476,7 +7594,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION redirect_to_new_team(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7540,7 +7660,9 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION format_team_name_to_url_key(team_name TEXT)
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
 BEGIN
   RETURN LOWER(regexp_replace(team_name, '\s+', '-', 'g'));
 END;
@@ -7549,7 +7671,9 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION analyze_user_issued_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7706,7 +7830,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let new_memo_data;
   plv8.subtransaction(function(){
     const {
@@ -7813,7 +7939,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_memo_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let memo_data_on_load;
   plv8.subtransaction(function() {
     const { memo_id, current_user_id } = input_data;
@@ -8014,7 +8142,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_memo_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let return_value;
   plv8.subtransaction(function(){
     const {
@@ -8108,7 +8238,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION edit_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       memo_id,
@@ -8142,7 +8274,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_memo_reference_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let memo_data_on_load;
   plv8.subtransaction(function(){
 
@@ -8269,7 +8403,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_reference_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let new_memo_data;
   plv8.subtransaction(function() {
     const {
@@ -8360,7 +8496,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_user(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       userData,
@@ -8388,7 +8526,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_edit_request_section(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -8652,7 +8792,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_query_data(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8675,7 +8817,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_signer_sla(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8758,7 +8902,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_incident_report(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8826,7 +8972,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ticket_list_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8850,7 +8998,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8890,7 +9040,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_custom_csi(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8954,7 +9106,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_ticket(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8977,7 +9131,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION edit_ticket(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8995,7 +9151,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION ped_part_check(
   input_data JSON
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SET search_path TO ''
+AS $$
   let returnData = false;
   plv8.subtransaction(function(){
     const {
@@ -9043,7 +9201,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_ped_part_from_ticket_request(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       equipmentName,
@@ -9151,7 +9311,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_user_valid_id(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -9231,7 +9393,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_ped_part(
   input_data JSON
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -9269,7 +9433,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_without_duplicatable_section(
   request_id TEXT
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const idCondition = plv8.execute(`SELECT generate_request_id_condition('${request_id}')`)[0].generate_request_id_condition;
@@ -9473,7 +9639,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_request_page_section(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -9619,7 +9787,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION generate_request_id_condition(
   request_id TEXT
 )
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
   let idCondition = '';
   plv8.subtransaction(function(){
     const isUUID = (str) => {
@@ -9639,7 +9809,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_request_comment(
   request_id TEXT
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = '';
   plv8.subtransaction(function(){
     const requestCommentData = plv8.execute(
@@ -9692,7 +9864,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION public_request_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -9765,7 +9939,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_item_request_conditional_options(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -9885,7 +10061,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_service_request_conditional_options(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -9933,7 +10111,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_other_expenses_request_conditional_options(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -9986,7 +10166,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_ped_equipment_request_conditional_options(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -10127,7 +10309,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_item_category(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -10174,7 +10358,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_item_category(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -10215,7 +10401,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_jira_automation_data(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let jira_automation_data;
   plv8.subtransaction(function(){
     const {
@@ -10299,7 +10487,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_approver_unresolved_request_count(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let data;
   plv8.subtransaction(function() {
     const {
@@ -10341,7 +10531,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_admin_ticket_analytics(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -10404,7 +10596,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION handle_formsly_payment(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       teamId,
@@ -10446,7 +10640,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION team_invoice_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -10487,7 +10683,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_form_section_with_multiple_duplicatable_section(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10535,7 +10733,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_memo_signer_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10587,7 +10787,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_signer_with_profile(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10652,7 +10854,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_user_with_signature(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10717,7 +10921,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_user_current_signature(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10749,7 +10955,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_form_list_with_filter(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -10868,7 +11076,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_form(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -10979,7 +11189,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11127,7 +11339,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_member_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11182,7 +11396,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_group_member_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11279,7 +11495,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_project_member_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11378,7 +11596,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_project_signer_with_team_member(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11468,7 +11688,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_multiple_project_signer_with_team_member(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11531,7 +11753,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_approver_list_with_filter(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11609,7 +11833,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_admin_list_with_filter(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11687,7 +11913,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_members_with_member_role(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11733,7 +11961,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_member_user_data(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11762,7 +11992,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_member_user(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11812,7 +12044,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_category_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11898,7 +12132,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_admin_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11948,7 +12184,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_form_approver(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11987,7 +12225,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION agree_to_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12069,7 +12309,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION approve_or_reject_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12178,7 +12420,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_user_valid_id(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12253,7 +12497,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_invitation(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12314,7 +12560,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_invitation_id(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = "";
 plv8.subtransaction(function() {
   const {
@@ -12347,7 +12595,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_invitation(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12411,7 +12661,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_unit_of_measurement(
   input_data JSON
 )
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
 let returnData = "";
 plv8.subtransaction(function() {
   const {
@@ -12464,7 +12716,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION send_notification_to_project_cost_engineer(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
 plv8.subtransaction(function() {
   const {
     projectId,
@@ -12512,7 +12766,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_category_option(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -12549,7 +12805,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_jira_formsly_project_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12662,7 +12920,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_if_all_primary_approver_approved_the_request(
   input_data JSON
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SET search_path TO ''
+AS $$
 let returnData = false;
 plv8.subtransaction(function() {
   const {
@@ -12691,7 +12951,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_approver_request_count(
   input_data JSON
 )
-RETURNS INT AS $$
+RETURNS INT 
+SET search_path TO ''
+AS $$
 let returnData = 0;
 plv8.subtransaction(function() {
   const {
@@ -12727,7 +12989,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_status_count(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12773,7 +13037,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_team_id(
   input_data JSON
 )
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
 let returnData = "";
 plv8.subtransaction(function() {
   const {
@@ -12802,7 +13068,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_total_count(
   input_data JSON
 )
-RETURNS INT AS $$
+RETURNS INT 
+SET search_path TO ''
+AS $$
 let returnData = 0;
 plv8.subtransaction(function() {
   const {
@@ -12834,7 +13102,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_status_monthly_count(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12885,7 +13155,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_form_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -12970,7 +13242,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_project_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -13073,7 +13347,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_user_email(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -13100,7 +13376,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_item_from_ticket_request(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       generalName,
@@ -13204,7 +13482,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION add_team_member_to_all_project(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       teamMemberIdList
@@ -13242,7 +13522,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_lrf_summary_table(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const { 
@@ -16926,9 +17208,9 @@ CREATE INDEX request_response_idx ON request_schema.request_response_table (requ
 
 ----- START: VIEWS
 
-CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description FROM lookup_schema.csi_code_table;
-CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_schema.request_table;
-CREATE VIEW equipment_schema.equipment_description_view AS 
+CREATE VIEW distinct_division_view WITH (SECURITY_INVOKER = ON) AS SELECT DISTINCT csi_code_division_id, csi_code_division_description FROM lookup_schema.csi_code_table;
+CREATE VIEW request_view WITH (SECURITY_INVOKER = ON) AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_schema.request_table;
+CREATE VIEW equipment_schema.equipment_description_view WITH (SECURITY_INVOKER = ON) AS 
 SELECT 
   equipment_description_table.*, 
   CASE 

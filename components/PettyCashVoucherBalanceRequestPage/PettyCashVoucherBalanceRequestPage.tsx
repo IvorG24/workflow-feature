@@ -408,8 +408,7 @@ const PettyCashVoucherBalanceRequestPage = ({ request }: Props) => {
 
       await createComment(supabaseClient, comment);
       setRequestStatus("CANCELED");
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
