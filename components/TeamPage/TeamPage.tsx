@@ -324,7 +324,7 @@ const TeamPage = ({
       );
       setTeamList(updatedTeamList);
       await router.push("/");
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Error: cannot leave team",
         color: "red",

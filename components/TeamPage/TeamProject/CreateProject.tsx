@@ -169,7 +169,6 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
       });
       setIsCreatingProject(false);
     } catch (e) {
-      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

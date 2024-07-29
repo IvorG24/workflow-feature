@@ -80,8 +80,7 @@ const JobTitleLookupTable = () => {
 
       setJobTitleList(jobTitleList);
       setJobTitleListCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch job title list",
       });
@@ -102,8 +101,7 @@ const JobTitleLookupTable = () => {
 
       setJobTitleList(data);
       setJobTitleListCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch job title list",
         color: "red",
@@ -150,8 +148,7 @@ const JobTitleLookupTable = () => {
       updateOrCreateJobTitle.reset();
 
       handlePagination(activePage);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: `Failed to ${
           isUpdatingJobTitle ? "update" : "create"
@@ -169,7 +166,7 @@ const JobTitleLookupTable = () => {
         prev.filter((proj) => proj.employee_job_title_id !== JobTitleId)
       );
       setJobTitleListCount((prev) => prev - 1);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to delete jira user.",
         color: "red",

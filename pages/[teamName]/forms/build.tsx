@@ -20,8 +20,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
       return {
         props: { ...(data as unknown as Props) },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

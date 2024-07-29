@@ -144,7 +144,7 @@ const JiraFormslyItemCategoryList = ({
       updateJiraFormslyItemCategoryMethods.reset();
 
       handlePagination(activePage);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to update item category",
         color: "red",
@@ -219,7 +219,7 @@ const JiraFormslyItemCategoryList = ({
           color: "green",
         });
       }
-    } catch (error) {
+    } catch (e) {
       const isUpdate = Boolean(data.jira_item_user_id);
       notifications.show({
         message: `Failed to ${isUpdate ? "update" : "assign"} jira user.`,
@@ -259,7 +259,7 @@ const JiraFormslyItemCategoryList = ({
       );
       setJiraItemCategoryList(data);
       setJiraItemCategoryCount(count);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch item category list",
         color: "red",
@@ -280,8 +280,7 @@ const JiraFormslyItemCategoryList = ({
 
       setJiraItemCategoryList(itemCategoryList);
       setJiraItemCategoryCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira item category list",
       });

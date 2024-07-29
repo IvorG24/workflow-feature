@@ -40,8 +40,7 @@ export default async function handler(
       console.error(await response.text());
       return null;
     }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error });
+  } catch (e) {
+    return res.status(500).json({ error: e });
   }
 }

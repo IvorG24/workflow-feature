@@ -138,7 +138,7 @@ const CreatePettyCashVoucherRequestPage = ({
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -275,7 +275,7 @@ const CreatePettyCashVoucherRequestPage = ({
           ),
         });
       }
-    } catch (error) {
+    } catch (e) {
       setValue(
         `sections.${sectionIndex}.section_field.8.field_response`,
         false
@@ -375,7 +375,7 @@ const CreatePettyCashVoucherRequestPage = ({
       } else if (!value) {
         replaceSection([getValues(`sections.0`)]);
       }
-    } catch (error) {
+    } catch (e) {
       setValue(`sections.0.section_field.0.field_response`, false);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -445,7 +445,7 @@ const CreatePettyCashVoucherRequestPage = ({
           (a, b) => a.field_order - b.field_order
         ),
       });
-    } catch (error) {
+    } catch (e) {
       setValue(`sections.2.section_field.1.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -476,7 +476,7 @@ const CreatePettyCashVoucherRequestPage = ({
           removeSection(2);
         }
       }
-    } catch (error) {
+    } catch (e) {
       const requestDetailsSection = getValues(`sections.1`);
       const pedConditionalFieldIndex =
         requestDetailsSection.section_field.findIndex(
@@ -547,7 +547,7 @@ const CreatePettyCashVoucherRequestPage = ({
         { ...selectedSection, section_field: currentSectionField },
         { shouldFocus: false }
       );
-    } catch (error) {
+    } catch (e) {
       setValue(`sections.3.section_field.0.field_response`, false);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -587,7 +587,7 @@ const CreatePettyCashVoucherRequestPage = ({
           removeSection(currentRequestSectionList.length - 1);
         }
       }
-    } catch (error) {
+    } catch (e) {
       const requestDetailsSection = getValues(`sections.1`);
       const pedConditionalFieldIndex =
         requestDetailsSection.section_field.findIndex(
@@ -622,7 +622,7 @@ const CreatePettyCashVoucherRequestPage = ({
         `sections.${sectionIndex}.section_field.4.field_response`,
         amount
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

@@ -174,7 +174,6 @@ const TicketAdminAnalytics = ({ teamAdminList, ticketCategoryList }: Props) => {
       setIntervalList(intervalList);
       await fetchAnalyticsData(admin, ticketCategory, interval, intervalList);
     } catch (e) {
-      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

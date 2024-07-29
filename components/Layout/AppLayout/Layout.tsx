@@ -133,7 +133,6 @@ const Layout = ({ children }: LayoutProps) => {
         setNotificationList(notificationList);
         setUnreadNotification(unreadNotificationCount || 0);
       } catch (e) {
-        console.error(e);
         notifications.show({
           message: "Something went wrong. Please try again later.",
           color: "red",

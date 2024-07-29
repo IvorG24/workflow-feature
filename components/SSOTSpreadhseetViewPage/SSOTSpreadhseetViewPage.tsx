@@ -471,7 +471,6 @@ const SSOTSpreadsheetView = ({
         }
       }
     } catch (e) {
-      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

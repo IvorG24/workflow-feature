@@ -60,8 +60,7 @@ const CreatePasswordPage = ({ email, inviteTeamId }: Props) => {
         color: "green",
       });
       await router.push(`/onboarding?inviteTeamId=${inviteTeamId}`);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

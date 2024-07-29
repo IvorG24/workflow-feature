@@ -52,13 +52,10 @@ export default async function handler(
           password: teamId,
           options: { emailRedirectTo: inviteUrl },
         });
-      } catch (error) {
-        console.error(error);
-      }
+      } catch (e) {}
     }
     return res.status(405).json({ message: "Email invite success." });
-  } catch (error) {
-    console.error(error);
+  } catch (e) {
     res.redirect("/500");
   }
 }

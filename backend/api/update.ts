@@ -172,7 +172,7 @@ export const updateComment = async (
 ) => {
   const { commentId, newComment } = params;
   const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
-  console.log(currentDate);
+
   const { error } = await supabaseClient
     .schema("request_schema")
     .from("comment_table")

@@ -120,8 +120,8 @@ export const convertAspectRatio = async (file: File): Promise<File> => {
         } else {
           reject(new Error("Failed to load the file."));
         }
-      } catch (error) {
-        reject(error);
+      } catch (e) {
+        reject(e);
       }
     };
 
