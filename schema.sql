@@ -1402,7 +1402,7 @@ AS $$
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -1451,7 +1451,7 @@ AS $$
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -1530,7 +1530,7 @@ AS $$
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -7915,7 +7915,7 @@ AS $$
 
     
     if (activeTeam && memo_author_data) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
