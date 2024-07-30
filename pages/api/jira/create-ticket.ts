@@ -140,8 +140,7 @@ export default async function handler(
     await Promise.all(promises);
 
     return res.status(200).json({ jiraTicketId, jiraTicketLink });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error });
+  } catch (e) {
+    return res.status(500).json({ error: e });
   }
 }

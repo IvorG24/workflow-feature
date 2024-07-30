@@ -54,7 +54,6 @@ const SignatureCrop = ({ file, setFile, onClose, onSaveChanges }: Props) => {
       onSaveChanges(croppedImageFile);
       onClose();
     } catch (e) {
-      console.error(e);
     } finally {
       setIsLoading(false);
     }

@@ -161,7 +161,7 @@ const EditPettyCashVoucherBalanceRequestPage = ({ form, requestId }: Props) => {
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

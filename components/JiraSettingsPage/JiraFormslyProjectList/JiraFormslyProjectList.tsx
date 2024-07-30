@@ -187,7 +187,7 @@ const JiraFormslyProjectList = ({
         message: "Successfully assigned to jira project",
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to assign to jira project",
         color: "red",
@@ -254,7 +254,7 @@ const JiraFormslyProjectList = ({
         await handleFetchJiraFormslyProjectList(1, formData.search);
       setJiraFormslyProjectList(processedProjects as JiraFormslyProjectType[]);
       setJiraFormslyProjectCount(count);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch projects",
         color: "red",
@@ -275,7 +275,7 @@ const JiraFormslyProjectList = ({
         );
       setJiraFormslyProjectList(processedProjects as JiraFormslyProjectType[]);
       setJiraFormslyProjectCount(count);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch projects",
         color: "red",
@@ -348,8 +348,7 @@ const JiraFormslyProjectList = ({
         message: "Successfully assigned to jira organization",
         color: "green",
       });
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to assign to jira organization",
         color: "red",

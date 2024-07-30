@@ -227,7 +227,7 @@ const LiquidationReimbursementRequestPage = ({
         },
         ...prev,
       ]);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -271,7 +271,7 @@ const LiquidationReimbursementRequestPage = ({
         message: `Request cancelled.`,
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -294,7 +294,7 @@ const LiquidationReimbursementRequestPage = ({
       await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -339,7 +339,7 @@ const LiquidationReimbursementRequestPage = ({
           boqForm.form_id
         }/create?lrf=${request.request_formsly_id}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message:
           "Failed to create Bill of Quantity request. Please contact the IT team.",
@@ -474,8 +474,8 @@ const LiquidationReimbursementRequestPage = ({
         link: jiraTicket.jiraTicketLink,
       });
       return jiraTicket;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
+    } catch (e) {
+      const errorMessage = (e as Error).message;
       notifications.show({
         message: `Error: ${errorMessage}`,
         color: "red",

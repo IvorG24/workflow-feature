@@ -18,9 +18,8 @@ export default async function handler(
         break;
     }
     return res.status(200).send("Success");
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error });
+  } catch (e) {
+    return res.status(500).json({ error: e });
   }
 }
 

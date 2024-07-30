@@ -42,8 +42,7 @@ export default async function handler(
       console.error(await response.text());
       return res.status(response.status).json({ error: await response.text() });
     }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error });
+  } catch (e) {
+    return res.status(500).json({ error: e });
   }
 }

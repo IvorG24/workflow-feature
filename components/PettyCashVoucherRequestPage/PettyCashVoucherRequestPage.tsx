@@ -187,7 +187,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         },
         ...prev,
       ]);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -231,7 +231,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
         message: `Request cancelled.`,
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -253,7 +253,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
       await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -313,7 +313,7 @@ const PettyCashVoucherRequestPage = ({ request }: Props) => {
           wavBalanceForm.form_id
         }/create?wav=${request.request_formsly_id}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message:
           "Failed to create Bill of Quantity request. Please contact the IT team.",

@@ -131,7 +131,7 @@ const TicketActionSection = ({
       }
 
       setTicket((ticket) => ({ ...ticket, ticket_status: data.ticket_status }));
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

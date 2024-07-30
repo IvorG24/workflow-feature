@@ -95,8 +95,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
 
       setJiraOrganizationList(organizationList);
       setJiraOrganizationCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira organization list",
       });
@@ -117,8 +116,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
 
       setJiraOrganizationList(data);
       setJiraOrganizationCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira organization list",
         color: "red",
@@ -181,8 +179,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
       updateOrCreateJiraOrganization.reset();
 
       handlePagination(activePage);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to update or create jira organization",
         color: "red",
@@ -198,7 +195,7 @@ const JiraOrganizationLookupTable = ({ jiraOrganizationData }: Props) => {
         prev.filter((proj) => proj.jira_organization_id !== jiraOrganizationId)
       );
       setJiraOrganizationCount((prev) => prev - 1);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to delete jira user.",
         color: "red",

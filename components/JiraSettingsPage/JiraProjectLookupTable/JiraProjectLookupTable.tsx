@@ -95,8 +95,7 @@ const JiraProjectLookupTable = ({
 
       setJiraProjectList(projectList);
       setJiraProjectCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira project list",
       });
@@ -117,8 +116,7 @@ const JiraProjectLookupTable = ({
 
       setJiraProjectList(data);
       setJiraProjectCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira project list",
         color: "red",
@@ -184,8 +182,7 @@ const JiraProjectLookupTable = ({
       updateOrCreateJiraProjectFormMethods.reset();
 
       handlePagination(activePage);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to update or create jira project",
         color: "red",
@@ -201,7 +198,7 @@ const JiraProjectLookupTable = ({
         prev.filter((proj) => proj.jira_project_id !== jiraProjectId)
       );
       setJiraProjectCount((prev) => prev - 1);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to delete jira user.",
         color: "red",

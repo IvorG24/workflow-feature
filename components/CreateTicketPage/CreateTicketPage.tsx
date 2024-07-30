@@ -56,7 +56,7 @@ const CreateTicketPage = ({ member, categorylist }: Props) => {
         teamId: activeTeam.team_id,
       });
       setTicketForm(ticketFormData);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

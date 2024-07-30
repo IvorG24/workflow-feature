@@ -145,7 +145,7 @@ const EditRequestPage = ({
           request.request_id
         }`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

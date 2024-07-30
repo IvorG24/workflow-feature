@@ -252,9 +252,7 @@ const RequestCommentList = ({
         },
         body: JSON.stringify(bodyData),
       });
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (e) {}
   };
 
   return (

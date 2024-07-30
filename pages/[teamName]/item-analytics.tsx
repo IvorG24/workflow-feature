@@ -17,8 +17,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
           items,
         },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

@@ -201,7 +201,7 @@ const RequestForPaymentCodeRequestPage = ({
         },
         ...prev,
       ]);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -245,7 +245,7 @@ const RequestForPaymentCodeRequestPage = ({
         message: `Request cancelled.`,
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -268,7 +268,7 @@ const RequestForPaymentCodeRequestPage = ({
       await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -462,8 +462,8 @@ const RequestForPaymentCodeRequestPage = ({
         link: jiraTicket.jiraTicketLink,
       });
       return jiraTicket;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
+    } catch (e) {
+      const errorMessage = (e as Error).message;
       notifications.show({
         message: `Error: ${errorMessage}`,
         color: "red",
