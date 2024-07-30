@@ -1700,8 +1700,8 @@ AS $$
     const fieldInput = [];
 
     itemDescription.forEach((description, index) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
-      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
         item_description_id: descriptionId,
         item_description_label: description.description,
@@ -1796,8 +1796,8 @@ AS $$
     const fieldInput = [];
 
     toAdd.forEach((description) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
-      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
         item_description_id: descriptionId,
         item_description_label: description.description,
@@ -1927,7 +1927,7 @@ AS $$
     const fieldInput = [];
 
     scope.forEach((scope) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
       
       fieldInput.push({
         field_id: fieldId,
@@ -1984,7 +1984,7 @@ AS $$
     const notificationInput = [];
 
     emailList.forEach((email) => {
-      const invitationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const invitationId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
 
        plv8.execute(
         `
@@ -3887,7 +3887,7 @@ AS $$
     const requestResponseData = plv8.execute(`SELECT request_response_table.*, field_name, field_order FROM request_schema.request_response_table INNER JOIN form_schema.field_table ON field_id = request_response_field_id WHERE request_response_request_id='${requestId}'`);
 
     const options = {};
-    const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+    const idForNullDuplicationId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
     requestResponseData.forEach((response) => {
       if (response) {
         const fieldName = response.field_name;
@@ -4237,7 +4237,7 @@ AS $$
       `
     );
     const groupList = plv8.execute(`SELECT * FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
-    const formId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+    const formId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
 
     returnData = {
       teamMemberList: teamMemberList.map(teamMember => {
@@ -8762,7 +8762,7 @@ AS $$
                   ...preferredSupplierField,
                   field_response: [
                     {
-                      request_response_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+                      request_response_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
                       request_response: null,
                       request_response_duplicatable_section_id:
                         section.section_field[8].field_response[0]
@@ -10246,7 +10246,7 @@ AS $$
             });
             optionData.unshift({
               option_field_id: field,
-              option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+              option_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
               option_order: 0,
               option_value: "ANY"
             });
@@ -10287,7 +10287,7 @@ AS $$
             });
             optionData.unshift({
               option_field_id: field,
-              option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+              option_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
               option_order: 0,
               option_value: "ANY"
             });
@@ -13439,8 +13439,8 @@ AS $$
     const fieldInput = [];
 
     descriptionList.forEach((description, index) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
-      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
         item_description_id: descriptionId,
         item_description_label: description.description,
