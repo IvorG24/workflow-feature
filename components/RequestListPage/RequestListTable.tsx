@@ -9,15 +9,11 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   BASE_URL,
   DEFAULT_REQUEST_LIST_LIMIT,
-  formatDate,
+  formatDate
 } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import {
-  getAvatarColor,
-  getJiraTicketStatusColor,
-  getStatusToColor
-} from "@/utils/styling";
+import { getAvatarColor, getJiraTicketStatusColor, getStatusToColor } from "@/utils/styling";
 import {
   RequestListFilterValues,
   RequestListItemSignerType,
