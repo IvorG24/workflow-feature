@@ -66,8 +66,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
           jiraOrganizationData: jiraOrganizationData,
         },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

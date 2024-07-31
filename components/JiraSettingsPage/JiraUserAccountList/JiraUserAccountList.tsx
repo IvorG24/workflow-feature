@@ -78,7 +78,10 @@ const JiraUserAccountList = ({
   const handleAddJiraUserToProject = async (data: AddProjectJiraUserForm) => {
     try {
       if (!selectedFormslyProject) {
-        console.error(selectedFormslyProject);
+        notifications.show({
+          message: "Something went wrong.",
+          color: "red",
+        });
         return;
       }
       setIsAddingProjectJiraUser(true);
@@ -135,8 +138,7 @@ const JiraUserAccountList = ({
       }
       setOpenJiraUserAccountForm(false);
       addJiraUserToProjectMethods.reset();
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to add jira user",
         color: "red",
@@ -161,8 +163,7 @@ const JiraUserAccountList = ({
 
       setProjectJiraUserAccountList(updatedProjectJiraUserAccountList);
       setProjectJiraUserAccountCount((prev) => prev - 1);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to delete jira user",
         color: "red",
@@ -181,7 +182,6 @@ const JiraUserAccountList = ({
         </Text>
       ),
       labels: { confirm: "Remove User", cancel: "Cancel" },
-      onCancel: () => console.error("Cancel"),
       onConfirm: async () =>
         await handleDeleteJiraUserFromProject(jiraProjectUserId),
       confirmProps: {
@@ -236,8 +236,7 @@ const JiraUserAccountList = ({
 
       setProjectJiraUserAccountList(sortedProjectJiraUserAccountList);
       setProjectJiraUserAccountCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira user account list",
         color: "red",
@@ -252,7 +251,7 @@ const JiraUserAccountList = ({
       setActivePage(page);
       setIsLoading(true);
       await handleFetchJiraUserAccountList(page - 1);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch projects",
         color: "red",

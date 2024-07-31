@@ -20,8 +20,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
           teamMemberList,
         },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

@@ -28,8 +28,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
       return {
         props: { notificationList, totalNotificationCount, tab },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

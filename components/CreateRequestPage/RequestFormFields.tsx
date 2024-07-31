@@ -21,6 +21,7 @@ import {
   Tooltip,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
   IconCalendar,
@@ -350,8 +351,11 @@ const RequestFormFields = ({
             file as never
           );
         }
-      } catch (error) {
-        console.error("Error downloading file:", error);
+      } catch (e) {
+        notifications.show({
+          message: "Error downloading file.",
+          color: "red",
+        });
       }
     };
 

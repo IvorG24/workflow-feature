@@ -38,8 +38,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
           ),
         },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

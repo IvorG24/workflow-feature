@@ -431,7 +431,7 @@ const EditPEDEquipmentRequestPage = ({
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
       );
-    } catch (error) {
+    } catch (erroer) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

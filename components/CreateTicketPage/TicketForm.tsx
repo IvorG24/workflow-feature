@@ -75,7 +75,7 @@ const TicketForm = ({
           ticket.ticket_id
         }`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -104,7 +104,7 @@ const TicketForm = ({
         message: "Ticket overriden.",
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

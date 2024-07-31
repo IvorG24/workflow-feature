@@ -62,7 +62,7 @@ const ResetPasswordPage = () => {
         color: "green",
       });
       await router.push("/userActiveTeam");
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

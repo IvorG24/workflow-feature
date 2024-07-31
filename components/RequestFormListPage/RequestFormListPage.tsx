@@ -144,7 +144,7 @@ const RequestFormListPage = ({
         message: "Form visibility updated.",
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -167,7 +167,7 @@ const RequestFormListPage = ({
         message: "Form deleted.",
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

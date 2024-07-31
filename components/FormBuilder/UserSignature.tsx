@@ -116,8 +116,7 @@ const UserSignature = ({
       if (!file) throw new Error();
 
       setNewUserSignatureFile(file);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

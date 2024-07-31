@@ -15,8 +15,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       return {
         props: ssotData,
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

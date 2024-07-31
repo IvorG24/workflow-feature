@@ -46,9 +46,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           lowestAdditionalCharge,
         },
       };
-    } catch (error) {
-      console.error(error);
-
+    } catch (e) {
       return {
         props: {},
         redirect: {

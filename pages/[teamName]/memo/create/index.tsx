@@ -27,8 +27,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       return {
         props: { user, teamMemoSignerList },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

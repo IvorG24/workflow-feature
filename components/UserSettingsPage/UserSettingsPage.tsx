@@ -176,9 +176,9 @@ const UserSettingsPage = ({ user }: Props) => {
       });
 
       changePasswordFormMethods.reset();
-    } catch (error) {
+    } catch (e) {
       let errorMessage = "";
-      errorMessage = error as unknown as string;
+      errorMessage = e as unknown as string;
       if (errorMessage === "Invalid login credentials")
         errorMessage = "Wrong old password.";
       notifications.show({

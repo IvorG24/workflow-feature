@@ -189,7 +189,7 @@ const RequestListTable = ({
       }
 
       setJiraTicketStatusList(updatedJiraTicketStatusList);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira status",
         color: "red",
@@ -244,7 +244,7 @@ const RequestListTable = ({
         updatedOtpIdList.push({ formslyId, otpId: jiraTicketOtpId });
       }
       setOtpIdList(updatedOtpIdList);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch OTP Id",
         color: "red",
@@ -353,8 +353,7 @@ const RequestListTable = ({
           ...newPedEquipmentNumberList,
         ];
         setPedEquipmentNumberList(updatedPedEquipmentNumberList);
-      } catch (error) {
-        console.error(error);
+      } catch (e) {
       } finally {
         setIsFetchingPedEquipmentNumberList(false);
       }
