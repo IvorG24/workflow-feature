@@ -6874,27 +6874,29 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_ticket_list(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let return_value
-    plv8.subtransaction(function(){
-      const {
-        teamId,
-        page,
-        limit,
-        requester,
-        approver,
-        status,
-        sort,
-        category,
-        search,
-        columnAccessor
-      } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      page,
+      limit,
+      requester,
+      approver,
+      status,
+      sort,
+      category,
+      search,
+      columnAccessor
+    } = input_data;
 
     const start = (page - 1) * limit;
 
-      const ticket_list = plv8.execute(
-        `
-          SELECT DISTINCT
+    const ticket_list = plv8.execute(
+      `
+        SELECT DISTINCT
           ticket_table.*,
           ticket_category_table.ticket_category,
           user_table_requester.user_id as requester_user_id,
@@ -6921,8 +6923,8 @@ RETURNS JSON AS $$
           ${search}
           ORDER BY ${columnAccessor} ${sort} 
           OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-        `
-      );
+      `
+    );
 
     const ticket_count = plv8.execute(
       `
@@ -6938,8 +6940,8 @@ RETURNS JSON AS $$
       `
     )[0];
 
-      const format_ticket = ticket_list.map((ticket) => {
-        return {
+    const ticket_data = ticket_list.map(ticket => {
+      return {
           ticket_approver_team_member_id: ticket.ticket_approver_team_member_id,
           ticket_approver_user: {
             user_avatar: ticket.approver_user_avatar,
@@ -6964,11 +6966,10 @@ RETURNS JSON AS $$
           ticket_status: ticket.ticket_status,
           ticket_status_date_updated: ticket.ticket_status_date_updated
         }
-      })
-
+    });
 
     returnData = {
-      data: format_ticket, 
+      data: ticket_data, 
       count: Number(ticket_count.count)
     };
   });
@@ -8993,7 +8994,7 @@ AS $$
     
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC", "columnAccessor": "ticket_date_created"}');`)[0].fetch_ticket_list;
+    const ticketList = plv8.execute(`SELECT public.fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC", "columnAccessor": "ticket_date_created"}');`)[0].fetch_ticket_list;
 
     const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category_is_disabled = false`);
 
