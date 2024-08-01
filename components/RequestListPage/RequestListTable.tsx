@@ -60,6 +60,7 @@ type Props = {
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>
   setValue:  UseFormSetValue<RequestListFilterValues>
   localFilter: RequestListFilterValues
+  checkIfColumnIsHidden:  (column: string) => boolean
 };
 
 const useStyles = createStyles(() => ({
@@ -85,7 +86,8 @@ const RequestListTable = ({
   sortStatus,
   setSortStatus,
   setValue,
-  localFilter
+  localFilter,
+  checkIfColumnIsHidden
 }: Props) => {
   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
@@ -396,6 +398,7 @@ const RequestListTable = ({
               accessor: "request_id",
               title: "Request ID",
               width: 180,
+              hidden: checkIfColumnIsHidden("request_id"),
               render: ({ request_id, request_formsly_id }) => {
                 const requestId =
                   request_formsly_id === "-" ? request_id : request_formsly_id;
@@ -435,7 +438,7 @@ const RequestListTable = ({
             {
               accessor: "request_jira_id",
               title: "JIRA ID",
-              hidden: localFilter.idFilter?.some((i) => i === 'jira'),
+              hidden: localFilter.idFilter?.some((i) => i === 'jira') || checkIfColumnIsHidden("request_jira_id"),
               render: ({ request_jira_id, request_jira_link }) => {
 
                 if (request_jira_id === null){
@@ -470,6 +473,7 @@ const RequestListTable = ({
             {
               accessor: "request_id_status",
               title: "JIRA Status",
+              hidden: checkIfColumnIsHidden("request_jira_status"),
               render: ({ request_jira_id }) => {
 
                 if (request_jira_id === null) {
@@ -530,7 +534,7 @@ const RequestListTable = ({
             {
               accessor: "request_otp_id",
               title: "OTP ID",
-              hidden: localFilter.idFilter?.some((i) => i === 'otp'),
+              hidden: localFilter.idFilter?.some((i) => i === 'otp') || checkIfColumnIsHidden("request_otp_id"),
               render: ({
                 request_otp_id,
                 request_team_member_id,
@@ -611,6 +615,7 @@ const RequestListTable = ({
               accessor: "form_name",
               title: "Form Name",
               sortable: true,
+              hidden: checkIfColumnIsHidden("request_form_name"),
               render: ({form_name}) => {
                 return (
                   <Text truncate maw={150}>
@@ -623,7 +628,7 @@ const RequestListTable = ({
               accessor: "request_ped_equipment_number",
               title: "PED Equipment Number",
               hidden:
-                !isPEDForm,
+                !isPEDForm || checkIfColumnIsHidden("request_ped_equipment_number"),
               render: ({ request_id }) => {
                 const pedEquipmentNumberMatch = pedEquipmentNumberList.find(
                   (ped) => ped.request_id === request_id
@@ -684,6 +689,7 @@ const RequestListTable = ({
               accessor: "request_status",
               title: "Formsly Status",
               sortable: true,
+              hidden: checkIfColumnIsHidden("request_status"),
               render: ({ request_status }) => (
                 <Flex justify="center">
                   <Badge variant="filled" color={getStatusToColor(String(request_status))}>
@@ -696,6 +702,7 @@ const RequestListTable = ({
               accessor: "user_id",
               title: "Requested By",
               sortable: true,
+              hidden: checkIfColumnIsHidden("request_team_member_id"),
               render: (request) => {
 
                 const { user_id, user_first_name, user_last_name, request_team_member_id} = request as {user_id: string, user_first_name: string, user_last_name: string, request_team_member_id: string}
@@ -729,6 +736,7 @@ const RequestListTable = ({
             {
               accessor: "request_signer",
               title: "Approver",
+              hidden: checkIfColumnIsHidden("request_signer"),
               render: (request) => {
                 const { request_signer } = request as {request_signer: requestSignerType[]}
                 const signerList = request_signer.map((signer: requestSignerType) => {
@@ -755,6 +763,7 @@ const RequestListTable = ({
             {
               accessor: "request_date_created",
               title: "Date Created",
+              hidden: checkIfColumnIsHidden("request_date_created"),
               sortable: true,
               render: ({ request_date_created }) => (
                 <Text>{formatDate(new Date(String(request_date_created)))}</Text>
@@ -763,6 +772,7 @@ const RequestListTable = ({
             {
               accessor: "view",
               title: "View",
+              hidden: checkIfColumnIsHidden("view"),
               textAlignment: "center",
               render: ({ request_id, request_formsly_id }) => {
                 const requestId =
