@@ -6,6 +6,7 @@ import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
+import useSaveToLocalStorage from "@/hooks/useSavetoLocalStorage";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -27,10 +28,12 @@ import {
   Stack,
   Title,
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 
@@ -56,7 +59,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const team = useActiveTeam();
-
+  const isSubmitting = useRef(false);
   const [signerList, setSignerList] = useState(
     form.form_signer.map((signer) => ({
       ...signer,
@@ -79,7 +82,11 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
     form_type: form.form_type,
     form_sub_type: form.form_sub_type,
   };
-
+  const [localFormState, setLocalFormState, removeLocalState] =
+    useLocalStorage<FormWithResponseType | null>({
+      key: `${formId}`,
+      defaultValue: form,
+    });
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
@@ -91,58 +98,36 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
     control,
     name: "sections",
   });
+  const saveToLocalStorage = () => {
+    if (isSubmitting.current) return;
 
-  useEffect(() => {
-    const fetchOptions = async () => {
-      setIsLoading(true);
-      try {
-        if (!team.team_id) return;
-        let index = 0;
-        const supplierOptionlist: OptionTableRow[] = [];
-        while (1) {
-          const supplierData = await getSupplierOptions(supabaseClient, {
-            teamId: team.team_id,
-            index,
-            limit: FETCH_OPTION_LIMIT,
-          });
-          const supplierOptions = supplierData.map((supplier, index) => {
+    const updatedForm = {
+      ...form,
+      form_section: getValues("sections").map((section) => ({
+        ...section,
+        section_field: section.section_field.map((field) => {
+          const fieldResponse = field.field_response as string | undefined;
+          if (field.field_type === "DROPDOWN" && fieldResponse) {
             return {
-              option_field_id: form.form_section[1].section_field[0].field_id,
-              option_id: supplier.supplier_id,
-              option_order: index,
-              option_value: supplier.supplier,
+              ...field,
+              field_option: field.field_option?.[0]
+                ? [
+                    {
+                      ...field.field_option[0],
+                      option_value: fieldResponse,
+                    },
+                  ]
+                : field.field_option,
             };
-          });
-          supplierOptionlist.push(...supplierOptions);
-
-          if (supplierOptions.length < FETCH_OPTION_LIMIT) break;
-          index += FETCH_OPTION_LIMIT;
-        }
-        setPreferredSupplierOptions(supplierOptionlist);
-        replaceSection([
-          form.form_section[0],
-          {
-            ...form.form_section[1],
-            section_field: [
-              ...form.form_section[1].section_field.slice(0, 4),
-              {
-                ...form.form_section[1].section_field[9],
-                field_option: supplierOptionlist,
-              },
-            ],
-          },
-        ]);
-      } catch (e) {
-        notifications.show({
-          message: "Something went wrong. Please try again later.",
-          color: "red",
-        });
-      } finally {
-        setIsLoading(false);
-      }
+          }
+          return field;
+        }),
+      })),
+      form_signer: signerList,
     };
-    fetchOptions();
-  }, [team]);
+
+    setLocalFormState(updatedForm);
+  };
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     if (isFetchingSigner) {
@@ -177,7 +162,8 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
         projectId,
         teamName: formatTeamNameToUrlKey(team.team_name ?? ""),
       });
-
+      isSubmitting.current = true;
+      removeLocalState();
       notifications.show({
         message: "Request created.",
         color: "green",
@@ -287,6 +273,138 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       setIsFetchingSigner(false);
     }
   };
+
+  useEffect(() => {
+    if (localFormState) {
+      removeSection();
+      replaceSection(localFormState.form_section);
+      setSignerList(localFormState.form_signer);
+    } else {
+      replaceSection(form.form_section);
+      setSignerList(
+        form.form_signer.map((signer) => ({
+          ...signer,
+          signer_action: signer.signer_action.toUpperCase(),
+        }))
+      );
+    }
+  }, [form, localFormState, replaceSection]);
+
+  useEffect(() => {
+    const resetLocalStorage = async () => {
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      if (!session) {
+        localStorage.clear();
+      }
+    };
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      try {
+        if (!team.team_id) return;
+        let index = 0;
+        const supplierOptionlist: OptionTableRow[] = [];
+        while (1) {
+          const supplierData = await getSupplierOptions(supabaseClient, {
+            teamId: team.team_id,
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          });
+          const supplierOptions = supplierData.map((supplier, index) => {
+            return {
+              option_field_id: form.form_section[1].section_field[0].field_id,
+              option_id: supplier.supplier_id,
+              option_order: index,
+              option_value: supplier.supplier,
+            };
+          });
+          supplierOptionlist.push(...supplierOptions);
+
+          if (supplierOptions.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setPreferredSupplierOptions(supplierOptionlist);
+        if (!localStorage.getItem(`${formId}`)) {
+          replaceSection([
+            form.form_section[0],
+            {
+              ...form.form_section[1],
+              section_field: [
+                ...form.form_section[1].section_field.slice(0, 4),
+                {
+                  ...form.form_section[1].section_field[9],
+                  field_option: supplierOptionlist,
+                },
+              ],
+            },
+          ]);
+        } else {
+          const newSections =
+            localFormState?.form_section.map((section, sectionIndex) => {
+              const categoryOption =
+                form.form_section[1]?.section_field[0].field_option;
+              const unitOption =
+                form.form_section[1]?.section_field[3].field_option;
+
+              return {
+                ...section,
+                section_field: section.section_field.map(
+                  (field, fieldIndex) => {
+                    const fieldName =
+                      localFormState.form_section[sectionIndex].section_field[
+                        fieldIndex
+                      ].field_name;
+
+                    let newFieldOption = field.field_option;
+                    switch (fieldName) {
+                      case "Preferred Supplier":
+                        newFieldOption = supplierOptionlist;
+                        break;
+                      case "Category":
+                        newFieldOption = categoryOption;
+                        break;
+                      case "Requesting Project":
+                        newFieldOption = projectOptions;
+                        break;
+                      case "Unit of Measurement":
+                        newFieldOption = unitOption;
+                        break;
+                      default:
+                        break;
+                    }
+
+                    return {
+                      ...field,
+                      field_option: newFieldOption,
+                    };
+                  }
+                ),
+              };
+            }) || [];
+
+          const requestProjectValue = localFormState?.form_section[0]
+            .section_field[0].field_response as string | null;
+          handleProjectNameChange(requestProjectValue);
+          removeSection();
+          replaceSection(newSections);
+        }
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOptions();
+    resetLocalStorage();
+  }, [team, formId, replaceSection, localFormState, removeLocalState]);
+  useBeforeunload(() => saveToLocalStorage());
+
+  useSaveToLocalStorage({ saveToLocalStorage });
 
   return (
     <Container>

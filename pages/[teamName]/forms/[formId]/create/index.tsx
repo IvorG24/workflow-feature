@@ -211,7 +211,6 @@ const Page = ({
         );
     }
   };
-
   return (
     <>
       <Meta
