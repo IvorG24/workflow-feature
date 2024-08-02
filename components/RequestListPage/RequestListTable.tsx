@@ -59,7 +59,6 @@ type Props = {
   sortStatus: DataTableSortStatus;
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>
   setValue:  UseFormSetValue<RequestListFilterValues>
-  localFilter: RequestListFilterValues
   checkIfColumnIsHidden:  (column: string) => boolean
   showTableColumnFilter: boolean;
   setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>
@@ -91,7 +90,6 @@ const RequestListTable = ({
   sortStatus,
   setSortStatus,
   setValue,
-  localFilter,
   checkIfColumnIsHidden,
   showTableColumnFilter,
   setShowTableColumnFilter,
@@ -392,426 +390,426 @@ const RequestListTable = ({
 
   return (
     <ListTable 
-          idAccessor="request_id"
-          records={requestList}
-          fetching={isFetchingRequestList}
-          page={activePage}
-          onPageChange={(page) => {
-            handlePagination(page)
-          }}
-          totalRecords={requestListCount}
-          recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
-          sortStatus={sortStatus}
-          onSortStatusChange={setSortStatus}
-          columns={[
-            {
-              accessor: "request_id",
-              title: "Request ID",
-              width: 180,
-              hidden: checkIfColumnIsHidden("request_id"),
-              render: ({ request_id, request_formsly_id }) => {
-                const requestId =
-                  request_formsly_id === "-" ? request_id : request_formsly_id;
-    
-                return (
-                  <Flex key={String(requestId)} justify="space-between">
-                    <Text truncate maw={150}>
-                      <Anchor
-                        href={`/${formatTeamNameToUrlKey(
-                          activeTeam.team_name ?? ""
-                        )}/requests/${requestId}`}
-                        target="_blank"
-                      >
-                        {String(requestId)}
-                      </Anchor>
-                    </Text>
-                    <CopyButton
-                      value={`${BASE_URL}/${formatTeamNameToUrlKey(
-                        activeTeam.team_name ?? ""
-                      )}/requests/${requestId}`}
-                    >
-                      {({ copied, copy }) => (
-                        <Tooltip
-                          label={copied ? "Copied" : `Copy ${requestId}`}
-                          onClick={copy}
-                        >
-                          <ActionIcon>
-                            <IconCopy size={16} />
-                          </ActionIcon>
-                        </Tooltip>
-                      )}
-                    </CopyButton>
-                  </Flex>
-                );
-              },
-            },
-            {
-              accessor: "request_jira_id",
-              title: "JIRA ID",
-              hidden: localFilter.idFilter?.some((i) => i === 'jira') || checkIfColumnIsHidden("request_jira_id"),
-              render: ({ request_jira_id, request_jira_link }) => {
+      idAccessor="request_id"
+      records={requestList}
+      fetching={isFetchingRequestList}
+      page={activePage}
+      onPageChange={(page) => {
+        handlePagination(page)
+      }}
+      totalRecords={requestListCount}
+      recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
+      sortStatus={sortStatus}
+      onSortStatusChange={setSortStatus}
+      columns={[
+        {
+          accessor: "request_id",
+          title: "Request ID",
+          width: 180,
+          hidden: checkIfColumnIsHidden("request_id"),
+          render: ({ request_id, request_formsly_id }) => {
+            const requestId =
+              request_formsly_id === "-" ? request_id : request_formsly_id;
 
-                if (request_jira_id === null){
-                  return null
-                }
-
-                return (
-                  <Flex justify="space-between" key={String(request_jira_id)}>
-                    <Text>
-                      <Anchor href={String(request_jira_link)} target="_blank">
-                        {String(request_jira_id)}
-                      </Anchor>
-                    </Text>
-                    {String(request_jira_id) && (
-                      <CopyButton value={String(request_jira_id)}>
-                        {({ copied, copy }) => (
-                          <Tooltip
-                            label={copied ? "Copied" : `Copy ${request_jira_id}`}
-                            onClick={copy}
-                          >
-                            <ActionIcon>
-                              <IconCopy size={16} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )}
-                      </CopyButton>
-                    )}
-                  </Flex>
-                );
-              },
-            },
-            {
-              accessor: "request_id_status",
-              title: "JIRA Status",
-              hidden: checkIfColumnIsHidden("request_jira_status"),
-              render: ({ request_jira_id }) => {
-
-                if (request_jira_id === null) {
-                  return null
-                }
-
-                const jiraStatusMatch = jiraTicketStatusList.find(
-                  (status) => status.jira_id === request_jira_id
-                );
-    
-                const isBeingFetched = isFetchingJiraStatus.includes(
-                  `${request_jira_id}`
-                );
-    
-                const badgeColor = jiraStatusMatch
-                  ? getJiraTicketStatusColor(
-                      `${jiraStatusMatch.status.toLowerCase()}`
-                    )
-                  : "blue";
-    
-                return (
-                  <Tooltip
-                    disabled={!Boolean(jiraStatusMatch)}
-                    label={jiraStatusMatch && jiraStatusMatch.status}
+            return (
+              <Flex key={String(requestId)} justify="space-between">
+                <Text truncate maw={150}>
+                  <Anchor
+                    href={`/${formatTeamNameToUrlKey(
+                      activeTeam.team_name ?? ""
+                    )}/requests/${requestId}`}
+                    target="_blank"
                   >
-                    <Flex justify="center">
-                      <Box maw={120} sx={{ cursor: "pointer" }}>
-                        {String(request_jira_id) && (
-                          <Badge
-                            w={120}
-                            key={String(request_jira_id)}
-                            variant={jiraStatusMatch ? "light" : "filled"}
-                            color={badgeColor}
-                            onClick={() =>
-                              handleFetchJiraTicketStatus(String(request_jira_id))
-                            }
-                          >
-                            {isBeingFetched ? (
-                              <Loader
-                                color={jiraStatusMatch ? "blue" : "white"}
-                                variant="dots"
-                                size={24}
-                              />
-                            ) : jiraStatusMatch ? (
-                              jiraStatusMatch.status
-                            ) : (
-                              "Show Status"
-                            )}
-                          </Badge>
-                        )}
-                      </Box>
-                    </Flex>
-                    
-                  </Tooltip>
-                );
-              },
-            },
-            {
-              accessor: "request_otp_id",
-              title: "OTP ID",
-              hidden: localFilter.idFilter?.some((i) => i === 'otp') || checkIfColumnIsHidden("request_otp_id"),
-              render: ({
-                request_otp_id,
-                request_team_member_id,
-                request_jira_id,
-                request_formsly_id,
-              }) => {
-                const canUserFetchOtpId =
-                  userTeamMember &&
-                  (userTeamMember.team_member_id === request_team_member_id ||
-                    ["OWNER", "APPROVER"].includes(
-                      userTeamMember.team_member_role
-                    ));
-                const currentOtp = otpIdList.find(
-                  (otp) => otp.formslyId === request_formsly_id
-                );
-    
-                const isBeingFetched = isFetchingOtpId.includes(
-                  `${request_formsly_id}`
-                );
-    
-                return (
-                  <>
-                    {request_jira_id && (
-                      <Flex maw={120} justify="space-between">
-                        {!request_otp_id &&
-                        canUserFetchOtpId &&
-                        !currentOtp?.otpId ? (
-                          <Badge
-                            w={120}
-                            sx={{ cursor: "pointer" }}
-                            onClick={() =>
-                              handleFetchOtpId(
-                                `${request_jira_id}`,
-                                String(request_formsly_id)
-                              )
-                            }
-                          >
-                            {isBeingFetched ? (
-                              <Loader
-                                color={currentOtp ? "blue" : "white"}
-                                variant="dots"
-                                size={24}
-                              />
-                            ) : (
-                              "Get OTP"
-                            )}
-                          </Badge>
-                        ) : (
-                          <>
-                            <Text truncate w={90}>
-                              {currentOtp?.otpId}
-                            </Text>
-                            {currentOtp?.otpId && 
-                              <CopyButton value={currentOtp?.otpId as string}>
-                                {({ copied, copy }) => (
-                                  <Tooltip
-                                    label={
-                                      copied ? "Copied" : `Copy ${currentOtp?.otpId}`
-                                    }
-                                    onClick={copy}
-                                  >
-                                    <ActionIcon>
-                                      <IconCopy size={16} />
-                                    </ActionIcon>
-                                  </Tooltip>
-                                )}
-                              </CopyButton>
-                            }
-                          </>
-                        )}
-                      </Flex>
+                    {String(requestId)}
+                  </Anchor>
+                </Text>
+                <CopyButton
+                  value={`${BASE_URL}/${formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  )}/requests/${requestId}`}
+                >
+                  {({ copied, copy }) => (
+                    <Tooltip
+                      label={copied ? "Copied" : `Copy ${requestId}`}
+                      onClick={copy}
+                    >
+                      <ActionIcon>
+                        <IconCopy size={16} />
+                      </ActionIcon>
+                    </Tooltip>
+                  )}
+                </CopyButton>
+              </Flex>
+            );
+          },
+        },
+        {
+          accessor: "request_jira_id",
+          title: "JIRA ID",
+          hidden: checkIfColumnIsHidden("request_jira_id"),
+          render: ({ request_jira_id, request_jira_link }) => {
+
+            if (request_jira_id === null){
+              return null
+            }
+
+            return (
+              <Flex justify="space-between" key={String(request_jira_id)}>
+                <Text>
+                  <Anchor href={String(request_jira_link)} target="_blank">
+                    {String(request_jira_id)}
+                  </Anchor>
+                </Text>
+                {String(request_jira_id) && (
+                  <CopyButton value={String(request_jira_id)}>
+                    {({ copied, copy }) => (
+                      <Tooltip
+                        label={copied ? "Copied" : `Copy ${request_jira_id}`}
+                        onClick={copy}
+                      >
+                        <ActionIcon>
+                          <IconCopy size={16} />
+                        </ActionIcon>
+                      </Tooltip>
                     )}
-                  </>
-                );
-              },
-            },
-            {
-              accessor: "form_name",
-              title: "Form Name",
-              sortable: true,
-              hidden: checkIfColumnIsHidden("request_form_name"),
-              render: ({form_name}) => {
-                return (
-                  <Text truncate maw={150}>
-                    {String(form_name)}
-                  </Text>
-                );
-              },
-            },
-            {
-              accessor: "request_ped_equipment_number",
-              title: "PED Equipment Number",
-              hidden:
-                !isPEDForm || checkIfColumnIsHidden("request_ped_equipment_number"),
-              render: ({ request_id }) => {
-                const pedEquipmentNumberMatch = pedEquipmentNumberList.find(
-                  (ped) => ped.request_id === request_id
-                );
-                const shouldTruncate =
-                  pedEquipmentNumberMatch &&
-                  pedEquipmentNumberMatch.equipment_number.length >= 3;
-    
-                const renderEquipmentNumbers = () => {
-                  if (!pedEquipmentNumberMatch) return null;
-    
-                  if (shouldTruncate) {
-                    return (
-                      <Group>
-                        <Text maw={80} truncate>
-                          {pedEquipmentNumberMatch.equipment_number.join(", ")}
-                        </Text>
-                        <Menu shadow="md" withArrow withinPortal={true}>
-                          <Menu.Target>
-                            <UnstyledButton>
-                              <Text color="blue">Show All</Text>
-                            </UnstyledButton>
-                          </Menu.Target>
-                          <Menu.Dropdown p="md">
-                            <Stack spacing={8}>
-                              {pedEquipmentNumberMatch.equipment_number.map(
-                                (equipment, idx) => (
-                                  <Text key={equipment + idx}>{equipment}</Text>
-                                )
-                              )}
-                            </Stack>
-                          </Menu.Dropdown>
-                        </Menu>
-                      </Group>
-                    );
-                  }
-    
-                  return (
-                    <Text>
-                      {pedEquipmentNumberMatch.equipment_number.join(", ")}
-                    </Text>
-                  );
-                };
-    
-                return (
-                  <Box>
-                    {isFetchingPedEquipmentNumberList ? (
-                      <Loader size={16} />
-                    ) : (
-                      renderEquipmentNumbers()
+                  </CopyButton>
+                )}
+              </Flex>
+            );
+          },
+        },
+        {
+          accessor: "request_id_status",
+          title: "JIRA Status",
+          hidden: checkIfColumnIsHidden("request_jira_status"),
+          render: ({ request_jira_id }) => {
+
+            if (request_jira_id === null) {
+              return null
+            }
+
+            const jiraStatusMatch = jiraTicketStatusList.find(
+              (status) => status.jira_id === request_jira_id
+            );
+
+            const isBeingFetched = isFetchingJiraStatus.includes(
+              `${request_jira_id}`
+            );
+
+            const badgeColor = jiraStatusMatch
+              ? getJiraTicketStatusColor(
+                  `${jiraStatusMatch.status.toLowerCase()}`
+                )
+              : "blue";
+
+            return (
+              <Tooltip
+                disabled={!Boolean(jiraStatusMatch)}
+                label={jiraStatusMatch && jiraStatusMatch.status}
+              >
+                <Flex justify="center">
+                  <Box maw={120} sx={{ cursor: "pointer" }}>
+                    {String(request_jira_id) && (
+                      <Badge
+                        w={120}
+                        key={String(request_jira_id)}
+                        variant={jiraStatusMatch ? "light" : "filled"}
+                        color={badgeColor}
+                        onClick={() =>
+                          handleFetchJiraTicketStatus(String(request_jira_id))
+                        }
+                      >
+                        {isBeingFetched ? (
+                          <Loader
+                            color={jiraStatusMatch ? "blue" : "white"}
+                            variant="dots"
+                            size={24}
+                          />
+                        ) : jiraStatusMatch ? (
+                          jiraStatusMatch.status
+                        ) : (
+                          "Show Status"
+                        )}
+                      </Badge>
                     )}
                   </Box>
-                );
-              },
-            },
-    
-            {
-              accessor: "request_status",
-              title: "Formsly Status",
-              sortable: true,
-              hidden: checkIfColumnIsHidden("request_status"),
-              render: ({ request_status }) => (
-                <Flex justify="center">
-                  <Badge variant="filled" color={getStatusToColor(String(request_status))}>
-                    {String(request_status)}
-                  </Badge>
                 </Flex>
-              ),
-            },
-            {
-              accessor: "user_id",
-              title: "Requested By",
-              sortable: true,
-              hidden: checkIfColumnIsHidden("request_team_member_id"),
-              render: (request) => {
+                
+              </Tooltip>
+            );
+          },
+        },
+        {
+          accessor: "request_otp_id",
+          title: "OTP ID",
+          hidden: checkIfColumnIsHidden("request_otp_id"),
+          render: ({
+            request_otp_id,
+            request_team_member_id,
+            request_jira_id,
+            request_formsly_id,
+          }) => {
+            const canUserFetchOtpId =
+              userTeamMember &&
+              (userTeamMember.team_member_id === request_team_member_id ||
+                ["OWNER", "APPROVER"].includes(
+                  userTeamMember.team_member_role
+                ));
+            const currentOtp = otpIdList.find(
+              (otp) => otp.formslyId === request_formsly_id
+            );
 
-                const { user_id, user_first_name, user_last_name, request_team_member_id} = request as {user_id: string, user_first_name: string, user_last_name: string, request_team_member_id: string}
+            const isBeingFetched = isFetchingOtpId.includes(
+              `${request_formsly_id}`
+            );
 
-                return (
-                  <Flex px={0} gap={8} align='center'>
-                    <Avatar
-                      // src={requestor.user_avatar}
-                      {...defaultAvatarProps}
-                      color={getAvatarColor(
-                        Number(`${user_id.charCodeAt(0)}`)
-                      )}
-                      className={classes.requestor}
-                      onClick={() =>
-                        window.open(`/member/${request_team_member_id}`)
-                      }
-                    >
-                      {user_first_name[0] +
-                        user_last_name[0]}
-                    </Avatar>
-                    <Anchor
-                      href={`/member/${request_team_member_id}`}
-                      target="_blank"
-                    >
-                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                    </Anchor>
+            return (
+              <>
+                {request_jira_id && (
+                  <Flex maw={120} justify="space-between">
+                    {!request_otp_id &&
+                    canUserFetchOtpId &&
+                    !currentOtp?.otpId ? (
+                      <Badge
+                        w={120}
+                        sx={{ cursor: "pointer" }}
+                        onClick={() =>
+                          handleFetchOtpId(
+                            `${request_jira_id}`,
+                            String(request_formsly_id)
+                          )
+                        }
+                      >
+                        {isBeingFetched ? (
+                          <Loader
+                            color={currentOtp ? "blue" : "white"}
+                            variant="dots"
+                            size={24}
+                          />
+                        ) : (
+                          "Get OTP"
+                        )}
+                      </Badge>
+                    ) : (
+                      <>
+                        <Text truncate w={90}>
+                          {currentOtp?.otpId}
+                        </Text>
+                        {currentOtp?.otpId && 
+                          <CopyButton value={currentOtp?.otpId as string}>
+                            {({ copied, copy }) => (
+                              <Tooltip
+                                label={
+                                  copied ? "Copied" : `Copy ${currentOtp?.otpId}`
+                                }
+                                onClick={copy}
+                              >
+                                <ActionIcon>
+                                  <IconCopy size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                          </CopyButton>
+                        }
+                      </>
+                    )}
                   </Flex>
-                ) 
-              },
-            },
-            {
-              accessor: "request_signer",
-              title: "Approver",
-              hidden: checkIfColumnIsHidden("request_signer"),
-              render: (request) => {
-                const { request_signer } = request as {request_signer: requestSignerType[]}
-                const signerList = request_signer.map((signer: requestSignerType) => {
-                  const signerTeamMemberData = teamMemberList.find(
-                    (member) =>
-                      member.team_member_id ===
-                      signer.request_signer.signer_team_member_id
-                  );
-    
-                  return {
-                    ...signer,
-                    signer_team_member_user: signerTeamMemberData?.team_member_user,
-                  };
-                });
-    
+                )}
+              </>
+            );
+          },
+        },
+        {
+          accessor: "form_name",
+          title: "Form Name",
+          sortable: true,
+          hidden: checkIfColumnIsHidden("request_form_name"),
+          render: ({form_name}) => {
+            return (
+              <Text truncate maw={150}>
+                {String(form_name)}
+              </Text>
+            );
+          },
+        },
+        {
+          accessor: "request_ped_equipment_number",
+          title: "PED Equipment Number",
+          hidden:
+            !isPEDForm || checkIfColumnIsHidden("request_ped_equipment_number"),
+          render: ({ request_id }) => {
+            const pedEquipmentNumberMatch = pedEquipmentNumberList.find(
+              (ped) => ped.request_id === request_id
+            );
+            const shouldTruncate =
+              pedEquipmentNumberMatch &&
+              pedEquipmentNumberMatch.equipment_number.length >= 3;
+
+            const renderEquipmentNumbers = () => {
+              if (!pedEquipmentNumberMatch) return null;
+
+              if (shouldTruncate) {
                 return (
-                  <RequestSignerList
-                    signerList={signerList as RequestListItemSignerType[]}
-                  />
+                  <Group>
+                    <Text maw={80} truncate>
+                      {pedEquipmentNumberMatch.equipment_number.join(", ")}
+                    </Text>
+                    <Menu shadow="md" withArrow withinPortal={true}>
+                      <Menu.Target>
+                        <UnstyledButton>
+                          <Text color="blue">Show All</Text>
+                        </UnstyledButton>
+                      </Menu.Target>
+                      <Menu.Dropdown p="md">
+                        <Stack spacing={8}>
+                          {pedEquipmentNumberMatch.equipment_number.map(
+                            (equipment, idx) => (
+                              <Text key={equipment + idx}>{equipment}</Text>
+                            )
+                          )}
+                        </Stack>
+                      </Menu.Dropdown>
+                    </Menu>
+                  </Group>
                 );
-              },
-            },
-    
-            {
-              accessor: "request_date_created",
-              title: "Date Created",
-              hidden: checkIfColumnIsHidden("request_date_created"),
-              sortable: true,
-              render: ({ request_date_created }) => (
-                <Text>{formatDate(new Date(String(request_date_created)))}</Text>
-              ),
-            },
-            {
-              accessor: "view",
-              title: "View",
-              hidden: checkIfColumnIsHidden("view"),
-              textAlignment: "center",
-              render: ({ request_id, request_formsly_id }) => {
-                const requestId =
-                  request_formsly_id === "-" ? request_id : request_formsly_id;
-                return (
-                  <ActionIcon
-                    maw={120}
-                    mx="auto"
-                    color="blue"
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name ?? ""
-                        )}/requests/${requestId}`
-                      )
-                    }
-                  >
-                    <IconArrowsMaximize size={16} />
-                  </ActionIcon>
-                );
-              },
-            },
-          ]}
-          showTableColumnFilter={showTableColumnFilter}
-          setShowTableColumnFilter={setShowTableColumnFilter}
-          listTableColumnFilter={listTableColumnFilter}
-          setListTableColumnFilter={setListTableColumnFilter}
-          tableColumnList={tableColumnList}
-        />
+              }
+
+              return (
+                <Text>
+                  {pedEquipmentNumberMatch.equipment_number.join(", ")}
+                </Text>
+              );
+            };
+
+            return (
+              <Box>
+                {isFetchingPedEquipmentNumberList ? (
+                  <Loader size={16} />
+                ) : (
+                  renderEquipmentNumbers()
+                )}
+              </Box>
+            );
+          },
+        },
+
+        {
+          accessor: "request_status",
+          title: "Formsly Status",
+          sortable: true,
+          hidden: checkIfColumnIsHidden("request_status"),
+          render: ({ request_status }) => (
+            <Flex justify="center">
+              <Badge variant="filled" color={getStatusToColor(String(request_status))}>
+                {String(request_status)}
+              </Badge>
+            </Flex>
+          ),
+        },
+        {
+          accessor: "user_id",
+          title: "Requested By",
+          sortable: true,
+          hidden: checkIfColumnIsHidden("request_team_member_id"),
+          render: (request) => {
+
+            const { user_id, user_first_name, user_last_name, request_team_member_id} = request as {user_id: string, user_first_name: string, user_last_name: string, request_team_member_id: string}
+
+            return (
+              <Flex px={0} gap={8} align='center'>
+                <Avatar
+                  // src={requestor.user_avatar}
+                  {...defaultAvatarProps}
+                  color={getAvatarColor(
+                    Number(`${user_id.charCodeAt(0)}`)
+                  )}
+                  className={classes.requestor}
+                  onClick={() =>
+                    window.open(`/member/${request_team_member_id}`)
+                  }
+                >
+                  {user_first_name[0] +
+                    user_last_name[0]}
+                </Avatar>
+                <Anchor
+                  href={`/member/${request_team_member_id}`}
+                  target="_blank"
+                >
+                  <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                </Anchor>
+              </Flex>
+            ) 
+          },
+        },
+        {
+          accessor: "request_signer",
+          title: "Approver",
+          hidden: checkIfColumnIsHidden("request_signer"),
+          render: (request) => {
+            const { request_signer } = request as {request_signer: requestSignerType[]}
+            const signerList = request_signer.map((signer: requestSignerType) => {
+              const signerTeamMemberData = teamMemberList.find(
+                (member) =>
+                  member.team_member_id ===
+                  signer.request_signer.signer_team_member_id
+              );
+
+              return {
+                ...signer,
+                signer_team_member_user: signerTeamMemberData?.team_member_user,
+              };
+            });
+
+            return (
+              <RequestSignerList
+                signerList={signerList as RequestListItemSignerType[]}
+              />
+            );
+          },
+        },
+
+        {
+          accessor: "request_date_created",
+          title: "Date Created",
+          hidden: checkIfColumnIsHidden("request_date_created"),
+          sortable: true,
+          render: ({ request_date_created }) => (
+            <Text>{formatDate(new Date(String(request_date_created)))}</Text>
+          ),
+        },
+        {
+          accessor: "view",
+          title: "View",
+          hidden: checkIfColumnIsHidden("view"),
+          textAlignment: "center",
+          render: ({ request_id, request_formsly_id }) => {
+            const requestId =
+              request_formsly_id === "-" ? request_id : request_formsly_id;
+            return (
+              <ActionIcon
+                maw={120}
+                mx="auto"
+                color="blue"
+                onClick={async () =>
+                  await router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name ?? ""
+                    )}/requests/${requestId}`
+                  )
+                }
+              >
+                <IconArrowsMaximize size={16} />
+              </ActionIcon>
+            );
+          },
+        },
+      ]}
+      showTableColumnFilter={showTableColumnFilter}
+      setShowTableColumnFilter={setShowTableColumnFilter}
+      listTableColumnFilter={listTableColumnFilter}
+      setListTableColumnFilter={setListTableColumnFilter}
+      tableColumnList={tableColumnList}
+    />
     
   );
 };

@@ -28,6 +28,8 @@ type RequestListFilterProps = {
   localFilter: RequestListFilterValues;
   setLocalFilter: Dispatch<SetStateAction<RequestListFilterValues>>;
   projectList: TeamProjectTableRow[];
+  setShowTableColumnFilter: (value: SetStateAction<boolean>) => void
+  showTableColumnFilter: boolean
 };
 
 type FilterSelectedValuesType = {
@@ -47,6 +49,8 @@ const RequestListFilter = ({
   localFilter,
   setLocalFilter,
   projectList,
+  showTableColumnFilter,
+  setShowTableColumnFilter
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -61,7 +65,6 @@ const RequestListFilter = ({
   const { ref: formRef, focused: formRefFocused } = useFocusWithin();
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
   const { ref: projectRef, focused: projectRefFocused } = useFocusWithin();
-  const { ref: idFilterRef, focused: idFilterRefFocused } = useFocusWithin();
 
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
@@ -85,11 +88,6 @@ const RequestListFilter = ({
     { value: "PENDING", label: "Pending" },
     { value: "REJECTED", label: "Rejected" },
     { value: "CANCELED", label: "Canceled" },
-  ];
-
-  const idFilterList = [
-    { value: "otp", label: "No OTP ID" },
-    { value: "jira", label: "No JIRA ID" },
   ];
 
   const projectListChoices = projectList.map((project) => {
@@ -141,6 +139,14 @@ const RequestListFilter = ({
         >
           Refresh
       </Button>
+      <Flex gap="sm" wrap="wrap" align="center">
+        <p>Show/Hide Table Columns</p>
+        <Switch
+          onLabel={<IconEyeFilled size="14" />}
+          checked={showTableColumnFilter}
+          onChange={(event) => setShowTableColumnFilter(event.currentTarget.checked)}
+        />
+      </Flex>
 
       <Flex gap="sm" wrap="wrap" align="center">
           <p>Filter</p>
@@ -276,29 +282,6 @@ const RequestListFilter = ({
                   if (!approverRefFocused) handleFilterChange("approver", value);
                 }}
                 onDropdownClose={() => handleFilterChange("approver", value)}
-                {...inputFilterProps}
-                sx={{ flex: 1 }}
-                miw={250}
-                maw={320}
-                disabled={filterSelectedValues.isApproversView}
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="idFilter"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                placeholder="OTP and Jira ID"
-                ref={idFilterRef}
-                data={idFilterList}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (!idFilterRefFocused) handleFilterChange("idFilter", value);
-                }}
-                onDropdownClose={() => handleFilterChange("idFilter", value)}
                 {...inputFilterProps}
                 sx={{ flex: 1 }}
                 miw={250}

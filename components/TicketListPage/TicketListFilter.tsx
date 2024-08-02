@@ -10,7 +10,7 @@ import {
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconEyeFilled, IconReload, IconSearch } from "@tabler/icons-react";
-import { useState } from "react";
+import { SetStateAction, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FilterFormValues, TicketListLocalFilter } from "./TicketListPage";
 
@@ -25,6 +25,8 @@ type Props = {
       | TicketListLocalFilter
       | ((prevState: TicketListLocalFilter) => TicketListLocalFilter)
   ) => void;
+  setShowTableColumnFilter: (value: SetStateAction<boolean>) => void
+  showTableColumnFilter: boolean
 }
 
 type FilterSelectedValuesType = {
@@ -40,6 +42,8 @@ const TicketListFilter = ({
   ticketCategoryList,
   teamMemberList,
   handleFilterTicketList,
+  setShowTableColumnFilter,
+  showTableColumnFilter
 }: Props) => {
 
   const inputFilterProps = {
@@ -112,6 +116,14 @@ const TicketListFilter = ({
         >
           Refresh
         </Button>
+        <Flex gap="sm" wrap="wrap" align="center">
+          <p>Show/Hide Table Columns</p>
+          <Switch
+            onLabel={<IconEyeFilled size="14" />}
+            checked={showTableColumnFilter}
+            onChange={(event) => setShowTableColumnFilter(event.currentTarget.checked)}
+          />
+        </Flex>
         <Flex gap="sm" wrap="wrap" align="center">
           <p>Filter</p>
           <Switch

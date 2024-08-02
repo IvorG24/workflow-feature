@@ -233,12 +233,6 @@ const MemoListPage = ({
             Manage Memo Format
           </Button>
         )}
-        <Button
-          variant="outline"
-          onClick={() => setShowTableColumnFilter(true)}
-        >
-          Show/Hide Table Columns
-        </Button>
       </Group>
       {/* memo filters */}
       <Paper p="md">
@@ -268,6 +262,14 @@ const MemoListPage = ({
             >
               Refresh
             </Button>
+            <Flex gap="sm" wrap="wrap" align="center">
+              <p>Show/Hide Table Columns</p>
+              <Switch
+                onLabel={<IconEyeFilled size="14" />}
+                checked={showTableColumnFilter}
+                onChange={(event) => setShowTableColumnFilter(event.currentTarget.checked)}
+              />
+            </Flex>
             <Flex gap="sm" wrap="wrap" align="center">
               <p>Filter</p>
               <Switch

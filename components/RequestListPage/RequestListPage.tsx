@@ -241,12 +241,6 @@ const RequestListPage = ({
             </Menu.Dropdown>
           </Menu>
         ) : null}
-        <Button
-          variant="outline"
-          onClick={() => setShowTableColumnFilter(true)}
-        >
-          Show/Hide Table Columns
-        </Button>
       </Flex>
       <Paper p="md">
       <FormProvider {...filterFormMethods}>
@@ -258,6 +252,8 @@ const RequestListPage = ({
             localFilter={localFilter}
             setLocalFilter={setLocalFilter}
             projectList={projectList}
+            showTableColumnFilter={showTableColumnFilter}
+            setShowTableColumnFilter={setShowTableColumnFilter}
           />
         </form>
       </FormProvider>
@@ -273,7 +269,6 @@ const RequestListPage = ({
           sortStatus={sortStatus}
           setSortStatus={setSortStatus}
           setValue={setValue}
-          localFilter={localFilter}
           checkIfColumnIsHidden={checkIfColumnIsHidden}
           showTableColumnFilter={showTableColumnFilter}
           setShowTableColumnFilter={setShowTableColumnFilter}

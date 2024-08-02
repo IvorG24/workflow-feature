@@ -254,12 +254,6 @@ const TicketListPage = ({
             Ticket Admin Analytics
           </Button>
         )}
-        <Button
-          variant="outline"
-          onClick={() => setShowTableColumnFilter(true)}
-        >
-          Show/Hide Table Columns
-        </Button>
       </Flex>
       <Paper p="md">
         <Box >
@@ -273,6 +267,8 @@ const TicketListPage = ({
                 teamMemberList={teamMemberList}
                 localFilter={localFilter}
                 setLocalFilter={setLocalFilter}
+                showTableColumnFilter={showTableColumnFilter}
+                setShowTableColumnFilter={setShowTableColumnFilter}
               />
             </form>
           </FormProvider>
