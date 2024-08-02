@@ -15,8 +15,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
       const ticketCategoryList = await getTicketCategoryList(supabaseClient);
       return { props: { teamAdminList, ticketCategoryList } };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

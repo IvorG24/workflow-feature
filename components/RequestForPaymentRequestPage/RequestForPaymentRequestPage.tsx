@@ -299,7 +299,7 @@ const RequestForPaymentRequestPage = ({
         },
         ...prev,
       ]);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -343,7 +343,7 @@ const RequestForPaymentRequestPage = ({
         message: `Request cancelled.`,
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -366,7 +366,7 @@ const RequestForPaymentRequestPage = ({
       await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -411,7 +411,7 @@ const RequestForPaymentRequestPage = ({
           rfpCodeForm.form_id
         }/create?rfp=${request.request_formsly_id}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message:
           "Failed to create RFP Code request. Please contact the IT team.",
@@ -577,8 +577,8 @@ const RequestForPaymentRequestPage = ({
         link: jiraTicket.jiraTicketLink,
       });
       return jiraTicket;
-    } catch (error) {
-      const errorMessage = (error as Error).message;
+    } catch (e) {
+      const errorMessage = (e as Error).message;
       notifications.show({
         message: `Error: ${errorMessage}`,
         color: "red",

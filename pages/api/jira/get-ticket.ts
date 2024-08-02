@@ -42,8 +42,7 @@ export default async function handler(
         .status(response.status)
         .json({ error: "Error fetching data from Jira API" });
     }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error });
+  } catch (e) {
+    return res.status(500).json({ error: e });
   }
 }

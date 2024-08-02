@@ -54,7 +54,7 @@ const SearchKeywordResponse = ({ selectedForm }: Props) => {
         searchData as unknown as SearchKeywordResponseType[]
       );
       setSearchKeywordResponse(reducedSearchData);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         title: "Can't fetch data at the moment.",
         message: "Please try again later.",

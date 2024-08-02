@@ -105,7 +105,7 @@ CreateFormProps) => {
   //       setTeamList(updatedTeamList);
   //       changeStep((prev) => prev + 1);
   //     }
-  //   } catch (error) {
+  //   } catch (e) {
   //     notifications.show({
   //       message: "Something went wrong. Please try again later.",
   //       color: "red",

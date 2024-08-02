@@ -24,8 +24,7 @@ export const getServerSideProps: GetServerSideProps = withAuth(
       return {
         props: { user: user },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

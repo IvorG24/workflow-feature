@@ -10,8 +10,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       return {
         props: { reportList: REPORT_LIST },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

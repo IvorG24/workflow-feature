@@ -69,7 +69,6 @@ const UserItemFilter = ({
       });
       setResultList(itemList);
     } catch (e) {
-      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

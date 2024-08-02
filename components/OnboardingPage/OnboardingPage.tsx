@@ -204,8 +204,7 @@ const OnboardingPage = ({ user }: Props) => {
         message: "Profile completed.",
         color: "green",
       });
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -378,8 +377,7 @@ const OnboardingPage = ({ user }: Props) => {
 
       setValue("user_first_name", employee.scic_employee_first_name);
       setValue("user_last_name", employee.scic_employee_last_name);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch employee data",
         color: "orange",

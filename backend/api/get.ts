@@ -3446,8 +3446,7 @@ export const getMemoFormat = async (
                   ...attachment,
                   memo_format_attachment_file: newAttachmentFile,
                 };
-              } catch (error) {
-                console.error(error);
+              } catch (e) {
                 return attachment;
               }
             })
@@ -4730,7 +4729,6 @@ export const getJiraAutomationDataByProjectId = async (
   });
 
   if (error) {
-    console.error(error);
     console.warn("Failed to fetch jira automation data");
     return null;
   }

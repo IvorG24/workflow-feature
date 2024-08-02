@@ -413,6 +413,15 @@ const EditITAssetRequestPage = ({
       });
       return;
     }
+
+    if (signerList.length === 0) {
+      notifications.show({
+        message: "Primary signer is required",
+        color: "orange",
+      });
+      return;
+    }
+
     try {
       if (!requestorProfile) return;
       if (!teamMember) return;
@@ -481,7 +490,7 @@ const EditITAssetRequestPage = ({
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

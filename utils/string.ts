@@ -1,3 +1,4 @@
+import { notifications } from "@mantine/notifications";
 import moment from "moment";
 
 export const isValidTeamName = (name: string): boolean => {
@@ -49,7 +50,7 @@ export const parseJSONIfValid = (jsonString: string) => {
   try {
     const jsonObject = JSON.parse(jsonString);
     return jsonObject;
-  } catch (error) {
+  } catch (e) {
     return jsonString;
   }
 };
@@ -149,8 +150,11 @@ export const jsonToCsv = (jsonString: string): string => {
       .join("\n")}`;
 
     return csvContent;
-  } catch (error) {
-    console.error("Error converting JSON to CSV");
+  } catch (e) {
+    notifications.show({
+      message: "Something went wrong. Please try again later.",
+      color: "red",
+    });
     return "";
   }
 };

@@ -237,8 +237,8 @@ export const signInUser = async (
     });
     if (error) throw error;
     return { data, error: null };
-  } catch (error) {
-    return { data: null, error: `${error}` };
+  } catch (e) {
+    return { data: null, error: `${e}` };
   }
 };
 

@@ -95,8 +95,8 @@ export const createJiraCommentRequestBody = async (
     };
 
     return requestBody;
-  } catch (error) {
-    console.error("Error adding comment to jira ticket:", error);
+  } catch (e) {
+    console.error("Error adding comment to jira ticket:", e);
   }
 };
 

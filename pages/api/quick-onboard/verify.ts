@@ -57,8 +57,7 @@ export default async function handler(
 
       res.redirect(`/invitation/${invitationId}`);
     }
-  } catch (error) {
-    console.error(error);
+  } catch (e) {
     res.redirect("/500");
   }
 }
