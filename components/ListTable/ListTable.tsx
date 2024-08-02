@@ -1,5 +1,7 @@
-import { createStyles } from "@mantine/core";
+import { createStyles, Drawer, Group, Stack, Switch, Text } from "@mantine/core";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { DataTable, DataTableColumn } from "mantine-datatable";
+import { Dispatch, SetStateAction } from "react";
 
 type DataTableProps<T = Record<string, unknown>> = {
   idAccessor?: string;
@@ -18,6 +20,13 @@ type DataTableProps<T = Record<string, unknown>> = {
     columnAccessor: string;
     direction: "asc" | "desc";
   }) => void;
+
+  // for table column
+  showTableColumnFilter: boolean;
+  setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>
+  listTableColumnFilter: string[]
+  setListTableColumnFilter: (val: string[] | ((prevState: string[]) => string[])) => void;
+  tableColumnList: { value: string, label: string }[]
 };
 
 const useStyles = createStyles((theme) => ({
@@ -46,20 +55,75 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const ListTable = (props: DataTableProps) => {
+const ListTable = ({ showTableColumnFilter, setShowTableColumnFilter, tableColumnList, listTableColumnFilter, setListTableColumnFilter, ...props}: DataTableProps) => {
   const { classes } = useStyles();
   return (
-    <DataTable
-      classNames={classes}
-      withColumnBorders
-      borderColor={"#CDD1D6"}
-      rowBorderColor={"#CDD1D6"}
-      highlightOnHover
-      fontSize={16}
-      withBorder
-      minHeight={390}
-      {...props}
-    />
+    <>
+      <DataTable
+        classNames={classes}
+        withColumnBorders
+        borderColor={"#CDD1D6"}
+        rowBorderColor={"#CDD1D6"}
+        highlightOnHover
+        fontSize={16}
+        withBorder
+        minHeight={390}
+        {...props}
+      />
+      
+      {/* drawer */}
+      <Drawer
+          opened={showTableColumnFilter}
+          onClose={() => {
+            setShowTableColumnFilter(false);
+          }}
+          position="right"
+          title={
+            <Text weight={600} fz={16}>
+              Show/Hide Request List Table Columns
+            </Text>
+          }
+        >
+          <Stack px="sm">
+            {tableColumnList.map((column, idx) => {
+              const isHidden =
+              listTableColumnFilter.find(
+                  (filter) => filter === column.value
+                ) === undefined;
+    
+    
+              const isPedColumn = column.label.includes("PED");
+    
+              if (isPedColumn ) return null;
+    
+              return (
+                <Group position="apart" key={column.value + idx}>
+                  <Text weight={500}>{column.label}</Text>
+                  <Switch
+                    checked={isHidden}
+                    onChange={(e) => {
+                      if (e.currentTarget.checked) {
+                        setListTableColumnFilter((prev) =>
+                          prev.filter((prevItem) => prevItem !== column.value)
+                        );
+                      } else {
+                        setListTableColumnFilter((prev) => [
+                          ...prev,
+                          column.value,
+                        ]);
+                      }
+                    }}
+                    styles={{ track: { cursor: "pointer" } }}
+                    color="green"
+                    onLabel={<IconEye size={16} />}
+                    offLabel={<IconEyeOff size={16} />}
+                  />
+                </Group>
+              );
+            })}
+          </Stack>
+      </Drawer>
+    </>
   );
 };
 

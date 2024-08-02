@@ -25,7 +25,7 @@ import {
   Title,
   Tooltip
 } from "@mantine/core";
-import { useDisclosure, useFocusWithin } from "@mantine/hooks";
+import { useDisclosure, useFocusWithin, useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
@@ -138,6 +138,27 @@ const MemoListPage = ({
     }
     return sortStatus.columnAccessor;
   };
+  const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
+  const [listTableColumnFilter, setListTableColumnFilter] =
+    useLocalStorage<string[]>({
+      key: "memo-list-table-column-filter",
+      defaultValue: [],
+    });
+
+  const checkIfColumnIsHidden = (column: string) => {
+    const isHidden = listTableColumnFilter.includes(column);
+    return isHidden;
+  };
+
+  const tableColumnList = [
+    { value: "memo_id", label: "Memo ID" },
+    { value: "memo_subject", label: "Subject" },
+    { value: "memo_status", label: "Status" },
+    { value: "memo_author_user_id", label: "Author" },
+    { value: "memo_signer_list", label: "Approver" },
+    { value: "memo_date_created", label: "Date Created" },
+    { value: "view", label: "View" },
+  ];
 
   const handlePagination = async ({ overidePage }: { overidePage?: number  } = {}) => {
     try {
@@ -212,6 +233,12 @@ const MemoListPage = ({
             Manage Memo Format
           </Button>
         )}
+        <Button
+          variant="outline"
+          onClick={() => setShowTableColumnFilter(true)}
+        >
+          Show/Hide Table Columns
+        </Button>
       </Group>
       {/* memo filters */}
       <Paper p="md">
@@ -348,6 +375,7 @@ const MemoListPage = ({
                 accessor: "memo_id",
                 title: "ID",
                 width: 180,
+                hidden: checkIfColumnIsHidden("memo_id"),
                 render: ({memo_id, memo_reference_number}) => {
                   return (
                     <Flex gap="md" align="center">
@@ -386,12 +414,14 @@ const MemoListPage = ({
               {
                 accessor: "memo_subject",
                 title: "Subject",
+                hidden: checkIfColumnIsHidden("memo_subject"),
                 sortable: true,
               },
               {
                 accessor: "memo_status",
                 title: "Status",
                 sortable: true,
+                hidden: checkIfColumnIsHidden("memo_status"),
                 render: ({memo_status}) => {
                   return (
                     <Flex justify="center">
@@ -409,6 +439,7 @@ const MemoListPage = ({
               {
                 accessor: "memo_author_user_id",
                 title: "Author",
+                hidden: checkIfColumnIsHidden("memo_author_user_id"),
                 sortable: true,
                 render: (memo) => {
                   const { memo_author_user } = memo as {
@@ -443,6 +474,7 @@ const MemoListPage = ({
               {
                 accessor: "memo_signer_list",
                 title: "Approver",
+                hidden: checkIfColumnIsHidden("memo_signer_list"),
                 render: (memo) => {
                   const { memo_signer_list } = memo as MemoListItemType;
                   return (
@@ -454,6 +486,7 @@ const MemoListPage = ({
                 accessor: "memo_date_created",
                 title: "Date Created",
                 sortable: true,
+                hidden: checkIfColumnIsHidden("memo_date_created"),
                 render: ({memo_date_created}) => {
                   if (!memo_date_created) {
                     return null;
@@ -469,8 +502,9 @@ const MemoListPage = ({
                 },
               },
               {
-                accessor: "memo_id" + "memo_date_created",
+                accessor: "view",
                 title: "View",
+                hidden: checkIfColumnIsHidden("view"),
                 render: ({memo_id}) => {
                   return (
                     <Flex justify="center">
@@ -491,6 +525,11 @@ const MemoListPage = ({
                 },
               },
             ]}
+            showTableColumnFilter={showTableColumnFilter}
+            setShowTableColumnFilter={setShowTableColumnFilter}
+            listTableColumnFilter={listTableColumnFilter}
+            setListTableColumnFilter={setListTableColumnFilter}
+            tableColumnList={tableColumnList}
           />
         </Box>
         <MemoFormatEditor

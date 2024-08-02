@@ -32,7 +32,6 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import RequestListFilter from "./RequestListFilter";
 import RequestListTable from "./RequestListTable";
-import RequestListTableColumnFilter from "./RequestListTableColumnFilter";
 
 type Props = {
   teamMemberList: TeamMemberWithUserType[];
@@ -87,14 +86,28 @@ const RequestListPage = ({
     columnAccessor: "request_date_created",
     direction: "desc",
   });
-  const [requestListTableColumnFilter, setRequestListTableColumnFilter] =
+  const [listTableColumnFilter, setListTableColumnFilter] =
     useLocalStorage<string[]>({
       key: "request-list-table-column-filter",
       defaultValue: [],
     });
 
+  const tableColumnList = [
+    { value: "request_id", label: "Request ID" },
+    { value: "request_jira_id", label: "Request Jira ID" },
+    { value: "request_jira_status", label: "JIRA Status" },
+    { value: "request_otp_id", label: "OTP ID" },
+    { value: "request_form_name", label: "Form Name" },
+    { value: "request_ped_equipment_number", label: "PED Equipment Number" },
+    { value: "request_status", label: "Status" },
+    { value: "request_team_member_id", label: "Requested By" },
+    { value: "request_signer", label: "Approver" },
+    { value: "request_date_created", label: "Date Created" },
+    { value: "view", label: "View" },
+  ];
+
   const checkIfColumnIsHidden = (column: string) => {
-    const isHidden = requestListTableColumnFilter.includes(column);
+    const isHidden = listTableColumnFilter.includes(column);
     return isHidden;
   };
 
@@ -262,16 +275,14 @@ const RequestListPage = ({
           setValue={setValue}
           localFilter={localFilter}
           checkIfColumnIsHidden={checkIfColumnIsHidden}
+          showTableColumnFilter={showTableColumnFilter}
+          setShowTableColumnFilter={setShowTableColumnFilter}
+          listTableColumnFilter={listTableColumnFilter}
+          setListTableColumnFilter={setListTableColumnFilter}
+          tableColumnList={tableColumnList}
         />
       </Box>
       </Paper>
-      <RequestListTableColumnFilter
-        showTableColumnFilter={showTableColumnFilter}
-        setShowTableColumnFilter={setShowTableColumnFilter}
-        requestListTableColumnFilter={requestListTableColumnFilter}
-        setRequestListTableColumnFilter={setRequestListTableColumnFilter}
-        selectedFormFilter={selectedFormFilter}
-      />
     </Container>
   );
 };

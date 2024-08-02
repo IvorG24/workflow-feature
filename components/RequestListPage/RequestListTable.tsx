@@ -61,6 +61,11 @@ type Props = {
   setValue:  UseFormSetValue<RequestListFilterValues>
   localFilter: RequestListFilterValues
   checkIfColumnIsHidden:  (column: string) => boolean
+  showTableColumnFilter: boolean;
+  setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>
+  listTableColumnFilter: string[]
+  setListTableColumnFilter: (val: string[] | ((prevState: string[]) => string[])) => void;
+  tableColumnList: { value: string, label: string }[]
 };
 
 const useStyles = createStyles(() => ({
@@ -87,7 +92,12 @@ const RequestListTable = ({
   setSortStatus,
   setValue,
   localFilter,
-  checkIfColumnIsHidden
+  checkIfColumnIsHidden,
+  showTableColumnFilter,
+  setShowTableColumnFilter,
+  listTableColumnFilter,
+  setListTableColumnFilter,
+  tableColumnList
 }: Props) => {
   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
@@ -796,6 +806,11 @@ const RequestListTable = ({
               },
             },
           ]}
+          showTableColumnFilter={showTableColumnFilter}
+          setShowTableColumnFilter={setShowTableColumnFilter}
+          listTableColumnFilter={listTableColumnFilter}
+          setListTableColumnFilter={setListTableColumnFilter}
+          tableColumnList={tableColumnList}
         />
     
   );

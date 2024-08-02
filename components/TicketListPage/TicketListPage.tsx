@@ -32,6 +32,7 @@ import {
   Title,
   Tooltip
 } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -112,6 +113,13 @@ const TicketListPage = ({
     columnAccessor: "ticket_date_created",
     direction: "desc",
   });
+  const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
+  const [listTableColumnFilter, setListTableColumnFilter] =
+    useLocalStorage<string[]>({
+      key: "ticket-list-table-column-filter",
+      defaultValue: [],
+    });
+
 
   const [localFilter, setLocalFilter] = useState<TicketListLocalFilter>({
       search: "",
@@ -197,6 +205,11 @@ const TicketListPage = ({
     }
   };
 
+  const checkIfColumnIsHidden = (column: string) => {
+    const isHidden = listTableColumnFilter.includes(column);
+    return isHidden;
+  };
+
   // soroting
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
@@ -207,7 +220,16 @@ const TicketListPage = ({
     handlePagination()
   }, [sortStatus]);
 
-
+  const tableColumnList = [
+    { value: "ticket_id", label: "Ticket ID" },
+    { value: "ticket_category", label: "Ticket Category" },
+    { value: "ticket_status", label: "Status" },
+    { value: "ticket_requester_team_member_id", label: "Requester" },
+    { value: "ticket_approver_team_member_id", label: "Approver" },
+    { value: "ticket_date_created", label: "Date Created" },
+    { value: "ticket_status_date_updated", label: "Date Updated" },
+    { value: "view", label: "View" },
+  ];
 
   return (
     <Container maw={3840} h="100%">
@@ -232,6 +254,12 @@ const TicketListPage = ({
             Ticket Admin Analytics
           </Button>
         )}
+        <Button
+          variant="outline"
+          onClick={() => setShowTableColumnFilter(true)}
+        >
+          Show/Hide Table Columns
+        </Button>
       </Flex>
       <Paper p="md">
         <Box >
@@ -268,6 +296,7 @@ const TicketListPage = ({
                 accessor: "ticket_id",
                 title: "ID",
                 width: 180,
+                hidden: checkIfColumnIsHidden("ticket_id"),
                 render: ({ticket_id}) => {
                   return (
                     <Flex gap="md" align="center">
@@ -305,11 +334,13 @@ const TicketListPage = ({
                 accessor: "ticket_category",
                 title: "Ticket Category",
                 sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_category"),
               },
               {
                 accessor: "ticket_status",
                 title: "Status",
                 sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_status"),
                 render: ({ticket_status}) => {
                   return (
                     <Flex justify="center">
@@ -327,6 +358,7 @@ const TicketListPage = ({
                 accessor: "ticket_requester_team_member_id",
                 title: "Requester",
                 sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_requester_team_member_id"),
                 render: (ticket) => {
                   const { ticket_requester_user } = ticket;
                   const { user_first_name, user_last_name, user_avatar, user_id } =
@@ -358,6 +390,7 @@ const TicketListPage = ({
               {
                 accessor: "ticket_approver_team_member_id",
                 title: "Approver",
+                hidden: checkIfColumnIsHidden("ticket_approver_team_member_id"),
                 render: ({ticket_approver_user, ticket_status, ticket_approver_team_member_id}) => {
                   const { user_first_name, user_last_name, user_id, user_avatar } = ticket_approver_user as TicketApproverUserType;
 
@@ -392,6 +425,7 @@ const TicketListPage = ({
                 accessor: "ticket_date_created",
                 title: "Date Created",
                 sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_date_created"),
                 render: ({ticket_date_created}) => {
                   if (!ticket_date_created) {
                     return null;
@@ -410,6 +444,7 @@ const TicketListPage = ({
                 accessor: "ticket_status_date_updated",
                 title: "Date Updated",
                 sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_status_date_updated"),
                 render: ({ticket_status_date_updated}) => {
                   if (!ticket_status_date_updated) {
                     return null;
@@ -427,8 +462,9 @@ const TicketListPage = ({
                 },
               },
               {
-                accessor: "ticket_id" + "ticket_status_date_updated",
+                accessor: "view",
                 title: "View",
+                hidden: checkIfColumnIsHidden("view"),
                 render: ({ticket_id}) => {
                   const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
@@ -450,6 +486,11 @@ const TicketListPage = ({
                 },
               },
             ]}
+            showTableColumnFilter={showTableColumnFilter}
+            setShowTableColumnFilter={setShowTableColumnFilter}
+            listTableColumnFilter={listTableColumnFilter}
+            setListTableColumnFilter={setListTableColumnFilter}
+            tableColumnList={tableColumnList}
           />
         </Box>
       </Paper>
