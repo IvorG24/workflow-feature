@@ -100,8 +100,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
 
       setJiraUserList(userList);
       setJiraUserCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira user list",
       });
@@ -122,8 +121,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
 
       setJiraUserList(data);
       setJiraUserCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch jira user list",
         color: "red",
@@ -193,8 +191,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
       updateOrCreateJiraUserFormMethods.reset();
 
       handlePagination(activePage);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to update or create jira user",
         color: "red",
@@ -210,7 +207,7 @@ const JiraUserLookupTable = ({ jiraUserAccountData }: Props) => {
         prev.filter((user) => user.jira_user_account_id !== jiraUserAccountId)
       );
       setJiraUserCount((prev) => prev - 1);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Failed to delete jira user.",
         color: "red",

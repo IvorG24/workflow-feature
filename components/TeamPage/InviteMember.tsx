@@ -144,7 +144,7 @@ const InviteMember = ({ memberEmailList }: Props) => {
         message: "Invitation resent",
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -166,7 +166,7 @@ const InviteMember = ({ memberEmailList }: Props) => {
         message: "Invitation canceled",
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -192,8 +192,7 @@ const InviteMember = ({ memberEmailList }: Props) => {
 
       setPendingInviteList(data);
       setPendingInviteCount(count);
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Error fetching pending invite list.",
         color: "red",

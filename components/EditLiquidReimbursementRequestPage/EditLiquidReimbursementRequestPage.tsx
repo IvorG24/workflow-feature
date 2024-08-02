@@ -186,7 +186,7 @@ const EditLiquidReimbursementRequestPage = ({
           request.request_formsly_id_prefix
         }-${request.request_formsly_id_serial}`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -459,7 +459,7 @@ const EditLiquidReimbursementRequestPage = ({
           value
         );
       }
-    } catch (error) {
+    } catch (e) {
       setValue(`sections.${sectionIndex}.section_field.4.field_response`, 0);
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -524,7 +524,7 @@ const EditLiquidReimbursementRequestPage = ({
           (a, b) => a.field_order - b.field_order
         ),
       });
-    } catch (error) {
+    } catch (e) {
       setValue(
         `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
         false
@@ -586,7 +586,7 @@ const EditLiquidReimbursementRequestPage = ({
         },
         { focusName: `sections.${sectionIndex}.section_field.1.field_response` }
       );
-    } catch (error) {
+    } catch (e) {
       setValue(
         `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
         ""
@@ -654,7 +654,7 @@ const EditLiquidReimbursementRequestPage = ({
         },
         { shouldFocus: false }
       );
-    } catch (error) {
+    } catch (e) {
       setValue(`sections.${sectionIndex}.section_field.2.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -680,7 +680,7 @@ const EditLiquidReimbursementRequestPage = ({
         ) - value
       );
       setIsUpdatedByAccountant(true);
-    } catch (error) {
+    } catch (e) {
       setValue(`sections.${sectionIndex}.section_field.4.field_response`, 0);
       notifications.show({
         message: "Something went wrong. Please try again later.",

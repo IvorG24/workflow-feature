@@ -49,8 +49,7 @@ export const withAuth = <P extends { [key: string]: any }>(
       if (!user) throw new Error("No email in session");
 
       return await getServerSidePropsFunc({ context, supabaseClient, user });
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",
@@ -106,8 +105,7 @@ export const withAuthAndOnboarding = <P extends { [key: string]: any }>(
       const user = session.user;
 
       return getServerSidePropsFunc({ context, supabaseClient, user });
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",
@@ -176,8 +174,7 @@ export const withOwnerOrApprover = <P extends { [key: string]: any }>(
         throw new Error("User is not an owner or approver");
 
       return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",
@@ -288,8 +285,7 @@ export const withAuthAndOnboardingRequestPage = <
       }
 
       return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",
@@ -394,8 +390,7 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
         user,
         userActiveTeam,
       });
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

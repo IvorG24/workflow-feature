@@ -116,7 +116,7 @@ const FormDepartmentSignerSection = ({
         } department signer`,
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: `Failed to ${
           isUpdatingDepartmentSigner ? "update" : "create"
@@ -190,7 +190,7 @@ const FormDepartmentSignerSection = ({
           setDepartmentSignerList((prev) =>
             prev.filter((signer) => signer.signer_id !== signerId)
           );
-        } catch (error) {
+        } catch (e) {
           notifications.show({
             message: "Failed to remove department signer.",
             color: "red",

@@ -69,8 +69,7 @@ const CommonQueriesPage = ({ queryList }: Props) => {
         message: "Data fetched.",
         color: "green",
       });
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

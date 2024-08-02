@@ -945,16 +945,19 @@ CREATE TABLE lookup_schema.bank_list_table (
 
 CREATE OR REPLACE FUNCTION get_current_date()
 RETURNS TIMESTAMPTZ
+SET search_path TO ''
 AS $$
 BEGIN
-    RETURN NOW();
+  RETURN NOW();
 END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION get_ssot(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let ssot_data;
 plv8.subtransaction(function(){
   const {
@@ -996,7 +999,7 @@ plv8.subtransaction(function(){
 
     if(supplierList.length !== 0){
       const quotationCondition = supplierList.map(supplier => `request_response_table.request_response='"${supplier}"'`).join(" OR ");
-      const quotationRequestIdList = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}' AND (${quotationCondition})`);
+      const quotationRequestIdList = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN public.request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}' AND (${quotationCondition})`);
 
       if(quotationRequestIdList.length === 0){
         ssot_data = [];
@@ -1018,7 +1021,7 @@ plv8.subtransaction(function(){
       `
         SELECT * FROM (
           SELECT 
-          request_view.request_id, 
+            request_view.request_id, 
             request_view.request_jira_id,
             request_view.request_otp_id,
             request_view.request_formsly_id,
@@ -1026,7 +1029,7 @@ plv8.subtransaction(function(){
             request_view.request_team_member_id, 
             request_response_table.request_response, 
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS RowNumber 
-          FROM request_view INNER JOIN request_schema.request_response_table ON request_view.request_id = request_response_table.request_response_request_id 
+          FROM public.request_view INNER JOIN request_schema.request_response_table ON request_view.request_id = request_response_table.request_response_request_id 
           WHERE 
             request_view.request_status = 'APPROVED'
             AND request_view.request_form_id = '${item_form.form_id}'
@@ -1042,7 +1045,7 @@ plv8.subtransaction(function(){
     );
         
   }else{
-    item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_view.request_jira_id, request_view.request_otp_id, request_date_created, request_team_member_id FROM request_view WHERE request_status='APPROVED' AND request_form_id='${item_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
+    item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_view.request_jira_id, request_view.request_otp_id, request_date_created, request_team_member_id FROM public.request_view WHERE request_status='APPROVED' AND request_form_id='${item_form.form_id}' ORDER BY request_status_date_updated DESC OFFSET ${rowStart} ROWS FETCH FIRST ${rowLimit} ROWS ONLY`);
   }
 
   ssot_data = item_requests.map((item) => {
@@ -1066,7 +1069,7 @@ plv8.subtransaction(function(){
     // Item team member
     const item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${item.request_team_member_id}'`)[0];
 
-    const quotation_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}'`);
+    const quotation_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN public.request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${quotation_form.form_id}'`);
     let quotation_list = [];
     if(quotation_ids.length !== 0){
       let quotation_condition = "";
@@ -1074,7 +1077,7 @@ plv8.subtransaction(function(){
         quotation_condition += `request_id='${quotation.request_id}' OR `;
       });
 
-      const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+      const quotation_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM public.request_view WHERE ${quotation_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
       quotation_list = quotation_requests.map(quotation => {
         // Quotation request response
         const quotation_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_schema.request_response_table WHERE request_response_request_id='${quotation.request_id}'`);
@@ -1092,7 +1095,7 @@ plv8.subtransaction(function(){
         // Quotation team member
         const quotation_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${quotation.request_team_member_id}'`)[0];
 
-        const rir_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${rir_form.form_id}'`);
+        const rir_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN public.request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${quotation.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${rir_form.form_id}'`);
         let rir_list = [];
         
         if(rir_ids.length !== 0){
@@ -1101,7 +1104,7 @@ plv8.subtransaction(function(){
             rir_condition += `request_id='${rir.request_id}' OR `;
           });
 
-          const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${rir_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+          const rir_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM public.request_view WHERE ${rir_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
           rir_list = rir_requests.map(rir => {
             // rir request response
             const rir_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_schema.request_response_table WHERE request_response_request_id='${rir.request_id}'`);
@@ -1140,7 +1143,7 @@ plv8.subtransaction(function(){
       });
     }
 
-    const sourced_item_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${sourced_item_form.form_id}'`);
+    const sourced_item_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN public.request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${sourced_item_form.form_id}'`);
     let sourced_item_list = [];
     if(sourced_item_ids.length !== 0){
       let sourced_item_condition = "";
@@ -1148,7 +1151,7 @@ plv8.subtransaction(function(){
         sourced_item_condition += `request_id='${sourced_item.request_id}' OR `;
       });
 
-      const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+      const sourced_item_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM public.request_view WHERE ${sourced_item_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
       sourced_item_list = sourced_item_requests.map(sourced_item => {
         // Sourced Item request response
         const sourced_item_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_schema.request_response_table WHERE request_response_request_id='${sourced_item.request_id}'`);
@@ -1166,7 +1169,7 @@ plv8.subtransaction(function(){
         // Sourced Item team member
         const sourced_item_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${sourced_item.request_team_member_id}'`)[0];
 
-        const ro_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${sourced_item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${ro_form.form_id}'`);
+        const ro_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN public.request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${sourced_item.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${ro_form.form_id}'`);
         let ro_list = [];
         
         if(ro_ids.length !== 0){
@@ -1175,7 +1178,7 @@ plv8.subtransaction(function(){
             ro_condition += `request_id='${ro.request_id}' OR `;
           });
 
-          const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${ro_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+          const ro_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM public.request_view WHERE ${ro_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
           ro_list = ro_requests.map(ro => {
             // ro request response
             const ro_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_schema.request_response_table WHERE request_response_request_id='${ro.request_id}'`);
@@ -1193,7 +1196,7 @@ plv8.subtransaction(function(){
             // ro team member
             const ro_team_member = plv8.execute(`SELECT user_table.user_first_name, user_table.user_last_name FROM team_schema.team_member_table INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_id WHERE team_member_id='${ro.request_team_member_id}'`)[0];
 
-            const transfer_receipt_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${ro.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${transfer_receipt_form.form_id}'`);
+            const transfer_receipt_ids = plv8.execute(`SELECT request_view.request_id FROM request_schema.request_response_table INNER JOIN public.request_view ON request_response_table.request_response_request_id=request_view.request_id WHERE request_response_table.request_response='"${ro.request_id}"' AND request_view.request_status='APPROVED' AND request_view.request_form_id='${transfer_receipt_form.form_id}'`);
             let transfer_receipt_list = [];
             
             if(transfer_receipt_ids.length !== 0){
@@ -1202,7 +1205,7 @@ plv8.subtransaction(function(){
                 transfer_receipt_condition += `request_id='${transfer_receipt.request_id}' OR `;
               });
 
-              const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM request_view WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
+              const transfer_receipt_requests = plv8.execute(`SELECT request_id, request_formsly_id, request_date_created, request_team_member_id FROM public.request_view WHERE ${transfer_receipt_condition.slice(0, -4)} ORDER BY request_status_date_updated DESC`);
               transfer_receipt_list = transfer_receipt_requests.map(transfer_receipt => {
                 // transfer_receipt request response
                 const transfer_receipt_response = plv8.execute(`SELECT request_response, request_response_field_id FROM request_schema.request_response_table WHERE request_response_request_id='${transfer_receipt.request_id}'`);
@@ -1271,7 +1274,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_user(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let user_data;
   plv8.subtransaction(function(){
     const {
@@ -1294,7 +1299,7 @@ RETURNS JSON AS $$
     }
     const invitation = plv8.execute(`SELECT invt.* ,teamt.team_name FROM user_schema.invitation_table invt INNER JOIN team_schema.team_member_table tmemt ON invt.invitation_from_team_member_id = tmemt.team_member_id INNER JOIN team_schema.team_table teamt ON tmemt.team_member_team_id = teamt.team_id WHERE invitation_to_email='${user_email}';`)[0];
 
-    if(invitation) plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
+    if(invitation) plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
     plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
  });
@@ -1304,7 +1309,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_request(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let request_data;
   plv8.subtransaction(function(){
     const {
@@ -1395,7 +1402,7 @@ RETURNS JSON AS $$
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -1406,7 +1413,7 @@ RETURNS JSON AS $$
         )
         .join(",");
 
-        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+        plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
       }
     }
     
@@ -1417,7 +1424,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION edit_request(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let request_data;
   plv8.subtransaction(function(){
     const {
@@ -1427,7 +1436,7 @@ RETURNS JSON AS $$
       requestSignerNotificationInput
     } = input_data;
 
-    request_data = plv8.execute(`SELECT * FROM request_view WHERE request_id='${requestId}';`)[0];
+    request_data = plv8.execute(`SELECT * FROM public.request_view WHERE request_id='${requestId}';`)[0];
 
     plv8.execute(`DELETE FROM request_schema.request_response_table WHERE request_response_request_id='${requestId}';`);
 
@@ -1442,7 +1451,7 @@ RETURNS JSON AS $$
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -1453,7 +1462,7 @@ RETURNS JSON AS $$
         )
         .join(",");
 
-        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+        plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
       }
     }
  });
@@ -1463,7 +1472,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION approve_or_reject_request(
   input_data JSON
 )
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
   let request_status;
   plv8.subtransaction(function(){
     const {
@@ -1519,13 +1530,13 @@ RETURNS TEXT AS $$
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
         plv8.execute(
           `
-            INSERT INTO notification_table 
+            INSERT INTO public.notification_table 
             (
               notification_app,
               notification_type,
@@ -1600,7 +1611,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_formsly_premade_forms(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       formValues,
@@ -1626,7 +1639,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let item_data;
   plv8.subtransaction(function(){
     const {
@@ -1685,8 +1700,8 @@ RETURNS JSON AS $$
     const fieldInput = [];
 
     itemDescription.forEach((description, index) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
-      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
         item_description_id: descriptionId,
         item_description_label: description.description,
@@ -1734,7 +1749,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let item_data;
   plv8.subtransaction(function(){
     const {
@@ -1779,8 +1796,8 @@ RETURNS JSON AS $$
     const fieldInput = [];
 
     toAdd.forEach((description) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
-      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
         item_description_id: descriptionId,
         item_description_label: description.description,
@@ -1886,7 +1903,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_service(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let item_data;
   plv8.subtransaction(function(){
     const {
@@ -1908,7 +1927,7 @@ RETURNS JSON AS $$
     const fieldInput = [];
 
     scope.forEach((scope) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4();')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
       
       fieldInput.push({
         field_id: fieldId,
@@ -1950,7 +1969,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_team_invitation(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let invitation_data;
   plv8.subtransaction(function(){
     const {
@@ -1963,7 +1984,7 @@ RETURNS JSON AS $$
     const notificationInput = [];
 
     emailList.forEach((email) => {
-      const invitationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const invitationId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
 
        plv8.execute(
         `
@@ -1985,7 +2006,7 @@ RETURNS JSON AS $$
       if (userData.length) {
         plv8.execute(
           `
-            DELETE FROM notification_table 
+            DELETE FROM public.notification_table 
             WHERE 
               notification_app = 'GENERAL'
               AND notification_content = 'You have been invited to join ${teamName}'
@@ -2021,7 +2042,7 @@ RETURNS JSON AS $$
         )
         .join(",");
       
-      plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ${notificationValues};`);
+      plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ${notificationValues};`);
     }
   });
   return invitation_data;
@@ -2030,7 +2051,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_user_active_team_id(
   user_id TEXT
 )
-RETURNS TEXT as $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
   let active_team_id;
   plv8.subtransaction(function(){
     const user_data = plv8.execute(`SELECT * FROM user_schema.user_table WHERE user_id='${user_id}' LIMIT 1`)[0];
@@ -2051,7 +2074,9 @@ CREATE OR REPLACE FUNCTION check_item_form_status(
   team_id TEXT,
   form_id TEXT
 )
-RETURNS Text as $$
+RETURNS Text 
+SET search_path TO ''
+AS $$
   let return_data;
   plv8.subtransaction(function(){
 
@@ -2076,7 +2101,9 @@ CREATE OR REPLACE FUNCTION check_subcon_form_status(
   team_id TEXT,
   form_id TEXT
 )
-RETURNS Text as $$
+RETURNS Text 
+SET search_path TO ''
+AS $$
   let return_data;
   plv8.subtransaction(function(){
 
@@ -2101,7 +2128,9 @@ CREATE OR REPLACE FUNCTION transfer_ownership(
   owner_id TEXT,
   member_id TEXT
 )
-RETURNS VOID  as $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
 
     plv8.execute(`UPDATE team_schema.team_member_table SET team_member_role='OWNER' WHERE team_member_id='${member_id}'`);
@@ -2114,7 +2143,9 @@ CREATE OR REPLACE FUNCTION accept_team_invitation(
   team_id TEXT,
   user_id TEXT
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let user_team_list
   plv8.subtransaction(function(){
 
@@ -2150,7 +2181,9 @@ CREATE OR REPLACE FUNCTION cancel_request(
   comment_type TEXT,
   comment_content TEXT
 )
-RETURNS VOID as $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     plv8.execute(`UPDATE request_schema.request_table SET request_status='CANCELED', request_status_date_updated = NOW() WHERE request_id='${request_id}'`);
     plv8.execute(`INSERT INTO request_schema.comment_table (comment_request_id,comment_team_member_id,comment_type,comment_content) VALUES ('${request_id}', '${member_id}','${comment_type}', '${comment_content}')`);
@@ -2160,7 +2193,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_request_form(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let form_data;
   plv8.subtransaction(function(){
     const {
@@ -2250,7 +2285,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_all_notification(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let notification_data;
   plv8.subtransaction(function(){
     const {
@@ -2266,9 +2303,9 @@ RETURNS JSON AS $$
     let team_query = ''
     if(teamId) team_query = `OR notification_team_id='${teamId}'`
 
-    const notification_list = plv8.execute(`SELECT  * FROM notification_table WHERE notification_user_id='${userId}' AND (notification_app = 'GENERAL' OR notification_app = '${app}') AND (notification_team_id IS NULL ${team_query}) ORDER BY notification_date_created DESC LIMIT '${limit}' OFFSET '${start}';`);
+    const notification_list = plv8.execute(`SELECT  * FROM public.notification_table WHERE notification_user_id='${userId}' AND (notification_app = 'GENERAL' OR notification_app = '${app}') AND (notification_team_id IS NULL ${team_query}) ORDER BY notification_date_created DESC LIMIT '${limit}' OFFSET '${start}';`);
     
-    const unread_notification_count = plv8.execute(`SELECT COUNT(*) FROM notification_table WHERE notification_user_id='${userId}' AND (notification_app='GENERAL' OR notification_app='${app}') AND (notification_team_id IS NULL ${team_query}) AND notification_is_read=false;`)[0].count;
+    const unread_notification_count = plv8.execute(`SELECT COUNT(*) FROM public.notification_table WHERE notification_user_id='${userId}' AND (notification_app='GENERAL' OR notification_app='${app}') AND (notification_team_id IS NULL ${team_query}) AND notification_is_read=false;`)[0].count;
 
     notification_data = {data: notification_list,  count: parseInt(unread_notification_count)}
  });
@@ -2278,7 +2315,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_form_signer(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let signer_data;
   plv8.subtransaction(function(){
     const {
@@ -2305,616 +2344,626 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_item_quantity(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-            itemID,
-            itemFieldList,
-            quantityFieldList
-        } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let item_data
+  plv8.subtransaction(function(){
+    const {
+      itemID,
+      itemFieldList,
+      quantityFieldList
+    } = input_data;
 
-        const request = plv8.execute(
-            `
-              SELECT request_response_table.* 
-              FROM request_schema.request_response_table 
-              INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-              INNER JOIN form_schema.form_table ON request_form_id = form_id 
-              WHERE 
-                request_status = 'APPROVED'
-                AND request_response = '${itemID}' 
-                AND form_is_formsly_form = true 
-                AND (form_name = 'Quotation' OR form_name = 'Sourced Item')
-            `
-        );
-        
-        let requestResponse = []
-        if(request.length > 0) {
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
+    const request = plv8.execute(
+      `
+        SELECT request_response_table.* 
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
+        INNER JOIN form_schema.form_table ON request_form_id = form_id 
+        WHERE 
+          request_status = 'APPROVED'
+          AND request_response = '${itemID}' 
+          AND form_is_formsly_form = true 
+          AND (form_name = 'Quotation' OR form_name = 'Sourced Item')
+      `
+    );
+    
+    let requestResponse = []
+    if(request.length > 0) {
+      const requestIdList = request.map(
+          (response) => `'${response.request_response_request_id}'`
+      ).join(",");
 
-            requestResponse = plv8.execute(
-                `
-                  SELECT 
-                    request_response_table.*, 
-                    field_name 
-                  FROM request_schema.request_response_table 
-                  INNER JOIN form_schema.field_table ON field_id = request_response_field_id 
-                  WHERE 
-                    (
-                      field_name = 'Quantity' 
-                      OR field_name = 'Item'
-                    ) 
-                    AND request_response_request_id IN (${requestIdList})
-                  ORDER BY request_response_duplicatable_section_id ASC
-                `
-            );
-        }
+      requestResponse = plv8.execute(
+        `
+          SELECT 
+            request_response_table.*, 
+            field_name 
+          FROM request_schema.request_response_table 
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id 
+          WHERE 
+            (
+              field_name = 'Quantity' 
+              OR field_name = 'Item'
+            ) 
+            AND request_response_request_id IN (${requestIdList})
+          ORDER BY request_response_duplicatable_section_id ASC
+        `
+      );
+    }
 
-        const requestResponseItem = [];
-        const requestResponseQuantity = [];
+    const requestResponseItem = [];
+    const requestResponseQuantity = [];
 
-        requestResponse.forEach((response) => {
-            if (response.field_name === "Item") {
-                requestResponseItem.push(response);
-            } else if (response.field_name === "Quantity") {
-                requestResponseQuantity.push(response);
-            }
-        });
-
-        requestResponseItem.push(...itemFieldList);
-        requestResponseQuantity.push(...quantityFieldList);
-
-        const itemList = [];
-        const quantityList = [];
-
-        const descriptionMatcher = (options, currentItem) => {
-            const regex = /\(([^()]+)\)/g;
-            let returnData = "";
-            for (const option of options) {
-              const currentItemResult = currentItem.match(regex);
-              const currentItemIndex = currentItem.indexOf("(");
-              const currentItemGeneralName = currentItem.slice(0, currentItemIndex - 1);
-              const currentItemDescriptionList =
-                currentItemResult && currentItemResult[1].slice(1, -1).split(", ");
-        
-              const optionIndex = option.indexOf("(");
-              const optionGeneralName = option.slice(0, optionIndex - 1);
-        
-              if (
-                currentItemGeneralName === optionGeneralName &&
-                currentItemDescriptionList
-              ) {
-                let match = true;
-                for (const description of currentItemDescriptionList) {
-                  if (!option.includes(description)) {
-                    match = false;
-                    break;
-                  }
-                }
-                if (match) {
-                  returnData = option;
-                  break;
-                }
-              }
-            }
-            return returnData;
-        };
-        
-  
-        for (let i = 0; i < requestResponseItem.length; i++) {
-            const currentItem = descriptionMatcher(itemList, requestResponseItem[i].request_response) || requestResponseItem[i].request_response;
-            if (itemList.includes(currentItem)) {
-                const quantityIndex = itemList.indexOf(currentItem);
-                quantityList[quantityIndex] += Number(
-                    requestResponseQuantity[i].request_response
-                );
-            } else {
-                itemList.push(currentItem);
-                quantityList.push(Number(requestResponseQuantity[i].request_response));
-            }
-        }
-
-        const returnData = [];
-        const regExp = /\(([^)]+)\)/;
-        for (let i = 0; i < itemList.length; i++) {
-            const matches = regExp.exec(itemList[i]);
-            if (!matches) continue;
-
-            const quantityMatch = matches[1].match(/(\d+)/);
-            if (!quantityMatch) continue;
-
-            const expectedQuantity = Number(quantityMatch[1]);
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            if (quantityList[i] > expectedQuantity) {
-            const quantityMatch = itemList[i].match(/(\d+)/);
-            if (!quantityMatch) return;
-
-            returnData.push(
-                `${JSON.parse(
-                itemList[i].replace(
-                    quantityMatch[1],
-                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                )
-                )} exceeds quantity limit by ${(
-                quantityList[i] - expectedQuantity
-                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-            );
-            }
-        }
-        item_data = returnData;
-        
+    requestResponse.forEach((response) => {
+      if (response.field_name === "Item") {
+        requestResponseItem.push(response);
+      } else if (response.field_name === "Quantity") {
+        requestResponseQuantity.push(response);
+      }
     });
-    return item_data;
+
+    requestResponseItem.push(...itemFieldList);
+    requestResponseQuantity.push(...quantityFieldList);
+
+    const itemList = [];
+    const quantityList = [];
+
+    const descriptionMatcher = (options, currentItem) => {
+      const regex = /\(([^()]+)\)/g;
+      let returnData = "";
+      for (const option of options) {
+        const currentItemResult = currentItem.match(regex);
+        const currentItemIndex = currentItem.indexOf("(");
+        const currentItemGeneralName = currentItem.slice(0, currentItemIndex - 1);
+        const currentItemDescriptionList =
+          currentItemResult && currentItemResult[1].slice(1, -1).split(", ");
+  
+        const optionIndex = option.indexOf("(");
+        const optionGeneralName = option.slice(0, optionIndex - 1);
+  
+        if (
+          currentItemGeneralName === optionGeneralName &&
+          currentItemDescriptionList
+        ) {
+          let match = true;
+          for (const description of currentItemDescriptionList) {
+            if (!option.includes(description)) {
+              match = false;
+              break;
+            }
+          }
+          if (match) {
+            returnData = option;
+            break;
+          }
+        }
+      }
+      return returnData;
+    };
+    
+
+    for (let i = 0; i < requestResponseItem.length; i++) {
+      const currentItem = descriptionMatcher(itemList, requestResponseItem[i].request_response) || requestResponseItem[i].request_response;
+      if (itemList.includes(currentItem)) {
+        const quantityIndex = itemList.indexOf(currentItem);
+        quantityList[quantityIndex] += Number(
+            requestResponseQuantity[i].request_response
+        );
+      } else {
+        itemList.push(currentItem);
+        quantityList.push(Number(requestResponseQuantity[i].request_response));
+      }
+    }
+
+    const returnData = [];
+    const regExp = /\(([^)]+)\)/;
+    for (let i = 0; i < itemList.length; i++) {
+      const matches = regExp.exec(itemList[i]);
+      if (!matches) continue;
+
+      const quantityMatch = matches[1].match(/(\d+)/);
+      if (!quantityMatch) continue;
+
+      const expectedQuantity = Number(quantityMatch[1]);
+      const unit = matches[1].replace(/\d+/g, "").trim();
+
+      if (quantityList[i] > expectedQuantity) {
+      const quantityMatch = itemList[i].match(/(\d+)/);
+      if (!quantityMatch) return;
+
+      returnData.push(
+        `${JSON.parse(
+        itemList[i].replace(
+          quantityMatch[1],
+          Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+        )
+        )} exceeds quantity limit by ${(
+          quantityList[i] - expectedQuantity
+        ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+      );
+      }
+    }
+    item_data = returnData;
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_ro_item_quantity(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-            sourcedItemId,
-            itemFieldId,
-            quantityFieldId,
-            itemFieldList,
-            quantityFieldList
-        } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let item_data
+  plv8.subtransaction(function(){
+    const {
+      sourcedItemId,
+      itemFieldId,
+      quantityFieldId,
+      itemFieldList,
+      quantityFieldList
+    } = input_data;
 
-        const request = plv8.execute(
-            `
-              SELECT request_response_table.* 
-              FROM request_schema.request_response_table 
-              INNER JOIN request_schema.request_table ON request_response_request_id = request_id
-              INNER JOIN form_schema.form_table ON request_form_id = form_id 
-              WHERE 
-                request_table.request_status = 'APPROVED' 
-                AND request_response = '${sourcedItemId}' 
-                AND form_is_formsly_form = true 
-                AND form_name = 'Release Order'
-            `
-        );
-        
-        let requestResponse = []
-        if(request.length > 0) {
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
+    const request = plv8.execute(
+      `
+        SELECT request_response_table.* 
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_response_request_id = request_id
+        INNER JOIN form_schema.form_table ON request_form_id = form_id 
+        WHERE 
+          request_table.request_status = 'APPROVED' 
+          AND request_response = '${sourcedItemId}' 
+          AND form_is_formsly_form = true 
+          AND form_name = 'Release Order'
+      `
+    );
+      
+    let requestResponse = []
+    if(request.length > 0) {
+      const requestIdList = request.map(
+        (response) => `'${response.request_response_request_id}'`
+      ).join(",");
 
-            requestResponse = plv8.execute(
-                `
-                  SELECT * FROM request_schema.request_response_table 
-                  WHERE 
-                    (
-                      request_response_field_id = '${itemFieldId}' 
-                      OR request_response_field_id = '${quantityFieldId}'
-                    ) 
-                    AND request_response_request_id IN (${requestIdList})
-                  ORDER BY request_response_duplicatable_section_id ASC
-                `
-            );
-        }
+      requestResponse = plv8.execute(
+        `
+          SELECT * FROM request_schema.request_response_table 
+          WHERE 
+            (
+              request_response_field_id = '${itemFieldId}' 
+              OR request_response_field_id = '${quantityFieldId}'
+            ) 
+            AND request_response_request_id IN (${requestIdList})
+          ORDER BY request_response_duplicatable_section_id ASC
+        `
+      );
+    }
 
-        const requestResponseItem = [];
-        const requestResponseQuantity = [];
+    const requestResponseItem = [];
+    const requestResponseQuantity = [];
 
-        requestResponse.forEach((response) => {
-            if (response.request_response_field_id === itemFieldId) {
-              requestResponseItem.push(response);
-            } else if (response.request_response_field_id === quantityFieldId) {
-              requestResponseQuantity.push(response);
-            }
-        });
-
-        requestResponseItem.push(...itemFieldList);
-        requestResponseQuantity.push(...quantityFieldList);
-
-        const itemList = [];
-        const quantityList = [];
-
-        for (let i = 0; i < requestResponseItem.length; i++) {
-            if (itemList.includes(requestResponseItem[i].request_response)) {
-                const quantityIndex = itemList.indexOf(requestResponseItem[i].request_response);
-                quantityList[quantityIndex] += Number(requestResponseQuantity[i].request_response);
-            } else {
-                itemList.push(requestResponseItem[i].request_response);
-                quantityList.push(Number(requestResponseQuantity[i].request_response));
-            }
-        }
-
-        const returnData = [];
-        const regExp = /\(([^)]+)\)/;
-        for (let i = 0; i < itemList.length; i++) {
-            const matches = regExp.exec(itemList[i]);
-            if (!matches) continue;
-
-            const quantityMatch = matches[1].match(/(\d+)/);
-            if (!quantityMatch) continue;
-
-            const expectedQuantity = Number(quantityMatch[1]);
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            if (quantityList[i] > expectedQuantity) {
-                const quantityMatch = itemList[i].match(/(\d+)/);
-                if (!quantityMatch) return;
-
-                returnData.push(
-                    `${JSON.parse(
-                    itemList[i].replace(
-                        quantityMatch[1],
-                        Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    )
-                    )} exceeds quantity limit by ${(
-                        quantityList[i] - expectedQuantity
-                    ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-                );
-            }
-        }
-        item_data = returnData
+    requestResponse.forEach((response) => {
+      if (response.request_response_field_id === itemFieldId) {
+        requestResponseItem.push(response);
+      } else if (response.request_response_field_id === quantityFieldId) {
+        requestResponseQuantity.push(response);
+      }
     });
-    return item_data;
+
+    requestResponseItem.push(...itemFieldList);
+    requestResponseQuantity.push(...quantityFieldList);
+
+    const itemList = [];
+    const quantityList = [];
+
+    for (let i = 0; i < requestResponseItem.length; i++) {
+      if (itemList.includes(requestResponseItem[i].request_response)) {
+        const quantityIndex = itemList.indexOf(requestResponseItem[i].request_response);
+        quantityList[quantityIndex] += Number(requestResponseQuantity[i].request_response);
+      } else {
+        itemList.push(requestResponseItem[i].request_response);
+        quantityList.push(Number(requestResponseQuantity[i].request_response));
+      }
+    }
+
+    const returnData = [];
+    const regExp = /\(([^)]+)\)/;
+    for (let i = 0; i < itemList.length; i++) {
+      const matches = regExp.exec(itemList[i]);
+      if (!matches) continue;
+
+      const quantityMatch = matches[1].match(/(\d+)/);
+      if (!quantityMatch) continue;
+
+      const expectedQuantity = Number(quantityMatch[1]);
+      const unit = matches[1].replace(/\d+/g, "").trim();
+
+      if (quantityList[i] > expectedQuantity) {
+        const quantityMatch = itemList[i].match(/(\d+)/);
+        if (!quantityMatch) return;
+
+        returnData.push(
+          `${JSON.parse(
+          itemList[i].replace(
+            quantityMatch[1],
+            Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          )
+          )} exceeds quantity limit by ${(
+            quantityList[i] - expectedQuantity
+          ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+        );
+      }
+    }
+    item_data = returnData
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_rir_item_quantity(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-            quotationId,
-            itemFieldId,
-            quantityFieldId,
-            itemFieldList,
-            quantityFieldList
-        } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let item_data
+  plv8.subtransaction(function(){
+    const {
+      quotationId,
+      itemFieldId,
+      quantityFieldId,
+      itemFieldList,
+      quantityFieldList
+    } = input_data;
 
-        const request = plv8.execute(
-            `
-              SELECT request_response_table.* 
-              FROM request_schema.request_response_table 
-              INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-              INNER JOIN form_schema.form_table ON request_form_id = form_id
-              WHERE 
-                request_status = 'APPROVED' 
-                AND request_response = '${quotationId}' 
-                AND form_is_formsly_form = true 
-                AND form_name = 'Receiving Inspecting Report'
-            `
-        );
-        
-        let requestResponse = [];
-        if(request.length > 0) {
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
+    const request = plv8.execute(
+      `
+        SELECT request_response_table.* 
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
+        INNER JOIN form_schema.form_table ON request_form_id = form_id
+        WHERE 
+          request_status = 'APPROVED' 
+          AND request_response = '${quotationId}' 
+          AND form_is_formsly_form = true 
+          AND form_name = 'Receiving Inspecting Report'
+      `
+    );
+    
+    let requestResponse = [];
+    if(request.length > 0) {
+      const requestIdList = request.map(
+        (response) => `'${response.request_response_request_id}'`
+      ).join(",");
 
-            requestResponse = plv8.execute(
-              `
-                SELECT * FROM request_schema.request_response_table 
-                WHERE 
-                  (
-                    request_response_field_id = '${itemFieldId}' 
-                    OR request_response_field_id = '${quantityFieldId}'
-                  ) 
-                  AND request_response_request_id IN (${requestIdList})
-                ORDER BY request_response_duplicatable_section_id ASC
-              `
-            );
-            const requestResponseItem = [];
-            const requestResponseQuantity = [];
+      requestResponse = plv8.execute(
+        `
+          SELECT * FROM request_schema.request_response_table 
+          WHERE 
+            (
+              request_response_field_id = '${itemFieldId}' 
+              OR request_response_field_id = '${quantityFieldId}'
+            ) 
+            AND request_response_request_id IN (${requestIdList})
+          ORDER BY request_response_duplicatable_section_id ASC
+        `
+      );
+      const requestResponseItem = [];
+      const requestResponseQuantity = [];
 
-            requestResponse.forEach((response) => {
-                if (response.request_response_field_id === itemFieldId) {
-                requestResponseItem.push(response);
-                } else if (response.request_response_field_id === quantityFieldId) {
-                requestResponseQuantity.push(response);
-                }
-            });
-
-            requestResponseItem.push(...itemFieldList);
-            requestResponseQuantity.push(...quantityFieldList);
-
-            const itemList = [];
-            const quantityList = [];
-
-            for (let i = 0; i < requestResponseItem.length; i++) {
-                if (itemList.includes(requestResponseItem[i].request_response)) {
-                const quantityIndex = itemList.indexOf(
-                    requestResponseItem[i].request_response
-                );
-                quantityList[quantityIndex] += Number(
-                    requestResponseQuantity[i].request_response
-                );
-                } else {
-                itemList.push(requestResponseItem[i].request_response);
-                quantityList.push(Number(requestResponseQuantity[i].request_response));
-                }
-            }
-
-            const returnData = [];
-            const regExp = /\(([^)]+)\)/;
-            for (let i = 0; i < itemList.length; i++) {
-                const matches = regExp.exec(itemList[i]);
-                if (!matches) continue;
-
-                const quantityMatch = matches[1].match(/(\d+)/);
-                if (!quantityMatch) continue;
-
-                const expectedQuantity = Number(quantityMatch[1]);
-                const unit = matches[1].replace(/\d+/g, "").trim();
-
-                if (quantityList[i] > expectedQuantity) {
-                const quantityMatch = itemList[i].match(/(\d+)/);
-                if (!quantityMatch) return;
-
-                returnData.push(
-                    `${JSON.parse(
-                    itemList[i].replace(
-                        quantityMatch[1],
-                        Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                    )
-                    )} exceeds quantity limit by ${(
-                    quantityList[i] - expectedQuantity
-                    ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-                );
-                }
-            }
-            item_data = returnData
+      requestResponse.forEach((response) => {
+        if (response.request_response_field_id === itemFieldId) {
+          requestResponseItem.push(response);
+        } else if (response.request_response_field_id === quantityFieldId) {
+          requestResponseQuantity.push(response);
         }
-    });
-    return item_data;
+      });
+
+      requestResponseItem.push(...itemFieldList);
+      requestResponseQuantity.push(...quantityFieldList);
+
+      const itemList = [];
+      const quantityList = [];
+
+      for (let i = 0; i < requestResponseItem.length; i++) {
+        if (itemList.includes(requestResponseItem[i].request_response)) {
+          const quantityIndex = itemList.indexOf(
+            requestResponseItem[i].request_response
+          );
+          quantityList[quantityIndex] += Number(
+            requestResponseQuantity[i].request_response
+          );
+        } else {
+          itemList.push(requestResponseItem[i].request_response);
+          quantityList.push(Number(requestResponseQuantity[i].request_response));
+        }
+      }
+
+      const returnData = [];
+      const regExp = /\(([^)]+)\)/;
+      for (let i = 0; i < itemList.length; i++) {
+        const matches = regExp.exec(itemList[i]);
+        if (!matches) continue;
+
+        const quantityMatch = matches[1].match(/(\d+)/);
+        if (!quantityMatch) continue;
+
+        const expectedQuantity = Number(quantityMatch[1]);
+        const unit = matches[1].replace(/\d+/g, "").trim();
+
+        if (quantityList[i] > expectedQuantity) {
+        const quantityMatch = itemList[i].match(/(\d+)/);
+          if (!quantityMatch) return;
+          returnData.push(
+              `${JSON.parse(
+              itemList[i].replace(
+                quantityMatch[1],
+                Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+              )
+              )} exceeds quantity limit by ${(
+                quantityList[i] - expectedQuantity
+              ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+          );
+        }
+      }
+      item_data = returnData
+    }
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_tranfer_receipt_item_quantity(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let item_data
-    plv8.subtransaction(function(){
-        const {
-          releaseOrderItemId,
-          itemFieldId,
-          quantityFieldId,
-          itemFieldList,
-          quantityFieldList
-        } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let item_data
+  plv8.subtransaction(function(){
+    const {
+      releaseOrderItemId,
+      itemFieldId,
+      quantityFieldId,
+      itemFieldList,
+      quantityFieldList
+    } = input_data;
 
-        const request = plv8.execute(
-          `
-            SELECT request_response_table.* 
-            FROM request_schema.request_response_table 
-            INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
-            INNER JOIN form_schema.form_table ON request_form_id = form_id 
-            WHERE 
-              request_response_table.request_response = '${releaseOrderItemId}' 
-              AND request_table.request_status = 'APPROVED' 
-              AND form_table.form_is_formsly_form = true 
-              AND form_table.form_name = 'Transfer Receipt'
-          `
-        );
-        
-        let requestResponse = []
-        if(request.length > 0) {
-            const requestIdList = request.map(
-                (response) => `'${response.request_response_request_id}'`
-            ).join(",");
-            requestResponse = plv8.execute(
-              `
-                SELECT * 
-                FROM request_schema.request_response_table
-                WHERE 
-                  (
-                    request_response_field_id = '${itemFieldId}' 
-                    OR request_response_field_id = '${quantityFieldId}'
-                  ) 
-                AND request_response_request_id IN (${requestIdList})
-                ORDER BY request_response_duplicatable_section_id ASC
-            `
-          );
-        }
+    const request = plv8.execute(
+      `
+        SELECT request_response_table.* 
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_response_request_id = request_id 
+        INNER JOIN form_schema.form_table ON request_form_id = form_id 
+        WHERE 
+          request_response_table.request_response = '${releaseOrderItemId}' 
+          AND request_table.request_status = 'APPROVED' 
+          AND form_table.form_is_formsly_form = true 
+          AND form_table.form_name = 'Transfer Receipt'
+      `
+    );
+      
+    let requestResponse = []
+    if(request.length > 0) {
+      const requestIdList = request.map(
+        (response) => `'${response.request_response_request_id}'`
+      ).join(",");
+      requestResponse = plv8.execute(
+        `
+          SELECT * 
+          FROM request_schema.request_response_table
+          WHERE 
+            (
+              request_response_field_id = '${itemFieldId}' 
+              OR request_response_field_id = '${quantityFieldId}'
+            ) 
+          AND request_response_request_id IN (${requestIdList})
+          ORDER BY request_response_duplicatable_section_id ASC
+        `
+      );
+    }
 
-        const requestResponseItem = [];
-        const requestResponseQuantity = [];
+    const requestResponseItem = [];
+    const requestResponseQuantity = [];
 
-        requestResponse.forEach((response) => {
-            if (response.request_response_field_id === itemFieldId) {
-            requestResponseItem.push(response);
-            } else if (response.request_response_field_id === quantityFieldId) {
-            requestResponseQuantity.push(response);
-            }
-        });
-
-        requestResponseItem.push(...itemFieldList);
-        requestResponseQuantity.push(...quantityFieldList);
-
-        const itemList = [];
-        const quantityList = [];
-
-        for (let i = 0; i < requestResponseItem.length; i++) {
-            if (itemList.includes(requestResponseItem[i].request_response)) {
-            const quantityIndex = itemList.indexOf(
-                requestResponseItem[i].request_response
-            );
-            quantityList[quantityIndex] += Number(
-                requestResponseQuantity[i].request_response
-            );
-            } else {
-            itemList.push(requestResponseItem[i].request_response);
-            quantityList.push(Number(requestResponseQuantity[i].request_response));
-            }
-        }
-
-        const returnData = [];
-        const regExp = /\(([^)]+)\)/;
-        for (let i = 0; i < itemList.length; i++) {
-            const matches = regExp.exec(itemList[i]);
-            if (!matches) continue;
-
-            const quantityMatch = matches[1].match(/(\d+)/);
-            if (!quantityMatch) continue;
-
-            const expectedQuantity = Number(quantityMatch[1]);
-            const unit = matches[1].replace(/\d+/g, "").trim();
-
-            if (quantityList[i] > expectedQuantity) {
-            const quantityMatch = itemList[i].match(/(\d+)/);
-            if (!quantityMatch) return;
-
-            returnData.push(
-                `${JSON.parse(
-                itemList[i].replace(
-                    quantityMatch[1],
-                    Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                )
-                )} exceeds quantity limit by ${(
-                quantityList[i] - expectedQuantity
-                ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
-            );
-            }
-        }
-        item_data = returnData
+    requestResponse.forEach((response) => {
+      if (response.request_response_field_id === itemFieldId) {
+        requestResponseItem.push(response);
+      } else if (response.request_response_field_id === quantityFieldId) {
+        requestResponseQuantity.push(response);
+      }
     });
-    return item_data;
+
+    requestResponseItem.push(...itemFieldList);
+    requestResponseQuantity.push(...quantityFieldList);
+
+    const itemList = [];
+    const quantityList = [];
+
+    for (let i = 0; i < requestResponseItem.length; i++) {
+      if (itemList.includes(requestResponseItem[i].request_response)) {
+        const quantityIndex = itemList.indexOf(
+          requestResponseItem[i].request_response
+        );
+        quantityList[quantityIndex] += Number(
+          requestResponseQuantity[i].request_response
+        );
+      } else {
+        itemList.push(requestResponseItem[i].request_response);
+        quantityList.push(Number(requestResponseQuantity[i].request_response));
+      }
+    }
+
+    const returnData = [];
+    const regExp = /\(([^)]+)\)/;
+    for (let i = 0; i < itemList.length; i++) {
+      const matches = regExp.exec(itemList[i]);
+      if (!matches) continue;
+
+      const quantityMatch = matches[1].match(/(\d+)/);
+      if (!quantityMatch) continue;
+
+      const expectedQuantity = Number(quantityMatch[1]);
+      const unit = matches[1].replace(/\d+/g, "").trim();
+
+      if (quantityList[i] > expectedQuantity) {
+        const quantityMatch = itemList[i].match(/(\d+)/);
+        if (!quantityMatch) return;
+
+        returnData.push(
+          `${JSON.parse(
+          itemList[i].replace(
+              quantityMatch[1],
+              Number(quantityMatch[1]).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+          )
+          )} exceeds quantity limit by ${(
+          quantityList[i] - expectedQuantity
+          ).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} ${unit}`
+        );
+      }
+    }
+    item_data = returnData
+  });
+  return item_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION fetch_request_list(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let return_value
-    plv8.subtransaction(function(){
-      const {
-        teamId,
-        page,
-        limit,
-        requestor,
-        approver,
-        status,
-        form,
-        sort,
-        search,
-        isApproversView,
-        teamMemberId,
-        project,
-        idFilter
-      } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      page,
+      limit,
+      requestor,
+      approver,
+      status,
+      form,
+      sort,
+      search,
+      isApproversView,
+      teamMemberId,
+      project,
+      idFilter
+    } = input_data;
 
-      const start = (page - 1) * limit;
+    const start = (page - 1) * limit;
 
-      let request_list = [];
-      let request_count = 0;
+    let request_list = [];
+    let request_count = 0;
 
-      let fetch_request_list_query = 
+    let fetch_request_list_query = 
+      `
+        SELECT DISTINCT
+          request_id, 
+          request_formsly_id,
+          request_date_created, 
+          request_status,
+          request_team_member_id,
+          request_jira_id,
+          request_jira_link,
+          request_otp_id,
+          request_form_id
+        FROM public.request_view
+        INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+        INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+        INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+        INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+        WHERE team_member_table.team_member_team_id = '${teamId}'
+        AND request_is_disabled = false
+        AND form_table.form_is_disabled = false
+      `;
+
+    let sort_request_list_query = 
+      `
+        ORDER BY request_view.request_date_created ${sort} 
+        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+      `;
+
+    let request_list_count_query = 
+      `
+        SELECT COUNT(DISTINCT request_id)
+        FROM public.request_view
+        INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+        INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+        INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+        INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+        WHERE team_member_table.team_member_team_id = '${teamId}'
+        AND request_is_disabled = false
+        AND form_table.form_is_disabled = false
+      `;
+
+    if (!isApproversView) {
+      const nonApproverFilterQuery = 
         `
-          SELECT DISTINCT
-              request_id, 
-              request_formsly_id,
-              request_date_created, 
-              request_status,
-              request_team_member_id,
-              request_jira_id,
-              request_jira_link,
-              request_otp_id,
-              request_form_id
-          FROM request_view
-          INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-          INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+          ${requestor}
+          ${approver}
+          ${status}
+          ${form}
+          ${project}
+          ${idFilter}
+          ${search}
+        `;
+
+      request_list = plv8.execute(fetch_request_list_query + nonApproverFilterQuery + sort_request_list_query);
+      request_count = plv8.execute(request_list_count_query + ' ' + nonApproverFilterQuery)[0];
+    } else {
+      const approverFilterQuery = 
+        `
+          AND signer_team_member_id = '${teamMemberId}'
+          AND request_signer_status = 'PENDING'
+          AND request_status != 'CANCELED'
+        `;
+      request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
+      request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
+    }
+
+    const request_data = request_list.map(request => {
+      const request_signer = plv8.execute(
+        `
+          SELECT 
+            request_signer_table.request_signer_id, 
+            request_signer_table.request_signer_status, 
+            signer_table.signer_is_primary_signer,
+            signer_table.signer_team_member_id
+          FROM request_schema.request_signer_table
           INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-        `;
-
-      let sort_request_list_query = 
+          WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
         `
-          ORDER BY request_view.request_date_created ${sort} 
-          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-        `;
-
-      let request_list_count_query = 
-        `
-          SELECT COUNT(DISTINCT request_id)
-          FROM request_view
-          INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-          INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
-          INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-          INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          AND request_is_disabled = false
-          AND form_table.form_is_disabled = false
-        `;
-
-      if (!isApproversView) {
-        const nonApproverFilterQuery = 
-          `
-            ${requestor}
-            ${approver}
-            ${status}
-            ${form}
-            ${project}
-            ${idFilter}
-            ${search}
-          `;
-
-        request_list = plv8.execute(fetch_request_list_query + nonApproverFilterQuery + sort_request_list_query);
-        request_count = plv8.execute(request_list_count_query + ' ' + nonApproverFilterQuery)[0];
-      } else {
-        const approverFilterQuery = 
-          `
-            AND signer_team_member_id = '${teamMemberId}'
-            AND request_signer_status = 'PENDING'
-            AND request_status != 'CANCELED'
-          `;
-        request_list = plv8.execute(fetch_request_list_query + approverFilterQuery + sort_request_list_query);
-        request_count = plv8.execute(request_list_count_query + ' ' + approverFilterQuery)[0];
-      }
-
-      const request_data = request_list.map(request => {
-        const request_signer = plv8.execute(
-          `
-            SELECT 
-              request_signer_table.request_signer_id, 
-              request_signer_table.request_signer_status, 
-              signer_table.signer_is_primary_signer,
-              signer_table.signer_team_member_id
-            FROM request_schema.request_signer_table
-            INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-            WHERE request_signer_table.request_signer_request_id = '${request.request_id}'
-          `
-        ).map(signer => {
-          return {
-            request_signer_id: signer.request_signer_id,
-            request_signer_status: signer.request_signer_status,
-            request_signer: {
-                signer_team_member_id: signer.signer_team_member_id,
-                signer_is_primary_signer: signer.signer_is_primary_signer
-            }
-          }
-        });
-
+      ).map(signer => {
         return {
-          ...request,
-          request_signer: request_signer,
+          request_signer_id: signer.request_signer_id,
+          request_signer_status: signer.request_signer_status,
+          request_signer: {
+              signer_team_member_id: signer.signer_team_member_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer
+          }
         }
       });
 
-      return_value = {
-        data: request_data, 
-        count: Number(request_count.count)
-      };
+      return {
+        ...request,
+        request_signer: request_signer,
+      }
     });
-    return return_value
+
+    return_value = {
+      data: request_data, 
+      count: Number(request_count.count)
+    };
+  });
+  return return_value
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION create_team_project(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let team_project_data;
   plv8.subtransaction(function(){
     const {
@@ -2941,7 +2990,7 @@ RETURNS JSON AS $$
 
     const addressData = plv8.execute(
       `
-        INSERT INTO address_table 
+        INSERT INTO public.address_table 
           (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
         VALUES 
           ('${region}', '${province}', '${city}', '${barangay}', '${street}', '${zipCode}') RETURNING *
@@ -2971,7 +3020,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION insert_group_member(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let group_data;
   plv8.subtransaction(function(){
     const {
@@ -3036,7 +3087,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION insert_project_member(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let project_data;
   plv8.subtransaction(function(){
     const {
@@ -3101,7 +3154,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_form_group(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
      formId,
@@ -3122,7 +3177,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_all_team_members_without_group_members(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let member_data;
   plv8.subtransaction(function(){
     const {
@@ -3152,7 +3209,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_all_team_members_without_project_members(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let member_data;
   plv8.subtransaction(function(){
     const {
@@ -3184,7 +3243,9 @@ CREATE OR REPLACE FUNCTION delete_team(
   team_id TEXT,
   team_member_id TEXT
 )
-RETURNS VOID as $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const user = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
     const isUserOwner = user.team_member_role === 'OWNER';
@@ -3259,7 +3320,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_multiple_approver(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let approverList = [];
   plv8.subtransaction(function(){
     const {
@@ -3288,7 +3351,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_multiple_admin(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let adminList = [];
   plv8.subtransaction(function(){
     const {
@@ -3317,7 +3382,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION request_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -3325,14 +3392,14 @@ RETURNS JSON as $$
       userId
     } = input_data;
 
-    const idCondition = plv8.execute(`SELECT generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
+    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
 
     const request = plv8.execute(
       `
         SELECT 
           form_is_formsly_form, 
           form_name
-        FROM request_view
+        FROM public.request_view
         INNER JOIN form_schema.form_table ON form_id = request_form_id
         WHERE 
           ${idCondition}
@@ -3341,14 +3408,14 @@ RETURNS JSON as $$
     )[0];
 
     if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
-      const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
+      const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
         request: requestData
       };
       return;
     } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report', 'Request For Payment'].includes(request.form_name)) {
-      const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
       const sectionIdWithDuplicatableSectionIdList = plv8.execute(
@@ -3366,10 +3433,10 @@ RETURNS JSON as $$
         sectionIdWithDuplicatableSectionIdList
       };
     } else {
-      const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+      const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
       if (!teamId) throw new Error("No team found");
 
-      const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
       const duplicatableSectionIdList = plv8.execute(
@@ -3394,7 +3461,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_member_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let team_member_data;
   plv8.subtransaction(function(){
     const {
@@ -3459,7 +3528,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let team_data;
   plv8.subtransaction(function(){
     const {
@@ -3467,7 +3538,7 @@ RETURNS JSON AS $$
       teamMemberLimit
     } = input_data;
     
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     
     const team = plv8.execute(`SELECT team_id, team_name, team_logo FROM team_schema.team_table WHERE team_id='${teamId}' AND team_is_disabled=false;`)[0];
 
@@ -3532,15 +3603,15 @@ RETURNS JSON AS $$
           site_map.attachment_value AS team_project_site_map_attachment_id,
           address_table.*
         FROM team_schema.team_project_table 
-        LEFT JOIN attachment_table boq ON (
+        LEFT JOIN public.attachment_table boq ON (
           team_project_boq_attachment_id = boq.attachment_id
           AND boq.attachment_is_disabled = false
         )
-        LEFT JOIN attachment_table site_map ON (
+        LEFT JOIN public.attachment_table site_map ON (
           team_project_site_map_attachment_id = site_map.attachment_id
           AND site_map.attachment_is_disabled = false
         )
-        LEFT JOIN address_table ON (
+        LEFT JOIN public.address_table ON (
           team_project_address_id = address_id
         )
         WHERE 
@@ -3598,7 +3669,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_member_with_filter(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let team_data;
   plv8.subtransaction(function(){
     const {
@@ -3674,7 +3747,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_notification_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let notification_data;
   plv8.subtransaction(function(){
     const {
@@ -3685,7 +3760,7 @@ RETURNS JSON AS $$
       unreadOnly
     } = input_data;
     
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
     const start = (page - 1) * limit;
 
@@ -3696,7 +3771,7 @@ RETURNS JSON AS $$
     if(teamId) team_query = `OR notification_team_id='${teamId}'`;
     if(unreadOnly) unread_query = 'AND notification_is_read=false';
 
-    const query = (toSelect) => `SELECT ${toSelect} FROM notification_table WHERE notification_user_id='${userId}' AND (notification_app = 'GENERAL' OR notification_app = '${app}') AND (notification_team_id IS NULL ${team_query}) ${unread_query}`
+    const query = (toSelect) => `SELECT ${toSelect} FROM public.notification_table WHERE notification_user_id='${userId}' AND (notification_app = 'GENERAL' OR notification_app = '${app}') AND (notification_team_id IS NULL ${team_query}) ${unread_query}`
 
     const notificationList = plv8.execute(`${query('*')} ${last_query};`);
     const totalNotificationCount = plv8.execute(`${query('COUNT(*)')};`)[0].count;
@@ -3710,7 +3785,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ssot_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let ssot_data;
   plv8.subtransaction(function(){
     const {
@@ -3721,9 +3798,9 @@ RETURNS JSON AS $$
       unreadOnly
     } = input_data;
     
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const ssotData = plv8.execute(`SELECT get_ssot('{ "activeTeam": "${teamId}", "pageNumber": 1, "rowLimit": 10, "search": "", "itemFilter": [], "itemFilterCount": 0, "supplierList": [] }');`)[0].get_ssot;
+    const ssotData = plv8.execute(`SELECT public.get_ssot('{ "activeTeam": "${teamId}", "pageNumber": 1, "rowLimit": 10, "search": "", "itemFilter": [], "itemFilterCount": 0, "supplierList": [] }');`)[0].get_ssot;
 
     const itemList = plv8.execute(`SELECT * FROM item_schema.item_table WHERE item_team_id='${teamId}' AND item_is_disabled=false AND item_is_available=true ORDER BY item_general_name ASC;`);
 
@@ -3740,14 +3817,16 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_list_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let request_data;
   plv8.subtransaction(function(){
     const {
       userId
     } = input_data;
     
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
@@ -3763,7 +3842,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION canvass_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -3806,7 +3887,7 @@ RETURNS JSON as $$
     const requestResponseData = plv8.execute(`SELECT request_response_table.*, field_name, field_order FROM request_schema.request_response_table INNER JOIN form_schema.field_table ON field_id = request_response_field_id WHERE request_response_request_id='${requestId}'`);
 
     const options = {};
-    const idForNullDuplicationId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+    const idForNullDuplicationId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
     requestResponseData.forEach((response) => {
       if (response) {
         const fieldName = response.field_name;
@@ -4017,7 +4098,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION form_list_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -4025,7 +4108,7 @@ RETURNS JSON as $$
       limit
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
 
     const formList = plv8.execute(
       `
@@ -4126,14 +4209,16 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION build_form_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
       userId
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
     const teamMemberList = plv8.execute(
       `
         SELECT
@@ -4152,7 +4237,7 @@ RETURNS JSON as $$
       `
     );
     const groupList = plv8.execute(`SELECT * FROM team_schema.team_group_table WHERE team_group_team_id = '${teamId}' AND team_group_is_disabled = false`);
-    const formId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+    const formId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
 
     returnData = {
       teamMemberList: teamMemberList.map(teamMember => {
@@ -4176,7 +4261,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION form_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -4186,7 +4273,7 @@ RETURNS JSON as $$
       limit
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
  
     const teamMembers = plv8.execute(
       `
@@ -4242,7 +4329,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_request_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const { 
@@ -4251,7 +4340,7 @@ RETURNS JSON as $$
       connectedRequestFormslyId
     } = input_data;
 
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
     if (!teamId) throw new Error("No team found");
 
     const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_user_id = '${userId}' AND team_member_team_id = '${teamId}'`)[0];
@@ -4505,7 +4594,7 @@ RETURNS JSON as $$
             SELECT 
               csi_code_division_id,
               csi_code_division_description
-            FROM distinct_division_view
+            FROM public.distinct_division_view
           `
         );
 
@@ -5782,10 +5871,12 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request(
   request_id TEXT
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
-    const idCondition = plv8.execute(`SELECT generate_request_id_condition('${request_id}')`)[0].generate_request_id_condition;
+    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${request_id}')`)[0].generate_request_id_condition;
 
     const requestData = plv8.execute(
       `
@@ -5805,7 +5896,7 @@ RETURNS JSON as $$
           form_type,
           form_sub_type,
           team_project_name
-        FROM request_view
+        FROM public.request_view
         INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_schema.form_table ON form_id = request_form_id
@@ -5837,7 +5928,7 @@ RETURNS JSON as $$
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
+        LEFT JOIN public.attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${requestData.request_id}'
       `
     );
@@ -6065,7 +6156,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ticket_form(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6396,7 +6489,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_custom_csi_validity(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6456,7 +6551,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ticket_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6486,7 +6583,7 @@ RETURNS JSON as $$
       JOIN user_schema.user_table u ON tm.team_member_user_id = u.user_id
       WHERE tm.team_member_id = '${ticket.ticket_requester_team_member_id}';`)[0]
     
-    const ticketForm = plv8.execute(`SELECT get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
+    const ticketForm = plv8.execute(`SELECT public.get_ticket_form('{"category": "${ticket.ticket_category}","teamId": "${requester.member.team_member_team_id}"}')`)[0].get_ticket_form;
 
     const responseData = plv8.execute(`SELECT * FROM ticket_schema.ticket_response_table WHERE ticket_response_ticket_id='${ticketId}';`);
 
@@ -6595,7 +6692,7 @@ RETURNS JSON as $$
       WHERE tm.team_member_id = '${ticket.ticket_approver_team_member_id}';`)[0]
     }
 
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
     const member = plv8.execute(
       `
@@ -6683,7 +6780,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION assign_ticket(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6748,7 +6847,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_ticket_status(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -6766,58 +6867,76 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_ticket_list(
   input_data JSON
 )
-RETURNS JSON AS $$
-    let return_value
-    plv8.subtransaction(function(){
-      const {
-        teamId,
-        page,
-        limit,
-        requester,
-        approver,
-        status,
-        sort,
-        category,
-        search,
-      } = input_data;
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      teamId,
+      page,
+      limit,
+      requester,
+      approver,
+      status,
+      sort,
+      category,
+      search,
+    } = input_data;
 
-      const start = (page - 1) * limit;
+    const start = (page - 1) * limit;
 
-      const ticket_list = plv8.execute(
-        `
-          SELECT DISTINCT
-            ticket_table.*,
-            ticket_category_table.ticket_category
-          FROM ticket_schema.ticket_table
-          INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_id
-          INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
-          WHERE team_member_team_id = '${teamId}'
-          ${requester}
-          ${approver}
-          ${status}
-          ${category}
-          ${search}
-          ORDER BY ticket_date_created ${sort} 
-          OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
-        `
-      );
+    const ticket_list = plv8.execute(
+      `
+        SELECT DISTINCT
+          ticket_table.*,
+          ticket_category_table.ticket_category
+        FROM ticket_schema.ticket_table
+        INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_id
+        INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
+        WHERE team_member_team_id = '${teamId}'
+        ${requester}
+        ${approver}
+        ${status}
+        ${category}
+        ${search}
+        ORDER BY ticket_date_created ${sort} 
+        OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
+      `
+    );
 
-      const ticket_count = plv8.execute(
+    const ticket_count = plv8.execute(
+      `
+        SELECT DISTINCT COUNT(*)
+        FROM ticket_schema.ticket_table
+        INNER JOIN team_schema.team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
+        WHERE team_member_table.team_member_team_id = '${teamId}'
+        ${requester}
+        ${approver}
+        ${status}
+        ${category}
+        ${search}
+      `
+    )[0];
+
+    const ticket_data = ticket_list.map(ticket => {
+      const ticket_requester = plv8.execute(
         `
-          SELECT DISTINCT COUNT(*)
-          FROM ticket_schema.ticket_table
-          INNER JOIN team_schema.team_member_table ON ticket_table.ticket_requester_team_member_id = team_member_table.team_member_id
-          WHERE team_member_table.team_member_team_id = '${teamId}'
-          ${requester}
-          ${approver}
-          ${status}
-          ${category}
-          ${search}
+          SELECT 
+            team_member_table.team_member_id, 
+            user_table.user_id,
+            user_table.user_first_name,
+            user_table.user_last_name,
+            user_table.user_username,
+            user_table.user_avatar
+          FROM team_schema.team_member_table
+          INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
+          WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
         `
       )[0];
-
-      const ticket_data = ticket_list.map(ticket => {
-        const ticket_requester = plv8.execute(
+      let ticket_approver = {}
+      if(ticket.ticket_approver_team_member_id){
+        ticket_approver = plv8.execute(
           `
             SELECT 
               team_member_table.team_member_id, 
@@ -6828,46 +6947,32 @@ RETURNS JSON AS $$
               user_table.user_avatar
             FROM team_schema.team_member_table
             INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-            WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
+            WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
           `
         )[0];
-        let ticket_approver = {}
-        if(ticket.ticket_approver_team_member_id){
-          ticket_approver = plv8.execute(
-            `
-              SELECT 
-                team_member_table.team_member_id, 
-                user_table.user_id,
-                user_table.user_first_name,
-                user_table.user_last_name,
-                user_table.user_username,
-                user_table.user_avatar
-              FROM team_schema.team_member_table
-              INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-              WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
-            `
-          )[0];
-        }
+      }
 
-        return {
-          ...ticket,
-          ticket_requester,
-          ticket_approver,
-        }
-      });
-
-      returnData = {
-        data: ticket_data, 
-        count: Number(ticket_count.count)
-      };
+      return {
+        ...ticket,
+        ticket_requester,
+        ticket_approver,
+      }
     });
-    return returnData
+
+    returnData = {
+      data: ticket_data, 
+      count: Number(ticket_count.count)
+    };
+  });
+  return returnData
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION analyze_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData;
 plv8.subtransaction(function(){
   const {
@@ -6916,7 +7021,7 @@ plv8.subtransaction(function(){
         request_formsly_id,
         request_id
       FROM request_schema.request_response_table
-      INNER JOIN request_view ON request_id = request_response_request_id
+      INNER JOIN public.request_view ON request_id = request_response_request_id
       WHERE 
         request_response = '"${itemName}"' AND
         request_response_field_id = '${generalNameFieldId}' AND
@@ -6931,7 +7036,7 @@ plv8.subtransaction(function(){
     `
       SELECT COUNT(*)
       FROM request_schema.request_response_table
-      INNER JOIN request_view ON request_id = request_response_request_id
+      INNER JOIN public.request_view ON request_id = request_response_request_id
       WHERE 
         request_response = '"${itemName}"' AND
         request_response_field_id = '${generalNameFieldId}' AND
@@ -6998,7 +7103,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_edit_request_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData;
 plv8.subtransaction(function(){
   const {
@@ -7007,7 +7114,7 @@ plv8.subtransaction(function(){
     referenceOnly
   } = input_data;
 
-  const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+  const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
   if (!teamId) throw new Error("No team found");
 
   const isUUID = (str) => {
@@ -7017,7 +7124,7 @@ plv8.subtransaction(function(){
 
   let requestId = initialRequestId;
   if(!isUUID(requestId)){
-    requestId = plv8.execute(`SELECT request_id FROM request_view WHERE request_formsly_id = '${initialRequestId}'`)[0].request_id;
+    requestId = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${initialRequestId}'`)[0].request_id;
   }
 
   const requestData = plv8.execute(
@@ -7051,7 +7158,7 @@ plv8.subtransaction(function(){
     `
   ).map(response => response.request_response_duplicatable_section_id);
   
-  formData = plv8.execute(`SELECT create_request_page_on_load('{ "formId": "${requestData.request_form_id}", "userId": "${userId}", "connectedRequestFormslyId": "${initialRequestId}" }')`)[0].create_request_page_on_load;
+  formData = plv8.execute(`SELECT public.create_request_page_on_load('{ "formId": "${requestData.request_form_id}", "userId": "${userId}", "connectedRequestFormslyId": "${initialRequestId}" }')`)[0].create_request_page_on_load;
 
   returnData = {
     ...formData,
@@ -7065,7 +7172,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_dashboard_top_requestor(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7160,7 +7269,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_equipment_part_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7259,7 +7370,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_section_choices(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7346,7 +7459,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_dashboard_top_signer(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7455,7 +7570,9 @@ CREATE OR REPLACE FUNCTION leave_team(
   team_id TEXT,
   team_member_id TEXT
 )
-RETURNS VOID as $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const teamMember = plv8.execute(`SELECT * FROM team_schema.team_member_table WHERE team_member_team_id='${team_id}' AND team_member_id='${team_member_id}'`)[0];
     const isUserOwner = teamMember.team_member_role === 'OWNER';
@@ -7476,7 +7593,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION redirect_to_new_team(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7540,7 +7659,9 @@ RETURNS JSON AS $$
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION format_team_name_to_url_key(team_name TEXT)
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
 BEGIN
   RETURN LOWER(regexp_replace(team_name, '\s+', '-', 'g'));
 END;
@@ -7549,7 +7670,9 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION analyze_user_issued_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -7606,93 +7729,92 @@ RETURNS JSON AS $$
     const itemSpecificList = {};
 
     responseListData.forEach(item => {
-        const key = `${item.request_response_request_id}-${item.request_response_duplicatable_section_id || ''}`;
+      const key = `${item.request_response_request_id}-${item.request_response_duplicatable_section_id || ''}`;
 
-        if (!itemSpecificList[key]) {
-            itemSpecificList[key] = [];
-        }
+      if (!itemSpecificList[key]) {
+        itemSpecificList[key] = [];
+      }
 
-        itemSpecificList[key].push({
-            request_response_id: item.request_response_id,
-            request_response: JSON.parse(item.request_response),
-            request_response_duplicatable_section_id: item.request_response_duplicatable_section_id,
-            request_response_request_id: item.request_response_request_id,
-            request_response_field_id: item.request_response_field_id,
-            field_name: item.field_name,
-            field_section_id: item.field_section_id,
-        });
+      itemSpecificList[key].push({
+        request_response_id: item.request_response_id,
+        request_response: JSON.parse(item.request_response),
+        request_response_duplicatable_section_id: item.request_response_duplicatable_section_id,
+        request_response_request_id: item.request_response_request_id,
+        request_response_field_id: item.request_response_field_id,
+        field_name: item.field_name,
+        field_section_id: item.field_section_id,
+      });
     });
     
     const nonUniqueitemList = [];
 
     for (const key in itemSpecificList) {
-        const items = itemSpecificList[key];
+      const items = itemSpecificList[key];
 
-        const formattedItem = {
-            itemName: "",
-            itemUom: "",
-            itemQuantity: 0,
-            variation: [{
-              quantity: 0,
-              specification: []
-            }]
-        };
-        
-            
+      const formattedItem = {
+          itemName: "",
+          itemUom: "",
+          itemQuantity: 0,
+          variation: [{
+            quantity: 0,
+            specification: []
+          }]
+      };
+      
+          
 
-        items.forEach(item => {
-            switch (item.field_name) {
-                case "General Name":
-                    formattedItem.itemName = item.request_response;
-                    break;
-                case "Base Unit of Measurement":
-                    formattedItem.itemUom = item.request_response;
-                    break;
-                case "Quantity":
-                    formattedItem.itemQuantity = item.request_response;
-                    formattedItem.variation[0].quantity = item.request_response;
-                    break;
-                default:
-                    formattedItem.variation[0].specification.push({
-                        fieldName: item.field_name,
-                        response: `${item.request_response}`
-                    });
-                    break;
-            }
-        });
-        
-        nonUniqueitemList.push(formattedItem);
+      items.forEach(item => {
+        switch (item.field_name) {
+          case "General Name":
+            formattedItem.itemName = item.request_response;
+            break;
+          case "Base Unit of Measurement":
+            formattedItem.itemUom = item.request_response;
+            break;
+          case "Quantity":
+            formattedItem.itemQuantity = item.request_response;
+            formattedItem.variation[0].quantity = item.request_response;
+            break;
+          default:
+            formattedItem.variation[0].specification.push({
+              fieldName: item.field_name,
+              response: `${item.request_response}`
+            });
+            break;
+        }
+      });
+      
+      nonUniqueitemList.push(formattedItem);
     }
 
     const mergedItems = [];
   
     Object.values(nonUniqueitemList).forEach((item) => {
-        const existingItem = mergedItems.find(
-          (mergedItem) =>
-            mergedItem.itemName === item.itemName &&
-            mergedItem.itemUom === item.itemUom
+      const existingItem = mergedItems.find(
+        (mergedItem) =>
+          mergedItem.itemName === item.itemName &&
+          mergedItem.itemUom === item.itemUom
+      );
+
+      if (existingItem) {
+        const existingVariation = existingItem.variation.find(
+          (variation) =>
+            JSON.stringify(variation.specification) ===
+            JSON.stringify(item.variation[0].specification)
         );
 
-        if (existingItem) {
-          const existingVariation = existingItem.variation.find(
-            (variation) =>
-              JSON.stringify(variation.specification) ===
-              JSON.stringify(item.variation[0].specification)
-          );
-
-          if (existingVariation) {
-            existingVariation.quantity += Number(item.variation[0].quantity);
-          } else {
-            
-            existingItem.variation.push(item.variation[0]);
-          }
-            existingItem.itemQuantity = existingItem.variation
-              .map((spec) => spec.quantity)
-              .reduce((a, c) => a + c, 0);
+        if (existingVariation) {
+          existingVariation.quantity += Number(item.variation[0].quantity);
         } else {
-          mergedItems.push({ ...item });
+          existingItem.variation.push(item.variation[0]);
         }
-      });
+          existingItem.itemQuantity = existingItem.variation
+            .map((spec) => spec.quantity)
+            .reduce((a, c) => a + c, 0);
+      } else {
+        mergedItems.push({ ...item });
+      }
+    });
 
     const itemList = mergedItems.sort((a, b) => b.itemQuantity - a.itemQuantity);
 
@@ -7706,7 +7828,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let new_memo_data;
   plv8.subtransaction(function(){
     const {
@@ -7791,7 +7915,7 @@ RETURNS JSON AS $$
 
     
     if (activeTeam && memo_author_data) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -7802,7 +7926,7 @@ RETURNS JSON AS $$
         )
         .join(",");
 
-        plv8.execute(`INSERT INTO notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+        plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
       }
     }
 
@@ -7813,7 +7937,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_memo_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let memo_data_on_load;
   plv8.subtransaction(function() {
     const { memo_id, current_user_id } = input_data;
@@ -8014,7 +8140,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_memo_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let return_value;
   plv8.subtransaction(function(){
     const {
@@ -8108,7 +8236,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION edit_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       memo_id,
@@ -8142,7 +8272,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_memo_reference_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let memo_data_on_load;
   plv8.subtransaction(function(){
 
@@ -8269,7 +8401,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_reference_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let new_memo_data;
   plv8.subtransaction(function() {
     const {
@@ -8360,7 +8494,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_user(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       userData,
@@ -8388,7 +8524,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_edit_request_section(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -8400,7 +8538,7 @@ RETURNS JSON AS $$
       preferredSupplierField
     } = input_data;
     
-    const unformattedRequest = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
+    const unformattedRequest = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
     const {
       request_form: { form_section: originalSectionList },
     } = unformattedRequest;
@@ -8624,7 +8762,7 @@ RETURNS JSON AS $$
                   ...preferredSupplierField,
                   field_response: [
                     {
-                      request_response_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+                      request_response_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
                       request_response: null,
                       request_response_duplicatable_section_id:
                         section.section_field[8].field_response[0]
@@ -8652,7 +8790,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_query_data(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8675,7 +8815,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_signer_sla(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8758,7 +8900,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_incident_report(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8826,7 +8970,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_ticket_list_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8834,11 +8980,11 @@ RETURNS JSON AS $$
     } = input_data;
     
     
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
     
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const ticketList = plv8.execute(`SELECT fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
+    const ticketList = plv8.execute(`SELECT public.fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
 
     const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category_is_disabled = false`);
 
@@ -8850,14 +8996,16 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_create_ticket_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
       userId
     } = input_data;
     
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
     const member = plv8.execute(
       `
@@ -8890,7 +9038,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_custom_csi(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8954,7 +9104,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_ticket(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8977,7 +9129,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION edit_ticket(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -8995,7 +9149,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION ped_part_check(
   input_data JSON
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SET search_path TO ''
+AS $$
   let returnData = false;
   plv8.subtransaction(function(){
     const {
@@ -9043,7 +9199,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_ped_part_from_ticket_request(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       equipmentName,
@@ -9151,7 +9309,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_user_valid_id(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -9176,7 +9336,7 @@ RETURNS JSON AS $$
 
     const addressData = plv8.execute(
       `
-        INSERT INTO address_table 
+        INSERT INTO public.address_table 
           (address_region, address_province, address_city, address_barangay, address_street, address_zip_code)
         VALUES
           ('${address_region}', '${address_province}', '${address_city}', '${address_barangay}', '${address_street}', '${address_zip_code}')
@@ -9231,7 +9391,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_ped_part(
   input_data JSON
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -9269,10 +9431,12 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_without_duplicatable_section(
   request_id TEXT
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
-    const idCondition = plv8.execute(`SELECT generate_request_id_condition('${request_id}')`)[0].generate_request_id_condition;
+    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${request_id}')`)[0].generate_request_id_condition;
 
     const requestData = plv8.execute(
       `
@@ -9292,7 +9456,7 @@ RETURNS JSON as $$
           form_type,
           form_sub_type,
           team_project_name
-        FROM request_view
+        FROM public.request_view
         INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_schema.form_table ON form_id = request_form_id
@@ -9409,7 +9573,7 @@ RETURNS JSON as $$
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        LEFT JOIN attachment_table on attachment_id = user_signature_attachment_id
+        LEFT JOIN public.attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${requestData.request_id}'
       `
     );
@@ -9473,7 +9637,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_request_page_section(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -9619,7 +9785,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION generate_request_id_condition(
   request_id TEXT
 )
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
   let idCondition = '';
   plv8.subtransaction(function(){
     const isUUID = (str) => {
@@ -9639,7 +9807,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_request_comment(
   request_id TEXT
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = '';
   plv8.subtransaction(function(){
     const requestCommentData = plv8.execute(
@@ -9692,21 +9862,23 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION public_request_page_on_load(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
       requestId
     } = input_data;
 
-    const idCondition = plv8.execute(`SELECT generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
+    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
 
     const request = plv8.execute(
       `
         SELECT 
           form_is_formsly_form, 
           form_name
-        FROM request_view
+        FROM public.request_view
         INNER JOIN form_schema.form_table ON form_id = request_form_id
         WHERE 
           ${idCondition}
@@ -9715,14 +9887,14 @@ RETURNS JSON as $$
     )[0];
 
     if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
-      const requestData = plv8.execute(`SELECT get_request('${requestId}')`)[0].get_request;
+      const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
         request: requestData
       };
       return;
     } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report', 'Request For Payment'].includes(request.form_name)) {
-      const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
       const sectionIdWithDuplicatableSectionIdList = plv8.execute(
@@ -9740,7 +9912,7 @@ RETURNS JSON as $$
         sectionIdWithDuplicatableSectionIdList
       };
     } else {
-      const requestData = plv8.execute(`SELECT get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
+      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
       const duplicatableSectionIdList = plv8.execute(
@@ -9765,7 +9937,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_item_request_conditional_options(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -9885,7 +10059,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_service_request_conditional_options(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -9933,7 +10109,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_other_expenses_request_conditional_options(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -9986,7 +10164,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_ped_equipment_request_conditional_options(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -10066,7 +10246,7 @@ RETURNS JSON as $$
             });
             optionData.unshift({
               option_field_id: field,
-              option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+              option_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
               option_order: 0,
               option_value: "ANY"
             });
@@ -10107,7 +10287,7 @@ RETURNS JSON as $$
             });
             optionData.unshift({
               option_field_id: field,
-              option_id: plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4,
+              option_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
               option_order: 0,
               option_value: "ANY"
             });
@@ -10127,7 +10307,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_item_category(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -10174,7 +10356,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION update_item_category(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -10215,7 +10399,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_jira_automation_data(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let jira_automation_data;
   plv8.subtransaction(function(){
     const {
@@ -10299,7 +10485,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_approver_unresolved_request_count(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let data;
   plv8.subtransaction(function() {
     const {
@@ -10341,7 +10529,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_admin_ticket_analytics(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const {
@@ -10404,7 +10594,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION handle_formsly_payment(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       teamId,
@@ -10446,7 +10638,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION team_invoice_on_load(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
@@ -10455,7 +10649,7 @@ RETURNS JSON AS $$
       userId
     } = input_data;
    
-    const currentDate = plv8.execute(`SELECT get_current_date()`)[0].get_current_date.toLocaleDateString();
+    const currentDate = plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date.toLocaleDateString();
     let expirationDate = teamDateCreated;
 
     const latestTransaction = plv8.execute(
@@ -10487,7 +10681,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION fetch_form_section_with_multiple_duplicatable_section(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10535,7 +10731,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_memo_signer_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10587,7 +10785,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_signer_with_profile(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10652,7 +10852,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_user_with_signature(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10667,7 +10869,7 @@ plv8.subtransaction(function() {
         user_employee_number,
         user_employee_number_is_disabled
       FROM user_schema.user_table
-      LEFT JOIN attachment_table ON attachment_id = user_signature_attachment_id
+      LEFT JOIN public.attachment_table ON attachment_id = user_signature_attachment_id
       LEFT JOIN user_schema.user_employee_number_table ON user_employee_number_user_id = user_id
         AND user_employee_number_is_disabled = false
       WHERE 
@@ -10717,7 +10919,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_user_current_signature(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -10730,7 +10934,7 @@ plv8.subtransaction(function() {
         attachment_value,
         attachment_bucket
       FROM user_schema.user_table
-      INNER JOIN attachment_table ON attachment_id = user_signature_attachment_id
+      INNER JOIN public.attachment_table ON attachment_id = user_signature_attachment_id
       WHERE 
         user_id = '${userId}'
     `
@@ -10749,7 +10953,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_form_list_with_filter(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -10868,7 +11074,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_form(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -10979,7 +11187,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11127,7 +11337,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_member_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11182,7 +11394,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_group_member_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11279,7 +11493,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_project_member_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11378,7 +11594,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_project_signer_with_team_member(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11468,7 +11686,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_multiple_project_signer_with_team_member(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11531,7 +11751,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_approver_list_with_filter(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11609,7 +11831,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_admin_list_with_filter(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11687,7 +11911,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_members_with_member_role(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11733,7 +11959,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_member_user_data(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11762,7 +11990,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_member_user(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11812,7 +12042,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_category_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -11898,7 +12130,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_admin_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11948,7 +12182,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_form_approver(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -11987,7 +12223,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION agree_to_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12069,7 +12307,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION approve_or_reject_memo(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12080,7 +12320,7 @@ plv8.subtransaction(function() {
     memoSignerTeamMemberId
   } = input_data;
 
-  const currentDate = plv8.execute(`SELECT get_current_date()`)[0].get_current_date.toISOString();
+  const currentDate = plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date.toISOString();
 
   plv8.execute(
     `
@@ -12178,7 +12418,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_user_valid_id(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12191,7 +12433,7 @@ plv8.subtransaction(function() {
         user_valid_id_table.*,
         address_table.*
       FROM user_schema.user_valid_id_table
-      INNER JOIN address_table ON address_id = user_valid_id_address_id
+      INNER JOIN public.address_table ON address_id = user_valid_id_address_id
       WHERE user_valid_id_id = '${validId}'
     `
   )[0];
@@ -12253,7 +12495,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_invitation(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12314,7 +12558,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_invitation_id(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = "";
 plv8.subtransaction(function() {
   const {
@@ -12347,7 +12593,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_invitation(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12411,7 +12659,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_unit_of_measurement(
   input_data JSON
 )
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
 let returnData = "";
 plv8.subtransaction(function() {
   const {
@@ -12464,7 +12714,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION send_notification_to_project_cost_engineer(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
 plv8.subtransaction(function() {
   const {
     projectId,
@@ -12503,7 +12755,7 @@ plv8.subtransaction(function() {
     `('${notification.notification_app}','${notification.notification_content}','${notification.notification_redirect_url}','${notification.notification_team_id}','${notification.notification_type}','${notification.notification_user_id}')`).join(",");
 
   plv8.execute(
-    `INSERT INTO notification_table 
+    `INSERT INTO public.notification_table 
     (notification_app, notification_content, notification_redirect_url, notification_team_id, notification_type, notification_user_id) 
     VALUES ${notificationValues};`);
 });
@@ -12512,7 +12764,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_item_category_option(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -12549,7 +12803,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_jira_formsly_project_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12662,7 +12918,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_if_all_primary_approver_approved_the_request(
   input_data JSON
 )
-RETURNS BOOLEAN AS $$
+RETURNS BOOLEAN 
+SET search_path TO ''
+AS $$
 let returnData = false;
 plv8.subtransaction(function() {
   const {
@@ -12691,7 +12949,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_approver_request_count(
   input_data JSON
 )
-RETURNS INT AS $$
+RETURNS INT 
+SET search_path TO ''
+AS $$
 let returnData = 0;
 plv8.subtransaction(function() {
   const {
@@ -12727,7 +12987,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_status_count(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12773,7 +13035,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_team_id(
   input_data JSON
 )
-RETURNS TEXT AS $$
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
 let returnData = "";
 plv8.subtransaction(function() {
   const {
@@ -12802,7 +13066,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_total_count(
   input_data JSON
 )
-RETURNS INT AS $$
+RETURNS INT 
+SET search_path TO ''
+AS $$
 let returnData = 0;
 plv8.subtransaction(function() {
   const {
@@ -12834,7 +13100,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_request_status_monthly_count(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -12885,7 +13153,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_form_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -12970,7 +13240,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_team_project_list(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = {};
 plv8.subtransaction(function() {
   const {
@@ -13017,7 +13289,7 @@ plv8.subtransaction(function() {
       addressData = plv8.execute(
         `
           SELECT *
-          FROM address_table
+          FROM public.address_table
           WHERE address_id = '${project.team_project_address_id}'
           LIMIT 1
         `
@@ -13028,7 +13300,7 @@ plv8.subtransaction(function() {
       siteMapData = plv8.execute(
         `
           SELECT attachment_value
-          FROM attachment_table
+          FROM public.attachment_table
           WHERE attachment_id = '${project.team_project_site_map_attachment_id}'
           LIMIT 1
         `
@@ -13039,7 +13311,7 @@ plv8.subtransaction(function() {
       boqData = plv8.execute(
         `
           SELECT attachment_value
-          FROM attachment_table
+          FROM public.attachment_table
           WHERE attachment_id = '${project.team_project_boq_attachment_id}'
           LIMIT 1
         `
@@ -13073,7 +13345,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION check_user_email(
   input_data JSON
 )
-RETURNS JSON AS $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
 let returnData = [];
 plv8.subtransaction(function() {
   const {
@@ -13100,7 +13374,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_item_from_ticket_request(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       generalName,
@@ -13163,8 +13439,8 @@ RETURNS VOID AS $$
     const fieldInput = [];
 
     descriptionList.forEach((description, index) => {
-      const fieldId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
-      const descriptionId = plv8.execute('SELECT uuid_generate_v4()')[0].uuid_generate_v4;
+      const fieldId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
+      const descriptionId = plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4;
       itemDescriptionInput.push({
         item_description_id: descriptionId,
         item_description_label: description.description,
@@ -13204,7 +13480,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION add_team_member_to_all_project(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
   plv8.subtransaction(function(){
     const {
       teamMemberIdList
@@ -13242,7 +13520,9 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_lrf_summary_table(
   input_data JSON
 )
-RETURNS JSON as $$
+RETURNS JSON 
+SET search_path TO ''
+AS $$
   let returnData;
   plv8.subtransaction(function(){
     const { 
@@ -13256,7 +13536,7 @@ RETURNS JSON as $$
     } = input_data;
 
     const offset = (page - 1) * limit;
-    const teamId = plv8.execute(`SELECT get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
 
     const projectFilterCondition = projectFilter ? `AND request_project_id IN (${projectFilter})` : '';
     const startDateCondition = startDate ? `AND request_date_created >= '${startDate}'` : '';
@@ -13501,7 +13781,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13520,7 +13800,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13540,7 +13820,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13562,7 +13842,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13579,7 +13859,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13599,7 +13879,7 @@ WITH CHECK (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13621,7 +13901,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13638,7 +13918,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE id.item_description_id = item_description_field_item_description_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13657,7 +13937,7 @@ WITH CHECK (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13678,7 +13958,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13694,7 +13974,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13711,7 +13991,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13730,7 +14010,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13744,7 +14024,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = item_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13764,7 +14044,7 @@ WITH CHECK (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13786,7 +14066,7 @@ USING (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13803,7 +14083,7 @@ USING (
     JOIN form_schema.form_table as fo ON fo.form_id = st.section_form_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_id = fo.form_team_member_id 
     WHERE ft.field_id = option_field_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13824,7 +14104,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -13846,7 +14126,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
@@ -13864,7 +14144,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -13884,7 +14164,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13907,7 +14187,7 @@ USING (
   ) = (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13925,7 +14205,7 @@ USING (
   ) = (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13946,7 +14226,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13969,7 +14249,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -13987,7 +14267,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14003,7 +14283,7 @@ WITH CHECK (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14021,7 +14301,7 @@ USING (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14034,7 +14314,7 @@ USING (
   supplier_team_id IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14060,9 +14340,9 @@ TO authenticated
 USING (
   team_member_team_id IN (
     SELECT team_member_team_id FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
-  ) OR team_member_user_id = auth.uid()
+  ) OR team_member_user_id = (SELECT auth.uid())
 );
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER or ADMIN role" ON team_schema.team_member_table;
@@ -14072,7 +14352,7 @@ TO authenticated
 USING (
   team_member_team_id IN (
     SELECT team_member_team_id FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14095,14 +14375,14 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on team_member
 CREATE POLICY "Allow UPDATE for authenticated users based on team_member_id" ON request_schema.comment_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()))
-WITH CHECK (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
+USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())))
+WITH CHECK (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())));
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on team_member_id" ON request_schema.comment_table;
 CREATE POLICY "Allow DELETE for authenticated users based on team_member_id" ON request_schema.comment_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
+USING (comment_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())));
 
 --- user_schema.invitation_table
 ALTER TABLE user_schema.invitation_table ENABLE ROW LEVEL SECURITY;
@@ -14121,7 +14401,7 @@ USING (
   invitation_to_email = (
     SELECT user_email 
     FROM user_schema.user_table 
-    WHERE user_id = auth.uid()
+    WHERE user_id = (SELECT auth.uid())
   )
   OR EXISTS (
     SELECT 1
@@ -14133,7 +14413,7 @@ USING (
       AND team_member_is_disabled = FALSE
       LIMIT 1
     )
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14153,12 +14433,12 @@ USING (
       AND team_member_is_disabled = FALSE
       LIMIT 1
     )
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR invitation_to_email = (
     SELECT user_email 
     FROM user_schema.user_table 
-    WHERE user_id = auth.uid()
+    WHERE user_id = (SELECT auth.uid())
   )
 )
 WITH CHECK (
@@ -14172,12 +14452,12 @@ WITH CHECK (
       AND team_member_is_disabled = FALSE
       LIMIT 1
     )
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   ) OR invitation_to_email = (
     SELECT user_email 
     FROM user_schema.user_table 
-    WHERE user_id = auth.uid()
+    WHERE user_id = (SELECT auth.uid())
   )
 );
 
@@ -14185,7 +14465,7 @@ DROP POLICY IF EXISTS "Allow DELETE for users based on invitation_from_team_memb
 CREATE POLICY "Allow DELETE for users based on invitation_from_team_member_id" ON user_schema.invitation_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = auth.uid()));
+USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema.team_member_table WHERE team_member_user_id = (SELECT auth.uid())));
 
 --- notification_table
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
@@ -14200,14 +14480,14 @@ DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" 
 CREATE POLICY "Allow READ for authenticated users on own notifications" ON notification_table
 AS PERMISSIVE FOR SELECT
 TO authenticated
-USING (auth.uid() = notification_user_id);
+USING ((SELECT auth.uid()) = notification_user_id);
 
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on notification_user_id" ON notification_table;
 CREATE POLICY "Allow UPDATE for authenticated users on notification_user_id" ON notification_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (auth.uid() = notification_user_id)
-WITH CHECK (auth.uid() = notification_user_id);
+USING ((SELECT auth.uid()) = notification_user_id)
+WITH CHECK ((SELECT auth.uid()) = notification_user_id);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users" ON notification_table;
 CREATE POLICY "Allow DELETE for authenticated users" ON notification_table
@@ -14242,7 +14522,7 @@ USING (
   ) IN (
     SELECT team_member_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 )
 WITH CHECK (
@@ -14253,7 +14533,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   ) 
 );
 
@@ -14270,13 +14550,13 @@ USING (
   ) IN (
     SELECT tmt.team_member_id
     FROM team_schema.team_member_table AS tmt
-    WHERE tmt.team_member_user_id = auth.uid()
+    WHERE tmt.team_member_user_id = (SELECT auth.uid())
   ) OR EXISTS (
     SELECT 1
     FROM team_schema.team_group_member_table AS tgm
     INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgm.team_member_id
     INNER JOIN team_schema.team_group_table AS tg ON tg.team_group_id = tgm.team_group_id
-    WHERE tmt.team_member_user_id = auth.uid()
+    WHERE tmt.team_member_user_id = (SELECT auth.uid())
     AND tg.team_group_name IN ('COST ENGINEER', 'ACCOUNTANT')
   )
 );
@@ -14303,7 +14583,7 @@ USING (
   request_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   ) OR (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
@@ -14311,7 +14591,7 @@ USING (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
 )
@@ -14319,7 +14599,7 @@ WITH CHECK (
   request_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   ) OR (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
@@ -14327,7 +14607,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid() 
+    WHERE team_member_user_id = (SELECT auth.uid()) 
     AND team_member_role IN ('OWNER', 'APPROVER')
   )
 );
@@ -14340,7 +14620,7 @@ USING (
   request_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14363,14 +14643,14 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON tea
 CREATE POLICY "Allow UPDATE for authenticated users on own teams" ON team_schema.team_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (auth.uid() = team_user_id)
-WITH CHECK (auth.uid() = team_user_id);
+USING ((SELECT auth.uid()) = team_user_id)
+WITH CHECK ((SELECT auth.uid()) = team_user_id);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users on own teams" ON team_schema.team_table;
 CREATE POLICY "Allow DELETE for authenticated users on own teams" ON team_schema.team_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (auth.uid() = team_user_id);
+USING ((SELECT auth.uid()) = team_user_id);
 
 --- user_schema.user_table
 ALTER TABLE user_schema.user_table ENABLE ROW LEVEL SECURITY;
@@ -14390,14 +14670,14 @@ DROP POLICY IF EXISTS "Allow UPDATE for authenticated users based on user_id" ON
 CREATE POLICY "Allow UPDATE for authenticated users based on user_id" ON user_schema.user_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING ((SELECT auth.uid()) = user_id)
+WITH CHECK ((SELECT auth.uid()) = user_id);
 
 DROP POLICY IF EXISTS "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table;
 CREATE POLICY "Allow DELETE for authenticated users based on user_id" ON user_schema.user_table
 AS PERMISSIVE FOR DELETE
 TO authenticated
-USING (auth.uid() = user_id);
+USING ((SELECT auth.uid()) = user_id);
 
 --- form_schema.form_team_group_table
 ALTER TABLE form_schema.form_team_group_table ENABLE ROW LEVEL SECURITY;
@@ -14412,7 +14692,7 @@ WITH CHECK (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14427,7 +14707,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14441,7 +14721,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 )
@@ -14451,7 +14731,7 @@ WITH CHECK (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14466,7 +14746,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14484,7 +14764,7 @@ WITH CHECK (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14499,7 +14779,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14513,7 +14793,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 )
@@ -14523,7 +14803,7 @@ WITH CHECK (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14538,7 +14818,7 @@ USING (
     FROM team_schema.team_group_table as tt
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_group_team_id
     WHERE tt.team_group_id = team_group_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14554,9 +14834,9 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14569,9 +14849,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
   ) 
 );
 
@@ -14583,9 +14863,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 )
@@ -14593,9 +14873,9 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14608,9 +14888,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_group_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14628,7 +14908,7 @@ WITH CHECK (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14643,7 +14923,7 @@ USING (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14657,7 +14937,7 @@ USING (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 )
@@ -14667,7 +14947,7 @@ WITH CHECK (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14682,7 +14962,7 @@ USING (
     FROM team_schema.team_project_table as tp
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tp.team_project_team_id
     WHERE tp.team_project_id = team_project_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND team_member_role in ('OWNER', 'ADMIN')
   )
 );
@@ -14698,9 +14978,9 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14718,9 +14998,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 )
@@ -14728,9 +15008,9 @@ WITH CHECK (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   ) 
 );
@@ -14743,9 +15023,9 @@ USING (
   EXISTS (
     SELECT tm.team_member_team_id
     FROM team_schema.team_member_table as tm
-    JOIN user_schema.user_table as ut ON ut.user_id = auth.uid()
+    JOIN user_schema.user_table as ut ON ut.user_id = (SELECT auth.uid())
     WHERE ut.user_active_team_id = team_project_team_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14779,7 +15059,7 @@ USING (
   ticket_requester_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14812,7 +15092,7 @@ USING (
   ticket_comment_team_member_id IN (
     SELECT team_member_id  
     FROM team_schema.team_member_table 
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
   )
 );
 
@@ -14831,7 +15111,7 @@ WITH CHECK (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14853,7 +15133,7 @@ USING (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14870,7 +15150,7 @@ USING (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_scope_id = service_scope_choice_service_scope_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14889,13 +15169,13 @@ WITH CHECK (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_scope_table;
-CREATE POLICY "Allow READ access for anon users" ON service_schema.service_scope_table
+DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_scope_table;
+CREATE POLICY "Allow READ for anon users" ON service_schema.service_scope_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
@@ -14910,7 +15190,7 @@ USING (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14926,7 +15206,7 @@ USING (
     JOIN team_schema.team_table ON team_id = service_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_id = service_scope_service_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14943,13 +15223,13 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
 
-DROP POLICY IF EXISTS "Allow READ access for anon users" ON service_schema.service_table;
-CREATE POLICY "Allow READ access for anon users" ON service_schema.service_table
+DROP POLICY IF EXISTS "Allow READ for anon users" ON service_schema.service_table;
+CREATE POLICY "Allow READ for anon users" ON service_schema.service_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
@@ -14962,7 +15242,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14976,7 +15256,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = service_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -14995,7 +15275,7 @@ WITH CHECK (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15016,7 +15296,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15032,7 +15312,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_division_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15053,7 +15333,7 @@ WITH CHECK (
     JOIN team_schema.team_table ON team_id = item_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15076,7 +15356,7 @@ USING (
     JOIN team_schema.team_table ON team_id = item_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15094,7 +15374,7 @@ USING (
     JOIN team_schema.team_table ON team_id = item_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE idf.item_description_field_id = item_description_field_uom_item_description_field_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15180,7 +15460,7 @@ WITH CHECK (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15200,7 +15480,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15215,7 +15495,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE general_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15233,7 +15513,7 @@ WITH CHECK (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15253,7 +15533,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15268,7 +15548,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE service_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15299,7 +15579,7 @@ CREATE POLICY "Allow DELETE for auth users on own memo" ON memo_schema.memo_tabl
 AS PERMISSIVE FOR DELETE
 TO authenticated
 USING (
-  memo_author_user_id = auth.uid()
+  memo_author_user_id = (SELECT auth.uid())
 );
 
 --- memo_schema.memo_signer_table
@@ -15362,7 +15642,7 @@ USING (
     SELECT 1
     FROM memo_schema.memo_table
     WHERE memo_id = memo_date_updated_memo_id
-    AND memo_author_user_id = auth.uid()
+    AND memo_author_user_id = (SELECT auth.uid())
   )
 );
 
@@ -15396,7 +15676,7 @@ USING (
     SELECT 1
     FROM memo_schema.memo_table
     WHERE memo_id = memo_status_memo_id
-    AND memo_author_user_id = auth.uid()
+    AND memo_author_user_id = (SELECT auth.uid())
   )
 );
 
@@ -15462,7 +15742,7 @@ WITH CHECK (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15482,7 +15762,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15498,7 +15778,7 @@ USING (
     JOIN team_schema.team_table ON other_expenses_category_team_id = team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15517,7 +15797,7 @@ WITH CHECK (
     JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15538,7 +15818,7 @@ USING (
     JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15554,7 +15834,7 @@ USING (
     JOIN team_schema.team_table ON team_id = other_expenses_category_team_id
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE other_expenses_category_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15572,7 +15852,7 @@ WITH CHECK (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15592,7 +15872,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15607,7 +15887,7 @@ USING (
     FROM team_schema.team_table
     JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE item_unit_of_measurement_team_id = team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15626,7 +15906,7 @@ WITH CHECK (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15647,7 +15927,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15663,7 +15943,7 @@ USING (
     JOIN team_schema.team_table as tt ON tt.team_id = it.item_team_id
     JOIN team_schema.team_member_table as tm ON tm.team_member_team_id = tt.team_id
     WHERE it.item_id = item_level_three_description_item_id
-    AND tm.team_member_user_id = auth.uid()
+    AND tm.team_member_user_id = (SELECT auth.uid())
     AND tm.team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15871,7 +16151,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15890,7 +16170,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15904,7 +16184,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15921,7 +16201,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15940,7 +16220,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15954,7 +16234,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_brand_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15971,7 +16251,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -15990,7 +16270,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16004,7 +16284,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_model_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16021,7 +16301,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16040,7 +16320,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16054,7 +16334,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_component_category_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16071,7 +16351,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16090,7 +16370,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16104,7 +16384,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16123,7 +16403,7 @@ WITH CHECK (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16144,7 +16424,7 @@ USING (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16160,7 +16440,7 @@ USING (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_description_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16177,7 +16457,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16196,7 +16476,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16210,7 +16490,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16227,7 +16507,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16246,7 +16526,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16260,7 +16540,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = equipment_general_name_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16279,7 +16559,7 @@ WITH CHECK (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16300,7 +16580,7 @@ USING (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16316,7 +16596,7 @@ USING (
     INNER JOIN team_schema.team_table ON team_id = equipment_team_id
     INNER JOIN team_schema.team_member_table ON team_member_team_id = team_id
     WHERE equipment_id = equipment_part_equipment_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16333,7 +16613,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16352,7 +16632,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16366,7 +16646,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE team_member_team_id = capacity_unit_of_measurement_team_id
-    AND team_member_user_id = auth.uid()
+    AND team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16409,7 +16689,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16426,7 +16706,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16469,7 +16749,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16486,7 +16766,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16503,7 +16783,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16521,7 +16801,7 @@ USING (true);
 ALTER TABLE jira_schema.jira_item_user_table ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table;
-CREATE POLICY "Allow CRUD for authenticated users " ON jira_schema.jira_item_user_table
+CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table
 AS PERMISSIVE FOR ALL
 TO authenticated
 USING (true);
@@ -16563,7 +16843,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16580,7 +16860,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16597,7 +16877,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16619,7 +16899,7 @@ WITH CHECK (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16633,7 +16913,7 @@ USING (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16647,7 +16927,7 @@ USING (
   EXISTS (
     SELECT 1
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16672,7 +16952,7 @@ WITH CHECK (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE 
-      team_member_user_id = auth.uid()
+      team_member_user_id = (SELECT auth.uid())
       AND team_member_role IN ('OWNER', 'ADMIN')
       AND team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
   )
@@ -16692,7 +16972,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE 
-      team_member_user_id = auth.uid()
+      team_member_user_id = (SELECT auth.uid())
       AND team_member_role IN ('OWNER', 'ADMIN')
       AND team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
   )
@@ -16714,7 +16994,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16737,7 +17017,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16769,45 +17049,6 @@ AS PERMISSIVE FOR SELECT
 TO authenticated
 USING (true);
 
---- service_schema.service_table
-ALTER TABLE service_schema.service_table ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-CREATE POLICY "Allow CREATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
-AS PERMISSIVE FOR INSERT
-TO authenticated
-WITH CHECK (
-  EXISTS (
-    SELECT 1
-    FROM team_schema.team_member_table
-    WHERE 
-      team_member_user_id = auth.uid()
-      AND team_member_role IN ('OWNER', 'ADMIN')
-      AND team_member_team_id = service_team_id
-  )
-);
-
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON service_schema.service_table;
-CREATE POLICY "Allow READ for authenticated users" ON service_schema.service_table
-AS PERMISSIVE FOR SELECT
-TO authenticated
-USING (true);
-
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table;
-CREATE POLICY "Allow UPDATE for authenticated users with OWNER or ADMIN role" ON service_schema.service_table
-AS PERMISSIVE FOR UPDATE
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1
-    FROM team_schema.team_member_table
-    WHERE 
-      team_member_user_id = auth.uid()
-      AND team_member_role IN ('OWNER', 'ADMIN')
-      AND team_member_team_id = service_team_id
-  )
-);
-
 --- service_schema.service_scope_table
 ALTER TABLE service_schema.service_scope_table ENABLE ROW LEVEL SECURITY;
 
@@ -16823,7 +17064,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16846,7 +17087,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16867,7 +17108,7 @@ WITH CHECK (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16891,7 +17132,7 @@ USING (
   ) IN (
     SELECT team_member_team_id
     FROM team_schema.team_member_table
-    WHERE team_member_user_id = auth.uid()
+    WHERE team_member_user_id = (SELECT auth.uid())
     AND team_member_role IN ('OWNER', 'ADMIN')
   )
 );
@@ -16908,7 +17149,7 @@ USING (
     SELECT 1
     FROM team_schema.team_member_table
     WHERE 
-      team_member_user_id = auth.uid()
+      team_member_user_id = (SELECT auth.uid())
       AND team_member_role IN ('OWNER')
       AND team_member_team_id = team_transaction_team_id
   )
@@ -16926,9 +17167,9 @@ CREATE INDEX request_response_idx ON request_schema.request_response_table (requ
 
 ----- START: VIEWS
 
-CREATE VIEW distinct_division_view AS SELECT DISTINCT csi_code_division_id, csi_code_division_description FROM lookup_schema.csi_code_table;
-CREATE VIEW request_view AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_schema.request_table;
-CREATE VIEW equipment_schema.equipment_description_view AS 
+CREATE VIEW distinct_division_view WITH (SECURITY_INVOKER = ON) AS SELECT DISTINCT csi_code_division_id, csi_code_division_description FROM lookup_schema.csi_code_table;
+CREATE VIEW request_view WITH (SECURITY_INVOKER = ON) AS SELECT *, CONCAT(request_formsly_id_prefix, '-', request_formsly_id_serial) AS request_formsly_id FROM request_schema.request_table;
+CREATE VIEW equipment_schema.equipment_description_view WITH (SECURITY_INVOKER = ON) AS 
 SELECT 
   equipment_description_table.*, 
   CASE 

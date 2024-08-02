@@ -85,7 +85,6 @@ const SignerSLAListFilter = ({ slaFormList, onSearch }: Props) => {
         await onProjectChange("");
       }
     } catch (e) {
-      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -111,7 +110,6 @@ const SignerSLAListFilter = ({ slaFormList, onSearch }: Props) => {
       setValue("singerId", "");
       setSignerList(signerOptions);
     } catch (e) {
-      console.error(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

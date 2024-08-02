@@ -191,7 +191,7 @@ const RequestPage = ({
         message: "Request canceled",
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -214,7 +214,7 @@ const RequestPage = ({
       await router.push(
         `/${formatTeamNameToUrlKey(activeTeam.team_name)}/requests`
       );
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

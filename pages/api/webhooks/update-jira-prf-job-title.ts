@@ -62,7 +62,6 @@ export default async function handler(
     const formAnswersData = await formAnswersResponse.json();
 
     if (!formAnswersResponse.ok) {
-      console.error(formAnswersData);
       return res.status(500).json({ error: "Failed to fetch form answers" });
     }
 
@@ -98,8 +97,7 @@ export default async function handler(
     }
 
     return res.status(200).json({ success: true, message: "Update success." });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: error });
+  } catch (e) {
+    return res.status(500).json({ error: e });
   }
 }

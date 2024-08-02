@@ -20,8 +20,7 @@ export const getServerSideProps: GetServerSideProps = withOwnerOrApprover(
       return {
         props: { slaFormList, slaFormListCount },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

@@ -3,6 +3,7 @@ import EditMemoPage from "@/components/EditMemoPage.tsx/EditMemoPage";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { EditMemoType, MemoSignerItem } from "@/utils/types";
+import { notifications } from "@mantine/notifications";
 import { GetServerSideProps } from "next";
 import { useEffect, useState } from "react";
 
@@ -31,8 +32,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       return {
         props: { memo, teamMemoSignerList },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",
@@ -88,8 +88,11 @@ const Page = ({ memo, teamMemoSignerList }: Props) => {
             }
 
             return lineItem;
-          } catch (error) {
-            console.error("Error fetching attachment:", error);
+          } catch (e) {
+            notifications.show({
+              message: "Something went wrong. Please try again later.",
+              color: "red",
+            });
             return lineItem;
           }
         })

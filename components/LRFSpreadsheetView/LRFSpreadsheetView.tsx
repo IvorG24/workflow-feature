@@ -65,8 +65,7 @@ const LRFSpreadsheetView = ({ initialData, projectListOptions }: Props) => {
       });
 
       return newData;
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to fetch data",
         color: "red",

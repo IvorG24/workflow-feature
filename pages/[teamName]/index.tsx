@@ -23,8 +23,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
           permanent: false,
         },
       };
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       return {
         redirect: {
           destination: "/500",

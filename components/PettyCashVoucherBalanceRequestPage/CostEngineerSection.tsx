@@ -42,8 +42,7 @@ const CostEngineerSection = ({ handleCostEngineerRejectRequest }: Props) => {
       }
 
       handleCostEngineerRejectRequest(rejectionReasonInputValue);
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
       notifications.show({
         message: "Failed to reject request.",
         color: "red",
