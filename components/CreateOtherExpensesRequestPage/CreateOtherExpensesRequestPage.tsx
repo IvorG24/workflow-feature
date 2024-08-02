@@ -372,7 +372,7 @@ const CreateOtherExpensesRequestPage = ({ form, projectOptions }: Props) => {
       } = await supabaseClient.auth.getSession();
 
       if (!session) {
-        removeLocalState();
+        localStorage.clear();
       }
     };
     const fetchOptions = async () => {
