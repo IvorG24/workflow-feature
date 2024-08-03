@@ -5633,7 +5633,7 @@ AS $$
 
           const duplicatableSectionIdList = plv8.execute(`
             SELECT DISTINCT(request_response_duplicatable_section_id)
-            FROM request_response_table
+            FROM request_schema.request_response_table
             WHERE 
               request_response_request_id = '${connectedRequest.request_id}'
               AND request_response_duplicatable_section_id IS NOT NULL
