@@ -2847,7 +2847,8 @@ AS $$
       isApproversView,
       teamMemberId,
       project,
-      idFilter
+      idFilter,
+      columnAccessor
     } = input_data;
 
     const start = (page - 1) * limit;
@@ -2866,9 +2867,15 @@ AS $$
           request_jira_id,
           request_jira_link,
           request_otp_id,
-          request_form_id
+          request_form_id,
+          form_name,
+          user_id,
+          user_first_name,
+          user_last_name,
+          user_avatar
         FROM public.request_view
         INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
         INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
@@ -2879,7 +2886,7 @@ AS $$
 
     let sort_request_list_query = 
       `
-        ORDER BY request_view.request_date_created ${sort} 
+        ORDER BY ${columnAccessor} ${sort} 
         OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
       `;
 
@@ -6882,6 +6889,7 @@ AS $$
       sort,
       category,
       search,
+      columnAccessor
     } = input_data;
 
     const start = (page - 1) * limit;
@@ -6890,17 +6898,23 @@ AS $$
       `
         SELECT DISTINCT
           ticket_table.*,
-          ticket_category_table.ticket_category
+          ticket_category_table.ticket_category,
+          user_table.user_id,
+          user_table.user_first_name,
+          user_table.user_last_name,
+          user_table.user_username,
+          user_table.user_avatar
         FROM ticket_schema.ticket_table
-        INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_id
-        INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id 
-        WHERE team_member_team_id = '${teamId}'
+        INNER JOIN team_schema.team_member_table ON ticket_requester_team_member_id = team_member_table.team_member_id
+        INNER JOIN ticket_schema.ticket_category_table ON ticket_category_table.ticket_category_id = ticket_table.ticket_category_id
+        INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
+        WHERE team_member_table.team_member_team_id = '${teamId}'
         ${requester}
         ${approver}
         ${status}
         ${category}
         ${search}
-        ORDER BY ticket_date_created ${sort} 
+        ORDER BY ${columnAccessor} ${sort} 
         OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
       `
     );
@@ -6920,43 +6934,45 @@ AS $$
     )[0];
 
     const ticket_data = ticket_list.map(ticket => {
-      const ticket_requester = plv8.execute(
+      const approver_list = plv8.execute(
         `
-          SELECT 
-            team_member_table.team_member_id, 
-            user_table.user_id,
-            user_table.user_first_name,
-            user_table.user_last_name,
-            user_table.user_username,
-            user_table.user_avatar
-          FROM team_schema.team_member_table
-          INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-          WHERE team_member_table.team_member_id = '${ticket.ticket_requester_team_member_id}'
+        SELECT
+        user_id,
+        user_first_name,
+        user_last_name,
+        user_username,
+        user_avatar
+        FROM ticket_schema.ticket_table
+        LEFT JOIN team_schema.team_member_table ON ticket_approver_team_member_id = team_member_id
+        LEFT JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
+        WHERE ticket_id = '${ticket.ticket_id}'
         `
       )[0];
-      let ticket_approver = {}
-      if(ticket.ticket_approver_team_member_id){
-        ticket_approver = plv8.execute(
-          `
-            SELECT 
-              team_member_table.team_member_id, 
-              user_table.user_id,
-              user_table.user_first_name,
-              user_table.user_last_name,
-              user_table.user_username,
-              user_table.user_avatar
-            FROM team_schema.team_member_table
-            INNER JOIN user_schema.user_table ON team_member_table.team_member_user_id = user_table.user_id
-            WHERE team_member_table.team_member_id = '${ticket.ticket_approver_team_member_id}'
-          `
-        )[0];
-      }
-
       return {
-        ...ticket,
-        ticket_requester,
-        ticket_approver,
-      }
+          ticket_approver_team_member_id: ticket.ticket_approver_team_member_id,
+          ticket_category: ticket.ticket_category,
+          ticket_category_id: ticket.ticket_category_id,
+          ticket_date_created: ticket.ticket_date_created,
+          ticket_id: ticket.ticket_id,
+          ticket_is_disabled: ticket.ticket_is_disabled,
+          ticket_requester_team_member_id: ticket.ticket_requester_team_member_id,
+          ticket_requester_user: {
+            user_avatar: ticket.user_avatar,
+            user_first_name: ticket.user_first_name,
+            user_id: ticket.user_id,
+            user_last_name: ticket.user_last_name,
+            user_username: ticket.user_username
+          },
+          ticket_approver_user: {
+            user_avatar: approver_list.user_avatar,
+            user_first_name: approver_list.user_first_name,
+            user_id: approver_list.user_id,
+            user_last_name: approver_list.user_last_name,
+            user_username: approver_list.user_username 
+          },
+          ticket_status: ticket.ticket_status,
+          ticket_status_date_updated: ticket.ticket_status_date_updated
+        }
     });
 
     returnData = {
@@ -8153,7 +8169,8 @@ AS $$
       approverFilter,
       status,
       sort,
-      searchFilter
+      searchFilter,
+      columnAccessor
     } = input_data;
 
     const start = (page - 1) * limit;
@@ -8161,32 +8178,32 @@ AS $$
     const memo_list = plv8.execute(
       `
         SELECT 
-          memo_table.*,
-          memo_status_table.memo_status as memo_status,
-          memo_date_updated_table.memo_date_updated as memo_date_updated,
-          JSONB_BUILD_OBJECT(
+        memo_table.*,
+        memo_status_table.memo_status as memo_status,
+        memo_date_updated_table.memo_date_updated as memo_date_updated,
+        JSONB_BUILD_OBJECT(
             'user_id', user_table.user_id,
             'user_avatar', user_table.user_avatar,
             'user_first_name', user_table.user_first_name,
             'user_last_name', user_table.user_last_name
-          ) AS memo_author_user,
-          ARRAY_AGG(
-           DISTINCT JSONB_BUILD_OBJECT(
-              'memo_signer_id', memo_signer_id,
-              'memo_signer_status', memo_signer_status,
-              'memo_signer_is_primary', memo_signer_is_primary,
-              'memo_signer_order', memo_signer_order,
-              'memo_signer_team_member', JSONB_BUILD_OBJECT(
-                'team_member_id', team_member_table.team_member_id,
-                'user', JSONB_BUILD_OBJECT(
-                  'user_id', team_member_user_table.user_id,
-                  'user_first_name', team_member_user_table.user_first_name,
-                  'user_last_name', team_member_user_table.user_last_name,
-                  'user_avatar', team_member_user_table.user_avatar
-                )
+        ) AS memo_author_user,
+        ARRAY_AGG(
+          DISTINCT JSONB_BUILD_OBJECT(
+            'memo_signer_id', memo_signer_id,
+            'memo_signer_status', memo_signer_status,
+            'memo_signer_is_primary', memo_signer_is_primary,
+            'memo_signer_order', memo_signer_order,
+            'memo_signer_team_member', JSONB_BUILD_OBJECT(
+              'team_member_id', team_member_table.team_member_id,
+              'user', JSONB_BUILD_OBJECT(
+                'user_id', team_member_user_table.user_id,
+                'user_first_name', team_member_user_table.user_first_name,
+                'user_last_name', team_member_user_table.user_last_name,
+                'user_avatar', team_member_user_table.user_avatar
               )
             )
-          ) AS memo_signer_list
+          )
+        ) AS memo_signer_list
         FROM memo_schema.memo_table
         INNER JOIN user_schema.user_table ON user_table.user_id = memo_table.memo_author_user_id
         INNER JOIN memo_schema.memo_date_updated_table ON memo_date_updated_memo_id = memo_table.memo_id
@@ -8207,7 +8224,7 @@ AS $$
           user_table.user_id,
           memo_status_table.memo_status,
           memo_date_updated_table.memo_date_updated
-        ORDER BY memo_table.memo_date_created ${sort}
+        ORDER BY ${columnAccessor} ${sort}
         OFFSET ${start} ROWS FETCH FIRST ${limit} ROWS ONLY
       `
     );
@@ -8984,7 +9001,7 @@ AS $$
     
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const ticketList = plv8.execute(`SELECT public.fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC"}');`)[0].fetch_ticket_list;
+    const ticketList = plv8.execute(`SELECT public.fetch_ticket_list('{"teamId":"${teamId}", "page":"1", "limit":"13", "requester":"", "approver":"", "category":"", "status":"", "search":"", "sort":"DESC", "columnAccessor": "ticket_date_created"}');`)[0].fetch_ticket_list;
 
     const ticketCategoryList = plv8.execute(`SELECT * FROM ticket_schema.ticket_category_table WHERE ticket_category_is_disabled = false`);
 

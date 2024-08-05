@@ -1,44 +1,47 @@
 import { getMemoList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
+import { DEFAULT_REQUEST_LIST_LIMIT, DEFAULT_TICKET_LIST_LIMIT, formatDate } from "@/utils/constant";
+import { formatTeamNameToUrlKey } from "@/utils/string";
+import { getAvatarColor } from "@/utils/styling";
 import { MemoListItemType, TeamMemberType } from "@/utils/types";
 import {
   ActionIcon,
-  Alert,
+  Anchor,
+  Avatar,
+  Badge,
   Box,
   Button,
   Container,
+  CopyButton,
   Divider,
   Flex,
-  Grid,
   Group,
-  Loader,
-  LoadingOverlay,
   MultiSelect,
-  Pagination,
   Paper,
-  ScrollArea,
-  Space,
-  Stack,
+  Switch,
   Text,
   TextInput,
   Title,
-  Tooltip,
+  Tooltip
 } from "@mantine/core";
-import { useDisclosure, useFocusWithin } from "@mantine/hooks";
+import { useDisclosure, useFocusWithin, useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
-  IconAlertCircle,
+  IconArrowsMaximize,
+  IconCopy,
+  IconEyeFilled,
+  IconReload,
   IconSearch,
-  IconSortAscending,
-  IconSortDescending,
 } from "@tabler/icons-react";
+import { DataTableSortStatus } from "mantine-datatable";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import ListTable from "../ListTable/ListTable";
 import MemoFormatEditor from "../MemoFormatEditor/MemoFormatEditor";
-import MemoListItemRow from "./MemoListItemRow";
+import MemoItemListSignerList from "./MemoListItemSignerList";
 
 type Props = {
   memoList: MemoListItemType[];
@@ -54,14 +57,32 @@ type FilterFormValues = {
   searchFilter: string;
 };
 
+export const getMemoStatusColor = (status: string) => {
+  switch (status) {
+    case "APPROVED":
+      return "green";
+
+    case "PENDING":
+      return "blue";
+
+    case "REJECTED":
+      return "red";
+
+    default:
+      break;
+  }
+};
+
 const MemoListPage = ({
   memoList: initialMemoList,
   memoListCount: initialMemoListCount,
   teamMemberList,
 }: Props) => {
+  const router = useRouter();
   const userTeamMemberData = useUserTeamMember();
   const activeTeam = useActiveTeam();
   const supabaseClient = useSupabaseClient();
+  const [isFilter, setIsfilter] = useState(false);
 
   // filter data
   const { ref: authorRef, focused: authorRefFocused } = useFocusWithin();
@@ -84,6 +105,8 @@ const MemoListPage = ({
     { value: "REJECTED", label: "Rejected" },
   ];
 
+  const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
+
   const [
     memoFormatEditorIsOpened,
     { open: openMemoFormatEditor, close: closeMemoFormatEditor },
@@ -99,38 +122,67 @@ const MemoListPage = ({
     isAscendingSort: false,
     searchFilter: "",
   });
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "memo_date_created",
+    direction: "desc",
+  });
 
-  const { handleSubmit, getValues, control, setValue, register } =
+  const { handleSubmit, getValues, control, register, setValue } =
     useForm<FilterFormValues>({
       defaultValues: filter,
     });
 
-  const handleFilterMemo = async (
-    {
-      authorFilter,
-      approverFilter,
-      status,
-      isAscendingSort,
-      searchFilter,
-    }: FilterFormValues = getValues()
-  ) => {
+  const columnAccessor = () => {
+    if (sortStatus.columnAccessor === "memo_author_user_id") {
+      return `user_table.user_first_name ${sortStatus.direction.toUpperCase()}, user_table.user_last_name `;
+    }
+    return sortStatus.columnAccessor;
+  };
+  const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
+  const [listTableColumnFilter, setListTableColumnFilter] =
+    useLocalStorage<string[]>({
+      key: "memo-list-table-column-filter",
+      defaultValue: [],
+    });
+
+  const checkIfColumnIsHidden = (column: string) => {
+    const isHidden = listTableColumnFilter.includes(column);
+    return isHidden;
+  };
+
+  const tableColumnList = [
+    { value: "memo_id", label: "Memo ID" },
+    { value: "memo_subject", label: "Subject" },
+    { value: "memo_status", label: "Status" },
+    { value: "memo_author_user_id", label: "Author" },
+    { value: "memo_signer_list", label: "Approver" },
+    { value: "memo_date_created", label: "Date Created" },
+    { value: "view", label: "View" },
+  ];
+
+  const handlePagination = async ({ overidePage }: { overidePage?: number  } = {}) => {
     try {
       if (!activeTeam.team_id) return;
       setIsLoading(true);
 
+      const {approverFilter, authorFilter, isAscendingSort, searchFilter, status} = getValues()
+
       const { data, count } = await getMemoList(supabaseClient, {
         teamId: activeTeam.team_id,
-        page: activePage,
-        limit: 13,
+        page: overidePage !== undefined ? overidePage : activePage || 1,
+        limit: DEFAULT_TICKET_LIST_LIMIT,
         authorFilter:
           authorFilter && authorFilter.length > 0 ? authorFilter : undefined,
         approverFilter:
           approverFilter && approverFilter.length > 0
             ? approverFilter
             : undefined,
-        status: status && status.length > 0 ? status : undefined,
-        sort: isAscendingSort ? "ascending" : "descending",
+        columnAccessor: columnAccessor(),
         searchFilter,
+        sort: isAscendingSort
+        ? "ascending"
+        : ("descending" as "ascending" | "descending"),
+        status
       });
 
       setMemoList(data);
@@ -152,41 +204,24 @@ const MemoListPage = ({
     const filterMatch = filter[`${key}`];
 
     if (value !== filterMatch) {
-      handleFilterMemo();
+      handlePagination();
       setFilter((prev) => ({ ...prev, [`${key}`]: value }));
     }
   };
 
-  const handlePagination = async () => {
-    try {
-      if (!activeTeam.team_id) return;
-      setIsLoading(true);
-
-      const { data, count } = await getMemoList(supabaseClient, {
-        teamId: activeTeam.team_id,
-        page: activePage,
-        limit: 13,
-      });
-
-      setMemoList(data);
-      setMemoListCount(count || 0);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // sorting
   useEffect(() => {
-    handlePagination();
-  }, [activePage]);
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
+    setFilter((prev) => {
+      return {...prev, isAscendingSort: sortStatus.direction === "asc" ? false : true}
+    })
+   
+    handlePagination()
+  }, [sortStatus]);
 
   return (
     <Container maw={3840} h="100%">
-      <Group>
+      <Group pb="sm">
         <Box>
           <Title order={4}>Memo List Page</Title>
           <Text>Manage your team memo here.</Text>
@@ -200,203 +235,310 @@ const MemoListPage = ({
         )}
       </Group>
       {/* memo filters */}
-      <form onSubmit={handleSubmit(handleFilterMemo)}>
-        <Flex mt="sm" gap="sm" wrap="wrap" align="center">
-          <Controller
-            control={control}
-            name="isAscendingSort"
-            render={({ field: { value } }) => {
-              return (
-                <Tooltip
-                  label={
-                    getValues("isAscendingSort") ? "Ascending" : "Descending"
-                  }
-                  openDelay={800}
-                >
-                  <ActionIcon
-                    onClick={async () => {
-                      setValue(
-                        "isAscendingSort",
-                        !getValues("isAscendingSort")
-                      );
-                      handleFilterMemo();
-                    }}
-                    size={36}
-                    color="dark"
-                    variant="outline"
-                  >
-                    {value ? (
-                      <IconSortAscending size={18} />
-                    ) : (
-                      <IconSortDescending size={18} />
-                    )}
-                  </ActionIcon>
-                </Tooltip>
-              );
-            }}
-          />
-          <TextInput
-            placeholder="Search memo"
-            rightSection={
-              <ActionIcon size="xs" type="submit">
-                <IconSearch />
-              </ActionIcon>
-            }
-            {...register("searchFilter")}
-            sx={{ flex: 2 }}
-            miw={250}
-            maw={320}
-          />
-          <Controller
-            control={control}
-            name="status"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                data={statusList}
-                placeholder="Status"
-                ref={statusRef}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (!statusRefFocused) handleFilterChange("status", value);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("status", value as string[])
-                }
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="authorFilter"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                searchable
-                clearable
-                data={authorList}
-                placeholder="Author"
-                ref={authorRef}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (!authorRefFocused)
-                    handleFilterChange("authorFilter", value);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("authorFilter", value as string[])
-                }
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
-
-          <Controller
-            control={control}
-            name="approverFilter"
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                searchable
-                clearable
-                data={approverList}
-                placeholder="Approver"
-                ref={approverRef}
-                value={value}
-                onChange={(value) => {
-                  onChange(value);
-                  if (!approverRefFocused)
-                    handleFilterChange("approverFilter", value);
-                }}
-                onDropdownClose={() =>
-                  handleFilterChange("approverFilter", value as string[])
-                }
-                miw={250}
-                maw={320}
-              />
-            )}
-          />
-        </Flex>
-      </form>
-
-      <Space h="xl" />
-
-      <Box h="fit-content" pos="relative">
-        <LoadingOverlay
-          visible={isLoading}
-          overlayBlur={0}
-          overlayOpacity={0.2}
-          loader={<Loader variant="dots" />}
-        />
-        {/* memo list */}
-        {memoList.length > 0 ? (
-          <Paper withBorder>
-            <ScrollArea h="fit-content" type="auto">
-              <Stack spacing={0} miw={1074}>
-                <Box
-                  sx={(theme) => ({
-                    backgroundColor:
-                      theme.colorScheme === "dark"
-                        ? theme.colors.dark[5]
-                        : theme.colors.gray[1],
-                  })}
-                >
-                  <Grid m={0} px="sm" justify="space-between">
-                    <Grid.Col span={2}>
-                      <Text weight={600}>Reference Number</Text>
-                    </Grid.Col>
-                    <Grid.Col span={2}>
-                      <Text weight={600}>Subject</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Status</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Author</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Approver</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Date Created</Text>
-                    </Grid.Col>
-                  </Grid>
-                </Box>
-                {memoList.map((memo, idx) => (
-                  <Box key={memo.memo_id}>
-                    <MemoListItemRow memo={memo} />
-                    {idx + 1 < DEFAULT_REQUEST_LIST_LIMIT ? <Divider /> : null}
-                  </Box>
-                ))}
-              </Stack>
-            </ScrollArea>
-          </Paper>
-        ) : (
-          <Text align="center" size={24} weight="bolder" color="dimmed">
-            <Alert
-              icon={<IconAlertCircle size="1rem" />}
-              color="orange"
-              mt="xs"
+      <Paper p="md">
+        <form onSubmit={handleSubmit(() => {
+          handlePagination({overidePage: 1})
+        })}>
+          <Flex gap="sm" wrap="wrap" align="center">
+            <TextInput
+              placeholder="Search memo"
+              rightSection={
+                <ActionIcon size="xs" type="submit">
+                  <IconSearch />
+                </ActionIcon>
+              }
+              {...register("searchFilter")}
+              sx={{ flex: 2 }}
+              miw={250}
+              maw={320}
+            />
+            <Button
+              variant="light"
+              leftIcon={<IconReload size={16} />}
+              onClick={() => {
+                setActivePage(1);
+                handlePagination();
+              }}
             >
-              No memo found.
-            </Alert>
-          </Text>
-        )}
-      </Box>
+              Refresh
+            </Button>
+            <Flex gap="sm" wrap="wrap" align="center">
+              <p>Show/Hide Table Columns</p>
+              <Switch
+                onLabel={<IconEyeFilled size="14" />}
+                checked={showTableColumnFilter}
+                onChange={(event) => setShowTableColumnFilter(event.currentTarget.checked)}
+              />
+            </Flex>
+            <Flex gap="sm" wrap="wrap" align="center">
+              <p>Filter</p>
+              <Switch
+                onLabel={<IconEyeFilled size="14" />}
+                checked={isFilter}
+                onChange={(event) => setIsfilter(event.currentTarget.checked)}
+              />
+            </Flex>
+          </Flex>
+          <Divider my="md" />
+          {isFilter && 
+            <Flex gap="sm" wrap="wrap" align="center" mb="sm">
+              <Controller
+                control={control}
+                name="status"
+                render={({ field: { value, onChange } }) => (
+                  <MultiSelect
+                    data={statusList}
+                    placeholder="Status"
+                    ref={statusRef}
+                    value={value}
+                    onChange={(value) => {
+                      onChange(value);
+                      if (!statusRefFocused)
+                        handleFilterChange("status", value);
+                    }}
+                    onDropdownClose={() =>
+                      handleFilterChange("status", value as string[])
+                    }
+                    miw={250}
+                    maw={320}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name="authorFilter"
+                render={({ field: { value, onChange } }) => (
+                  <MultiSelect
+                    searchable
+                    clearable
+                    data={authorList}
+                    placeholder="Author"
+                    ref={authorRef}
+                    value={value}
+                    onChange={(value) => {
+                      onChange(value);
+                      if (!authorRefFocused)
+                        handleFilterChange("authorFilter", value);
+                    }}
+                    onDropdownClose={() =>
+                      handleFilterChange("authorFilter", value as string[])
+                    }
+                    miw={250}
+                    maw={320}
+                  />
+                )}
+              />
 
-      <Flex justify="flex-end">
-        <Pagination
-          value={activePage}
-          onChange={setActivePage}
-          total={Math.ceil(memoListCount / DEFAULT_REQUEST_LIST_LIMIT)}
-          mt="xl"
+              <Controller
+                control={control}
+                name="approverFilter"
+                render={({ field: { value, onChange } }) => (
+                  <MultiSelect
+                    searchable
+                    clearable
+                    data={approverList}
+                    placeholder="Approver"
+                    ref={approverRef}
+                    value={value}
+                    onChange={(value) => {
+                      onChange(value);
+                      if (!approverRefFocused)
+                        handleFilterChange("approverFilter", value);
+                    }}
+                    onDropdownClose={() =>
+                      handleFilterChange("approverFilter", value as string[])
+                    }
+                    miw={250}
+                    maw={320}
+                  />
+                )}
+              />
+            </Flex>
+          }
+        </form>
+
+        <Box h="fit-content" pos="relative">
+          {/* memo list */}
+          <ListTable
+            idAccessor="memo_id"
+            records={memoList}
+            fetching={isLoading}
+            page={activePage}
+            onPageChange={(page) => {
+              setActivePage(page)
+              handlePagination({overidePage: page});
+            }}
+            totalRecords={memoListCount}
+            recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
+            sortStatus={sortStatus}
+            onSortStatusChange={setSortStatus}
+            columns={[
+              {
+                accessor: "memo_id",
+                title: "ID",
+                width: 180,
+                hidden: checkIfColumnIsHidden("memo_id"),
+                render: ({memo_id, memo_reference_number}) => {
+                  return (
+                    <Flex gap="md" align="center">
+                      <Text size="xs" truncate maw={150}>
+                        <Anchor
+                          href={`/${formatTeamNameToUrlKey(
+                            activeTeam.team_name ?? ""
+                          )}/memo/${memo_id}`}
+                          target="_blank"
+                          color="blue"
+                        >
+                          {String(memo_reference_number)}
+                        </Anchor>
+                      </Text>
+
+                      <CopyButton value={String(memo_reference_number)}>
+                        {({ copied, copy }) => (
+                          <Tooltip
+                            label={
+                              copied
+                                ? "Copied"
+                                : `Copy ${memo_reference_number}`
+                            }
+                            onClick={copy}
+                          >
+                            <ActionIcon>
+                              <IconCopy size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
+                      </CopyButton>
+                    </Flex>
+                  );
+                },
+              },
+              {
+                accessor: "memo_subject",
+                title: "Subject",
+                hidden: checkIfColumnIsHidden("memo_subject"),
+                sortable: true,
+              },
+              {
+                accessor: "memo_status",
+                title: "Status",
+                sortable: true,
+                hidden: checkIfColumnIsHidden("memo_status"),
+                render: ({memo_status}) => {
+                  return (
+                    <Flex justify="center">
+
+                    <Badge
+                      variant="filled"
+                      color={getMemoStatusColor(String(memo_status))}
+                    >
+                      {String(memo_status)}
+                    </Badge>
+                    </Flex>
+                  )
+                }
+              },
+              {
+                accessor: "memo_author_user_id",
+                title: "Author",
+                hidden: checkIfColumnIsHidden("memo_author_user_id"),
+                sortable: true,
+                render: (memo) => {
+                  const { memo_author_user } = memo as {
+                    memo_author_user: {
+                      user_first_name: string;
+                      user_last_name: string;
+                      user_avatar: string | null;
+                      user_id: string
+                    };
+                    memo_author_user_id: string;
+                  };
+                  const { user_first_name, user_last_name, user_avatar, user_id } = memo_author_user;
+
+                  return (
+                    <Flex px={0} gap={8} align='center'>
+                      <Avatar
+                            {...defaultAvatarProps}
+                            color={getAvatarColor(
+                              Number(`${user_id.charCodeAt(0)}`)
+                            )}
+                            src={user_avatar}
+                        >
+                        {(
+                          user_first_name[0] + user_last_name[0]
+                        ).toUpperCase()}
+                      </Avatar>
+                      <Text >{`${user_first_name} ${user_last_name}`}</Text>
+                    </Flex>
+                  )
+                },
+              },
+              {
+                accessor: "memo_signer_list",
+                title: "Approver",
+                hidden: checkIfColumnIsHidden("memo_signer_list"),
+                render: (memo) => {
+                  const { memo_signer_list } = memo as MemoListItemType;
+                  return (
+                    <MemoItemListSignerList signerList={memo_signer_list} />
+                  )
+                },
+              },
+              {
+                accessor: "memo_date_created",
+                title: "Date Created",
+                sortable: true,
+                hidden: checkIfColumnIsHidden("memo_date_created"),
+                render: ({memo_date_created}) => {
+                  if (!memo_date_created) {
+                    return null;
+                  }
+
+                  return (
+                    <Flex justify="center">
+                      <Text>
+                        {formatDate(new Date(String(memo_date_created)))}
+                      </Text>
+                    </Flex>
+                  );
+                },
+              },
+              {
+                accessor: "view",
+                title: "View",
+                hidden: checkIfColumnIsHidden("view"),
+                render: ({memo_id}) => {
+                  return (
+                    <Flex justify="center">
+                      <ActionIcon
+                        color="blue"
+                        onClick={() =>
+                          router.push(
+                            `/${formatTeamNameToUrlKey(
+                              activeTeam.team_name ?? ""
+                            )}/memo/${memo_id}`
+                          )
+                        }
+                      >
+                        <IconArrowsMaximize size={16} />
+                      </ActionIcon>
+                    </Flex>
+                  );
+                },
+              },
+            ]}
+            showTableColumnFilter={showTableColumnFilter}
+            setShowTableColumnFilter={setShowTableColumnFilter}
+            listTableColumnFilter={listTableColumnFilter}
+            setListTableColumnFilter={setListTableColumnFilter}
+            tableColumnList={tableColumnList}
+          />
+        </Box>
+        <MemoFormatEditor
+          opened={memoFormatEditorIsOpened}
+          close={closeMemoFormatEditor}
         />
-      </Flex>
-      <MemoFormatEditor
-        opened={memoFormatEditorIsOpened}
-        close={closeMemoFormatEditor}
-      />
+      </Paper>
     </Container>
   );
 };

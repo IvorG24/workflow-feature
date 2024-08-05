@@ -10,7 +10,26 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import { getTicketStatusColor } from "../TicketListPage/TicketListItem";
+
+const getTicketStatusColor = (status: string) => {
+  switch (status) {
+    case "CLOSED":
+      return "green";
+
+    case "PENDING":
+      return "blue";
+
+    case "INCORRECT":
+      return "red";
+
+    case "UNDER REVIEW":
+      return "orange";
+
+    default:
+      break;
+  }
+};
+
 
 type Props = {
   ticket: TicketType;

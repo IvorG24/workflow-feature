@@ -218,6 +218,7 @@ export const getRequestList = async (
     teamMemberId,
     project,
     idFilter,
+    columnAccessor = "request_date_created"
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
@@ -264,6 +265,7 @@ export const getRequestList = async (
       sort,
       isApproversView,
       teamMemberId,
+      columnAccessor
     },
   });
 
@@ -472,8 +474,8 @@ export const getItemList = async (
     .from("item_table")
     .select(
       `
-        *, 
-        item_division_table!inner(*), 
+        *,
+        item_division_table!inner(*),
         item_description: item_description_table!inner(*),
         item_level_three_description: item_level_three_description_table(*)
       `,
@@ -2539,6 +2541,7 @@ export const getTicketList = async (
     category?: string[];
     sort?: "ascending" | "descending";
     search?: string;
+    columnAccessor?: string;
   }
 ) => {
   const {
@@ -2551,6 +2554,7 @@ export const getTicketList = async (
     category,
     sort = "descending",
     search = "",
+    columnAccessor = "ticket_date_created",
   } = params;
 
   const requesterCondition = requester
@@ -2584,6 +2588,7 @@ export const getTicketList = async (
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: searchCondition ? `AND (${searchCondition})` : "",
       sort: sort === "descending" ? "DESC" : "ASC",
+      columnAccessor,
     },
   });
 
@@ -3323,6 +3328,7 @@ export const getMemoList = async (
     status?: string[];
     sort?: "ascending" | "descending";
     searchFilter?: string;
+    columnAccessor?: string;
   }
 ) => {
   const {
@@ -3334,6 +3340,7 @@ export const getMemoList = async (
     status,
     sort = "descending",
     searchFilter,
+    columnAccessor = "memo_table.memo_date_created",
   } = params;
 
   const authorFilterCondition = authorFilter
@@ -3367,6 +3374,7 @@ export const getMemoList = async (
         : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       searchFilter: searchFilter ? addAmpersandBetweenWords(searchFilter) : "",
+      columnAccessor,
     },
   });
 
@@ -3487,7 +3495,7 @@ export const getTypeList = async (
     .from(`other_expenses_type_table`)
     .select(
       `
-        *, 
+        *,
         other_expenses_type_category: other_expenses_type_category_id!inner(
           other_expenses_category
         )
@@ -4149,7 +4157,7 @@ export const getEquipmentSectionChoices = async (
         equipment_id,
         equipment_equipment_category: equipment_equipment_category_id!inner(equipment_category),
         equipment_name,
-        equipment_description: 
+        equipment_description:
           equipment_description_table!inner(
             equipment_description_brand: equipment_description_brand_id(
               equipment_brand
@@ -5145,10 +5153,10 @@ export const getFormSection = async (
     .from("section_table")
     .select(
       `
-        *, 
-        section_field: 
+        *,
+        section_field:
         field_table(
-          *, 
+          *,
           field_option: option_table(*)
         )
       `

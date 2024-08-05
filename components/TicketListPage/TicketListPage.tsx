@@ -1,45 +1,51 @@
 import { getTicketList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_TICKET_LIST_LIMIT } from "@/utils/constant";
+import {
+  DEFAULT_REQUEST_LIST_LIMIT,
+  DEFAULT_TICKET_LIST_LIMIT,
+  formatDate,
+} from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { getAvatarColor } from "@/utils/styling";
 import {
   TeamMemberWithUserType,
+  TicketApproverUserType,
   TicketCategoryTableRow,
   TicketListType,
-  TicketStatusType,
+  TicketRequesterUserType,
+  TicketStatusType
 } from "@/utils/types";
 import {
-  Alert,
+  ActionIcon,
+  Anchor,
+  Avatar,
+  Badge,
   Box,
   Button,
   Container,
-  Divider,
+  CopyButton,
   Flex,
-  Grid,
-  Loader,
-  LoadingOverlay,
-  Pagination,
   Paper,
-  ScrollArea,
-  Stack,
   Text,
   Title,
+  Tooltip
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
-  IconAlertCircle,
-  IconReload,
+  IconArrowsMaximize,
+  IconCopy,
   IconReportAnalytics,
 } from "@tabler/icons-react";
+import { DataTableSortStatus } from "mantine-datatable";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import ListTable from "../ListTable/ListTable";
 import TicketListFilter from "./TicketListFilter";
-import TicketListItem from "./TicketListItem";
 
 export type FilterFormValues = {
   search: string;
@@ -57,6 +63,7 @@ export type TicketListLocalFilter = {
   categoryList: string[];
   status: string[] | undefined;
   isAscendingSort: boolean;
+  columnAccessor: string
 };
 
 type Props = {
@@ -64,6 +71,25 @@ type Props = {
   ticketListCount: number;
   teamMemberList: TeamMemberWithUserType[];
   ticketCategoryList: TicketCategoryTableRow[];
+};
+
+const getTicketStatusColor = (status: string) => {
+  switch (status) {
+    case "CLOSED":
+      return "green";
+
+    case "PENDING":
+      return "blue";
+
+    case "INCORRECT":
+      return "red";
+
+    case "UNDER REVIEW":
+      return "orange";
+
+    default:
+      break;
+  }
 };
 
 const TicketListPage = ({
@@ -83,80 +109,56 @@ const TicketListPage = ({
   const [ticketListCount, setTicketListCount] = useState(
     inititalTicketListCount
   );
-  const [localFilter, setLocalFilter] = useLocalStorage<TicketListLocalFilter>({
-    key: "formsly-ticket-list-filter",
-    defaultValue: {
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus>({
+    columnAccessor: "ticket_date_created",
+    direction: "desc",
+  });
+  const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
+  const [listTableColumnFilter, setListTableColumnFilter] =
+    useLocalStorage<string[]>({
+      key: "ticket-list-table-column-filter",
+      defaultValue: [],
+    });
+
+
+  const [localFilter, setLocalFilter] = useState<TicketListLocalFilter>({
       search: "",
       categoryList: [],
       requesterList: [],
       status: undefined,
       approverList: [],
       isAscendingSort: false,
-    },
+      columnAccessor: 'ticket_date_created'
   });
 
   const filterFormMethods = useForm<FilterFormValues>({
-    defaultValues: localFilter,
+    defaultValues: {
+      search: "",
+      categoryList: [],
+      requesterList: [],
+      status: undefined,
+      approverList: [],
+      isAscendingSort: false,
+  },
     mode: "onChange",
   });
 
-  const { handleSubmit, getValues } = filterFormMethods;
+  const { handleSubmit, getValues, setValue } = filterFormMethods;
 
-  const handleFilterTicketList = async (
-    {
-      search,
-      requesterList,
-      approverList,
-      categoryList,
-      status,
-      isAscendingSort,
-    }: FilterFormValues = getValues()
-  ) => {
-    try {
-      setIsFetchingTicketList(true);
-      if (!activeTeam.team_id) {
-        console.warn(
-          "RequestListPage handleFilterFormsError: active team_id not found"
-        );
-        return;
-      }
-      setActivePage(1);
-      const params = {
-        teamId: activeTeam.team_id,
-        page: 1,
-        limit: DEFAULT_TICKET_LIST_LIMIT,
-        requester:
-          requesterList && requesterList.length > 0 ? requesterList : undefined,
-        approver:
-          approverList && approverList.length > 0 ? approverList : undefined,
-        category:
-          categoryList && categoryList.length > 0 ? categoryList : undefined,
-        status:
-          status && status.length > 0
-            ? (status as TicketStatusType[])
-            : undefined,
-        search: search,
-        sort: isAscendingSort
-          ? "ascending"
-          : ("descending" as "ascending" | "descending"),
-      };
+  const defaultAvatarProps = { color: "blue", size: "sm", radius: "xl" };
 
-      const { data, count } = await getTicketList(supabaseClient, params);
-
-      setTicketList(data);
-      setTicketListCount(count || 0);
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsFetchingTicketList(false);
+  // this function will return a valid postgress for sort by
+  const columnAccessor = () => {
+    // requester
+    if (sortStatus.columnAccessor === "ticket_requester_team_member_id") {
+      return `user_first_name ${sortStatus.direction.toUpperCase()}, user_last_name `
     }
+    return sortStatus.columnAccessor;
   };
 
-  const handlePagination = async () => {
-    try {
+  // this function will handle pagination and filteration
+  const handlePagination = async ({ overidePage }: { overidePage?: number  } = {}) => {
+     try {
       setIsFetchingTicketList(true);
       if (!activeTeam.team_id) return;
 
@@ -171,7 +173,7 @@ const TicketListPage = ({
 
       const params = {
         teamId: activeTeam.team_id,
-        page: activePage,
+        page: overidePage !== undefined ? overidePage : activePage || 1,
         limit: DEFAULT_TICKET_LIST_LIMIT,
         requester:
           requesterList && requesterList.length > 0 ? requesterList : undefined,
@@ -187,6 +189,7 @@ const TicketListPage = ({
         sort: isAscendingSort
           ? "ascending"
           : ("descending" as "ascending" | "descending"),
+        columnAccessor: columnAccessor()
       };
 
       const { data, count } = await getTicketList(supabaseClient, params);
@@ -202,36 +205,44 @@ const TicketListPage = ({
     }
   };
 
-  useEffect(() => {
-    handlePagination();
-  }, [activePage, localFilter]);
+  const checkIfColumnIsHidden = (column: string) => {
+    const isHidden = listTableColumnFilter.includes(column);
+    return isHidden;
+  };
 
+  // soroting
   useEffect(() => {
-    const localStorageFilter = localStorage.getItem(
-      "formsly-ticket-list-filter"
-    );
-    if (localStorageFilter) {
-      handleFilterTicketList(localFilter);
-    }
-  }, [activeTeam.team_id, teamMember, localFilter]);
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
+    setLocalFilter((prev) => {
+      return {...prev, isAscendingSort: sortStatus.direction === "asc" ? false : true}
+    })
+
+    handlePagination()
+  }, [sortStatus]);
+
+  const tableColumnList = [
+    { value: "ticket_id", label: "Ticket ID" },
+    { value: "ticket_category", label: "Ticket Category" },
+    { value: "ticket_status", label: "Status" },
+    { value: "ticket_requester_team_member_id", label: "Requester" },
+    { value: "ticket_approver_team_member_id", label: "Approver" },
+    { value: "ticket_date_created", label: "Date Created" },
+    { value: "ticket_status_date_updated", label: "Date Updated" },
+    { value: "view", label: "View" },
+  ];
 
   return (
     <Container maw={3840} h="100%">
-      <Flex align="center" gap="xl" wrap="wrap">
+      <Flex align="center" gap="xl" wrap="wrap" pb="sm">
         <Box>
           <Title order={4}>Ticket List Page</Title>
           <Text> Manage your team requests here.</Text>
         </Box>
-        <Button
-          variant="light"
-          leftIcon={<IconReload size={16} />}
-          onClick={() => handleFilterTicketList()}
-        >
-          Refresh
-        </Button>
+
         {["ADMIN", "OWNER"].includes(teamMember?.team_member_role ?? "") && (
           <Button
             leftIcon={<IconReportAnalytics size={16} />}
+            variant="light"
             onClick={async () =>
               await router.push(
                 `/${formatTeamNameToUrlKey(
@@ -244,99 +255,241 @@ const TicketListPage = ({
           </Button>
         )}
       </Flex>
-      <Box my="sm">
-        <FormProvider {...filterFormMethods}>
-          <form onSubmit={handleSubmit(handleFilterTicketList)}>
-            <TicketListFilter
-              ticketCategoryList={ticketCategoryList}
-              handleFilterTicketList={handleFilterTicketList}
-              teamMemberList={teamMemberList}
-              localFilter={localFilter}
-              setLocalFilter={setLocalFilter}
-            />
-          </form>
-        </FormProvider>
-      </Box>
-      <Box h="fit-content" pos="relative">
-        <LoadingOverlay
-          visible={isFetchingTicketList}
-          overlayBlur={0}
-          overlayOpacity={0.2}
-          loader={<Loader variant="dots" />}
-        />
-        {ticketList.length > 0 ? (
-          <Paper withBorder>
-            <ScrollArea h="fit-content" type="auto">
-              <Stack spacing={0} miw={1074}>
-                <Box
-                  sx={(theme) => ({
-                    backgroundColor:
-                      theme.colorScheme === "dark"
-                        ? theme.colors.dark[5]
-                        : theme.colors.gray[1],
-                  })}
-                >
-                  <Grid m={0} px="sm" justify="space-between">
-                    <Grid.Col span={2}>
-                      <Text weight={600}>Ticket ID</Text>
-                    </Grid.Col>
-                    <Grid.Col span={2}>
-                      <Text weight={600}>Ticket Category</Text>
-                    </Grid.Col>
-                    <Grid.Col span={2}>
-                      <Text weight={600}>Status</Text>
-                    </Grid.Col>
-
-                    <Grid.Col span="auto" offset={0.5}>
-                      <Text weight={600} pl={8}>
-                        Requester
+      <Paper p="md">
+        <Box >
+          <FormProvider {...filterFormMethods}>
+            <form onSubmit={handleSubmit(() => {
+              handlePagination({overidePage: 1})
+            })}>
+              <TicketListFilter
+                ticketCategoryList={ticketCategoryList}
+                handleFilterTicketList={handlePagination}
+                teamMemberList={teamMemberList}
+                localFilter={localFilter}
+                setLocalFilter={setLocalFilter}
+                showTableColumnFilter={showTableColumnFilter}
+                setShowTableColumnFilter={setShowTableColumnFilter}
+              />
+            </form>
+          </FormProvider>
+        </Box>
+        <Box h="fit-content" pos="relative">
+          <ListTable
+            idAccessor="ticket_id"
+            records={ticketList}
+            fetching={isFetchingTicketList}
+            page={activePage}
+            onPageChange={(page) => {
+              setActivePage(page)
+              handlePagination({overidePage: page});
+            }}
+            totalRecords={ticketListCount}
+            recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
+            sortStatus={sortStatus}
+            onSortStatusChange={setSortStatus}
+            columns={[
+              {
+                accessor: "ticket_id",
+                title: "ID",
+                width: 180,
+                hidden: checkIfColumnIsHidden("ticket_id"),
+                render: ({ticket_id}) => {
+                  return (
+                    <Flex gap="md" align="center">
+                      <Text size="xs" truncate maw={150}>
+                        <Anchor
+                          href={`/${formatTeamNameToUrlKey(
+                            activeTeam.team_name ?? ""
+                          )}/tickets/${ticket_id}`}
+                          target="_blank"
+                          color="blue"
+                        >
+                          {String(ticket_id)}
+                        </Anchor>
                       </Text>
-                    </Grid.Col>
-                    <Grid.Col span="auto">
-                      <Text weight={600}>Approver</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Date Created</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1}>
-                      <Text weight={600}>Date Updated</Text>
-                    </Grid.Col>
-                    <Grid.Col span={1} sx={{ textAlign: "center" }}>
-                      <Text weight={600}>View</Text>
-                    </Grid.Col>
-                  </Grid>
-                  <Divider />
-                </Box>
-                {ticketList.map((ticket, idx) => (
-                  <Box key={ticket.ticket_id}>
-                    <TicketListItem ticket={ticket} />
-                    {idx + 1 < DEFAULT_TICKET_LIST_LIMIT ? <Divider /> : null}
-                  </Box>
-                ))}
-              </Stack>
-            </ScrollArea>
-          </Paper>
-        ) : (
-          <Text align="center" size={24} weight="bolder" color="dimmed">
-            <Alert
-              icon={<IconAlertCircle size="1rem" />}
-              color="orange"
-              mt="xs"
-            >
-              No tickets found.
-            </Alert>
-          </Text>
-        )}
-      </Box>
 
-      <Flex justify="flex-end">
-        <Pagination
-          value={activePage}
-          onChange={setActivePage}
-          total={Math.ceil(ticketListCount / DEFAULT_TICKET_LIST_LIMIT)}
-          mt="xl"
-        />
-      </Flex>
+                      <CopyButton value={String(ticket_id)}>
+                        {({ copied, copy }) => (
+                          <Tooltip
+                            label={
+                              copied ? "Copied" : `Copy ${ticket_id}`
+                            }
+                            onClick={copy}
+                          >
+                            <ActionIcon>
+                              <IconCopy size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
+                      </CopyButton>
+                    </Flex>
+                  );
+                },
+              },
+              {
+                accessor: "ticket_category",
+                title: "Ticket Category",
+                sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_category"),
+              },
+              {
+                accessor: "ticket_status",
+                title: "Status",
+                sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_status"),
+                render: ({ticket_status}) => {
+                  return (
+                    <Flex justify="center">
+                      <Badge
+                        variant="filled"
+                        color={getTicketStatusColor(String(ticket_status))}
+                      >
+                        {String(ticket_status)}
+                      </Badge>
+                    </Flex>
+                  )
+                }
+              },
+              {
+                accessor: "ticket_requester_team_member_id",
+                title: "Requester",
+                sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_requester_team_member_id"),
+                render: (ticket) => {
+                  const { ticket_requester_user } = ticket;
+                  const { user_first_name, user_last_name, user_avatar, user_id } =
+                    ticket_requester_user as TicketRequesterUserType;
+                    
+                  return (
+                    <Flex px={0} gap={8} align='center'>
+                      <Avatar
+                            {...defaultAvatarProps}
+                            color={getAvatarColor(
+                              Number(`${user_id.charCodeAt(0)}`)
+                            )}
+                            src={user_avatar}
+                        >
+                        {(
+                          user_first_name[0] + user_last_name[0]
+                        ).toUpperCase()}
+                      </Avatar>
+                      <Anchor
+                        href={`/member/${ticket.ticket_requester_team_member_id}`}
+                        target="_blank"
+                      >
+                        <Text >{`${user_first_name} ${user_last_name}`}</Text>
+                      </Anchor>
+                    </Flex>
+                  )
+                },
+              },
+              {
+                accessor: "ticket_approver_team_member_id",
+                title: "Approver",
+                hidden: checkIfColumnIsHidden("ticket_approver_team_member_id"),
+                render: ({ticket_approver_user, ticket_status, ticket_approver_team_member_id}) => {
+                  const { user_first_name, user_last_name, user_id, user_avatar } = ticket_approver_user as TicketApproverUserType;
+
+                  if (user_first_name === null || user_last_name === null || ticket_status === null) {
+                    return null;
+                  }
+                  
+                  return (
+                    <Flex px={0} gap={8} align='center'>
+                      <Avatar
+                            {...defaultAvatarProps}
+                            color={getAvatarColor(
+                              Number(`${user_id.charCodeAt(0)}`)
+                            )}
+                            src={user_avatar}
+                        >
+                        {(
+                          user_first_name[0] + user_last_name[0]
+                        ).toUpperCase()}
+                      </Avatar>
+                      <Anchor
+                        href={`/member/${ticket_approver_team_member_id}`}
+                        target="_blank"
+                      >
+                        <Text >{`${user_first_name} ${user_last_name}`}</Text>
+                      </Anchor>
+                  </Flex>
+                  )
+                },
+              },
+              {
+                accessor: "ticket_date_created",
+                title: "Date Created",
+                sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_date_created"),
+                render: ({ticket_date_created}) => {
+                  if (!ticket_date_created) {
+                    return null;
+                  }
+
+                  return (
+                    <Flex justify="center">
+                      <Text>
+                        {formatDate(new Date(String(ticket_date_created)))}
+                      </Text>
+                    </Flex>
+                  );
+                },
+              },
+              {
+                accessor: "ticket_status_date_updated",
+                title: "Date Updated",
+                sortable: true,
+                hidden: checkIfColumnIsHidden("ticket_status_date_updated"),
+                render: ({ticket_status_date_updated}) => {
+                  if (!ticket_status_date_updated) {
+                    return null;
+                  }
+
+                  return (
+                    <Flex justify="center">
+                      <Text>
+                        {formatDate(
+                          new Date(String(ticket_status_date_updated))
+                        )}
+                      </Text>
+                    </Flex>
+                  );
+                },
+              },
+              {
+                accessor: "view",
+                title: "View",
+                hidden: checkIfColumnIsHidden("view"),
+                render: ({ticket_id}) => {
+                  const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
+                    activeTeam.team_name ?? ""
+                  );
+                  return (
+                    <Flex justify="center">
+                      <ActionIcon
+                        color="blue"
+                        onClick={() =>
+                          router.push(
+                            `/${activeTeamNameToUrlKey}/tickets/${ticket_id}`
+                          )
+                        }
+                      >
+                        <IconArrowsMaximize size={16} />
+                      </ActionIcon>
+                    </Flex >
+                  );
+                },
+              },
+            ]}
+            showTableColumnFilter={showTableColumnFilter}
+            setShowTableColumnFilter={setShowTableColumnFilter}
+            listTableColumnFilter={listTableColumnFilter}
+            setListTableColumnFilter={setListTableColumnFilter}
+            tableColumnList={tableColumnList}
+          />
+        </Box>
+      </Paper>
     </Container>
   );
 };
