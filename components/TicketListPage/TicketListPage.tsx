@@ -151,7 +151,7 @@ const TicketListPage = ({
   const columnAccessor = () => {
     // requester
     if (sortStatus.columnAccessor === "ticket_requester_team_member_id") {
-      return `requester_user_first_name ${sortStatus.direction.toUpperCase()}, requester_user_last_name `
+      return `user_first_name ${sortStatus.direction.toUpperCase()}, user_last_name `
     }
     return sortStatus.columnAccessor;
   };
