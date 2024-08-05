@@ -43,26 +43,30 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
         </Stack>
       )}
 
-      <Title order={5} mt="xl">
-        Requested by:
-      </Title>
-      <Flex gap="md" align="center" mt="xs">
-        <Avatar
-          size={50}
-          src={userProfile?.user_avatar}
-          color={getAvatarColor(
-            Number(`${userProfile?.user_id.charCodeAt(0)}`)
-          )}
-          radius="xl"
-        >
-          {userInitials}
-        </Avatar>
-        <Stack spacing={0}>
-          <Text>
-            {`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}
-          </Text>
-        </Stack>
-      </Flex>
+      {userProfile && (
+        <>
+          <Title order={5} mt="xl">
+            Requested by:
+          </Title>
+          <Flex gap="md" align="center" mt="xs">
+            <Avatar
+              size={50}
+              src={userProfile?.user_avatar}
+              color={getAvatarColor(
+                Number(`${userProfile?.user_id.charCodeAt(0)}`)
+              )}
+              radius="xl"
+            >
+              {userInitials}
+            </Avatar>
+            <Stack spacing={0}>
+              <Text>
+                {`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}
+              </Text>
+            </Stack>
+          </Flex>
+        </>
+      )}
       <Group spacing="md" mt="xl">
         <IconCalendar />
         <Text weight={600}>{requestDate}</Text>

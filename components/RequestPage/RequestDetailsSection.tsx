@@ -110,26 +110,32 @@ const RequestDetailsSection = ({
         </Stack>
       )}
 
-      <Title order={5} mt="xl">
-        Requested by:
-      </Title>
-      <Flex gap="md" align="center" mt="xs">
-        <Avatar
-          size={50}
-          src={requestor.user_avatar}
-          color={getAvatarColor(Number(`${requestor.user_id.charCodeAt(0)}`))}
-          radius="xl"
-        >
-          {(
-            requestor.user_first_name[0] + requestor.user_last_name[0]
-          ).toUpperCase()}
-        </Avatar>
-        <Stack spacing={0}>
-          <Text>
-            {`${requestor.user_first_name} ${requestor.user_last_name}`}
-          </Text>
-        </Stack>
-      </Flex>
+      {requestor.user_first_name && (
+        <>
+          <Title order={5} mt="xl">
+            Requested by:
+          </Title>
+          <Flex gap="md" align="center" mt="xs">
+            <Avatar
+              size={50}
+              src={requestor.user_avatar}
+              color={getAvatarColor(
+                Number(`${requestor.user_id.charCodeAt(0)}`)
+              )}
+              radius="xl"
+            >
+              {(
+                requestor.user_first_name[0] + requestor.user_last_name[0]
+              ).toUpperCase()}
+            </Avatar>
+            <Stack spacing={0}>
+              <Text>
+                {`${requestor.user_first_name} ${requestor.user_last_name}`}
+              </Text>
+            </Stack>
+          </Flex>
+        </>
+      )}
       <Group spacing="md" mt="xl">
         <IconCalendar />
         <Text weight={600}>{requestDateCreated}</Text>

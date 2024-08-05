@@ -1342,7 +1342,10 @@ AS $$
       )[0].count;
   
       formslyIdSerial = (Number(requestCount) + 1).toString(16).toUpperCase();
-      const project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}';`)[0];
+      let project;
+      if(projectId){
+        project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}'`)[0];
+      }
       
       if(formName==='Quotation') {
         endId = `Q`;
@@ -1382,16 +1385,18 @@ AS $$
         endId = `RFP`;
       } else if(formName.includes('Petty Cash Voucher Balance')) {
         endId = `PCVB`;
+      } else if(formName === 'HR') {
+        endId = `HR`;
       } else {
         endId = ``;
       }
-      formslyIdPrefix = `${project.team_project_code}${endId}`;
+      formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
 
     if (projectId === "") {
-      request_data = plv8.execute(`INSERT INTO request_schema.request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`)[0];
+      request_data = plv8.execute(`INSERT INTO request_schema.request_table (request_id,request_form_id${teamMemberId ? `,${request_team_member_id}` : ""}) VALUES ('${requestId}','${formId}'${teamMemberId ? `,'${teamMemberId}'` : ""}) RETURNING *`)[0];
     } else {
-      request_data = plv8.execute(`INSERT INTO request_schema.request_table (request_id,request_form_id,request_team_member_id,request_formsly_id_prefix,request_formsly_id_serial,request_project_id) VALUES ('${requestId}','${formId}','${teamMemberId}','${formslyIdPrefix}','${formslyIdSerial}','${projectId}') RETURNING *;`)[0];
+      request_data = plv8.execute(`INSERT INTO request_schema.request_table (request_id,request_form_id${teamMemberId ? `,${request_team_member_id}` : ""},request_formsly_id_prefix,request_formsly_id_serial,request_project_id) VALUES ('${requestId}','${formId}'${teamMemberId ? `,'${teamMemberId}'` : ""},'${formslyIdPrefix}','${formslyIdSerial}','${projectId}') RETURNING *`)[0];
     }
 
     plv8.execute(`INSERT INTO request_schema.request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id,request_response_prefix) VALUES ${responseValues};`);
@@ -3830,7 +3835,7 @@ AS $$
 
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
+    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true AND formt.form_department = 'default'`)[0].isformslyteam;
 
     const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
@@ -4372,7 +4377,7 @@ AS $$
       `
     )[0];
     
-        const signerData = plv8.execute(
+    const signerData = plv8.execute(
       `
         SELECT
           signer_id, 
@@ -5858,11 +5863,11 @@ AS $$
             form
           }
         }
+      } else {
+        returnData = { form }
       }
     } else {
-        returnData = {
-        form
-        }
+      returnData = { form }
     }
 });
 return returnData;
@@ -5897,7 +5902,7 @@ AS $$
           form_sub_type,
           team_project_name
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
         INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_schema.form_table ON form_id = request_form_id
         LEFT JOIN team_schema.team_project_table ON team_project_id = request_project_id
@@ -5926,8 +5931,8 @@ AS $$
           attachment_value
         FROM request_schema.request_signer_table
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         LEFT JOIN public.attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${requestData.request_id}'
       `
@@ -13175,6 +13180,7 @@ plv8.subtransaction(function() {
       WHERE
         form_is_disabled = false
         AND form_app = '${app}'
+        AND form_department = 'default'
       ORDER BY form_date_created DESC
     `
   );
@@ -14094,19 +14100,7 @@ ALTER TABLE request_schema.request_signer_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_schema.request_signer_table;
 CREATE POLICY "Allow CREATE for authenticated users" ON request_schema.request_signer_table
 AS PERMISSIVE FOR INSERT
-TO authenticated
-WITH CHECK (
-  (
-    SELECT tm.team_member_team_id
-    FROM request_schema.request_table as rt
-    JOIN team_schema.team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
-    WHERE rt.request_id = request_signer_request_id
-  ) IN (
-    SELECT team_member_team_id 
-    FROM team_schema.team_member_table 
-    WHERE team_member_user_id = (SELECT auth.uid())
-  )
-);
+WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_signer_table;
 CREATE POLICY "Allow READ for anon users" ON request_schema.request_signer_table
@@ -14501,7 +14495,6 @@ ALTER TABLE request_schema.request_response_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_response_table;
 CREATE POLICY "Allow CREATE access for all users" ON request_schema.request_response_table
 AS PERMISSIVE FOR INSERT
-TO authenticated
 WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_response_table;
@@ -14567,7 +14560,6 @@ ALTER TABLE request_schema.request_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_table;
 CREATE POLICY "Allow CREATE access for all users" ON request_schema.request_table
 AS PERMISSIVE FOR INSERT
-TO authenticated
 WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_table;

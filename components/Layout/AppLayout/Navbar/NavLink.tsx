@@ -2,7 +2,10 @@ import { getApproverRequestCount } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { REQUEST_LIST_HIDDEN_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
@@ -53,10 +56,12 @@ const ReviewAppNavLink = () => {
   const hasTeam = teamList.length > 0;
   const forms = useFormList();
   const userTeamMemberData = useUserTeamMember();
+  const userTeamMemberGroupList = useUserTeamMemberGroupList();
   const unreadNotificationCount = useUnreadNotificationCount();
   const activeTeamNameToUrl = formatTeamNameToUrlKey(
     activeTeam.team_name ?? ""
   );
+
   const router = useRouter();
   const unhiddenForms = forms.filter(
     (form) => !REQUEST_LIST_HIDDEN_FORMS.includes(form.form_name)
@@ -279,6 +284,20 @@ const ReviewAppNavLink = () => {
       ),
       href: `/${activeTeamNameToUrl}/requests`,
     },
+    ...(userTeamMemberGroupList.includes("HUMAN RESOURCES")
+      ? [
+          {
+            label: `HR Request List`,
+            icon: (
+              <Box ml="sm" {...defaultNavLinkContainerProps}>
+                <IconFiles {...defaultIconProps} />
+              </Box>
+            ),
+            href: `/${activeTeamNameToUrl}/hr/requests`,
+          },
+        ]
+      : []),
+    ,
     {
       label: `Notification List`,
       icon: (

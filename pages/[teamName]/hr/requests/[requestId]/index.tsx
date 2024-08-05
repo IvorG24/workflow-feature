@@ -1,8 +1,5 @@
-import { getTeam, getUserActiveTeamId } from "@/backend/api/get";
-import { checkIfEmailExists } from "@/backend/api/post";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
-import EquipmentServiceReportRequestPage from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
-import HRRequestPage from "@/components/HRRequestPage/HRRequestPage";
+import { default as EquipmentServiceReportRequestPage } from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
@@ -12,103 +9,44 @@ import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEqu
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
 import PEDPartRequestPage from "@/components/PEDPartRequestPage/PEDPartRequestPage";
 import PersonnelTransferRequisitionRequestPage from "@/components/PersonnelTransferRequisitionRequestPage/PersonnelTransferRequisitionRequestPage";
+import PettyCashVoucherBalanceRequestPage from "@/components/PettyCashVoucherBalanceRequestPage/PettyCashVoucherBalanceRequestPage";
 import PettyCashVoucherRequestPage from "@/components/PettyCashVoucherRequestPage/PettyCashVoucherRequestPage";
 import RequestForPaymentCodeRequestPage from "@/components/RequestForPaymentCodeRequestPage/RequestForPaymentCodeRequestPage";
 import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestPage/RequestForPaymentRequestPage";
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
-import { Space } from "@mantine/core";
-import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { GetServerSideProps } from "next";
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const supabaseClient = createPagesServerClient(context);
-  try {
-    const { data, error } = await supabaseClient.rpc(
-      "public_request_page_on_load",
-      {
-        input_data: {
-          requestId: context.query.requestId,
-        },
-      }
-    );
-
-    if (error) throw error;
-    // * 1. Check if there is user active session
-    const {
-      data: { session },
-    } = await supabaseClient.auth.getSession();
-
-    if (session) {
-      if (!session?.user?.email) {
+export const getServerSideProps: GetServerSideProps =
+  withAuthAndOnboardingRequestPage(
+    async ({ supabaseClient, user, context }) => {
+      try {
+        const { data, error } = await supabaseClient.rpc(
+          "request_page_on_load",
+          {
+            input_data: {
+              requestId: context.query.requestId,
+              userId: user.id,
+            },
+          }
+        );
+        if (error) throw error;
         return {
-          redirect: {
-            destination: "/sign-in",
-            permanent: false,
-          },
+          props: data as Props,
         };
-      }
-
-      // * 2. Check if user is onboarded
-      if (
-        !(await checkIfEmailExists(supabaseClient, {
-          email: session.user.email,
-        }))
-      ) {
+      } catch (e) {
         return {
           redirect: {
-            destination: "/onboarding",
-            permanent: false,
-          },
-        };
-      }
-
-      // * 3. Check if user has active team
-      const user = session.user;
-
-      const teamId = await getUserActiveTeamId(supabaseClient, {
-        userId: user.id,
-      });
-
-      if (!teamId) {
-        return {
-          redirect: {
-            destination: "/create-team",
-            permanent: false,
-          },
-        };
-      }
-
-      const activeTeam = await getTeam(supabaseClient, { teamId });
-
-      if (activeTeam) {
-        return {
-          redirect: {
-            destination: `/${formatTeamNameToUrlKey(
-              activeTeam.team_name
-            )}/requests/${data.request.request_formsly_id}`,
+            destination: "/500",
             permanent: false,
           },
         };
       }
     }
-
-    return {
-      props: data,
-    };
-  } catch (e) {
-    console.log(e);
-    return {
-      redirect: {
-        destination: "/500",
-        permanent: false,
-      },
-    };
-  }
-};
+  );
 
 type Props = {
   request: RequestWithResponseType;
@@ -228,8 +166,10 @@ const Page = ({
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
-    } else if (request.request_form.form_name === "HR") {
-      return <HRRequestPage request={request} />;
+    } else if (
+      request.request_form.form_name === "Petty Cash Voucher Balance"
+    ) {
+      return <PettyCashVoucherBalanceRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }
@@ -237,19 +177,15 @@ const Page = ({
 
   return (
     <>
-      <Meta
-        description="Public Request Page"
-        url="/public-request/[requestId]"
-      />
-      <Space h="xl" />
+      <Meta description="Request Page" url="/teamName/requests/[requestId]" />
+
       {request.request_form.form_is_formsly_form ? formslyForm() : null}
       {!request.request_form.form_is_formsly_form ? (
         <RequestPage request={request} />
       ) : null}
-      <Space h="xl" />
     </>
   );
 };
 
 export default Page;
-Page.Layout = "HOME";
+Page.Layout = "APP";

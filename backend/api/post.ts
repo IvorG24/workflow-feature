@@ -460,7 +460,7 @@ export const createRequest = async (
   params: {
     requestFormValues: RequestFormValues;
     formId: string;
-    teamMemberId: string;
+    teamMemberId?: string;
     signers: FormType["form_signer"];
     teamId: string;
     requesterName: string;
@@ -468,6 +468,7 @@ export const createRequest = async (
     isFormslyForm: boolean;
     projectId: string;
     teamName: string;
+    formDepartment?: string;
   }
 ) => {
   const {
@@ -479,6 +480,7 @@ export const createRequest = async (
     isFormslyForm,
     projectId,
     teamName,
+    formDepartment,
   } = params;
 
   const requestId = uuidv4();
@@ -546,7 +548,9 @@ export const createRequest = async (
       requestSignerNotificationInput.push({
         notification_app: "REQUEST",
         notification_content: `${requesterName} requested you to sign his/her ${formName} request`,
-        notification_redirect_url: `/${teamName}/requests/${requestId}`,
+        notification_redirect_url: `/${teamName}/${
+          formDepartment ? `${formDepartment}/` : ""
+        }requests/${requestId}`,
         notification_team_id: teamId,
         notification_type: "REQUEST",
         notification_user_id:
@@ -579,7 +583,20 @@ export const createRequest = async (
         `('${signer.request_signer_signer_id}','${signer.request_signer_request_id}')`
     )
     .join(",");
-
+  console.log({
+    input_data: {
+      requestId,
+      formId: params.formId,
+      teamMemberId: params.teamMemberId,
+      responseValues,
+      signerValues,
+      requestSignerNotificationInput,
+      formName,
+      isFormslyForm,
+      projectId,
+      teamId,
+    },
+  });
   // create request
   const { data, error } = await supabaseClient
     .rpc("create_request", {

@@ -164,7 +164,6 @@ const Page = ({
             projectOptions={projectOptions}
           />
         );
-
       case "Petty Cash Voucher":
         return (
           <CreatePettyCashVoucherRequestPage
@@ -193,7 +192,6 @@ const Page = ({
             allProjectOptions={allProjectOptions}
           />
         );
-
       case "Request For Payment Code":
         return (
           <CreateRequestForPaymentCodePage
@@ -201,13 +199,16 @@ const Page = ({
             connectedRequest={connectedRequest}
           />
         );
-
       case "Petty Cash Voucher Balance":
         return (
           <CreatePettyCashVoucherBalancePage
             form={form}
             connectedRequest={connectedRequest}
           />
+        );
+      default:
+        return (
+          <CreateRequestPage form={form} formslyFormName={form.form_name} />
         );
     }
   };
