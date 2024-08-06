@@ -1,8 +1,8 @@
 import { getTeam, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
+import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import EquipmentServiceReportRequestPage from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
-import HRRequestPage from "@/components/HRRequestPage/HRRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
@@ -100,7 +100,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       props: data,
     };
   } catch (e) {
-    console.log(e);
     return {
       redirect: {
         destination: "/500",
@@ -228,8 +227,8 @@ const Page = ({
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
-    } else if (request.request_form.form_name === "HR") {
-      return <HRRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Application Information") {
+      return <ApplicationInformationRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

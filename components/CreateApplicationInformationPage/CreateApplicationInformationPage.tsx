@@ -1,21 +1,31 @@
+import {
+  fetchRegion,
+  getApplicationInformationPositionOptions,
+} from "@/backend/api/get";
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
+import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import supabaseClientAddress from "@/utils/supabase/address";
 import {
   FormType,
   FormWithResponseType,
   OptionTableRow,
+  PositionTableRow,
   RequestResponseTableRow,
 } from "@/utils/types";
 import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import {
+  createPagesBrowserClient,
+  SupabaseClient,
+} from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/router";
-import { Database } from "oneoffice-api";
-import { useEffect } from "react";
+import { Database, Database as OneOfficeDatabase } from "oneoffice-api";
+import { useEffect, useState } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 
@@ -34,9 +44,14 @@ type Props = {
   form: FormType;
 };
 
-const CreateHRPage = ({ form }: Props) => {
+const CreateApplicationInformationPage = ({ form }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
+
+  const [positionList, setPositionList] = useState<PositionTableRow[]>([]);
+  const [loadingFieldList, setLoadingFieldList] = useState<
+    { sectionIndex: number; fieldIndex: number }[]
+  >([]);
 
   const { setIsLoading } = useLoadingActions();
 
@@ -52,7 +67,7 @@ const CreateHRPage = ({ form }: Props) => {
   }));
 
   const requestFormMethods = useForm<RequestFormValues>();
-  const { handleSubmit, control, getValues } = requestFormMethods;
+  const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
     insert: addSection,
@@ -65,7 +80,87 @@ const CreateHRPage = ({ form }: Props) => {
   });
 
   useEffect(() => {
-    replaceSection(form.form_section);
+    const fetchOptions = async () => {
+      setIsLoading(true);
+      try {
+        let index = 0;
+        const positionOptionList: OptionTableRow[] = [];
+        const positionList: PositionTableRow[] = [];
+        while (1) {
+          const positionData = await getApplicationInformationPositionOptions(
+            supabaseClient,
+            {
+              teamId: form.form_team_member.team_member_team_id,
+              index,
+              limit: FETCH_OPTION_LIMIT,
+            }
+          );
+
+          const positionOptions = positionData.map((position, index) => {
+            return {
+              option_field_id: form.form_section[0].section_field[0].field_id,
+              option_id: position.position_id,
+              option_order: index,
+              option_value: position.position,
+            };
+          });
+          positionOptionList.push(...positionOptions);
+          positionList.push(...positionData);
+          if (positionData.length < FETCH_OPTION_LIMIT) break;
+          index += FETCH_OPTION_LIMIT;
+        }
+        setPositionList(positionList);
+
+        const regionData = await fetchRegion(
+          supabaseClientAddress as unknown as SupabaseClient<
+            OneOfficeDatabase["address_schema"]
+          >
+        );
+        if (!regionData) throw new Error();
+
+        const regionOptionList = regionData.map((region, index) => {
+          return {
+            option_field_id: form.form_section[2].section_field[1].field_id,
+            option_id: region.region_id,
+            option_order: index,
+            option_value: region.region,
+          };
+        });
+        replaceSection([
+          {
+            ...form.form_section[0],
+            section_field: [
+              {
+                ...form.form_section[0].section_field[0],
+                field_option: positionOptionList,
+              },
+              ...form.form_section[0].section_field.slice(3),
+            ],
+          },
+          form.form_section[1],
+          {
+            ...form.form_section[2],
+            section_field: [
+              form.form_section[2].section_field[0],
+              {
+                ...form.form_section[2].section_field[1],
+                field_option: regionOptionList,
+              },
+              ...form.form_section[2].section_field.slice(2),
+            ],
+          },
+          ...form.form_section.slice(3),
+        ]);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchOptions();
   }, [form, replaceSection, requestFormMethods]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
@@ -83,16 +178,14 @@ const CreateHRPage = ({ form }: Props) => {
         teamName: formatTeamNameToUrlKey(
           process.env.NODE_ENV === "production" ? "SCIC" : "Sta Clara"
         ),
-        formDepartment: formatTeamNameToUrlKey("HR"),
       });
       notifications.show({
         message: "Request created.",
         color: "green",
       });
-      console.log(`/public-request/${request.request_id}`);
+
       await router.push(`/public-request/${request.request_id}`);
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -175,6 +268,50 @@ const CreateHRPage = ({ form }: Props) => {
     }
   };
 
+  const handlePositionChange = (value: string | null) => {
+    const newSection = getValues(`sections.0`);
+
+    try {
+      if (value) {
+        setLoadingFieldList([{ sectionIndex: 0, fieldIndex: 0 }]);
+
+        const position = positionList.find(
+          (position) => position.position === value
+        );
+
+        updateSection(0, {
+          ...newSection,
+          section_field: [
+            newSection.section_field[0],
+            ...(position?.position_is_with_certificate
+              ? [{ ...form.form_section[0].section_field[1] }]
+              : []),
+            ...(position?.position_is_with_license
+              ? [{ ...form.form_section[0].section_field[2] }]
+              : []),
+            newSection.section_field[newSection.section_field.length - 1],
+          ],
+        });
+      } else {
+        updateSection(0, {
+          ...newSection,
+          section_field: [
+            newSection.section_field[0],
+            newSection.section_field[newSection.section_field.length - 1],
+          ],
+        });
+      }
+    } catch (e) {
+      setValue(`sections.0.section_field.0.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
+    }
+  };
+
   return (
     <Container>
       <Title order={2} color="dimmed">
@@ -198,7 +335,11 @@ const CreateHRPage = ({ form }: Props) => {
                     section={section}
                     sectionIndex={idx}
                     formslyFormName={form.form_name}
+                    loadingFieldList={loadingFieldList}
                     onRemoveSection={handleRemoveSection}
+                    applicationInformationFormMethods={{
+                      onPositionChange: handlePositionChange,
+                    }}
                   />
                   {section.section_is_duplicatable &&
                     idx === sectionLastIndex && (
@@ -225,4 +366,4 @@ const CreateHRPage = ({ form }: Props) => {
   );
 };
 
-export default CreateHRPage;
+export default CreateApplicationInformationPage;

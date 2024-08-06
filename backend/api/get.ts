@@ -218,7 +218,7 @@ export const getRequestList = async (
     teamMemberId,
     project,
     idFilter,
-    columnAccessor = "request_date_created"
+    columnAccessor = "request_date_created",
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
@@ -265,7 +265,7 @@ export const getRequestList = async (
       sort,
       isApproversView,
       teamMemberId,
-      columnAccessor
+      columnAccessor,
     },
   });
 
@@ -2194,6 +2194,7 @@ export const getRequestListOnLoad = async (
   const { data, error } = await supabaseClient
     .rpc("get_request_list_on_load", { input_data: params })
     .select("*");
+
   if (error) throw error;
 
   return data as unknown as RequestListOnLoad;
@@ -5834,4 +5835,28 @@ export const getLRFSummaryData = async (
   if (error) throw error;
 
   return data as { data: LRFSpreadsheetData[]; count: number };
+};
+
+export const getApplicationInformationPositionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", teamId)
+    .eq("position_is_disabled", false)
+    .eq("position_is_available", true)
+    .order("position")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
 };

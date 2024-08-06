@@ -498,6 +498,13 @@ export type JobTitleTableInsert =
 export type JobTitleTableUpdate =
   Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Update"];
 
+export type PositionTableRow =
+  Database["lookup_schema"]["Tables"]["position_table"]["Row"];
+export type PositionTableInsert =
+  Database["lookup_schema"]["Tables"]["position_table"]["Insert"];
+export type PositionTableUpdate =
+  Database["lookup_schema"]["Tables"]["position_table"]["Update"];
+
 export type TeamDepartmentTableRow =
   Database["team_schema"]["Tables"]["team_department_table"]["Row"];
 
@@ -738,6 +745,7 @@ export type FormType = {
       user_last_name: string;
       user_avatar: string;
     };
+    team_member_team_id: string;
   };
   form_signer: {
     signer_id: string;
@@ -788,6 +796,7 @@ export type FormWithResponseType = {
       user_last_name: string;
       user_avatar: string;
     };
+    team_member_team_id: string;
   };
   form_signer: {
     signer_id: string;
@@ -1176,7 +1185,7 @@ export type requestSignerType = {
     signer_team_member_id: string;
     signer_is_primary_signer: boolean;
   };
-}
+};
 
 export type RequestListItemType = {
   request_id: string;
@@ -1193,7 +1202,7 @@ export type RequestListItemType = {
   user_first_name: string;
   user_last_name: string;
   user_avatar: string | null;
-  form_name: string; 
+  form_name: string;
 };
 
 export type ConnectedRequestItemType = {
@@ -1908,7 +1917,7 @@ export type FetchRequestListParams = {
   page: number;
   limit: number;
   teamMemberId?: string;
-  columnAccessor?: string
+  columnAccessor?: string;
 } & RequestListFilterValues;
 
 export type RequestListFilterValues = {

@@ -1,4 +1,4 @@
-import CreateHRPage from "@/components/CreateHRPage/CreateHRPage";
+import CreateApplicationInformationPage from "@/components/CreateApplicationInformationPage/CreateApplicationInformationPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { FormWithResponseType } from "@/utils/types";
@@ -39,8 +39,8 @@ type Props = {
 const Page = ({ form }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
-      case "HR":
-        return <CreateHRPage form={form} />;
+      case "Application Information":
+        return <CreateApplicationInformationPage form={form} />;
       default:
         return (
           <CreateRequestPage form={form} formslyFormName={form.form_name} />
@@ -58,6 +58,7 @@ const Page = ({ form }: Props) => {
       {!form.form_is_formsly_form ? (
         <CreateRequestPage form={form} formslyFormName={form.form_name} />
       ) : null}
+      <Space h="xl" />
     </>
   );
 };

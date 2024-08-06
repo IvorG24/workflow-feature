@@ -253,6 +253,9 @@ type RequestFormFieldsProps = {
     onAmountBlur: (value: string | null, index: number) => void;
     onModeOfPaymentChange: (value: string | null, index: number) => void;
   };
+  applicationInformationFormMethods?: {
+    onPositionChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormFields = ({
@@ -276,6 +279,7 @@ const RequestFormFields = ({
   pettyCashVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
+  applicationInformationFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -472,6 +476,7 @@ const RequestFormFields = ({
                   break;
               }
             }}
+            type={field.field_name === "Email" ? "email" : undefined}
           />
         );
 
@@ -551,7 +556,18 @@ const RequestFormFields = ({
                   withAsterisk={field.field_is_required}
                   {...inputProps}
                   error={fieldError}
-                  precision={2}
+                  precision={
+                    [
+                      "Quantity",
+                      "Amount",
+                      "Unit Cost",
+                      "Invoice Amount",
+                      "Cost",
+                      "VAT",
+                    ].includes(field.field_name)
+                      ? 2
+                      : 0
+                  }
                   onBlur={() => {
                     switch (field.field_name) {
                       case "Amount":
@@ -560,14 +576,12 @@ const RequestFormFields = ({
                           sectionIndex
                         );
                         break;
-
                       case "Invoice Amount":
                         liquidationReimbursementFormMethods?.onInvoiceAmountChange(
                           value as number,
                           sectionIndex
                         );
                         break;
-
                       case "VAT":
                         liquidationReimbursementFormMethods?.onVatFieldChange &&
                           liquidationReimbursementFormMethods?.onVatFieldChange(
@@ -575,13 +589,11 @@ const RequestFormFields = ({
                             sectionIndex
                           );
                         break;
-
                       case "Quantity":
                         pettyCashVoucherFormMethods?.onQuantityOrUnitCostChange(
                           sectionIndex
                         );
                         break;
-
                       case "Unit Cost":
                         pettyCashVoucherFormMethods?.onQuantityOrUnitCostChange(
                           sectionIndex
@@ -930,12 +942,16 @@ const RequestFormFields = ({
                         sectionIndex
                       );
                       break;
-
                     case "Type of Request":
                       pettyCashVoucherFormMethods?.onTypeOfRequestChange(value);
                       liquidationReimbursementFormMethods?.onTypeOfRequestChange(
                         value,
                         sectionIndex
+                      );
+                      break;
+                    case "Position applying for":
+                      applicationInformationFormMethods?.onPositionChange(
+                        value
                       );
                       break;
                   }

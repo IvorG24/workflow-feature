@@ -1385,8 +1385,8 @@ AS $$
         endId = `RFP`;
       } else if(formName.includes('Petty Cash Voucher Balance')) {
         endId = `PCVB`;
-      } else if(formName === 'HR') {
-        endId = `HR`;
+      } else if(formName === 'Application Information') {
+        endId = `AI`;
       } else {
         endId = ``;
       }
@@ -2879,14 +2879,16 @@ AS $$
           user_last_name,
           user_avatar
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+        INNER JOIN team_schema.team_member_table AS ftmt ON ftmt.team_member_id = form_team_member_id
         INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-        WHERE team_member_table.team_member_team_id = '${teamId}'
-        AND request_is_disabled = false
-        AND form_table.form_is_disabled = false
+        WHERE 
+          ftmt.team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
+          AND request_is_disabled = false
+          AND form_table.form_is_disabled = false
       `;
 
     let sort_request_list_query = 
@@ -3842,7 +3844,7 @@ AS $$
 
     const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true AND formt.form_department = 'default'`)[0].isformslyteam;
+    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
 
     const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
@@ -13197,7 +13199,6 @@ plv8.subtransaction(function() {
       WHERE
         form_is_disabled = false
         AND form_app = '${app}'
-        AND form_department = 'default'
       ORDER BY form_date_created DESC
     `
   );
@@ -13245,6 +13246,7 @@ plv8.subtransaction(function() {
       form_sub_type: form.form_sub_type,
       form_team_member_id: form.form_team_member_id,
       form_type: form.form_type,
+      form_is_public_form: form.form_is_public_form,
       form_team_member: {
         team_member_date_created: form.team_member_date_created,
         team_member_id: form.team_member_id,
@@ -13761,6 +13763,161 @@ AS $$
       projectFilter
     };
  });
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_public_request_page_on_load(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const { 
+      formId,
+    } = input_data;
+
+    const formData = plv8.execute(
+      `
+        SELECT
+          form_id,
+          form_name, 
+          form_description, 
+          form_date_created, 
+          form_is_hidden, 
+          form_is_formsly_form, 
+          form_is_for_every_member,
+          form_type,
+          form_sub_type,
+          team_member_id,
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_avatar, 
+          user_username,
+          team_member_team_id
+        FROM form_schema.form_table
+        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        WHERE 
+          form_id = '${formId}'
+      `
+    )[0];
+    
+    const signerData = plv8.execute(
+      `
+        SELECT
+          signer_id, 
+          signer_is_primary_signer, 
+          signer_action, 
+          signer_order,
+          signer_is_disabled, 
+          signer_team_project_id,
+          team_member_id, 
+          user_id,
+          user_first_name, 
+          user_last_name, 
+          user_avatar
+        FROM form_schema.signer_table
+        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        WHERE 
+          signer_is_disabled = false
+          AND signer_team_project_id IS null
+          AND signer_form_id = '${formId}'
+      `
+    );
+
+    const sectionData = [];
+    const formSection = plv8.execute(`SELECT * FROM form_schema.section_table WHERE section_form_id = '${formId}' ORDER BY section_order ASC`);
+    formSection.forEach(section => {
+      const fieldData = plv8.execute(
+        `
+          SELECT *
+          FROM form_schema.field_table
+          WHERE field_section_id = '${section.section_id}'
+          ORDER BY field_order ASC
+          ${formData.form_name === 'Item' ? "LIMIT 10" : ""}
+          ${formData.form_name === 'PED Item' ? "LIMIT 7" : ""}
+          ${formData.form_name === 'IT Asset' ? "LIMIT 10" : ""}
+        `
+      );
+      const field = fieldData.map(field => {
+        let optionData = [];
+
+        optionData = plv8.execute( `
+          SELECT *
+          FROM form_schema.option_table
+          WHERE option_field_id = '${field.field_id}'
+          ORDER BY option_order ASC
+        `);
+   
+        return {
+          ...field,
+          field_option: optionData
+        };
+      });
+      sectionData.push({
+        ...section,
+        section_field: field,
+      }) 
+    });
+ 
+    const form = {
+      form_id: formData.form_id,
+      form_name: formData.form_name,
+      form_description: formData.form_description,
+      form_date_created: formData.form_date_created,
+      form_is_hidden: formData.form_is_hidden,
+      form_is_formsly_form: formData.form_is_formsly_form,
+      form_is_for_every_member: formData.form_is_for_every_member,
+      form_type: formData.form_type,
+      form_sub_type: formData.form_sub_type,
+      form_team_member: {
+        team_member_id: formData.team_member_id,
+        team_member_user: {
+          user_id: formData.user_id,
+          user_first_name: formData.user_first_name,
+          user_last_name: formData.user_last_name,
+          user_avatar: formData.user_avatar,
+          user_username: formData.user_username
+        },
+        team_member_team_id: formData.team_member_team_id
+      },
+      form_signer: signerData.map(signer => {
+        return {
+          signer_id: signer.signer_id,
+          signer_is_primary_signer: signer.signer_is_primary_signer,
+          signer_action: signer.signer_action,
+          signer_order: signer.signer_order,
+          signer_is_disabled: signer.signer_is_disabled,
+          signer_team_project_id: signer.signer_team_project_id,
+          signer_team_member: {
+            team_member_id: signer.team_member_id,
+            team_member_user: {
+              user_id: signer.user_id,
+              user_first_name: signer.user_first_name,
+              user_last_name: signer.user_last_name,
+              user_avatar: signer.user_avatar
+            }
+          }
+        }
+      }),
+      form_section: sectionData,
+    };
+
+    if (form.form_is_formsly_form) {
+      if (form.form_name === "Application Information") {
+        returnData = { form }
+        return;
+      } else {
+        returnData = { form }
+      }
+    } else {
+      returnData = { form }
+    }
+});
 return returnData;
 $$ LANGUAGE plv8;
 

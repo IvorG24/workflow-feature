@@ -223,6 +223,9 @@ type RequestFormSectionProps = {
     onAmountBlur: (value: string | null, index: number) => void;
     onModeOfPaymentChange: (value: string | null, index: number) => void;
   };
+  applicationInformationFormMethods?: {
+    onPositionChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormSection = ({
@@ -246,6 +249,7 @@ const RequestFormSection = ({
   pettyCashVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
+  applicationInformationFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -314,6 +318,9 @@ const RequestFormSection = ({
               pettyCashVoucherFormMethods={pettyCashVoucherFormMethods}
               equipmentServiceReportMethods={equipmentServiceReportMethods}
               requestForPaymentFormMethods={requestForPaymentFormMethods}
+              applicationInformationFormMethods={
+                applicationInformationFormMethods
+              }
             />
           );
         })}

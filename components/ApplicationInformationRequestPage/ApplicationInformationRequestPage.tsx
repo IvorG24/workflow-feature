@@ -39,7 +39,7 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-const HRRequestPage = ({ request }: Props) => {
+const ApplicationInformationRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { setIsLoading } = useLoadingActions();
@@ -64,9 +64,9 @@ const HRRequestPage = ({ request }: Props) => {
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
-  const [formSection, setFormSection] = useState(
-    generateSectionWithDuplicateList([request.request_form.form_section[0]])
-  );
+  const formSection = generateSectionWithDuplicateList([
+    request.request_form.form_section[0],
+  ]);
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -393,4 +393,4 @@ const HRRequestPage = ({ request }: Props) => {
   );
 };
 
-export default HRRequestPage;
+export default ApplicationInformationRequestPage;
