@@ -9,19 +9,17 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   BASE_URL,
   DEFAULT_REQUEST_LIST_LIMIT,
-  formatDate,
+  formatDate
 } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
+import { getAvatarColor, getJiraTicketStatusColor, getStatusToColor } from "@/utils/styling";
 import {
-  getAvatarColor,
-  getJiraTicketStatusColor,
-  getStatusToColor,
-} from "@/utils/styling";
-import {
+  RequestListFilterValues,
   RequestListItemSignerType,
   RequestListItemType,
-  TeamMemberWithUserType,
+  requestSignerType,
+  TeamMemberWithUserType
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -30,6 +28,7 @@ import {
   Badge,
   Box,
   CopyButton,
+  createStyles,
   Flex,
   Group,
   Loader,
@@ -37,16 +36,16 @@ import {
   Stack,
   Text,
   Tooltip,
-  UnstyledButton,
-  createStyles,
+  UnstyledButton
 } from "@mantine/core";
-import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
-import { DataTable } from "mantine-datatable";
+import { DataTableSortStatus } from "mantine-datatable";
 import router from "next/router";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { UseFormSetValue } from "react-hook-form";
+import ListTable from "../ListTable/ListTable";
 import RequestSignerList from "./RequestSignerList";
 
 type Props = {
@@ -57,7 +56,15 @@ type Props = {
   isFetchingRequestList: boolean;
   selectedFormFilter: string[] | undefined;
   handlePagination: (p: number) => void;
-  checkIfColumnIsHidden: (column: string) => boolean;
+  sortStatus: DataTableSortStatus;
+  setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>
+  setValue:  UseFormSetValue<RequestListFilterValues>
+  checkIfColumnIsHidden:  (column: string) => boolean
+  showTableColumnFilter: boolean;
+  setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>
+  listTableColumnFilter: string[]
+  setListTableColumnFilter: (val: string[] | ((prevState: string[]) => string[])) => void;
+  tableColumnList: { value: string, label: string }[]
 };
 
 const useStyles = createStyles(() => ({
@@ -79,8 +86,16 @@ const RequestListTable = ({
   activePage,
   isFetchingRequestList,
   handlePagination,
-  checkIfColumnIsHidden,
   selectedFormFilter,
+  sortStatus,
+  setSortStatus,
+  setValue,
+  checkIfColumnIsHidden,
+  showTableColumnFilter,
+  setShowTableColumnFilter,
+  listTableColumnFilter,
+  setListTableColumnFilter,
+  tableColumnList
 }: Props) => {
   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
@@ -88,9 +103,9 @@ const RequestListTable = ({
   const supabaseClient = createPagesBrowserClient();
   const userTeamMember = useUserTeamMember();
 
-  const [jiraTicketStatusList, setJiraTicketStatusList] = useLocalStorage<
+  const [jiraTicketStatusList, setJiraTicketStatusList] = useState<
     { jira_id: string; status: string }[]
-  >({ key: "formsly-jira-ticket-status-list", defaultValue: [] });
+  >([]);
 
   const [isFetchingJiraStatus, setIsFetchingJiraStatus] = useState<string[]>(
     []
@@ -101,12 +116,9 @@ const RequestListTable = ({
     { formslyId: string; otpId: string }[]
   >([]);
 
-  const [pedEquipmentNumberList, setPedEquipmentNumberList] = useLocalStorage<
+  const [pedEquipmentNumberList, setPedEquipmentNumberList] = useState<
     { request_id: string; equipment_number: string[] }[]
-  >({
-    key: "formsly-ped-equipment-number-list",
-    defaultValue: [],
-  });
+  >([]);
 
   const [
     isFetchingPedEquipmentNumberList,
@@ -370,35 +382,25 @@ const RequestListTable = ({
     setOtpIdList(currentOtpIdList);
   }, [requestList]);
 
+
+  useEffect(() => {
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
+    handlePagination(activePage);
+}, [sortStatus])
+
   return (
-    <DataTable
-      fontSize={16}
+    <ListTable 
       idAccessor="request_id"
-      sx={{
-        thead: {
-          tr: {
-            backgroundColor: "transparent",
-          },
-        },
-      }}
-      styles={(theme) => ({
-        header: {
-          background:
-            theme.colorScheme === "dark"
-              ? theme.colors.dark[5]
-              : theme.colors.gray[1],
-        },
-      })}
-      withBorder
-      minHeight={390}
+      records={requestList}
       fetching={isFetchingRequestList}
+      page={activePage}
+      onPageChange={(page) => {
+        handlePagination(page)
+      }}
       totalRecords={requestListCount}
       recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
-      page={activePage}
-      onPageChange={(p) => {
-        handlePagination(p);
-      }}
-      records={requestList}
+      sortStatus={sortStatus}
+      onSortStatusChange={setSortStatus}
       columns={[
         {
           accessor: "request_id",
@@ -410,7 +412,7 @@ const RequestListTable = ({
               request_formsly_id === "-" ? request_id : request_formsly_id;
 
             return (
-              <Flex key={request_id} justify="space-between">
+              <Flex key={String(requestId)} justify="space-between">
                 <Text truncate maw={150}>
                   <Anchor
                     href={`/${formatTeamNameToUrlKey(
@@ -418,13 +420,13 @@ const RequestListTable = ({
                     )}/requests/${requestId}`}
                     target="_blank"
                   >
-                    {requestId}
+                    {String(requestId)}
                   </Anchor>
                 </Text>
                 <CopyButton
                   value={`${BASE_URL}/${formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
-                  )}/requests/${request_formsly_id}`}
+                  )}/requests/${requestId}`}
                 >
                   {({ copied, copy }) => (
                     <Tooltip
@@ -444,18 +446,22 @@ const RequestListTable = ({
         {
           accessor: "request_jira_id",
           title: "JIRA ID",
-          width: 180,
           hidden: checkIfColumnIsHidden("request_jira_id"),
           render: ({ request_jira_id, request_jira_link }) => {
+
+            if (request_jira_id === null){
+              return null
+            }
+
             return (
-              <Flex justify="space-between" key={request_jira_id}>
+              <Flex justify="space-between" key={String(request_jira_id)}>
                 <Text>
-                  <Anchor href={request_jira_link} target="_blank">
-                    {request_jira_id}
+                  <Anchor href={String(request_jira_link)} target="_blank">
+                    {String(request_jira_id)}
                   </Anchor>
                 </Text>
-                {request_jira_id && (
-                  <CopyButton value={request_jira_id}>
+                {String(request_jira_id) && (
+                  <CopyButton value={String(request_jira_id)}>
                     {({ copied, copy }) => (
                       <Tooltip
                         label={copied ? "Copied" : `Copy ${request_jira_id}`}
@@ -477,6 +483,11 @@ const RequestListTable = ({
           title: "JIRA Status",
           hidden: checkIfColumnIsHidden("request_jira_status"),
           render: ({ request_jira_id }) => {
+
+            if (request_jira_id === null) {
+              return null
+            }
+
             const jiraStatusMatch = jiraTicketStatusList.find(
               (status) => status.jira_id === request_jira_id
             );
@@ -496,31 +507,34 @@ const RequestListTable = ({
                 disabled={!Boolean(jiraStatusMatch)}
                 label={jiraStatusMatch && jiraStatusMatch.status}
               >
-                <Box maw={120} sx={{ cursor: "pointer" }}>
-                  {request_jira_id && (
-                    <Badge
-                      w={120}
-                      key={request_jira_id}
-                      variant={jiraStatusMatch ? "light" : "filled"}
-                      color={badgeColor}
-                      onClick={() =>
-                        handleFetchJiraTicketStatus(request_jira_id)
-                      }
-                    >
-                      {isBeingFetched ? (
-                        <Loader
-                          color={jiraStatusMatch ? "blue" : "white"}
-                          variant="dots"
-                          size={24}
-                        />
-                      ) : jiraStatusMatch ? (
-                        jiraStatusMatch.status
-                      ) : (
-                        "Show Status"
-                      )}
-                    </Badge>
-                  )}
-                </Box>
+                <Flex justify="center">
+                  <Box maw={120} sx={{ cursor: "pointer" }}>
+                    {String(request_jira_id) && (
+                      <Badge
+                        w={120}
+                        key={String(request_jira_id)}
+                        variant={jiraStatusMatch ? "light" : "filled"}
+                        color={badgeColor}
+                        onClick={() =>
+                          handleFetchJiraTicketStatus(String(request_jira_id))
+                        }
+                      >
+                        {isBeingFetched ? (
+                          <Loader
+                            color={jiraStatusMatch ? "blue" : "white"}
+                            variant="dots"
+                            size={24}
+                          />
+                        ) : jiraStatusMatch ? (
+                          jiraStatusMatch.status
+                        ) : (
+                          "Show Status"
+                        )}
+                      </Badge>
+                    )}
+                  </Box>
+                </Flex>
+                
               </Tooltip>
             );
           },
@@ -562,7 +576,7 @@ const RequestListTable = ({
                         onClick={() =>
                           handleFetchOtpId(
                             `${request_jira_id}`,
-                            request_formsly_id
+                            String(request_formsly_id)
                           )
                         }
                       >
@@ -581,20 +595,22 @@ const RequestListTable = ({
                         <Text truncate w={90}>
                           {currentOtp?.otpId}
                         </Text>
-                        <CopyButton value={currentOtp?.otpId as string}>
-                          {({ copied, copy }) => (
-                            <Tooltip
-                              label={
-                                copied ? "Copied" : `Copy ${currentOtp?.otpId}`
-                              }
-                              onClick={copy}
-                            >
-                              <ActionIcon>
-                                <IconCopy size={16} />
-                              </ActionIcon>
-                            </Tooltip>
-                          )}
-                        </CopyButton>
+                        {currentOtp?.otpId && 
+                          <CopyButton value={currentOtp?.otpId as string}>
+                            {({ copied, copy }) => (
+                              <Tooltip
+                                label={
+                                  copied ? "Copied" : `Copy ${currentOtp?.otpId}`
+                                }
+                                onClick={copy}
+                              >
+                                <ActionIcon>
+                                  <IconCopy size={16} />
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                          </CopyButton>
+                        }
                       </>
                     )}
                   </Flex>
@@ -604,16 +620,14 @@ const RequestListTable = ({
           },
         },
         {
-          accessor: "request_form_id",
+          accessor: "form_name",
           title: "Form Name",
+          sortable: true,
           hidden: checkIfColumnIsHidden("request_form_name"),
-          render: ({ request_form_id }) => {
-            const formMatch = formList.find(
-              (form) => form.form_id === request_form_id
-            );
+          render: ({form_name}) => {
             return (
               <Text truncate maw={150}>
-                {formMatch?.form_name}
+                {String(form_name)}
               </Text>
             );
           },
@@ -621,7 +635,6 @@ const RequestListTable = ({
         {
           accessor: "request_ped_equipment_number",
           title: "PED Equipment Number",
-          width: 220,
           hidden:
             !isPEDForm || checkIfColumnIsHidden("request_ped_equipment_number"),
           render: ({ request_id }) => {
@@ -683,60 +696,58 @@ const RequestListTable = ({
         {
           accessor: "request_status",
           title: "Formsly Status",
+          sortable: true,
           hidden: checkIfColumnIsHidden("request_status"),
           render: ({ request_status }) => (
-            <Badge variant="filled" color={getStatusToColor(request_status)}>
-              {request_status}
-            </Badge>
+            <Flex justify="center">
+              <Badge variant="filled" color={getStatusToColor(String(request_status))}>
+                {String(request_status)}
+              </Badge>
+            </Flex>
           ),
         },
         {
-          accessor: "request_team_member_id",
+          accessor: "user_id",
           title: "Requested By",
+          sortable: true,
           hidden: checkIfColumnIsHidden("request_team_member_id"),
-          render: ({ request_team_member_id }) => {
-            const requestor = teamMemberList.find(
-              (member) => member.team_member_id === request_team_member_id
-            );
+          render: (request) => {
 
-            const requestorUserData = requestor
-              ? requestor.team_member_user
-              : null;
+            const { user_id, user_first_name, user_last_name, request_team_member_id} = request as {user_id: string, user_first_name: string, user_last_name: string, request_team_member_id: string}
 
-            return requestorUserData ? (
-              <Flex px={0} gap={8} wrap="wrap">
+            return (
+              <Flex px={0} gap={8} align='center'>
                 <Avatar
                   // src={requestor.user_avatar}
                   {...defaultAvatarProps}
                   color={getAvatarColor(
-                    Number(`${requestorUserData.user_id.charCodeAt(0)}`)
+                    Number(`${user_id.charCodeAt(0)}`)
                   )}
                   className={classes.requestor}
                   onClick={() =>
                     window.open(`/member/${request_team_member_id}`)
                   }
                 >
-                  {requestorUserData.user_first_name[0] +
-                    requestorUserData.user_last_name[0]}
+                  {user_first_name[0] +
+                    user_last_name[0]}
                 </Avatar>
                 <Anchor
                   href={`/member/${request_team_member_id}`}
                   target="_blank"
                 >
-                  <Text>{`${requestorUserData?.user_first_name} ${requestorUserData?.user_last_name}`}</Text>
+                  <Text>{`${user_first_name} ${user_last_name}`}</Text>
                 </Anchor>
               </Flex>
-            ) : (
-              <></>
-            );
+            ) 
           },
         },
         {
           accessor: "request_signer",
           title: "Approver",
           hidden: checkIfColumnIsHidden("request_signer"),
-          render: ({ request_signer }) => {
-            const signerList = request_signer.map((signer) => {
+          render: (request) => {
+            const { request_signer } = request as {request_signer: requestSignerType[]}
+            const signerList = request_signer.map((signer: requestSignerType) => {
               const signerTeamMemberData = teamMemberList.find(
                 (member) =>
                   member.team_member_id ===
@@ -760,17 +771,17 @@ const RequestListTable = ({
         {
           accessor: "request_date_created",
           title: "Date Created",
-          width: 120,
           hidden: checkIfColumnIsHidden("request_date_created"),
+          sortable: true,
           render: ({ request_date_created }) => (
-            <Text>{formatDate(new Date(request_date_created))}</Text>
+            <Text>{formatDate(new Date(String(request_date_created)))}</Text>
           ),
         },
         {
           accessor: "view",
           title: "View",
-          textAlignment: "center",
           hidden: checkIfColumnIsHidden("view"),
+          textAlignment: "center",
           render: ({ request_id, request_formsly_id }) => {
             const requestId =
               request_formsly_id === "-" ? request_id : request_formsly_id;
@@ -793,7 +804,13 @@ const RequestListTable = ({
           },
         },
       ]}
+      showTableColumnFilter={showTableColumnFilter}
+      setShowTableColumnFilter={setShowTableColumnFilter}
+      listTableColumnFilter={listTableColumnFilter}
+      setListTableColumnFilter={setListTableColumnFilter}
+      tableColumnList={tableColumnList}
     />
+    
   );
 };
 
