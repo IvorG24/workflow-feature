@@ -232,7 +232,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       return;
     }
   };
-
   const resetSigner = () => {
     setSignerList(
       form.form_signer.map((signer) => ({
@@ -264,6 +263,8 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
         resetSigner();
       }
     } catch (e) {
+      console.log(e);
+
       setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -273,22 +274,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
       setIsFetchingSigner(false);
     }
   };
-
-  useEffect(() => {
-    if (localFormState) {
-      removeSection();
-      replaceSection(localFormState.form_section);
-      setSignerList(localFormState.form_signer);
-    } else {
-      replaceSection(form.form_section);
-      setSignerList(
-        form.form_signer.map((signer) => ({
-          ...signer,
-          signer_action: signer.signer_action.toUpperCase(),
-        }))
-      );
-    }
-  }, [form, localFormState, replaceSection]);
 
   useEffect(() => {
     const resetLocalStorage = async () => {
@@ -341,53 +326,72 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
             },
           ]);
         } else {
-          const newSections =
-            localFormState?.form_section.map((section, sectionIndex) => {
-              const categoryOption =
-                form.form_section[1]?.section_field[0].field_option;
-              const unitOption =
-                form.form_section[1]?.section_field[3].field_option;
-
-              return {
-                ...section,
-                section_field: section.section_field.map(
-                  (field, fieldIndex) => {
-                    const fieldName =
-                      localFormState.form_section[sectionIndex].section_field[
-                        fieldIndex
-                      ].field_name;
-
-                    let newFieldOption = field.field_option;
-                    switch (fieldName) {
-                      case "Preferred Supplier":
-                        newFieldOption = supplierOptionlist;
-                        break;
-                      case "Category":
-                        newFieldOption = categoryOption;
-                        break;
-                      case "Requesting Project":
-                        newFieldOption = projectOptions;
-                        break;
-                      case "Unit of Measurement":
-                        newFieldOption = unitOption;
-                        break;
-                      default:
-                        break;
-                    }
-
-                    return {
-                      ...field,
-                      field_option: newFieldOption,
-                    };
-                  }
-                ),
-              };
-            }) || [];
-
-          const requestProjectValue = localFormState?.form_section[0]
-            .section_field[0].field_response as string | null;
-          handleProjectNameChange(requestProjectValue);
           removeSection();
+          const newSections = (localFormState?.form_section || []).map(
+            (section, sectionIndex) => {
+              if (sectionIndex > 0) {
+                const categoryOption =
+                  form.form_section[1]?.section_field[0]?.field_option;
+                const unitOption =
+                  form.form_section[1]?.section_field[3]?.field_option;
+
+                const updatedSectionFields = [
+                  ...section.section_field.slice(0, 4),
+                  {
+                    ...form.form_section[1].section_field[9],
+                    field_option: supplierOptionlist,
+                  },
+                ];
+
+                return {
+                  ...section,
+                  section_field: updatedSectionFields.map(
+                    (field, fieldIndex) => {
+                      const fieldName =
+                        localFormState?.form_section[sectionIndex]
+                          ?.section_field[fieldIndex]?.field_name;
+                      const supplierResponse =
+                        localFormState?.form_section[sectionIndex]
+                          ?.section_field[4]?.field_response;
+
+                      let newFieldOption = field.field_option;
+                      let newFieldResponse = field.field_response;
+
+                      switch (fieldName) {
+                        case "Preferred Supplier":
+                          newFieldOption = supplierOptionlist;
+                          newFieldResponse = supplierResponse;
+                          break;
+                        case "Category":
+                          newFieldOption = categoryOption;
+                          break;
+                        case "Requesting Project":
+                          newFieldOption = projectOptions;
+                          break;
+                        case "Unit of Measurement":
+                          newFieldOption = unitOption;
+                          break;
+                        default:
+                          break;
+                      }
+
+                      return {
+                        ...field,
+                        field_option: newFieldOption,
+                        field_response: newFieldResponse,
+                      };
+                    }
+                  ),
+                };
+              }
+              return section;
+            }
+          );
+
+          // Handle project name change and update sections
+          const requestProjectValue = localFormState?.form_section[0]
+            .section_field[0]?.field_response as string | null;
+          handleProjectNameChange(requestProjectValue);
           replaceSection(newSections);
         }
       } catch (e) {
@@ -399,9 +403,16 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
         setIsLoading(false);
       }
     };
+    const handleStorageChange = () => {
+      if (!localStorage.getItem(`${formId}`)) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
     fetchOptions();
     resetLocalStorage();
   }, [team, formId, replaceSection, localFormState, removeLocalState]);
+
   useBeforeunload(() => saveToLocalStorage());
 
   useSaveToLocalStorage({ saveToLocalStorage });
