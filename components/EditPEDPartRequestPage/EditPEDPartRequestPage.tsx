@@ -811,10 +811,14 @@ const EditPEDPartRequestPage = ({
           ...section.section_field.slice(9),
         ];
         removeSection(0);
-        addSection(0, {
-          ...section,
-          section_field: generalField,
-        });
+        addSection(
+          0,
+          {
+            ...section,
+            section_field: generalField,
+          },
+          { shouldFocus: false }
+        );
 
         const data = await getItemSectionChoices(supabaseClient, {});
         const equipmentGeneralNameChoices = data as unknown as {
@@ -850,10 +854,14 @@ const EditPEDPartRequestPage = ({
         ];
         setStoredFields([]);
         removeSection(0);
-        addSection(0, {
-          ...section,
-          section_field: generalField,
-        });
+        addSection(
+          0,
+          {
+            ...section,
+            section_field: generalField,
+          },
+          { shouldFocus: false }
+        );
       } else {
         const generalField = [
           ...section.section_field.slice(0, 4),
@@ -871,10 +879,14 @@ const EditPEDPartRequestPage = ({
           ...section.section_field.slice(9),
         ];
         removeSection(0);
-        addSection(0, {
-          ...section,
-          section_field: generalField,
-        });
+        addSection(
+          0,
+          {
+            ...section,
+            section_field: generalField,
+          },
+          { shouldFocus: false }
+        );
       }
     } catch (e) {
       setValue(`sections.0.section_field.${3}.field_response`, "");

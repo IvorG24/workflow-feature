@@ -1,4 +1,7 @@
 import {
+  fetchBarangay,
+  fetchCity,
+  fetchProvince,
   fetchRegion,
   getApplicationInformationPositionOptions,
 } from "@/backend/api/get";
@@ -48,6 +51,18 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
 
+  const [regionOptionList, setRegionOptionsList] = useState<
+    { region_id: string; region: string }[]
+  >([]);
+  const [provinceOptionList, setProvinceOptionList] = useState<
+    { province_id: string; province: string }[]
+  >([]);
+  const [cityOptionList, setCityOptionList] = useState<
+    { city_id: string; city: string }[]
+  >([]);
+  const [barangayOptionList, setBarangayOptionList] = useState<
+    { barangay_id: string; barangay: string; barangay_zip_code: string }[]
+  >([]);
   const [positionList, setPositionList] = useState<PositionTableRow[]>([]);
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
@@ -117,6 +132,7 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
           >
         );
         if (!regionData) throw new Error();
+        setRegionOptionsList(regionData);
 
         const regionOptionList = regionData.map((region, index) => {
           return {
@@ -134,6 +150,13 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
                 ...form.form_section[0].section_field[0],
                 field_option: positionOptionList,
               },
+              ...form.form_section[0].section_field.slice(1, 3).map((field) => {
+                return {
+                  ...field,
+                  field_is_read_only: true,
+                  field_is_required: false,
+                };
+              }),
               ...form.form_section[0].section_field.slice(3),
             ],
           },
@@ -141,15 +164,29 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
           {
             ...form.form_section[2],
             section_field: [
-              form.form_section[2].section_field[0],
+              ...form.form_section[2].section_field.slice(0, 2),
               {
-                ...form.form_section[2].section_field[1],
+                ...form.form_section[2].section_field[2],
                 field_option: regionOptionList,
               },
-              ...form.form_section[2].section_field.slice(2),
+              ...form.form_section[2].section_field.slice(3).map((field) => {
+                return { ...field, field_is_read_only: true };
+              }),
             ],
           },
-          ...form.form_section.slice(3),
+          form.form_section[3],
+          {
+            ...form.form_section[5],
+            section_field: [
+              ...form.form_section[5].section_field.slice(0, 3),
+              {
+                ...form.form_section[5].section_field[3],
+                field_option: regionOptionList,
+              },
+              ...form.form_section[5].section_field.slice(4),
+            ],
+          },
+          ...form.form_section.slice(7),
         ]);
       } catch (e) {
         notifications.show({
@@ -202,6 +239,19 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
     const sectionMatch = form.form_section.find(
       (section) => section.section_id === sectionId
     );
+    let workExperienceSectionCount = 0;
+    formSections.forEach((section) => {
+      if (section.section_name === "Most Recent Work Experience") {
+        workExperienceSectionCount++;
+      }
+    });
+    if (workExperienceSectionCount === 3) {
+      notifications.show({
+        message: "Only 3 Most Recent Work Experience is needed.",
+        color: "orange",
+      });
+      return;
+    }
     if (sectionMatch) {
       const sectionDuplicatableId = uuidv4();
       const duplicatedFieldsWithDuplicatableId = sectionMatch.section_field.map(
@@ -271,6 +321,10 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
   const handlePositionChange = (value: string | null) => {
     const newSection = getValues(`sections.0`);
 
+    const isWithEducationalBackground = formSections.some(
+      (section) => section.section_name === "Educational Background"
+    );
+
     try {
       if (value) {
         setLoadingFieldList([{ sectionIndex: 0, fieldIndex: 0 }]);
@@ -283,15 +337,36 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
           ...newSection,
           section_field: [
             newSection.section_field[0],
-            ...(position?.position_is_with_certificate
-              ? [{ ...form.form_section[0].section_field[1] }]
-              : []),
-            ...(position?.position_is_with_license
-              ? [{ ...form.form_section[0].section_field[2] }]
-              : []),
+            {
+              ...form.form_section[0].section_field[1],
+              field_is_required: Boolean(
+                position?.position_is_with_certificate
+              ),
+              field_is_read_only: !Boolean(
+                position?.position_is_with_certificate
+              ),
+            },
+            {
+              ...form.form_section[0].section_field[2],
+              field_is_required: Boolean(position?.position_is_with_license),
+              field_is_read_only: !Boolean(position?.position_is_with_license),
+            },
             newSection.section_field[newSection.section_field.length - 1],
           ],
         });
+
+        if (
+          position?.position_type === "STAFF" &&
+          !isWithEducationalBackground
+        ) {
+          addSection(4, form.form_section[4], { shouldFocus: false });
+          addSection(6, form.form_section[6], { shouldFocus: false });
+        } else if (
+          position?.position_type === "SKILLED" &&
+          isWithEducationalBackground
+        ) {
+          removeSection([4, 6]);
+        }
       } else {
         updateSection(0, {
           ...newSection,
@@ -300,15 +375,430 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
             newSection.section_field[newSection.section_field.length - 1],
           ],
         });
+
+        if (isWithEducationalBackground) {
+          removeSection([4, 6]);
+        }
       }
     } catch (e) {
       setValue(`sections.0.section_field.0.field_response`, "");
+      if (isWithEducationalBackground) {
+        removeSection([4, 6]);
+      }
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
     } finally {
       setLoadingFieldList([]);
+    }
+  };
+
+  const handleRegionChange = async (value: string | null) => {
+    const newSection = getValues(`sections.2`);
+    try {
+      setLoadingFieldList([{ sectionIndex: 2, fieldIndex: 3 }]);
+      setCityOptionList([]);
+      setBarangayOptionList([]);
+
+      if (value) {
+        const regionId = regionOptionList.find(
+          (region) => region.region === value
+        )?.region_id;
+        if (!regionId) throw new Error();
+
+        const provinceData = await fetchProvince(
+          supabaseClientAddress as unknown as SupabaseClient<
+            OneOfficeDatabase["address_schema"]
+          >,
+          { regionId }
+        );
+        if (!provinceData) throw new Error();
+
+        const provinceOption = provinceData.map((province, index) => {
+          return {
+            option_field_id: form.form_section[2].section_field[3].field_id,
+            option_id: province.province_id,
+            option_order: index,
+            option_value: province.province,
+          };
+        });
+        setProvinceOptionList(provinceData);
+
+        updateSection(2, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 3),
+            {
+              ...newSection.section_field[3],
+              field_option: provinceOption,
+              field_is_read_only: false,
+            },
+            ...newSection.section_field.slice(4),
+          ],
+        });
+      } else {
+        updateSection(2, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 3),
+            ...newSection.section_field.slice(3).map((field) => {
+              return {
+                ...field,
+                field_response: "",
+                field_option: [],
+                field_is_read_only: true,
+              };
+            }),
+          ],
+        });
+      }
+    } catch (e) {
+      updateSection(2, {
+        ...newSection,
+        section_field: [
+          ...newSection.section_field.slice(0, 2),
+          {
+            ...newSection.section_field[2],
+            field_response: "",
+          },
+          ...newSection.section_field.slice(3).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+              field_is_read_only: true,
+            };
+          }),
+        ],
+      });
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
+    }
+  };
+
+  const handleProvinceChange = async (value: string | null) => {
+    const newSection = getValues(`sections.2`);
+    try {
+      setLoadingFieldList([{ sectionIndex: 2, fieldIndex: 4 }]);
+      setBarangayOptionList([]);
+
+      if (value) {
+        const provinceId = provinceOptionList.find(
+          (province) => province.province === value
+        )?.province_id;
+        if (!provinceId) throw new Error();
+
+        const cityData = await fetchCity(
+          supabaseClientAddress as unknown as SupabaseClient<
+            OneOfficeDatabase["address_schema"]
+          >,
+          { provinceId }
+        );
+        if (!cityData) throw new Error();
+
+        const cityOption = cityData.map((city, index) => {
+          return {
+            option_field_id: form.form_section[2].section_field[4].field_id,
+            option_id: city.city_id,
+            option_order: index,
+            option_value: city.city,
+          };
+        });
+        setCityOptionList(cityData);
+
+        updateSection(2, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 4),
+            {
+              ...newSection.section_field[4],
+              field_option: cityOption,
+              field_is_read_only: false,
+            },
+            ...newSection.section_field.slice(5),
+          ],
+        });
+      } else {
+        updateSection(2, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 4),
+            ...newSection.section_field.slice(4).map((field) => {
+              return {
+                ...field,
+                field_response: "",
+                field_option: [],
+                field_is_read_only: true,
+              };
+            }),
+          ],
+        });
+      }
+    } catch (e) {
+      updateSection(2, {
+        ...newSection,
+        section_field: [
+          ...newSection.section_field.slice(0, 3),
+          {
+            ...newSection.section_field[3],
+            field_response: "",
+          },
+          ...newSection.section_field.slice(4).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+              field_is_read_only: true,
+            };
+          }),
+        ],
+      });
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
+    }
+  };
+
+  const handleCityChange = async (value: string | null) => {
+    const newSection = getValues(`sections.2`);
+    try {
+      setLoadingFieldList([{ sectionIndex: 2, fieldIndex: 5 }]);
+
+      if (value) {
+        const cityId = cityOptionList.find(
+          (city) => city.city === value
+        )?.city_id;
+        if (!cityId) throw new Error();
+
+        const barangayData = await fetchBarangay(
+          supabaseClientAddress as unknown as SupabaseClient<
+            OneOfficeDatabase["address_schema"]
+          >,
+          { cityId }
+        );
+        if (!barangayData) throw new Error();
+
+        const barangayOption = barangayData.map((barangay, index) => {
+          return {
+            option_field_id: form.form_section[2].section_field[5].field_id,
+            option_id: barangay.barangay_id,
+            option_order: index,
+            option_value: barangay.barangay,
+          };
+        });
+        setBarangayOptionList(barangayData);
+
+        updateSection(2, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 5),
+            {
+              ...newSection.section_field[5],
+              field_option: barangayOption,
+              field_is_read_only: false,
+            },
+            ...newSection.section_field.slice(6),
+          ],
+        });
+      } else {
+        updateSection(2, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 5),
+            ...newSection.section_field.slice(5).map((field) => {
+              return {
+                ...field,
+                field_response: "",
+                field_option: [],
+                field_is_read_only: true,
+              };
+            }),
+          ],
+        });
+      }
+    } catch (e) {
+      updateSection(2, {
+        ...newSection,
+        section_field: [
+          ...newSection.section_field.slice(0, 4),
+          {
+            ...newSection.section_field[4],
+            field_response: "",
+          },
+          ...newSection.section_field.slice(5).map((field) => {
+            return {
+              ...field,
+              field_response: "",
+              field_option: [],
+              field_is_read_only: true,
+            };
+          }),
+        ],
+      });
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
+    }
+  };
+
+  const handleBarangayChange = async (value: string | null) => {
+    const newSection = getValues(`sections.2`);
+    try {
+      setLoadingFieldList([
+        { sectionIndex: 2, fieldIndex: 6 },
+        { sectionIndex: 2, fieldIndex: 7 },
+      ]);
+
+      if (value) {
+        const zipCode = barangayOptionList.find(
+          (barangay) => barangay.barangay === value
+        )?.barangay_zip_code;
+        if (!zipCode) throw new Error();
+
+        updateSection(2, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 6),
+            {
+              ...newSection.section_field[6],
+              field_is_read_only: false,
+            },
+            {
+              ...newSection.section_field[7],
+              field_response: zipCode,
+            },
+          ],
+        });
+      } else {
+        updateSection(2, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 6),
+            {
+              ...newSection.section_field[6],
+              field_is_read_only: false,
+              field_response: "",
+            },
+            {
+              ...newSection.section_field[7],
+              field_response: "",
+            },
+          ],
+        });
+      }
+    } catch (e) {
+      updateSection(2, {
+        ...newSection,
+        section_field: [
+          ...newSection.section_field.slice(0, 6),
+          {
+            ...newSection.section_field[6],
+            field_is_read_only: false,
+            field_response: "",
+          },
+          {
+            ...newSection.section_field[7],
+            field_response: "",
+          },
+        ],
+      });
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
+    }
+  };
+
+  const handleWillingToBeAssignedAnywhereChange = async (value: boolean) => {
+    const newSection = getValues(`sections.5`);
+
+    if (value) {
+      updateSection(5, {
+        ...newSection,
+        section_field: [
+          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(4),
+        ],
+      });
+    } else {
+      const regionOptions = regionOptionList.map((region, index) => {
+        return {
+          option_field_id: form.form_section[5].section_field[3].field_id,
+          option_id: region.region_id,
+          option_order: index,
+          option_value: region.region,
+        };
+      });
+      updateSection(5, {
+        ...newSection,
+        section_field: [
+          ...newSection.section_field.slice(0, 3),
+          {
+            ...form.form_section[5].section_field[3],
+            field_option: regionOptions,
+          },
+          ...newSection.section_field.slice(3),
+        ],
+      });
+    }
+  };
+
+  const handleHighestEducationalAttainmentChange = async (
+    value: string | null
+  ) => {
+    const newSection = getValues(`sections.4`);
+
+    const isWithDegree = newSection.section_field.some(
+      (field) => field.field_name === "Degree"
+    );
+
+    const isDegreeRequired = value
+      ? !["High School", "Vocational"].includes(value)
+      : false;
+
+    if (value) {
+      if (!isDegreeRequired && isWithDegree) {
+        updateSection(4, {
+          ...newSection,
+          section_field: [
+            newSection.section_field[0],
+            ...newSection.section_field.slice(2),
+          ],
+        });
+      } else if (isDegreeRequired && !isWithDegree) {
+        updateSection(4, {
+          ...newSection,
+          section_field: [
+            newSection.section_field[0],
+            form.form_section[4].section_field[1],
+            ...newSection.section_field.slice(1),
+          ],
+        });
+      }
+    } else {
+      if (!isWithDegree) {
+        updateSection(4, {
+          ...newSection,
+          section_field: [
+            newSection.section_field[0],
+            form.form_section[4].section_field[1],
+            ...newSection.section_field.slice(1),
+          ],
+        });
+      }
     }
   };
 
@@ -339,6 +829,14 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
                     onRemoveSection={handleRemoveSection}
                     applicationInformationFormMethods={{
                       onPositionChange: handlePositionChange,
+                      onRegionChange: handleRegionChange,
+                      onProvinceChange: handleProvinceChange,
+                      onCityChange: handleCityChange,
+                      onBarangayChange: handleBarangayChange,
+                      onWillingToBeAssignedAnywhereChange:
+                        handleWillingToBeAssignedAnywhereChange,
+                      onHighestEducationalAttainmentChange:
+                        handleHighestEducationalAttainmentChange,
                     }}
                   />
                   {section.section_is_duplicatable &&

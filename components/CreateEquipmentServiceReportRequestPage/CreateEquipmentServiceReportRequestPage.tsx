@@ -610,16 +610,20 @@ const CreateEquipmentServiceReportRequestPage = ({
     try {
       if (value === "Labor and Parts") {
         setLoadingFieldList([{ sectionIndex: 1, fieldIndex: 12 }]);
-        addSection(formSections.length, {
-          ...form.form_section[4],
-          section_field: [
-            {
-              ...form.form_section[4].section_field[0],
-              field_option: generalItemNameOptions,
-            },
-            ...form.form_section[4].section_field.slice(1),
-          ],
-        });
+        addSection(
+          formSections.length,
+          {
+            ...form.form_section[4],
+            section_field: [
+              {
+                ...form.form_section[4].section_field[0],
+                field_option: generalItemNameOptions,
+              },
+              ...form.form_section[4].section_field.slice(1),
+            ],
+          },
+          { shouldFocus: false }
+        );
         setTimeout(
           () => setFocus(`sections.${2}.section_field.0.field_response`),
           0

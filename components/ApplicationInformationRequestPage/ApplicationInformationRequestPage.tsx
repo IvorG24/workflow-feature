@@ -64,9 +64,9 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
     id: request.request_jira_id,
     link: request.request_jira_link,
   });
-  const formSection = generateSectionWithDuplicateList([
-    request.request_form.form_section[0],
-  ]);
+  const formSection = generateSectionWithDuplicateList(
+    request.request_form.form_section
+  );
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -349,11 +349,19 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
           jiraTicketStatus={jiraTicketStatus}
         />
 
-        <RequestSection
-          section={formSection[0]}
-          isFormslyForm={true}
-          isOnlyWithResponse
-        />
+        <Stack spacing="xl" mt="lg">
+          {formSection.map((section, idx) => {
+            return (
+              <RequestSection
+                key={section.section_id + idx}
+                section={section}
+                isFormslyForm={true}
+                isOnlyWithResponse
+                index={idx + 1}
+              />
+            );
+          })}
+        </Stack>
 
         {isRequestActionSectionVisible && (
           <RequestActionSection

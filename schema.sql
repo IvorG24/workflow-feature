@@ -5912,7 +5912,7 @@ AS $$
           team_project_name
         FROM public.request_view
         LEFT JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_schema.form_table ON form_id = request_form_id
         LEFT JOIN team_schema.team_project_table ON team_project_id = request_project_id
         WHERE 
@@ -9910,7 +9910,7 @@ AS $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {

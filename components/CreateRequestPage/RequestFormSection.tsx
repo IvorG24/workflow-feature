@@ -225,6 +225,12 @@ type RequestFormSectionProps = {
   };
   applicationInformationFormMethods?: {
     onPositionChange: (value: string | null) => void;
+    onRegionChange: (value: string | null) => void;
+    onProvinceChange: (value: string | null) => void;
+    onCityChange: (value: string | null) => void;
+    onBarangayChange: (value: string | null) => void;
+    onWillingToBeAssignedAnywhereChange: (value: boolean) => void;
+    onHighestEducationalAttainmentChange: (value: string | null) => void;
   };
 };
 

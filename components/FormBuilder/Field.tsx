@@ -375,6 +375,8 @@ const Field = ({
             className={classes.previewField}
             mt="xs"
             sx={{ label: { cursor: "pointer" } }}
+            onLabel="ON"
+            offLabel="OFF"
           />
         )}
 
