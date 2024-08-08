@@ -99,7 +99,7 @@ const CreatePEDPartRequestPage = ({
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -187,7 +187,7 @@ const CreatePEDPartRequestPage = ({
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };
@@ -552,7 +552,7 @@ const CreatePEDPartRequestPage = ({
           ...section.section_field.slice(9),
         ];
         removeSection(0);
-        addSection(
+        insertSection(
           0,
           {
             ...section,
@@ -595,7 +595,7 @@ const CreatePEDPartRequestPage = ({
         ];
         setStoredFields([]);
         removeSection(0);
-        addSection(
+        insertSection(
           0,
           {
             ...section,
@@ -620,7 +620,7 @@ const CreatePEDPartRequestPage = ({
           ...section.section_field.slice(9),
         ];
         removeSection(0);
-        addSection(
+        insertSection(
           0,
           {
             ...section,

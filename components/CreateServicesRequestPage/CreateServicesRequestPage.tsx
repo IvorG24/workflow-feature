@@ -91,7 +91,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
   } = useFieldArray({
@@ -216,7 +216,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
           duplicatedFieldsWithDuplicatableId[9],
         ],
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };

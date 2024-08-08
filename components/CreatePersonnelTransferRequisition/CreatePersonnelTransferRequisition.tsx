@@ -71,7 +71,7 @@ const CreatePersonnelTransferRequisition = ({
     requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -236,7 +236,7 @@ const CreatePersonnelTransferRequisition = ({
       section_field: duplicatedFieldsWithDuplicatableId,
     };
 
-    addSection(sectionLastIndex + 1, newSection);
+    insertSection(sectionLastIndex + 1, newSection);
     setTimeout(
       () =>
         setFocus(
@@ -987,7 +987,7 @@ const CreatePersonnelTransferRequisition = ({
     try {
       setLoadingFieldList([{ sectionIndex: index, fieldIndex: 2 }]);
       if (value) {
-        addSection(index + 1, form.form_section[7], { shouldFocus: false });
+        insertSection(index + 1, form.form_section[7], { shouldFocus: false });
         setTimeout(
           () =>
             setFocus(`sections.${index + 1}.section_field.0.field_response`),
@@ -1023,7 +1023,7 @@ const CreatePersonnelTransferRequisition = ({
 
       if (value === "Contractual") {
         removeSection(index);
-        addSection(
+        insertSection(
           index,
           {
             ...currentSection,
@@ -1037,7 +1037,7 @@ const CreatePersonnelTransferRequisition = ({
         );
       } else if (prevValue === "Contractual") {
         removeSection(index);
-        addSection(
+        insertSection(
           index,
           {
             ...currentSection,
@@ -1078,7 +1078,7 @@ const CreatePersonnelTransferRequisition = ({
 
       removeSection(sectionIndex);
       if (value === "Area of Assignment") {
-        addSection(
+        insertSection(
           sectionIndex,
           {
             ...currentSection,
@@ -1090,7 +1090,7 @@ const CreatePersonnelTransferRequisition = ({
           { shouldFocus: false }
         );
       } else if (value === "Specific Work Assignment") {
-        addSection(
+        insertSection(
           sectionIndex,
           {
             ...currentSection,
@@ -1102,7 +1102,7 @@ const CreatePersonnelTransferRequisition = ({
           { shouldFocus: false }
         );
       } else {
-        addSection(
+        insertSection(
           sectionIndex,
           {
             ...currentSection,

@@ -48,7 +48,7 @@ const TicketForm = ({
   const {
     fields: ticketSections,
     replace: replaceSection,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
   } = useFieldArray({
     control,
@@ -134,7 +134,7 @@ const TicketForm = ({
         field_section_duplicatable_id: sectionDuplicatableId,
         ticket_section_fields: duplicatedFieldsWithDuplicatableId,
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };

@@ -351,6 +351,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
 
         <Stack spacing="xl" mt="lg">
           {formSection.map((section, idx) => {
+            if (!section.section_field[0].field_response) return null;
             return (
               <RequestSection
                 key={section.section_id + idx}
@@ -373,11 +374,11 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
                 ? Boolean(isUserSigner.signer_is_primary_signer)
                 : false
             }
-            isEditable={isEditable}
+            isEditable={false}
             isCancelable={isCancelable}
             canSignerTakeAction={canSignerTakeAction}
             isDeletable={isDeletable}
-            isUserRequester={isUserRequester}
+            isUserRequester={false}
             requestId={request.request_id}
             isItemForm
             onCreateJiraTicket={onCreateJiraTicket}

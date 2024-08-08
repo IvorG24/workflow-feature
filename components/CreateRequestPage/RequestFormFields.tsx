@@ -260,7 +260,10 @@ type RequestFormFieldsProps = {
     onProvinceChange: (value: string | null) => void;
     onCityChange: (value: string | null) => void;
     onBarangayChange: (value: string | null) => void;
-    onWillingToBeAssignedAnywhereChange: (value: boolean) => void;
+    onWillingToBeAssignedAnywhereChange: (
+      value: boolean,
+      index: number
+    ) => void;
     onHighestEducationalAttainmentChange: (value: string | null) => void;
   };
 };
@@ -552,8 +555,8 @@ const RequestFormFields = ({
             />
           );
         } else {
-          let maxLength = undefined;
-          let formatter = undefined;
+          let maxLength: number | undefined = undefined;
+          let formatter: ((value: string) => string) | undefined = undefined;
 
           switch (field.field_name) {
             case "Contact Number":
@@ -747,7 +750,8 @@ const RequestFormFields = ({
                     case "Are you willing to be assigned anywhere?":
                       applicationInformationFormMethods &&
                         applicationInformationFormMethods.onWillingToBeAssignedAnywhereChange(
-                          value
+                          value,
+                          sectionIndex
                         );
                       break;
                   }

@@ -2,20 +2,15 @@ import { checkIfOtpIdIsUnique } from "@/backend/api/get";
 import { updateOtpId } from "@/backend/api/update";
 import { formatDate, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import {
-  getAvatarColor,
-  getJiraTicketStatusColor,
-  getStatusToColor,
-} from "@/utils/styling";
+import { getJiraTicketStatusColor } from "@/utils/styling";
 import { RequestWithResponseType } from "@/utils/types";
 import {
   Anchor,
-  Avatar,
   Badge,
   Button,
-  Flex,
   Group,
   Paper,
+  Space,
   Stack,
   Text,
   TextInput,
@@ -23,7 +18,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconCalendar, IconId } from "@tabler/icons-react";
+import { IconId } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -92,175 +87,179 @@ const RequestDetailsSection = ({
     (signer) => signer.request_signer_signer.signer_is_primary_signer
   );
 
+  const fieldList = [
+    {
+      label: "Form Name",
+      value: request.request_form.form_name,
+    },
+    {
+      label: "Form Description",
+      value: request.request_form.form_description,
+    },
+    {
+      label: "Date Created",
+      value: formatDate(new Date(requestDateCreated)),
+    },
+    ...(request.request_form.form_type && request.request_form.form_sub_type
+      ? [
+          {
+            label: "Type",
+            value: request.request_form.form_type,
+          },
+          {
+            label: "Sub Type",
+            value: request.request_form.form_sub_type,
+          },
+        ]
+      : []),
+    ...(requestor.user_first_name
+      ? [
+          {
+            label: "Requested by",
+            value: `${requestor.user_first_name} ${requestor.user_last_name}`,
+          },
+        ]
+      : []),
+    {
+      label: "Status",
+      value: requestStatus,
+    },
+    ...(primarySigner &&
+    primarySigner.request_signer_status_date_updated &&
+    ["APPROVED", "REJECTED"].includes(request.request_status)
+      ? [
+          {
+            label: "Date Updated",
+            value: `${formatDate(
+              new Date(primarySigner.request_signer_status_date_updated)
+            )} ${formatTime(
+              new Date(primarySigner.request_signer_status_date_updated)
+            )}`,
+          },
+        ]
+      : []),
+    {
+      label: "Request ID",
+      value:
+        request.request_formsly_id === "-"
+          ? request.request_id
+          : request.request_formsly_id,
+    },
+    ...(request.request_project.team_project_name
+      ? [
+          {
+            label: "Requesting Project",
+            value: request.request_project.team_project_name,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <Paper p="xl" shadow="xs">
-      <Title order={2}>{request.request_form.form_name}</Title>
-      <Text mt="xs">{request.request_form.form_description}</Text>
+      <Title order={4} color="dimmed">
+        Metadata
+      </Title>
+      <Space h="xl" />
+      <Stack spacing="xs">
+        {fieldList.map((field, index) => (
+          <TextInput
+            key={index}
+            label={field.label}
+            value={field.value}
+            readOnly
+            variant="filled"
+          />
+        ))}
 
-      {request.request_form.form_type && request.request_form.form_sub_type && (
-        <Stack mt="xl" spacing="xs">
-          <Group>
-            <Title order={5}>Type:</Title>
-            <Text>{request.request_form.form_type}</Text>
-          </Group>
-          <Group>
-            <Title order={5}>Sub Type:</Title>
-            <Text>{request.request_form.form_sub_type}</Text>
-          </Group>
-        </Stack>
-      )}
-
-      {requestor.user_first_name && (
-        <>
-          <Title order={5} mt="xl">
-            Requested by:
-          </Title>
-          <Flex gap="md" align="center" mt="xs">
-            <Avatar
-              size={50}
-              src={requestor.user_avatar}
-              color={getAvatarColor(
-                Number(`${requestor.user_id.charCodeAt(0)}`)
-              )}
-              radius="xl"
-            >
-              {(
-                requestor.user_first_name[0] + requestor.user_last_name[0]
-              ).toUpperCase()}
-            </Avatar>
-            <Stack spacing={0}>
-              <Text>
-                {`${requestor.user_first_name} ${requestor.user_last_name}`}
-              </Text>
-            </Stack>
-          </Flex>
-        </>
-      )}
-      <Group spacing="md" mt="xl">
-        <IconCalendar />
-        <Text weight={600}>{requestDateCreated}</Text>
-      </Group>
-      <Group spacing="md" mt="xs">
-        <Text>Status:</Text>
-        <Group spacing="xs">
-          <Badge color={getStatusToColor(requestStatus.toLowerCase())}>
-            {requestStatus}
-          </Badge>
-          {primarySigner &&
-            primarySigner.request_signer_status_date_updated &&
-            ["APPROVED", "REJECTED"].includes(request.request_status) && (
-              <Text color="dimmed">
-                {`on ${formatDate(
-                  new Date(primarySigner.request_signer_status_date_updated)
-                )} ${formatTime(
-                  new Date(primarySigner.request_signer_status_date_updated)
-                )}`}
-              </Text>
-            )}
-        </Group>
-      </Group>
-
-      <Group spacing="md" mt="xl">
-        <Title order={5}>Request ID:</Title>
-        <Text>
-          {request.request_formsly_id === "-"
-            ? request.request_id
-            : request.request_formsly_id}
-        </Text>
-      </Group>
-      {request.request_project.team_project_name && (
-        <Group spacing="md" mt="xl">
-          <Title order={5}>Requesting Project:</Title>
-          <Text>{request.request_project.team_project_name}</Text>
-        </Group>
-      )}
-      {requestJira?.id && (
-        <Group spacing="md" mt="xl">
-          <Title order={5}>Jira ID:</Title>
-          <Text>
-            <Anchor
-              href={
-                requestJira.link
-                  ? requestJira.link?.slice(0, 8) !== "https://"
-                    ? `https://${requestJira.link}`
-                    : requestJira.link
-                  : "#"
-              }
-              target="_blank"
-            >
-              {requestJira.id}
-            </Anchor>
-          </Text>
-          {jiraTicketStatus && (
-            <Badge
-              color={getJiraTicketStatusColor(jiraTicketStatus.toLowerCase())}
-            >
-              {jiraTicketStatus}
-            </Badge>
-          )}
-        </Group>
-      )}
-      {isFormslyItemRequest &&
-        !isAddingOtpID &&
-        requestStatus === "APPROVED" &&
-        !`${router.pathname}`.includes("public-request") &&
-        isPrimarySigner && (
+        {requestJira?.id && (
           <Group spacing="md" mt="xl">
-            <Title order={5}>OTP ID:</Title>
-            {otpID ? (
-              <Text>{otpID}</Text>
-            ) : (
-              <Button variant="light" onClick={() => setIsAddingOtpID(true)}>
-                Add OTP ID
-              </Button>
+            <Title order={5}>Jira ID:</Title>
+            <Text>
+              <Anchor
+                href={
+                  requestJira.link
+                    ? requestJira.link?.slice(0, 8) !== "https://"
+                      ? `https://${requestJira.link}`
+                      : requestJira.link
+                    : "#"
+                }
+                target="_blank"
+              >
+                {requestJira.id}
+              </Anchor>
+            </Text>
+            {jiraTicketStatus && (
+              <Badge
+                color={getJiraTicketStatusColor(jiraTicketStatus.toLowerCase())}
+              >
+                {jiraTicketStatus}
+              </Badge>
             )}
           </Group>
         )}
-      {isAddingOtpID && (
-        <form onSubmit={handleSubmit(handleUpdateOtpID)}>
-          <TextInput
-            mt="xl"
-            icon={<IconId size={16} />}
-            placeholder="OTP ID"
-            data-autofocus
-            {...register("otpID", {
-              validate: {
-                required: (value) => {
-                  if (!value) {
-                    return "OTP ID is required.";
-                  } else {
-                    return true;
-                  }
+        {isFormslyItemRequest &&
+          !isAddingOtpID &&
+          requestStatus === "APPROVED" &&
+          !`${router.pathname}`.includes("public-request") &&
+          isPrimarySigner && (
+            <Group spacing="md" mt="xl">
+              <Title order={5}>OTP ID:</Title>
+              {otpID ? (
+                <Text>{otpID}</Text>
+              ) : (
+                <Button variant="light" onClick={() => setIsAddingOtpID(true)}>
+                  Add OTP ID
+                </Button>
+              )}
+            </Group>
+          )}
+        {isAddingOtpID && (
+          <form onSubmit={handleSubmit(handleUpdateOtpID)}>
+            <TextInput
+              mt="xl"
+              icon={<IconId size={16} />}
+              placeholder="OTP ID"
+              data-autofocus
+              {...register("otpID", {
+                validate: {
+                  required: (value) => {
+                    if (!value) {
+                      return "OTP ID is required.";
+                    } else {
+                      return true;
+                    }
+                  },
+                  checkIfUnique: async (value) => {
+                    if (
+                      await checkIfOtpIdIsUnique(supabaseClient, {
+                        value: value,
+                      })
+                    ) {
+                      return "OTP ID already exists.";
+                    } else {
+                      return true;
+                    }
+                  },
                 },
-                checkIfUnique: async (value) => {
-                  if (
-                    await checkIfOtpIdIsUnique(supabaseClient, {
-                      value: value,
-                    })
-                  ) {
-                    return "OTP ID already exists.";
-                  } else {
-                    return true;
-                  }
-                },
-              },
-            })}
-            error={errors.otpID?.message}
-          />
-          <Group spacing="xs" mt="xs" position="right">
-            <Button
-              disabled={isSubmitting}
-              variant="light"
-              onClick={() => setIsAddingOtpID(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" loading={isSubmitting}>
-              Submit
-            </Button>
-          </Group>
-        </form>
-      )}
+              })}
+              error={errors.otpID?.message}
+            />
+            <Group spacing="xs" mt="xs" position="right">
+              <Button
+                disabled={isSubmitting}
+                variant="light"
+                onClick={() => setIsAddingOtpID(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" loading={isSubmitting}>
+                Submit
+              </Button>
+            </Group>
+          </form>
+        )}
+      </Stack>
     </Paper>
   );
 };

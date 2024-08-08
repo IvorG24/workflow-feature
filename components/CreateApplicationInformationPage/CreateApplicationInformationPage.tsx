@@ -85,7 +85,7 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     update: updateSection,
     replace: replaceSection,
@@ -208,9 +208,12 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
         formId: form.form_id,
         signers: form.form_signer,
         teamId: "a5a28977-6956-45c1-a624-b9e90911502e",
-        requesterName: `TEMP`,
+        requesterName: data.sections[1].section_field
+          .slice(0, 3)
+          .map((field) => field.field_response)
+          .join(" "),
         formName: form.form_name,
-        isFormslyForm: false,
+        isFormslyForm: true,
         projectId: "",
         teamName: formatTeamNameToUrlKey(
           process.env.NODE_ENV === "production" ? "SCIC" : "Sta Clara"
@@ -264,7 +267,7 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };
@@ -359,8 +362,8 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
           position?.position_type === "STAFF" &&
           !isWithEducationalBackground
         ) {
-          addSection(4, form.form_section[4], { shouldFocus: false });
-          addSection(6, form.form_section[6], { shouldFocus: false });
+          insertSection(4, form.form_section[4], { shouldFocus: false });
+          insertSection(6, form.form_section[6], { shouldFocus: false });
         } else if (
           position?.position_type === "SKILLED" &&
           isWithEducationalBackground
@@ -722,11 +725,13 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
     }
   };
 
-  const handleWillingToBeAssignedAnywhereChange = async (value: boolean) => {
-    const newSection = getValues(`sections.5`);
-
+  const handleWillingToBeAssignedAnywhereChange = async (
+    value: boolean,
+    index: number
+  ) => {
+    const newSection = getValues(`sections.${index}`);
     if (value) {
-      updateSection(5, {
+      updateSection(index, {
         ...newSection,
         section_field: [
           ...newSection.section_field.slice(0, 3),
@@ -742,7 +747,7 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
           option_value: region.region,
         };
       });
-      updateSection(5, {
+      updateSection(index, {
         ...newSection,
         section_field: [
           ...newSection.section_field.slice(0, 3),
@@ -769,9 +774,10 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
       ? !["High School", "Vocational"].includes(value)
       : false;
 
+    removeSection(4);
     if (value) {
       if (!isDegreeRequired && isWithDegree) {
-        updateSection(4, {
+        insertSection(4, {
           ...newSection,
           section_field: [
             newSection.section_field[0],
@@ -779,7 +785,7 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
           ],
         });
       } else if (isDegreeRequired && !isWithDegree) {
-        updateSection(4, {
+        insertSection(4, {
           ...newSection,
           section_field: [
             newSection.section_field[0],
@@ -790,7 +796,7 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
       }
     } else {
       if (!isWithDegree) {
-        updateSection(4, {
+        insertSection(4, {
           ...newSection,
           section_field: [
             newSection.section_field[0],

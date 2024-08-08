@@ -229,7 +229,10 @@ type RequestFormSectionProps = {
     onProvinceChange: (value: string | null) => void;
     onCityChange: (value: string | null) => void;
     onBarangayChange: (value: string | null) => void;
-    onWillingToBeAssignedAnywhereChange: (value: boolean) => void;
+    onWillingToBeAssignedAnywhereChange: (
+      value: boolean,
+      index: number
+    ) => void;
     onHighestEducationalAttainmentChange: (value: string | null) => void;
   };
 };

@@ -27,14 +27,11 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const supabaseClient = createPagesServerClient(context);
   try {
-    const { data, error } = await supabaseClient.rpc(
-      "public_request_page_on_load",
-      {
-        input_data: {
-          requestId: context.query.requestId,
-        },
-      }
-    );
+    const { data, error } = await supabaseClient.rpc("request_page_on_load", {
+      input_data: {
+        requestId: context.query.requestId,
+      },
+    });
 
     if (error) throw error;
     // * 1. Check if there is user active session

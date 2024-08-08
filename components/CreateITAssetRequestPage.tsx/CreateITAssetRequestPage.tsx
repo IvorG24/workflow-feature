@@ -66,7 +66,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
   const { handleSubmit, control, setValue, getValues } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -245,7 +245,7 @@ const CreateITAssetRequestPage = ({ form, projectOptions }: Props) => {
         section_field: duplicatedFieldsWithDuplicatableId.slice(0, 4),
       };
 
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };

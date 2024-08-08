@@ -1,9 +1,7 @@
-import { useUserIntials, useUserProfile } from "@/stores/useUserStore";
+import { useUserProfile } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
-import { getAvatarColor } from "@/utils/styling";
 import { FormType } from "@/utils/types";
-import { Avatar, Flex, Group, Paper, Stack, Text, Title } from "@mantine/core";
-import { IconCalendar } from "@tabler/icons-react";
+import { Paper, Stack, TextInput } from "@mantine/core";
 
 type Props = {
   formDetails: {
@@ -18,65 +16,68 @@ type Props = {
 };
 
 const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
-  const userInitials = useUserIntials();
   const userProfile = useUserProfile();
 
   const { form_name, form_description, form_type, form_sub_type } = formDetails;
 
   const requestDate = formatDate(new Date());
 
+  const fieldList = [
+    {
+      label: "Form Name",
+      value: form_name,
+    },
+    {
+      label: "Form Description",
+      value: form_description,
+    },
+    {
+      label: "Date Created",
+      value: requestDate,
+    },
+    ...(form_type && form_sub_type
+      ? [
+          {
+            label: "Type",
+            value: form_type,
+          },
+          {
+            label: "Sub Type",
+            value: form_sub_type,
+          },
+        ]
+      : []),
+    ...(userProfile
+      ? [
+          {
+            label: "Requested by",
+            value: `${userProfile?.user_first_name} ${userProfile?.user_last_name}`,
+          },
+        ]
+      : []),
+    ...(requestingProject
+      ? [
+          {
+            label: "Requesting Project",
+            value: requestingProject,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <Paper p="xl" shadow="xs">
-      <Title order={2}>{form_name}</Title>
-      <Text mt="xs">{form_description}</Text>
-
-      {form_type && form_sub_type && (
-        <Stack mt="xl" spacing="xs">
-          <Group>
-            <Title order={5}>Type:</Title>
-            <Text>{form_type}</Text>
-          </Group>
-          <Group>
-            <Title order={5}>Sub Type:</Title>
-            <Text>{form_sub_type}</Text>
-          </Group>
-        </Stack>
-      )}
-
-      {userProfile && (
-        <>
-          <Title order={5} mt="xl">
-            Requested by:
-          </Title>
-          <Flex gap="md" align="center" mt="xs">
-            <Avatar
-              size={50}
-              src={userProfile?.user_avatar}
-              color={getAvatarColor(
-                Number(`${userProfile?.user_id.charCodeAt(0)}`)
-              )}
-              radius="xl"
-            >
-              {userInitials}
-            </Avatar>
-            <Stack spacing={0}>
-              <Text>
-                {`${userProfile?.user_first_name} ${userProfile?.user_last_name}`}
-              </Text>
-            </Stack>
-          </Flex>
-        </>
-      )}
-      <Group spacing="md" mt="xl">
-        <IconCalendar />
-        <Text weight={600}>{requestDate}</Text>
-      </Group>
-      {requestingProject && (
-        <Group spacing="md" mt="xl">
-          <Title order={5}>Requesting Project:</Title>
-          <Text>{requestingProject}</Text>
-        </Group>
-      )}
+      <Stack spacing="xs">
+        {fieldList.map((field, index) => (
+          <TextInput
+            key={index}
+            label={field.label}
+            value={field.value}
+            readOnly
+            variant="filled"
+          />
+        ))}
+      </Stack>
     </Paper>
   );
 };

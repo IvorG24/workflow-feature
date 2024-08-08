@@ -1329,8 +1329,9 @@ AS $$
 
     let formslyIdPrefix = '';
     let formslyIdSerial = '';
+    let endId = '';
 
-    if(isFormslyForm===true) {
+    if(isFormslyForm) {
       const requestCount = plv8.execute(
         `
           SELECT COUNT(*) FROM request_schema.request_table 
@@ -1347,25 +1348,25 @@ AS $$
         project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}'`)[0];
       }
       
-      if(formName==='Quotation') {
+      if(formName ==='Quotation') {
         endId = `Q`;
-      } else if(formName==='Services') {
+      } else if(formName ==='Services') {
         endId = `S`;
-      } else if(formName==='Other Expenses') {
+      } else if(formName ==='Other Expenses') {
         endId = `OE`;
-      } else if(formName==='PED Equipment') {
+      } else if(formName ==='PED Equipment') {
         endId = `PE`;
-      } else if(formName==='PED Part') {
+      } else if(formName ==='PED Part') {
         endId = `PP`;
-      } else if(formName==='PED Item') {
+      } else if(formName ==='PED Item') {
         endId = `PC`;
-      } else if(formName==='Sourced Item') {
+      } else if(formName ==='Sourced Item') {
         endId = `SI`;
-      } else if(formName==='Receiving Inspecting Report') {
+      } else if(formName ==='Receiving Inspecting Report') {
         endId = `RIR`;
-      } else if(formName==='Release Order') {
+      } else if(formName ==='Release Order') {
         endId = `RO`;
-      } else if(formName==='Transfer Receipt') {
+      } else if(formName ==='Transfer Receipt') {
         endId = `TR`;
       } else if(formName === 'IT Asset') {
         endId = `ITA`;
@@ -1387,16 +1388,51 @@ AS $$
         endId = `PCVB`;
       } else if(formName === 'Application Information') {
         endId = `AI`;
-      } else {
-        endId = ``;
-      }
+      } 
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
 
-    if (projectId === "") {
-      request_data = plv8.execute(`INSERT INTO request_schema.request_table (request_id,request_form_id${teamMemberId ? `,${request_team_member_id}` : ""}) VALUES ('${requestId}','${formId}'${teamMemberId ? `,'${teamMemberId}'` : ""}) RETURNING *`)[0];
+    if (!projectId && !endId) {
+      request_data = plv8.execute(
+        `
+          INSERT INTO request_schema.request_table 
+          (
+            request_id,
+            request_form_id
+            ${teamMemberId ? `,request_team_member_id` : ""}
+          ) 
+          VALUES 
+          (
+            '${requestId}',
+            '${formId}'
+            ${teamMemberId ? `,'${teamMemberId}'` : ""}
+          ) 
+          RETURNING *
+        `)[0];
     } else {
-      request_data = plv8.execute(`INSERT INTO request_schema.request_table (request_id,request_form_id${teamMemberId ? `,${request_team_member_id}` : ""},request_formsly_id_prefix,request_formsly_id_serial,request_project_id) VALUES ('${requestId}','${formId}'${teamMemberId ? `,'${teamMemberId}'` : ""},'${formslyIdPrefix}','${formslyIdSerial}','${projectId}') RETURNING *`)[0];
+      request_data = plv8.execute(
+        `
+          INSERT INTO request_schema.request_table 
+          (
+            request_id,
+            request_form_id
+            ${teamMemberId ? `,request_team_member_id` : ""},
+            request_formsly_id_prefix,
+            request_formsly_id_serial
+            ${projectId ? `,request_project_id` : ""}
+          ) 
+          VALUES 
+          (
+            '${requestId}',
+            '${formId}'
+            ${teamMemberId ? `,'${teamMemberId}'` : ""},
+            '${formslyIdPrefix}',
+            '${formslyIdSerial}'
+            ${projectId ? `,'${projectId}'` : ""}
+          ) 
+          RETURNING *
+        `
+      )[0];
     }
 
     plv8.execute(`INSERT INTO request_schema.request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id,request_response_prefix) VALUES ${responseValues};`);
@@ -3402,8 +3438,7 @@ AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
-      requestId,
-      userId
+      requestId
     } = input_data;
 
     const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
@@ -3421,7 +3456,7 @@ AS $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -3447,9 +3482,6 @@ AS $$
         sectionIdWithDuplicatableSectionIdList
       };
     } else {
-      const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
-      if (!teamId) throw new Error("No team found");
-
       const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
@@ -9883,81 +9915,6 @@ AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION public_request_page_on_load(
-  input_data JSON
-)
-RETURNS JSON 
-SET search_path TO ''
-AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      requestId
-    } = input_data;
-
-    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
-
-    const request = plv8.execute(
-      `
-        SELECT 
-          form_is_formsly_form, 
-          form_name
-        FROM public.request_view
-        INNER JOIN form_schema.form_table ON form_id = request_form_id
-        WHERE 
-          ${idCondition}
-          AND request_is_disabled = false
-      `
-    )[0];
-
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information'].includes(request.form_name))) {
-      const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
-      if(!request) throw new Error('404');
-      returnData = {
-        request: requestData
-      };
-      return;
-    } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report', 'Request For Payment'].includes(request.form_name)) {
-      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
-      if(!request) throw new Error('404');
-
-      const sectionIdWithDuplicatableSectionIdList = plv8.execute(
-        `
-          SELECT DISTINCT request_response_duplicatable_section_id, section_id, section_order FROM request_schema.request_response_table
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-          INNER JOIN form_schema.section_table ON section_id = field_section_id
-          WHERE request_response_request_id = '${requestData.request_id}'
-          ORDER BY section_order
-        `
-      );
-
-      returnData =  {
-        request: requestData,
-        sectionIdWithDuplicatableSectionIdList
-      };
-    } else {
-      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
-      if(!request) throw new Error('404');
-
-      const duplicatableSectionIdList = plv8.execute(
-        `
-          SELECT DISTINCT(request_response_duplicatable_section_id)
-          FROM request_schema.request_response_table
-          WHERE 
-            request_response_request_id = '${requestData.request_id}'
-            AND request_response_duplicatable_section_id IS NOT NULL
-        `
-      ).map(response => response.request_response_duplicatable_section_id);
-
-      returnData =  {
-        request: requestData,
-        duplicatableSectionIdList
-      };
-    }
- });
- return returnData;
-$$ LANGUAGE plv8;
-
 CREATE OR REPLACE FUNCTION fetch_item_request_conditional_options(
   input_data JSON
 )
@@ -14638,10 +14595,9 @@ USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema
 --- notification_table
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Allow INSERT for authenticated users" ON notification_table;
-CREATE POLICY "Allow INSERT for authenticated users" ON notification_table
+DROP POLICY IF EXISTS "Allow INSERT for public users" ON notification_table;
+CREATE POLICY "Allow INSERT for public users" ON notification_table
 AS PERMISSIVE FOR INSERT
-TO authenticated
 WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" ON notification_table;
@@ -14799,10 +14755,9 @@ AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON team_schema.team_table;
-CREATE POLICY "Allow READ for authenticated users" ON team_schema.team_table
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_table;
+CREATE POLICY "Allow READ for anon users" ON team_schema.team_table
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON team_schema.team_table;
