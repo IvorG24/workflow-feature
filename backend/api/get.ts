@@ -23,6 +23,7 @@ import {
 import {
   AddressTableRow,
   AppType,
+  ApplicationInformationSpreadsheetData,
   ApproverUnresolvedRequestCountType,
   AttachmentBucketType,
   AttachmentTableRow,
@@ -5858,5 +5859,39 @@ export const getApplicationInformationPositionOptions = async (
     .range(index, index + limit - 1);
   if (error) throw error;
 
+  return data;
+};
+
+export const getApplicationInformationSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    limit: number;
+    page: number;
+    userId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_application_information_summary_table",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data as ApplicationInformationSpreadsheetData[];
+};
+
+export const getFormSectionWithFieldList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_form_section_with_field_list",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
   return data;
 };

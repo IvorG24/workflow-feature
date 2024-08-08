@@ -178,3 +178,51 @@ export const getPaymayaStatusColor = (status: string) => {
       return "gray";
   }
 };
+
+export const sssIdNumberFormatter = (value: string | undefined) => {
+  const cleanedNumber = value ? value.replace(/\D/g, "") : "";
+
+  if (cleanedNumber.length === 10) {
+    const formattedNumber = cleanedNumber.replace(
+      /(\d{2})(\d{7})(\d{1})/,
+      "$1-$2-$3"
+    );
+    return formattedNumber;
+  } else if (cleanedNumber.length === 0) {
+    return "";
+  } else {
+    return "Invalid number";
+  }
+};
+
+export const pagIbigNumberFormatter = (value: string | undefined) => {
+  const cleanedNumber = value ? value.replace(/\D/g, "") : "";
+
+  if (cleanedNumber.length === 12) {
+    const formattedNumber = cleanedNumber.replace(
+      /(\d{4})(\d{4})(\d{4})/,
+      "$1-$2-$3"
+    );
+    return formattedNumber;
+  } else if (cleanedNumber.length === 0) {
+    return "";
+  } else {
+    return "Invalid Pag IBIG number";
+  }
+};
+
+export const tinNumberFormatter = (value: string | undefined) => {
+  const cleanedNumber = value ? value.replace(/\D/g, "") : "";
+
+  if (cleanedNumber.length === 9) {
+    const formattedNumber = cleanedNumber.replace(
+      /(\d{3})(\d{3})(\d{3})/,
+      "$1-$2-$3"
+    );
+    return formattedNumber;
+  } else if (cleanedNumber.length === 0) {
+    return "";
+  } else {
+    return "Invalid TIN number";
+  }
+};

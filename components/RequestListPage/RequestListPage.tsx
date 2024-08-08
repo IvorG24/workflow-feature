@@ -235,6 +235,17 @@ const RequestListPage = ({
               >
                 Liquidation Spreadsheet View
               </Menu.Item>
+              <Menu.Item
+                onClick={async () =>
+                  await router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name
+                    )}/requests/application-information-spreadsheet-view`
+                  )
+                }
+              >
+                Application Information Spreadhsheet View
+              </Menu.Item>
             </Menu.Dropdown>
           </Menu>
         ) : null}

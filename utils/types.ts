@@ -2072,3 +2072,27 @@ export type LRFSpreadsheetData = {
   request_department_code: string;
   jira_project_jira_label: string;
 };
+
+export type ApplicationInformationSpreadsheetData = {
+  request_id: string;
+  request_formsly_id: string;
+  request_date_created: string;
+  request_status: string;
+  request_status_date_updated: string;
+  request_response_list: (RequestResponseTableRow & { field_id: string })[];
+};
+
+export type SectionWithFieldType = SectionTableRow & {
+  section_field: FieldTableRow[];
+};
+
+export type ApplicationInformationFieldType = FieldTableRow & {
+  field_section: SectionTableRow;
+} & { field_response: string };
+
+export type ApplicationInformationFieldObjectType = Record<
+  string,
+  FieldTableRow & {
+    field_section: SectionTableRow;
+  }
+>;

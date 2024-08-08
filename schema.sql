@@ -13878,6 +13878,112 @@ AS $$
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_application_information_summary_table(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const { 
+      limit,
+      page,
+      userId
+    } = input_data;
+
+    const offset = (page - 1) * limit;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+
+    const parentRequests = plv8.execute(`
+        SELECT 
+          request_id,
+          request_formsly_id,
+          request_date_created,
+          request_status,
+          request_status_date_updated
+        FROM public.request_view
+        INNER JOIN form_schema.form_table ON form_id = request_form_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+        WHERE
+          team_member_team_id = '${teamId}'
+          AND request_is_disabled = FALSE
+          AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+        ORDER BY request_date_created
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+    `);
+
+    const requestListWithResponses = [];
+    parentRequests.forEach((parentRequest) => {
+      const responseList = plv8.execute(
+        `
+          SELECT 
+            request_response_table.*,
+            field_id
+          FROM 
+            request_schema.request_response_table 
+          INNER JOIN 
+            form_schema.field_table 
+            ON field_id = request_response_field_id 
+          WHERE 
+            request_response_request_id = '${parentRequest.request_id}' 
+        `
+      );
+
+      requestListWithResponses.push({
+        ...parentRequest,
+        request_response_list: responseList
+      });
+    });
+
+    returnData = [...requestListWithResponses];
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_form_section_with_field_list(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const { 
+      formId
+    } = input_data;
+
+    const sectionList = plv8.execute(
+      `
+        SELECT *
+        FROM form_schema.section_table
+        WHERE
+          section_form_id = '${formId}'
+        ORDER BY section_order
+      `
+    );
+
+    returnData = sectionList.map(section => {
+      const fieldData = plv8.execute(
+        `
+          SELECT *
+          FROM form_schema.field_table
+          WHERE
+            field_section_id = '${section.section_id}'
+          ORDER BY field_order
+        `
+      );
+
+      return {
+        ...section,
+        section_field: fieldData
+      }
+    });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
