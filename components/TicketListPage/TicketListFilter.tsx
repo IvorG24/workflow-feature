@@ -14,15 +14,17 @@ import { Dispatch, SetStateAction, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FilterFormValues, TicketListLocalFilter } from "./TicketListPage";
 
+type HandlePaginationType = ({
+  overidePage,
+}?: {
+  overidePage?: number;
+}) => Promise<void>;
+
 type Props = {
   // requestList: RequestType[];
   ticketCategoryList: TicketCategoryTableRow[];
   teamMemberList: TeamMemberWithUserType[];
-  handlePagination: ({
-    overidePage,
-  }?: {
-    overidePage?: number;
-  }) => Promise<void>;
+  handlePagination: HandlePaginationType;
   localFilter: TicketListLocalFilter;
   setLocalFilter: (
     val:
