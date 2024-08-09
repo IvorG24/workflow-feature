@@ -4,15 +4,16 @@ import {
   ApplicationInformationSpreadsheetData,
   SectionWithFieldType,
 } from "@/utils/types";
-import { Box, Group, Stack, Title } from "@mantine/core";
+import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import ApplicationInformationSpreadsheetTable from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
 
 export type FilterFormValues = {
-  page: number;
-  sort: {
+  page?: number;
+  sort?: {
     field: string;
     order: string;
     dataType: string;
@@ -82,7 +83,7 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
     dataType: "DATE",
   });
 
-  const fetchData = async (data: FilterFormValues) => {
+  const fetchData = async (data?: FilterFormValues) => {
     try {
       if (!user) return;
       setIsLoading(true);
@@ -91,7 +92,8 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
         {
           userId: user.id,
           limit: DEFAULT_NUMBER_SSOT_ROWS,
-          ...data,
+          page: data?.page ?? page,
+          sort: data?.sort ?? sort,
         }
       );
 
@@ -111,16 +113,12 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
     setPage(currentPage);
     await fetchData({
       page: currentPage,
-      sort,
     });
   };
 
   useEffect(() => {
     const handleSorting = async () => {
-      await fetchData({
-        page,
-        sort,
-      });
+      await fetchData({ sort });
     };
     handleSorting();
   }, [sort]);
@@ -128,8 +126,7 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
   useEffect(() => {
     const fetchInitialData = async () => {
       await fetchData({
-        page,
-        sort,
+        page: 1,
       });
     };
     fetchInitialData();
@@ -145,6 +142,13 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
           {/* <FormProvider {...filterFormMethods}>
             <ApplicationInformationFilterMenu />
           </FormProvider> */}
+          <Button
+            variant="light"
+            leftIcon={<IconReload size={16} />}
+            onClick={() => fetchData()}
+          >
+            Refresh
+          </Button>
         </Group>
       </Box>
       <ApplicationInformationSpreadsheetTable
