@@ -5,6 +5,7 @@ import {
 } from "@/utils/types";
 import {
   ActionIcon,
+  Box,
   Button,
   Center,
   createStyles,
@@ -22,6 +23,7 @@ import {
   IconArrowUp,
   IconChevronDown,
 } from "@tabler/icons-react";
+
 import { Dispatch, SetStateAction } from "react";
 import ApplicationInformationMainTableRow from "./ApplicationInformationMainTableRow";
 
@@ -136,13 +138,18 @@ const ApplicationInformationSpreadsheetTable = ({
     });
   };
 
-  const sortButtons = (field: { field_id: string; field_type: string }) => {
+  const sortButtons = (field: {
+    field_id: string;
+    field_type: string;
+    field_name: string;
+  }) => {
     return (
       <ActionIcon
-        variant="subtle"
         onClick={() => {
           handleSortClick(field.field_id, field.field_type);
         }}
+        color={sort.field !== field.field_id ? "dark" : "blue"}
+        variant={sort.field !== field.field_id ? "subtle" : "light"}
       >
         {sort.field !== field.field_id && <IconArrowsSort size={14} />}
         {sort.field === field.field_id && sort.order === "ASC" && (
@@ -176,10 +183,7 @@ const ApplicationInformationSpreadsheetTable = ({
         <Flex gap="xs" align="center" justify="center" wrap="wrap">
           <Text>{field.field_name}</Text>
           {!unsortableFieldList.includes(field.field_name) &&
-            sortButtons({
-              field_id: field.field_id,
-              field_type: field.field_type,
-            })}
+            sortButtons(field)}
         </Flex>
       </th>
     ));
@@ -191,10 +195,7 @@ const ApplicationInformationSpreadsheetTable = ({
         <Flex gap="xs" align="center" justify="center" wrap="wrap">
           <Text>{field.field_name}</Text>
           {!unsortableFieldList.includes(field.field_name) &&
-            sortButtons({
-              field_id: field.field_id,
-              field_type: field.field_type,
-            })}
+            sortButtons(field)}
         </Flex>
       </th>
     ));
@@ -224,6 +225,25 @@ const ApplicationInformationSpreadsheetTable = ({
                   fieldObject={fieldObject}
                 />
               ))}
+              <tr>
+                {Array.from(
+                  {
+                    length:
+                      Object.keys(fieldObject).length +
+                      requestColumnList.length,
+                  },
+                  (_, index) => index
+                ).map((index) => (
+                  <td style={{ padding: 0, borderTop: "0" }} key={index}>
+                    <Box
+                      h="xs"
+                      sx={(theme) => ({
+                        backgroundColor: theme.colors.blue[0],
+                      })}
+                    />
+                  </td>
+                ))}
+              </tr>
             </tbody>
           </Table>
         </ScrollArea>
