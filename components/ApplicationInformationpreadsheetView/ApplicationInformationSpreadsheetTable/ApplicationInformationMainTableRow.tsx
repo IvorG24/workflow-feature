@@ -18,6 +18,7 @@ import {
 } from "@/utils/types";
 import { ActionIcon, Anchor, Badge, Center, Flex, Text } from "@mantine/core";
 import { IconFile } from "@tabler/icons-react";
+import moment from "moment";
 import { useEffect, useState } from "react";
 
 type Props = {
@@ -28,15 +29,16 @@ type Props = {
 const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
   const activeTeam = useActiveTeam();
 
-  const [sortedFields, setSrotedFields] = useState<
+  const [sortedFields, setSortedFields] = useState<
     ApplicationInformationFieldType[]
   >([]);
 
   useEffect(() => {
-    const emptyFieldObject = fieldObject as Record<
+    const emptyFieldObject = { ...fieldObject } as Record<
       string,
       ApplicationInformationFieldType
     >;
+
     item.request_response_list.forEach((response) => {
       emptyFieldObject[response.field_id] = {
         ...emptyFieldObject[response.field_id],
@@ -47,7 +49,7 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
     const sortedFields = Object.values(emptyFieldObject).sort((a, b) => {
       return a.field_order - b.field_order;
     });
-    setSrotedFields(sortedFields);
+    setSortedFields(sortedFields);
   }, [item, fieldObject]);
 
   const renderFieldColumn = (
@@ -56,11 +58,17 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
     } & { field_response: string }
   ) => {
     const response = safeParse(row.field_response);
+    if (!response) return "";
     switch (row.field_type) {
       case "DATE":
-        return `${formatDate(response)}`;
+        switch (row.field_name) {
+          case "Year Graduated":
+            return `${moment(response).year()}`;
+          default:
+            return `${formatDate(response)}`;
+        }
       case "FILE":
-        return response ? (
+        return (
           <ActionIcon
             w="100%"
             variant="outline"
@@ -71,8 +79,6 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
               <Text size={14}>File</Text> <IconFile size={14} />
             </Flex>
           </ActionIcon>
-        ) : (
-          ""
         );
       case "SWITCH":
         return `${Boolean(response)}`;
@@ -89,8 +95,11 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
             return tinNumberFormatter(`${response}`);
           case "Expected Salary (PHP)":
             return pesoFormatter(`${response}`);
+          default:
+            return response;
         }
-
+      case "MULTISELECT":
+        return response && response.join(", ");
       default:
         return response;
     }

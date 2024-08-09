@@ -4,17 +4,64 @@ import {
   SectionWithFieldType,
 } from "@/utils/types";
 import {
+  ActionIcon,
   Button,
   Center,
+  createStyles,
+  Flex,
   LoadingOverlay,
   Paper,
   ScrollArea,
   Stack,
   Table,
-  createStyles,
+  Text,
 } from "@mantine/core";
-import { IconChevronDown } from "@tabler/icons-react";
+import {
+  IconArrowDown,
+  IconArrowsSort,
+  IconArrowUp,
+  IconChevronDown,
+} from "@tabler/icons-react";
+import { Dispatch, SetStateAction } from "react";
 import ApplicationInformationMainTableRow from "./ApplicationInformationMainTableRow";
+
+const unsortableFieldList = [
+  "Approver",
+  "Contact Number",
+  "Email Address",
+  "SSS ID Number",
+  "Philhealth Number",
+  "Pag-IBIG Number",
+  "TIN",
+];
+
+const requestColumnList = [
+  {
+    field_id: "request_formsly_id",
+    field_name: "Request ID",
+    field_type: "TEXT",
+  },
+  {
+    field_id: "request_date_created",
+    field_name: "Date Created",
+    field_type: "DATE",
+  },
+  {
+    field_id: "request_status",
+    field_name: "Status",
+    field_type: "TEXT",
+  },
+  {
+    field_id: "request_status_date_updated",
+    field_name: "Date Updated",
+    field_type: "DATE",
+  },
+  {
+    field_id: "Approver",
+    field_name: "Approver",
+    field_type: "Approver",
+  },
+];
 
 const useStyles = createStyles((theme) => ({
   parentTable: {
@@ -41,17 +88,23 @@ const useStyles = createStyles((theme) => ({
 type Props = {
   data: ApplicationInformationSpreadsheetData[];
   sectionList: SectionWithFieldType[];
-  loading: boolean;
+  isLoading: boolean;
   page: number;
   handlePagination: (page: number) => void;
+  sort: { field: string; order: string; dataType: string };
+  setSort: Dispatch<
+    SetStateAction<{ field: string; order: string; dataType: string }>
+  >;
 };
 
 const ApplicationInformationSpreadsheetTable = ({
   data,
   sectionList,
-  loading,
+  isLoading,
   page,
   handlePagination,
+  sort,
+  setSort,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -65,15 +118,86 @@ const ApplicationInformationSpreadsheetTable = ({
     });
   });
 
+  const handleSortClick = (field: string, dataType: string) => {
+    setSort((prev) => {
+      if (prev.field === field) {
+        return {
+          field,
+          order: prev.order === "ASC" ? "DESC" : "ASC",
+          dataType,
+        };
+      } else {
+        return {
+          field,
+          order: "DESC",
+          dataType,
+        };
+      }
+    });
+  };
+
+  const sortButtons = (field: { field_id: string; field_type: string }) => {
+    return (
+      <ActionIcon
+        variant="subtle"
+        onClick={() => {
+          handleSortClick(field.field_id, field.field_type);
+        }}
+      >
+        {sort.field !== field.field_id && <IconArrowsSort size={14} />}
+        {sort.field === field.field_id && sort.order === "ASC" && (
+          <IconArrowUp size={14} />
+        )}
+        {sort.field === field.field_id && sort.order === "DESC" && (
+          <IconArrowDown size={14} />
+        )}
+      </ActionIcon>
+    );
+  };
+
   const renderFieldList = () => {
-    const fieldList: string[] = [];
+    const fieldList: {
+      field_name: string;
+      field_id: string;
+      field_type: string;
+    }[] = [];
     sectionList.forEach((section) => {
       section.section_field.forEach((field) => {
-        fieldList.push(field.field_name);
+        fieldList.push({
+          field_id: field.field_id,
+          field_name: field.field_name,
+          field_type: field.field_type,
+        });
       });
     });
 
-    return fieldList.map((field, index) => <th key={index}>{field}</th>);
+    return fieldList.map((field, index) => (
+      <th key={index}>
+        <Flex gap="xs" align="center" justify="center" wrap="wrap">
+          <Text>{field.field_name}</Text>
+          {!unsortableFieldList.includes(field.field_name) &&
+            sortButtons({
+              field_id: field.field_id,
+              field_type: field.field_type,
+            })}
+        </Flex>
+      </th>
+    ));
+  };
+
+  const renderRequestFieldList = () => {
+    return requestColumnList.map((field, index) => (
+      <th key={index}>
+        <Flex gap="xs" align="center" justify="center" wrap="wrap">
+          <Text>{field.field_name}</Text>
+          {!unsortableFieldList.includes(field.field_name) &&
+            sortButtons({
+              field_id: field.field_id,
+              field_type: field.field_type,
+            })}
+        </Flex>
+      </th>
+    ));
   };
 
   return (
@@ -81,18 +205,14 @@ const ApplicationInformationSpreadsheetTable = ({
       <Paper p="xs" pos="relative">
         <ScrollArea type="auto" scrollbarSize={10}>
           <LoadingOverlay
-            visible={loading}
+            visible={isLoading}
             overlayBlur={0}
             overlayOpacity={0}
           />
           <Table withBorder withColumnBorders className={classes.parentTable}>
             <thead>
               <tr>
-                <th>Request ID</th>
-                <th>Date Created</th>
-                <th>Status</th>
-                <th>Date Updated</th>
-                <th>Approver</th>
+                {renderRequestFieldList()}
                 {renderFieldList()}
               </tr>
             </thead>
@@ -111,10 +231,10 @@ const ApplicationInformationSpreadsheetTable = ({
           <Button
             leftIcon={<IconChevronDown size={16} />}
             onClick={() => handlePagination(page + 1)}
-            disabled={loading}
+            disabled={isLoading}
             variant="subtle"
           >
-            {loading ? "Loading..." : "Load More"}
+            {isLoading ? "Loading..." : "Load More"}
           </Button>
         </Center>
       </Paper>

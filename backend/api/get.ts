@@ -5868,6 +5868,7 @@ export const getApplicationInformationSummaryData = async (
     limit: number;
     page: number;
     userId: string;
+    sort: { field: string; order: string , dataType: string};
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(

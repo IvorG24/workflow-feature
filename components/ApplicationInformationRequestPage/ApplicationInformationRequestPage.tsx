@@ -27,7 +27,15 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Container, Flex, Stack, Text, Title } from "@mantine/core";
+import {
+  Accordion,
+  Container,
+  Flex,
+  Paper,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -66,6 +74,12 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
   });
   const formSection = generateSectionWithDuplicateList(
     request.request_form.form_section
+  );
+
+  const isWithDuplicatableSection = request.request_form.form_section.some(
+    (section) =>
+      section.section_is_duplicatable &&
+      section.section_field[0].field_response.length
   );
 
   const teamMember = useUserTeamMember();
@@ -351,7 +365,12 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
 
         <Stack spacing="xl" mt="lg">
           {formSection.map((section, idx) => {
-            if (!section.section_field[0].field_response) return null;
+            if (
+              !section.section_field[0].field_response ||
+              section.section_is_duplicatable ||
+              section.section_name === "Resume"
+            )
+              return null;
             return (
               <RequestSection
                 key={section.section_id + idx}
@@ -362,6 +381,43 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
               />
             );
           })}
+
+          {isWithDuplicatableSection && (
+            <Accordion>
+              <Accordion.Item value={"workExperience"}>
+                <Paper shadow="xs">
+                  <Accordion.Control>
+                    <Title order={4} color="dimmed">
+                      Most Recent Work Experience
+                    </Title>
+                  </Accordion.Control>
+                </Paper>
+                <Accordion.Panel>
+                  <Stack spacing="xl" mt="lg">
+                    {formSection
+                      .filter((section) => section.section_is_duplicatable)
+                      .map((section, index) => {
+                        return (
+                          <RequestSection
+                            key={section.section_id + index}
+                            section={section}
+                            isFormslyForm={true}
+                            isOnlyWithResponse
+                            index={index + 1}
+                          />
+                        );
+                      })}
+                  </Stack>
+                </Accordion.Panel>
+              </Accordion.Item>
+            </Accordion>
+          )}
+
+          <RequestSection
+            section={formSection[formSection.length - 1]}
+            isFormslyForm={true}
+            isOnlyWithResponse
+          />
         </Stack>
 
         {isRequestActionSectionVisible && (

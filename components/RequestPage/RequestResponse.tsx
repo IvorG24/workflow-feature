@@ -291,7 +291,9 @@ const RequestResponse = ({
             value={parsedValue ? new Date(parsedValue) : undefined}
             {...inputProps}
             icon={<IconCalendar size={16} />}
-            valueFormat="YYYY-MM-DD"
+            valueFormat={
+              response.label === "Year Graduated" ? "YYYY" : "YYYY-MM-DD"
+            }
           />
         );
       case "TIME":

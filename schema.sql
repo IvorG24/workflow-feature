@@ -13889,11 +13889,52 @@ AS $$
     const { 
       limit,
       page,
-      userId
+      userId,
+      sort
     } = input_data;
+
+    const isUUID = (str) => {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidPattern.test(str);
+    };
+
+    const isSortByResponse = isUUID(sort.field);
 
     const offset = (page - 1) * limit;
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+
+    let requestIdCondition = "";
+    let requestIdOrder = "";
+    if(isSortByResponse){
+      let requestResponse = "request_response";
+      switch(sort.dataType) {
+        case "NUMBER": requestResponse = `CAST(request_response AS INTEGER)`; break;
+        case "DATE": requestResponse = `TO_DATE(REPLACE(request_response, '"', ''), 'YYYY-MM-DD')`; break;
+      }
+
+      const requestResponseData = plv8.execute(
+        `
+          SELECT 
+            request_id,
+            request_response
+          FROM request_schema.request_response_table
+          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+            AND request_is_disabled = false
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+          WHERE
+            field_id = '${sort.field}'
+          ORDER BY ${requestResponse} ${sort.order}
+          LIMIT '${limit}'
+          OFFSET '${offset}'
+        `
+      );
+
+      requestIdCondition = `AND request_id IN (${requestResponseData.map(request => `'${request.request_id}'`).join(',')})`;
+      const isDescending = sort.order === "DESC";
+      requestIdOrder = requestResponseData.map((request, index) => {
+        return `WHEN '${request.request_id}' THEN ${(isDescending ? 1 : requestResponse.length) + index}`
+      }).join(" ") + ` ELSE ${requestResponseData.length + (isDescending ? 1 : 2)} END`
+    }
 
     const parentRequests = plv8.execute(`
         SELECT 
@@ -13909,7 +13950,8 @@ AS $$
           team_member_team_id = '${teamId}'
           AND request_is_disabled = FALSE
           AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
-        ORDER BY request_date_created
+        ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
+        ${isSortByResponse ? `ORDER BY CASE request_id ${requestIdOrder}` : ""}
         LIMIT '${limit}'
         OFFSET '${offset}'
     `);

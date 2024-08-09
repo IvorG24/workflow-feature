@@ -774,9 +774,9 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
       ? !["High School", "Vocational"].includes(value)
       : false;
 
-    removeSection(4);
     if (value) {
       if (!isDegreeRequired && isWithDegree) {
+        removeSection(4);
         insertSection(4, {
           ...newSection,
           section_field: [
@@ -785,6 +785,7 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
           ],
         });
       } else if (isDegreeRequired && !isWithDegree) {
+        removeSection(4);
         insertSection(4, {
           ...newSection,
           section_field: [
@@ -796,6 +797,7 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
       }
     } else {
       if (!isWithDegree) {
+        removeSection(4);
         insertSection(4, {
           ...newSection,
           section_field: [
