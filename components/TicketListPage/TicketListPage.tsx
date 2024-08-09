@@ -267,16 +267,18 @@ const TicketListPage = ({
             <form
               onSubmit={handleSubmit(() => {
                 handlePagination({ overidePage: 1 });
+                setActivePage(1);
               })}
             >
               <TicketListFilter
                 ticketCategoryList={ticketCategoryList}
-                handleFilterTicketList={handlePagination}
+                handlePagination={handlePagination}
                 teamMemberList={teamMemberList}
                 localFilter={localFilter}
                 setLocalFilter={setLocalFilter}
                 showTableColumnFilter={showTableColumnFilter}
                 setShowTableColumnFilter={setShowTableColumnFilter}
+                setActivePage={setActivePage}
               />
             </form>
           </FormProvider>
