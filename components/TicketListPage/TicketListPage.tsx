@@ -158,9 +158,7 @@ const TicketListPage = ({
   };
 
   // this function will handle pagination and filteration
-  const handlePagination = async ({
-    overidePage,
-  }: { overidePage?: number } = {}) => {
+  const handlePagination = async (overidePage?: number) => {
     try {
       setIsFetchingTicketList(true);
       if (!activeTeam.team_id) return;
@@ -266,7 +264,7 @@ const TicketListPage = ({
           <FormProvider {...filterFormMethods}>
             <form
               onSubmit={handleSubmit(() => {
-                handlePagination({ overidePage: 1 });
+                handlePagination(1);
                 setActivePage(1);
               })}
             >
@@ -291,7 +289,7 @@ const TicketListPage = ({
             page={activePage}
             onPageChange={(page) => {
               setActivePage(page);
-              handlePagination({ overidePage: page });
+              handlePagination(page);
             }}
             totalRecords={ticketListCount}
             recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
