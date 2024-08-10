@@ -23,6 +23,7 @@ import {
 import {
   AddressTableRow,
   AppType,
+  ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
   ApproverUnresolvedRequestCountType,
   AttachmentBucketType,
@@ -5864,11 +5865,8 @@ export const getApplicationInformationPositionOptions = async (
 
 export const getApplicationInformationSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
-  params: {
-    limit: number;
-    page: number;
+  params: ApplicationInformationFilterFormValues & {
     userId: string;
-    sort: { field: string; order: string , dataType: string};
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(

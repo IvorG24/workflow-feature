@@ -2096,3 +2096,74 @@ export type ApplicationInformationFieldObjectType = Record<
     field_section: SectionTableRow;
   }
 >;
+
+export type ApplicationInformationFilterFormValues = {
+  limit?: number;
+  page?: number;
+  sort?: {
+    field: string;
+    order: string;
+    dataType: string;
+  };
+  requestFilter?: {
+    requestId?: string;
+    dateCreatedRange?: {
+      start?: string;
+      end?: string;
+    };
+    status?: string[];
+    dateUpdatedRange?: { start?: string; end?: string };
+    approver?: string[];
+  };
+  responseFilter?: {
+    position?: string[];
+    certificate?: boolean;
+    license?: boolean;
+    source?: string[];
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    gender?: string;
+    ageRange?: {
+      start?: number;
+      end?: number;
+    };
+    civilStatus?: string[];
+    contactNumber?: string;
+    emailAddress?: string;
+    region?: string;
+    province?: string;
+    city?: string;
+    barangay?: string;
+    street?: string;
+    zipCode?: string;
+    sssId?: string;
+    philhealthNumber?: string;
+    pagibigNumber?: string;
+    tin?: string;
+    highestEducationalAttainment?: string[];
+    degree?: string;
+    torOrDiplomaAttachment?: boolean;
+    school?: string;
+    yearGraduated?: {
+      start?: number;
+      end?: number;
+    };
+    employmentStatus?: string;
+    workedAtStaClara?: boolean;
+    willingToBeAssignedAnywhere?: boolean;
+    regionWillingToBeAssigned?: string[];
+    soonestJoiningDate?: {
+      start?: number;
+      end?: number;
+    };
+    workExperience?: {
+      start?: number;
+      end?: number;
+    };
+    expectedSalary?: {
+      start?: number;
+      end?: number;
+    };
+  };
+};

@@ -1,6 +1,7 @@
 import { getApplicationInformationSummaryData } from "@/backend/api/get";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
+  ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
   SectionWithFieldType,
 } from "@/utils/types";
@@ -9,63 +10,9 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import ApplicationInformationFilterMenu from "./ApplicationInformationFilterMenu";
 import ApplicationInformationSpreadsheetTable from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
-
-export type FilterFormValues = {
-  page?: number;
-  sort?: {
-    field: string;
-    order: string;
-    dataType: string;
-  };
-  // requestFilter: {
-  //   requestId: string;
-  //   dateCreatedRange: {
-  //     start: string;
-  //     end: string;
-  //   };
-  //   status: string[];
-  //   dateUpdatedRange: { start: string; end: string };
-  //   approver: string[];
-  // };
-  // responseFilter: {
-  //   position: string[];
-  //   certificate: boolean;
-  //   license: boolean;
-  //   source: string[];
-  //   firstName: string;
-  //   middleName: string;
-  //   lastName: string;
-  //   gender: string[];
-  //   ageRange: {
-  //     start: number;
-  //     end: number;
-  //   };
-  //   civilStatus: string[];
-  //   contactNumber: string;
-  //   emailAddress: string;
-  //   region: string;
-  //   province: string;
-  //   city: string;
-  //   barangay: string;
-  //   street: string;
-  //   zipCode: string;
-  //   sssId: string;
-  //   sssIdAttachment: boolean;
-  //   philhealthNumber: string;
-  //   pagibigNumber: string;
-  //   tin: string;
-  //   highestEducationalAttainment: string[];
-  //   degree: string;
-  //   torOrDiplomaAttachment: boolean;
-  //   school: string;
-  //   yearGraduated: {
-  //     start: number;
-  //     end: number;
-  //   };
-  //   employmentStatus: string[];
-  // };
-};
 
 type Props = {
   sectionList: SectionWithFieldType[];
@@ -83,13 +30,16 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
     dataType: "DATE",
   });
 
-  const fetchData = async (data?: FilterFormValues) => {
+  const filterFormMethods = useForm<ApplicationInformationFilterFormValues>();
+
+  const fetchData = async (data?: ApplicationInformationFilterFormValues) => {
     try {
       if (!user) return;
       setIsLoading(true);
       const newData = await getApplicationInformationSummaryData(
         supabaseClient,
         {
+          ...data,
           userId: user.id,
           limit: DEFAULT_NUMBER_SSOT_ROWS,
           page: data?.page ?? page,
@@ -139,9 +89,7 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
           <Title order={2} color="dimmed">
             Application Information Spreadsheet View
           </Title>
-          {/* <FormProvider {...filterFormMethods}>
-            <ApplicationInformationFilterMenu />
-          </FormProvider> */}
+
           <Button
             variant="light"
             leftIcon={<IconReload size={16} />}
@@ -149,6 +97,9 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
           >
             Refresh
           </Button>
+          <FormProvider {...filterFormMethods}>
+            <ApplicationInformationFilterMenu fetchData={fetchData} />
+          </FormProvider>
         </Group>
       </Box>
       <ApplicationInformationSpreadsheetTable
