@@ -1,24 +1,39 @@
-import { getApplicationInformationSummaryData } from "@/backend/api/get";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
+  fetchRegion,
+  getApplicationInformationSummaryData,
+} from "@/backend/api/get";
+import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import supabaseClientAddress from "@/utils/supabase/address";
+import {
+  ApplicationInformationFieldOptionType,
   ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
   SectionWithFieldType,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import {
+  SupabaseClient,
+  useSupabaseClient,
+  useUser,
+} from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
+import { Database as OneOfficeDatabase } from "oneoffice-api";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 import ApplicationInformationFilterMenu from "./ApplicationInformationFilterMenu";
 import ApplicationInformationSpreadsheetTable from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
 
 type Props = {
   sectionList: SectionWithFieldType[];
+  optionList: ApplicationInformationFieldOptionType[];
 };
 
-const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
+const ApplicationInformationSpreadsheetView = ({
+  sectionList,
+  optionList: initialOptionList,
+}: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const [data, setData] = useState<ApplicationInformationSpreadsheetData[]>([]);
@@ -29,6 +44,7 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
     order: "DESC",
     dataType: "DATE",
   });
+  const [optionList, setOptionList] = useState(initialOptionList);
 
   const filterFormMethods = useForm<ApplicationInformationFilterFormValues>();
 
@@ -36,6 +52,7 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
     try {
       if (!user) return;
       setIsLoading(true);
+
       const newData = await getApplicationInformationSummaryData(
         supabaseClient,
         {
@@ -47,7 +64,11 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
         }
       );
 
-      setData(newData);
+      if (page === 1) {
+        setData(newData);
+      } else {
+        setData((prev) => [...prev, ...newData]);
+      }
     } catch (e) {
       console.log("ERROR: ", e);
       notifications.show({
@@ -75,6 +96,27 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
 
   useEffect(() => {
     const fetchInitialData = async () => {
+      const regionData = await fetchRegion(
+        supabaseClientAddress as unknown as SupabaseClient<
+          OneOfficeDatabase["address_schema"]
+        >
+      );
+      if (regionData) {
+        setOptionList((prev) => {
+          const regionOption = {
+            field_name: "Region willing to be assigned",
+            field_option: regionData.map((region, index) => {
+              return {
+                option_id: uuidv4(),
+                option_value: region.region,
+                option_order: index + 1,
+                option_field_id: "aeb28a1f-8a5c-4e17-9ddd-a0377db12e97",
+              };
+            }),
+          };
+          return [...prev, regionOption];
+        });
+      }
       await fetchData({
         page: 1,
       });
@@ -98,7 +140,10 @@ const ApplicationInformationSpreadsheetView = ({ sectionList }: Props) => {
             Refresh
           </Button>
           <FormProvider {...filterFormMethods}>
-            <ApplicationInformationFilterMenu fetchData={fetchData} />
+            <ApplicationInformationFilterMenu
+              fetchData={fetchData}
+              optionList={optionList}
+            />
           </FormProvider>
         </Group>
       </Box>

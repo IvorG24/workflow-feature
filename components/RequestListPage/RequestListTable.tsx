@@ -771,6 +771,7 @@ const RequestListTable = ({
             const { request_signer } = request as {
               request_signer: requestSignerType[];
             };
+
             const signerList = request_signer.map(
               (signer: requestSignerType) => {
                 const signerTeamMemberData = teamMemberList.find(

@@ -723,6 +723,7 @@ export type TeamMemberWithUserType = {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_avatar: string;
   };
 };
 
@@ -1711,6 +1712,7 @@ export type RequestListItemSignerType = {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_avatar: string;
   };
 };
 
@@ -2080,6 +2082,7 @@ export type ApplicationInformationSpreadsheetData = {
   request_status: string;
   request_status_date_updated: string;
   request_response_list: (RequestResponseTableRow & { field_id: string })[];
+  request_signer_list: RequestListItemSignerType[];
 };
 
 export type SectionWithFieldType = SectionTableRow & {
@@ -2096,6 +2099,8 @@ export type ApplicationInformationFieldObjectType = Record<
     field_section: SectionTableRow;
   }
 >;
+
+export type ApplicationInformationFieldOptionType = { field_option: OptionTableRow[]; field_name: string };
 
 export type ApplicationInformationFilterFormValues = {
   limit?: number;

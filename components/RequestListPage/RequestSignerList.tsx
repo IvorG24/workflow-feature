@@ -40,29 +40,26 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
   const [opened, { open, close }] = useDisclosure(false);
 
   if (signerList.length === 1) {
-    const user = signerList[0].signer_team_member_user
+    const user = signerList[0].signer_team_member_user;
 
     return (
-      <Flex px={0} gap={8} align='center'>
+      <Flex px={0} gap={8} align="center">
         <Avatar
-              {...defaultAvatarProps}
-              color={getAvatarColor(
-                Number(`${user.user_id.charCodeAt(0)}`)
-              )}
-          >
-          {(
-            user.user_first_name[0] + user.user_last_name[0]
-          ).toUpperCase()}
+          {...defaultAvatarProps}
+          color={getAvatarColor(Number(`${user.user_id.charCodeAt(0)}`))}
+          src={user.user_avatar}
+        >
+          {(user.user_first_name[0] + user.user_last_name[0]).toUpperCase()}
         </Avatar>
 
         <Anchor
           href={`/member/${signerList[0].request_signer.signer_team_member_id}`}
           target="_blank"
         >
-          <Text >{`${user.user_first_name} ${user.user_last_name}`} </Text>
+          <Text>{`${user.user_first_name} ${user.user_last_name}`} </Text>
         </Anchor>
-    </Flex>
-    )
+      </Flex>
+    );
   }
 
   return (
@@ -80,7 +77,7 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
                       color={getAvatarColor(
                         Number(`${user.user_id.charCodeAt(0)}`)
                       )}
-                      // src={user.user_avatar}
+                      src={user.user_avatar}
                       sx={{ cursor: "pointer" }}
                       onClick={() =>
                         window.open(
@@ -131,7 +128,7 @@ const RequestSignerList = ({ signerList }: RequestSignerListProps) => {
                   color={getAvatarColor(
                     Number(`${user.user_id.charCodeAt(0)}`)
                   )}
-                  // src={user.user_avatar}
+                  src={user.user_avatar}
                   className={
                     signer.request_signer_status
                       ? classes[

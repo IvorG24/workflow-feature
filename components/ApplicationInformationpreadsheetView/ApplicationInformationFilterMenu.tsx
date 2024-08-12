@@ -1,4 +1,7 @@
-import { ApplicationInformationFilterFormValues } from "@/utils/types";
+import {
+  ApplicationInformationFieldOptionType,
+  ApplicationInformationFilterFormValues,
+} from "@/utils/types";
 import {
   Accordion,
   Box,
@@ -13,7 +16,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
+import { DateInput, YearPickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { IconCalendar, IconFilter } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -209,7 +212,7 @@ const sectionList = [
     sectionFieldList: [
       {
         id: "responseFilter.employmentStatus",
-        label: "Empoyment Status",
+        label: "Employment Status",
         type: "SELECT",
       },
       {
@@ -248,9 +251,10 @@ const sectionList = [
 
 type Props = {
   fetchData: (data?: ApplicationInformationFilterFormValues) => void;
+  optionList: ApplicationInformationFieldOptionType[];
 };
 
-const ApplicationInformationFilterMenu = ({ fetchData }: Props) => {
+const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
 
@@ -262,6 +266,28 @@ const ApplicationInformationFilterMenu = ({ fetchData }: Props) => {
     label: string;
     type: string;
   }) => {
+    let fieldOptions: { label: string; value: string }[] = [];
+
+    if (["SELECT", "MULTISELECT"].includes(field.type)) {
+      fieldOptions =
+        optionList
+          .find((option) => option.field_name === field.label)
+          ?.field_option.map((option) => {
+            return {
+              label: option.option_value,
+              value: option.option_value,
+            };
+          }) ?? [];
+
+      if (field.label === "Status") {
+        fieldOptions = [
+          { label: "PENDING", value: "PENDING" },
+          { label: "APPROVED", value: "APPROVED" },
+          { label: "REJECTED", value: "REJECTED" },
+        ];
+      }
+    }
+
     switch (field.type) {
       case "TEXT":
         return (
@@ -281,7 +307,16 @@ const ApplicationInformationFilterMenu = ({ fetchData }: Props) => {
                 control={control}
                 name={`${field.id}.start` as "requestFilter"}
                 render={({ field: { value, onChange } }) => {
-                  return (
+                  return field.label === "Year Graduated" ? (
+                    <YearPickerInput
+                      placeholder="Start"
+                      value={value as Date}
+                      onChange={onChange}
+                      clearable
+                      icon={<IconCalendar size={16} />}
+                      sx={{ flex: 1 }}
+                    />
+                  ) : (
                     <DateInput
                       placeholder="Start"
                       value={value as Date}
@@ -297,7 +332,16 @@ const ApplicationInformationFilterMenu = ({ fetchData }: Props) => {
                 control={control}
                 name={`${field.id}.end` as "requestFilter"}
                 render={({ field: { value, onChange } }) => {
-                  return (
+                  return field.label === "Year Graduated" ? (
+                    <YearPickerInput
+                      placeholder="End"
+                      value={value as Date}
+                      onChange={onChange}
+                      clearable
+                      icon={<IconCalendar size={16} />}
+                      sx={{ flex: 1 }}
+                    />
+                  ) : (
                     <DateInput
                       placeholder="End"
                       value={value as Date}
@@ -320,10 +364,11 @@ const ApplicationInformationFilterMenu = ({ fetchData }: Props) => {
             render={({ field: { value, onChange } }) => (
               <MultiSelect
                 label={field.label}
-                data={[]}
+                data={fieldOptions}
                 value={value as string[]}
                 onChange={onChange}
                 clearable
+                searchable
               />
             )}
           />
@@ -336,10 +381,11 @@ const ApplicationInformationFilterMenu = ({ fetchData }: Props) => {
             render={({ field: { value, onChange } }) => (
               <Select
                 label={field.label}
-                data={[]}
+                data={fieldOptions}
                 value={value as string}
                 onChange={onChange}
                 clearable
+                searchable
               />
             )}
           />
@@ -419,31 +465,38 @@ const ApplicationInformationFilterMenu = ({ fetchData }: Props) => {
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >
-        <Stack spacing="xs" sx={{ overflow: "hidden" }}>
-          {sectionList.map((section, sectionIndex) => {
-            return (
-              <Accordion key={sectionIndex} variant="contained">
-                <Accordion.Item value={section.sectionName}>
-                  <Accordion.Control>
-                    <Text color="dimmed">{section.sectionName}</Text>
-                  </Accordion.Control>
-                  <Accordion.Panel>
-                    <Stack spacing="xs">
-                      {section.sectionFieldList.map((field, fieldIndex) => {
-                        return (
-                          <Box key={fieldIndex}>{renderResponse(field)}</Box>
-                        );
-                      })}
-                    </Stack>
-                  </Accordion.Panel>
-                </Accordion.Item>
-              </Accordion>
-            );
-          })}
-          <Button type="submit" mt="xs" onClick={handleSubmit(fetchData)}>
-            Apply Filter
-          </Button>
-        </Stack>
+        <form
+          onSubmit={handleSubmit((data) => fetchData({ ...data, page: 1 }))}
+        >
+          <Stack spacing="xs" sx={{ overflow: "hidden" }}>
+            <Accordion variant="contained">
+              {sectionList.map((section, sectionIndex) => {
+                return (
+                  <Accordion.Item
+                    value={section.sectionName}
+                    key={sectionIndex}
+                  >
+                    <Accordion.Control>
+                      <Text color="dimmed">{section.sectionName}</Text>
+                    </Accordion.Control>
+                    <Accordion.Panel>
+                      <Stack spacing="xs">
+                        {section.sectionFieldList.map((field, fieldIndex) => {
+                          return (
+                            <Box key={fieldIndex}>{renderResponse(field)}</Box>
+                          );
+                        })}
+                      </Stack>
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                );
+              })}
+            </Accordion>
+            <Button type="submit" mt="xs">
+              Apply Filter
+            </Button>
+          </Stack>
+        </form>
       </Drawer>
     </>
   );

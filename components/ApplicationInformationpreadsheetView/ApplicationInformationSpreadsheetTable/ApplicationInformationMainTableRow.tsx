@@ -1,3 +1,4 @@
+import RequestSignerList from "@/components/RequestListPage/RequestSignerList";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
@@ -58,7 +59,8 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
     } & { field_response: string }
   ) => {
     const response = safeParse(row.field_response);
-    if (!response) return "";
+
+    if (!response && !(row.field_type === "SWITCH")) return "";
     switch (row.field_type) {
       case "DATE":
         switch (row.field_name) {
@@ -126,7 +128,9 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
         </Center>
       </td>
       <td>{item.request_status_date_updated}</td>
-      <td>APPROVER</td>
+      <td>
+        <RequestSignerList signerList={item.request_signer_list} />
+      </td>
       {sortedFields.map((row, index) => (
         <td key={index}>{renderFieldColumn(row)}</td>
       ))}

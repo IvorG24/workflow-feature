@@ -3874,7 +3874,7 @@ AS $$
     
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name, 'user_avatar',usert.user_avatar) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
     const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
 
@@ -13887,15 +13887,28 @@ AS $$
   let returnData = [];
   plv8.subtransaction(function(){
     const { 
+      userId,
       limit,
       page,
-      userId,
-      sort
+      sort,
+      requestFilter,
+      responseFilter
     } = input_data;
 
     const isUUID = (str) => {
       const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
       return uuidPattern.test(str);
+    };
+
+    const hasValue = (value) => {
+      if (value == null) return false;
+      if (value === "") return false;
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === "object") {
+        if (Object.keys(value).length === 0) return false;
+        return Object.values(value).some(hasValue);
+      }
+      return Boolean(value);
     };
 
     const isSortByResponse = isUUID(sort.field);
@@ -13905,11 +13918,18 @@ AS $$
 
     let requestIdCondition = "";
     let requestIdOrder = "";
-    if(isSortByResponse){
+    const isWithResponseFilter = hasValue(responseFilter);
+    if(isSortByResponse || isWithResponseFilter){
       let requestResponse = "request_response";
       switch(sort.dataType) {
         case "NUMBER": requestResponse = `CAST(request_response AS INTEGER)`; break;
         case "DATE": requestResponse = `TO_DATE(REPLACE(request_response, '"', ''), 'YYYY-MM-DD')`; break;
+      }
+
+      if(isWithResponseFilter){
+        responseFilterCondition = `
+          ${responseFilter.certificate ? `(AND field_id = 'b3ddc3c1-d93c-486d-9bdf-86a10d481df0' AND request_response IS ${Boolean(responseFilter.certificate) ? "NOT" : ""} NULL)` : ""}
+        `;
       }
 
       const requestResponseData = plv8.execute(
@@ -13936,6 +13956,16 @@ AS $$
       }).join(" ") + ` ELSE ${requestResponseData.length + (isDescending ? 1 : 2)} END`
     }
 
+    let requestFilterCondition = "";
+    if(requestFilter){
+      requestFilterCondition = `
+        ${Boolean(requestFilter.requestId) ? `AND request_formsly_id ILIKE '%${requestFilter.requestId}%'` : ""}
+        ${Boolean(requestFilter.status) && requestFilter.status.length ? `AND request_status IN (${requestFilter.status.map(status => `'${status}'`)})` : ""}
+        ${Boolean(requestFilter.dateCreatedRange.start) ? `AND request_date_created >= '${requestFilter.dateCreatedRange.start}'` : ""}
+        ${Boolean(requestFilter.dateCreatedRange.end) ? `AND request_date_created <= '${requestFilter.dateCreatedRange.end}'` : ""}
+      `;
+    }
+
     const parentRequests = plv8.execute(`
         SELECT 
           request_id,
@@ -13950,8 +13980,9 @@ AS $$
           team_member_team_id = '${teamId}'
           AND request_is_disabled = FALSE
           AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
-        ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
-        ${isSortByResponse ? `ORDER BY CASE request_id ${requestIdOrder}` : ""}
+          ${requestFilterCondition.length ? `${requestFilterCondition}` : ""}
+          ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
+          ${isSortByResponse ? `ORDER BY CASE request_id ${requestIdOrder}` : ""}
         LIMIT '${limit}'
         OFFSET '${offset}'
     `);
@@ -13973,9 +14004,45 @@ AS $$
         `
       );
 
+      const signerList = plv8.execute(
+        `
+          SELECT 
+            request_signer_id,
+            request_signer_status,
+            signer_team_member_id,
+            signer_is_primary_signer,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_avatar
+          FROM request_schema.request_signer_table 
+          INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          WHERE 
+            request_signer_request_id = '${parentRequest.request_id}' 
+        `
+      );
+
       requestListWithResponses.push({
         ...parentRequest,
-        request_response_list: responseList
+        request_response_list: responseList,
+        request_signer_list: signerList.map(signer => {
+          return {
+            request_signer_id: signer.request_signer_id,
+            request_signer_status: signer.request_signer_status,
+            request_signer: {
+              signer_team_member_id: signer.signer_team_member_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer,
+            },
+            signer_team_member_user: {
+              user_id: signer.user_id,
+              user_first_name: signer.user_first_name,
+              user_last_name: signer.user_last_name,
+              user_avatar: signer.user_avatar
+            }
+          }
+        })
       });
     });
 
@@ -13996,6 +14063,8 @@ AS $$
       formId
     } = input_data;
 
+    const optionList = [];
+
     const sectionList = plv8.execute(
       `
         SELECT *
@@ -14006,22 +14075,69 @@ AS $$
       `
     );
 
-    returnData = sectionList.map(section => {
-      const fieldData = plv8.execute(
-        `
-          SELECT *
-          FROM form_schema.field_table
-          WHERE
-            field_section_id = '${section.section_id}'
-          ORDER BY field_order
-        `
-      );
+    const positionData = plv8.execute(
+      `
+        SELECT position
+        FROM lookup_schema.position_table
+        WHERE 
+          position_is_disabled = false
+        ORDER BY position
+      `
+    );
 
-      return {
-        ...section,
-        section_field: fieldData
-      }
-    });
+    if(positionData.length){
+      optionList.push({
+        field_name: 'Position',
+        field_option: positionData.map((position, index) => {
+          return {
+            option_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
+            option_value: position.position,
+            option_order: index + 1,
+            option_field_id: 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'
+          }
+        })
+      });
+    }
+
+    returnData = {
+      sectionList: sectionList.map(section => {
+        const fieldData = plv8.execute(
+          `
+            SELECT *
+            FROM form_schema.field_table
+            WHERE
+              field_section_id = '${section.section_id}'
+            ORDER BY field_order
+          `
+        );
+
+        const fieldWithOptionData = fieldData.map(field => {
+          const fieldOptionData = plv8.execute(
+            `
+              SELECT *
+              FROM form_schema.option_table
+              WHERE
+                option_field_id = '${field.field_id}'
+            `
+          );
+
+          if(fieldOptionData.length){
+            optionList.push({
+              field_name: field.field_name,
+              field_option: fieldOptionData
+            });
+          }
+        
+          return field;
+        });
+
+        return {
+          ...section,
+          section_field: fieldWithOptionData
+        }
+      }),
+      optionList
+    }
 });
 return returnData;
 $$ LANGUAGE plv8;

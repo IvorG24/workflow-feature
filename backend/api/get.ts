@@ -66,6 +66,7 @@ import {
   RequestTableRow,
   RequestWithResponseType,
   SSOTOnLoad,
+  SectionWithFieldType,
   ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
   SignerRequestSLA,
@@ -5869,10 +5870,66 @@ export const getApplicationInformationSummaryData = async (
     userId: string;
   }
 ) => {
+  const updatedParams = {
+    ...params,
+    requestFilter: {
+      ...params.requestFilter,
+      dateCreatedRange: {
+        start: params.requestFilter?.dateCreatedRange?.start
+          ? new Date(
+              params.requestFilter?.dateCreatedRange?.start
+            ).toLocaleDateString()
+          : undefined,
+        end: params.requestFilter?.dateCreatedRange?.end
+          ? new Date(
+              params.requestFilter?.dateCreatedRange?.end
+            ).toLocaleDateString()
+          : undefined,
+      },
+      dateUpdatedRange: {
+        start: params.requestFilter?.dateUpdatedRange?.start
+          ? new Date(
+              params.requestFilter?.dateUpdatedRange?.start
+            ).toLocaleDateString()
+          : undefined,
+        end: params.requestFilter?.dateUpdatedRange?.end
+          ? new Date(
+              params.requestFilter?.dateUpdatedRange?.end
+            ).toLocaleDateString()
+          : undefined,
+      },
+    },
+    responseFilter: {
+      ...params.responseFilter,
+      yearGraduated: {
+        start: params.responseFilter?.yearGraduated?.start
+          ? moment(params.responseFilter?.yearGraduated?.start)
+              .subtract(1, "year")
+              .format("YYYY")
+          : undefined,
+        end: params.responseFilter?.yearGraduated?.end
+          ? moment(params.responseFilter?.yearGraduated?.end).format("YYYY")
+          : undefined,
+      },
+      soonestJoiningDate: {
+        start: params.responseFilter?.soonestJoiningDate?.start
+          ? moment(params.responseFilter?.soonestJoiningDate?.start)
+              .subtract(1, "day")
+              .format("MM-DD-YYYY")
+          : undefined,
+        end: params.responseFilter?.soonestJoiningDate?.end
+          ? new Date(
+              params.responseFilter?.soonestJoiningDate?.end
+            ).toLocaleDateString()
+          : undefined,
+      },
+    },
+  };
+  console.log("PARAMS: ", updatedParams);
   const { data, error } = await supabaseClient.rpc(
     "get_application_information_summary_table",
     {
-      input_data: params,
+      input_data: updatedParams,
     }
   );
   if (error) throw error;
@@ -5892,5 +5949,8 @@ export const getFormSectionWithFieldList = async (
     }
   );
   if (error) throw error;
-  return data;
+  return data as unknown as {
+    sectionList: SectionWithFieldType[];
+    optionList: (OptionTableRow & { field_name: string })[];
+  };
 };
