@@ -11,7 +11,7 @@ import {
   RequestListFilterValues,
   RequestListItemType,
   TeamMemberWithUserType,
-  TeamProjectTableRow
+  TeamProjectTableRow,
 } from "@/utils/types";
 import {
   Box,
@@ -21,7 +21,7 @@ import {
   Menu,
   Paper,
   Text,
-  Title
+  Title,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -88,11 +88,12 @@ const RequestListPage = ({
     columnAccessor: "request_date_created",
     direction: "desc",
   });
-  const [listTableColumnFilter, setListTableColumnFilter] =
-    useLocalStorage<string[]>({
-      key: "request-list-table-column-filter",
-      defaultValue: [],
-    });
+  const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
+    string[]
+  >({
+    key: "request-list-table-column-filter",
+    defaultValue: [],
+  });
 
   const tableColumnList = [
     { value: "request_id", label: "Request ID" },
@@ -161,7 +162,7 @@ const RequestListPage = ({
         isApproversView,
         isAscendingSort,
         teamMemberId: teamMember.team_member_id,
-        columnAccessor: columnAccessor()
+        columnAccessor: columnAccessor(),
       };
 
       const { data, count } = await getRequestList(supabaseClient, params);
@@ -212,9 +213,7 @@ const RequestListPage = ({
         {isFormslyTeam ? (
           <Menu shadow="md" width={200}>
             <Menu.Target>
-              <Button            
-              variant="light"
-              >Spreadsheet View</Button>
+              <Button variant="light">Spreadsheet View</Button>
             </Menu.Target>
 
             <Menu.Dropdown>
@@ -245,40 +244,40 @@ const RequestListPage = ({
         ) : null}
       </Flex>
       <Paper p="md">
-      <FormProvider {...filterFormMethods}>
-        <form onSubmit={handleSubmit(handleFilterForms)}>
-          <RequestListFilter
+        <FormProvider {...filterFormMethods}>
+          <form onSubmit={handleSubmit(handleFilterForms)}>
+            <RequestListFilter
+              teamMemberList={teamMemberList}
+              handleFilterForms={handleFilterForms}
+              formList={filteredFormList}
+              localFilter={localFilter}
+              setLocalFilter={setLocalFilter}
+              projectList={projectList}
+              showTableColumnFilter={showTableColumnFilter}
+              setShowTableColumnFilter={setShowTableColumnFilter}
+            />
+          </form>
+        </FormProvider>
+        <Box h="fit-content">
+          <RequestListTable
+            requestList={requestList}
+            requestListCount={requestListCount}
             teamMemberList={teamMemberList}
-            handleFilterForms={handleFilterForms}
-            formList={filteredFormList}
-            localFilter={localFilter}
-            setLocalFilter={setLocalFilter}
-            projectList={projectList}
+            activePage={activePage}
+            isFetchingRequestList={isFetchingRequestList}
+            handlePagination={handlePagination}
+            selectedFormFilter={selectedFormFilter}
+            sortStatus={sortStatus}
+            setSortStatus={setSortStatus}
+            setValue={setValue}
+            checkIfColumnIsHidden={checkIfColumnIsHidden}
             showTableColumnFilter={showTableColumnFilter}
             setShowTableColumnFilter={setShowTableColumnFilter}
+            listTableColumnFilter={listTableColumnFilter}
+            setListTableColumnFilter={setListTableColumnFilter}
+            tableColumnList={tableColumnList}
           />
-        </form>
-      </FormProvider>
-      <Box h="fit-content">
-        <RequestListTable
-          requestList={requestList}
-          requestListCount={requestListCount}
-          teamMemberList={teamMemberList}
-          activePage={activePage}
-          isFetchingRequestList={isFetchingRequestList}
-          handlePagination={handlePagination}
-          selectedFormFilter={selectedFormFilter}
-          sortStatus={sortStatus}
-          setSortStatus={setSortStatus}
-          setValue={setValue}
-          checkIfColumnIsHidden={checkIfColumnIsHidden}
-          showTableColumnFilter={showTableColumnFilter}
-          setShowTableColumnFilter={setShowTableColumnFilter}
-          listTableColumnFilter={listTableColumnFilter}
-          setListTableColumnFilter={setListTableColumnFilter}
-          tableColumnList={tableColumnList}
-        />
-      </Box>
+        </Box>
       </Paper>
     </Container>
   );
