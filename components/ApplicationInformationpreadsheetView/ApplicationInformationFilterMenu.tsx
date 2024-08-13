@@ -252,9 +252,14 @@ const sectionList = [
 type Props = {
   fetchData: (data?: ApplicationInformationFilterFormValues) => void;
   optionList: ApplicationInformationFieldOptionType[];
+  handleReset: () => void;
 };
 
-const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
+const ApplicationInformationFilterMenu = ({
+  fetchData,
+  optionList,
+  handleReset,
+}: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
 
@@ -307,10 +312,11 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
                 control={control}
                 name={`${field.id}.start` as "requestFilter"}
                 render={({ field: { value, onChange } }) => {
+                  const newValue = value ?? null;
                   return field.label === "Year Graduated" ? (
                     <YearPickerInput
                       placeholder="Start"
-                      value={value as Date}
+                      value={newValue as Date}
                       onChange={onChange}
                       clearable
                       icon={<IconCalendar size={16} />}
@@ -319,7 +325,7 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
                   ) : (
                     <DateInput
                       placeholder="Start"
-                      value={value as Date}
+                      value={newValue as Date}
                       onChange={onChange}
                       clearable
                       icon={<IconCalendar size={16} />}
@@ -332,10 +338,11 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
                 control={control}
                 name={`${field.id}.end` as "requestFilter"}
                 render={({ field: { value, onChange } }) => {
+                  const newValue = value ?? null;
                   return field.label === "Year Graduated" ? (
                     <YearPickerInput
                       placeholder="End"
-                      value={value as Date}
+                      value={newValue as Date}
                       onChange={onChange}
                       clearable
                       icon={<IconCalendar size={16} />}
@@ -344,7 +351,7 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
                   ) : (
                     <DateInput
                       placeholder="End"
-                      value={value as Date}
+                      value={newValue as Date}
                       onChange={onChange}
                       clearable
                       icon={<IconCalendar size={16} />}
@@ -361,16 +368,19 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
           <Controller
             control={control}
             name={field.id as "requestFilter"}
-            render={({ field: { value, onChange } }) => (
-              <MultiSelect
-                label={field.label}
-                data={fieldOptions}
-                value={value as string[]}
-                onChange={onChange}
-                clearable
-                searchable
-              />
-            )}
+            render={({ field: { value, onChange } }) => {
+              const newValue = value ?? [];
+              return (
+                <MultiSelect
+                  label={field.label}
+                  data={fieldOptions}
+                  value={newValue as string[]}
+                  onChange={onChange}
+                  clearable
+                  searchable
+                />
+              );
+            }}
           />
         );
       case "SELECT":
@@ -378,16 +388,19 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
           <Controller
             control={control}
             name={field.id as "requestFilter"}
-            render={({ field: { value, onChange } }) => (
-              <Select
-                label={field.label}
-                data={fieldOptions}
-                value={value as string}
-                onChange={onChange}
-                clearable
-                searchable
-              />
-            )}
+            render={({ field: { value, onChange } }) => {
+              const newValue = value ?? "";
+              return (
+                <Select
+                  label={field.label}
+                  data={fieldOptions}
+                  value={newValue as string}
+                  onChange={onChange}
+                  clearable
+                  searchable
+                />
+              );
+            }}
           />
         );
       case "BOOLEAN":
@@ -395,18 +408,21 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
           <Controller
             control={control}
             name={field.id as "requestFilter"}
-            render={({ field: { value, onChange } }) => (
-              <Select
-                label={field.label}
-                data={[
-                  { label: "True", value: "true" },
-                  { label: "False", value: "false" },
-                ]}
-                value={value as string}
-                onChange={onChange}
-                clearable
-              />
-            )}
+            render={({ field: { value, onChange } }) => {
+              const newValue = value === undefined ? "" : value;
+              return (
+                <Select
+                  label={field.label}
+                  data={[
+                    { label: "True", value: "true" },
+                    { label: "False", value: "false" },
+                  ]}
+                  value={newValue as string}
+                  onChange={onChange}
+                  clearable
+                />
+              );
+            }}
           />
         );
       case "NUMBER":
@@ -420,10 +436,11 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
                 control={control}
                 name={`${field.id}.start` as "requestFilter"}
                 render={({ field: { value, onChange } }) => {
+                  const newValue = value ?? "";
                   return (
                     <NumberInput
                       placeholder="Start"
-                      value={value as number}
+                      value={newValue as number}
                       onChange={onChange}
                       sx={{ flex: 1 }}
                       hideControls
@@ -435,10 +452,11 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
                 control={control}
                 name={`${field.id}.end` as "requestFilter"}
                 render={({ field: { value, onChange } }) => {
+                  const newValue = value ?? "";
                   return (
                     <NumberInput
                       placeholder="End"
-                      value={value as number}
+                      value={newValue as number}
                       onChange={onChange}
                       sx={{ flex: 1 }}
                       hideControls
@@ -492,9 +510,10 @@ const ApplicationInformationFilterMenu = ({ fetchData, optionList }: Props) => {
                 );
               })}
             </Accordion>
-            <Button type="submit" mt="xs">
-              Apply Filter
+            <Button variant="light" mt="xs" onClick={handleReset}>
+              Reset Filter
             </Button>
+            <Button type="submit">Apply Filter</Button>
           </Stack>
         </form>
       </Drawer>

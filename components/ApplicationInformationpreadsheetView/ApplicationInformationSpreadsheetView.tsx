@@ -20,10 +20,17 @@ import {
 import { IconReload } from "@tabler/icons-react";
 import { Database as OneOfficeDatabase } from "oneoffice-api";
 import { useEffect, useState } from "react";
+import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import ApplicationInformationFilterMenu from "./ApplicationInformationFilterMenu";
 import ApplicationInformationSpreadsheetTable from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
+
+const initialSort = {
+  field: "request_date_created",
+  order: "DESC",
+  dataType: "DATE",
+};
 
 type Props = {
   sectionList: SectionWithFieldType[];
@@ -39,24 +46,26 @@ const ApplicationInformationSpreadsheetView = ({
   const [data, setData] = useState<ApplicationInformationSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
-  const [sort, setSort] = useState({
-    field: "request_date_created",
-    order: "DESC",
-    dataType: "DATE",
-  });
+  const [sort, setSort] = useState(initialSort);
   const [optionList, setOptionList] = useState(initialOptionList);
   const [isMax, setIsMax] = useState(false);
 
-  const filterFormMethods = useForm<ApplicationInformationFilterFormValues>();
+  const filterFormMethods = useForm<ApplicationInformationFilterFormValues>({
+    defaultValues: {
+      requestFilter: undefined,
+      responseFilter: undefined,
+    },
+  });
 
   const fetchData = async (data?: ApplicationInformationFilterFormValues) => {
     try {
       if (!user) return;
       setIsLoading(true);
-
+      const filterData = filterFormMethods.getValues();
       const newData = await getApplicationInformationSummaryData(
         supabaseClient,
         {
+          ...filterData,
           ...data,
           userId: user.id,
           limit: DEFAULT_NUMBER_SSOT_ROWS,
@@ -68,7 +77,7 @@ const ApplicationInformationSpreadsheetView = ({
       if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
         setIsMax(true);
       }
-
+      console.log("NEW DATA: ", newData);
       if (page === 1) {
         setData(newData);
       } else {
@@ -92,10 +101,28 @@ const ApplicationInformationSpreadsheetView = ({
     });
   };
 
+  const handleReset = () => {
+    filterFormMethods.reset();
+    setPage(1);
+    fetchData({ page: 1 });
+  };
+
+  useBeforeunload(() => {
+    const filterData = filterFormMethods.getValues();
+    localStorage.setItem(
+      "applicationInformationSpreadsheetView",
+      JSON.stringify({
+        ...filterData,
+        limit: DEFAULT_NUMBER_SSOT_ROWS,
+        page,
+        sort,
+      })
+    );
+  });
+
   useEffect(() => {
     const handleSorting = async () => {
-      const data = filterFormMethods.getValues();
-      await fetchData({ ...data, sort });
+      await fetchData({ sort });
     };
     handleSorting();
   }, [sort]);
@@ -123,6 +150,25 @@ const ApplicationInformationSpreadsheetView = ({
           return [...prev, regionOption];
         });
       }
+
+      // const storedData = localStorage.getItem(
+      //   "applicationInformationSpreadsheetView"
+      // );
+      // if (storedData) {
+      //   const filterData: ApplicationInformationFilterFormValues =
+      //     JSON.parse(storedData);
+
+      //   setPage(filterData.page ?? 1);
+      //   setSort(sort ?? initialSort);
+      //   filterFormMethods.reset(filterData);
+      //   await fetchData({
+      //     ...filterData,
+      //   });
+      // } else {
+      //   await fetchData({
+      //     page: 1,
+      //   });
+      // }
       await fetchData({
         page: 1,
       });
@@ -149,6 +195,7 @@ const ApplicationInformationSpreadsheetView = ({
             <ApplicationInformationFilterMenu
               fetchData={fetchData}
               optionList={optionList}
+              handleReset={handleReset}
             />
           </FormProvider>
         </Group>

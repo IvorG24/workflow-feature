@@ -5905,10 +5905,12 @@ export const getApplicationInformationSummaryData = async (
         start: params.responseFilter?.yearGraduated?.start
           ? moment(params.responseFilter?.yearGraduated?.start)
               .subtract(1, "year")
-              .format("YYYY")
+              .format("MM-DD-YYYY")
           : undefined,
         end: params.responseFilter?.yearGraduated?.end
-          ? moment(params.responseFilter?.yearGraduated?.end).format("YYYY")
+          ? moment(params.responseFilter?.yearGraduated?.end).format(
+              "MM-DD-YYYY"
+            )
           : undefined,
       },
       soonestJoiningDate: {
