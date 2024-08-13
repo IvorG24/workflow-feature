@@ -5925,7 +5925,7 @@ export const getApplicationInformationSummaryData = async (
       },
     },
   };
-
+  console.log("PARAMS: ", updatedParams);
   const { data, error } = await supabaseClient.rpc(
     "get_application_information_summary_table",
     {

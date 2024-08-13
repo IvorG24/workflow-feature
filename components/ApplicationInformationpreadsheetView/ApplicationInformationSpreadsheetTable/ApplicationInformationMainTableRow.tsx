@@ -22,6 +22,13 @@ import { IconFile } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
+export const duplicatableFieldIdList = [
+  "98378ca4-3323-4f7c-a469-e33adec84d25",
+  "00d3e4e7-9177-4497-948d-daba978f0aa3",
+  "c35cf796-9613-4a02-8438-d2baa46e653b",
+  "e0959707-0606-4610-af60-8fd49d014320",
+];
+
 type Props = {
   item: ApplicationInformationSpreadsheetData;
   fieldObject: ApplicationInformationFieldObjectType;
@@ -50,7 +57,11 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
     const sortedFields = Object.values(emptyFieldObject).sort((a, b) => {
       return a.field_order - b.field_order;
     });
-    setSortedFields(sortedFields);
+    setSortedFields(
+      sortedFields.filter(
+        (field) => !duplicatableFieldIdList.includes(field.field_id)
+      )
+    );
   }, [item, fieldObject]);
 
   const renderFieldColumn = (
@@ -131,9 +142,14 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
       <td>
         <RequestSignerList signerList={item.request_signer_list} />
       </td>
-      {sortedFields.map((row, index) => (
-        <td key={index}>{renderFieldColumn(row)}</td>
-      ))}
+      {sortedFields
+        .filter(
+          (row) =>
+            row.field_section.section_name !== "Most Recent Work Experience"
+        )
+        .map((row, index) => (
+          <td key={index}>{renderFieldColumn(row)}</td>
+        ))}
     </tr>
   );
 };

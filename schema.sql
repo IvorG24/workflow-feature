@@ -13945,6 +13945,11 @@ AS $$
     responseFilter.expectedSalary && responseFilter.expectedSalary.start ? responseFilterCondition.push(`(field_id = 'bd9af7fa-03c3-4fdc-a34f-99f46a666569' AND CAST(request_response AS integer) >= ${responseFilter.expectedSalary.start})`) : null;
     responseFilter.expectedSalary && responseFilter.expectedSalary.end ? responseFilterCondition.push(`(field_id = 'bd9af7fa-03c3-4fdc-a34f-99f46a666569' AND CAST(request_response AS integer) <= ${responseFilter.expectedSalary.end})`) : null;
 
+    const responseBooleanFilterCondition = [];
+    responseFilter.certification ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.certification === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = 'b3ddc3c1-d93c-486d-9bdf-86a10d481df0'))`) : null;
+    responseFilter.license ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.license === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = '5a07dbc9-8a45-44da-8235-9d330957433d'))`) : null;
+    responseFilter.torOrDiplomaAttachment ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.torOrDiplomaAttachment === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = '8ff6676c-5c82-4013-ab92-7c3df6b80d53'))`) : null;
+
     const requestFilterCondition = [];
     Boolean(requestFilter.requestId) ? requestFilterCondition.push(`request_formsly_id ILIKE '%requestFilter.requestId}%'`) : null;
     Boolean(requestFilter.status) && requestFilter.status.length ? requestFilterCondition.push(`request_status IN (${requestFilter.status.map(status => `'${status}'`)})`) : null;
@@ -13987,7 +13992,9 @@ AS $$
             ${responseFilterCondition.length ? `AND (${responseFilterCondition.join(" OR ")})` : ""}
             ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
         ) AS a 
-        WHERE a.rowNumber = ${filterCount ? filterCount : 1}
+        WHERE 
+          a.rowNumber = ${filterCount ? filterCount : 1}
+          ${responseBooleanFilterCondition.length ? `AND (${responseBooleanFilterCondition.join(" AND ")})` : ""}
         ${isSortByResponse ? 
         `
           ORDER BY ${castRequestResponse(`(

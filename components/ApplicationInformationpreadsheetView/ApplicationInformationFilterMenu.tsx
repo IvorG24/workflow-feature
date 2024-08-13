@@ -56,8 +56,8 @@ const sectionList = [
         type: "MULTISELECT",
       },
       {
-        id: "responseFilter.certificate",
-        label: "Certificate",
+        id: "responseFilter.certification",
+        label: "Certification",
         type: "BOOLEAN",
       },
       {

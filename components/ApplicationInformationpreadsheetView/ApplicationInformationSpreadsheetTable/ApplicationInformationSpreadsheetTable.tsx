@@ -25,7 +25,9 @@ import {
 } from "@tabler/icons-react";
 
 import { Dispatch, SetStateAction } from "react";
-import ApplicationInformationMainTableRow from "./ApplicationInformationMainTableRow";
+import ApplicationInformationMainTableRow, {
+  duplicatableFieldIdList,
+} from "./ApplicationInformationMainTableRow";
 
 const unsortableFieldList = [
   "Approver",
@@ -113,8 +115,8 @@ const ApplicationInformationSpreadsheetTable = ({
   const { classes } = useStyles();
 
   const fieldObject: ApplicationInformationFieldObjectType = {};
-  sectionList.map((section) => {
-    section.section_field.map((field) => {
+  sectionList.forEach((section) => {
+    section.section_field.forEach((field) => {
       fieldObject[field.field_id] = {
         ...field,
         field_section: section,
@@ -171,13 +173,15 @@ const ApplicationInformationSpreadsheetTable = ({
       field_type: string;
     }[] = [];
     sectionList.forEach((section) => {
-      section.section_field.forEach((field) => {
-        fieldList.push({
-          field_id: field.field_id,
-          field_name: field.field_name,
-          field_type: field.field_type,
+      if (section.section_name !== "Most Recent Work Experience") {
+        section.section_field.forEach((field) => {
+          fieldList.push({
+            field_id: field.field_id,
+            field_name: field.field_name,
+            field_type: field.field_type,
+          });
         });
-      });
+      }
     });
 
     return fieldList.map((field, index) => (
@@ -232,7 +236,8 @@ const ApplicationInformationSpreadsheetTable = ({
                   {
                     length:
                       Object.keys(fieldObject).length +
-                      requestColumnList.length,
+                      requestColumnList.length -
+                      duplicatableFieldIdList.length,
                   },
                   (_, index) => index
                 ).map((index) => (

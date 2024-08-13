@@ -2100,7 +2100,10 @@ export type ApplicationInformationFieldObjectType = Record<
   }
 >;
 
-export type ApplicationInformationFieldOptionType = { field_option: OptionTableRow[]; field_name: string };
+export type ApplicationInformationFieldOptionType = {
+  field_option: OptionTableRow[];
+  field_name: string;
+};
 
 export type ApplicationInformationFilterFormValues = {
   limit?: number;
@@ -2122,7 +2125,7 @@ export type ApplicationInformationFilterFormValues = {
   };
   responseFilter?: {
     position?: string[];
-    certificate?: boolean;
+    certification?: boolean;
     license?: boolean;
     source?: string[];
     firstName?: string;
