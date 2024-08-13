@@ -1,7 +1,11 @@
 import { getMemoList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
-import { DEFAULT_REQUEST_LIST_LIMIT, DEFAULT_TICKET_LIST_LIMIT, formatDate } from "@/utils/constant";
+import {
+  DEFAULT_REQUEST_LIST_LIMIT,
+  DEFAULT_TICKET_LIST_LIMIT,
+  formatDate,
+} from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getAvatarColor } from "@/utils/styling";
 import { MemoListItemType, TeamMemberType } from "@/utils/types";
@@ -23,7 +27,7 @@ import {
   Text,
   TextInput,
   Title,
-  Tooltip
+  Tooltip,
 } from "@mantine/core";
 import { useDisclosure, useFocusWithin, useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -139,11 +143,12 @@ const MemoListPage = ({
     return sortStatus.columnAccessor;
   };
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
-  const [listTableColumnFilter, setListTableColumnFilter] =
-    useLocalStorage<string[]>({
-      key: "memo-list-table-column-filter",
-      defaultValue: [],
-    });
+  const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
+    string[]
+  >({
+    key: "memo-list-table-column-filter",
+    defaultValue: [],
+  });
 
   const checkIfColumnIsHidden = (column: string) => {
     const isHidden = listTableColumnFilter.includes(column);
@@ -160,12 +165,20 @@ const MemoListPage = ({
     { value: "view", label: "View" },
   ];
 
-  const handlePagination = async ({ overidePage }: { overidePage?: number  } = {}) => {
+  const handlePagination = async ({
+    overidePage,
+  }: { overidePage?: number } = {}) => {
     try {
       if (!activeTeam.team_id) return;
       setIsLoading(true);
 
-      const {approverFilter, authorFilter, isAscendingSort, searchFilter, status} = getValues()
+      const {
+        approverFilter,
+        authorFilter,
+        isAscendingSort,
+        searchFilter,
+        status,
+      } = getValues();
 
       const { data, count } = await getMemoList(supabaseClient, {
         teamId: activeTeam.team_id,
@@ -180,9 +193,9 @@ const MemoListPage = ({
         columnAccessor: columnAccessor(),
         searchFilter,
         sort: isAscendingSort
-        ? "ascending"
-        : ("descending" as "ascending" | "descending"),
-        status
+          ? "ascending"
+          : ("descending" as "ascending" | "descending"),
+        status,
       });
 
       setMemoList(data);
@@ -204,19 +217,23 @@ const MemoListPage = ({
     const filterMatch = filter[`${key}`];
 
     if (value !== filterMatch) {
-      handlePagination();
+      handlePagination({ overidePage: 1 });
+      setActivePage(1);
       setFilter((prev) => ({ ...prev, [`${key}`]: value }));
     }
   };
 
   // sorting
   useEffect(() => {
-    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     setFilter((prev) => {
-      return {...prev, isAscendingSort: sortStatus.direction === "asc" ? false : true}
-    })
-   
-    handlePagination()
+      return {
+        ...prev,
+        isAscendingSort: sortStatus.direction === "asc" ? false : true,
+      };
+    });
+
+    handlePagination();
   }, [sortStatus]);
 
   return (
@@ -236,9 +253,12 @@ const MemoListPage = ({
       </Group>
       {/* memo filters */}
       <Paper p="md">
-        <form onSubmit={handleSubmit(() => {
-          handlePagination({overidePage: 1})
-        })}>
+        <form
+          onSubmit={handleSubmit(() => {
+            handlePagination({ overidePage: 1 });
+            setActivePage(1);
+          })}
+        >
           <Flex gap="sm" wrap="wrap" align="center">
             <TextInput
               placeholder="Search memo"
@@ -267,7 +287,9 @@ const MemoListPage = ({
               <Switch
                 onLabel={<IconEyeFilled size="14" />}
                 checked={showTableColumnFilter}
-                onChange={(event) => setShowTableColumnFilter(event.currentTarget.checked)}
+                onChange={(event) =>
+                  setShowTableColumnFilter(event.currentTarget.checked)
+                }
               />
             </Flex>
             <Flex gap="sm" wrap="wrap" align="center">
@@ -280,7 +302,7 @@ const MemoListPage = ({
             </Flex>
           </Flex>
           <Divider my="md" />
-          {isFilter && 
+          {isFilter && (
             <Flex gap="sm" wrap="wrap" align="center" mb="sm">
               <Controller
                 control={control}
@@ -354,7 +376,7 @@ const MemoListPage = ({
                 )}
               />
             </Flex>
-          }
+          )}
         </form>
 
         <Box h="fit-content" pos="relative">
@@ -365,8 +387,8 @@ const MemoListPage = ({
             fetching={isLoading}
             page={activePage}
             onPageChange={(page) => {
-              setActivePage(page)
-              handlePagination({overidePage: page});
+              setActivePage(page);
+              handlePagination({ overidePage: page });
             }}
             totalRecords={memoListCount}
             recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
@@ -378,7 +400,7 @@ const MemoListPage = ({
                 title: "ID",
                 width: 180,
                 hidden: checkIfColumnIsHidden("memo_id"),
-                render: ({memo_id, memo_reference_number}) => {
+                render: ({ memo_id, memo_reference_number }) => {
                   return (
                     <Flex gap="md" align="center">
                       <Text size="xs" truncate maw={150}>
@@ -424,19 +446,18 @@ const MemoListPage = ({
                 title: "Status",
                 sortable: true,
                 hidden: checkIfColumnIsHidden("memo_status"),
-                render: ({memo_status}) => {
+                render: ({ memo_status }) => {
                   return (
                     <Flex justify="center">
-
-                    <Badge
-                      variant="filled"
-                      color={getMemoStatusColor(String(memo_status))}
-                    >
-                      {String(memo_status)}
-                    </Badge>
+                      <Badge
+                        variant="filled"
+                        color={getMemoStatusColor(String(memo_status))}
+                      >
+                        {String(memo_status)}
+                      </Badge>
                     </Flex>
-                  )
-                }
+                  );
+                },
               },
               {
                 accessor: "memo_author_user_id",
@@ -449,28 +470,31 @@ const MemoListPage = ({
                       user_first_name: string;
                       user_last_name: string;
                       user_avatar: string | null;
-                      user_id: string
+                      user_id: string;
                     };
                     memo_author_user_id: string;
                   };
-                  const { user_first_name, user_last_name, user_avatar, user_id } = memo_author_user;
+                  const {
+                    user_first_name,
+                    user_last_name,
+                    user_avatar,
+                    user_id,
+                  } = memo_author_user;
 
                   return (
-                    <Flex px={0} gap={8} align='center'>
+                    <Flex px={0} gap={8} align="center">
                       <Avatar
-                            {...defaultAvatarProps}
-                            color={getAvatarColor(
-                              Number(`${user_id.charCodeAt(0)}`)
-                            )}
-                            src={user_avatar}
-                        >
-                        {(
-                          user_first_name[0] + user_last_name[0]
-                        ).toUpperCase()}
+                        {...defaultAvatarProps}
+                        color={getAvatarColor(
+                          Number(`${user_id.charCodeAt(0)}`)
+                        )}
+                        src={user_avatar}
+                      >
+                        {(user_first_name[0] + user_last_name[0]).toUpperCase()}
                       </Avatar>
-                      <Text >{`${user_first_name} ${user_last_name}`}</Text>
+                      <Text>{`${user_first_name} ${user_last_name}`}</Text>
                     </Flex>
-                  )
+                  );
                 },
               },
               {
@@ -481,7 +505,7 @@ const MemoListPage = ({
                   const { memo_signer_list } = memo as MemoListItemType;
                   return (
                     <MemoItemListSignerList signerList={memo_signer_list} />
-                  )
+                  );
                 },
               },
               {
@@ -489,7 +513,7 @@ const MemoListPage = ({
                 title: "Date Created",
                 sortable: true,
                 hidden: checkIfColumnIsHidden("memo_date_created"),
-                render: ({memo_date_created}) => {
+                render: ({ memo_date_created }) => {
                   if (!memo_date_created) {
                     return null;
                   }
@@ -507,7 +531,7 @@ const MemoListPage = ({
                 accessor: "view",
                 title: "View",
                 hidden: checkIfColumnIsHidden("view"),
-                render: ({memo_id}) => {
+                render: ({ memo_id }) => {
                   return (
                     <Flex justify="center">
                       <ActionIcon

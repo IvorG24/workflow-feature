@@ -9,17 +9,21 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   BASE_URL,
   DEFAULT_REQUEST_LIST_LIMIT,
-  formatDate
+  formatDate,
 } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { getAvatarColor, getJiraTicketStatusColor, getStatusToColor } from "@/utils/styling";
+import {
+  getAvatarColor,
+  getJiraTicketStatusColor,
+  getStatusToColor,
+} from "@/utils/styling";
 import {
   RequestListFilterValues,
   RequestListItemSignerType,
   RequestListItemType,
   requestSignerType,
-  TeamMemberWithUserType
+  TeamMemberWithUserType,
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -36,7 +40,7 @@ import {
   Stack,
   Text,
   Tooltip,
-  UnstyledButton
+  UnstyledButton,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
@@ -57,14 +61,16 @@ type Props = {
   selectedFormFilter: string[] | undefined;
   handlePagination: (p: number) => void;
   sortStatus: DataTableSortStatus;
-  setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>
-  setValue:  UseFormSetValue<RequestListFilterValues>
-  checkIfColumnIsHidden:  (column: string) => boolean
+  setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
+  setValue: UseFormSetValue<RequestListFilterValues>;
+  checkIfColumnIsHidden: (column: string) => boolean;
   showTableColumnFilter: boolean;
-  setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>
-  listTableColumnFilter: string[]
-  setListTableColumnFilter: (val: string[] | ((prevState: string[]) => string[])) => void;
-  tableColumnList: { value: string, label: string }[]
+  setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
+  listTableColumnFilter: string[];
+  setListTableColumnFilter: (
+    val: string[] | ((prevState: string[]) => string[])
+  ) => void;
+  tableColumnList: { value: string; label: string }[];
 };
 
 const useStyles = createStyles(() => ({
@@ -95,7 +101,7 @@ const RequestListTable = ({
   setShowTableColumnFilter,
   listTableColumnFilter,
   setListTableColumnFilter,
-  tableColumnList
+  tableColumnList,
 }: Props) => {
   const { classes } = useStyles();
   const activeTeam = useActiveTeam();
@@ -382,20 +388,19 @@ const RequestListTable = ({
     setOtpIdList(currentOtpIdList);
   }, [requestList]);
 
-
   useEffect(() => {
-    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
-}, [sortStatus])
+  }, [sortStatus]);
 
   return (
-    <ListTable 
+    <ListTable
       idAccessor="request_id"
       records={requestList}
       fetching={isFetchingRequestList}
       page={activePage}
       onPageChange={(page) => {
-        handlePagination(page)
+        handlePagination(page);
       }}
       totalRecords={requestListCount}
       recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
@@ -448,9 +453,8 @@ const RequestListTable = ({
           title: "JIRA ID",
           hidden: checkIfColumnIsHidden("request_jira_id"),
           render: ({ request_jira_id, request_jira_link }) => {
-
-            if (request_jira_id === null){
-              return null
+            if (request_jira_id === null) {
+              return null;
             }
 
             return (
@@ -483,9 +487,8 @@ const RequestListTable = ({
           title: "JIRA Status",
           hidden: checkIfColumnIsHidden("request_jira_status"),
           render: ({ request_jira_id }) => {
-
             if (request_jira_id === null) {
-              return null
+              return null;
             }
 
             const jiraStatusMatch = jiraTicketStatusList.find(
@@ -534,7 +537,6 @@ const RequestListTable = ({
                     )}
                   </Box>
                 </Flex>
-                
               </Tooltip>
             );
           },
@@ -595,12 +597,14 @@ const RequestListTable = ({
                         <Text truncate w={90}>
                           {currentOtp?.otpId}
                         </Text>
-                        {currentOtp?.otpId && 
+                        {currentOtp?.otpId && (
                           <CopyButton value={currentOtp?.otpId as string}>
                             {({ copied, copy }) => (
                               <Tooltip
                                 label={
-                                  copied ? "Copied" : `Copy ${currentOtp?.otpId}`
+                                  copied
+                                    ? "Copied"
+                                    : `Copy ${currentOtp?.otpId}`
                                 }
                                 onClick={copy}
                               >
@@ -610,7 +614,7 @@ const RequestListTable = ({
                               </Tooltip>
                             )}
                           </CopyButton>
-                        }
+                        )}
                       </>
                     )}
                   </Flex>
@@ -624,7 +628,7 @@ const RequestListTable = ({
           title: "Form Name",
           sortable: true,
           hidden: checkIfColumnIsHidden("request_form_name"),
-          render: ({form_name}) => {
+          render: ({ form_name }) => {
             return (
               <Text truncate maw={150}>
                 {String(form_name)}
@@ -700,7 +704,10 @@ const RequestListTable = ({
           hidden: checkIfColumnIsHidden("request_status"),
           render: ({ request_status }) => (
             <Flex justify="center">
-              <Badge variant="filled" color={getStatusToColor(String(request_status))}>
+              <Badge
+                variant="filled"
+                color={getStatusToColor(String(request_status))}
+              >
                 {String(request_status)}
               </Badge>
             </Flex>
@@ -712,24 +719,30 @@ const RequestListTable = ({
           sortable: true,
           hidden: checkIfColumnIsHidden("request_team_member_id"),
           render: (request) => {
-
-            const { user_id, user_first_name, user_last_name, request_team_member_id} = request as {user_id: string, user_first_name: string, user_last_name: string, request_team_member_id: string}
+            const {
+              user_id,
+              user_first_name,
+              user_last_name,
+              request_team_member_id,
+            } = request as {
+              user_id: string;
+              user_first_name: string;
+              user_last_name: string;
+              request_team_member_id: string;
+            };
 
             return (
-              <Flex px={0} gap={8} align='center'>
+              <Flex px={0} gap={8} align="center">
                 <Avatar
                   // src={requestor.user_avatar}
                   {...defaultAvatarProps}
-                  color={getAvatarColor(
-                    Number(`${user_id.charCodeAt(0)}`)
-                  )}
+                  color={getAvatarColor(Number(`${user_id.charCodeAt(0)}`))}
                   className={classes.requestor}
                   onClick={() =>
                     window.open(`/member/${request_team_member_id}`)
                   }
                 >
-                  {user_first_name[0] +
-                    user_last_name[0]}
+                  {user_first_name[0] + user_last_name[0]}
                 </Avatar>
                 <Anchor
                   href={`/member/${request_team_member_id}`}
@@ -738,7 +751,7 @@ const RequestListTable = ({
                   <Text>{`${user_first_name} ${user_last_name}`}</Text>
                 </Anchor>
               </Flex>
-            ) 
+            );
           },
         },
         {
@@ -746,19 +759,24 @@ const RequestListTable = ({
           title: "Approver",
           hidden: checkIfColumnIsHidden("request_signer"),
           render: (request) => {
-            const { request_signer } = request as {request_signer: requestSignerType[]}
-            const signerList = request_signer.map((signer: requestSignerType) => {
-              const signerTeamMemberData = teamMemberList.find(
-                (member) =>
-                  member.team_member_id ===
-                  signer.request_signer.signer_team_member_id
-              );
+            const { request_signer } = request as {
+              request_signer: requestSignerType[];
+            };
+            const signerList = request_signer.map(
+              (signer: requestSignerType) => {
+                const signerTeamMemberData = teamMemberList.find(
+                  (member) =>
+                    member.team_member_id ===
+                    signer.request_signer.signer_team_member_id
+                );
 
-              return {
-                ...signer,
-                signer_team_member_user: signerTeamMemberData?.team_member_user,
-              };
-            });
+                return {
+                  ...signer,
+                  signer_team_member_user:
+                    signerTeamMemberData?.team_member_user,
+                };
+              }
+            );
 
             return (
               <RequestSignerList
@@ -810,7 +828,6 @@ const RequestListTable = ({
       setListTableColumnFilter={setListTableColumnFilter}
       tableColumnList={tableColumnList}
     />
-    
   );
 };
 
