@@ -45,6 +45,7 @@ const ApplicationInformationSpreadsheetView = ({
     dataType: "DATE",
   });
   const [optionList, setOptionList] = useState(initialOptionList);
+  const [isMax, setIsMax] = useState(false);
 
   const filterFormMethods = useForm<ApplicationInformationFilterFormValues>();
 
@@ -63,6 +64,9 @@ const ApplicationInformationSpreadsheetView = ({
           sort: data?.sort ?? sort,
         }
       );
+      if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
+        setIsMax(true);
+      }
 
       if (page === 1) {
         setData(newData);
@@ -70,7 +74,6 @@ const ApplicationInformationSpreadsheetView = ({
         setData((prev) => [...prev, ...newData]);
       }
     } catch (e) {
-      console.log("ERROR: ", e);
       notifications.show({
         message: "Failed to fetch data",
         color: "red",
@@ -89,7 +92,8 @@ const ApplicationInformationSpreadsheetView = ({
 
   useEffect(() => {
     const handleSorting = async () => {
-      await fetchData({ sort });
+      const data = filterFormMethods.getValues();
+      await fetchData({ ...data, sort });
     };
     handleSorting();
   }, [sort]);
@@ -155,6 +159,7 @@ const ApplicationInformationSpreadsheetView = ({
         handlePagination={handlePagination}
         sort={sort}
         setSort={setSort}
+        isMax={isMax}
       />
     </Stack>
   );

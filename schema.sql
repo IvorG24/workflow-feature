@@ -13900,92 +13900,108 @@ AS $$
       return uuidPattern.test(str);
     };
 
-    const hasValue = (value) => {
-      if (value == null) return false;
-      if (value === "") return false;
-      if (Array.isArray(value)) return value.length > 0;
-      if (typeof value === "object") {
-        if (Object.keys(value).length === 0) return false;
-        return Object.values(value).some(hasValue);
-      }
-      return Boolean(value);
-    };
-
+    const onlyNumber = (value) => (value.match(/\d+/g) || []).join('')
+    
     const isSortByResponse = isUUID(sort.field);
-
+    
     const offset = (page - 1) * limit;
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
 
-    let requestIdCondition = "";
-    let requestIdOrder = "";
-    const isWithResponseFilter = hasValue(responseFilter);
-    if(isSortByResponse || isWithResponseFilter){
-      let requestResponse = "request_response";
+    const responseFilterCondition = [];
+    Boolean(responseFilter.position) && responseFilter.position.length ? responseFilterCondition.push(`(field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66' AND request_response IN (${responseFilter.position.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    Boolean(responseFilter.source) && responseFilter.source.length ? responseFilterCondition.push(`(field_id = 'f416b6c8-5374-4642-b608-f626269bde1b' AND request_response IN (${responseFilter.source.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    responseFilter.firstName ? responseFilterCondition.push(`(field_id = '7201c77e-b24a-4006-a4e5-8f38db887804' AND request_response ILIKE '%${responseFilter.firstName}%')`) : null;
+    responseFilter.middleName ? responseFilterCondition.push(`(field_id = '859ac939-10c8-4094-aa7a-634f84b950b0' AND request_response ILIKE '%${responseFilter.middleName}%')`) : null;
+    responseFilter.lastName ? responseFilterCondition.push(`(field_id = '0080798c-2359-4162-b8ae-441ac80512b6' AND request_response ILIKE '%${responseFilter.lastName}%')`) : null;
+    responseFilter.gender ? responseFilterCondition.push(`(field_id = '9f36b822-320a-4044-b292-ced5e2074949' AND request_response = '"${responseFilter.gender}"')`) : null;
+    responseFilter.ageRange && responseFilter.ageRange.start ? responseFilterCondition.push(`(field_id = '222d4978-5216-4c81-a676-be9405a7323c' AND CAST(request_response AS integer) >= ${responseFilter.ageRange.start})`) : null;
+    responseFilter.ageRange && responseFilter.ageRange.end ? responseFilterCondition.push(`(field_id = '222d4978-5216-4c81-a676-be9405a7323c' AND CAST(request_response AS integer) <= ${responseFilter.ageRange.end})`) : null;
+    Boolean(responseFilter.civilStatus) && responseFilter.civilStatus.length ? responseFilterCondition.push(`(field_id = '2ba8f1e6-5ff9-4db8-b0c0-e9f6b62cc7a9' AND request_response IN (${responseFilter.civilStatus.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    responseFilter.contactNumber ? responseFilterCondition.push(`(field_id = '5b43279b-88d6-41ce-ac69-b396e5a7a48f' AND request_response ILIKE '%${onlyNumber(responseFilter.contactNumber)}%')`) : null;
+    responseFilter.emailAddress ? responseFilterCondition.push(`(field_id = 'ee6ec8af-0a9e-40a5-8353-7d851218fa87' AND request_response ILIKE '%${responseFilter.emailAddress}%')`) : null;
+    responseFilter.region ? responseFilterCondition.push(`(field_id = '1d6b36a6-b78f-4be7-a577-162664efb8c0' AND request_response ILIKE '%${responseFilter.region}%')`) : null;
+    responseFilter.province ? responseFilterCondition.push(`(field_id = 'a0b3e0cd-f2eb-45cb-87e1-a9ce59dff479' AND request_response ILIKE '%${responseFilter.province}%')`) : null;
+    responseFilter.city ? responseFilterCondition.push(`(field_id = '4902fd1f-5b23-42c0-88a4-e2b6425bc974' AND request_response ILIKE '%${responseFilter.city}%')`) : null;
+    responseFilter.barangay ? responseFilterCondition.push(`(field_id = 'f14eb00e-f927-4bf7-9e69-e7a4ff963f4a' AND request_response ILIKE '%${responseFilter.barangay}%')`) : null;
+    responseFilter.street ? responseFilterCondition.push(`(field_id = 'a2987c8a-cf04-4c7a-99d1-47a1cfa82e2a' AND request_response ILIKE '%${responseFilter.street}%')`) : null;
+    responseFilter.zipCode ? responseFilterCondition.push(`(field_id = '27646e7b-882b-4117-90df-3a8d5dac8a78' AND request_response ILIKE '%${responseFilter.zipCode}%')`) : null;
+    responseFilter.sssId ? responseFilterCondition.push(`(field_id = '6d133972-e44a-4cca-a393-e779f7046112' AND request_response ILIKE '%${onlyNumber(responseFilter.sssId)}%')`) : null;
+    responseFilter.philhealthNumber ? responseFilterCondition.push(`(field_id = '6a8d49ca-fb22-4ec5-a00c-986859d900ae' AND request_response ILIKE '%${onlyNumber(responseFilter.philhealthNumber)}%')`) : null;
+    responseFilter.pagibigNumber ? responseFilterCondition.push(`(field_id = '0d7295a6-68c3-4646-99eb-421b44973d30' AND request_response ILIKE '%${onlyNumber(responseFilter.pagibigNumber)}%')`) : null;
+    responseFilter.tin ? responseFilterCondition.push(`(field_id = 'd7db6653-2296-4515-b2b2-62ecba8e8999' AND request_response ILIKE '%${onlyNumber(responseFilter.tin)}%')`) : null;
+    Boolean(responseFilter.highestEducationalAttainment) && responseFilter.highestEducationalAttainment.length ? responseFilterCondition.push(`(field_id = 'c8ff31cc-26c9-4544-8414-76741fe73b19' AND request_response IN (${responseFilter.highestEducationalAttainment.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    responseFilter.degree ? responseFilterCondition.push(`(field_id = '3a60d0e4-0485-4055-8a94-e51a9a4e0b72' AND request_response ILIKE '%${responseFilter.degree}%')`) : null;
+    responseFilter.school ? responseFilterCondition.push(`(field_id = 'f6a645c6-d7b2-4a77-ae72-1d4e386ba9e1' AND request_response ILIKE '%${responseFilter.school}%')`) : null;
+    responseFilter.yearGraduated && Boolean(responseFilter.yearGraduated.start) ? responseFilterCondition.push(`(field_id = '9b63d408-c67b-419a-a8f2-7bf65d249ccf' AND TO_DATE(REPLACE(request_response, '"', ''), 'YYYY') :: TEXT >= '${responseFilter.yearGraduated.start}')`) : null;
+    responseFilter.yearGraduated && Boolean(responseFilter.yearGraduated.end) ? responseFilterCondition.push(`(field_id = '9b63d408-c67b-419a-a8f2-7bf65d249ccf' AND TO_DATE(REPLACE(request_response, '"', ''), 'YYYY') :: TEXT <= '${responseFilter.yearGraduated.end}')`) : null;
+    responseFilter.employmentStatus ? responseFilterCondition.push(`(field_id = 'c3df937d-de59-413f-b6bb-22e5679fa4d1' AND request_response = '"${responseFilter.employmentStatus}"')`) : null;
+    responseFilter.workedAtStaClara ? responseFilterCondition.push(`(field_id = '57dc8bc7-3dff-437f-83de-67ea9052248a' AND request_response = '${responseFilter.workedAtStaClara}')`) : null;
+    responseFilter.willingToBeAssignedAnywhere ? responseFilterCondition.push(`(field_id = '996ae92d-0155-4ad2-ada5-be129aef2d92' AND request_response = '${responseFilter.willingToBeAssignedAnywhere}')`) : null;
+    Boolean(responseFilter.regionWillingToBeAssigned) && responseFilter.regionWillingToBeAssigned.length ? responseFilterCondition.push(`(field_id = 'aeb28a1f-8a5c-4e17-9ddd-a0377db12e97' AND request_response IN (${responseFilter.regionWillingToBeAssigned.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    responseFilter.soonestJoiningDate && Boolean(responseFilter.soonestJoiningDate.start) ? responseFilterCondition.push(`(field_id = 'da35e324-185a-47c5-bf5b-bc0ebf318461' AND REPLACE(request_response, '"', '') >= '${new Date(responseFilter.soonestJoiningDate.start).toISOString()}')`) : null;
+    responseFilter.soonestJoiningDate && Boolean(responseFilter.soonestJoiningDate.end) ? responseFilterCondition.push(`(field_id = 'da35e324-185a-47c5-bf5b-bc0ebf318461' AND REPLACE(request_response, '"', '') <= '${new Date(responseFilter.soonestJoiningDate.end).toISOString()}')`) : null;
+    responseFilter.workExperience && responseFilter.workExperience.start ? responseFilterCondition.push(`(field_id = '0e1b4ee7-1eaa-4eb6-a142-d15c05d96fe0' AND CAST(request_response AS integer) >= ${responseFilter.workExperience.start})`) : null;
+    responseFilter.workExperience && responseFilter.workExperience.end ? responseFilterCondition.push(`(field_id = '0e1b4ee7-1eaa-4eb6-a142-d15c05d96fe0' AND CAST(request_response AS integer) <= ${responseFilter.workExperience.end})`) : null;
+    responseFilter.expectedSalary && responseFilter.expectedSalary.start ? responseFilterCondition.push(`(field_id = 'bd9af7fa-03c3-4fdc-a34f-99f46a666569' AND CAST(request_response AS integer) >= ${responseFilter.expectedSalary.start})`) : null;
+    responseFilter.expectedSalary && responseFilter.expectedSalary.end ? responseFilterCondition.push(`(field_id = 'bd9af7fa-03c3-4fdc-a34f-99f46a666569' AND CAST(request_response AS integer) <= ${responseFilter.expectedSalary.end})`) : null;
+
+    const requestFilterCondition = [];
+    Boolean(requestFilter.requestId) ? requestFilterCondition.push(`request_formsly_id ILIKE '%requestFilter.requestId}%'`) : null;
+    Boolean(requestFilter.status) && requestFilter.status.length ? requestFilterCondition.push(`request_status IN (${requestFilter.status.map(status => `'${status}'`)})`) : null;
+    Boolean(requestFilter.dateCreatedRange.start) ? requestFilterCondition.push(`request_date_created :: DATE >= 'requestFilter.dateCreatedRange.start}'`) : null;
+    Boolean(requestFilter.dateCreatedRange.end) ? requestFilterCondition.push(`request_date_created :: DATE <= 'requestFilter.dateCreatedRange.end}'`) : null;
+    Boolean(requestFilter.dateUpdatedRange.start) ? requestFilterCondition.push(`request_status_date_updated :: DATE >= 'requestFilter.dateUpdatedRange.start}'`) : null;
+    Boolean(requestFilter.dateUpdatedRange.end) ? requestFilterCondition.push(`request_status_date_updated :: DATE <= 'requestFilter.dateUpdatedRange.end}'`) : null;
+
+    const filterCount = responseFilterCondition.length;
+
+    const castRequestResponse = (value) => {
       switch(sort.dataType) {
-        case "NUMBER": requestResponse = `CAST(request_response AS INTEGER)`; break;
-        case "DATE": requestResponse = `TO_DATE(REPLACE(request_response, '"', ''), 'YYYY-MM-DD')`; break;
+        case "NUMBER": return `CAST(${value} AS INTEGER)`;
+        case "DATE": return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
+        default: return value;
       }
+    }
 
-      if(isWithResponseFilter){
-        responseFilterCondition = `
-          ${responseFilter.certificate ? `(AND field_id = 'b3ddc3c1-d93c-486d-9bdf-86a10d481df0' AND request_response IS ${Boolean(responseFilter.certificate) ? "NOT" : ""} NULL)` : ""}
-        `;
-      }
-
-      const requestResponseData = plv8.execute(
-        `
+    const parentRequests = plv8.execute(
+      `
+        SELECT * FROM (
           SELECT 
             request_id,
-            request_response
-          FROM request_schema.request_response_table
-          INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-            AND request_is_disabled = false
+            request_formsly_id,
+            request_date_created,
+            request_status,
+            request_status_date_updated,
+            request_response,
+            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber 
+          FROM public.request_view
+          INNER JOIN form_schema.form_table ON form_id = request_form_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
           WHERE
-            field_id = '${sort.field}'
-          ORDER BY ${requestResponse} ${sort.order}
-          LIMIT '${limit}'
-          OFFSET '${offset}'
+            team_member_team_id = '${teamId}'
+            AND request_is_disabled = FALSE
+            AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+            ${requestFilterCondition.length ? `AND (${requestFilterCondition.join(" OR ")})` : ""}
+            ${responseFilterCondition.length ? `AND (${responseFilterCondition.join(" OR ")})` : ""}
+            ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
+        ) AS a 
+        WHERE a.rowNumber = ${filterCount ? filterCount : 1}
+        ${isSortByResponse ? 
         `
-      );
-
-      requestIdCondition = `AND request_id IN (${requestResponseData.map(request => `'${request.request_id}'`).join(',')})`;
-      const isDescending = sort.order === "DESC";
-      requestIdOrder = requestResponseData.map((request, index) => {
-        return `WHEN '${request.request_id}' THEN ${(isDescending ? 1 : requestResponse.length) + index}`
-      }).join(" ") + ` ELSE ${requestResponseData.length + (isDescending ? 1 : 2)} END`
-    }
-
-    let requestFilterCondition = "";
-    if(requestFilter){
-      requestFilterCondition = `
-        ${Boolean(requestFilter.requestId) ? `AND request_formsly_id ILIKE '%${requestFilter.requestId}%'` : ""}
-        ${Boolean(requestFilter.status) && requestFilter.status.length ? `AND request_status IN (${requestFilter.status.map(status => `'${status}'`)})` : ""}
-        ${Boolean(requestFilter.dateCreatedRange.start) ? `AND request_date_created >= '${requestFilter.dateCreatedRange.start}'` : ""}
-        ${Boolean(requestFilter.dateCreatedRange.end) ? `AND request_date_created <= '${requestFilter.dateCreatedRange.end}'` : ""}
-      `;
-    }
-
-    const parentRequests = plv8.execute(`
-        SELECT 
-          request_id,
-          request_formsly_id,
-          request_date_created,
-          request_status,
-          request_status_date_updated
-        FROM public.request_view
-        INNER JOIN form_schema.form_table ON form_id = request_form_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
-        WHERE
-          team_member_team_id = '${teamId}'
-          AND request_is_disabled = FALSE
-          AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
-          ${requestFilterCondition.length ? `${requestFilterCondition}` : ""}
-          ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
-          ${isSortByResponse ? `ORDER BY CASE request_id ${requestIdOrder}` : ""}
+          ORDER BY ${castRequestResponse(`(
+          SELECT request_response
+          FROM request_schema.request_response_table
+          WHERE 
+            request_response_request_id = request_id
+            AND request_response_field_id = '${sort.field}'
+          )`)} ${sort.order}
+        ` : ""}
         LIMIT '${limit}'
         OFFSET '${offset}'
-    `);
+      `
+    );
 
     const requestListWithResponses = [];
     parentRequests.forEach((parentRequest) => {
@@ -14025,7 +14041,11 @@ AS $$
       );
 
       requestListWithResponses.push({
-        ...parentRequest,
+        request_id: parentRequest.request_id,
+        request_formsly_id: parentRequest.request_formsly_id,
+        request_date_created: parentRequest.request_date_created,
+        request_status: parentRequest.request_status,
+        request_status_date_updated: parentRequest.request_status_date_updated,
         request_response_list: responseList,
         request_signer_list: signerList.map(signer => {
           return {
@@ -14045,8 +14065,7 @@ AS $$
         })
       });
     });
-
-    returnData = [...requestListWithResponses];
+    returnData = requestListWithResponses;
 });
 return returnData;
 $$ LANGUAGE plv8;

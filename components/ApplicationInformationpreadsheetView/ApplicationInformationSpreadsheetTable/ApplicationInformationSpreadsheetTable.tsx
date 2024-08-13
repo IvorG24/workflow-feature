@@ -97,6 +97,7 @@ type Props = {
   setSort: Dispatch<
     SetStateAction<{ field: string; order: string; dataType: string }>
   >;
+  isMax: boolean;
 };
 
 const ApplicationInformationSpreadsheetTable = ({
@@ -107,6 +108,7 @@ const ApplicationInformationSpreadsheetTable = ({
   handlePagination,
   sort,
   setSort,
+  isMax,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -247,16 +249,18 @@ const ApplicationInformationSpreadsheetTable = ({
             </tbody>
           </Table>
         </ScrollArea>
-        <Center mt="md">
-          <Button
-            leftIcon={<IconChevronDown size={16} />}
-            onClick={() => handlePagination(page + 1)}
-            disabled={isLoading}
-            variant="subtle"
-          >
-            {isLoading ? "Loading..." : "Load More"}
-          </Button>
-        </Center>
+        {!isMax && (
+          <Center mt="md">
+            <Button
+              leftIcon={<IconChevronDown size={16} />}
+              onClick={() => handlePagination(page + 1)}
+              disabled={isLoading}
+              variant="subtle"
+            >
+              {isLoading ? "Loading..." : "Load More"}
+            </Button>
+          </Center>
+        )}
       </Paper>
     </Stack>
   );
