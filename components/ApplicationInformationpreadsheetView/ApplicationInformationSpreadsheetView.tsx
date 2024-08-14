@@ -11,6 +11,7 @@ import {
   SectionWithFieldType,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
+import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import {
   SupabaseClient,
@@ -23,6 +24,7 @@ import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import ApplicationInformationColumnsMenu from "./ApplicationInformationColumnsMenu";
 import ApplicationInformationFilterMenu from "./ApplicationInformationFilterMenu";
 import ApplicationInformationSpreadsheetTable from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
 
@@ -113,6 +115,10 @@ const ApplicationInformationSpreadsheetView = ({
   const [sort, setSort] = useState(initialSort);
   const [optionList, setOptionList] = useState(initialOptionList);
   const [isMax, setIsMax] = useState(false);
+  const [hiddenColumnList, setHiddenColumnList] = useLocalStorage<string[]>({
+    key: "ApplicationInformationColumns",
+    defaultValue: [],
+  });
 
   const filterFormMethods = useForm<ApplicationInformationFilterFormValues>({
     defaultValues:
@@ -258,6 +264,14 @@ const ApplicationInformationSpreadsheetView = ({
               handleReset={handleReset}
             />
           </FormProvider>
+          <ApplicationInformationColumnsMenu
+            sectionList={sectionList.filter(
+              (section) =>
+                section.section_name !== "Most Recent Work Experience"
+            )}
+            hiddenColumnList={hiddenColumnList}
+            setHiddenColumnList={setHiddenColumnList}
+          />
         </Group>
       </Box>
       <ApplicationInformationSpreadsheetTable
@@ -269,6 +283,7 @@ const ApplicationInformationSpreadsheetView = ({
         sort={sort}
         setSort={setSort}
         isMax={isMax}
+        hiddenColumnList={hiddenColumnList}
       />
     </Stack>
   );

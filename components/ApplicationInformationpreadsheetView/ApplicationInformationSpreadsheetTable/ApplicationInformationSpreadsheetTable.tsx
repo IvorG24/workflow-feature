@@ -39,7 +39,7 @@ const unsortableFieldList = [
   "TIN",
 ];
 
-const requestColumnList = [
+export const requestColumnList = [
   {
     field_id: "request_formsly_id",
     field_name: "Request ID",
@@ -100,6 +100,7 @@ type Props = {
     SetStateAction<{ field: string; order: string; dataType: string }>
   >;
   isMax: boolean;
+  hiddenColumnList: string[];
 };
 
 const ApplicationInformationSpreadsheetTable = ({
@@ -111,6 +112,7 @@ const ApplicationInformationSpreadsheetTable = ({
   sort,
   setSort,
   isMax,
+  hiddenColumnList,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -184,27 +186,31 @@ const ApplicationInformationSpreadsheetTable = ({
       }
     });
 
-    return fieldList.map((field, index) => (
-      <th key={index}>
-        <Flex gap="xs" align="center" justify="center" wrap="wrap">
-          <Text>{field.field_name}</Text>
-          {!unsortableFieldList.includes(field.field_name) &&
-            sortButtons(field)}
-        </Flex>
-      </th>
-    ));
+    return fieldList
+      .filter((field) => !hiddenColumnList.includes(field.field_id))
+      .map((field, index) => (
+        <th key={index}>
+          <Flex gap="xs" align="center" justify="center" wrap="wrap">
+            <Text>{field.field_name}</Text>
+            {!unsortableFieldList.includes(field.field_name) &&
+              sortButtons(field)}
+          </Flex>
+        </th>
+      ));
   };
 
   const renderRequestFieldList = () => {
-    return requestColumnList.map((field, index) => (
-      <th key={index}>
-        <Flex gap="xs" align="center" justify="center" wrap="wrap">
-          <Text>{field.field_name}</Text>
-          {!unsortableFieldList.includes(field.field_name) &&
-            sortButtons(field)}
-        </Flex>
-      </th>
-    ));
+    return requestColumnList
+      .filter((field) => !hiddenColumnList.includes(field.field_name))
+      .map((field, index) => (
+        <th key={index}>
+          <Flex gap="xs" align="center" justify="center" wrap="wrap">
+            <Text>{field.field_name}</Text>
+            {!unsortableFieldList.includes(field.field_name) &&
+              sortButtons(field)}
+          </Flex>
+        </th>
+      ));
   };
 
   return (
@@ -229,6 +235,7 @@ const ApplicationInformationSpreadsheetTable = ({
                   key={item.request_id}
                   item={item}
                   fieldObject={fieldObject}
+                  hiddenColumnList={hiddenColumnList}
                 />
               ))}
               <tr>
@@ -237,7 +244,8 @@ const ApplicationInformationSpreadsheetTable = ({
                     length:
                       Object.keys(fieldObject).length +
                       requestColumnList.length -
-                      duplicatableFieldIdList.length,
+                      duplicatableFieldIdList.length -
+                      hiddenColumnList.length,
                   },
                   (_, index) => index
                 ).map((index) => (

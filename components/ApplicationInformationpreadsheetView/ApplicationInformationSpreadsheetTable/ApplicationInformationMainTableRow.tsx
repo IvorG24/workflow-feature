@@ -32,9 +32,14 @@ export const duplicatableFieldIdList = [
 type Props = {
   item: ApplicationInformationSpreadsheetData;
   fieldObject: ApplicationInformationFieldObjectType;
+  hiddenColumnList: string[];
 };
 
-const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
+const ApplicationInformationMainTableRow = ({
+  item,
+  fieldObject,
+  hiddenColumnList,
+}: Props) => {
   const activeTeam = useActiveTeam();
 
   const [sortedFields, setSortedFields] = useState<
@@ -120,32 +125,46 @@ const ApplicationInformationMainTableRow = ({ item, fieldObject }: Props) => {
 
   return (
     <tr>
-      <td>
-        <Anchor
-          href={`/${formatTeamNameToUrlKey(
-            activeTeam.team_name ?? ""
-          )}/requests/${item.request_formsly_id}`}
-          target="_blank"
-        >
-          {item.request_formsly_id}
-        </Anchor>
-      </td>
-      <td>{formatDate(new Date(item.request_date_created))}</td>
-      <td>
-        <Center>
-          <Badge variant="filled" color={getStatusToColor(item.request_status)}>
-            {item.request_status}
-          </Badge>
-        </Center>
-      </td>
-      <td>{item.request_status_date_updated}</td>
-      <td>
-        <RequestSignerList signerList={item.request_signer_list} />
-      </td>
+      {!hiddenColumnList.includes("Request ID") && (
+        <td>
+          <Anchor
+            href={`/${formatTeamNameToUrlKey(
+              activeTeam.team_name ?? ""
+            )}/requests/${item.request_formsly_id}`}
+            target="_blank"
+          >
+            {item.request_formsly_id}
+          </Anchor>
+        </td>
+      )}
+      {!hiddenColumnList.includes("Date Created") && (
+        <td>{formatDate(new Date(item.request_date_created))}</td>
+      )}
+      {!hiddenColumnList.includes("Status") && (
+        <td>
+          <Center>
+            <Badge
+              variant="filled"
+              color={getStatusToColor(item.request_status)}
+            >
+              {item.request_status}
+            </Badge>
+          </Center>
+        </td>
+      )}
+      {!hiddenColumnList.includes("Date Updated") && (
+        <td>{item.request_status_date_updated}</td>
+      )}
+      {!hiddenColumnList.includes("Approver") && (
+        <td>
+          <RequestSignerList signerList={item.request_signer_list} />
+        </td>
+      )}
       {sortedFields
         .filter(
           (row) =>
-            row.field_section.section_name !== "Most Recent Work Experience"
+            row.field_section.section_name !== "Most Recent Work Experience" &&
+            !hiddenColumnList.includes(row.field_id)
         )
         .map((row, index) => (
           <td key={index}>{renderFieldColumn(row)}</td>
