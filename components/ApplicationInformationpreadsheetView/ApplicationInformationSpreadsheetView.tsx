@@ -32,6 +32,70 @@ const initialSort = {
   dataType: "DATE",
 };
 
+const formDefaultValues = {
+  requestFilter: {
+    requestId: "",
+    dateCreatedRange: {
+      start: "",
+      end: "",
+    },
+    status: [],
+    dateUpdatedRange: { start: "", end: "" },
+    approver: [],
+  },
+  responseFilter: {
+    position: [],
+    certification: null,
+    license: null,
+    source: [],
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    gender: "",
+    ageRange: {
+      start: null,
+      end: null,
+    },
+    civilStatus: [],
+    contactNumber: "",
+    emailAddress: "",
+    region: "",
+    province: "",
+    city: "",
+    barangay: "",
+    street: "",
+    zipCode: "",
+    sssId: "",
+    philhealthNumber: "",
+    pagibigNumber: "",
+    tin: "",
+    highestEducationalAttainment: [],
+    degree: "",
+    torOrDiplomaAttachment: null,
+    school: "",
+    yearGraduated: {
+      start: null,
+      end: null,
+    },
+    employmentStatus: "",
+    workedAtStaClara: null,
+    willingToBeAssignedAnywhere: null,
+    regionWillingToBeAssigned: [],
+    soonestJoiningDate: {
+      start: null,
+      end: null,
+    },
+    workExperience: {
+      start: null,
+      end: null,
+    },
+    expectedSalary: {
+      start: null,
+      end: null,
+    },
+  },
+};
+
 type Props = {
   sectionList: SectionWithFieldType[];
   optionList: ApplicationInformationFieldOptionType[];
@@ -51,10 +115,8 @@ const ApplicationInformationSpreadsheetView = ({
   const [isMax, setIsMax] = useState(false);
 
   const filterFormMethods = useForm<ApplicationInformationFilterFormValues>({
-    defaultValues: {
-      requestFilter: undefined,
-      responseFilter: undefined,
-    },
+    defaultValues:
+      formDefaultValues as unknown as ApplicationInformationFilterFormValues,
   });
 
   const fetchData = async (data?: ApplicationInformationFilterFormValues) => {
@@ -62,6 +124,7 @@ const ApplicationInformationSpreadsheetView = ({
       if (!user) return;
       setIsLoading(true);
       const filterData = filterFormMethods.getValues();
+
       const newData = await getApplicationInformationSummaryData(
         supabaseClient,
         {
@@ -77,14 +140,13 @@ const ApplicationInformationSpreadsheetView = ({
       if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
         setIsMax(true);
       }
-      console.log("NEW DATA: ", newData);
+
       if (page === 1) {
         setData(newData);
       } else {
         setData((prev) => [...prev, ...newData]);
       }
     } catch (e) {
-      console.log("ERROR: ", e);
       notifications.show({
         message: "Failed to fetch data",
         color: "red",
@@ -102,7 +164,9 @@ const ApplicationInformationSpreadsheetView = ({
   };
 
   const handleReset = () => {
-    filterFormMethods.reset();
+    filterFormMethods.reset(
+      formDefaultValues as unknown as ApplicationInformationFilterFormValues
+    );
     setPage(1);
     fetchData({ page: 1 });
   };
@@ -114,7 +178,6 @@ const ApplicationInformationSpreadsheetView = ({
       JSON.stringify({
         ...filterData,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
-        page,
         sort,
       })
     );
@@ -151,30 +214,27 @@ const ApplicationInformationSpreadsheetView = ({
         });
       }
 
-      // const storedData = localStorage.getItem(
-      //   "applicationInformationSpreadsheetView"
-      // );
-      // if (storedData) {
-      //   const filterData: ApplicationInformationFilterFormValues =
-      //     JSON.parse(storedData);
-
-      //   setPage(filterData.page ?? 1);
-      //   setSort(sort ?? initialSort);
-      //   filterFormMethods.reset(filterData);
-      //   await fetchData({
-      //     ...filterData,
-      //   });
-      // } else {
-      //   await fetchData({
-      //     page: 1,
-      //   });
-      // }
-      await fetchData({
-        page: 1,
-      });
+      const storedData = localStorage.getItem(
+        "applicationInformationSpreadsheetView"
+      );
+      if (storedData) {
+        const filterData: ApplicationInformationFilterFormValues =
+          JSON.parse(storedData);
+        setSort(filterData.sort ?? initialSort);
+        filterFormMethods.reset(
+          filterData as ApplicationInformationFilterFormValues
+        );
+        await fetchData({
+          ...filterData,
+        });
+      } else {
+        await fetchData({
+          page: 1,
+        });
+      }
     };
     fetchInitialData();
-  }, [user]);
+  }, []);
 
   return (
     <Stack pos="relative">

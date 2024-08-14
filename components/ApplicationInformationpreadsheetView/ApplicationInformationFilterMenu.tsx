@@ -312,11 +312,11 @@ const ApplicationInformationFilterMenu = ({
                 control={control}
                 name={`${field.id}.start` as "requestFilter"}
                 render={({ field: { value, onChange } }) => {
-                  const newValue = value ?? null;
+                  const newValue = value ? new Date(value as string) : null;
                   return field.label === "Year Graduated" ? (
                     <YearPickerInput
                       placeholder="Start"
-                      value={newValue as Date}
+                      value={newValue}
                       onChange={onChange}
                       clearable
                       icon={<IconCalendar size={16} />}
@@ -338,7 +338,7 @@ const ApplicationInformationFilterMenu = ({
                 control={control}
                 name={`${field.id}.end` as "requestFilter"}
                 render={({ field: { value, onChange } }) => {
-                  const newValue = value ?? null;
+                  const newValue = value ? new Date(value as string) : null;
                   return field.label === "Year Graduated" ? (
                     <YearPickerInput
                       placeholder="End"

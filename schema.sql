@@ -14002,7 +14002,6 @@ AS $$
           INNER JOIN form_schema.form_table ON form_id = request_form_id
           INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
           WHERE
             team_member_team_id = '${teamId}'
             AND request_is_disabled = FALSE
