@@ -162,7 +162,7 @@ const RequestListPage = ({
       };
 
       const { data, count } = await getRequestList(supabaseClient, params);
-
+      console.log(count);
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {

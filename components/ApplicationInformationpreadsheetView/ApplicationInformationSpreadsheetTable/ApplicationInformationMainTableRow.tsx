@@ -199,7 +199,9 @@ const ApplicationInformationMainTableRow = ({
       )}
       {!hiddenColumnList.includes("Date Updated") && (
         <td className={classes["Request"]}>
-          {item.request_status_date_updated}
+          {item.request_status_date_updated
+            ? formatDate(new Date(item.request_status_date_updated))
+            : ""}
         </td>
       )}
       {!hiddenColumnList.includes("Approver") && (

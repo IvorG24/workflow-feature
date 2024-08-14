@@ -129,6 +129,7 @@ const ApplicationInformationSpreadsheetView = ({
     try {
       if (!user) return;
       setIsLoading(true);
+      setIsMax(false);
       const filterData = filterFormMethods.getValues();
 
       const newData = await getApplicationInformationSummaryData(
@@ -147,7 +148,7 @@ const ApplicationInformationSpreadsheetView = ({
         setIsMax(true);
       }
 
-      if (page === 1) {
+      if ((data?.page ?? page) === 1) {
         setData(newData);
       } else {
         setData((prev) => [...prev, ...newData]);
@@ -191,7 +192,7 @@ const ApplicationInformationSpreadsheetView = ({
 
   useEffect(() => {
     const handleSorting = async () => {
-      await fetchData({ sort });
+      await fetchData({ sort, page: 1 });
     };
     handleSorting();
   }, [sort]);
