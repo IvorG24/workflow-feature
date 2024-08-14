@@ -67,25 +67,45 @@ export const requestColumnList = [
   },
 ];
 
+export type ClassNameType =
+  | "Header"
+  | "Personal Information"
+  | "Contact Information"
+  | "ID Number"
+  | "Educational Background"
+  | "Work Information"
+  | "Resume";
+
 const useStyles = createStyles((theme) => ({
   parentTable: {
-    "& th": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.blue[6]
-          : theme.colors.blue[3],
-      height: 48,
-    },
-    "& tbody": {
-      backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.colors.blue[9]
-          : theme.colors.blue[0],
-    },
     "& td": {
       minWidth: 130,
       width: "100%",
     },
+  },
+  Request: {
+    backgroundColor: theme.colors.blue[3],
+  },
+  Header: {
+    backgroundColor: theme.colors.cyan[3],
+  },
+  "Personal Information": {
+    backgroundColor: theme.colors.teal[3],
+  },
+  "Contact Information": {
+    backgroundColor: theme.colors.green[3],
+  },
+  "ID Number": {
+    backgroundColor: theme.colors.red[3],
+  },
+  "Educational Background": {
+    backgroundColor: theme.colors.grape[3],
+  },
+  "Work Information": {
+    backgroundColor: theme.colors.violet[3],
+  },
+  Resume: {
+    backgroundColor: theme.colors.indigo[3],
   },
 }));
 
@@ -168,28 +188,11 @@ const ApplicationInformationSpreadsheetTable = ({
     );
   };
 
-  const renderFieldList = () => {
-    const fieldList: {
-      field_name: string;
-      field_id: string;
-      field_type: string;
-    }[] = [];
-    sectionList.forEach((section) => {
-      if (section.section_name !== "Most Recent Work Experience") {
-        section.section_field.forEach((field) => {
-          fieldList.push({
-            field_id: field.field_id,
-            field_name: field.field_name,
-            field_type: field.field_type,
-          });
-        });
-      }
-    });
-
-    return fieldList
-      .filter((field) => !hiddenColumnList.includes(field.field_id))
+  const renderRequestFieldList = () => {
+    return requestColumnList
+      .filter((field) => !hiddenColumnList.includes(field.field_name))
       .map((field, index) => (
-        <th key={index}>
+        <th key={index} className={classes["Request"]}>
           <Flex gap="xs" align="center" justify="center" wrap="wrap">
             <Text>{field.field_name}</Text>
             {!unsortableFieldList.includes(field.field_name) &&
@@ -199,11 +202,33 @@ const ApplicationInformationSpreadsheetTable = ({
       ));
   };
 
-  const renderRequestFieldList = () => {
-    return requestColumnList
-      .filter((field) => !hiddenColumnList.includes(field.field_name))
+  const renderFieldList = () => {
+    const fieldList: {
+      field_name: string;
+      field_id: string;
+      field_type: string;
+      section_name: string;
+    }[] = [];
+    sectionList.forEach((section) => {
+      if (section.section_name !== "Most Recent Work Experience") {
+        section.section_field.forEach((field) => {
+          fieldList.push({
+            field_id: field.field_id,
+            field_name: field.field_name,
+            field_type: field.field_type,
+            section_name: section.section_name,
+          });
+        });
+      }
+    });
+
+    return fieldList
+      .filter((field) => !hiddenColumnList.includes(field.field_id))
       .map((field, index) => (
-        <th key={index}>
+        <th
+          key={index}
+          className={classes[field.section_name as ClassNameType]}
+        >
           <Flex gap="xs" align="center" justify="center" wrap="wrap">
             <Text>{field.field_name}</Text>
             {!unsortableFieldList.includes(field.field_name) &&

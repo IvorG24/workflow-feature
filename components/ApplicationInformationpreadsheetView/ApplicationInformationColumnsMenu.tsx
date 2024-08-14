@@ -3,17 +3,32 @@ import {
   Accordion,
   Box,
   Button,
+  ColorSwatch,
   Drawer,
   Flex,
   Grid,
+  Group,
   ScrollArea,
   Stack,
   Switch,
   Text,
+  useMantineTheme,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconColumns3 } from "@tabler/icons-react";
 import { Dispatch, SetStateAction } from "react";
+import { ClassNameType } from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
+
+export const swatchMap = {
+  Request: "blue",
+  Header: "cyan",
+  "Personal Information": "teal",
+  "Contact Information": "green",
+  "ID Number": "red",
+  "Educational Background": "grape",
+  "Work Information": "violet",
+  Resume: "indigo",
+};
 
 const requestColumnList = {
   section_id: "Request",
@@ -53,6 +68,7 @@ const ApplicationInformationColumnsMenu = ({
   hiddenColumnList,
   setHiddenColumnList,
 }: Props) => {
+  const theme = useMantineTheme();
   const [isColumnMenuOpen, { open: openColumnMenu, close: closeColumnMenu }] =
     useDisclosure(false);
 
@@ -64,7 +80,7 @@ const ApplicationInformationColumnsMenu = ({
   return (
     <>
       <Button
-        variant="outline"
+        variant="light"
         onClick={openColumnMenu}
         leftIcon={<IconColumns3 size={14} />}
       >
@@ -89,7 +105,19 @@ const ApplicationInformationColumnsMenu = ({
                 key={section.section_id}
                 value={section.section_name}
               >
-                <Accordion.Control>{section.section_name}</Accordion.Control>
+                <Accordion.Control>
+                  <Group>
+                    <ColorSwatch
+                      sx={{ width: 15, height: 15 }}
+                      color={
+                        theme.colors[
+                          swatchMap[section.section_name as ClassNameType]
+                        ][3]
+                      }
+                    />
+                    <Text color="dimmed"> {section.section_name}</Text>
+                  </Group>
+                </Accordion.Control>
                 <Accordion.Panel>
                   <Stack p="xs" spacing="xl">
                     <Grid>

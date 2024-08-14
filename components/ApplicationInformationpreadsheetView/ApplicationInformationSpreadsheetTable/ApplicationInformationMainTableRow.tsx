@@ -17,10 +17,19 @@ import {
   FieldTableRow,
   SectionTableRow,
 } from "@/utils/types";
-import { ActionIcon, Anchor, Badge, Center, Flex, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Anchor,
+  Badge,
+  Center,
+  createStyles,
+  Flex,
+  Text,
+} from "@mantine/core";
 import { IconFile } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
+import { ClassNameType } from "./ApplicationInformationSpreadsheetTable";
 
 export const duplicatableFieldIdList = [
   "98378ca4-3323-4f7c-a469-e33adec84d25",
@@ -28,6 +37,39 @@ export const duplicatableFieldIdList = [
   "c35cf796-9613-4a02-8438-d2baa46e653b",
   "e0959707-0606-4610-af60-8fd49d014320",
 ];
+
+const useStyles = createStyles((theme) => ({
+  parentTable: {
+    "& td": {
+      minWidth: 130,
+      width: "100%",
+    },
+  },
+  Request: {
+    backgroundColor: theme.colors.blue[0],
+  },
+  Header: {
+    backgroundColor: theme.colors.cyan[0],
+  },
+  "Personal Information": {
+    backgroundColor: theme.colors.teal[0],
+  },
+  "Contact Information": {
+    backgroundColor: theme.colors.green[0],
+  },
+  "ID Number": {
+    backgroundColor: theme.colors.red[0],
+  },
+  "Educational Background": {
+    backgroundColor: theme.colors.grape[0],
+  },
+  "Work Information": {
+    backgroundColor: theme.colors.violet[0],
+  },
+  Resume: {
+    backgroundColor: theme.colors.indigo[0],
+  },
+}));
 
 type Props = {
   item: ApplicationInformationSpreadsheetData;
@@ -40,6 +82,7 @@ const ApplicationInformationMainTableRow = ({
   fieldObject,
   hiddenColumnList,
 }: Props) => {
+  const { classes } = useStyles();
   const activeTeam = useActiveTeam();
 
   const [sortedFields, setSortedFields] = useState<
@@ -126,7 +169,7 @@ const ApplicationInformationMainTableRow = ({
   return (
     <tr>
       {!hiddenColumnList.includes("Request ID") && (
-        <td>
+        <td className={classes["Request"]}>
           <Anchor
             href={`/${formatTeamNameToUrlKey(
               activeTeam.team_name ?? ""
@@ -138,10 +181,12 @@ const ApplicationInformationMainTableRow = ({
         </td>
       )}
       {!hiddenColumnList.includes("Date Created") && (
-        <td>{formatDate(new Date(item.request_date_created))}</td>
+        <td className={classes["Request"]}>
+          {formatDate(new Date(item.request_date_created))}
+        </td>
       )}
       {!hiddenColumnList.includes("Status") && (
-        <td>
+        <td className={classes["Request"]}>
           <Center>
             <Badge
               variant="filled"
@@ -153,10 +198,12 @@ const ApplicationInformationMainTableRow = ({
         </td>
       )}
       {!hiddenColumnList.includes("Date Updated") && (
-        <td>{item.request_status_date_updated}</td>
+        <td className={classes["Request"]}>
+          {item.request_status_date_updated}
+        </td>
       )}
       {!hiddenColumnList.includes("Approver") && (
-        <td>
+        <td className={classes["Request"]}>
           <RequestSignerList signerList={item.request_signer_list} />
         </td>
       )}
@@ -167,7 +214,12 @@ const ApplicationInformationMainTableRow = ({
             !hiddenColumnList.includes(row.field_id)
         )
         .map((row, index) => (
-          <td key={index}>{renderFieldColumn(row)}</td>
+          <td
+            className={classes[row.field_section.section_name as ClassNameType]}
+            key={index}
+          >
+            {renderFieldColumn(row)}
+          </td>
         ))}
     </tr>
   );

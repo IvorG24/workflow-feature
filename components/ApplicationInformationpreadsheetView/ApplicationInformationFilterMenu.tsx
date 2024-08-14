@@ -6,8 +6,10 @@ import {
   Accordion,
   Box,
   Button,
+  ColorSwatch,
   Drawer,
   Flex,
+  Group,
   MultiSelect,
   NumberInput,
   ScrollArea,
@@ -15,11 +17,14 @@ import {
   Stack,
   Text,
   TextInput,
+  useMantineTheme,
 } from "@mantine/core";
 import { DateInput, YearPickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { IconCalendar, IconFilter } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form";
+import { swatchMap } from "./ApplicationInformationColumnsMenu";
+import { ClassNameType } from "./ApplicationInformationSpreadsheetTable/ApplicationInformationSpreadsheetTable";
 
 const sectionList = [
   {
@@ -260,6 +265,7 @@ const ApplicationInformationFilterMenu = ({
   optionList,
   handleReset,
 }: Props) => {
+  const theme = useMantineTheme();
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
 
@@ -472,7 +478,11 @@ const ApplicationInformationFilterMenu = ({
 
   return (
     <>
-      <Button leftIcon={<IconFilter size={16} />} onClick={openFilterMenu}>
+      <Button
+        leftIcon={<IconFilter size={16} />}
+        variant="light"
+        onClick={openFilterMenu}
+      >
         Filter
       </Button>
       <Drawer
@@ -495,7 +505,17 @@ const ApplicationInformationFilterMenu = ({
                     key={sectionIndex}
                   >
                     <Accordion.Control>
-                      <Text color="dimmed">{section.sectionName}</Text>
+                      <Group>
+                        <ColorSwatch
+                          sx={{ width: 15, height: 15 }}
+                          color={
+                            theme.colors[
+                              swatchMap[section.sectionName as ClassNameType]
+                            ][3]
+                          }
+                        />
+                        <Text color="dimmed"> {section.sectionName}</Text>
+                      </Group>
                     </Accordion.Control>
                     <Accordion.Panel>
                       <Stack spacing="xs">

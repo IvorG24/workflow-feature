@@ -251,7 +251,6 @@ const ApplicationInformationSpreadsheetView = ({
           </Title>
 
           <Button
-            variant="light"
             leftIcon={<IconReload size={16} />}
             onClick={() => fetchData()}
           >
