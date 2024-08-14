@@ -2922,7 +2922,7 @@ AS $$
         INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
         WHERE 
-          ftmt.team_member_team_id = 'a5a28977-6956-45c1-a624-b9e90911502e'
+          ftmt.team_member_team_id = '${teamId}'
           AND request_is_disabled = false
           AND form_table.form_is_disabled = false
       `;
@@ -2937,13 +2937,15 @@ AS $$
       `
         SELECT COUNT(DISTINCT request_id)
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+        LEFT JOIN team_schema.team_member_table AS rtm ON request_view.request_team_member_id = rtm.team_member_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+        INNER JOIN team_schema.team_member_table AS ftm ON ftm.team_member_id = form_table.form_team_member_id
         INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-        WHERE team_member_table.team_member_team_id = '${teamId}'
-        AND request_is_disabled = false
-        AND form_table.form_is_disabled = false
+        WHERE 
+          ftm.team_member_team_id = '${teamId}'
+          AND request_is_disabled = false
+          AND form_table.form_is_disabled = false
       `;
 
     if (!isApproversView) {
