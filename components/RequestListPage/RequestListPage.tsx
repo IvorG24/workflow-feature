@@ -53,17 +53,21 @@ const RequestListPage = ({
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
   const [requestListCount, setRequestListCount] = useState(0);
-  const [localFilter, setLocalFilter] = useState<RequestListFilterValues>({
-    search: "",
-    requestor: [],
-    approver: [],
-    form: [],
-    status: undefined,
-    isAscendingSort: false,
-    isApproversView: false,
-    project: [],
-    idFilter: [],
-  });
+  const [localFilter, setLocalFilter] =
+    useLocalStorage<RequestListFilterValues>({
+      key: "request-list-filter",
+      defaultValue: {
+        search: "",
+        requestor: [],
+        approver: [],
+        form: [],
+        status: undefined,
+        isAscendingSort: false,
+        isApproversView: false,
+        project: [],
+        idFilter: [],
+      },
+    });
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
 
   const filterFormMethods = useForm<RequestListFilterValues>({
