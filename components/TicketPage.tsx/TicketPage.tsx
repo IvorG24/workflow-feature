@@ -196,7 +196,8 @@ const TicketPage = ({
 
           {ticketStatus === "UNDER REVIEW" &&
             !isEditingResponse &&
-            ticket.ticket_requester_team_member_id !== user.team_member_id && (
+            ticket.ticket_requester_team_member_id !== user.team_member_id &&
+            !canAssignTicket && (
               <>
                 <Divider mt="md" />
                 <TicketActionSection
