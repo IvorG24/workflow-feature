@@ -9,6 +9,7 @@ import { createAttachment, createTeamProject } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { MAX_FILE_SIZE, MAX_FILE_SIZE_IN_MB } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { escapeQuotes } from "@/utils/string";
 import supabaseClientAddress from "@/utils/supabase/address";
 import { OptionType } from "@/utils/types";
 import {
@@ -154,11 +155,11 @@ const CreateProject = ({ setIsCreatingProject, handleFetch }: Props) => {
         teamProjectTeamId: activeTeam.team_id,
         siteMapId: siteMapAttachmentId,
         boqId: boqAttachmentId,
-        region: region.replace(/'/g, "''"),
-        province: province.replace(/'/g, "''"),
-        city: city.replace(/'/g, "''"),
-        barangay: barangay.replace(/'/g, "''"),
-        street: data.street.replace(/'/g, "''"),
+        region: escapeQuotes(region),
+        province: escapeQuotes(province),
+        city: escapeQuotes(city),
+        barangay: escapeQuotes(barangay),
+        street: escapeQuotes(data.street),
         zipCode: data.zipCode,
       });
       handleFetch("", 1);

@@ -9,7 +9,7 @@ import {
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatJiraItemUserTableData } from "@/utils/functions";
-import { escapeQuotes } from "@/utils/string";
+import { escapeQuotes, escapeQuotesForObject } from "@/utils/string";
 import {
   AddressTableInsert,
   AttachmentBucketType,
@@ -558,7 +558,7 @@ export const createRequest = async (
 
   const responseValues = requestResponseInput
     .map((response) => {
-      const escapedResponse = response.request_response.replace(/'/g, "''");
+      const escapedResponse = escapeQuotes(response.request_response);
       return `('${escapedResponse}',${
         response.request_response_duplicatable_section_id
           ? `'${response.request_response_duplicatable_section_id}'`
@@ -704,7 +704,7 @@ export const editRequest = async (
 
   const responseValues = requestResponseInput
     .map((response) => {
-      const escapedResponse = response.request_response.replace(/'/g, "''");
+      const escapedResponse = escapeQuotes(response.request_response);
       return `('${escapedResponse}',${
         response.request_response_duplicatable_section_id
           ? `'${response.request_response_duplicatable_section_id}'`
@@ -1338,10 +1338,7 @@ export const createTicket = async (
 
   const responseValues = requestResponseInput
     .map((response) => {
-      const escapedResponse = response.ticket_response_value.replace(
-        /'/g,
-        "''"
-      );
+      const escapedResponse = escapeQuotes(response.ticket_response_value);
       return `('${escapedResponse}',${
         response.ticket_response_duplicatable_section_id
           ? `'${response.ticket_response_duplicatable_section_id}'`
@@ -1423,10 +1420,7 @@ export const editTicket = async (
 
   const responseValues = requestResponseInput
     .map((response) => {
-      const escapedResponse = response.ticket_response_value.replace(
-        /'/g,
-        "''"
-      );
+      const escapedResponse = escapeQuotes(response.ticket_response_value);
       return `('${escapedResponse}',${
         response.ticket_response_duplicatable_section_id
           ? `'${response.ticket_response_duplicatable_section_id}'`
@@ -1579,7 +1573,7 @@ export const createPedPartFromTicketRequest = async (
   const { data, error } = await supabaseClient.rpc(
     "create_ped_part_from_ticket_request",
     {
-      input_data: params,
+      input_data: escapeQuotesForObject(params),
     }
   );
   if (error) throw error;
