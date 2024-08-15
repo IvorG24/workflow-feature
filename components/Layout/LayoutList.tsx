@@ -1,5 +1,6 @@
 import AppLayout from "@/components/Layout/AppLayout/Layout";
 import HomeLayout from "@/components/Layout/HomeLayout/Layout";
+import NoLayout from "@/components/Layout/NoLayout/Layout";
 import OnboardingLayout from "@/components/Layout/OnboardingLayout/Layout";
 import { NextComponentType, NextPage, NextPageContext } from "next";
 import { AppProps } from "next/app";
@@ -8,6 +9,7 @@ export const Layouts = {
   HOME: HomeLayout,
   APP: AppLayout,
   ONBOARDING: OnboardingLayout,
+  NOLAYOUT: NoLayout,
 };
 
 export type LayoutKeys = keyof typeof Layouts;

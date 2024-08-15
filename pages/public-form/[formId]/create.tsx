@@ -64,4 +64,4 @@ const Page = ({ form }: Props) => {
 };
 
 export default Page;
-Page.Layout = "HOME";
+Page.Layout = "NOLAYOUT";

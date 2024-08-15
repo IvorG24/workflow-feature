@@ -34,7 +34,6 @@ type FilterSelectedValuesType = {
   requestor: string[];
   approver: string[];
   project: string[];
-  idFilter: string[];
   isApproversView: boolean;
 };
 
@@ -69,7 +68,6 @@ const RequestListFilter = ({
       requestor: [],
       approver: [],
       project: [],
-      idFilter: [],
       isApproversView: false,
     });
   const [isFilter, setIsfilter] = useState(false);

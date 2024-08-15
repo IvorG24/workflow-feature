@@ -13,6 +13,7 @@ import {
   Space,
   Stack,
   Text,
+  Textarea,
   TextInput,
   Title,
 } from "@mantine/core";
@@ -162,15 +163,29 @@ const RequestDetailsSection = ({
       </Title>
       <Space h="xl" />
       <Stack spacing="xs">
-        {fieldList.map((field, index) => (
-          <TextInput
-            key={index}
-            label={field.label}
-            value={field.value}
-            readOnly
-            variant="filled"
-          />
-        ))}
+        {fieldList.map((field, index) => {
+          if (field.label === "Form Description") {
+            return (
+              <Textarea
+                key={index}
+                label={field.label}
+                value={field.value}
+                readOnly
+                variant="filled"
+              />
+            );
+          } else {
+            return (
+              <TextInput
+                key={index}
+                label={field.label}
+                value={field.value}
+                readOnly
+                variant="filled"
+              />
+            );
+          }
+        })}
 
         {requestJira?.id && (
           <Group spacing="md" mt="xl">

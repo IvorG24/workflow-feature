@@ -73,7 +73,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       if (!teamId) {
         return {
           redirect: {
-            destination: "/create-team",
+            destination: "/user/notification",
             permanent: false,
           },
         };

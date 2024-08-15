@@ -62,7 +62,6 @@ const RequestListPage = ({
     isAscendingSort: false,
     isApproversView: false,
     project: [],
-    idFilter: [],
   });
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
 
@@ -141,7 +140,6 @@ const RequestListPage = ({
         isAscendingSort,
         isApproversView,
         project,
-        idFilter,
       } = getValues();
 
       const params = {
@@ -153,7 +151,6 @@ const RequestListPage = ({
         form: form && form.length > 0 ? form : undefined,
         status: status && status.length > 0 ? status : undefined,
         project: project && project.length > 0 ? project : undefined,
-        idFilter: idFilter && idFilter.length < 0 ? idFilter : undefined,
         search: search,
         isApproversView,
         isAscendingSort,
@@ -162,7 +159,7 @@ const RequestListPage = ({
       };
 
       const { data, count } = await getRequestList(supabaseClient, params);
-      console.log(count);
+
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {

@@ -1,7 +1,7 @@
 import { useUserProfile } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
 import { FormType } from "@/utils/types";
-import { Paper, Stack, TextInput } from "@mantine/core";
+import { Paper, Stack, Textarea, TextInput } from "@mantine/core";
 
 type Props = {
   formDetails: {
@@ -68,15 +68,29 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
   return (
     <Paper p="xl" shadow="xs">
       <Stack spacing="xs">
-        {fieldList.map((field, index) => (
-          <TextInput
-            key={index}
-            label={field.label}
-            value={field.value}
-            readOnly
-            variant="filled"
-          />
-        ))}
+        {fieldList.map((field, index) => {
+          if (field.label === "Form Description") {
+            return (
+              <Textarea
+                key={index}
+                label={field.label}
+                value={field.value}
+                readOnly
+                variant="filled"
+              />
+            );
+          } else {
+            return (
+              <TextInput
+                key={index}
+                label={field.label}
+                value={field.value}
+                readOnly
+                variant="filled"
+              />
+            );
+          }
+        })}
       </Stack>
     </Paper>
   );

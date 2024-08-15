@@ -14,7 +14,6 @@ import {
 import { useUserStore, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NOTIFICATION_LIST_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
-import { startCase } from "@/utils/string";
 import {
   AppType,
   ApproverUnresolvedRequestCountType,
@@ -169,9 +168,9 @@ const NotificationPage = ({
   const openJoinTeamModal = () =>
     modals.open({
       centered: true,
-      closeOnEscape: false,
-      closeOnClickOutside: false,
-      withCloseButton: false,
+      closeOnEscape: true,
+      closeOnClickOutside: true,
+      withCloseButton: true,
       children: (
         <Box>
           <Title order={3}>Team Invitation Required</Title>
@@ -211,9 +210,15 @@ const NotificationPage = ({
       storeNotificationList.filter(
         (notification) => notification.notification_type === "INVITE"
       ).length > 0;
-    if (router.query.onboarding === "true" && !hasInvitation)
+    if (
+      router.query.onboarding === "true" &&
+      !hasInvitation &&
+      userProfile?.user_email
+    ) {
       openJoinTeamModal();
-    else modals.closeAll();
+    } else {
+      modals.closeAll();
+    }
   }, [router.query, storeNotificationList]);
 
   useEffect(() => {
@@ -246,7 +251,7 @@ const NotificationPage = ({
 
   return (
     <Container p={0}>
-      <Title order={2}>{startCase(app)} Notifications </Title>
+      <Title order={2}>Notifications</Title>
       {approverUnresolvedRequestCount &&
         approverUnresolvedRequestCount.approvedRequestCount.total > 0 && (
           <ApproverNotification

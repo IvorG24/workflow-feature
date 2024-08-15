@@ -36,6 +36,7 @@ import {
   EquipmentPartType,
   EquipmentTableRow,
   FetchRequestListParams,
+  FetchUserRequestListParams,
   FieldTableRow,
   FormTableRow,
   FormType,
@@ -220,7 +221,6 @@ export const getRequestList = async (
     isApproversView,
     teamMemberId,
     project,
-    idFilter,
     columnAccessor = "request_date_created",
   } = params;
 
@@ -244,9 +244,6 @@ export const getRequestList = async (
         `request_view.request_formsly_id_prefix ILIKE '${value}' || '%'`
     )
     .join(" OR ");
-  const idFilterCondition = idFilter
-    ?.map((value) => `request_view.request_${value}_id IS NULL`)
-    .join(" AND ");
 
   const searchCondition =
     search && validate(search)
@@ -262,7 +259,6 @@ export const getRequestList = async (
       approver: approverCondition ? `AND (${approverCondition})` : "",
       project: projectCondition ? `AND (${projectCondition})` : "",
       form: formCondition ? `AND (${formCondition})` : "",
-      idFilter: idFilterCondition ? `AND (${idFilterCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: search ? `AND (${searchCondition})` : "",
       sort,
@@ -5955,4 +5951,53 @@ export const getFormSectionWithFieldList = async (
     sectionList: SectionWithFieldType[];
     optionList: (OptionTableRow & { field_name: string })[];
   };
+};
+
+export const getUserRequestList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: FetchUserRequestListParams
+) => {
+  const {
+    page,
+    limit,
+    status,
+    search,
+    isAscendingSort,
+    columnAccessor = "request_date_created",
+    email,
+  } = params;
+
+  const sort = isAscendingSort ? "ASC" : "DESC";
+
+  const statusCondition = status
+    ?.map((value) => `a.request_status = '${value}'`)
+    .join(" OR ");
+
+  const searchCondition =
+    search && validate(search)
+      ? `a.request_id = '${search}'`
+      : `a.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+
+  const { data: data, error } = await supabaseClient.rpc(
+    "fetch_user_request_list",
+    {
+      input_data: {
+        page: page,
+        limit: limit,
+        status: statusCondition ? `AND (${statusCondition})` : "",
+        search: search ? `AND (${searchCondition})` : "",
+        sort,
+        columnAccessor,
+        email,
+      },
+    }
+  );
+
+  if (error || !data) throw error;
+  const dataFormat = data as unknown as {
+    data: RequestListItemType[];
+    count: number;
+  };
+
+  return { data: dataFormat.data, count: dataFormat.count };
 };

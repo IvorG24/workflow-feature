@@ -1931,7 +1931,6 @@ export type RequestListFilterValues = {
   status?: FormStatusType[];
   isAscendingSort: boolean;
   isApproversView: boolean;
-  idFilter?: string[];
 };
 
 export type TeamInviteJwtPayload = {
@@ -2176,3 +2175,28 @@ export type ApplicationInformationFilterFormValues = {
   };
 };
 
+export type UserRequestListFilterValues = {
+  search?: string;
+  status?: FormStatusType[];
+  isAscendingSort: boolean;
+};
+
+export type UserRequestListItemType = {
+  request_id: string;
+  request_formsly_id: string;
+  request_date_created: string;
+  request_status: string;
+  request_form_id: string;
+  request_signer: requestSignerType[];
+  form_name: string;
+};
+
+export type FetchUserRequestListParams = {
+  page: number;
+  limit: number;
+  columnAccessor?: string;
+  search?: string;
+  status?: FormStatusType[];
+  isAscendingSort: boolean;
+  email: string;
+};

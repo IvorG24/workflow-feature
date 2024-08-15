@@ -1301,7 +1301,9 @@ AS $$
 
     if(invitation) plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
-    plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
+    if(user_employee_number){
+      plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
+    }
  });
  return user_data;
 $$ LANGUAGE plv8;
@@ -2888,7 +2890,6 @@ AS $$
       isApproversView,
       teamMemberId,
       project,
-      idFilter,
       columnAccessor
     } = input_data;
 
@@ -2956,7 +2957,6 @@ AS $$
           ${status}
           ${form}
           ${project}
-          ${idFilter}
           ${search}
         `;
 
@@ -14188,6 +14188,141 @@ AS $$
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION fetch_user_request_list(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      page,
+      limit,
+      status,
+      sort,
+      search,
+      columnAccessor,
+      email
+    } = input_data;
+
+    const offset = (page - 1) * limit;
+
+
+    const request_list = plv8.execute(
+      `
+        SELECT * FROM (
+          SELECT 
+            request_id, 
+            request_formsly_id,
+            request_date_created, 
+            request_status,
+            request_form_id,
+            form_name,
+            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber 
+          FROM public.request_view
+          INNER JOIN form_schema.form_table ON form_id = request_form_id
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          WHERE
+            request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+            AND request_response_field_id = 'ee6ec8af-0a9e-40a5-8353-7d851218fa87'
+            AND request_response = '"${email}"'
+        ) AS a 
+        WHERE 
+          a.rowNumber = 1
+          ${status}
+          ${search}
+        ORDER BY ${columnAccessor} ${sort} 
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+      `
+    );
+
+    let request_count = plv8.execute(
+      `
+        SELECT COUNT(request_id) FROM (
+          SELECT 
+            request_id, 
+            request_formsly_id,
+            request_date_created, 
+            request_status,
+            request_form_id,
+            form_name,
+            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber 
+          FROM public.request_view
+          INNER JOIN form_schema.form_table ON form_id = request_form_id
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          WHERE
+            request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+            AND request_response_field_id = 'ee6ec8af-0a9e-40a5-8353-7d851218fa87'
+            AND request_response = '"${email}"'
+        ) AS a 
+        WHERE 
+          a.rowNumber = 1
+          ${status}
+          ${search}
+      `
+    )[0];
+
+    const request_data = request_list.map(request => {
+      const request_signer = plv8.execute(
+        `
+          SELECT 
+            request_signer_id,
+            request_signer_status,
+            signer_team_member_id,
+            signer_is_primary_signer,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_avatar
+          FROM request_schema.request_signer_table
+          INNER JOIN form_schema.signer_table ON request_signer_signer_id = signer_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          WHERE
+            request_signer_request_id = '${request.request_id}'
+        `
+      ).map(signer => {
+        return {
+          request_signer_id: signer.request_signer_id,
+          request_signer_status: signer.request_signer_status,
+          request_signer: {
+              signer_team_member_id: signer.signer_team_member_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer
+          },
+          signer_team_member_user: {
+            user_id: signer.user_id,
+            user_first_name: signer.user_first_name,
+            user_last_name: signer.user_last_name,
+            user_avatar: signer.user_avatar
+          }
+        }
+      });
+
+      return {
+        request_id: request.request_id,
+        request_formsly_id: request.request_formsly_id,
+        request_date_created: request.request_date_created,
+        request_status: request.request_status,
+        request_form_id: request.request_form_id,
+        form_name: request.form_name,
+        request_signer: request_signer,
+      }
+    });
+
+    return_value = {
+      data: request_data, 
+      count: Number(request_count.count)
+    };
+  });
+  return return_value
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -14198,7 +14333,8 @@ ALTER TABLE attachment_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 CREATE POLICY "Allow CRUD for anon users" ON attachment_table
 AS PERMISSIVE FOR ALL
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- form_schema.field_table
 ALTER TABLE form_schema.field_table ENABLE ROW LEVEL SECURITY;
@@ -17089,6 +17225,7 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON address_table;
 CREATE POLICY "Allow CRUD for authenticated users" ON address_table
 AS PERMISSIVE FOR ALL
 TO authenticated
+USING (true)
 WITH CHECK (true);
 
 --- jira_schema.jira_project_table
@@ -17098,7 +17235,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_p
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_project_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 -- jira_schema.jira_formsly_project_table
 ALTER TABLE jira_schema.jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
@@ -17149,7 +17287,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_u
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_user_role_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- JIRA_USER_ACCOUNT_TABLE
 ALTER TABLE jira_schema.jira_user_account_table ENABLE ROW LEVEL SECURITY;
@@ -17158,7 +17297,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_u
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_user_account_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- jira_schema.jira_project_user_table
 ALTER TABLE jira_schema.jira_project_user_table ENABLE ROW LEVEL SECURITY;
@@ -17226,7 +17366,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_i
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_item_category_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- jira_schema.jira_item_user_table
 ALTER TABLE jira_schema.jira_item_user_table ENABLE ROW LEVEL SECURITY;
@@ -17235,7 +17376,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_i
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- team_schema.team_department_table
 ALTER TABLE team_schema.team_department_table ENABLE ROW LEVEL SECURITY;
@@ -17252,7 +17394,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_o
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_organization_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- jira_organization_team_project_table
 ALTER TABLE jira_schema.jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;

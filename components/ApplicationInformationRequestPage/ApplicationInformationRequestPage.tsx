@@ -29,6 +29,7 @@ import {
 } from "@/utils/types";
 import {
   Accordion,
+  Alert,
   Container,
   Flex,
   Paper,
@@ -39,6 +40,8 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconNote } from "@tabler/icons-react";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -51,6 +54,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { setIsLoading } = useLoadingActions();
+  const [isNoteClosed, setIsNoteClosed] = useState(false);
 
   const initialRequestSignerList = request.request_signer.map((signer) => {
     return {
@@ -347,6 +351,23 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
 
   return (
     <Container>
+      {!isNoteClosed && router.pathname.includes("public-request") && (
+        <Alert
+          mb="xl"
+          title="Note!"
+          icon={<IconNote size={16} />}
+          withCloseButton
+          onClose={() => {
+            setIsNoteClosed(true);
+          }}
+        >
+          <Text>
+            To access and keep track of all your submitted applications, go to{" "}
+            <Link href="/sign-up">formsly.io/sign-up</Link> and sign up using
+            the email that you entered on the application.
+          </Text>
+        </Alert>
+      )}
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
