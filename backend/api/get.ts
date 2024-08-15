@@ -17,6 +17,8 @@ import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import {
   addAmpersandBetweenWords,
+  escapeQuotes,
+  escapeQuotesForObject,
   parseJSONIfValid,
   startCase,
 } from "@/utils/string";
@@ -218,7 +220,7 @@ export const getRequestList = async (
     teamMemberId,
     project,
     idFilter,
-    columnAccessor = "request_date_created"
+    columnAccessor = "request_date_created",
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
@@ -265,7 +267,7 @@ export const getRequestList = async (
       sort,
       isApproversView,
       teamMemberId,
-      columnAccessor
+      columnAccessor,
     },
   });
 
@@ -4095,16 +4097,16 @@ export const getItemSectionChoices = async (
       {
         input_data: {
           equipmentId: equipmentId
-            ? `${safeParse(equipmentId.replace(/'/g, "''"))}`
+            ? `${safeParse(escapeQuotes(equipmentId))}`
             : undefined,
           generalName: generalName
-            ? `${safeParse(generalName.replace(/'/g, "''"))}`
+            ? `${safeParse(escapeQuotes(generalName))}`
             : undefined,
           componentCategory: componentCategory
-            ? `${safeParse(componentCategory.replace(/'/g, "''"))}`
+            ? `${safeParse(escapeQuotes(componentCategory))}`
             : undefined,
-          brand: brand ? `${safeParse(brand.replace(/'/g, "''"))}` : undefined,
-          model: model ? `${safeParse(model.replace(/'/g, "''"))}` : undefined,
+          brand: brand ? `${safeParse(escapeQuotes(brand))}` : undefined,
+          model: model ? `${safeParse(escapeQuotes(model))}` : undefined,
           index,
           limit: FETCH_OPTION_LIMIT,
         },
@@ -4253,7 +4255,7 @@ export const pedPartCheck = async (
   }
 ) => {
   const { data, error } = await supabaseClient.rpc("ped_part_check", {
-    input_data: params,
+    input_data: escapeQuotesForObject(params),
   });
   if (error) throw error;
   return data;

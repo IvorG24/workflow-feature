@@ -410,11 +410,11 @@ const TicketActionSection = ({
         equipmentName: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[0]
             .ticket_field_response as string
-        ).replace(/'/g, "''"),
+        ),
         partName: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[1]
             .ticket_field_response as string
-        ).replace(/'/g, "''"),
+        ),
         partNumber: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[2]
             .ticket_field_response as string
@@ -422,19 +422,19 @@ const TicketActionSection = ({
         brand: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[3]
             .ticket_field_response as string
-        ).replace(/'/g, "''"),
+        ),
         model: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[4]
             .ticket_field_response as string
-        ).replace(/'/g, "''"),
+        ),
         unitOfMeasure: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[5]
             .ticket_field_response as string
-        ).replace(/'/g, "''"),
+        ),
         category: JSON.parse(
           ticketForm.ticket_sections[0].ticket_section_fields[6]
             .ticket_field_response as string
-        ).replace(/'/g, "''"),
+        ),
         teamId: activeTeam.team_id,
       });
 

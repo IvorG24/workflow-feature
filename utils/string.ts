@@ -183,3 +183,14 @@ export const capitalizeEachWord = (value: string) => {
   }
   return words.join(" ");
 };
+
+export const escapeQuotesForObject = (input: Record<string, string>) => {
+  const escapedObj: Record<string, string> = {};
+  for (const key in input) {
+    if (input.hasOwnProperty(key)) {
+      const value = input[key];
+      escapedObj[key] = typeof value === "string" ? escapeQuotes(value) : value;
+    }
+  }
+  return escapedObj;
+};
