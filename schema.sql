@@ -1532,7 +1532,8 @@ AS $$
       teamId,
       jiraId,
       jiraLink,
-      requestFormslyId
+      requestFormslyId,
+      userId
     } = input_data;
 
     request_status = "PENDING";
@@ -1545,8 +1546,7 @@ AS $$
           request_signer_status = '${requestAction}', 
           request_signer_status_date_updated = NOW() 
         WHERE 
-          request_signer_signer_id='${requestSignerId}' 
-          AND request_signer_request_id='${requestId}'
+          request_signer_id='${requestSignerId}'
       `
     );
     
@@ -1568,12 +1568,17 @@ AS $$
         )
       `
     );
-    
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}';`);
-    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
+    let activeTeam = "";
+    if(teamId){
+      const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}'`);
+      if(activeTeamResult.length){
+        activeTeam = activeTeamResult[0];
+      }
+    }
+    
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -1600,9 +1605,31 @@ AS $$
         );
       }
     }
+
+    if (userId) {
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table 
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id
+          ) VALUES 
+          (
+            'REQUEST',
+            '${present[requestAction]}',
+            '${signerFullName} ${requestAction.toLowerCase()} your ${formName} request',
+            '/user/requests/${requestFormslyId ?? requestId}',
+            '${userId}'
+          )
+        `
+      );
+    }
     
-    if(isPrimarySigner===true){
-      if(requestAction === "APPROVED"){
+    if (isPrimarySigner) {
+      if (requestAction === "APPROVED") {
         const isAllPrimaryApprovedTheRequest = Boolean(
           plv8.execute(
             `
@@ -1617,7 +1644,7 @@ AS $$
             `
           )[0].count
         );
-        if(!isAllPrimaryApprovedTheRequest){
+        if (!isAllPrimaryApprovedTheRequest) {
           plv8.execute(
             `
               UPDATE request_schema.request_table
@@ -1631,7 +1658,7 @@ AS $$
           );
           request_status = "APPROVED"
         }
-      } else if(requestAction === "REJECTED"){
+      } else if (requestAction === "REJECTED") {
         plv8.execute(
           `
             UPDATE request_schema.request_table
@@ -14323,6 +14350,44 @@ AS $$
   return return_value
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_user_id_in_application_information(
+  input_data JSON
+)
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
+  let return_value = '';
+  plv8.subtransaction(function(){
+    const {
+      requestId
+    } = input_data;
+
+    const email = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_field_id = 'ee6ec8af-0a9e-40a5-8353-7d851218fa87'
+          AND request_response_request_id = '${requestId}'
+      `
+    )[0].request_response;
+
+    const user = plv8.execute(
+      `
+        SELECT user_id
+        FROM user_schema.user_table
+        WHERE
+          user_email = '${email.replace(/"/g, '')}'
+      `
+    );
+
+    if(user.length){
+      return_value = user[0].user_id
+    }
+  });
+  return return_value
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -14690,10 +14755,11 @@ AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   (
-    SELECT tm.team_member_team_id
-    FROM request_schema.request_table as rt
-    JOIN team_schema.team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
-    WHERE rt.request_id = request_signer_request_id
+    SELECT team_member_team_id
+    FROM request_schema.request_table
+    INNER JOIN form_schema.form_table ON form_id = request_form_id
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE request_id = request_signer_request_id
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
@@ -15143,8 +15209,8 @@ CREATE POLICY "Allow READ for anon users" ON request_schema.request_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_schema.request_table;
-CREATE POLICY "Allow UPDATE for authenticated users on own requests" ON request_schema.request_table
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests or approver" ON request_schema.request_table;
+CREATE POLICY "Allow UPDATE for authenticated users on own requests or approver" ON request_schema.request_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -15154,9 +15220,10 @@ USING (
     WHERE team_member_user_id = (SELECT auth.uid())
   ) OR (
     SELECT team_member_team_id 
-    FROM team_schema.team_member_table 
-    WHERE team_member_id = request_team_member_id
-  ) IN (
+    FROM form_schema.form_table
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE form_id = request_form_id
+  ) = (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
     WHERE team_member_user_id = (SELECT auth.uid()) 
@@ -15170,9 +15237,10 @@ WITH CHECK (
     WHERE team_member_user_id = (SELECT auth.uid())
   ) OR (
     SELECT team_member_team_id 
-    FROM team_schema.team_member_table 
-    WHERE team_member_id = request_team_member_id
-  ) IN (
+    FROM form_schema.form_table
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE form_id = request_form_id
+  ) = (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
     WHERE team_member_user_id = (SELECT auth.uid()) 

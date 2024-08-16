@@ -240,7 +240,7 @@ export const withAuthAndOnboardingRequestPage = <
       if (!teamId) {
         return {
           redirect: {
-            destination: "/user/notification",
+            destination: "/user/requests",
             permanent: false,
           },
         };
@@ -253,7 +253,7 @@ export const withAuthAndOnboardingRequestPage = <
       if (!userActiveTeam) {
         return {
           redirect: {
-            destination: "/user/notification",
+            destination: "/user/requests",
             permanent: false,
           },
         };
@@ -350,7 +350,7 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
       if (!teamId) {
         return {
           redirect: {
-            destination: "/user/notification",
+            destination: "/user/requests",
             permanent: false,
           },
         };
@@ -363,7 +363,7 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
       if (!userActiveTeam) {
         return {
           redirect: {
-            destination: "/user/notification",
+            destination: "/user/requests",
             permanent: false,
           },
         };

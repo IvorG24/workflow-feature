@@ -197,7 +197,7 @@ const OnboardingPage = ({ user }: Props) => {
           `/invitation/${pendingInvitation.invitation_id}?onboarding=true`
         );
       } else {
-        await router.push("/user/notification");
+        await router.push("/user/requests");
       }
 
       notifications.show({

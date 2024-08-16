@@ -1,10 +1,8 @@
-import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   BASE_URL,
   DEFAULT_REQUEST_LIST_LIMIT,
   formatDate,
 } from "@/utils/constant";
-import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor } from "@/utils/styling";
 import {
   RequestListFilterValues,
@@ -63,8 +61,6 @@ const UserRequestListTable = ({
   setListTableColumnFilter,
   tableColumnList,
 }: Props) => {
-  const activeTeam = useActiveTeam();
-
   useEffect(() => {
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
@@ -96,20 +92,11 @@ const UserRequestListTable = ({
             return (
               <Flex key={String(requestId)} justify="space-between">
                 <Text truncate maw={150}>
-                  <Anchor
-                    href={`/${formatTeamNameToUrlKey(
-                      activeTeam.team_name ?? ""
-                    )}/requests/${requestId}`}
-                    target="_blank"
-                  >
+                  <Anchor href={`/user/requests/${requestId}`} target="_blank">
                     {String(requestId)}
                   </Anchor>
                 </Text>
-                <CopyButton
-                  value={`${BASE_URL}/${formatTeamNameToUrlKey(
-                    activeTeam.team_name ?? ""
-                  )}/requests/${requestId}`}
-                >
+                <CopyButton value={`${BASE_URL}/user/requests/${requestId}`}>
                   {({ copied, copy }) => (
                     <Tooltip
                       label={copied ? "Copied" : `Copy ${requestId}`}

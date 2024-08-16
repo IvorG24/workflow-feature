@@ -6001,3 +6001,36 @@ export const getUserRequestList = async (
 
   return { data: dataFormat.data, count: dataFormat.count };
 };
+
+export const getUserIdInApplicationInformation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_user_id_in_application_information",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data;
+};
+
+export const checkUserIdNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    idNumber: string;
+  }
+) => {
+  const { idNumber } = params;
+  const { count, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_valid_id_table")
+    .select("user_valid_id_number", { count: "exact", head: true })
+    .eq("user_valid_id_number", idNumber);
+
+  if (error) throw error;
+  return !Boolean(count);
+};

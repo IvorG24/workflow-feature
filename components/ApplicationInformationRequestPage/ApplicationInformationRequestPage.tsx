@@ -1,4 +1,8 @@
 import { deleteRequest } from "@/backend/api/delete";
+import {
+  getRequestComment,
+  getUserIdInApplicationInformation,
+} from "@/backend/api/get";
 import { approveOrRejectRequest, cancelRequest } from "@/backend/api/update";
 import RequestActionSection from "@/components/RequestPage/RequestActionSection";
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
@@ -7,11 +11,7 @@ import RequestSection from "@/components/RequestPage/RequestSection";
 import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  useUserProfile,
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDate } from "@/utils/constant";
 import {
@@ -66,7 +66,6 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
     };
   });
 
-  const [jiraTicketStatus, setJiraTicketStatus] = useState<string | null>(null);
   const [requestStatus, setRequestStatus] = useState(request.request_status);
   const [signerList, setSignerList] = useState(initialRequestSignerList);
   const [requestCommentList, setRequestCommentList] = useState<
@@ -88,18 +87,14 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
-  const teamMemberGroupList = useUserTeamMemberGroupList();
+  // const teamMemberGroupList = useUserTeamMemberGroupList();
   const activeTeam = useActiveTeam();
 
   const requestor = request.request_team_member.team_member_user;
 
   const requestDateCreated = formatDate(new Date(request.request_date_created));
 
-  const handleUpdateRequest = async (
-    status: "APPROVED" | "REJECTED",
-    jiraId?: string,
-    jiraLink?: string
-  ) => {
+  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
     try {
       setIsLoading(true);
       const signer = isUserSigner;
@@ -111,21 +106,25 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         });
         return;
       }
+
       if (!teamMember) return;
+
+      const userId = await getUserIdInApplicationInformation(supabaseClient, {
+        requestId: request.request_id,
+      });
 
       await approveOrRejectRequest(supabaseClient, {
         requestAction: status,
         requestId: request.request_id,
         isPrimarySigner: signer.signer_is_primary_signer,
-        requestSignerId: signer.signer_id,
+        requestSignerId: signer.request_signer_id,
         requestOwnerId: request.request_team_member.team_member_user.user_id,
         signerFullName: signerFullName,
         formName: request.request_form.form_name,
         memberId: teamMember.team_member_id,
         teamId: request.request_team_member.team_member_team_id,
-        jiraId,
-        jiraLink,
         requestFormslyId: request.request_formsly_id,
+        userId,
       });
 
       notifications.show({
@@ -306,45 +305,44 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
   };
 
   useEffect(() => {
-    const fetchJiraTicketStatus = async (requestJiraId: string) => {
-      const newJiraTicketData = await fetch(
-        `/api/jira/get-ticket?jiraTicketKey=${requestJiraId}`
-      );
-
-      if (newJiraTicketData.ok) {
-        const jiraTicket = await newJiraTicketData.json();
-        const jiraTicketStatus =
-          jiraTicket.fields["customfield_10010"].currentStatus.status;
-
-        setJiraTicketStatus(jiraTicketStatus);
-      } else {
-        setJiraTicketStatus("Ticket Not Found");
-      }
-    };
-
-    if (requestJira.id) {
-      fetchJiraTicketStatus(requestJira.id);
+    try {
+      const fetchComments = async () => {
+        const data = await getRequestComment(supabaseClient, {
+          request_id: request.request_id,
+        });
+        setRequestCommentList(data);
+      };
+      fetchComments();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }, [requestJira.id]);
+  }, []);
 
   const isUserOwner = requestor.user_id === user?.user_id;
   const isUserSigner = signerList.find(
     (signer) =>
       signer.signer_team_member.team_member_id === teamMember?.team_member_id
   );
+
   const canSignerTakeAction =
     isUserSigner &&
     isUserSigner.request_signer_status === "PENDING" &&
     requestStatus !== "CANCELED";
-  const isEditable =
-    signerList
-      .map((signer) => signer.request_signer_status)
-      .filter((status) => status !== "PENDING").length === 0 &&
-    isUserOwner &&
-    requestStatus === "PENDING";
+  const isEditable = false;
+  // signerList
+  //   .map((signer) => signer.request_signer_status)
+  //   .filter((status) => status !== "PENDING").length === 0 &&
+  // isUserOwner &&
+  // requestStatus === "PENDING";
   const isCancelable = isUserOwner && requestStatus === "PENDING";
   const isDeletable = isUserOwner && requestStatus === "CANCELED";
-  const isUserRequester = teamMemberGroupList.includes("REQUESTER");
+  const isUserRequester = false;
+  // teamMemberGroupList.includes("REQUESTER");
 
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
@@ -381,7 +379,6 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
-          jiraTicketStatus={jiraTicketStatus}
         />
 
         <Stack spacing="xl" mt="lg">

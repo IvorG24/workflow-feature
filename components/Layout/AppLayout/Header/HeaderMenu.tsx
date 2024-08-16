@@ -4,7 +4,6 @@ import {
   useUserAvatar,
   useUserIntials,
   useUserProfile,
-  useUserTeamMember,
 } from "@/stores/useUserStore";
 import {
   // NOTIFICATION_LIST_LIMIT,
@@ -13,20 +12,17 @@ import {
 import { Database } from "@/utils/database";
 import { getAvatarColor } from "@/utils/styling";
 // import { AppType } from "@/utils/types";
-import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { startCase } from "@/utils/string";
 import {
   ActionIcon,
   Avatar,
   Divider,
   Group,
-  Indicator,
   Menu,
   useMantineColorScheme,
 } from "@mantine/core";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
-  IconBell,
   IconHelpCircle,
   IconLogout,
   IconMoonStars,
@@ -35,16 +31,13 @@ import {
   IconUserCircle,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
-import Notification from "./Notification";
 
 const HeaderMenu = () => {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const router = useRouter();
   const supabaseClient = createPagesBrowserClient<Database>();
-  const teamMember = useUserTeamMember();
   const userAvatar = useUserAvatar();
   const userInitials = useUserIntials();
-  const unreadNotificationCount = useUnreadNotificationCount();
   const user = useUserProfile();
 
   const handleLogout = async () => {
@@ -54,7 +47,7 @@ const HeaderMenu = () => {
 
   return (
     <Group spacing={16}>
-      {!teamMember && (
+      {/* {!teamMember && (
         <Menu
           shadow="xs"
           width={300}
@@ -78,7 +71,7 @@ const HeaderMenu = () => {
             <Notification />
           </Menu.Dropdown>
         </Menu>
-      )}
+      )} */}
 
       <Menu shadow="md" width={200} position="bottom-end" withArrow>
         <Menu.Target data-cy="header-account-button">

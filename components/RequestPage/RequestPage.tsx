@@ -100,7 +100,7 @@ const RequestPage = ({
         requestAction: status,
         requestId: request.request_id,
         isPrimarySigner: signer.signer_is_primary_signer,
-        requestSignerId: signer.signer_id,
+        requestSignerId: signer.request_signer_id,
         requestOwnerId: request.request_team_member.team_member_user.user_id,
         signerFullName: signerFullName,
         formName: request.request_form.form_name,
@@ -147,7 +147,7 @@ const RequestPage = ({
         },
         ...prev,
       ]);
-    } catch {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
