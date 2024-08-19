@@ -5,9 +5,9 @@ import {
 } from "@/utils/constant";
 import { getStatusToColor } from "@/utils/styling";
 import {
-  RequestListFilterValues,
   RequestListItemSignerType,
   RequestListItemType,
+  UserRequestListFilterValues,
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -15,10 +15,11 @@ import {
   Badge,
   CopyButton,
   Flex,
+  Indicator,
   Text,
   Tooltip,
 } from "@mantine/core";
-import { IconArrowsMaximize, IconCopy } from "@tabler/icons-react";
+import { IconArrowsMaximize, IconCopy, IconGraph } from "@tabler/icons-react";
 import { DataTableSortStatus } from "mantine-datatable";
 import router from "next/router";
 import { Dispatch, SetStateAction, useEffect } from "react";
@@ -34,7 +35,7 @@ type Props = {
   handlePagination: (p: number) => void;
   sortStatus: DataTableSortStatus;
   setSortStatus: Dispatch<SetStateAction<DataTableSortStatus>>;
-  setValue: UseFormSetValue<RequestListFilterValues>;
+  setValue: UseFormSetValue<UserRequestListFilterValues>;
   checkIfColumnIsHidden: (column: string) => boolean;
   showTableColumnFilter: boolean;
   setShowTableColumnFilter: Dispatch<SetStateAction<boolean>>;
@@ -65,7 +66,7 @@ const UserRequestListTable = ({
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
-
+  console.log(requestList);
   return (
     <ListTable
       idAccessor="request_id"
@@ -119,7 +120,7 @@ const UserRequestListTable = ({
           hidden: checkIfColumnIsHidden("request_form_name"),
           render: ({ form_name }) => {
             return (
-              <Text truncate maw={150}>
+              <Text truncate maw={250}>
                 {String(form_name)}
               </Text>
             );
@@ -164,24 +165,59 @@ const UserRequestListTable = ({
           ),
         },
         {
+          accessor: "progress",
+          title: "Progress",
+          hidden: checkIfColumnIsHidden("progress"),
+          textAlignment: "center",
+          render: ({ request_form_id, request_is_with_indicator }) => {
+            if (request_form_id !== "151cc6d7-94d7-4c54-b5ae-44de9f59d170")
+              return null;
+            return (
+              <Tooltip label="View Progress" openDelay={100}>
+                <ActionIcon maw={120} mx="auto" color="blue">
+                  {request_is_with_indicator ? (
+                    <Indicator color="red" size={8} offset={-4}>
+                      <IconGraph size={16} />
+                    </Indicator>
+                  ) : (
+                    <IconGraph size={16} />
+                  )}
+                </ActionIcon>
+              </Tooltip>
+            );
+          },
+        },
+        {
           accessor: "view",
           title: "View",
           hidden: checkIfColumnIsHidden("view"),
           textAlignment: "center",
-          render: ({ request_id, request_formsly_id }) => {
+          render: ({
+            request_id,
+            request_formsly_id,
+            request_is_with_indicator,
+          }) => {
             const requestId =
               request_formsly_id === "-" ? request_id : request_formsly_id;
             return (
-              <ActionIcon
-                maw={120}
-                mx="auto"
-                color="blue"
-                onClick={async () =>
-                  await router.push(`/user/requests/${requestId}`)
-                }
-              >
-                <IconArrowsMaximize size={16} />
-              </ActionIcon>
+              <Tooltip label="View Request" openDelay={100}>
+                <ActionIcon
+                  maw={120}
+                  mx="auto"
+                  color="blue"
+                  onClick={async () =>
+                    await router.push(`/user/requests/${requestId}`)
+                  }
+                >
+                  {request_is_with_indicator ? (
+                    <Indicator color="red" size={8} offset={-4}>
+                      <IconArrowsMaximize size={16} />
+                    </Indicator>
+                  ) : (
+                    <IconArrowsMaximize size={16} />
+                  )}
+                </ActionIcon>
+              </Tooltip>
             );
           },
         },

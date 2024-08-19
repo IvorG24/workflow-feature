@@ -1,4 +1,6 @@
-import CreateApplicationInformationPage from "@/components/CreateApplicationInformationPage/CreateApplicationInformationPage";
+import CreateApplicationInformationRequestPage from "@/components/CreateApplicationInformationRequestPage/CreateApplicationInformationRequestPage";
+import CreateOnlineApplicationRequestPage from "@/components/CreateOnlineApplicationRequestPage/CreateOnlineApplicationRequestPage";
+import CreateOnlineAssessmentRequestPage from "@/components/CreateOnlineAssessmentRequestPage/CreateOnlineAssessmentRequestPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { FormWithResponseType } from "@/utils/types";
@@ -14,6 +16,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       {
         input_data: {
           formId: context.query.formId,
+          applicationInformationId: context.query.applicationInformationId,
+          onlineApplicationId: context.query.onlineApplicationId,
         },
       }
     );
@@ -40,7 +44,11 @@ const Page = ({ form }: Props) => {
   const formslyForm = () => {
     switch (form.form_name) {
       case "Application Information":
-        return <CreateApplicationInformationPage form={form} />;
+        return <CreateApplicationInformationRequestPage form={form} />;
+      case "Online Application":
+        return <CreateOnlineApplicationRequestPage form={form} />;
+      case "Online Assessment":
+        return <CreateOnlineAssessmentRequestPage form={form} />;
       default:
         return (
           <CreateRequestPage form={form} formslyFormName={form.form_name} />

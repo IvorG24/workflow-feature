@@ -1,6 +1,10 @@
 import { getUserRequestList } from "@/backend/api/get";
 import { DEFAULT_REQUEST_LIST_LIMIT } from "@/utils/constant";
-import { RequestListFilterValues, RequestListItemType } from "@/utils/types";
+import {
+  FormTableRow,
+  RequestListItemType,
+  UserRequestListFilterValues,
+} from "@/utils/types";
 import { Box, Container, Flex, Paper, Text, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -11,7 +15,11 @@ import { FormProvider, useForm } from "react-hook-form";
 import UserRequestListFilter from "./UserRequestListFilter";
 import UserRequestListTable from "./UserRequestListTable";
 
-const UserRequestListPage = () => {
+type Props = {
+  formList: FormTableRow[];
+};
+
+const UserRequestListPage = ({ formList }: Props) => {
   const supabaseClient = useSupabaseClient();
   const currentUser = useUser();
 
@@ -20,10 +28,20 @@ const UserRequestListPage = () => {
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
   const [requestListCount, setRequestListCount] = useState(0);
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
+  const [localFilter, setLocalFilter] = useState<UserRequestListFilterValues>({
+    search: "",
+    form: [],
+    status: undefined,
+    isAscendingSort: false,
+  });
 
-  const filterFormMethods = useForm<RequestListFilterValues>({
+  const filterFormMethods = useForm<UserRequestListFilterValues>({
     mode: "onChange",
   });
+
+  const filteredFormList = formList
+    .map(({ form_name: label, form_id: value }) => ({ label, value }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   const { handleSubmit, getValues, setValue } = filterFormMethods;
 
@@ -45,6 +63,7 @@ const UserRequestListPage = () => {
     { value: "request_team_member_id", label: "Requested By" },
     { value: "request_signer", label: "Approver" },
     { value: "request_date_created", label: "Date Created" },
+    { value: "progress", label: "Progress" },
     { value: "view", label: "View" },
   ];
 
@@ -65,7 +84,7 @@ const UserRequestListPage = () => {
       if (!currentUser?.email) return;
       setIsFetchingRequestList(true);
 
-      const { search, status, isAscendingSort } = getValues();
+      const { search, status, form, isAscendingSort } = getValues();
 
       const params = {
         page: page,
@@ -75,6 +94,7 @@ const UserRequestListPage = () => {
         isAscendingSort,
         columnAccessor: columnAccessor(),
         email: currentUser.email,
+        form: form,
       };
 
       const { data, count } = await getUserRequestList(supabaseClient, params);
@@ -82,6 +102,7 @@ const UserRequestListPage = () => {
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Failed to fetch request list.",
         color: "red",
@@ -127,9 +148,12 @@ const UserRequestListPage = () => {
         <FormProvider {...filterFormMethods}>
           <form onSubmit={handleSubmit(handleFilterForms)}>
             <UserRequestListFilter
+              formList={filteredFormList}
               handleFilterForms={handleFilterForms}
               showTableColumnFilter={showTableColumnFilter}
               setShowTableColumnFilter={setShowTableColumnFilter}
+              localFilter={localFilter}
+              setLocalFilter={setLocalFilter}
             />
           </form>
         </FormProvider>

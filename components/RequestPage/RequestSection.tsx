@@ -8,6 +8,7 @@ type RequestSectionProps = {
   isOnlyWithResponse?: boolean;
   isAnon?: boolean;
   index?: number;
+  isPublicRequest?: boolean;
 };
 
 const RequestSection = ({
@@ -16,6 +17,7 @@ const RequestSection = ({
   isOnlyWithResponse = false,
   isAnon = false,
   index = 0,
+  isPublicRequest = false,
 }: RequestSectionProps) => {
   return (
     <Paper p="xl" shadow="xs">
@@ -42,6 +44,7 @@ const RequestSection = ({
                     }}
                     isFormslyForm={isFormslyForm}
                     isAnon={isAnon}
+                    isPublicRequest={isPublicRequest}
                   />
                 </Box>
               );
@@ -64,6 +67,7 @@ const RequestSection = ({
                   }}
                   isFormslyForm={isFormslyForm}
                   isAnon={isAnon}
+                  isPublicRequest={isPublicRequest}
                 />
               </Box>
             );

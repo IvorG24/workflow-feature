@@ -1390,6 +1390,10 @@ AS $$
         endId = `PCVB`;
       } else if(formName === 'Application Information') {
         endId = `AI`;
+      } else if(formName === 'Online Application') {
+        endId = `OAP`;
+      } else if(formName === 'Online Assessment') {
+        endId = `OAS`;
       } 
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
@@ -3475,8 +3479,11 @@ AS $$
     const request = plv8.execute(
       `
         SELECT 
+          request_formsly_id,
+          request_status,
           form_is_formsly_form, 
-          form_name
+          form_name,
+          form_is_public_form
         FROM public.request_view
         INNER JOIN form_schema.form_table ON form_id = request_form_id
         WHERE 
@@ -3485,11 +3492,29 @@ AS $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information'].includes(request.form_name))) {
+    let isWithNextStep = false;
+    if(request.request_status === 'APPROVED' && request.form_is_public_form){
+      const connectedRequestCount = plv8.execute(
+        `
+          SELECT COUNT(request_response_id)
+          FROM request_schema.request_response_table
+          WHERE
+            request_response = '"${request.request_formsly_id}"'
+        `
+      )[0].count;
+      if(!connectedRequestCount){
+        isWithNextStep = true;
+      }
+    }
+
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information', 'Online Application', 'Online Assessment'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
-        request: requestData
+        request: {
+          ...requestData,
+          isWithNextStep
+        }
       };
       return;
     } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report', 'Request For Payment'].includes(request.form_name)) {
@@ -3507,7 +3532,10 @@ AS $$
       );
 
       returnData =  {
-        request: requestData,
+        request: {
+          ...requestData,
+          isWithNextStep
+        },
         sectionIdWithDuplicatableSectionIdList
       };
     } else {
@@ -3525,7 +3553,10 @@ AS $$
       ).map(response => response.request_response_duplicatable_section_id);
 
       returnData =  {
-        request: requestData,
+        request: {
+          ...requestData,
+          isWithNextStep
+        },
         duplicatableSectionIdList
       };
     }
@@ -13762,7 +13793,26 @@ AS $$
   plv8.subtransaction(function(){
     const { 
       formId,
+      applicationInformationId,
+      onlineApplicationId
     } = input_data;
+
+    const isStringParsable = (str) => {
+      try {
+        JSON.parse(str);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const safeParse = (str) => {
+      if (isStringParsable(str)) {
+        return JSON.parse(str);
+      } else {
+        return str;
+      }
+    };
 
     const formData = plv8.execute(
       `
@@ -13824,9 +13874,6 @@ AS $$
           FROM form_schema.field_table
           WHERE field_section_id = '${section.section_id}'
           ORDER BY field_order ASC
-          ${formData.form_name === 'Item' ? "LIMIT 10" : ""}
-          ${formData.form_name === 'PED Item' ? "LIMIT 7" : ""}
-          ${formData.form_name === 'IT Asset' ? "LIMIT 10" : ""}
         `
       );
       const field = fieldData.map(field => {
@@ -13894,8 +13941,150 @@ AS $$
     };
 
     if (form.form_is_formsly_form) {
-      if (form.form_name === "Application Information") {
-        returnData = { form }
+      if (form.form_name === 'Online Application' && applicationInformationId) {
+        const requestData = plv8.execute(
+          `
+            SELECT request_id
+            FROM public.request_view
+            WHERE request_formsly_id = '${applicationInformationId}'
+          `
+        );
+        if(!requestData.length) throw new Error('Request not found');
+        const requestId = requestData[0].request_id;
+
+        const applicantData = plv8.execute(
+          `
+            SELECT 
+              request_response,
+              field_id
+            FROM request_schema.request_response_table
+            INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            WHERE 
+              request_response_request_id = '${requestId}'
+              AND field_id IN (
+                'ee6ec8af-0a9e-40a5-8353-7d851218fa87', 
+                '7201c77e-b24a-4006-a4e5-8f38db887804', 
+                '859ac939-10c8-4094-aa7a-634f84b950b0', 
+                '0080798c-2359-4162-b8ae-441ac80512b6'
+              )
+            ORDER BY field_order
+          `
+        );
+
+        returnData = { 
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_response: applicationInformationId,
+                  },
+                  ...form.form_section[0].section_field.slice(1)
+                ]
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_response: safeParse(applicantData[applicantData.length-1].request_response)
+                  },
+                  {
+                    ...form.form_section[1].section_field[1],
+                    field_response: safeParse(applicantData[0].request_response)
+                  },
+                  {
+                    ...form.form_section[1].section_field[2],
+                    field_response: applicantData[1].field_id === '859ac939-10c8-4094-aa7a-634f84b950b0' ? safeParse(applicantData[1].request_response) : ""
+                  },
+                  {
+                    ...form.form_section[1].section_field[3],
+                    field_response: safeParse(applicantData[applicantData.length-2].request_response)
+                  },
+                ]
+              },
+              ...form.form_section.slice(2)
+            ]
+          }
+        }
+        return;
+      } else if (form.form_name === 'Online Assessment' && onlineApplicationId) {
+        const requestData = plv8.execute(
+          `
+            SELECT request_id
+            FROM public.request_view
+            WHERE request_formsly_id = '${onlineApplicationId}'
+          `
+        );
+        if(!requestData.length) throw new Error('Request not found');
+        const requestId = requestData[0].request_id;
+
+        const applicantData = plv8.execute(
+          `
+            SELECT 
+              request_response,
+              field_id
+            FROM request_schema.request_response_table
+            INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            WHERE 
+              request_response_request_id = '${requestId}'
+              AND field_id IN (
+                'be0e130b-455b-47e0-a804-f90943f7bc07',
+                '5c5284cd-7647-4307-b558-40b9076d9f7f', 
+                'f1c516bd-e483-4f32-a5b0-5223b186afb5', 
+                'd209aed6-e560-49a8-aa77-66c9cada168d', 
+                'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+              )
+            ORDER BY field_order
+          `
+        );
+
+        returnData = { 
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_response: safeParse(applicantData[0].request_response),
+                  },
+                  {
+                    ...form.form_section[0].section_field[1],
+                    field_response: onlineApplicationId,
+                  },
+                  ...form.form_section[0].section_field.slice(2)
+                ]
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_response: safeParse(applicantData[1].request_response)
+                  },
+                  {
+                    ...form.form_section[1].section_field[1],
+                    field_response: safeParse(applicantData[2].request_response)
+                  },
+                  {
+                    ...form.form_section[1].section_field[2],
+                    field_response: applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d' ? safeParse(applicantData[3].request_response) : ""
+                  },
+                  {
+                    ...form.form_section[1].section_field[3],
+                    field_response: safeParse(applicantData[applicantData.length-1].request_response)
+                  },
+                ]
+              },
+              ...form.form_section.slice(2)
+            ]
+          }
+        }
         return;
       } else {
         returnData = { form }
@@ -14230,7 +14419,8 @@ AS $$
       sort,
       search,
       columnAccessor,
-      email
+      email,
+      form
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -14250,17 +14440,19 @@ AS $$
           FROM public.request_view
           INNER JOIN form_schema.form_table ON form_id = request_form_id
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
           WHERE
             request_is_disabled = false
             AND form_table.form_is_disabled = false
-            AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
-            AND request_response_field_id = 'ee6ec8af-0a9e-40a5-8353-7d851218fa87'
+            AND form_is_public_form = true
+            AND field_name = 'Email Address'
             AND request_response = '"${email}"'
         ) AS a 
         WHERE 
           a.rowNumber = 1
           ${status}
           ${search}
+          ${form}
         ORDER BY ${columnAccessor} ${sort} 
         LIMIT '${limit}'
         OFFSET '${offset}'
@@ -14292,6 +14484,7 @@ AS $$
           a.rowNumber = 1
           ${status}
           ${search}
+          ${form}
       `
     )[0];
 
@@ -14331,6 +14524,21 @@ AS $$
         }
       });
 
+      let isWithIndicator = false;
+      if(request.request_status === 'APPROVED' && ['Application Information', 'Online Application'].includes(request.form_name)){
+        const connectedRequestCount = plv8.execute(
+          `
+            SELECT COUNT(request_response_id)
+            FROM request_schema.request_response_table
+            WHERE
+              request_response = '"${request.request_formsly_id}"'
+          `
+        )[0].count;
+        if(!connectedRequestCount){
+          isWithIndicator = true;
+        }
+      }
+
       return {
         request_id: request.request_id,
         request_formsly_id: request.request_formsly_id,
@@ -14339,6 +14547,7 @@ AS $$
         request_form_id: request.request_form_id,
         form_name: request.form_name,
         request_signer: request_signer,
+        request_is_with_indicator: isWithIndicator
       }
     });
 

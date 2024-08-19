@@ -5,7 +5,11 @@ import {
   MAX_FILE_SIZE_IN_MB,
   SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
-import { parseJSONIfValid, requestPath } from "@/utils/string";
+import {
+  parseJSONIfValid,
+  publicRequestPath,
+  requestPath,
+} from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -46,11 +50,15 @@ type RequestFormFieldsProps = {
   };
   sectionIndex: number;
   fieldIndex: number;
+  currencyOptionList?: { value: string; label: string }[];
+  formslyFormName?: string;
+  isEdit?: boolean;
+  isLoading: boolean | undefined;
+  isPublicRequest?: boolean;
   itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
   };
-  formslyFormName?: string;
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
   };
@@ -125,13 +133,10 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
-  isEdit?: boolean;
-  isLoading: boolean | undefined;
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
-  currencyOptionList?: { value: string; label: string }[];
   liquidationReimbursementFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null) => void;
@@ -272,8 +277,12 @@ const RequestFormFields = ({
   field,
   sectionIndex,
   fieldIndex,
-  itemFormMethods,
+  isEdit,
+  isLoading,
+  currencyOptionList,
   formslyFormName = "",
+  isPublicRequest = false,
+  itemFormMethods,
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
@@ -281,9 +290,6 @@ const RequestFormFields = ({
   pedItemFormMethods,
   paymentRequestFormMethods,
   itAssetRequestFormMethods,
-  isEdit,
-  isLoading,
-  currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
   pettyCashVoucherFormMethods,
@@ -412,6 +418,7 @@ const RequestFormFields = ({
                     icon={<IconLink size={16} />}
                     style={{ flex: 1 }}
                     onChange={onChange}
+                    readOnly={field.field_is_read_only}
                   />
                   <ActionIcon
                     mb={4}
@@ -420,7 +427,9 @@ const RequestFormFields = ({
                     color="blue"
                     onClick={() =>
                       window.open(
-                        requestPath(`${value}`, team.team_name),
+                        isPublicRequest
+                          ? publicRequestPath(`${value}`)
+                          : requestPath(`${value}`, team.team_name),
                         "_blank"
                       )
                     }

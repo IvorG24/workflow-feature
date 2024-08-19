@@ -1204,6 +1204,7 @@ export type RequestListItemType = {
   user_last_name: string;
   user_avatar: string | null;
   form_name: string;
+  request_is_with_indicator: boolean;
 };
 
 export type ConnectedRequestItemType = {
@@ -2178,6 +2179,7 @@ export type ApplicationInformationFilterFormValues = {
 export type UserRequestListFilterValues = {
   search?: string;
   status?: FormStatusType[];
+  form?: string[];
   isAscendingSort: boolean;
 };
 
@@ -2199,4 +2201,5 @@ export type FetchUserRequestListParams = {
   status?: FormStatusType[];
   isAscendingSort: boolean;
   email: string;
+  form?: string[];
 };

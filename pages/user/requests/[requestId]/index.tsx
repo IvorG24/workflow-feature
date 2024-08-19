@@ -1,5 +1,7 @@
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import Meta from "@/components/Meta/Meta";
+import OnlineApplicationRequestPage from "@/components/OnlineApplicationRequestPage/OnlineApplicationRequestPage";
+import OnlineAssessmentRequestPage from "@/components/OnlineAssessmentRequestPage/OnlineAssessmentRequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
@@ -30,13 +32,17 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 );
 
 type Props = {
-  request: RequestWithResponseType;
+  request: RequestWithResponseType & { isWithNextStep: boolean };
 };
 
 const Page = ({ request }: Props) => {
   const formslyForm = () => {
     if (request.request_form.form_name === "Application Information") {
       return <ApplicationInformationRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Online Application") {
+      return <OnlineApplicationRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Online Assessment") {
+      return <OnlineAssessmentRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

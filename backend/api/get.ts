@@ -5965,12 +5965,17 @@ export const getUserRequestList = async (
     isAscendingSort,
     columnAccessor = "request_date_created",
     email,
+    form,
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
 
   const statusCondition = status
     ?.map((value) => `a.request_status = '${value}'`)
+    .join(" OR ");
+
+  const formCondition = form
+    ?.map((value) => `a.request_form_id = '${value}'`)
     .join(" OR ");
 
   const searchCondition =
@@ -5989,6 +5994,7 @@ export const getUserRequestList = async (
         sort,
         columnAccessor,
         email,
+        form: formCondition ? `AND (${formCondition})` : "",
       },
     }
   );
@@ -6033,4 +6039,17 @@ export const checkUserIdNumber = async (
 
   if (error) throw error;
   return !Boolean(count);
+};
+
+export const getPublicFormList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("form_table")
+    .select("*")
+    .eq("form_is_public_form", true);
+  if (error) throw error;
+
+  return data;
 };

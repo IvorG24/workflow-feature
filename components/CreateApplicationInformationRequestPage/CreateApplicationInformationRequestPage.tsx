@@ -47,7 +47,7 @@ type Props = {
   form: FormType;
 };
 
-const CreateApplicationInformationPage = ({ form }: Props) => {
+const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
 
@@ -872,4 +872,4 @@ const CreateApplicationInformationPage = ({ form }: Props) => {
   );
 };
 
-export default CreateApplicationInformationPage;
+export default CreateApplicationInformationRequestPage;

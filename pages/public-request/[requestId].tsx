@@ -27,9 +27,10 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const supabaseClient = createPagesServerClient(context);
   try {
+    const requestId = context.query.requestId;
     const { data, error } = await supabaseClient.rpc("request_page_on_load", {
       input_data: {
-        requestId: context.query.requestId,
+        requestId,
       },
     });
 
@@ -73,7 +74,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       if (!teamId) {
         return {
           redirect: {
-            destination: "/user/requests",
+            destination: `/user/requests/${requestId}`,
             permanent: false,
           },
         };

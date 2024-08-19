@@ -53,7 +53,7 @@ type Props = {
   request: RequestWithResponseType & { isWithNextStep: boolean };
 };
 
-const ApplicationInformationRequestPage = ({ request }: Props) => {
+const OnlineApplicationRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   const { colors } = useMantineTheme();
@@ -356,7 +356,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
     request.request_status === "APPROVED" &&
     user?.user_email ===
       safeParse(
-        request.request_form.form_section[2].section_field[1].field_response[0]
+        request.request_form.form_section[1].section_field[0].field_response[0]
           .request_response ?? ""
       ) &&
     request.isWithNextStep;
@@ -369,9 +369,9 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             target: ".onboarding-create-team",
             content: (
               <Text>
-                You can now continue with the online application since your
-                application information has been accepted. To continue, simply
-                click the &ldquo;Next Step&ldquo; button.
+                You can now continue with the online assessment since your
+                online application has been accepted. To continue, simply click
+                the &ldquo;Next Step&ldquo; button.
               </Text>
             ),
             disableBeacon: true,
@@ -410,7 +410,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             className="onboarding-create-team"
             onClick={() =>
               router.push(
-                `/public-form/71f569a0-70a8-4609-82d2-5cc26ac1fe8c/create?applicationInformationId=${request.request_formsly_id}`
+                `/public-form/cc410201-f5a6-49ce-a06c-c2ce2c169436/create?onlineApplicationId=${request.request_formsly_id}`
               )
             }
           >
@@ -479,13 +479,6 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
               </Accordion.Item>
             </Accordion>
           )}
-
-          <RequestSection
-            section={formSection[formSection.length - 1]}
-            isFormslyForm={true}
-            isOnlyWithResponse
-            isPublicRequest={true}
-          />
         </Stack>
 
         {isRequestActionSectionVisible && (
@@ -526,4 +519,4 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
   );
 };
 
-export default ApplicationInformationRequestPage;
+export default OnlineApplicationRequestPage;

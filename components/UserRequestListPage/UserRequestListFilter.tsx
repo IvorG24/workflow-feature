@@ -1,4 +1,7 @@
-import { RequestListFilterValues } from "@/utils/types";
+import {
+  RequestListFilterValues,
+  UserRequestListFilterValues,
+} from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -10,25 +13,31 @@ import {
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
-import { SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
-type RequestListFilterProps = {
-  handleFilterForms: () => void;
-  setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
-  showTableColumnFilter: boolean;
-};
-
 type FilterSelectedValuesType = {
+  form: string[];
   status: string[];
 };
 
-const UserRequestListFilter = ({
-  handleFilterForms,
+type Props = {
+  formList: { label: string; value: string }[];
+  handleFilterForms: () => void;
+  setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
+  showTableColumnFilter: boolean;
+  localFilter: UserRequestListFilterValues;
+  setLocalFilter: Dispatch<SetStateAction<UserRequestListFilterValues>>;
+};
 
+const UserRequestListFilter = ({
+  formList,
+  handleFilterForms,
   showTableColumnFilter,
   setShowTableColumnFilter,
-}: RequestListFilterProps) => {
+  localFilter,
+  setLocalFilter,
+}: Props) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
     clearable: true,
@@ -38,10 +47,12 @@ const UserRequestListFilter = ({
     nothingFound: "Nothing found",
   };
   const { ref: statusRef, focused: statusRefFocused } = useFocusWithin();
+  const { ref: formRef, focused: formRefFocused } = useFocusWithin();
 
   const [filterSelectedValues, setFilterSelectedValues] =
     useState<FilterSelectedValuesType>({
       status: [],
+      form: [],
     });
   const [isFilter, setIsfilter] = useState(false);
 
@@ -64,6 +75,7 @@ const UserRequestListFilter = ({
       // if (value.length === 0 && filterMatch.length === 0) return;
       handleFilterForms();
       setFilterSelectedValues((prev) => ({ ...prev, [`${key}`]: value }));
+      setLocalFilter({ ...localFilter, [key]: value });
     }
   };
 
@@ -117,6 +129,28 @@ const UserRequestListFilter = ({
 
       {isFilter && (
         <Flex gap="sm" wrap="wrap" mb="sm">
+          <Controller
+            control={control}
+            name="form"
+            defaultValue={localFilter.form}
+            render={({ field: { value, onChange } }) => (
+              <MultiSelect
+                data={formList}
+                placeholder="Form"
+                ref={formRef}
+                value={value}
+                onChange={(value) => {
+                  onChange(value);
+                  if (!formRefFocused) handleFilterChange("form", value);
+                }}
+                onDropdownClose={() => handleFilterChange("form", value)}
+                {...inputFilterProps}
+                sx={{ flex: 1 }}
+                miw={250}
+                maw={320}
+              />
+            )}
+          />
           <Controller
             control={control}
             name="status"

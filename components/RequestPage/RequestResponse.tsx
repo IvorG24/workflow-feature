@@ -1,6 +1,6 @@
 import { getRequestFormslyId } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { requestPath } from "@/utils/string";
+import { publicRequestPath, requestPath } from "@/utils/string";
 import { FieldType, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -36,12 +36,14 @@ type RequestReponseProps = {
   };
   isFormslyForm?: boolean;
   isAnon?: boolean;
+  isPublicRequest?: boolean;
 };
 
 const RequestResponse = ({
   response,
   isFormslyForm = false,
   isAnon = false,
+  isPublicRequest = false,
 }: RequestReponseProps) => {
   const inputProps = {
     variant: "filled",
@@ -112,7 +114,14 @@ const RequestResponse = ({
               p={4}
               variant="light"
               color="blue"
-              onClick={() => window.open(getRequestPath(parsedValue), "_blank")}
+              onClick={() =>
+                window.open(
+                  isPublicRequest
+                    ? publicRequestPath(parsedValue)
+                    : getRequestPath(parsedValue),
+                  "_blank"
+                )
+              }
             >
               <IconExternalLink />
             </ActionIcon>

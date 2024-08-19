@@ -1,5 +1,5 @@
 import { getFormSectionWithFieldList } from "@/backend/api/get";
-import ApplicationInformationSpreadsheetView from "@/components/ApplicationInformationpreadsheetView/ApplicationInformationSpreadsheetView";
+import ApplicationInformationSpreadsheetView from "@/components/ApplicationInformationSpreadsheetView/ApplicationInformationSpreadsheetView";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
