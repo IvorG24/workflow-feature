@@ -15,6 +15,7 @@ import {
 } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDate } from "@/utils/constant";
+import { safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -335,8 +336,20 @@ const PEDEquipmentRequestPage = ({
         throw new Error("Project id is not defined.");
       }
       setIsLoading(true);
-      const itemCategory =
-        "Fixed Asset - Construction Equipment, Machinery and Tools";
+      const isRental =
+        safeParse(
+          request.request_form.form_section[0].section_field[1]
+            .field_response[0].request_response
+        ) === "Rental";
+
+      const itemCategory = isRental
+        ? "Services"
+        : "Fixed Asset - Construction Equipment, Machinery and Tools";
+
+      const requestFormType = isRental
+        ? "Services"
+        : request.request_form.form_name;
+
       const requisitionAutomationData = await getRequisitionAutomationData(
         supabaseClient,
         {
@@ -347,7 +360,7 @@ const PEDEquipmentRequestPage = ({
       const jiraTicketPayload = formatJiraRequisitionPayload({
         requestId: request.request_formsly_id,
         requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
-        requestFormType: request.request_form.form_name,
+        requestFormType,
         requestTypeId: "299",
         ...requisitionAutomationData,
       });

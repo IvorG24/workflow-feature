@@ -6,7 +6,7 @@ import { createTicket, editTicket } from "@/backend/api/post";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile } from "@/stores/useUserStore";
 import { Database } from "@/utils/database";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import { CreateTicketFormValues } from "@/utils/types";
 import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -65,7 +65,7 @@ const TicketRequestCustomCSIForm = ({
 
       const csiValid = await checkIfCSIValid(
         `${csiCode}`,
-        `${csiCodeDescription}`.trim().replace(/'/g, "''")
+        escapeQuotes(`${csiCodeDescription}`.trim())
       );
 
       if (!csiValid) return;

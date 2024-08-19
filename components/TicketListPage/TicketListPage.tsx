@@ -2,6 +2,7 @@ import { getTicketList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
+  BASE_URL,
   DEFAULT_REQUEST_LIST_LIMIT,
   DEFAULT_TICKET_LIST_LIMIT,
   formatDate,
@@ -15,7 +16,7 @@ import {
   TicketCategoryTableRow,
   TicketListType,
   TicketRequesterUserType,
-  TicketStatusType
+  TicketStatusType,
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -30,7 +31,7 @@ import {
   Paper,
   Text,
   Title,
-  Tooltip
+  Tooltip,
 } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
@@ -63,7 +64,7 @@ export type TicketListLocalFilter = {
   categoryList: string[];
   status: string[] | undefined;
   isAscendingSort: boolean;
-  columnAccessor: string
+  columnAccessor: string;
 };
 
 type Props = {
@@ -114,21 +115,21 @@ const TicketListPage = ({
     direction: "desc",
   });
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
-  const [listTableColumnFilter, setListTableColumnFilter] =
-    useLocalStorage<string[]>({
-      key: "ticket-list-table-column-filter",
-      defaultValue: [],
-    });
-
+  const [listTableColumnFilter, setListTableColumnFilter] = useLocalStorage<
+    string[]
+  >({
+    key: "ticket-list-table-column-filter",
+    defaultValue: [],
+  });
 
   const [localFilter, setLocalFilter] = useState<TicketListLocalFilter>({
-      search: "",
-      categoryList: [],
-      requesterList: [],
-      status: undefined,
-      approverList: [],
-      isAscendingSort: false,
-      columnAccessor: 'ticket_date_created'
+    search: "",
+    categoryList: [],
+    requesterList: [],
+    status: undefined,
+    approverList: [],
+    isAscendingSort: false,
+    columnAccessor: "ticket_date_created",
   });
 
   const filterFormMethods = useForm<FilterFormValues>({
@@ -139,7 +140,7 @@ const TicketListPage = ({
       status: undefined,
       approverList: [],
       isAscendingSort: false,
-  },
+    },
     mode: "onChange",
   });
 
@@ -151,14 +152,14 @@ const TicketListPage = ({
   const columnAccessor = () => {
     // requester
     if (sortStatus.columnAccessor === "ticket_requester_team_member_id") {
-      return `user_first_name ${sortStatus.direction.toUpperCase()}, user_last_name `
+      return `user_first_name ${sortStatus.direction.toUpperCase()}, user_last_name `;
     }
     return sortStatus.columnAccessor;
   };
 
   // this function will handle pagination and filteration
-  const handlePagination = async ({ overidePage }: { overidePage?: number  } = {}) => {
-     try {
+  const handlePagination = async (overidePage?: number) => {
+    try {
       setIsFetchingTicketList(true);
       if (!activeTeam.team_id) return;
 
@@ -189,7 +190,7 @@ const TicketListPage = ({
         sort: isAscendingSort
           ? "ascending"
           : ("descending" as "ascending" | "descending"),
-        columnAccessor: columnAccessor()
+        columnAccessor: columnAccessor(),
       };
 
       const { data, count } = await getTicketList(supabaseClient, params);
@@ -212,12 +213,15 @@ const TicketListPage = ({
 
   // soroting
   useEffect(() => {
-    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false)
+    setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     setLocalFilter((prev) => {
-      return {...prev, isAscendingSort: sortStatus.direction === "asc" ? false : true}
-    })
+      return {
+        ...prev,
+        isAscendingSort: sortStatus.direction === "asc" ? false : true,
+      };
+    });
 
-    handlePagination()
+    handlePagination();
   }, [sortStatus]);
 
   const tableColumnList = [
@@ -256,19 +260,23 @@ const TicketListPage = ({
         )}
       </Flex>
       <Paper p="md">
-        <Box >
+        <Box>
           <FormProvider {...filterFormMethods}>
-            <form onSubmit={handleSubmit(() => {
-              handlePagination({overidePage: 1})
-            })}>
+            <form
+              onSubmit={handleSubmit(() => {
+                handlePagination(1);
+                setActivePage(1);
+              })}
+            >
               <TicketListFilter
                 ticketCategoryList={ticketCategoryList}
-                handleFilterTicketList={handlePagination}
+                handlePagination={handlePagination}
                 teamMemberList={teamMemberList}
                 localFilter={localFilter}
                 setLocalFilter={setLocalFilter}
                 showTableColumnFilter={showTableColumnFilter}
                 setShowTableColumnFilter={setShowTableColumnFilter}
+                setActivePage={setActivePage}
               />
             </form>
           </FormProvider>
@@ -280,8 +288,8 @@ const TicketListPage = ({
             fetching={isFetchingTicketList}
             page={activePage}
             onPageChange={(page) => {
-              setActivePage(page)
-              handlePagination({overidePage: page});
+              setActivePage(page);
+              handlePagination(page);
             }}
             totalRecords={ticketListCount}
             recordsPerPage={DEFAULT_REQUEST_LIST_LIMIT}
@@ -293,7 +301,7 @@ const TicketListPage = ({
                 title: "ID",
                 width: 180,
                 hidden: checkIfColumnIsHidden("ticket_id"),
-                render: ({ticket_id}) => {
+                render: ({ ticket_id }) => {
                   return (
                     <Flex gap="md" align="center">
                       <Text size="xs" truncate maw={150}>
@@ -308,12 +316,14 @@ const TicketListPage = ({
                         </Anchor>
                       </Text>
 
-                      <CopyButton value={String(ticket_id)}>
+                      <CopyButton
+                        value={`${BASE_URL}/${formatTeamNameToUrlKey(
+                          activeTeam.team_name ?? ""
+                        )}/tickets/${ticket_id}`}
+                      >
                         {({ copied, copy }) => (
                           <Tooltip
-                            label={
-                              copied ? "Copied" : `Copy ${ticket_id}`
-                            }
+                            label={copied ? "Copied" : `Copy ${ticket_id}`}
                             onClick={copy}
                           >
                             <ActionIcon>
@@ -337,7 +347,7 @@ const TicketListPage = ({
                 title: "Status",
                 sortable: true,
                 hidden: checkIfColumnIsHidden("ticket_status"),
-                render: ({ticket_status}) => {
+                render: ({ ticket_status }) => {
                   return (
                     <Flex justify="center">
                       <Badge
@@ -347,74 +357,89 @@ const TicketListPage = ({
                         {String(ticket_status)}
                       </Badge>
                     </Flex>
-                  )
-                }
+                  );
+                },
               },
               {
                 accessor: "ticket_requester_team_member_id",
                 title: "Requester",
                 sortable: true,
-                hidden: checkIfColumnIsHidden("ticket_requester_team_member_id"),
+                hidden: checkIfColumnIsHidden(
+                  "ticket_requester_team_member_id"
+                ),
                 render: (ticket) => {
                   const { ticket_requester_user } = ticket;
-                  const { user_first_name, user_last_name, user_avatar, user_id } =
-                    ticket_requester_user as TicketRequesterUserType;
-                    
+                  const {
+                    user_first_name,
+                    user_last_name,
+                    user_avatar,
+                    user_id,
+                  } = ticket_requester_user as TicketRequesterUserType;
+
                   return (
-                    <Flex px={0} gap={8} align='center'>
+                    <Flex px={0} gap={8} align="center">
                       <Avatar
-                            {...defaultAvatarProps}
-                            color={getAvatarColor(
-                              Number(`${user_id.charCodeAt(0)}`)
-                            )}
-                            src={user_avatar}
-                        >
-                        {(
-                          user_first_name[0] + user_last_name[0]
-                        ).toUpperCase()}
+                        {...defaultAvatarProps}
+                        color={getAvatarColor(
+                          Number(`${user_id.charCodeAt(0)}`)
+                        )}
+                        src={user_avatar}
+                      >
+                        {(user_first_name[0] + user_last_name[0]).toUpperCase()}
                       </Avatar>
                       <Anchor
                         href={`/member/${ticket.ticket_requester_team_member_id}`}
                         target="_blank"
                       >
-                        <Text >{`${user_first_name} ${user_last_name}`}</Text>
+                        <Text>{`${user_first_name} ${user_last_name}`}</Text>
                       </Anchor>
                     </Flex>
-                  )
+                  );
                 },
               },
               {
                 accessor: "ticket_approver_team_member_id",
                 title: "Approver",
                 hidden: checkIfColumnIsHidden("ticket_approver_team_member_id"),
-                render: ({ticket_approver_user, ticket_status, ticket_approver_team_member_id}) => {
-                  const { user_first_name, user_last_name, user_id, user_avatar } = ticket_approver_user as TicketApproverUserType;
+                render: ({
+                  ticket_approver_user,
+                  ticket_status,
+                  ticket_approver_team_member_id,
+                }) => {
+                  const {
+                    user_first_name,
+                    user_last_name,
+                    user_id,
+                    user_avatar,
+                  } = ticket_approver_user as TicketApproverUserType;
 
-                  if (user_first_name === null || user_last_name === null || ticket_status === null) {
+                  if (
+                    user_first_name === null ||
+                    user_last_name === null ||
+                    ticket_status === null
+                  ) {
                     return null;
                   }
-                  
+
                   return (
-                    <Flex px={0} gap={8} align='center'>
+                    <Flex px={0} gap={8} align="center">
                       <Avatar
-                            {...defaultAvatarProps}
-                            color={getAvatarColor(
-                              Number(`${user_id.charCodeAt(0)}`)
-                            )}
-                            src={user_avatar}
-                        >
-                        {(
-                          user_first_name[0] + user_last_name[0]
-                        ).toUpperCase()}
+                        {...defaultAvatarProps}
+                        color={getAvatarColor(
+                          Number(`${user_id.charCodeAt(0)}`)
+                        )}
+                        src={user_avatar}
+                      >
+                        {(user_first_name[0] + user_last_name[0]).toUpperCase()}
                       </Avatar>
                       <Anchor
                         href={`/member/${ticket_approver_team_member_id}`}
                         target="_blank"
                       >
-                        <Text >{`${user_first_name} ${user_last_name}`}</Text>
+                        <Text>{`${user_first_name} ${user_last_name}`}</Text>
                       </Anchor>
-                  </Flex>
-                  )
+                    </Flex>
+                  );
                 },
               },
               {
@@ -422,7 +447,7 @@ const TicketListPage = ({
                 title: "Date Created",
                 sortable: true,
                 hidden: checkIfColumnIsHidden("ticket_date_created"),
-                render: ({ticket_date_created}) => {
+                render: ({ ticket_date_created }) => {
                   if (!ticket_date_created) {
                     return null;
                   }
@@ -441,7 +466,7 @@ const TicketListPage = ({
                 title: "Date Updated",
                 sortable: true,
                 hidden: checkIfColumnIsHidden("ticket_status_date_updated"),
-                render: ({ticket_status_date_updated}) => {
+                render: ({ ticket_status_date_updated }) => {
                   if (!ticket_status_date_updated) {
                     return null;
                   }
@@ -461,7 +486,7 @@ const TicketListPage = ({
                 accessor: "view",
                 title: "View",
                 hidden: checkIfColumnIsHidden("view"),
-                render: ({ticket_id}) => {
+                render: ({ ticket_id }) => {
                   const activeTeamNameToUrlKey = formatTeamNameToUrlKey(
                     activeTeam.team_name ?? ""
                   );
@@ -477,7 +502,7 @@ const TicketListPage = ({
                       >
                         <IconArrowsMaximize size={16} />
                       </ActionIcon>
-                    </Flex >
+                    </Flex>
                   );
                 },
               },

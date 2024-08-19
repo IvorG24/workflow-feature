@@ -12,7 +12,7 @@ import {
   createValidID,
   uploadImage,
 } from "@/backend/api/post";
-import { formatTeamNameToUrlKey, isUUID } from "@/utils/string";
+import { escapeQuotes, formatTeamNameToUrlKey, isUUID } from "@/utils/string";
 import supabaseClientAddress from "@/utils/supabase/address";
 import { OptionType } from "@/utils/types";
 import { Container, Flex, LoadingOverlay, Paper } from "@mantine/core";
@@ -135,7 +135,7 @@ const OnboardingPage = ({ user }: Props) => {
         user_last_name: data.user_last_name.trim(),
         user_username: data.user_username.trim(),
         user_phone_number: data.user_phone_number,
-        user_job_title: data.user_job_title.trim().replace(/'/g, "''"),
+        user_job_title: escapeQuotes(data.user_job_title.trim()),
         user_active_team_id: isValidTeamId ? `${inviteTeamId}` : "",
         user_avatar: imageUrl,
         user_employee_number: data.user_employee_number,
@@ -160,7 +160,7 @@ const OnboardingPage = ({ user }: Props) => {
 
       await createValidID(supabaseClient, {
         user_valid_id_user_id: data.user_id,
-        user_valid_id_type: data.user_id_type.replace(/'/g, "''"),
+        user_valid_id_type: escapeQuotes(data.user_id_type),
         user_valid_id_number: data.user_id_number.trim(),
         user_valid_id_first_name: data.user_first_name.trim(),
         user_valid_id_middle_name: data.user_id_middle_name.trim(),
@@ -170,11 +170,11 @@ const OnboardingPage = ({ user }: Props) => {
         user_valid_id_status: "PENDING",
         user_valid_id_front_image_url: idFrontImage,
         user_valid_id_back_image_url: idBackImage,
-        address_region: region.replace(/'/g, "''"),
-        address_province: province.replace(/'/g, "''"),
-        address_city: city.replace(/'/g, "''"),
-        address_barangay: barangay.replace(/'/g, "''"),
-        address_street: data.user_id_street.replace(/'/g, "''"),
+        address_region: escapeQuotes(region),
+        address_province: escapeQuotes(province),
+        address_city: escapeQuotes(city),
+        address_barangay: escapeQuotes(barangay),
+        address_street: escapeQuotes(data.user_id_street),
         address_zip_code: data.user_id_zip_code,
       });
 

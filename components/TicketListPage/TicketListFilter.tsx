@@ -10,7 +10,7 @@ import {
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
-import { SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FilterFormValues, TicketListLocalFilter } from "./TicketListPage";
 
@@ -18,7 +18,7 @@ type Props = {
   // requestList: RequestType[];
   ticketCategoryList: TicketCategoryTableRow[];
   teamMemberList: TeamMemberWithUserType[];
-  handleFilterTicketList: () => void;
+  handlePagination: (overidePage?: number) => Promise<void>;
   localFilter: TicketListLocalFilter;
   setLocalFilter: (
     val:
@@ -27,6 +27,7 @@ type Props = {
   ) => void;
   setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
   showTableColumnFilter: boolean;
+  setActivePage: Dispatch<SetStateAction<number>>;
 };
 
 type FilterSelectedValuesType = {
@@ -41,9 +42,10 @@ const TicketListFilter = ({
   setLocalFilter,
   ticketCategoryList,
   teamMemberList,
-  handleFilterTicketList,
+  handlePagination,
   setShowTableColumnFilter,
   showTableColumnFilter,
+  setActivePage,
 }: Props) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -86,7 +88,9 @@ const TicketListFilter = ({
 
     if (value !== filterMatch) {
       // if (value.length === 0 && filterMatch.length === 0) return;
-      handleFilterTicketList();
+      setActivePage(1);
+      handlePagination(1);
+
       setLocalFilter({ ...localFilter, [key]: value });
     }
   };
@@ -109,7 +113,7 @@ const TicketListFilter = ({
         <Button
           variant="light"
           leftIcon={<IconReload size={16} />}
-          onClick={() => handleFilterTicketList()}
+          onClick={() => handlePagination()}
         >
           Refresh
         </Button>

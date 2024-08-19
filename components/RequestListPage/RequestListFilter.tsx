@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
 import { IconReload, IconSearch } from "@tabler/icons-react";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
 type RequestListFilterProps = {
@@ -107,6 +107,12 @@ const RequestListFilter = ({
       setLocalFilter({ ...localFilter, [key]: value });
     }
   };
+
+  useEffect(() => {
+    Object.entries(localFilter).forEach(([key, value]) => {
+      setValue(key as keyof RequestListFilterValues, value);
+    });
+  }, [localFilter]);
 
   return (
     <>
