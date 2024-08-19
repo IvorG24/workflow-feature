@@ -21,7 +21,6 @@ import {
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
-  IconCirclePlus,
   IconDashboard,
   IconFile,
   IconFileDescription,
@@ -57,6 +56,7 @@ const ReviewAppNavLink = () => {
   const activeTeamNameToUrl = formatTeamNameToUrlKey(
     activeTeam.team_name ?? ""
   );
+
   const router = useRouter();
   const unhiddenForms = forms.filter(
     (form) => !REQUEST_LIST_HIDDEN_FORMS.includes(form.form_name)
@@ -68,7 +68,7 @@ const ReviewAppNavLink = () => {
         "Petty Cash Voucher Balance",
         "Request For Payment Code",
         "Bill of Quantity",
-      ].includes(form.form_name)
+      ].includes(form.form_name) && !form.form_is_public_form
   );
 
   const itemForm = forms.filter(
@@ -277,7 +277,9 @@ const ReviewAppNavLink = () => {
           <IconFiles {...defaultIconProps} />
         </Box>
       ),
-      href: `/${activeTeamNameToUrl}/requests`,
+      href: activeTeam.team_id
+        ? `/${activeTeamNameToUrl}/requests`
+        : `/user/requests`,
     },
     {
       label: `Notification List`,
@@ -320,28 +322,28 @@ const ReviewAppNavLink = () => {
       ),
       href: `/${activeTeamNameToUrl}/settings`,
     },
-    {
-      label: "Create Team",
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconCirclePlus {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/create-team`,
-    },
+    // {
+    //   label: "Create Team",
+    //   icon: (
+    //     <Box ml="sm" {...defaultNavLinkContainerProps}>
+    //       <IconCirclePlus {...defaultIconProps} />
+    //     </Box>
+    //   ),
+    //   href: `/create-team`,
+    // },
   ];
 
-  const teamSection = [
-    {
-      label: "Create Team",
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconCirclePlus {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/create-team`,
-    },
-  ];
+  // const teamSection = [
+  //   {
+  //     label: "Create Team",
+  //     icon: (
+  //       <Box ml="sm" {...defaultNavLinkContainerProps}>
+  //         <IconCirclePlus {...defaultIconProps} />
+  //       </Box>
+  //     ),
+  //     href: `/create-team`,
+  //   },
+  // ];
 
   const jiraSection = [
     {
@@ -408,17 +410,21 @@ const ReviewAppNavLink = () => {
           links={listSection}
           {...defaultNavLinkProps}
         />
-      ) : null}
+      ) : (
+        <NavLinkSection
+          label={"List"}
+          links={listSection.slice(0, 2)}
+          {...defaultNavLinkProps}
+        />
+      )}
 
-      <NavLinkSection
-        label={"Team"}
-        links={
-          !isEmpty(activeTeam) && hasTeam
-            ? teamSectionWithManageTeam
-            : teamSection
-        }
-        {...defaultNavLinkProps}
-      />
+      {!isEmpty(activeTeam) && hasTeam && (
+        <NavLinkSection
+          label={"Team"}
+          links={teamSectionWithManageTeam}
+          {...defaultNavLinkProps}
+        />
+      )}
 
       {forms.length > 0 && (
         <>

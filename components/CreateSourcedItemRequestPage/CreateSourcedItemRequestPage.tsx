@@ -90,7 +90,7 @@ const CreateSourcedItemRequestPage = ({
   const { handleSubmit, setValue, control, getValues } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
   } = useFieldArray({
@@ -295,7 +295,7 @@ const CreateSourcedItemRequestPage = ({
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };

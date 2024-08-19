@@ -71,7 +71,7 @@ const CreatePersonnelTransferRequisition = ({
     requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -236,7 +236,7 @@ const CreatePersonnelTransferRequisition = ({
       section_field: duplicatedFieldsWithDuplicatableId,
     };
 
-    addSection(sectionLastIndex + 1, newSection);
+    insertSection(sectionLastIndex + 1, newSection);
     setTimeout(
       () =>
         setFocus(
@@ -987,7 +987,7 @@ const CreatePersonnelTransferRequisition = ({
     try {
       setLoadingFieldList([{ sectionIndex: index, fieldIndex: 2 }]);
       if (value) {
-        addSection(index + 1, form.form_section[7]);
+        insertSection(index + 1, form.form_section[7], { shouldFocus: false });
         setTimeout(
           () =>
             setFocus(`sections.${index + 1}.section_field.0.field_response`),
@@ -1023,23 +1023,31 @@ const CreatePersonnelTransferRequisition = ({
 
       if (value === "Contractual") {
         removeSection(index);
-        addSection(index, {
-          ...currentSection,
-          section_field: [
-            ...currentSection.section_field.slice(0, 4),
-            form.form_section[6].section_field[4],
-            ...currentSection.section_field.slice(4),
-          ],
-        });
+        insertSection(
+          index,
+          {
+            ...currentSection,
+            section_field: [
+              ...currentSection.section_field.slice(0, 4),
+              form.form_section[6].section_field[4],
+              ...currentSection.section_field.slice(4),
+            ],
+          },
+          { shouldFocus: false }
+        );
       } else if (prevValue === "Contractual") {
         removeSection(index);
-        addSection(index, {
-          ...currentSection,
-          section_field: [
-            ...currentSection.section_field.slice(0, 4),
-            ...currentSection.section_field.slice(5),
-          ],
-        });
+        insertSection(
+          index,
+          {
+            ...currentSection,
+            section_field: [
+              ...currentSection.section_field.slice(0, 4),
+              ...currentSection.section_field.slice(5),
+            ],
+          },
+          { shouldFocus: false }
+        );
       }
     } catch (e) {
       setValue(`sections.${index}.section_field.3.field_response`, "");
@@ -1070,26 +1078,38 @@ const CreatePersonnelTransferRequisition = ({
 
       removeSection(sectionIndex);
       if (value === "Area of Assignment") {
-        addSection(sectionIndex, {
-          ...currentSection,
-          section_field: [
-            ...newSectionField,
-            form.form_section[6].section_field[6],
-          ],
-        });
+        insertSection(
+          sectionIndex,
+          {
+            ...currentSection,
+            section_field: [
+              ...newSectionField,
+              form.form_section[6].section_field[6],
+            ],
+          },
+          { shouldFocus: false }
+        );
       } else if (value === "Specific Work Assignment") {
-        addSection(sectionIndex, {
-          ...currentSection,
-          section_field: [
-            ...newSectionField,
-            form.form_section[6].section_field[7],
-          ],
-        });
+        insertSection(
+          sectionIndex,
+          {
+            ...currentSection,
+            section_field: [
+              ...newSectionField,
+              form.form_section[6].section_field[7],
+            ],
+          },
+          { shouldFocus: false }
+        );
       } else {
-        addSection(sectionIndex, {
-          ...currentSection,
-          section_field: newSectionField,
-        });
+        insertSection(
+          sectionIndex,
+          {
+            ...currentSection,
+            section_field: newSectionField,
+          },
+          { shouldFocus: false }
+        );
       }
     } catch (e) {
       setValue(

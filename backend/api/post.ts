@@ -460,7 +460,7 @@ export const createRequest = async (
   params: {
     requestFormValues: RequestFormValues;
     formId: string;
-    teamMemberId: string;
+    teamMemberId?: string;
     signers: FormType["form_signer"];
     teamId: string;
     requesterName: string;

@@ -39,7 +39,6 @@ const ApproverNotification = ({ approverUnresolvedRequestCount }: Props) => {
         isAscendingSort: false,
         isApproversView: false,
         project: [],
-        idFilter: [],
       },
     });
 

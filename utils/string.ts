@@ -21,6 +21,10 @@ export const requestPath = (requestId: string, teamName: string) => {
   )}/requests/${requestId}`;
 };
 
+export const publicRequestPath = (requestId: string) => {
+  return `http://${window.location.host}/user/requests/${requestId}`;
+};
+
 export const regExp = /\(([^)]+)\)/;
 
 export const addCommaToNumber = (number: number) => {

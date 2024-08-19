@@ -99,7 +99,7 @@ const CreatePEDPartRequestPage = ({
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -187,7 +187,7 @@ const CreatePEDPartRequestPage = ({
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };
@@ -552,10 +552,14 @@ const CreatePEDPartRequestPage = ({
           ...section.section_field.slice(9),
         ];
         removeSection(0);
-        addSection(0, {
-          ...section,
-          section_field: generalField,
-        });
+        insertSection(
+          0,
+          {
+            ...section,
+            section_field: generalField,
+          },
+          { shouldFocus: false }
+        );
 
         const data = await getItemSectionChoices(supabaseClient, {});
         const equipmentGeneralNameChoices = data as unknown as {
@@ -591,10 +595,14 @@ const CreatePEDPartRequestPage = ({
         ];
         setStoredFields([]);
         removeSection(0);
-        addSection(0, {
-          ...section,
-          section_field: generalField,
-        });
+        insertSection(
+          0,
+          {
+            ...section,
+            section_field: generalField,
+          },
+          { shouldFocus: false }
+        );
       } else {
         const generalField = [
           ...section.section_field.slice(0, 4),
@@ -612,10 +620,14 @@ const CreatePEDPartRequestPage = ({
           ...section.section_field.slice(9),
         ];
         removeSection(0);
-        addSection(0, {
-          ...section,
-          section_field: generalField,
-        });
+        insertSection(
+          0,
+          {
+            ...section,
+            section_field: generalField,
+          },
+          { shouldFocus: false }
+        );
       }
     } catch (e) {
       setValue(`sections.0.section_field.${3}.field_response`, "");

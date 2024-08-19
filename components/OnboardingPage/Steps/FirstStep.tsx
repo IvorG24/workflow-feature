@@ -134,17 +134,9 @@ const FirstStep = ({
                       handleEmployeeNumberChange(value ? `${value}` : null)
                     }
                     hideControls
-                    error={errors.user_employee_number?.message}
-                    required
                     {...defaultInputProps}
                   />
                 )}
-                rules={{
-                  required: {
-                    value: true,
-                    message: "Employee number is required",
-                  },
-                }}
               />
               <TextInput
                 label="Username"

@@ -22,7 +22,7 @@ const CreateTeamPage = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [newTeam, setNewTeam] = useState<TeamTableRow | null>(null);
   const [ownerData, setOwnerData] = useState<TeamMemberTableRow | null>(null);
-  const [isCreateTeam, setIsCreateTeam] = useState(false);
+  // const [isCreateTeam, setIsCreateTeam] = useState(false);
   const { colors } = useMantineTheme();
   const activeTeam = useActiveTeam();
   const renderSteps = (activeStep: number) => {
@@ -73,7 +73,7 @@ const CreateTeamPage = () => {
             mt="md"
             onClick={async () => {
               modals.closeAll();
-              await router.push("/user/notification?onboarding=true");
+              await router.push("/user/requests?onboarding=true");
             }}
           >
             <Box>
@@ -84,7 +84,7 @@ const CreateTeamPage = () => {
             </Box>
           </Button>
 
-          <Button
+          {/* <Button
             h={100}
             fullWidth
             variant="outline"
@@ -98,7 +98,7 @@ const CreateTeamPage = () => {
               <Title order={4}> Create Team</Title>
               <Text>Use this option if you want to start a new team.</Text>
             </Box>
-          </Button>
+          </Button> */}
         </Box>
       ),
     });
@@ -119,7 +119,7 @@ const CreateTeamPage = () => {
             disableBeacon: true,
           },
         ]}
-        run={isCreateTeam}
+        run={false}
         hideCloseButton
         disableCloseOnEsc
         disableOverlayClose

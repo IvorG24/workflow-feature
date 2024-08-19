@@ -9,7 +9,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
-import { IconEyeFilled, IconReload, IconSearch } from "@tabler/icons-react";
+import { IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { FilterFormValues, TicketListLocalFilter } from "./TicketListPage";
@@ -94,6 +94,7 @@ const TicketListFilter = ({
       setLocalFilter({ ...localFilter, [key]: value });
     }
   };
+
   return (
     <>
       <Flex gap="sm" wrap="wrap" align="center">
@@ -119,19 +120,21 @@ const TicketListFilter = ({
         <Flex gap="sm" wrap="wrap" align="center">
           <p>Show/Hide Table Columns</p>
           <Switch
-            onLabel={<IconEyeFilled size="14" />}
             checked={showTableColumnFilter}
             onChange={(event) =>
               setShowTableColumnFilter(event.currentTarget.checked)
             }
+            onLabel="ON"
+            offLabel="OFF"
           />
         </Flex>
         <Flex gap="sm" wrap="wrap" align="center">
           <p>Filter</p>
           <Switch
-            onLabel={<IconEyeFilled size="14" />}
             checked={isFilter}
             onChange={(event) => setIsfilter(event.currentTarget.checked)}
+            onLabel="ON"
+            offLabel="OFF"
           />
         </Flex>
       </Flex>

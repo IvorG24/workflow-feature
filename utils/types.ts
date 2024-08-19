@@ -498,8 +498,17 @@ export type JobTitleTableInsert =
 export type JobTitleTableUpdate =
   Database["lookup_schema"]["Tables"]["employee_job_title_table"]["Update"];
 
+export type PositionTableRow =
+  Database["lookup_schema"]["Tables"]["position_table"]["Row"];
+export type PositionTableInsert =
+  Database["lookup_schema"]["Tables"]["position_table"]["Insert"];
+export type PositionTableUpdate =
+  Database["lookup_schema"]["Tables"]["position_table"]["Update"];
+
 export type TeamDepartmentTableRow =
   Database["team_schema"]["Tables"]["team_department_table"]["Row"];
+
+export type RequestViewRow = Database["public"]["Views"]["request_view"]["Row"];
 
 // End: Database Table Types
 
@@ -605,6 +614,8 @@ export type UserWithSignatureType = UserTableRow & {
 };
 
 export type RequestWithResponseType = RequestTableRow & {
+  isWithNextStep?: boolean;
+} & {
   request_formsly_id: string;
 } & {
   request_form: {
@@ -716,6 +727,7 @@ export type TeamMemberWithUserType = {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_avatar: string;
   };
 };
 
@@ -738,6 +750,7 @@ export type FormType = {
       user_last_name: string;
       user_avatar: string;
     };
+    team_member_team_id: string;
   };
   form_signer: {
     signer_id: string;
@@ -788,6 +801,7 @@ export type FormWithResponseType = {
       user_last_name: string;
       user_avatar: string;
     };
+    team_member_team_id: string;
   };
   form_signer: {
     signer_id: string;
@@ -1176,7 +1190,7 @@ export type requestSignerType = {
     signer_team_member_id: string;
     signer_is_primary_signer: boolean;
   };
-}
+};
 
 export type RequestListItemType = {
   request_id: string;
@@ -1193,7 +1207,8 @@ export type RequestListItemType = {
   user_first_name: string;
   user_last_name: string;
   user_avatar: string | null;
-  form_name: string; 
+  form_name: string;
+  request_is_with_indicator: boolean;
 };
 
 export type ConnectedRequestItemType = {
@@ -1702,6 +1717,7 @@ export type RequestListItemSignerType = {
     user_id: string;
     user_first_name: string;
     user_last_name: string;
+    user_avatar: string;
   };
 };
 
@@ -1908,7 +1924,7 @@ export type FetchRequestListParams = {
   page: number;
   limit: number;
   teamMemberId?: string;
-  columnAccessor?: string
+  columnAccessor?: string;
 } & RequestListFilterValues;
 
 export type RequestListFilterValues = {
@@ -1920,7 +1936,6 @@ export type RequestListFilterValues = {
   status?: FormStatusType[];
   isAscendingSort: boolean;
   isApproversView: boolean;
-  idFilter?: string[];
 };
 
 export type TeamInviteJwtPayload = {
@@ -2062,4 +2077,133 @@ export type LRFSpreadsheetData = {
   };
   request_department_code: string;
   jira_project_jira_label: string;
+};
+
+export type ApplicationInformationSpreadsheetData = {
+  request_id: string;
+  request_formsly_id: string;
+  request_date_created: string;
+  request_status: string;
+  request_status_date_updated: string;
+  request_response_list: (RequestResponseTableRow & { field_id: string })[];
+  request_signer_list: RequestListItemSignerType[];
+};
+
+export type SectionWithFieldType = SectionTableRow & {
+  section_field: FieldTableRow[];
+};
+
+export type ApplicationInformationFieldType = FieldTableRow & {
+  field_section: SectionTableRow;
+} & { field_response: string };
+
+export type ApplicationInformationFieldObjectType = Record<
+  string,
+  FieldTableRow & {
+    field_section: SectionTableRow;
+  }
+>;
+
+export type ApplicationInformationFieldOptionType = {
+  field_option: OptionTableRow[];
+  field_name: string;
+};
+
+export type ApplicationInformationFilterFormValues = {
+  limit?: number;
+  page?: number;
+  sort?: {
+    field: string;
+    order: string;
+    dataType: string;
+  };
+  requestFilter?: {
+    requestId?: string;
+    dateCreatedRange?: {
+      start?: string;
+      end?: string;
+    };
+    status?: string[];
+    dateUpdatedRange?: { start?: string; end?: string };
+    approver?: string[];
+  };
+  responseFilter?: {
+    position?: string[];
+    certification?: boolean;
+    license?: boolean;
+    source?: string[];
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    gender?: string;
+    ageRange?: {
+      start?: number;
+      end?: number;
+    };
+    civilStatus?: string[];
+    contactNumber?: string;
+    emailAddress?: string;
+    region?: string;
+    province?: string;
+    city?: string;
+    barangay?: string;
+    street?: string;
+    zipCode?: string;
+    sssId?: string;
+    philhealthNumber?: string;
+    pagibigNumber?: string;
+    tin?: string;
+    highestEducationalAttainment?: string[];
+    degree?: string;
+    torOrDiplomaAttachment?: boolean;
+    school?: string;
+    yearGraduated?: {
+      start?: number;
+      end?: number;
+    };
+    employmentStatus?: string;
+    workedAtStaClara?: boolean;
+    willingToBeAssignedAnywhere?: boolean;
+    regionWillingToBeAssigned?: string[];
+    soonestJoiningDate?: {
+      start?: number;
+      end?: number;
+    };
+    workExperience?: {
+      start?: number;
+      end?: number;
+    };
+    expectedSalary?: {
+      start?: number;
+      end?: number;
+    };
+  };
+};
+
+export type UserRequestListFilterValues = {
+  search?: string;
+  status?: FormStatusType[];
+  form?: string[];
+  isAscendingSort: boolean;
+};
+
+export type UserRequestListItemType = {
+  request_id: string;
+  request_formsly_id: string;
+  request_date_created: string;
+  request_status: string;
+  request_form_id: string;
+  request_signer: requestSignerType[];
+  form_name: string;
+};
+
+export type FetchUserRequestListParams = {
+  page: number;
+  limit: number;
+  columnAccessor?: string;
+  search?: string;
+  status?: FormStatusType[];
+  isAscendingSort: boolean;
+  email: string;
+  form?: string[];
 };

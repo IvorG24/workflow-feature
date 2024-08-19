@@ -15,11 +15,15 @@ type RequestFormSectionProps = {
   section: Section;
   sectionIndex: number;
   onRemoveSection?: (sectionDuplicatableId: string) => void;
+  currencyOptionList?: { value: string; label: string }[];
+  formslyFormName?: string;
+  isEdit?: boolean;
+  loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
+  isPublicRequest?: boolean;
   itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
   };
-  formslyFormName?: string;
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
   };
@@ -94,13 +98,10 @@ type RequestFormSectionProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
-  isEdit?: boolean;
-  loadingFieldList?: { sectionIndex: number; fieldIndex: number }[];
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
-  currencyOptionList?: { value: string; label: string }[];
   liquidationReimbursementFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null) => void;
@@ -223,29 +224,43 @@ type RequestFormSectionProps = {
     onAmountBlur: (value: string | null, index: number) => void;
     onModeOfPaymentChange: (value: string | null, index: number) => void;
   };
+  applicationInformationFormMethods?: {
+    onPositionChange: (value: string | null) => void;
+    onRegionChange: (value: string | null) => void;
+    onProvinceChange: (value: string | null) => void;
+    onCityChange: (value: string | null) => void;
+    onBarangayChange: (value: string | null) => void;
+    onWillingToBeAssignedAnywhereChange: (
+      value: boolean,
+      index: number
+    ) => void;
+    onHighestEducationalAttainmentChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormSection = ({
   section,
   sectionIndex,
   onRemoveSection,
-  itemFormMethods,
   formslyFormName = "",
+  isPublicRequest = false,
+  isEdit,
+  loadingFieldList,
+  currencyOptionList,
+  itemFormMethods,
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
   otherExpensesMethods,
   pedItemFormMethods,
   paymentRequestFormMethods,
-  isEdit,
-  loadingFieldList,
   itAssetRequestFormMethods,
-  currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
   pettyCashVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
+  applicationInformationFormMethods,
 }: RequestFormSectionProps) => {
   const sectionDuplicatableId =
     section.section_field[0].field_section_duplicatable_id;
@@ -293,8 +308,12 @@ const RequestFormSection = ({
               }}
               sectionIndex={sectionIndex}
               fieldIndex={idx}
-              itemFormMethods={itemFormMethods}
+              isEdit={isEdit}
+              isLoading={isLoading}
               formslyFormName={formslyFormName}
+              isPublicRequest={isPublicRequest}
+              currencyOptionList={currencyOptionList}
+              itemFormMethods={itemFormMethods}
               servicesFormMethods={servicesFormMethods}
               pedEquipmentFormMethods={pedEquipmentFormMethods}
               pedPartFormMethods={pedPartFormMethods}
@@ -302,9 +321,6 @@ const RequestFormSection = ({
               pedItemFormMethods={pedItemFormMethods}
               paymentRequestFormMethods={paymentRequestFormMethods}
               itAssetRequestFormMethods={itAssetRequestFormMethods}
-              isEdit={isEdit}
-              isLoading={isLoading}
-              currencyOptionList={currencyOptionList}
               liquidationReimbursementFormMethods={
                 liquidationReimbursementFormMethods
               }
@@ -314,6 +330,9 @@ const RequestFormSection = ({
               pettyCashVoucherFormMethods={pettyCashVoucherFormMethods}
               equipmentServiceReportMethods={equipmentServiceReportMethods}
               requestForPaymentFormMethods={requestForPaymentFormMethods}
+              applicationInformationFormMethods={
+                applicationInformationFormMethods
+              }
             />
           );
         })}

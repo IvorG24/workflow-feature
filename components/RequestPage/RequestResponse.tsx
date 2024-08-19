@@ -1,6 +1,6 @@
 import { getRequestFormslyId } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { requestPath } from "@/utils/string";
+import { publicRequestPath, requestPath } from "@/utils/string";
 import { FieldType, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
@@ -36,12 +36,14 @@ type RequestReponseProps = {
   };
   isFormslyForm?: boolean;
   isAnon?: boolean;
+  isPublicRequest?: boolean;
 };
 
 const RequestResponse = ({
   response,
   isFormslyForm = false,
   isAnon = false,
+  isPublicRequest = false,
 }: RequestReponseProps) => {
   const inputProps = {
     variant: "filled",
@@ -112,7 +114,14 @@ const RequestResponse = ({
               p={4}
               variant="light"
               color="blue"
-              onClick={() => window.open(getRequestPath(parsedValue), "_blank")}
+              onClick={() =>
+                window.open(
+                  isPublicRequest
+                    ? publicRequestPath(parsedValue)
+                    : getRequestPath(parsedValue),
+                  "_blank"
+                )
+              }
             >
               <IconExternalLink />
             </ActionIcon>
@@ -169,12 +178,63 @@ const RequestResponse = ({
             />
           );
         } else {
+          let formatter = undefined;
+          switch (response.label) {
+            case "SSS ID Number":
+            case "Philhealth Number":
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+            case "Pag-IBIG Number":
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{4})(\d{4})(\d{4})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+            case "TIN":
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{3})(\d{3})(\d{3})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+          }
+
           return (
             <NumberInput
               label={response.label}
               value={parsedValue}
               {...inputProps}
-              precision={2}
+              precision={
+                [
+                  "Quantity",
+                  "Amount",
+                  "Unit Cost",
+                  "Invoice Amount",
+                  "Cost",
+                  "VAT",
+                  "Expected Salary (PHP)",
+                ].includes(response.label)
+                  ? 2
+                  : 0
+              }
+              formatter={formatter}
             />
           );
         }
@@ -187,6 +247,8 @@ const RequestResponse = ({
             {...inputProps}
             mt="xs"
             sx={{ label: { cursor: "pointer" } }}
+            onLabel="ON"
+            offLabel="OFF"
           />
         );
       case "DROPDOWN":
@@ -238,7 +300,9 @@ const RequestResponse = ({
             value={parsedValue ? new Date(parsedValue) : undefined}
             {...inputProps}
             icon={<IconCalendar size={16} />}
-            valueFormat="YYYY-MM-DD"
+            valueFormat={
+              response.label === "Year Graduated" ? "YYYY" : "YYYY-MM-DD"
+            }
           />
         );
       case "TIME":

@@ -25,6 +25,8 @@ import {
 import {
   AddressTableRow,
   AppType,
+  ApplicationInformationFilterFormValues,
+  ApplicationInformationSpreadsheetData,
   ApproverUnresolvedRequestCountType,
   AttachmentBucketType,
   AttachmentTableRow,
@@ -36,6 +38,7 @@ import {
   EquipmentPartType,
   EquipmentTableRow,
   FetchRequestListParams,
+  FetchUserRequestListParams,
   FieldTableRow,
   FormTableRow,
   FormType,
@@ -66,6 +69,7 @@ import {
   RequestTableRow,
   RequestWithResponseType,
   SSOTOnLoad,
+  SectionWithFieldType,
   ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
   SignerRequestSLA,
@@ -219,7 +223,6 @@ export const getRequestList = async (
     isApproversView,
     teamMemberId,
     project,
-    idFilter,
     columnAccessor = "request_date_created",
   } = params;
 
@@ -243,9 +246,6 @@ export const getRequestList = async (
         `request_view.request_formsly_id_prefix ILIKE '${value}' || '%'`
     )
     .join(" OR ");
-  const idFilterCondition = idFilter
-    ?.map((value) => `request_view.request_${value}_id IS NULL`)
-    .join(" AND ");
 
   const searchCondition =
     search && validate(search)
@@ -261,7 +261,6 @@ export const getRequestList = async (
       approver: approverCondition ? `AND (${approverCondition})` : "",
       project: projectCondition ? `AND (${projectCondition})` : "",
       form: formCondition ? `AND (${formCondition})` : "",
-      idFilter: idFilterCondition ? `AND (${idFilterCondition})` : "",
       status: statusCondition ? `AND (${statusCondition})` : "",
       search: search ? `AND (${searchCondition})` : "",
       sort,
@@ -2196,6 +2195,7 @@ export const getRequestListOnLoad = async (
   const { data, error } = await supabaseClient
     .rpc("get_request_list_on_load", { input_data: params })
     .select("*");
+
   if (error) throw error;
 
   return data as unknown as RequestListOnLoad;
@@ -5836,4 +5836,222 @@ export const getLRFSummaryData = async (
   if (error) throw error;
 
   return data as { data: LRFSpreadsheetData[]; count: number };
+};
+
+export const getApplicationInformationPositionOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    index: number;
+    limit: number;
+  }
+) => {
+  const { teamId, index, limit } = params;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("*")
+    .eq("position_team_id", teamId)
+    .eq("position_is_disabled", false)
+    .eq("position_is_available", true)
+    .order("position")
+    .limit(limit)
+    .range(index, index + limit - 1);
+  if (error) throw error;
+
+  return data;
+};
+
+export const getApplicationInformationSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: ApplicationInformationFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    requestFilter: {
+      ...params.requestFilter,
+      dateCreatedRange: {
+        start: params.requestFilter?.dateCreatedRange?.start
+          ? new Date(
+              params.requestFilter?.dateCreatedRange?.start
+            ).toLocaleDateString()
+          : undefined,
+        end: params.requestFilter?.dateCreatedRange?.end
+          ? new Date(
+              params.requestFilter?.dateCreatedRange?.end
+            ).toLocaleDateString()
+          : undefined,
+      },
+      dateUpdatedRange: {
+        start: params.requestFilter?.dateUpdatedRange?.start
+          ? new Date(
+              params.requestFilter?.dateUpdatedRange?.start
+            ).toLocaleDateString()
+          : undefined,
+        end: params.requestFilter?.dateUpdatedRange?.end
+          ? new Date(
+              params.requestFilter?.dateUpdatedRange?.end
+            ).toLocaleDateString()
+          : undefined,
+      },
+    },
+    responseFilter: {
+      ...params.responseFilter,
+      yearGraduated: {
+        start: params.responseFilter?.yearGraduated?.start
+          ? moment(params.responseFilter?.yearGraduated?.start)
+              .subtract(1, "year")
+              .format("MM-DD-YYYY")
+          : undefined,
+        end: params.responseFilter?.yearGraduated?.end
+          ? moment(params.responseFilter?.yearGraduated?.end).format(
+              "MM-DD-YYYY"
+            )
+          : undefined,
+      },
+      soonestJoiningDate: {
+        start: params.responseFilter?.soonestJoiningDate?.start
+          ? moment(params.responseFilter?.soonestJoiningDate?.start)
+              .subtract(1, "day")
+              .format("MM-DD-YYYY")
+          : undefined,
+        end: params.responseFilter?.soonestJoiningDate?.end
+          ? new Date(
+              params.responseFilter?.soonestJoiningDate?.end
+            ).toLocaleDateString()
+          : undefined,
+      },
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_application_information_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as ApplicationInformationSpreadsheetData[];
+};
+
+export const getFormSectionWithFieldList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    formId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_form_section_with_field_list",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data as unknown as {
+    sectionList: SectionWithFieldType[];
+    optionList: (OptionTableRow & { field_name: string })[];
+  };
+};
+
+export const getUserRequestList = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: FetchUserRequestListParams
+) => {
+  const {
+    page,
+    limit,
+    status,
+    search,
+    isAscendingSort,
+    columnAccessor = "request_date_created",
+    email,
+    form,
+  } = params;
+
+  const sort = isAscendingSort ? "ASC" : "DESC";
+
+  const statusCondition = status
+    ?.map((value) => `a.request_status = '${value}'`)
+    .join(" OR ");
+
+  const formCondition = form
+    ?.map((value) => `a.request_form_id = '${value}'`)
+    .join(" OR ");
+
+  const searchCondition =
+    search && validate(search)
+      ? `a.request_id = '${search}'`
+      : `a.request_formsly_id ILIKE '%' || '${search}' || '%'`;
+
+  const { data: data, error } = await supabaseClient.rpc(
+    "fetch_user_request_list",
+    {
+      input_data: {
+        page: page,
+        limit: limit,
+        status: statusCondition ? `AND (${statusCondition})` : "",
+        search: search ? `AND (${searchCondition})` : "",
+        sort,
+        columnAccessor,
+        email,
+        form: formCondition ? `AND (${formCondition})` : "",
+      },
+    }
+  );
+
+  if (error || !data) throw error;
+  const dataFormat = data as unknown as {
+    data: RequestListItemType[];
+    count: number;
+  };
+
+  return { data: dataFormat.data, count: dataFormat.count };
+};
+
+export const getUserIdInApplicationInformation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_user_id_in_application_information",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data;
+};
+
+export const checkUserIdNumber = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    idNumber: string;
+  }
+) => {
+  const { idNumber } = params;
+  const { count, error } = await supabaseClient
+    .schema("user_schema")
+    .from("user_valid_id_table")
+    .select("user_valid_id_number", { count: "exact", head: true })
+    .eq("user_valid_id_number", idNumber);
+
+  if (error) throw error;
+  return !Boolean(count);
+};
+
+export const getPublicFormList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .schema("form_schema")
+    .from("form_table")
+    .select("*")
+    .eq("form_is_public_form", true);
+  if (error) throw error;
+
+  return data;
 };

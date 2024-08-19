@@ -261,6 +261,7 @@ CREATE TABLE form_schema.form_table (
   form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
   form_type VARCHAR(4000),
   form_sub_type VARCHAR(4000),
+  form_is_public_form BOOLEAN DEFAULT FALSE NOT NULL,
 
   form_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
 );
@@ -939,6 +940,19 @@ CREATE TABLE lookup_schema.bank_list_table (
   bank_label VARCHAR(4000) NOT NULL
 );
 
+CREATE TABLE lookup_schema.position_table (
+  position_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  position_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  position VARCHAR(4000) NOT NULL,
+  position_type VARCHAR(4000) NOT NULL,
+  position_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  position_is_available BOOLEAN DEFAULT true NOT NULL,
+  position_is_with_certificate BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_license BOOLEAN DEFAULT false NOT NULL,
+
+  position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -1301,7 +1315,9 @@ AS $$
 
     if(invitation) plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_type,notification_user_id) VALUES ('GENERAL','You have been invited to join ${invitation.team_name}','/user/invitation/${invitation.invitation_id}','INVITE','${user_id}') ;`);
     
-    plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
+    if(user_employee_number){
+      plv8.execute(`INSERT INTO user_schema.user_employee_number_table (user_employee_number, user_employee_number_user_id) VALUES ('${user_employee_number}', '${user_id}')`);
+    }
  });
  return user_data;
 $$ LANGUAGE plv8;
@@ -1329,8 +1345,9 @@ AS $$
 
     let formslyIdPrefix = '';
     let formslyIdSerial = '';
+    let endId = '';
 
-    if(isFormslyForm===true) {
+    if(isFormslyForm) {
       const requestCount = plv8.execute(
         `
           SELECT COUNT(*) FROM request_schema.request_table 
@@ -1342,27 +1359,30 @@ AS $$
       )[0].count;
   
       formslyIdSerial = (Number(requestCount) + 1).toString(16).toUpperCase();
-      const project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}';`)[0];
+      let project;
+      if(projectId){
+        project = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_id='${projectId}'`)[0];
+      }
       
-      if(formName==='Quotation') {
+      if(formName ==='Quotation') {
         endId = `Q`;
-      } else if(formName==='Services') {
+      } else if(formName ==='Services') {
         endId = `S`;
-      } else if(formName==='Other Expenses') {
+      } else if(formName ==='Other Expenses') {
         endId = `OE`;
-      } else if(formName==='PED Equipment') {
+      } else if(formName ==='PED Equipment') {
         endId = `PE`;
-      } else if(formName==='PED Part') {
+      } else if(formName ==='PED Part') {
         endId = `PP`;
-      } else if(formName==='PED Item') {
+      } else if(formName ==='PED Item') {
         endId = `PC`;
-      } else if(formName==='Sourced Item') {
+      } else if(formName ==='Sourced Item') {
         endId = `SI`;
-      } else if(formName==='Receiving Inspecting Report') {
+      } else if(formName ==='Receiving Inspecting Report') {
         endId = `RIR`;
-      } else if(formName==='Release Order') {
+      } else if(formName ==='Release Order') {
         endId = `RO`;
-      } else if(formName==='Transfer Receipt') {
+      } else if(formName ==='Transfer Receipt') {
         endId = `TR`;
       } else if(formName === 'IT Asset') {
         endId = `ITA`;
@@ -1382,16 +1402,57 @@ AS $$
         endId = `RFP`;
       } else if(formName.includes('Petty Cash Voucher Balance')) {
         endId = `PCVB`;
-      } else {
-        endId = ``;
-      }
-      formslyIdPrefix = `${project.team_project_code}${endId}`;
+      } else if(formName === 'Application Information') {
+        endId = `AI`;
+      } else if(formName === 'Online Application') {
+        endId = `OAP`;
+      } else if(formName === 'Online Assessment') {
+        endId = `OAS`;
+      } 
+      formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
 
-    if (projectId === "") {
-      request_data = plv8.execute(`INSERT INTO request_schema.request_table (request_id,request_form_id,request_team_member_id) VALUES ('${requestId}','${formId}','${teamMemberId}') RETURNING *;`)[0];
+    if (!projectId && !endId) {
+      request_data = plv8.execute(
+        `
+          INSERT INTO request_schema.request_table 
+          (
+            request_id,
+            request_form_id
+            ${teamMemberId ? `,request_team_member_id` : ""}
+          ) 
+          VALUES 
+          (
+            '${requestId}',
+            '${formId}'
+            ${teamMemberId ? `,'${teamMemberId}'` : ""}
+          ) 
+          RETURNING *
+        `)[0];
     } else {
-      request_data = plv8.execute(`INSERT INTO request_schema.request_table (request_id,request_form_id,request_team_member_id,request_formsly_id_prefix,request_formsly_id_serial,request_project_id) VALUES ('${requestId}','${formId}','${teamMemberId}','${formslyIdPrefix}','${formslyIdSerial}','${projectId}') RETURNING *;`)[0];
+      request_data = plv8.execute(
+        `
+          INSERT INTO request_schema.request_table 
+          (
+            request_id,
+            request_form_id
+            ${teamMemberId ? `,request_team_member_id` : ""},
+            request_formsly_id_prefix,
+            request_formsly_id_serial
+            ${projectId ? `,request_project_id` : ""}
+          ) 
+          VALUES 
+          (
+            '${requestId}',
+            '${formId}'
+            ${teamMemberId ? `,'${teamMemberId}'` : ""},
+            '${formslyIdPrefix}',
+            '${formslyIdSerial}'
+            ${projectId ? `,'${projectId}'` : ""}
+          ) 
+          RETURNING *
+        `
+      )[0];
     }
 
     plv8.execute(`INSERT INTO request_schema.request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id,request_response_prefix) VALUES ${responseValues};`);
@@ -1489,7 +1550,8 @@ AS $$
       teamId,
       jiraId,
       jiraLink,
-      requestFormslyId
+      requestFormslyId,
+      userId
     } = input_data;
 
     request_status = "PENDING";
@@ -1502,8 +1564,7 @@ AS $$
           request_signer_status = '${requestAction}', 
           request_signer_status_date_updated = NOW() 
         WHERE 
-          request_signer_signer_id='${requestSignerId}' 
-          AND request_signer_request_id='${requestId}'
+          request_signer_id='${requestSignerId}'
       `
     );
     
@@ -1525,12 +1586,17 @@ AS $$
         )
       `
     );
-    
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}';`);
-    const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
+    let activeTeam = "";
+    if(teamId){
+      const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}'`);
+      if(activeTeamResult.length){
+        activeTeam = activeTeamResult[0];
+      }
+    }
+    
     if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -1557,9 +1623,31 @@ AS $$
         );
       }
     }
+
+    if (userId) {
+      plv8.execute(
+        `
+          INSERT INTO public.notification_table 
+          (
+            notification_app,
+            notification_type,
+            notification_content,
+            notification_redirect_url,
+            notification_user_id
+          ) VALUES 
+          (
+            'REQUEST',
+            '${present[requestAction]}',
+            '${signerFullName} ${requestAction.toLowerCase()} your ${formName} request',
+            '/user/requests/${requestFormslyId ?? requestId}',
+            '${userId}'
+          )
+        `
+      );
+    }
     
-    if(isPrimarySigner===true){
-      if(requestAction === "APPROVED"){
+    if (isPrimarySigner) {
+      if (requestAction === "APPROVED") {
         const isAllPrimaryApprovedTheRequest = Boolean(
           plv8.execute(
             `
@@ -1574,7 +1662,7 @@ AS $$
             `
           )[0].count
         );
-        if(!isAllPrimaryApprovedTheRequest){
+        if (!isAllPrimaryApprovedTheRequest) {
           plv8.execute(
             `
               UPDATE request_schema.request_table
@@ -1588,7 +1676,7 @@ AS $$
           );
           request_status = "APPROVED"
         }
-      } else if(requestAction === "REJECTED"){
+      } else if (requestAction === "REJECTED") {
         plv8.execute(
           `
             UPDATE request_schema.request_table
@@ -2847,7 +2935,6 @@ AS $$
       isApproversView,
       teamMemberId,
       project,
-      idFilter,
       columnAccessor
     } = input_data;
 
@@ -2874,14 +2961,16 @@ AS $$
           user_last_name,
           user_avatar
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+        INNER JOIN team_schema.team_member_table AS ftmt ON ftmt.team_member_id = form_team_member_id
         INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-        WHERE team_member_table.team_member_team_id = '${teamId}'
-        AND request_is_disabled = false
-        AND form_table.form_is_disabled = false
+        WHERE 
+          ftmt.team_member_team_id = '${teamId}'
+          AND request_is_disabled = false
+          AND form_table.form_is_disabled = false
       `;
 
     let sort_request_list_query = 
@@ -2894,13 +2983,15 @@ AS $$
       `
         SELECT COUNT(DISTINCT request_id)
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table ON request_view.request_team_member_id = team_member_table.team_member_id
+        LEFT JOIN team_schema.team_member_table AS rtm ON request_view.request_team_member_id = rtm.team_member_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
+        INNER JOIN team_schema.team_member_table AS ftm ON ftm.team_member_id = form_table.form_team_member_id
         INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
         INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
-        WHERE team_member_table.team_member_team_id = '${teamId}'
-        AND request_is_disabled = false
-        AND form_table.form_is_disabled = false
+        WHERE 
+          ftm.team_member_team_id = '${teamId}'
+          AND request_is_disabled = false
+          AND form_table.form_is_disabled = false
       `;
 
     if (!isApproversView) {
@@ -2911,7 +3002,6 @@ AS $$
           ${status}
           ${form}
           ${project}
-          ${idFilter}
           ${search}
         `;
 
@@ -3395,8 +3485,7 @@ AS $$
   let returnData;
   plv8.subtransaction(function(){
     const {
-      requestId,
-      userId
+      requestId
     } = input_data;
 
     const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
@@ -3404,8 +3493,11 @@ AS $$
     const request = plv8.execute(
       `
         SELECT 
+          request_formsly_id,
+          request_status,
           form_is_formsly_form, 
-          form_name
+          form_name,
+          form_is_public_form
         FROM public.request_view
         INNER JOIN form_schema.form_table ON form_id = request_form_id
         WHERE 
@@ -3414,11 +3506,29 @@ AS $$
       `
     )[0];
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
+    let isWithNextStep = false;
+    if(request.request_status === 'APPROVED' && request.form_is_public_form){
+      const connectedRequestCount = plv8.execute(
+        `
+          SELECT COUNT(request_response_id)
+          FROM request_schema.request_response_table
+          WHERE
+            request_response = '"${request.request_formsly_id}"'
+        `
+      )[0].count;
+      if(!connectedRequestCount){
+        isWithNextStep = true;
+      }
+    }
+
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information', 'Online Application', 'Online Assessment'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
-        request: requestData
+        request: {
+          ...requestData,
+          isWithNextStep
+        }
       };
       return;
     } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report', 'Request For Payment'].includes(request.form_name)) {
@@ -3436,13 +3546,13 @@ AS $$
       );
 
       returnData =  {
-        request: requestData,
+        request: {
+          ...requestData,
+          isWithNextStep
+        },
         sectionIdWithDuplicatableSectionIdList
       };
     } else {
-      const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
-      if (!teamId) throw new Error("No team found");
-
       const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
       if(!request) throw new Error('404');
 
@@ -3457,7 +3567,10 @@ AS $$
       ).map(response => response.request_response_duplicatable_section_id);
 
       returnData =  {
-        request: requestData,
+        request: {
+          ...requestData,
+          isWithNextStep
+        },
         duplicatableSectionIdList
       };
     }
@@ -3835,9 +3948,9 @@ AS $$
     
     const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}');`)[0].get_user_active_team_id;
 
-    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
+    const teamMemberList = plv8.execute(`SELECT tmt.team_member_id, tmt.team_member_role, json_build_object( 'user_id',usert.user_id, 'user_first_name',usert.user_first_name , 'user_last_name',usert.user_last_name, 'user_avatar',usert.user_avatar) AS team_member_user FROM team_schema.team_member_table tmt JOIN user_schema.user_table usert ON tmt.team_member_user_id=usert.user_id WHERE tmt.team_member_team_id='${teamId}' AND tmt.team_member_is_disabled=false;`);
 
-    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true;`)[0].isformslyteam;
+    const isFormslyTeam = plv8.execute(`SELECT COUNT(formt.form_id) > 0 AS isFormslyTeam FROM form_schema.form_table formt JOIN team_schema.team_member_table tmt ON formt.form_team_member_id = tmt.team_member_id WHERE tmt.team_member_team_id='${teamId}' AND formt.form_is_formsly_form=true`)[0].isformslyteam;
 
     const projectList = plv8.execute(`SELECT * FROM team_schema.team_project_table WHERE team_project_is_disabled=false AND team_project_team_id='${teamId}';`);
 
@@ -4379,7 +4492,7 @@ AS $$
       `
     )[0];
     
-        const signerData = plv8.execute(
+    const signerData = plv8.execute(
       `
         SELECT
           signer_id, 
@@ -5865,11 +5978,11 @@ AS $$
             form
           }
         }
+      } else {
+        returnData = { form }
       }
     } else {
-        returnData = {
-        form
-        }
+      returnData = { form }
     }
 });
 return returnData;
@@ -5904,8 +6017,8 @@ AS $$
           form_sub_type,
           team_project_name
         FROM public.request_view
-        INNER JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = request_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         INNER JOIN form_schema.form_table ON form_id = request_form_id
         LEFT JOIN team_schema.team_project_table ON team_project_id = request_project_id
         WHERE 
@@ -5933,8 +6046,8 @@ AS $$
           attachment_value
         FROM request_schema.request_signer_table
         INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         LEFT JOIN public.attachment_table on attachment_id = user_signature_attachment_id
         WHERE request_signer_request_id = '${requestData.request_id}'
       `
@@ -9876,81 +9989,6 @@ AS $$
  return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION public_request_page_on_load(
-  input_data JSON
-)
-RETURNS JSON 
-SET search_path TO ''
-AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
-      requestId
-    } = input_data;
-
-    const idCondition = plv8.execute(`SELECT public.generate_request_id_condition('${requestId}')`)[0].generate_request_id_condition;
-
-    const request = plv8.execute(
-      `
-        SELECT 
-          form_is_formsly_form, 
-          form_name
-        FROM public.request_view
-        INNER JOIN form_schema.form_table ON form_id = request_form_id
-        WHERE 
-          ${idCondition}
-          AND request_is_disabled = false
-      `
-    )[0];
-
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance'].includes(request.form_name))) {
-      const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
-      if(!request) throw new Error('404');
-      returnData = {
-        request: requestData
-      };
-      return;
-    } else if (request.form_is_formsly_form && ['Personnel Transfer Requisition', 'Equipment Service Report', 'Request For Payment'].includes(request.form_name)) {
-      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
-      if(!request) throw new Error('404');
-
-      const sectionIdWithDuplicatableSectionIdList = plv8.execute(
-        `
-          SELECT DISTINCT request_response_duplicatable_section_id, section_id, section_order FROM request_schema.request_response_table
-          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-          INNER JOIN form_schema.section_table ON section_id = field_section_id
-          WHERE request_response_request_id = '${requestData.request_id}'
-          ORDER BY section_order
-        `
-      );
-
-      returnData =  {
-        request: requestData,
-        sectionIdWithDuplicatableSectionIdList
-      };
-    } else {
-      const requestData = plv8.execute(`SELECT public.get_request_without_duplicatable_section('${requestId}')`)[0].get_request_without_duplicatable_section;
-      if(!request) throw new Error('404');
-
-      const duplicatableSectionIdList = plv8.execute(
-        `
-          SELECT DISTINCT(request_response_duplicatable_section_id)
-          FROM request_schema.request_response_table
-          WHERE 
-            request_response_request_id = '${requestData.request_id}'
-            AND request_response_duplicatable_section_id IS NOT NULL
-        `
-      ).map(response => response.request_response_duplicatable_section_id);
-
-      returnData =  {
-        request: requestData,
-        duplicatableSectionIdList
-      };
-    }
- });
- return returnData;
-$$ LANGUAGE plv8;
-
 CREATE OR REPLACE FUNCTION fetch_item_request_conditional_options(
   input_data JSON
 )
@@ -13239,6 +13277,7 @@ plv8.subtransaction(function() {
       form_sub_type: form.form_sub_type,
       form_team_member_id: form.form_team_member_id,
       form_type: form.form_type,
+      form_is_public_form: form.form_is_public_form,
       form_team_member: {
         team_member_date_created: form.team_member_date_created,
         team_member_id: form.team_member_id,
@@ -13758,6 +13797,885 @@ AS $$
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION create_public_request_page_on_load(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const { 
+      formId,
+      applicationInformationId,
+      onlineApplicationId
+    } = input_data;
+
+    const isStringParsable = (str) => {
+      try {
+        JSON.parse(str);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    const safeParse = (str) => {
+      if (isStringParsable(str)) {
+        return JSON.parse(str);
+      } else {
+        return str;
+      }
+    };
+
+    const formData = plv8.execute(
+      `
+        SELECT
+          form_id,
+          form_name, 
+          form_description, 
+          form_date_created, 
+          form_is_hidden, 
+          form_is_formsly_form, 
+          form_is_for_every_member,
+          form_type,
+          form_sub_type,
+          team_member_id,
+          user_id, 
+          user_first_name, 
+          user_last_name, 
+          user_avatar, 
+          user_username,
+          team_member_team_id
+        FROM form_schema.form_table
+        INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        WHERE 
+          form_id = '${formId}'
+      `
+    )[0];
+    
+    const signerData = plv8.execute(
+      `
+        SELECT
+          signer_id, 
+          signer_is_primary_signer, 
+          signer_action, 
+          signer_order,
+          signer_is_disabled, 
+          signer_team_project_id,
+          team_member_id, 
+          user_id,
+          user_first_name, 
+          user_last_name, 
+          user_avatar
+        FROM form_schema.signer_table
+        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        WHERE 
+          signer_is_disabled = false
+          AND signer_team_project_id IS null
+          AND signer_form_id = '${formId}'
+      `
+    );
+
+    const sectionData = [];
+    const formSection = plv8.execute(`SELECT * FROM form_schema.section_table WHERE section_form_id = '${formId}' ORDER BY section_order ASC`);
+    formSection.forEach(section => {
+      const fieldData = plv8.execute(
+        `
+          SELECT *
+          FROM form_schema.field_table
+          WHERE field_section_id = '${section.section_id}'
+          ORDER BY field_order ASC
+        `
+      );
+      const field = fieldData.map(field => {
+        let optionData = [];
+
+        optionData = plv8.execute( `
+          SELECT *
+          FROM form_schema.option_table
+          WHERE option_field_id = '${field.field_id}'
+          ORDER BY option_order ASC
+        `);
+   
+        return {
+          ...field,
+          field_option: optionData
+        };
+      });
+      sectionData.push({
+        ...section,
+        section_field: field,
+      }) 
+    });
+ 
+    const form = {
+      form_id: formData.form_id,
+      form_name: formData.form_name,
+      form_description: formData.form_description,
+      form_date_created: formData.form_date_created,
+      form_is_hidden: formData.form_is_hidden,
+      form_is_formsly_form: formData.form_is_formsly_form,
+      form_is_for_every_member: formData.form_is_for_every_member,
+      form_type: formData.form_type,
+      form_sub_type: formData.form_sub_type,
+      form_team_member: {
+        team_member_id: formData.team_member_id,
+        team_member_user: {
+          user_id: formData.user_id,
+          user_first_name: formData.user_first_name,
+          user_last_name: formData.user_last_name,
+          user_avatar: formData.user_avatar,
+          user_username: formData.user_username
+        },
+        team_member_team_id: formData.team_member_team_id
+      },
+      form_signer: signerData.map(signer => {
+        return {
+          signer_id: signer.signer_id,
+          signer_is_primary_signer: signer.signer_is_primary_signer,
+          signer_action: signer.signer_action,
+          signer_order: signer.signer_order,
+          signer_is_disabled: signer.signer_is_disabled,
+          signer_team_project_id: signer.signer_team_project_id,
+          signer_team_member: {
+            team_member_id: signer.team_member_id,
+            team_member_user: {
+              user_id: signer.user_id,
+              user_first_name: signer.user_first_name,
+              user_last_name: signer.user_last_name,
+              user_avatar: signer.user_avatar
+            }
+          }
+        }
+      }),
+      form_section: sectionData,
+    };
+
+    if (form.form_is_formsly_form) {
+      if (form.form_name === 'Online Application' && applicationInformationId) {
+        const requestData = plv8.execute(
+          `
+            SELECT request_id
+            FROM public.request_view
+            WHERE request_formsly_id = '${applicationInformationId}'
+          `
+        );
+        if(!requestData.length) throw new Error('Request not found');
+        const requestId = requestData[0].request_id;
+
+        const applicantData = plv8.execute(
+          `
+            SELECT 
+              request_response,
+              field_id
+            FROM request_schema.request_response_table
+            INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            WHERE 
+              request_response_request_id = '${requestId}'
+              AND field_id IN (
+                'ee6ec8af-0a9e-40a5-8353-7d851218fa87', 
+                '7201c77e-b24a-4006-a4e5-8f38db887804', 
+                '859ac939-10c8-4094-aa7a-634f84b950b0', 
+                '0080798c-2359-4162-b8ae-441ac80512b6'
+              )
+            ORDER BY field_order
+          `
+        );
+
+        returnData = { 
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_response: applicationInformationId,
+                  },
+                  ...form.form_section[0].section_field.slice(1)
+                ]
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_response: safeParse(applicantData[applicantData.length-1].request_response)
+                  },
+                  {
+                    ...form.form_section[1].section_field[1],
+                    field_response: safeParse(applicantData[0].request_response)
+                  },
+                  {
+                    ...form.form_section[1].section_field[2],
+                    field_response: applicantData[1].field_id === '859ac939-10c8-4094-aa7a-634f84b950b0' ? safeParse(applicantData[1].request_response) : ""
+                  },
+                  {
+                    ...form.form_section[1].section_field[3],
+                    field_response: safeParse(applicantData[applicantData.length-2].request_response)
+                  },
+                ]
+              },
+              ...form.form_section.slice(2)
+            ]
+          }
+        }
+        return;
+      } else if (form.form_name === 'Online Assessment' && onlineApplicationId) {
+        const requestData = plv8.execute(
+          `
+            SELECT request_id
+            FROM public.request_view
+            WHERE request_formsly_id = '${onlineApplicationId}'
+          `
+        );
+        if(!requestData.length) throw new Error('Request not found');
+        const requestId = requestData[0].request_id;
+
+        const applicantData = plv8.execute(
+          `
+            SELECT 
+              request_response,
+              field_id
+            FROM request_schema.request_response_table
+            INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+            WHERE 
+              request_response_request_id = '${requestId}'
+              AND field_id IN (
+                'be0e130b-455b-47e0-a804-f90943f7bc07',
+                '5c5284cd-7647-4307-b558-40b9076d9f7f', 
+                'f1c516bd-e483-4f32-a5b0-5223b186afb5', 
+                'd209aed6-e560-49a8-aa77-66c9cada168d', 
+                'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+              )
+            ORDER BY field_order
+          `
+        );
+
+        returnData = { 
+          form: {
+            ...form,
+            form_section: [
+              {
+                ...form.form_section[0],
+                section_field: [
+                  {
+                    ...form.form_section[0].section_field[0],
+                    field_response: safeParse(applicantData[0].request_response),
+                  },
+                  {
+                    ...form.form_section[0].section_field[1],
+                    field_response: onlineApplicationId,
+                  },
+                  ...form.form_section[0].section_field.slice(2)
+                ]
+              },
+              {
+                ...form.form_section[1],
+                section_field: [
+                  {
+                    ...form.form_section[1].section_field[0],
+                    field_response: safeParse(applicantData[1].request_response)
+                  },
+                  {
+                    ...form.form_section[1].section_field[1],
+                    field_response: safeParse(applicantData[2].request_response)
+                  },
+                  {
+                    ...form.form_section[1].section_field[2],
+                    field_response: applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d' ? safeParse(applicantData[3].request_response) : ""
+                  },
+                  {
+                    ...form.form_section[1].section_field[3],
+                    field_response: safeParse(applicantData[applicantData.length-1].request_response)
+                  },
+                ]
+              },
+              ...form.form_section.slice(2)
+            ]
+          }
+        }
+        return;
+      } else {
+        returnData = { form }
+      }
+    } else {
+      returnData = { form }
+    }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_application_information_summary_table(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const { 
+      userId,
+      limit,
+      page,
+      sort,
+      requestFilter,
+      responseFilter
+    } = input_data;
+
+    const isUUID = (str) => {
+      const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      return uuidPattern.test(str);
+    };
+
+    const onlyNumber = (value) => (value.match(/\d+/g) || []).join('');
+
+    const numberRangeCondition = (property, fieldId) => {
+      let returnData = "";
+      if (responseFilter[property]["start"] && responseFilter[property]["end"]) {
+        returnData = `(request_response_field_id = '${fieldId}' AND (CAST(request_response AS integer) >= ${responseFilter[property]["start"]} AND CAST(request_response AS integer) <= ${responseFilter[property]["end"]}))`;
+      } else if (responseFilter[property]["start"]) {
+        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS integer) >= ${responseFilter[property]["start"]})`;
+      } else if (responseFilter[property]["end"]){
+        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS integer) <= ${responseFilter[property]["end"]})`;
+      }
+      return returnData;
+    }
+
+    const dateRangeCondition = (property, fieldId) => {
+      let returnData = "";
+      if (responseFilter[property]["start"] && responseFilter[property]["end"]) {
+        returnData = `(request_response_field_id = '${fieldId}' AND (REPLACE(request_response, '"', '') >= '${new Date(responseFilter[property]["start"]).toISOString()}' AND REPLACE(request_response, '"', '') <= '${new Date(responseFilter[property]["end"]).toISOString()}'))`;
+      } else if (responseFilter[property]["start"]) {
+        returnData = `(request_response_field_id = '${fieldId}' AND REPLACE(request_response, '"', '') >= '${new Date(responseFilter[property]["start"]).toISOString()}')`;
+      } else if (responseFilter[property]["end"]){
+        returnData = `(request_response_field_id = '${fieldId}' AND REPLACE(request_response, '"', '') <= '${new Date(responseFilter[property]["end"]).toISOString()}')`;
+      }
+      return returnData;
+    }
+    
+    const isSortByResponse = isUUID(sort.field);
+    
+    const offset = (page - 1) * limit;
+    const teamId = plv8.execute(`SELECT public.get_user_active_team_id('${userId}')`)[0].get_user_active_team_id;
+
+    const responseFilterCondition = [];
+    Boolean(responseFilter.position) && responseFilter.position.length ? responseFilterCondition.push(`(request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66' AND request_response IN (${responseFilter.position.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    Boolean(responseFilter.source) && responseFilter.source.length ? responseFilterCondition.push(`(request_response_field_id = 'f416b6c8-5374-4642-b608-f626269bde1b' AND request_response IN (${responseFilter.source.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    responseFilter.firstName ? responseFilterCondition.push(`(request_response_field_id = '7201c77e-b24a-4006-a4e5-8f38db887804' AND request_response ILIKE '%${responseFilter.firstName}%')`) : null;
+    responseFilter.middleName ? responseFilterCondition.push(`(request_response_field_id = '859ac939-10c8-4094-aa7a-634f84b950b0' AND request_response ILIKE '%${responseFilter.middleName}%')`) : null;
+    responseFilter.lastName ? responseFilterCondition.push(`(request_response_field_id = '0080798c-2359-4162-b8ae-441ac80512b6' AND request_response ILIKE '%${responseFilter.lastName}%')`) : null;
+    responseFilter.gender ? responseFilterCondition.push(`(request_response_field_id = '9f36b822-320a-4044-b292-ced5e2074949' AND request_response = '"${responseFilter.gender}"')`) : null;
+    responseFilter.ageRange && (responseFilter.ageRange.start || responseFilter.ageRange.end) ? responseFilterCondition.push(numberRangeCondition('ageRange', '222d4978-5216-4c81-a676-be9405a7323c')) : null;
+    Boolean(responseFilter.civilStatus) && responseFilter.civilStatus.length ? responseFilterCondition.push(`(request_response_field_id = '2ba8f1e6-5ff9-4db8-b0c0-e9f6b62cc7a9' AND request_response IN (${responseFilter.civilStatus.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    responseFilter.contactNumber ? responseFilterCondition.push(`(request_response_field_id = '5b43279b-88d6-41ce-ac69-b396e5a7a48f' AND request_response ILIKE '%${onlyNumber(responseFilter.contactNumber)}%')`) : null;
+    responseFilter.emailAddress ? responseFilterCondition.push(`(request_response_field_id = 'ee6ec8af-0a9e-40a5-8353-7d851218fa87' AND request_response ILIKE '%${responseFilter.emailAddress}%')`) : null;
+    responseFilter.region ? responseFilterCondition.push(`(request_response_field_id = '1d6b36a6-b78f-4be7-a577-162664efb8c0' AND request_response ILIKE '%${responseFilter.region}%')`) : null;
+    responseFilter.province ? responseFilterCondition.push(`(request_response_field_id = 'a0b3e0cd-f2eb-45cb-87e1-a9ce59dff479' AND request_response ILIKE '%${responseFilter.province}%')`) : null;
+    responseFilter.city ? responseFilterCondition.push(`(request_response_field_id = '4902fd1f-5b23-42c0-88a4-e2b6425bc974' AND request_response ILIKE '%${responseFilter.city}%')`) : null;
+    responseFilter.barangay ? responseFilterCondition.push(`(request_response_field_id = 'f14eb00e-f927-4bf7-9e69-e7a4ff963f4a' AND request_response ILIKE '%${responseFilter.barangay}%')`) : null;
+    responseFilter.street ? responseFilterCondition.push(`(request_response_field_id = 'a2987c8a-cf04-4c7a-99d1-47a1cfa82e2a' AND request_response ILIKE '%${responseFilter.street}%')`) : null;
+    responseFilter.zipCode ? responseFilterCondition.push(`(request_response_field_id = '27646e7b-882b-4117-90df-3a8d5dac8a78' AND request_response ILIKE '%${responseFilter.zipCode}%')`) : null;
+    responseFilter.sssId ? responseFilterCondition.push(`(request_response_field_id = '6d133972-e44a-4cca-a393-e779f7046112' AND request_response ILIKE '%${onlyNumber(responseFilter.sssId)}%')`) : null;
+    responseFilter.philhealthNumber ? responseFilterCondition.push(`(request_response_field_id = '6a8d49ca-fb22-4ec5-a00c-986859d900ae' AND request_response ILIKE '%${onlyNumber(responseFilter.philhealthNumber)}%')`) : null;
+    responseFilter.pagibigNumber ? responseFilterCondition.push(`(request_response_field_id = '0d7295a6-68c3-4646-99eb-421b44973d30' AND request_response ILIKE '%${onlyNumber(responseFilter.pagibigNumber)}%')`) : null;
+    responseFilter.tin ? responseFilterCondition.push(`(request_response_field_id = 'd7db6653-2296-4515-b2b2-62ecba8e8999' AND request_response ILIKE '%${onlyNumber(responseFilter.tin)}%')`) : null;
+    Boolean(responseFilter.highestEducationalAttainment) && responseFilter.highestEducationalAttainment.length ? responseFilterCondition.push(`(request_response_field_id = 'c8ff31cc-26c9-4544-8414-76741fe73b19' AND request_response IN (${responseFilter.highestEducationalAttainment.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    responseFilter.degree ? responseFilterCondition.push(`(request_response_field_id = '3a60d0e4-0485-4055-8a94-e51a9a4e0b72' AND request_response ILIKE '%${responseFilter.degree}%')`) : null;
+    responseFilter.school ? responseFilterCondition.push(`(request_response_field_id = 'f6a645c6-d7b2-4a77-ae72-1d4e386ba9e1' AND request_response ILIKE '%${responseFilter.school}%')`) : null;
+    responseFilter.yearGraduated && (Boolean(responseFilter.yearGraduated.start) || Boolean(responseFilter.yearGraduated.end)) ? responseFilterCondition.push(dateRangeCondition('yearGraduated', '9b63d408-c67b-419a-a8f2-7bf65d249ccf')) : null;
+    responseFilter.employmentStatus ? responseFilterCondition.push(`(request_response_field_id = 'c3df937d-de59-413f-b6bb-22e5679fa4d1' AND request_response = '"${responseFilter.employmentStatus}"')`) : null;
+    responseFilter.workedAtStaClara ? responseFilterCondition.push(`(request_response_field_id = '57dc8bc7-3dff-437f-83de-67ea9052248a' AND request_response = '${responseFilter.workedAtStaClara}')`) : null;
+    responseFilter.willingToBeAssignedAnywhere ? responseFilterCondition.push(`(request_response_field_id = '996ae92d-0155-4ad2-ada5-be129aef2d92' AND request_response = '${responseFilter.willingToBeAssignedAnywhere}')`) : null;
+    Boolean(responseFilter.regionWillingToBeAssigned) && responseFilter.regionWillingToBeAssigned.length ? responseFilterCondition.push(`(request_response_field_id = 'aeb28a1f-8a5c-4e17-9ddd-a0377db12e97' AND request_response IN (${responseFilter.regionWillingToBeAssigned.map(value => `'"${value}"'`).join(", ")}))`) : null;
+    responseFilter.soonestJoiningDate && (Boolean(responseFilter.soonestJoiningDate.start) || Boolean(responseFilter.soonestJoiningDate.end)) ? responseFilterCondition.push(dateRangeCondition('soonestJoiningDate', 'da35e324-185a-47c5-bf5b-bc0ebf318461')) : null;
+    responseFilter.workExperience && (responseFilter.workExperience.start || responseFilter.workExperience.end) ? responseFilterCondition.push(numberRangeCondition('workExperience', '0e1b4ee7-1eaa-4eb6-a142-d15c05d96fe0')) : null;
+    responseFilter.expectedSalary && (responseFilter.expectedSalary.start || responseFilter.expectedSalary.end) ? responseFilterCondition.push(numberRangeCondition('expectedSalary', 'bd9af7fa-03c3-4fdc-a34f-99f46a666569')) : null;
+
+    const responseBooleanFilterCondition = [];
+    responseFilter.certification ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.certification === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = 'b3ddc3c1-d93c-486d-9bdf-86a10d481df0'))`) : null;
+    responseFilter.license ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.license === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = '5a07dbc9-8a45-44da-8235-9d330957433d'))`) : null;
+    responseFilter.torOrDiplomaAttachment ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.torOrDiplomaAttachment === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = '8ff6676c-5c82-4013-ab92-7c3df6b80d53'))`) : null;
+
+    const requestFilterCondition = [];
+    Boolean(requestFilter.requestId) ? requestFilterCondition.push(`request_formsly_id ILIKE '%${requestFilter.requestId}%'`) : null;
+    Boolean(requestFilter.status) && requestFilter.status.length ? requestFilterCondition.push(`request_status IN (${requestFilter.status.map(status => `'${status}'`)})`) : null;
+    Boolean(requestFilter.dateCreatedRange.start) ? requestFilterCondition.push(`request_date_created :: DATE >= '${requestFilter.dateCreatedRange.start}'`) : null;
+    Boolean(requestFilter.dateCreatedRange.end) ? requestFilterCondition.push(`request_date_created :: DATE <= '${requestFilter.dateCreatedRange.end}'`) : null;
+    Boolean(requestFilter.dateUpdatedRange.start) ? requestFilterCondition.push(`request_status_date_updated :: DATE >= '${requestFilter.dateUpdatedRange.start}'`) : null;
+    Boolean(requestFilter.dateUpdatedRange.end) ? requestFilterCondition.push(`request_status_date_updated :: DATE <= '${requestFilter.dateUpdatedRange.end}'`) : null;
+
+    const filterCount = responseFilterCondition.length;
+
+    const castRequestResponse = (value) => {
+      switch(sort.dataType) {
+        case "NUMBER": return `CAST(${value} AS INTEGER)`;
+        case "DATE": return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
+        default: return value;
+      }
+    }
+
+    const parentRequests = plv8.execute(
+      `
+        SELECT * FROM (
+          SELECT 
+            request_id,
+            request_formsly_id,
+            request_date_created,
+            request_status,
+            request_status_date_updated,
+            request_response,
+            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber 
+          FROM public.request_view
+          INNER JOIN form_schema.form_table ON form_id = request_form_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          WHERE
+            team_member_team_id = '${teamId}'
+            AND request_is_disabled = FALSE
+            AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+            ${responseFilterCondition.length ? `AND (${responseFilterCondition.join(" OR ")})` : ""}
+            ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
+        ) AS a 
+        WHERE 
+          a.rowNumber = ${filterCount ? filterCount : 1}
+          ${requestFilterCondition.length ? `AND (${requestFilterCondition.join(" AND ")})` : ""}
+          ${responseBooleanFilterCondition.length ? `AND (${responseBooleanFilterCondition.join(" AND ")})` : ""}
+        ${isSortByResponse ? 
+        `
+          ORDER BY ${castRequestResponse(`(
+          SELECT request_response
+          FROM request_schema.request_response_table
+          WHERE 
+            request_response_request_id = request_id
+            AND request_response_field_id = '${sort.field}'
+          )`)} ${sort.order}
+        ` : ""}
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+      `
+    );
+
+    const requestListWithResponses = [];
+    parentRequests.forEach((parentRequest) => {
+      const responseList = plv8.execute(
+        `
+          SELECT 
+            request_response_table.*,
+            field_id
+          FROM 
+            request_schema.request_response_table 
+          INNER JOIN 
+            form_schema.field_table 
+            ON field_id = request_response_field_id 
+          WHERE 
+            request_response_request_id = '${parentRequest.request_id}' 
+        `
+      );
+
+      const signerList = plv8.execute(
+        `
+          SELECT 
+            request_signer_id,
+            request_signer_status,
+            signer_team_member_id,
+            signer_is_primary_signer,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_avatar
+          FROM request_schema.request_signer_table 
+          INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          WHERE 
+            request_signer_request_id = '${parentRequest.request_id}' 
+        `
+      );
+
+      requestListWithResponses.push({
+        request_id: parentRequest.request_id,
+        request_formsly_id: parentRequest.request_formsly_id,
+        request_date_created: parentRequest.request_date_created,
+        request_status: parentRequest.request_status,
+        request_status_date_updated: parentRequest.request_status_date_updated,
+        request_response_list: responseList,
+        request_signer_list: signerList.map(signer => {
+          return {
+            request_signer_id: signer.request_signer_id,
+            request_signer_status: signer.request_signer_status,
+            request_signer: {
+              signer_team_member_id: signer.signer_team_member_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer,
+            },
+            signer_team_member_user: {
+              user_id: signer.user_id,
+              user_first_name: signer.user_first_name,
+              user_last_name: signer.user_last_name,
+              user_avatar: signer.user_avatar
+            }
+          }
+        })
+      });
+    });
+    returnData = requestListWithResponses;
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_form_section_with_field_list(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const { 
+      formId
+    } = input_data;
+
+    const optionList = [];
+
+    const sectionList = plv8.execute(
+      `
+        SELECT *
+        FROM form_schema.section_table
+        WHERE
+          section_form_id = '${formId}'
+        ORDER BY section_order
+      `
+    );
+
+    const positionData = plv8.execute(
+      `
+        SELECT position
+        FROM lookup_schema.position_table
+        WHERE 
+          position_is_disabled = false
+        ORDER BY position
+      `
+    );
+
+    if(positionData.length){
+      optionList.push({
+        field_name: 'Position',
+        field_option: positionData.map((position, index) => {
+          return {
+            option_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
+            option_value: position.position,
+            option_order: index + 1,
+            option_field_id: 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'
+          }
+        })
+      });
+    }
+
+    returnData = {
+      sectionList: sectionList.map(section => {
+        const fieldData = plv8.execute(
+          `
+            SELECT *
+            FROM form_schema.field_table
+            WHERE
+              field_section_id = '${section.section_id}'
+            ORDER BY field_order
+          `
+        );
+
+        const fieldWithOptionData = fieldData.map(field => {
+          const fieldOptionData = plv8.execute(
+            `
+              SELECT *
+              FROM form_schema.option_table
+              WHERE
+                option_field_id = '${field.field_id}'
+            `
+          );
+
+          if(fieldOptionData.length){
+            optionList.push({
+              field_name: field.field_name,
+              field_option: fieldOptionData
+            });
+          }
+        
+          return field;
+        });
+
+        return {
+          ...section,
+          section_field: fieldWithOptionData
+        }
+      }),
+      optionList
+    }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION fetch_user_request_list(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let return_value
+  plv8.subtransaction(function(){
+    const {
+      page,
+      limit,
+      status,
+      sort,
+      search,
+      columnAccessor,
+      email,
+      form
+    } = input_data;
+
+    const offset = (page - 1) * limit;
+
+
+    const request_list = plv8.execute(
+      `
+        SELECT * FROM (
+          SELECT 
+            request_id, 
+            request_formsly_id,
+            request_date_created, 
+            request_status,
+            request_form_id,
+            form_name,
+            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber 
+          FROM public.request_view
+          INNER JOIN form_schema.form_table ON form_id = request_form_id
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+          WHERE
+            request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND form_is_public_form = true
+            AND field_name = 'Email Address'
+            AND request_response = '"${email}"'
+        ) AS a 
+        WHERE 
+          a.rowNumber = 1
+          ${status}
+          ${search}
+          ${form}
+        ORDER BY ${columnAccessor} ${sort} 
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+      `
+    );
+
+    let request_count = plv8.execute(
+      `
+        SELECT COUNT(request_id) FROM (
+          SELECT 
+            request_id, 
+            request_formsly_id,
+            request_date_created, 
+            request_status,
+            request_form_id,
+            form_name,
+            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber 
+          FROM public.request_view
+          INNER JOIN form_schema.form_table ON form_id = request_form_id
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          WHERE
+            request_is_disabled = false
+            AND form_table.form_is_disabled = false
+            AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+            AND request_response_field_id = 'ee6ec8af-0a9e-40a5-8353-7d851218fa87'
+            AND request_response = '"${email}"'
+        ) AS a 
+        WHERE 
+          a.rowNumber = 1
+          ${status}
+          ${search}
+          ${form}
+      `
+    )[0];
+
+    const request_data = request_list.map(request => {
+      const request_signer = plv8.execute(
+        `
+          SELECT 
+            request_signer_id,
+            request_signer_status,
+            signer_team_member_id,
+            signer_is_primary_signer,
+            user_id,
+            user_first_name,
+            user_last_name,
+            user_avatar
+          FROM request_schema.request_signer_table
+          INNER JOIN form_schema.signer_table ON request_signer_signer_id = signer_id
+          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          WHERE
+            request_signer_request_id = '${request.request_id}'
+        `
+      ).map(signer => {
+        return {
+          request_signer_id: signer.request_signer_id,
+          request_signer_status: signer.request_signer_status,
+          request_signer: {
+              signer_team_member_id: signer.signer_team_member_id,
+              signer_is_primary_signer: signer.signer_is_primary_signer
+          },
+          signer_team_member_user: {
+            user_id: signer.user_id,
+            user_first_name: signer.user_first_name,
+            user_last_name: signer.user_last_name,
+            user_avatar: signer.user_avatar
+          }
+        }
+      });
+
+      let isWithIndicator = false;
+      if(request.request_status === 'APPROVED' && ['Application Information', 'Online Application'].includes(request.form_name)){
+        const connectedRequestCount = plv8.execute(
+          `
+            SELECT COUNT(request_response_id)
+            FROM request_schema.request_response_table
+            WHERE
+              request_response = '"${request.request_formsly_id}"'
+          `
+        )[0].count;
+        if(!connectedRequestCount){
+          isWithIndicator = true;
+        }
+      }
+
+      return {
+        request_id: request.request_id,
+        request_formsly_id: request.request_formsly_id,
+        request_date_created: request.request_date_created,
+        request_status: request.request_status,
+        request_form_id: request.request_form_id,
+        form_name: request.form_name,
+        request_signer: request_signer,
+        request_is_with_indicator: isWithIndicator
+      }
+    });
+
+    return_value = {
+      data: request_data, 
+      count: Number(request_count.count)
+    };
+  });
+  return return_value
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_user_id_in_application_information(
+  input_data JSON
+)
+RETURNS TEXT 
+SET search_path TO ''
+AS $$
+  let return_value = '';
+  plv8.subtransaction(function(){
+    const {
+      requestId
+    } = input_data;
+
+    const email = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_field_id = 'ee6ec8af-0a9e-40a5-8353-7d851218fa87'
+          AND request_response_request_id = '${requestId}'
+      `
+    )[0].request_response;
+
+    const user = plv8.execute(
+      `
+        SELECT user_id
+        FROM user_schema.user_table
+        WHERE
+          user_email = '${email.replace(/"/g, '')}'
+      `
+    );
+
+    if(user.length){
+      return_value = user[0].user_id
+    }
+  });
+  return return_value
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_user_application_progress_on_load(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      requestId
+    } = input_data;
+
+    let applicationInformationData = {};
+    let onlineApplicationData = {};
+    let onlineAssessmentData = {};
+    
+    applicationInformationData = plv8.execute(
+      `
+        SELECT * 
+        FROM public.request_view
+        WHERE
+          request_formsly_id = '${requestId}'
+      `
+    );
+    if(applicationInformationData.length){
+      onlineApplicationData = plv8.execute(
+        `
+          SELECT request_view.*
+          FROM public.request_view
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          WHERE
+            request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
+            AND request_response = '"${requestId}"'
+        `
+      );
+      if(onlineApplicationData.length){
+        const onlineAssessmentData  = plv8.execute(
+          `
+            SELECT request_view.*
+            FROM public.request_view
+            INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+            WHERE
+              (
+                request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
+                AND request_response = '"${requestId}"'
+              )
+              AND
+              (
+                request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
+                AND request_response = 'onlineApplicationData'
+              )
+          `
+        );
+      }
+    }
+
+    returnData = {
+      applicationInformationData: applicationInformationData.length ? applicationInformationData[0] : null,
+      onlineApplicationData: onlineApplicationData.length ? onlineApplicationData[0] : null,
+      onlineAssessmentData: onlineAssessmentData.length ? onlineAssessmentData[0] : null
+    }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -13768,7 +14686,8 @@ ALTER TABLE attachment_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CRUD for anon users" ON attachment_table;
 CREATE POLICY "Allow CRUD for anon users" ON attachment_table
 AS PERMISSIVE FOR ALL
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- form_schema.field_table
 ALTER TABLE form_schema.field_table ENABLE ROW LEVEL SECURITY;
@@ -14111,19 +15030,7 @@ ALTER TABLE request_schema.request_signer_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CREATE for authenticated users" ON request_schema.request_signer_table;
 CREATE POLICY "Allow CREATE for authenticated users" ON request_schema.request_signer_table
 AS PERMISSIVE FOR INSERT
-TO authenticated
-WITH CHECK (
-  (
-    SELECT tm.team_member_team_id
-    FROM request_schema.request_table as rt
-    JOIN team_schema.team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
-    WHERE rt.request_id = request_signer_request_id
-  ) IN (
-    SELECT team_member_team_id 
-    FROM team_schema.team_member_table 
-    WHERE team_member_user_id = (SELECT auth.uid())
-  )
-);
+WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_signer_table;
 CREATE POLICY "Allow READ for anon users" ON request_schema.request_signer_table
@@ -14136,10 +15043,11 @@ AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
   (
-    SELECT tm.team_member_team_id
-    FROM request_schema.request_table as rt
-    JOIN team_schema.team_member_table as tm ON tm.team_member_id = rt.request_team_member_id
-    WHERE rt.request_id = request_signer_request_id
+    SELECT team_member_team_id
+    FROM request_schema.request_table
+    INNER JOIN form_schema.form_table ON form_id = request_form_id
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE request_id = request_signer_request_id
   ) IN (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
@@ -14487,10 +15395,9 @@ USING (invitation_from_team_member_id IN (SELECT team_member_id FROM team_schema
 --- notification_table
 ALTER TABLE notification_table ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Allow INSERT for authenticated users" ON notification_table;
-CREATE POLICY "Allow INSERT for authenticated users" ON notification_table
+DROP POLICY IF EXISTS "Allow INSERT for public users" ON notification_table;
+CREATE POLICY "Allow INSERT for public users" ON notification_table
 AS PERMISSIVE FOR INSERT
-TO authenticated
 WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for authenticated users on own notifications" ON notification_table;
@@ -14518,7 +15425,6 @@ ALTER TABLE request_schema.request_response_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_response_table;
 CREATE POLICY "Allow CREATE access for all users" ON request_schema.request_response_table
 AS PERMISSIVE FOR INSERT
-TO authenticated
 WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_response_table;
@@ -14584,7 +15490,6 @@ ALTER TABLE request_schema.request_table ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow CREATE access for all users" ON request_schema.request_table;
 CREATE POLICY "Allow CREATE access for all users" ON request_schema.request_table
 AS PERMISSIVE FOR INSERT
-TO authenticated
 WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow READ for anon users" ON request_schema.request_table;
@@ -14592,8 +15497,8 @@ CREATE POLICY "Allow READ for anon users" ON request_schema.request_table
 AS PERMISSIVE FOR SELECT
 USING (true);
 
-DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests" ON request_schema.request_table;
-CREATE POLICY "Allow UPDATE for authenticated users on own requests" ON request_schema.request_table
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own requests or approver" ON request_schema.request_table;
+CREATE POLICY "Allow UPDATE for authenticated users on own requests or approver" ON request_schema.request_table
 AS PERMISSIVE FOR UPDATE
 TO authenticated
 USING (
@@ -14603,9 +15508,10 @@ USING (
     WHERE team_member_user_id = (SELECT auth.uid())
   ) OR (
     SELECT team_member_team_id 
-    FROM team_schema.team_member_table 
-    WHERE team_member_id = request_team_member_id
-  ) IN (
+    FROM form_schema.form_table
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE form_id = request_form_id
+  ) = (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
     WHERE team_member_user_id = (SELECT auth.uid()) 
@@ -14619,9 +15525,10 @@ WITH CHECK (
     WHERE team_member_user_id = (SELECT auth.uid())
   ) OR (
     SELECT team_member_team_id 
-    FROM team_schema.team_member_table 
-    WHERE team_member_id = request_team_member_id
-  ) IN (
+    FROM form_schema.form_table
+    INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
+    WHERE form_id = request_form_id
+  ) = (
     SELECT team_member_team_id 
     FROM team_schema.team_member_table 
     WHERE team_member_user_id = (SELECT auth.uid()) 
@@ -14650,10 +15557,9 @@ AS PERMISSIVE FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow READ for authenticated users" ON team_schema.team_table;
-CREATE POLICY "Allow READ for authenticated users" ON team_schema.team_table
+DROP POLICY IF EXISTS "Allow READ for anon users" ON team_schema.team_table;
+CREATE POLICY "Allow READ for anon users" ON team_schema.team_table
 AS PERMISSIVE FOR SELECT
-TO authenticated
 USING (true);
 
 DROP POLICY IF EXISTS "Allow UPDATE for authenticated users on own teams" ON team_schema.team_table;
@@ -16675,6 +17581,7 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON address_table;
 CREATE POLICY "Allow CRUD for authenticated users" ON address_table
 AS PERMISSIVE FOR ALL
 TO authenticated
+USING (true)
 WITH CHECK (true);
 
 --- jira_schema.jira_project_table
@@ -16684,7 +17591,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_p
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_project_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 -- jira_schema.jira_formsly_project_table
 ALTER TABLE jira_schema.jira_formsly_project_table ENABLE ROW LEVEL SECURITY;
@@ -16735,7 +17643,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_u
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_user_role_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- JIRA_USER_ACCOUNT_TABLE
 ALTER TABLE jira_schema.jira_user_account_table ENABLE ROW LEVEL SECURITY;
@@ -16744,7 +17653,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_u
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_user_account_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- jira_schema.jira_project_user_table
 ALTER TABLE jira_schema.jira_project_user_table ENABLE ROW LEVEL SECURITY;
@@ -16812,7 +17722,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_i
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_item_category_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- jira_schema.jira_item_user_table
 ALTER TABLE jira_schema.jira_item_user_table ENABLE ROW LEVEL SECURITY;
@@ -16821,7 +17732,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_i
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_item_user_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- team_schema.team_department_table
 ALTER TABLE team_schema.team_department_table ENABLE ROW LEVEL SECURITY;
@@ -16838,7 +17750,8 @@ DROP POLICY IF EXISTS "Allow CRUD for authenticated users" ON jira_schema.jira_o
 CREATE POLICY "Allow CRUD for authenticated users" ON jira_schema.jira_organization_table
 AS PERMISSIVE FOR ALL
 TO authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);
 
 --- jira_organization_team_project_table
 ALTER TABLE jira_schema.jira_organization_team_project_table ENABLE ROW LEVEL SECURITY;

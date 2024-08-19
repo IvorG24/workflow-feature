@@ -83,7 +83,7 @@ const CreateReceivingInspectingReportPage = ({
   const { handleSubmit, setValue, control, getValues } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -265,7 +265,7 @@ const CreateReceivingInspectingReportPage = ({
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId,
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };

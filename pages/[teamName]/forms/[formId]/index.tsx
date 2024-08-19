@@ -1,4 +1,5 @@
 import { getForm } from "@/backend/api/get";
+import ApplicationInformationFormPage from "@/components/ApplicationInformationFormPage/ApplicationInformationFormPage";
 import ITAssetFormPage from "@/components/ITAssetFormPage/ITAssetFormPage";
 import ItemFormPage from "@/components/ItemFormPage/ItemFormPage";
 import Meta from "@/components/Meta/Meta";
@@ -126,10 +127,19 @@ const Page = ({
             teamProjectListCount={teamProjectListCount}
           />
         );
-
       case "IT Asset":
         return (
           <ITAssetFormPage
+            form={form}
+            teamMemberList={teamMemberList}
+            teamGroupList={teamGroupList}
+            teamProjectList={teamProjectList}
+            teamProjectListCount={teamProjectListCount}
+          />
+        );
+      case "Application Information":
+        return (
+          <ApplicationInformationFormPage
             form={form}
             teamMemberList={teamMemberList}
             teamGroupList={teamGroupList}

@@ -736,20 +736,29 @@ const RequestListTable = ({
                 <Avatar
                   // src={requestor.user_avatar}
                   {...defaultAvatarProps}
-                  color={getAvatarColor(Number(`${user_id.charCodeAt(0)}`))}
+                  color={
+                    user_id
+                      ? getAvatarColor(Number(`${user_id.charCodeAt(0)}`))
+                      : undefined
+                  }
                   className={classes.requestor}
                   onClick={() =>
-                    window.open(`/member/${request_team_member_id}`)
+                    request_team_member_id
+                      ? window.open(`/member/${request_team_member_id}`)
+                      : null
                   }
                 >
-                  {user_first_name[0] + user_last_name[0]}
+                  {user_id ? `${user_first_name[0] + user_last_name[0]}` : ""}
                 </Avatar>
-                <Anchor
-                  href={`/member/${request_team_member_id}`}
-                  target="_blank"
-                >
-                  <Text>{`${user_first_name} ${user_last_name}`}</Text>
-                </Anchor>
+                {user_id && (
+                  <Anchor
+                    href={`/member/${request_team_member_id}`}
+                    target="_blank"
+                  >
+                    <Text>{`${user_first_name} ${user_last_name}`}</Text>
+                  </Anchor>
+                )}
+                {!user_id && <Text>Public User</Text>}
               </Flex>
             );
           },
@@ -762,6 +771,7 @@ const RequestListTable = ({
             const { request_signer } = request as {
               request_signer: requestSignerType[];
             };
+
             const signerList = request_signer.map(
               (signer: requestSignerType) => {
                 const signerTeamMemberData = teamMemberList.find(

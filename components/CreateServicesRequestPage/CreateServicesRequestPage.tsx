@@ -91,7 +91,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
   } = useFieldArray({
@@ -216,7 +216,7 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
           duplicatedFieldsWithDuplicatableId[9],
         ],
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };
@@ -263,8 +263,6 @@ const CreateServicesRequestPage = ({ form, projectOptions }: Props) => {
         resetSigner();
       }
     } catch (e) {
-      console.log(e);
-
       setValue(`sections.0.section_field.0.field_response`, "");
       notifications.show({
         message: "Something went wrong. Please try again later.",

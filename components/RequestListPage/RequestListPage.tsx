@@ -65,7 +65,6 @@ const RequestListPage = ({
         isAscendingSort: false,
         isApproversView: false,
         project: [],
-        idFilter: [],
       },
     });
   const [showTableColumnFilter, setShowTableColumnFilter] = useState(false);
@@ -145,7 +144,6 @@ const RequestListPage = ({
         isAscendingSort,
         isApproversView,
         project,
-        idFilter,
       } = getValues();
 
       const params = {
@@ -157,7 +155,6 @@ const RequestListPage = ({
         form: form && form.length > 0 ? form : undefined,
         status: status && status.length > 0 ? status : undefined,
         project: project && project.length > 0 ? project : undefined,
-        idFilter: idFilter && idFilter.length < 0 ? idFilter : undefined,
         search: search,
         isApproversView,
         isAscendingSort,
@@ -238,6 +235,17 @@ const RequestListPage = ({
                 }
               >
                 Liquidation Spreadsheet View
+              </Menu.Item>
+              <Menu.Item
+                onClick={async () =>
+                  await router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name
+                    )}/requests/application-information-spreadsheet-view`
+                  )
+                }
+              >
+                Application Information Spreadhsheet View
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>

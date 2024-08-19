@@ -134,6 +134,7 @@ export const approveOrRejectRequest = async (
     jiraId?: string;
     jiraLink?: string;
     requestFormslyId?: string;
+    userId?: string;
   }
 ) => {
   const { data, error } = await supabaseClient

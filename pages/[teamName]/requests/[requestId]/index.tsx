@@ -1,3 +1,4 @@
+import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import { default as EquipmentServiceReportRequestPage } from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
@@ -170,6 +171,8 @@ const Page = ({
       request.request_form.form_name === "Petty Cash Voucher Balance"
     ) {
       return <PettyCashVoucherBalanceRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Application Information") {
+      return <ApplicationInformationRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

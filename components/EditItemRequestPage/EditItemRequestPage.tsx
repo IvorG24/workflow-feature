@@ -113,7 +113,7 @@ const EditItemRequestPage = ({
   const { handleSubmit, control, getValues, setValue } = requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -599,7 +599,7 @@ const EditItemRequestPage = ({
           duplicatedFieldsWithDuplicatableId[9],
         ],
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };

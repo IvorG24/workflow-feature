@@ -109,7 +109,7 @@ const EditITAssetRequestPage = ({
     requestFormMethods;
   const {
     fields: formSections,
-    insert: addSection,
+    insert: insertSection,
     remove: removeSection,
     replace: replaceSection,
     update: updateSection,
@@ -580,7 +580,7 @@ const EditITAssetRequestPage = ({
         ...sectionMatch,
         section_field: duplicatedFieldsWithDuplicatableId.slice(0, 4),
       };
-      addSection(sectionLastIndex + 1, newSection);
+      insertSection(sectionLastIndex + 1, newSection);
       return;
     }
   };

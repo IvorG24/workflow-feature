@@ -10,14 +10,10 @@ import {
   Flex,
   MultiSelect,
   Switch,
-  TextInput
+  TextInput,
 } from "@mantine/core";
 import { useFocusWithin } from "@mantine/hooks";
-import {
-  IconEyeFilled,
-  IconReload,
-  IconSearch
-} from "@tabler/icons-react";
+import { IconReload, IconSearch } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 
@@ -28,8 +24,8 @@ type RequestListFilterProps = {
   localFilter: RequestListFilterValues;
   setLocalFilter: Dispatch<SetStateAction<RequestListFilterValues>>;
   projectList: TeamProjectTableRow[];
-  setShowTableColumnFilter: (value: SetStateAction<boolean>) => void
-  showTableColumnFilter: boolean
+  setShowTableColumnFilter: (value: SetStateAction<boolean>) => void;
+  showTableColumnFilter: boolean;
 };
 
 type FilterSelectedValuesType = {
@@ -38,7 +34,6 @@ type FilterSelectedValuesType = {
   requestor: string[];
   approver: string[];
   project: string[];
-  idFilter: string[];
   isApproversView: boolean;
 };
 
@@ -50,7 +45,7 @@ const RequestListFilter = ({
   setLocalFilter,
   projectList,
   showTableColumnFilter,
-  setShowTableColumnFilter
+  setShowTableColumnFilter,
 }: RequestListFilterProps) => {
   const inputFilterProps = {
     w: { base: 200, sm: 300 },
@@ -73,10 +68,9 @@ const RequestListFilter = ({
       requestor: [],
       approver: [],
       project: [],
-      idFilter: [],
       isApproversView: false,
     });
-    const [isFilter, setIsfilter] = useState(false);
+  const [isFilter, setIsfilter] = useState(false);
 
   const memberList = teamMemberList.map((member) => ({
     value: member.team_member_id,
@@ -118,25 +112,25 @@ const RequestListFilter = ({
     Object.entries(localFilter).forEach(([key, value]) => {
       setValue(key as keyof RequestListFilterValues, value);
     });
-  }, [localFilter])
+  }, [localFilter]);
 
   return (
     <>
       <Flex gap="sm" wrap="wrap" align="center" direction="row">
-      <TextInput
-        placeholder="Search by request id"
-        rightSection={
-          <ActionIcon size="xs" type="submit">
-            <IconSearch />
-          </ActionIcon>
-        }
-        {...register("search")}
-        sx={{ flex: 2 }}
-        miw={250}
-        maw={320}
-        disabled={filterSelectedValues.isApproversView}
-      />
-      <Button
+        <TextInput
+          placeholder="Search by request id"
+          rightSection={
+            <ActionIcon size="xs" type="submit">
+              <IconSearch />
+            </ActionIcon>
+          }
+          {...register("search")}
+          sx={{ flex: 2 }}
+          miw={250}
+          maw={320}
+          disabled={filterSelectedValues.isApproversView}
+        />
+        <Button
           variant="light"
           leftIcon={<IconReload size={16} />}
           onClick={() => {
@@ -144,41 +138,46 @@ const RequestListFilter = ({
           }}
         >
           Refresh
-      </Button>
-      <Flex gap="sm" wrap="wrap" align="center">
-        <p>Show/Hide Table Columns</p>
-        <Switch
-          onLabel={<IconEyeFilled size="14" />}
-          checked={showTableColumnFilter}
-          onChange={(event) => setShowTableColumnFilter(event.currentTarget.checked)}
-        />
-      </Flex>
+        </Button>
+        <Flex gap="sm" wrap="wrap" align="center">
+          <p>Show/Hide Table Columns</p>
+          <Switch
+            checked={showTableColumnFilter}
+            onChange={(event) =>
+              setShowTableColumnFilter(event.currentTarget.checked)
+            }
+            onLabel="ON"
+            offLabel="OFF"
+          />
+        </Flex>
 
-      <Flex gap="sm" wrap="wrap" align="center">
+        <Flex gap="sm" wrap="wrap" align="center">
           <p>Filter</p>
           <Switch
-            onLabel={<IconEyeFilled size="14" />}
             checked={isFilter}
             onChange={(event) => setIsfilter(event.currentTarget.checked)}
+            onLabel="ON"
+            offLabel="OFF"
           />
-      </Flex>
-      <Flex gap="sm" wrap="wrap" align="center">
+        </Flex>
+        <Flex gap="sm" wrap="wrap" align="center">
           <p>Approver&apos;s View</p>
           <Switch
-            onLabel={<IconEyeFilled size="14" />}
             {...register("isApproversView")}
             onChange={(e) => {
               setValue("isApproversView", e.target.checked);
               handleFilterChange("isApproversView", e.target.checked);
             }}
+            onLabel="ON"
+            offLabel="OFF"
           />
+        </Flex>
       </Flex>
-    </Flex>
-    <Divider my="md" />
+      <Divider my="md" />
 
-    {isFilter && 
-      <Flex gap="sm" wrap="wrap" mb="sm">
-        <Controller
+      {isFilter && (
+        <Flex gap="sm" wrap="wrap" mb="sm">
+          <Controller
             control={control}
             name="form"
             defaultValue={localFilter.form}
@@ -262,7 +261,8 @@ const RequestListFilter = ({
                 value={value}
                 onChange={(value) => {
                   onChange(value);
-                  if (!requestorRefFocused) handleFilterChange("requestor", value);
+                  if (!requestorRefFocused)
+                    handleFilterChange("requestor", value);
                 }}
                 onDropdownClose={() => handleFilterChange("requestor", value)}
                 {...inputFilterProps}
@@ -285,7 +285,8 @@ const RequestListFilter = ({
                 value={value}
                 onChange={(value) => {
                   onChange(value);
-                  if (!approverRefFocused) handleFilterChange("approver", value);
+                  if (!approverRefFocused)
+                    handleFilterChange("approver", value);
                 }}
                 onDropdownClose={() => handleFilterChange("approver", value)}
                 {...inputFilterProps}
@@ -296,11 +297,9 @@ const RequestListFilter = ({
               />
             )}
           />
-      </Flex>
-    }
-    
+        </Flex>
+      )}
     </>
-    
   );
 };
 

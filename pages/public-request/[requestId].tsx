@@ -1,5 +1,6 @@
 import { getTeam, getUserActiveTeamId } from "@/backend/api/get";
 import { checkIfEmailExists } from "@/backend/api/post";
+import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import EquipmentServiceReportRequestPage from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
@@ -26,14 +27,13 @@ import { GetServerSideProps } from "next";
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const supabaseClient = createPagesServerClient(context);
   try {
-    const { data, error } = await supabaseClient.rpc(
-      "public_request_page_on_load",
-      {
-        input_data: {
-          requestId: context.query.requestId,
-        },
-      }
-    );
+    const requestId = context.query.requestId;
+    const { data, error } = await supabaseClient.rpc("request_page_on_load", {
+      input_data: {
+        requestId,
+      },
+    });
+
     if (error) throw error;
     // * 1. Check if there is user active session
     const {
@@ -74,7 +74,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       if (!teamId) {
         return {
           redirect: {
-            destination: "/create-team",
+            destination: `/user/requests/${requestId}`,
             permanent: false,
           },
         };
@@ -225,6 +225,8 @@ const Page = ({
           duplicatableSectionIdList={duplicatableSectionIdList}
         />
       );
+    } else if (request.request_form.form_name === "Application Information") {
+      return <ApplicationInformationRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

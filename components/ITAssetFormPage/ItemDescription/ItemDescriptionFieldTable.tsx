@@ -292,7 +292,6 @@ const ItemDescriptionFieldTable = ({
                 },
               ]
             : []),
-
           {
             accessor: "item_description_field_is_available",
             title: "Status",

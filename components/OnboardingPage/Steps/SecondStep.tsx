@@ -1,3 +1,4 @@
+import { checkUserIdNumber } from "@/backend/api/get";
 import { ID_OPTIONS } from "@/utils/constant";
 import { removeMultipleSpaces, toTitleCase } from "@/utils/string";
 import { OptionType } from "@/utils/types";
@@ -11,6 +12,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { Dispatch, SetStateAction } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { OnboardUserParams } from "../OnboardingPage";
@@ -40,6 +42,8 @@ const SecondStep = ({
   handleFetchProvinceOptions,
   handleFetchCityOptions,
 }: Props) => {
+  const supabaseClient = useSupabaseClient();
+
   const {
     register,
     control,
@@ -183,6 +187,14 @@ const SecondStep = ({
                   maxLength: {
                     value: 16,
                     message: `${idLabel} must be shorter than 16 characters`,
+                  },
+                  validate: {
+                    isUnique: async (value) => {
+                      const result = await checkUserIdNumber(supabaseClient, {
+                        idNumber: value.trim(),
+                      });
+                      return result ? result : "ID Number already used";
+                    },
                   },
                 })}
                 error={errors.user_id_number?.message}

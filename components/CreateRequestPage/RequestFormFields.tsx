@@ -5,10 +5,15 @@ import {
   MAX_FILE_SIZE_IN_MB,
   SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
-import { parseJSONIfValid, requestPath } from "@/utils/string";
+import {
+  parseJSONIfValid,
+  publicRequestPath,
+  requestPath,
+} from "@/utils/string";
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  Checkbox,
   FileInput,
   Flex,
   Loader,
@@ -20,7 +25,7 @@ import {
   Textarea,
   Tooltip,
 } from "@mantine/core";
-import { DateInput, TimeInput } from "@mantine/dates";
+import { DateInput, TimeInput, YearPickerInput } from "@mantine/dates";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import {
@@ -45,11 +50,15 @@ type RequestFormFieldsProps = {
   };
   sectionIndex: number;
   fieldIndex: number;
+  currencyOptionList?: { value: string; label: string }[];
+  formslyFormName?: string;
+  isEdit?: boolean;
+  isLoading: boolean | undefined;
+  isPublicRequest?: boolean;
   itemFormMethods?: {
     onGeneralNameChange: (index: number, value: string | null) => void;
     onProjectNameChange: (value: string | null) => void;
   };
-  formslyFormName?: string;
   servicesFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
   };
@@ -124,13 +133,10 @@ type RequestFormFieldsProps = {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null, index: number) => void;
   };
-  isEdit?: boolean;
-  isLoading: boolean | undefined;
   itAssetRequestFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onGeneralNameChange: (index: number, value: string | null) => void;
   };
-  currencyOptionList?: { value: string; label: string }[];
   liquidationReimbursementFormMethods?: {
     onProjectNameChange: (value: string | null) => void;
     onRequestTypeChange: (value: string | null) => void;
@@ -253,14 +259,30 @@ type RequestFormFieldsProps = {
     onAmountBlur: (value: string | null, index: number) => void;
     onModeOfPaymentChange: (value: string | null, index: number) => void;
   };
+  applicationInformationFormMethods?: {
+    onPositionChange: (value: string | null) => void;
+    onRegionChange: (value: string | null) => void;
+    onProvinceChange: (value: string | null) => void;
+    onCityChange: (value: string | null) => void;
+    onBarangayChange: (value: string | null) => void;
+    onWillingToBeAssignedAnywhereChange: (
+      value: boolean,
+      index: number
+    ) => void;
+    onHighestEducationalAttainmentChange: (value: string | null) => void;
+  };
 };
 
 const RequestFormFields = ({
   field,
   sectionIndex,
   fieldIndex,
-  itemFormMethods,
+  isEdit,
+  isLoading,
+  currencyOptionList,
   formslyFormName = "",
+  isPublicRequest = false,
+  itemFormMethods,
   servicesFormMethods,
   pedEquipmentFormMethods,
   pedPartFormMethods,
@@ -268,14 +290,12 @@ const RequestFormFields = ({
   pedItemFormMethods,
   paymentRequestFormMethods,
   itAssetRequestFormMethods,
-  isEdit,
-  isLoading,
-  currencyOptionList,
   liquidationReimbursementFormMethods,
   personnelTransferRequisitionMethods,
   pettyCashVoucherFormMethods,
   equipmentServiceReportMethods,
   requestForPaymentFormMethods,
+  applicationInformationFormMethods,
 }: RequestFormFieldsProps) => {
   const {
     register,
@@ -398,6 +418,7 @@ const RequestFormFields = ({
                     icon={<IconLink size={16} />}
                     style={{ flex: 1 }}
                     onChange={onChange}
+                    readOnly={field.field_is_read_only}
                   />
                   <ActionIcon
                     mb={4}
@@ -406,7 +427,9 @@ const RequestFormFields = ({
                     color="blue"
                     onClick={() =>
                       window.open(
-                        requestPath(`${value}`, team.team_name),
+                        isPublicRequest
+                          ? publicRequestPath(`${value}`)
+                          : requestPath(`${value}`, team.team_name),
                         "_blank"
                       )
                     }
@@ -472,6 +495,7 @@ const RequestFormFields = ({
                   break;
               }
             }}
+            type={field.field_name === "Email Address" ? "email" : undefined}
           />
         );
 
@@ -540,6 +564,52 @@ const RequestFormFields = ({
             />
           );
         } else {
+          let maxLength: number | undefined = undefined;
+          let formatter: ((value: string) => string) | undefined = undefined;
+
+          switch (field.field_name) {
+            case "Contact Number":
+              maxLength = 10;
+              break;
+            case "SSS ID Number":
+            case "Philhealth Number":
+              maxLength = 10;
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+            case "Pag-IBIG Number":
+              maxLength = 12;
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{4})(\d{4})(\d{4})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+            case "TIN":
+              maxLength = 9;
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{3})(\d{3})(\d{3})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+          }
+
           return (
             <Controller
               control={control}
@@ -551,7 +621,22 @@ const RequestFormFields = ({
                   withAsterisk={field.field_is_required}
                   {...inputProps}
                   error={fieldError}
-                  precision={2}
+                  formatter={formatter}
+                  parser={(value) => value.replace(/\D/g, "")}
+                  maxLength={maxLength}
+                  precision={
+                    [
+                      "Quantity",
+                      "Amount",
+                      "Unit Cost",
+                      "Invoice Amount",
+                      "Cost",
+                      "VAT",
+                      "Expected Salary (PHP)",
+                    ].includes(field.field_name)
+                      ? 2
+                      : 0
+                  }
                   onBlur={() => {
                     switch (field.field_name) {
                       case "Amount":
@@ -560,14 +645,12 @@ const RequestFormFields = ({
                           sectionIndex
                         );
                         break;
-
                       case "Invoice Amount":
                         liquidationReimbursementFormMethods?.onInvoiceAmountChange(
                           value as number,
                           sectionIndex
                         );
                         break;
-
                       case "VAT":
                         liquidationReimbursementFormMethods?.onVatFieldChange &&
                           liquidationReimbursementFormMethods?.onVatFieldChange(
@@ -575,13 +658,11 @@ const RequestFormFields = ({
                             sectionIndex
                           );
                         break;
-
                       case "Quantity":
                         pettyCashVoucherFormMethods?.onQuantityOrUnitCostChange(
                           sectionIndex
                         );
                         break;
-
                       case "Unit Cost":
                         pettyCashVoucherFormMethods?.onQuantityOrUnitCostChange(
                           sectionIndex
@@ -589,6 +670,7 @@ const RequestFormFields = ({
                         break;
                     }
                   }}
+                  icon={field.field_name === "Contact Number" ? "+63" : ""}
                 />
               )}
               rules={{
@@ -604,6 +686,18 @@ const RequestFormFields = ({
                     field.field_name === "Quantity" && Number(value) < 0
                       ? "Quantity must be a positive integer."
                       : true,
+                  valid: (value) => {
+                    if (field.field_name !== "Contact Number") return true;
+                    return `${value}`.length === 10
+                      ? true
+                      : "Invalid contact number";
+                  },
+                  startsWith: (value) => {
+                    if (field.field_name !== "Contact Number") return true;
+                    return `${value}`[0] === "9"
+                      ? true
+                      : "Contact number must start with 9";
+                  },
                 },
               }}
             />
@@ -629,7 +723,6 @@ const RequestFormFields = ({
                           sectionIndex
                         );
                       break;
-
                     case "Is this for Official Business?":
                       pettyCashVoucherFormMethods &&
                         pettyCashVoucherFormMethods.onPettyCashVoucherBooleanChange(
@@ -637,7 +730,6 @@ const RequestFormFields = ({
                           sectionIndex
                         );
                       break;
-
                     case "This is to authorize the Accounting Department to deduct the cash advance amount from my salary upon my failure to liquidate within 48hrs after the purpose has been accomplished.":
                       pettyCashVoucherFormMethods &&
                         pettyCashVoucherFormMethods.onAccountingAuthorizationBooleanChange(
@@ -664,6 +756,13 @@ const RequestFormFields = ({
                           sectionIndex
                         );
                       break;
+                    case "Are you willing to be assigned anywhere?":
+                      applicationInformationFormMethods &&
+                        applicationInformationFormMethods.onWillingToBeAssignedAnywhereChange(
+                          value,
+                          sectionIndex
+                        );
+                      break;
                   }
                   onChange(value);
                 }}
@@ -672,6 +771,8 @@ const RequestFormFields = ({
                 sx={{ label: { cursor: "pointer" } }}
                 error={fieldError}
                 disabled={field.field_is_read_only}
+                onLabel="ON"
+                offLabel="OFF"
               />
             )}
             rules={{ ...fieldRules }}
@@ -711,7 +812,6 @@ const RequestFormFields = ({
                         value
                       );
                       break;
-
                     case "Requesting Project":
                       itemFormMethods?.onProjectNameChange(value);
                       servicesFormMethods?.onProjectNameChange(value);
@@ -930,12 +1030,37 @@ const RequestFormFields = ({
                         sectionIndex
                       );
                       break;
-
                     case "Type of Request":
                       pettyCashVoucherFormMethods?.onTypeOfRequestChange(value);
                       liquidationReimbursementFormMethods?.onTypeOfRequestChange(
                         value,
                         sectionIndex
+                      );
+                      break;
+                    case "Position applying for":
+                      applicationInformationFormMethods?.onPositionChange(
+                        value
+                      );
+                      break;
+                    case "Region":
+                      applicationInformationFormMethods?.onRegionChange(value);
+                      break;
+                    case "Province":
+                      applicationInformationFormMethods?.onProvinceChange(
+                        value
+                      );
+                      break;
+                    case "City":
+                      applicationInformationFormMethods?.onCityChange(value);
+                      break;
+                    case "Barangay":
+                      applicationInformationFormMethods?.onBarangayChange(
+                        value
+                      );
+                      break;
+                    case "Highest Educational Attainment":
+                      applicationInformationFormMethods?.onHighestEducationalAttainmentChange(
+                        value
                       );
                       break;
                   }
@@ -1071,19 +1196,35 @@ const RequestFormFields = ({
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
             render={({ field: { value, onChange } }) => {
               const dateValue = value ? new Date(`${value}`) : undefined;
-              return (
-                <DateInput
-                  value={dateValue}
-                  onChange={(value) => onChange(new Date(`${value}`))}
-                  withAsterisk={field.field_is_required}
-                  {...inputProps}
-                  icon={<IconCalendar size={16} />}
-                  error={fieldError}
-                  minDate={formslyFormName ? new Date() : undefined}
-                  valueFormat="YYYY-MM-DD"
-                  readOnly={field.field_is_read_only}
-                />
-              );
+              if (field.field_name === "Year Graduated") {
+                return (
+                  <YearPickerInput
+                    value={dateValue}
+                    onChange={onChange}
+                    withAsterisk={field.field_is_required}
+                    {...inputProps}
+                    icon={<IconCalendar size={16} />}
+                    error={fieldError}
+                    readOnly={field.field_is_read_only}
+                    clearable
+                  />
+                );
+              } else {
+                return (
+                  <DateInput
+                    value={dateValue}
+                    onChange={onChange}
+                    withAsterisk={field.field_is_required}
+                    {...inputProps}
+                    icon={<IconCalendar size={16} />}
+                    error={fieldError}
+                    minDate={formslyFormName ? new Date() : undefined}
+                    valueFormat="YYYY-MM-DD"
+                    readOnly={field.field_is_read_only}
+                    clearable
+                  />
+                );
+              }
             }}
             rules={{ ...fieldRules }}
           />
@@ -1120,19 +1261,27 @@ const RequestFormFields = ({
           <Controller
             control={control}
             name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
-            render={({ field }) => (
+            render={({ field: { value, onChange } }) => (
               <Flex w="100%" align="flex-end" gap="xs">
+                {["Certification", "License"].includes(field.field_name) && (
+                  <Checkbox
+                    checked={field.field_is_required}
+                    mb="xs"
+                    readOnly
+                  />
+                )}
                 <FileInput
                   {...inputProps}
                   icon={<IconFile size={16} />}
                   clearable
                   multiple={false}
-                  value={field.value as File | null | undefined}
-                  onChange={field.onChange}
+                  value={value as File | null | undefined}
+                  onChange={onChange}
                   error={fieldError}
                   sx={{ width: prevFileLink ? "96%" : "100%" }}
+                  disabled={field.field_is_read_only}
                 />
-                {parseJSONIfValid(`${field.value}`) && isEdit !== undefined ? (
+                {parseJSONIfValid(`${value}`) && isEdit !== undefined ? (
                   <Tooltip
                     label="Open last saved file in new tab"
                     openDelay={200}

@@ -201,6 +201,8 @@ CreateFormProps) => {
                 sx={{ label: { cursor: "pointer" } }}
                 error={errors.isWithFormslyForms?.message}
                 label="Create with Formsly pre-made forms"
+                onLabel="ON"
+                offLabel="OFF"
               />
             )}
           />
