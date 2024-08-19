@@ -1,19 +1,23 @@
-import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
+import ApplicationProgressPage from "@/components/ApplicationProgressPage/ApplicationProgressPage";
 import Meta from "@/components/Meta/Meta";
-import RequestPage from "@/components/RequestPage/RequestPage";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { RequestWithResponseType } from "@/utils/types";
+import { RequestViewRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({}) => {
+  async ({ supabaseClient, context }) => {
     try {
-      // const { data, error } = await supabaseClient.rpc("", {
-      //   request_id: `${context.query.requestId}`,
-      // });
-      // if (error) throw error;
+      const { data, error } = await supabaseClient.rpc(
+        "get_user_application_progress_on_load",
+        {
+          input_data: {
+            requestId: `${context.query.requestId}`,
+          },
+        }
+      );
+      if (error) throw error;
       return {
-        props: {},
+        props: data as Props,
       };
     } catch (e) {
       return {
@@ -27,26 +31,27 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 );
 
 type Props = {
-  request: RequestWithResponseType;
+  applicationInformationData: RequestViewRow;
+  onlineApplicationData: RequestViewRow;
+  onlineAssessmentData: RequestViewRow;
 };
 
-const Page = ({ request }: Props) => {
-  const formslyForm = () => {
-    if (request.request_form.form_name === "Application Information") {
-      return <ApplicationInformationRequestPage request={request} />;
-    } else {
-      return <RequestPage request={request} isFormslyForm />;
-    }
-  };
-
+const Page = ({
+  applicationInformationData,
+  onlineApplicationData,
+  onlineAssessmentData,
+}: Props) => {
   return (
     <>
-      <Meta description="User Request Page" url="/user/requests/[requestId]" />
-
-      {request.request_form.form_is_formsly_form ? formslyForm() : null}
-      {!request.request_form.form_is_formsly_form ? (
-        <RequestPage request={request} />
-      ) : null}
+      <Meta
+        description="User Application Progress Page"
+        url="/user/application-progress/[requestId]"
+      />
+      <ApplicationProgressPage
+        applicationInformationData={applicationInformationData}
+        onlineApplicationData={onlineApplicationData}
+        onlineAssessmentData={onlineAssessmentData}
+      />
     </>
   );
 };

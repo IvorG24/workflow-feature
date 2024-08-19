@@ -169,12 +169,30 @@ const UserRequestListTable = ({
           title: "Progress",
           hidden: checkIfColumnIsHidden("progress"),
           textAlignment: "center",
-          render: ({ request_form_id, request_is_with_indicator }) => {
+          render: ({
+            request_form_id,
+            request_is_with_indicator,
+            request_formsly_id,
+            request_id,
+          }) => {
             if (request_form_id !== "151cc6d7-94d7-4c54-b5ae-44de9f59d170")
               return null;
             return (
               <Tooltip label="View Progress" openDelay={100}>
-                <ActionIcon maw={120} mx="auto" color="blue">
+                <ActionIcon
+                  maw={120}
+                  mx="auto"
+                  color="blue"
+                  onClick={async () => {
+                    const requestId =
+                      request_formsly_id === "-"
+                        ? request_id
+                        : request_formsly_id;
+                    await router.push(
+                      `/user/application-progress/${requestId}`
+                    );
+                  }}
+                >
                   {request_is_with_indicator ? (
                     <Indicator color="red" size={8} offset={-4}>
                       <IconGraph size={16} />

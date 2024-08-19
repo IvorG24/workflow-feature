@@ -508,6 +508,8 @@ export type PositionTableUpdate =
 export type TeamDepartmentTableRow =
   Database["team_schema"]["Tables"]["team_department_table"]["Row"];
 
+export type RequestViewRow = Database["public"]["Views"]["request_view"]["Row"];
+
 // End: Database Table Types
 
 // Start: Database Enums

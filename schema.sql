@@ -14597,6 +14597,71 @@ AS $$
   return return_value
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_user_application_progress_on_load(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      requestId
+    } = input_data;
+
+    let applicationInformationData = {};
+    let onlineApplicationData = {};
+    let onlineAssessmentData = {};
+    
+    applicationInformationData = plv8.execute(
+      `
+        SELECT * 
+        FROM public.request_view
+        WHERE
+          request_formsly_id = '${requestId}'
+      `
+    );
+    if(applicationInformationData.length){
+      onlineApplicationData = plv8.execute(
+        `
+          SELECT request_view.*
+          FROM public.request_view
+          INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          WHERE
+            request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
+            AND request_response = '"${requestId}"'
+        `
+      );
+      if(onlineApplicationData.length){
+        const onlineAssessmentData  = plv8.execute(
+          `
+            SELECT request_view.*
+            FROM public.request_view
+            INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+            WHERE
+              (
+                request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
+                AND request_response = '"${requestId}"'
+              )
+              AND
+              (
+                request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
+                AND request_response = 'onlineApplicationData'
+              )
+          `
+        );
+      }
+    }
+
+    returnData = {
+      applicationInformationData: applicationInformationData.length ? applicationInformationData[0] : null,
+      onlineApplicationData: onlineApplicationData.length ? onlineApplicationData[0] : null,
+      onlineAssessmentData: onlineAssessmentData.length ? onlineAssessmentData[0] : null
+    }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
