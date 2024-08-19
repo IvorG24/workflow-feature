@@ -63,7 +63,7 @@ const UserRequestListPage = ({ formList }: Props) => {
     { value: "request_team_member_id", label: "Requested By" },
     { value: "request_signer", label: "Approver" },
     { value: "request_date_created", label: "Date Created" },
-    { value: "progress", label: "Progress" },
+    // { value: "progress", label: "Progress" },
     { value: "view", label: "View" },
   ];
 

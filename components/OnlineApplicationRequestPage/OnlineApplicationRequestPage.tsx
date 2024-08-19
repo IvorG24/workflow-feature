@@ -14,7 +14,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDate } from "@/utils/constant";
-import { JoyRideNoSSR, safeParse } from "@/utils/functions";
+import { JoyRideNoSSR } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -352,14 +352,14 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
   // teamMemberGroupList.includes("REQUESTER");
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
-  const nextStep =
-    request.request_status === "APPROVED" &&
-    user?.user_email ===
-      safeParse(
-        request.request_form.form_section[1].section_field[0].field_response[0]
-          .request_response ?? ""
-      ) &&
-    request.isWithNextStep;
+  const nextStep = false;
+  // request.request_status === "APPROVED" &&
+  // user?.user_email ===
+  //   safeParse(
+  //     request.request_form.form_section[1].section_field[0].field_response[0]
+  //       .request_response ?? ""
+  //   ) &&
+  // request.isWithNextStep;
 
   return (
     <Container>

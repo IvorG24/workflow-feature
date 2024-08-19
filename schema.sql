@@ -261,6 +261,7 @@ CREATE TABLE form_schema.form_table (
   form_is_for_every_member BOOLEAN DEFAULT TRUE NOT NULL,
   form_type VARCHAR(4000),
   form_sub_type VARCHAR(4000),
+  form_is_public_form BOOLEAN DEFAULT FALSE NOT NULL,
 
   form_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
 );
@@ -937,6 +938,19 @@ CREATE TABLE unit_of_measurement_schema.item_unit_of_measurement_table (
 CREATE TABLE lookup_schema.bank_list_table (
   bank_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   bank_label VARCHAR(4000) NOT NULL
+);
+
+CREATE TABLE lookup_schema.position_table (
+  position_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  position_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  position VARCHAR(4000) NOT NULL,
+  position_type VARCHAR(4000) NOT NULL,
+  position_is_disabled BOOLEAN DEFAULT false NOT NULL,
+  position_is_available BOOLEAN DEFAULT true NOT NULL,
+  position_is_with_certificate BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_license BOOLEAN DEFAULT false NOT NULL,
+
+  position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
 ----- END: TABLES

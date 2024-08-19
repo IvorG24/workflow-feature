@@ -365,7 +365,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           insertSection(4, form.form_section[4], { shouldFocus: false });
           insertSection(6, form.form_section[6], { shouldFocus: false });
         } else if (
-          position?.position_type === "SKILLED" &&
+          position?.position_type === "RANK AND FILE" &&
           isWithEducationalBackground
         ) {
           removeSection([4, 6]);
