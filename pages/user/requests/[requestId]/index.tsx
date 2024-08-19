@@ -32,7 +32,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 );
 
 type Props = {
-  request: RequestWithResponseType & { isWithNextStep: boolean };
+  request: RequestWithResponseType;
 };
 
 const Page = ({ request }: Props) => {

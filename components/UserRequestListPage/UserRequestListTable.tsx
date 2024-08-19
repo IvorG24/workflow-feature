@@ -66,7 +66,7 @@ const UserRequestListTable = ({
     setValue("isAscendingSort", sortStatus.direction === "asc" ? true : false);
     handlePagination(activePage);
   }, [sortStatus]);
-  console.log(requestList);
+
   return (
     <ListTable
       idAccessor="request_id"

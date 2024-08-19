@@ -50,7 +50,7 @@ import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 type Props = {
-  request: RequestWithResponseType & { isWithNextStep: boolean };
+  request: RequestWithResponseType;
 };
 
 const OnlineApplicationRequestPage = ({ request }: Props) => {

@@ -102,7 +102,6 @@ const UserRequestListPage = ({ formList }: Props) => {
       setRequestList(data);
       setRequestListCount(count || 0);
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Failed to fetch request list.",
         color: "red",

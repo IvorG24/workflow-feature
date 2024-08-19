@@ -612,6 +612,8 @@ export type UserWithSignatureType = UserTableRow & {
 };
 
 export type RequestWithResponseType = RequestTableRow & {
+  isWithNextStep?: boolean;
+} & {
   request_formsly_id: string;
 } & {
   request_form: {
