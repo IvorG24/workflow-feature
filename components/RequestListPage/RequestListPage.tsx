@@ -11,7 +11,7 @@ import {
   RequestListFilterValues,
   RequestListItemType,
   TeamMemberWithUserType,
-  TeamProjectTableRow,,
+  TeamProjectTableRow,
 } from "@/utils/types";
 import {
   Box,

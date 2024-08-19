@@ -223,8 +223,7 @@ export const getRequestList = async (
     isApproversView,
     teamMemberId,
     project,
-    idFilter,
-    columnAccessor = "request_date_created"
+    columnAccessor = "request_date_created",
   } = params;
 
   const sort = isAscendingSort ? "ASC" : "DESC";
