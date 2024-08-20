@@ -1,5 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
+  getPositionType,
   getRequestComment,
   getUserIdInApplicationInformation,
 } from "@/backend/api/get";
@@ -13,14 +14,8 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { BASE_URL, formatDate } from "@/utils/constant";
-import { JoyRideNoSSR } from "@/utils/functions";
-import {
-  createJiraTicket,
-  formatJiraRequisitionPayload,
-  getJiraTransitionId,
-  getRequisitionAutomationData,
-} from "@/utils/jira/functions";
+import { formatDate } from "@/utils/constant";
+import { JoyRideNoSSR, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -263,34 +258,81 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
 
   const onCreateJiraTicket = async () => {
     try {
-      if (!request.request_project_id) {
-        throw new Error("Project id is not defined.");
-      }
       setIsLoading(true);
-      const itemCategory =
-        "Fixed Asset - Construction Equipment, Machinery and Tools";
-      const requisitionAutomationData = await getRequisitionAutomationData(
+
+      const personalInformationSection = formSection[1].section_field;
+      const firstName = safeParse(
+        `${personalInformationSection[0].field_response?.request_response}`
+      );
+      const middleName = personalInformationSection[1].field_response
+        ?.request_response
+        ? safeParse(
+            personalInformationSection[1].field_response?.request_response
+          )
+        : "";
+      const lastName = safeParse(
+        `${personalInformationSection[2].field_response?.request_response}`
+      );
+      let applicantName = `${lastName}, ${firstName}`;
+      if (middleName) {
+        applicantName = applicantName + ` ${middleName}`;
+      }
+
+      const applicantPosition = safeParse(
+        `${formSection[0].section_field[0].field_response?.request_response}`
+      );
+      const positionType = await getPositionType(
         supabaseClient,
+        applicantPosition
+      );
+      const sssID = safeParse(
+        `${formSection[3].section_field[0].field_response?.request_response}`
+      );
+      const contactNumber = safeParse(
+        `${formSection[2].section_field[0].field_response?.request_response}`
+      );
+      const emailAddress = safeParse(
+        `${formSection[2].section_field[1].field_response?.request_response}`
+      );
+      const candidateSource = safeParse(
+        `${formSection[0].section_field[3].field_response?.request_response}`
+      );
+      const employmentStatus = safeParse(
+        `${formSection[5].section_field[0].field_response?.request_response}`
+      );
+      const isExperienced = formSection.some(
+        (section) => section.section_name === "Most Recent Work Experience"
+      );
+
+      const createTicketResponse = await fetch(
+        "/api/jira/create-recruitment-ticket",
         {
-          teamProjectId: request.request_project_id,
-          itemCategory,
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            applicantName,
+            applicantPosition,
+            positionType,
+            sssID,
+            contactNumber,
+            emailAddress,
+            candidateSource,
+            employmentStatus,
+            isExperienced,
+          }),
         }
       );
-      const jiraTicketPayload = formatJiraRequisitionPayload({
-        requestId: request.request_formsly_id,
-        requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
-        requestFormType: request.request_form.form_name,
-        requestTypeId: "299",
-        ...requisitionAutomationData,
-      });
-      const jiraTicket = await createJiraTicket({
-        requestType: "Automated Requisition Form",
-        formslyId: request.request_formsly_id,
-        requestCommentList,
-        ticketPayload: jiraTicketPayload,
-        transitionId: getJiraTransitionId(request.request_form.form_name) ?? "",
-        organizationId: requisitionAutomationData.jiraOrganizationId,
-      });
+      const jiraTicket = await createTicketResponse.json();
+
+      if (!jiraTicket.jiraTicketId) {
+        notifications.show({
+          message: "Failed to create jira ticket",
+          color: "red",
+        });
+        return;
+      }
       setRequestJira({
         id: jiraTicket.jiraTicketId,
         link: jiraTicket.jiraTicketLink,
