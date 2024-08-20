@@ -13,14 +13,8 @@ import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
-import { BASE_URL, formatDate } from "@/utils/constant";
+import { formatDate } from "@/utils/constant";
 import { JoyRideNoSSR } from "@/utils/functions";
-import {
-  createJiraTicket,
-  formatJiraRequisitionPayload,
-  getJiraTransitionId,
-  getRequisitionAutomationData,
-} from "@/utils/jira/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -75,10 +69,10 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
   const [requestCommentList, setRequestCommentList] = useState<
     RequestCommentType[]
   >([]);
-  const [requestJira, setRequestJira] = useState({
-    id: request.request_jira_id,
-    link: request.request_jira_link,
-  });
+  // const [requestJira, setRequestJira] = useState({
+  //   id: request.request_jira_id,
+  //   link: request.request_jira_link,
+  // });
   const formSection = generateSectionWithDuplicateList(
     request.request_form.form_section
   );
@@ -261,52 +255,52 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
       onConfirm: async () => await handleDeleteRequest(),
     });
 
-  const onCreateJiraTicket = async () => {
-    try {
-      if (!request.request_project_id) {
-        throw new Error("Project id is not defined.");
-      }
-      setIsLoading(true);
-      const itemCategory =
-        "Fixed Asset - Construction Equipment, Machinery and Tools";
-      const requisitionAutomationData = await getRequisitionAutomationData(
-        supabaseClient,
-        {
-          teamProjectId: request.request_project_id,
-          itemCategory,
-        }
-      );
-      const jiraTicketPayload = formatJiraRequisitionPayload({
-        requestId: request.request_formsly_id,
-        requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
-        requestFormType: request.request_form.form_name,
-        requestTypeId: "299",
-        ...requisitionAutomationData,
-      });
-      const jiraTicket = await createJiraTicket({
-        requestType: "Automated Requisition Form",
-        formslyId: request.request_formsly_id,
-        requestCommentList,
-        ticketPayload: jiraTicketPayload,
-        transitionId: getJiraTransitionId(request.request_form.form_name) ?? "",
-        organizationId: requisitionAutomationData.jiraOrganizationId,
-      });
-      setRequestJira({
-        id: jiraTicket.jiraTicketId,
-        link: jiraTicket.jiraTicketLink,
-      });
-      return jiraTicket;
-    } catch (e) {
-      const errorMessage = (e as Error).message;
-      notifications.show({
-        message: `Error: ${errorMessage}`,
-        color: "red",
-      });
-      return { jiraTicketId: "", jiraTicketLink: "" };
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const onCreateJiraTicket = async () => {
+  //   try {
+  //     if (!request.request_project_id) {
+  //       throw new Error("Project id is not defined.");
+  //     }
+  //     setIsLoading(true);
+  //     const itemCategory =
+  //       "Fixed Asset - Construction Equipment, Machinery and Tools";
+  //     const requisitionAutomationData = await getRequisitionAutomationData(
+  //       supabaseClient,
+  //       {
+  //         teamProjectId: request.request_project_id,
+  //         itemCategory,
+  //       }
+  //     );
+  //     const jiraTicketPayload = formatJiraRequisitionPayload({
+  //       requestId: request.request_formsly_id,
+  //       requestUrl: `${BASE_URL}/public-request/${request.request_formsly_id}`,
+  //       requestFormType: request.request_form.form_name,
+  //       requestTypeId: "299",
+  //       ...requisitionAutomationData,
+  //     });
+  //     const jiraTicket = await createJiraTicket({
+  //       requestType: "Automated Requisition Form",
+  //       formslyId: request.request_formsly_id,
+  //       requestCommentList,
+  //       ticketPayload: jiraTicketPayload,
+  //       transitionId: getJiraTransitionId(request.request_form.form_name) ?? "",
+  //       organizationId: requisitionAutomationData.jiraOrganizationId,
+  //     });
+  //     setRequestJira({
+  //       id: jiraTicket.jiraTicketId,
+  //       link: jiraTicket.jiraTicketLink,
+  //     });
+  //     return jiraTicket;
+  //   } catch (e) {
+  //     const errorMessage = (e as Error).message;
+  //     notifications.show({
+  //       message: `Error: ${errorMessage}`,
+  //       color: "red",
+  //     });
+  //     return { jiraTicketId: "", jiraTicketLink: "" };
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   useEffect(() => {
     try {
@@ -425,7 +419,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
           requestDateCreated={requestDateCreated}
           requestStatus={requestStatus}
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
-          requestJira={requestJira}
+          // requestJira={requestJira}
         />
 
         <Stack spacing="xl" mt="lg">
@@ -505,7 +499,6 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             isUserRequester={false}
             requestId={request.request_id}
             isItemForm
-            onCreateJiraTicket={onCreateJiraTicket}
             requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
