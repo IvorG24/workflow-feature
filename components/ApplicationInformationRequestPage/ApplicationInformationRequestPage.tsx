@@ -14,7 +14,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
-import { JoyRideNoSSR } from "@/utils/functions";
+import { JoyRideNoSSR, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   CommentType,
@@ -346,25 +346,25 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
   // teamMemberGroupList.includes("REQUESTER");
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
-  const nextStep = false;
-  // request.request_status === "APPROVED" &&
-  // user?.user_email ===
-  //   safeParse(
-  //     request.request_form.form_section[2].section_field[1].field_response[0]
-  //       .request_response ?? ""
-  //   ) &&
-  // request.isWithNextStep;
+  const nextStep =
+    request.request_status === "APPROVED" &&
+    user?.user_email ===
+      safeParse(
+        request.request_form.form_section[2].section_field[1].field_response[0]
+          .request_response ?? ""
+      ) &&
+    request.isWithNextStep;
 
   return (
     <Container>
       <JoyRideNoSSR
         steps={[
           {
-            target: ".onboarding-create-team",
+            target: ".online-application",
             content: (
               <Text>
                 You can now continue with the online application since your
-                application information has been accepted. To continue, simply
+                application information has been approved. To continue, simply
                 click the &ldquo;Next Step&ldquo; button.
               </Text>
             ),
@@ -401,7 +401,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         </Title>
         {nextStep && (
           <Button
-            className="onboarding-create-team"
+            className="online-application"
             onClick={() =>
               router.push(
                 `/public-form/71f569a0-70a8-4609-82d2-5cc26ac1fe8c/create?applicationInformationId=${request.request_formsly_id}`

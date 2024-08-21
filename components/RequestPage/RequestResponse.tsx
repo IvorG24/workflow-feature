@@ -7,7 +7,9 @@ import {
   Flex,
   MultiSelect,
   NumberInput,
+  Radio,
   Select,
+  Stack,
   Switch,
   TextInput,
   Textarea,
@@ -335,6 +337,26 @@ const RequestResponse = ({
               <IconExternalLink />
             </ActionIcon>
           </Flex>
+        );
+      case "MULTIPLE CHOICE":
+        return (
+          <Radio.Group
+            {...inputProps}
+            label={response.label}
+            mb="md"
+            value={parsedValue}
+          >
+            <Stack mt="xs">
+              {response.options.map((option) => (
+                <Radio
+                  ml="xs"
+                  key={option.option_id}
+                  value={option.option_value}
+                  label={option.option_value}
+                />
+              ))}
+            </Stack>
+          </Radio.Group>
         );
     }
   };

@@ -19,7 +19,9 @@ import {
   Loader,
   MultiSelect,
   NumberInput,
+  Radio,
   Select,
+  Stack,
   Switch,
   TextInput,
   Textarea,
@@ -1311,6 +1313,38 @@ const RequestFormFields = ({
                 },
               },
             }}
+          />
+        );
+
+      case "MULTIPLE CHOICE":
+        return (
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Radio.Group
+                {...inputProps}
+                value={value as string}
+                onChange={onChange}
+                mb="md"
+              >
+                <Stack mt="xs">
+                  {field.options.map((option) => (
+                    <Radio
+                      ml="xs"
+                      key={option.option_id}
+                      value={option.option_value}
+                      label={option.option_value}
+                      sx={{
+                        input: { cursor: "pointer" },
+                        label: { cursor: "pointer" },
+                      }}
+                    />
+                  ))}
+                </Stack>
+              </Radio.Group>
+            )}
+            rules={fieldRules}
           />
         );
     }

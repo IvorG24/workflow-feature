@@ -8,13 +8,12 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDate } from "@/utils/constant";
-import { JoyRideNoSSR } from "@/utils/functions";
+import { JoyRideNoSSR, safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -352,25 +351,25 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
   // teamMemberGroupList.includes("REQUESTER");
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
-  const nextStep = false;
-  // request.request_status === "APPROVED" &&
-  // user?.user_email ===
-  //   safeParse(
-  //     request.request_form.form_section[1].section_field[0].field_response[0]
-  //       .request_response ?? ""
-  //   ) &&
-  // request.isWithNextStep;
+  const nextStep =
+    request.request_status === "APPROVED" &&
+    user?.user_email ===
+      safeParse(
+        request.request_form.form_section[1].section_field[0].field_response[0]
+          .request_response ?? ""
+      ) &&
+    request.isWithNextStep;
 
   return (
     <Container>
       <JoyRideNoSSR
         steps={[
           {
-            target: ".onboarding-create-team",
+            target: ".online-assessment",
             content: (
               <Text>
                 You can now continue with the online assessment since your
-                online application has been accepted. To continue, simply click
+                online application has been approved. To continue, simply click
                 the &ldquo;Next Step&ldquo; button.
               </Text>
             ),
@@ -407,7 +406,7 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
         </Title>
         {nextStep && (
           <Button
-            className="onboarding-create-team"
+            className="online-assessment"
             onClick={() =>
               router.push(
                 `/public-form/cc410201-f5a6-49ce-a06c-c2ce2c169436/create?onlineApplicationId=${request.request_formsly_id}`
@@ -428,7 +427,7 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
           requestJira={requestJira}
         />
 
-        <Stack spacing="xl" mt="lg">
+        <Stack spacing="xl">
           {formSection.map((section, idx) => {
             if (
               !section.section_field[0].field_response ||
@@ -502,8 +501,8 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
             requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
-
-        <RequestSignerSection signerList={signerList} />
+        {/* 
+        <RequestSignerSection signerList={signerList} /> */}
       </Stack>
 
       <RequestCommentList

@@ -55,6 +55,8 @@ export const getStatusToColor = (status: string) => {
       return "red";
     case "canceled":
       return "gray";
+    default:
+      return "";
   }
 };
 export const mobileNumberFormatter = (value: string | undefined) => {

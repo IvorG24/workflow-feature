@@ -505,6 +505,13 @@ export type PositionTableInsert =
 export type PositionTableUpdate =
   Database["lookup_schema"]["Tables"]["position_table"]["Update"];
 
+export type FieldCorrectResponseTableRow =
+  Database["form_schema"]["Tables"]["correct_response_table"]["Row"];
+export type FieldCorrectResponseTableInsert =
+  Database["form_schema"]["Tables"]["correct_response_table"]["Insert"];
+export type FieldCorrectResponseTableUpdate =
+  Database["form_schema"]["Tables"]["correct_response_table"]["Update"];
+
 export type TeamDepartmentTableRow =
   Database["team_schema"]["Tables"]["team_department_table"]["Row"];
 
@@ -542,7 +549,8 @@ export type FieldType =
   | "FILE"
   | "DATE"
   | "TIME"
-  | "LINK";
+  | "LINK"
+  | "MULTIPLE CHOICE";
 // | "SLIDER";
 export type FieldTagType =
   | "POSITIVE_METRIC"
@@ -771,6 +779,7 @@ export type FormType = {
     section_field: (FieldTableRow & {
       field_option: OptionTableRow[];
       field_section_duplicatable_id?: string;
+      field_correct_response: FieldCorrectResponseTableRow | null;
     })[];
   })[];
   form_team_group: {
@@ -821,8 +830,8 @@ export type FormWithResponseType = {
   form_section: (SectionTableRow & {
     section_field: (FieldTableRow & {
       field_section_duplicatable_id?: string;
-    } & {
       field_option: OptionTableRow[];
+      field_correct_response: FieldCorrectResponseTableRow | null;
       field_response?: unknown;
       field_prefix?: string;
     })[];

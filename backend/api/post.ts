@@ -468,6 +468,8 @@ export const createRequest = async (
     isFormslyForm: boolean;
     projectId: string;
     teamName: string;
+    status?: string;
+    requestScore?: number;
   }
 ) => {
   const {
@@ -479,6 +481,8 @@ export const createRequest = async (
     isFormslyForm,
     projectId,
     teamName,
+    status,
+    requestScore,
   } = params;
 
   const requestId = uuidv4();
@@ -594,6 +598,8 @@ export const createRequest = async (
         isFormslyForm,
         projectId,
         teamId,
+        status,
+        requestScore,
       },
     })
     .select()

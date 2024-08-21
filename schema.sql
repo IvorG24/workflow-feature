@@ -1340,7 +1340,9 @@ AS $$
       formName,
       isFormslyForm,
       projectId,
-      teamId
+      teamId,
+      status,
+      requestScore
     } = input_data;
 
     let formslyIdPrefix = '';
@@ -1420,12 +1422,16 @@ AS $$
             request_id,
             request_form_id
             ${teamMemberId ? `,request_team_member_id` : ""}
+            ${status ? `,request_status` : ""}
+            ${status ? `,request_status_date_updated` : ""}
           ) 
           VALUES 
           (
             '${requestId}',
             '${formId}'
             ${teamMemberId ? `,'${teamMemberId}'` : ""}
+            ${status ? `,'${status}'` : ""}
+            ${status ? `,NOW()` : ""}
           ) 
           RETURNING *
         `)[0];
@@ -1435,35 +1441,43 @@ AS $$
           INSERT INTO request_schema.request_table 
           (
             request_id,
-            request_form_id
-            ${teamMemberId ? `,request_team_member_id` : ""},
+            request_form_id,
             request_formsly_id_prefix,
             request_formsly_id_serial
+            ${teamMemberId ? `,request_team_member_id` : ""}
             ${projectId ? `,request_project_id` : ""}
+            ${status ? `,request_status` : ""}
+            ${status ? `,request_status_date_updated` : ""}
           ) 
           VALUES 
           (
             '${requestId}',
-            '${formId}'
-            ${teamMemberId ? `,'${teamMemberId}'` : ""},
+            '${formId}',
             '${formslyIdPrefix}',
             '${formslyIdSerial}'
+            ${teamMemberId ? `,'${teamMemberId}'` : ""}
             ${projectId ? `,'${projectId}'` : ""}
+            ${status ? `,'${status}'` : ""}
+            ${status ? `,NOW()` : ""}
           ) 
           RETURNING *
         `
       )[0];
     }
 
-    plv8.execute(`INSERT INTO request_schema.request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id,request_response_prefix) VALUES ${responseValues};`);
+    plv8.execute(`INSERT INTO request_schema.request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id,request_response_prefix) VALUES ${responseValues}`);
 
-    plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues};`);
+    if (!status) {
+      plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues}`);
+    } else {
+      plv8.execute(`INSERT INTO request_schema.request_score_table (request_score_value,request_score_request_id) VALUES (${requestScore}, '${requestId}')`);
+    }
 
-    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}';`);
+    const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}'`);
     const activeTeam = activeTeamResult.length > 0 ? activeTeamResult[0] : null;
 
-    if (activeTeam) {
-      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key;`);
+    if (activeTeam && requestSignerNotificationInput.length) {
+      const teamNameUrlKeyResult = plv8.execute(`SELECT public.format_team_name_to_url_key('${activeTeam.team_name}') AS url_key`);
       const teamNameUrlKey = teamNameUrlKeyResult.length > 0 ? teamNameUrlKeyResult[0].url_key : null;
 
       if (teamNameUrlKey) {
@@ -1474,7 +1488,7 @@ AS $$
         )
         .join(",");
 
-        plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues};`);
+        plv8.execute(`INSERT INTO public.notification_table (notification_app,notification_content,notification_redirect_url,notification_team_id,notification_type,notification_user_id) VALUES ${notificationValues}`);
       }
     }
     
@@ -13891,18 +13905,29 @@ AS $$
         `
       );
       const field = fieldData.map(field => {
-        let optionData = [];
+        const optionData = plv8.execute(
+          `
+            SELECT *
+            FROM form_schema.option_table
+            WHERE option_field_id = '${field.field_id}'
+            ORDER BY option_order ASC
+          `
+        );
 
-        optionData = plv8.execute( `
-          SELECT *
-          FROM form_schema.option_table
-          WHERE option_field_id = '${field.field_id}'
-          ORDER BY option_order ASC
-        `);
+        const correctResponseData = plv8.execute(
+          `
+            SELECT * 
+            FROM form_schema.correct_response_table
+            WHERE
+              correct_response_field_id = '${field.field_id}'
+            LIMIT 1
+          `
+        );
    
         return {
           ...field,
-          field_option: optionData
+          field_option: optionData,
+          field_correct_response: correctResponseData.length ? correctResponseData[0] : null
         };
       });
       sectionData.push({
@@ -14647,21 +14672,41 @@ AS $$
         `
       );
       if(onlineApplicationData.length){
-        const onlineAssessmentData  = plv8.execute(
+        onlineAssessmentData  = plv8.execute(
           `
-            SELECT request_view.*
-            FROM public.request_view
-            INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-            WHERE
-              (
-                request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
-                AND request_response = '"${requestId}"'
-              )
-              AND
-              (
-                request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
-                AND request_response = 'onlineApplicationData'
-              )
+            SELECT 
+              request_date_created,
+              request_form_id,
+              request_formsly_id,
+              request_formsly_id_prefix,
+              request_formsly_id_serial,
+              request_id,
+              request_is_disabled,
+              request_jira_id,
+              request_jira_link,
+              request_otp_id,
+              request_project_id,
+              request_status,
+              request_status_date_updated,
+              request_team_member_id
+            FROM (
+              SELECT 
+                request_view.*,
+                ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS RowNumber 
+              FROM public.request_view
+              INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+              WHERE
+                (
+                  request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
+                  AND request_response = '"${requestId}"'
+                )
+                OR
+                (
+                  request_response_field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
+                  AND request_response = '"${onlineApplicationData[0].request_formsly_id}"'
+                )
+            ) AS a
+            WHERE a.RowNumber = 2
           `
         );
       }
