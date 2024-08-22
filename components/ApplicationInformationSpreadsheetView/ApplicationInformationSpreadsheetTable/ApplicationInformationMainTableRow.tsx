@@ -154,7 +154,7 @@ const ApplicationInformationMainTableRow = ({
             return pagIbigNumberFormatter(`${response}`);
           case "TIN":
             return tinNumberFormatter(`${response}`);
-          case "Expected Salary (PHP)":
+          case "Expected Monthly Salary (PHP)":
             return pesoFormatter(`${response}`);
           default:
             return response;

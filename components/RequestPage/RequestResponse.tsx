@@ -229,7 +229,7 @@ const RequestResponse = ({
                   "Invoice Amount",
                   "Cost",
                   "VAT",
-                  "Expected Salary (PHP)",
+                  "Expected Monthly Salary (PHP)",
                 ].includes(response.label)
                   ? 2
                   : 0
