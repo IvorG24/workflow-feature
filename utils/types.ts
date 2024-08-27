@@ -786,7 +786,7 @@ export type FormType = {
     section_field: (FieldTableRow & {
       field_option: OptionTableRow[];
       field_section_duplicatable_id?: string;
-      field_correct_response: FieldCorrectResponseTableRow | null;
+      field_correct_response?: FieldCorrectResponseTableRow | null;
     })[];
   })[];
   form_team_group: {
@@ -838,7 +838,7 @@ export type FormWithResponseType = {
     section_field: (FieldTableRow & {
       field_section_duplicatable_id?: string;
       field_option: OptionTableRow[];
-      field_correct_response: FieldCorrectResponseTableRow | null;
+      field_correct_response?: FieldCorrectResponseTableRow | null;
       field_response?: unknown;
       field_prefix?: string;
     })[];
