@@ -14782,7 +14782,8 @@ AS $$
       online_application_score,
       online_assessment_request_id,
       online_assessment_score,
-      online_assessment_date
+      online_assessment_date,
+      hr_screening_status
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -14830,17 +14831,23 @@ AS $$
         onlineAssessmentDateCondition += ` AND onlineAssessment.request_date_created <= '${new Date(online_assessment_date.end).toISOString()}'`;
       }
     }
+    let hrScreeningCondition = "";
+    if (hr_screening_status && hr_screening_status.length) {
+      hrScreeningCondition = `AND hr_screening_status IN (${hr_screening_status.map(status => `'${status}'`).join(", ")})`;
+    }
 
     const parentRequests = plv8.execute(
       `
         SELECT
+          applicationInformation.request_id AS hr_request_reference_id,
           request_response AS position,
           applicationInformation.request_formsly_id AS application_information_request_id,
           onlineApplication.request_formsly_id AS online_application_request_id,
           onlineApplicationScore.request_score_value AS online_application_score,
           onlineAssessment.request_formsly_id AS online_assessment_request_id,
           onlineAssessmentScore.request_score_value AS online_assessment_score,
-          onlineAssessment.request_date_created AS online_assessment_date
+          onlineAssessment.request_date_created AS online_assessment_date,
+          hr_screening_status
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
@@ -14849,6 +14856,7 @@ AS $$
         INNER JOIN request_schema.request_score_table AS onlineApplicationScore ON onlineApplicationScore.request_score_request_id = onlineApplication.request_id
         INNER JOIN public.request_view AS onlineAssessment ON onlineAssessment.request_id = request_connection_online_assessment_request_id
         INNER JOIN request_schema.request_score_table AS onlineAssessmentScore ON onlineAssessmentScore.request_score_request_id = onlineAssessment.request_id
+        INNER JOIN hr_schema.hr_screening_table ON hr_screening_request_id = applicationInformation.request_id
         WHERE 
           applicationInformation.request_status = 'APPROVED'
           AND onlineApplication.request_status = 'APPROVED'
@@ -14860,6 +14868,7 @@ AS $$
           ${onlineAssessmentRequestIdCondition.length ? onlineAssessmentRequestIdCondition : ""}
           ${onlineAssessmentScoreCondition.length ? onlineAssessmentScoreCondition : ""}
           ${onlineAssessmentDateCondition.length ? onlineAssessmentDateCondition : ""}
+          ${hrScreeningCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'

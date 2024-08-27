@@ -41,7 +41,7 @@ const HRScreeningColumnsMenu = ({
         opened={isColumnMenuOpen}
         onClose={closeColumnMenu}
         position="right"
-        title="Application Information Column Menu"
+        title="HR Screening Columns Menu"
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >

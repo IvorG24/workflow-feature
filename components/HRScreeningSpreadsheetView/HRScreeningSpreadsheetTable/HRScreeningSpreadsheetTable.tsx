@@ -37,6 +37,10 @@ type Props = {
   setSort: Dispatch<SetStateAction<{ sortBy: string; order: string }>>;
   isMax: boolean;
   hiddenColumnList: string[];
+  handleUpdateHRScreeningStatus: (
+    applicationinformationRqeuestId: string,
+    status: string
+  ) => void;
 };
 
 const HRScreeningSpreadsheetTable = ({
@@ -48,6 +52,7 @@ const HRScreeningSpreadsheetTable = ({
   setSort,
   isMax,
   hiddenColumnList,
+  handleUpdateHRScreeningStatus,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -161,6 +166,19 @@ const HRScreeningSpreadsheetTable = ({
                     </Flex>
                   </th>
                 )}
+                {!hiddenColumnList.includes("hr_screening_status") && (
+                  <th>
+                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
+                      <Text>HR Screening Status</Text>
+                      {sortButtons("hr_screening_status")}
+                    </Flex>
+                  </th>
+                )}
+                <th>
+                  <Flex gap="xs" align="center" justify="center" wrap="wrap">
+                    <Text>Action</Text>
+                  </Flex>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -169,6 +187,7 @@ const HRScreeningSpreadsheetTable = ({
                   key={item.application_information_request_id}
                   item={item}
                   hiddenColumnList={hiddenColumnList}
+                  handleUpdateHRScreeningStatus={handleUpdateHRScreeningStatus}
                 />
               ))}
             </tbody>

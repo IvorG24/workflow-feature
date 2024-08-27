@@ -2226,6 +2226,7 @@ export type FetchUserRequestListParams = {
 };
 
 export type HRScreeningSpreadsheetData = {
+  hr_request_reference_id: string;
   position: string;
   application_information_request_id: string;
   online_application_request_id: string;
@@ -2233,6 +2234,7 @@ export type HRScreeningSpreadsheetData = {
   online_assessment_request_id: string;
   online_assessment_score: number;
   online_assessment_date: string;
+  hr_screening_status: string;
 };
 
 export type HRScreeningFilterFormValues = {
@@ -2258,4 +2260,5 @@ export type HRScreeningFilterFormValues = {
     start?: string;
     end?: string;
   };
+  hr_screening_status?: string;
 };

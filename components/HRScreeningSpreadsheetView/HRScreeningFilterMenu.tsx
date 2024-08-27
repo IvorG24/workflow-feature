@@ -201,6 +201,27 @@ const HRScreeningFilterMenu = ({
                 />
               </Flex>
             </Stack>
+            <Controller
+              control={control}
+              name="hr_screening_status"
+              render={({ field: { value, onChange } }) => {
+                const newValue = value ?? [];
+                return (
+                  <MultiSelect
+                    label="HR Screening Status"
+                    data={[
+                      { value: "APPROVED", label: "Approved" },
+                      { value: "PENDING", label: "Pending" },
+                      { value: "REJECTED", label: "Rejected" },
+                    ]}
+                    value={newValue as string[]}
+                    onChange={onChange}
+                    clearable
+                    searchable
+                  />
+                );
+              }}
+            />
             <Button variant="light" mt="xs" onClick={handleReset}>
               Reset Filter
             </Button>

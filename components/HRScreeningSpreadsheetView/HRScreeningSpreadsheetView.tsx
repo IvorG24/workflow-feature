@@ -1,4 +1,6 @@
 import { getHRScreeningSummaryData } from "@/backend/api/get";
+import { updateHRScreeningStatus } from "@/backend/api/update";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
   HRScreeningFilterFormValues,
@@ -39,6 +41,7 @@ const formDefaultValues = {
     start: "",
     end: "",
   },
+  hr_screening_status: "",
 };
 
 type Props = {
@@ -48,6 +51,7 @@ type Props = {
 const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
+  const teamMember = useUserTeamMember();
   const [data, setData] = useState<HRScreeningSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -154,6 +158,44 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
     fetchInitialData();
   }, [user?.id]);
 
+  const handleUpdateHRScreeningStatus = async (
+    applicationinformationRqeuestId: string,
+    status: string
+  ) => {
+    setIsLoading(true);
+    try {
+      if (!teamMember?.team_member_id) throw new Error();
+
+      await updateHRScreeningStatus(supabaseClient, {
+        applicationinformationRqeuestId,
+        status,
+        teamMemberId: teamMember.team_member_id,
+      });
+      setData((prev) =>
+        prev.map((data) => {
+          if (data.hr_request_reference_id !== applicationinformationRqeuestId)
+            return data;
+
+          return {
+            ...data,
+            hr_screening_status: status,
+          };
+        })
+      );
+      notifications.show({
+        message: `HR screening ${status.toLowerCase()}.`,
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Stack pos="relative">
       <Box>
@@ -190,6 +232,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
         setSort={setSort}
         isMax={isMax}
         hiddenColumnList={hiddenColumnList}
+        handleUpdateHRScreeningStatus={handleUpdateHRScreeningStatus}
       />
     </Stack>
   );

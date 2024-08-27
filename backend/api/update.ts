@@ -34,7 +34,7 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { getCurrentDate, getMemoFormat } from "./get";
+import { getCurrentDate, getCurrentDateString, getMemoFormat } from "./get";
 import { createNotification, uploadImage } from "./post";
 
 // Update Team
@@ -1310,4 +1310,27 @@ export const cancelPCVRequestByCostEngineer = async (
   };
 
   await createNotification(supabaseClient, notification);
+};
+
+export const updateHRScreeningStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    applicationinformationRqeuestId: string;
+    status: string;
+    teamMemberId: string;
+  }
+) => {
+  const { applicationinformationRqeuestId, status, teamMemberId } = params;
+  const currentDate = await getCurrentDateString(supabaseClient);
+
+  const { error } = await supabaseClient
+    .schema("hr_schema")
+    .from("hr_screening_table")
+    .update({
+      hr_screening_status: status,
+      hr_screening_status_date_updated: currentDate,
+      hr_screening_team_member_id: teamMemberId,
+    })
+    .eq("hr_screening_request_id", applicationinformationRqeuestId);
+  if (error) throw error;
 };
