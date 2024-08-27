@@ -5,36 +5,40 @@ import { Badge, Button, Group, Stack, Text, Title } from "@mantine/core";
 import { IconMaximize } from "@tabler/icons-react";
 
 type Props = {
-  onlineAssessmentData: RequestViewRow;
+  technicalAssessmentData: RequestViewRow;
 };
-const OnlineAssessment = ({ onlineAssessmentData }: Props) => {
+const TechnicalAssessment = ({ technicalAssessmentData }: Props) => {
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
-      <Title order={3}>Online Application</Title>
+      <Title order={3}>General Assessment</Title>
       <Stack>
         <Group>
           <Text>Request ID: </Text>
-          <Title order={5}>{onlineAssessmentData.request_formsly_id}</Title>
+          <Title order={5}>{technicalAssessmentData.request_formsly_id}</Title>
         </Group>
         <Group>
           <Text>Date Created: </Text>
           <Title order={5}>
             {formatDate(
-              new Date(onlineAssessmentData.request_date_created ?? "")
+              new Date(technicalAssessmentData.request_date_created ?? "")
             )}
           </Title>
         </Group>
         <Group>
           <Text>Status: </Text>
           <Badge
-            color={getStatusToColor(onlineAssessmentData.request_status ?? "")}
+            color={getStatusToColor(
+              technicalAssessmentData.request_status ?? ""
+            )}
           >
-            {onlineAssessmentData.request_status}
+            {technicalAssessmentData.request_status}
           </Badge>
           <Text color="dimmed">
             on{" "}
             {formatDate(
-              new Date(onlineAssessmentData.request_status_date_updated ?? "")
+              new Date(
+                technicalAssessmentData.request_status_date_updated ?? ""
+              )
             )}
           </Text>
         </Group>
@@ -45,7 +49,7 @@ const OnlineAssessment = ({ onlineAssessmentData }: Props) => {
             variant="light"
             onClick={() => {
               window.open(
-                `/user/requests/${onlineAssessmentData.request_formsly_id}`,
+                `/user/requests/${technicalAssessmentData.request_formsly_id}`,
                 "_blank"
               );
             }}
@@ -58,4 +62,4 @@ const OnlineAssessment = ({ onlineAssessmentData }: Props) => {
   );
 };
 
-export default OnlineAssessment;
+export default TechnicalAssessment;

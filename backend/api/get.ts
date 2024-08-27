@@ -42,8 +42,8 @@ import {
   FieldTableRow,
   FormTableRow,
   FormType,
-  HRScreeningFilterFormValues,
-  HRScreeningSpreadsheetData,
+  HRPhoneInterviewFilterFormValues,
+  HRPhoneInterviewSpreadsheetData,
   InitialFormType,
   ItemCategoryType,
   ItemCategoryWithSigner,
@@ -6058,20 +6058,20 @@ export const getPublicFormList = async (
   return data;
 };
 
-export const getHRScreeningSummaryData = async (
+export const getHRPhoneInterviewSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
-  params: HRScreeningFilterFormValues & {
+  params: HRPhoneInterviewFilterFormValues & {
     userId: string;
   }
 ) => {
   const updatedParams = {
     ...params,
-    online_assessment_date: {
-      start: params.online_assessment_date?.start
-        ? new Date(params.online_assessment_date?.start).toLocaleDateString()
+    technical_assessment_date: {
+      start: params.technical_assessment_date?.start
+        ? new Date(params.technical_assessment_date?.start).toLocaleDateString()
         : undefined,
-      end: params.online_assessment_date?.end
-        ? moment(params.online_assessment_date?.end)
+      end: params.technical_assessment_date?.end
+        ? moment(params.technical_assessment_date?.end)
             .add(1, "day")
             .format("MM-DD-YYYY")
         : undefined,
@@ -6079,13 +6079,13 @@ export const getHRScreeningSummaryData = async (
   };
 
   const { data, error } = await supabaseClient.rpc(
-    "get_hr_screening_summary_table",
+    "get_hr_phone_interview_summary_table",
     {
       input_data: updatedParams,
     }
   );
   if (error) throw error;
-  return data as HRScreeningSpreadsheetData[];
+  return data as HRPhoneInterviewSpreadsheetData[];
 };
 
 export const getAllPoisitions = async (

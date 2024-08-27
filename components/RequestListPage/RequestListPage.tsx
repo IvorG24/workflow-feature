@@ -252,11 +252,11 @@ const RequestListPage = ({
                   await router.push(
                     `/${formatTeamNameToUrlKey(
                       activeTeam.team_name
-                    )}/requests/hr-screening-spreadsheet-view`
+                    )}/requests/hr-phone-interview-spreadsheet-view`
                   )
                 }
               >
-                HR Screening Spreadhsheet View
+                HR Phone Interview Spreadhsheet View
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>

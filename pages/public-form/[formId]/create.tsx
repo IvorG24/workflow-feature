@@ -1,7 +1,7 @@
 import CreateApplicationInformationRequestPage from "@/components/CreateApplicationInformationRequestPage/CreateApplicationInformationRequestPage";
-import CreateOnlineApplicationRequestPage from "@/components/CreateOnlineApplicationRequestPage/CreateOnlineApplicationRequestPage";
-import CreateOnlineAssessmentRequestPage from "@/components/CreateOnlineAssessmentRequestPage/CreateOnlineAssessmentRequestPage";
+import CreateGeneralAssessmentRequestPage from "@/components/CreateGeneralAssessmentRequestPage/CreateGeneralAssessmentRequestPage";
 import CreateRequestPage from "@/components/CreateRequestPage/CreateRequestPage";
+import CreateTechnicalAssessmentRequestPage from "@/components/CreateTechnicalAssessmentRequestPage/CreateTechnicalAssessmentRequestPage";
 import Meta from "@/components/Meta/Meta";
 import { FormWithResponseType } from "@/utils/types";
 import { Space } from "@mantine/core";
@@ -17,7 +17,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         input_data: {
           formId: context.query.formId,
           applicationInformationId: context.query.applicationInformationId,
-          onlineApplicationId: context.query.onlineApplicationId,
+          generalAssessmentId: context.query.generalAssessmentId,
         },
       }
     );
@@ -45,10 +45,10 @@ const Page = ({ form }: Props) => {
     switch (form.form_name) {
       case "Application Information":
         return <CreateApplicationInformationRequestPage form={form} />;
-      case "Online Application":
-        return <CreateOnlineApplicationRequestPage form={form} />;
-      case "Online Assessment":
-        return <CreateOnlineAssessmentRequestPage form={form} />;
+      case "General Assessment":
+        return <CreateGeneralAssessmentRequestPage form={form} />;
+      case "Technical Assessment":
+        return <CreateTechnicalAssessmentRequestPage form={form} />;
       default:
         return (
           <CreateRequestPage form={form} formslyFormName={form.form_name} />

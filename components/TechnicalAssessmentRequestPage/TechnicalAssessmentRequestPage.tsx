@@ -13,7 +13,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDate } from "@/utils/constant";
-import { JoyRideNoSSR, safeParse } from "@/utils/functions";
+import { safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -27,16 +27,7 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import {
-  Alert,
-  Button,
-  Container,
-  Flex,
-  Stack,
-  Text,
-  Title,
-  useMantineTheme,
-} from "@mantine/core";
+import { Alert, Container, Flex, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -50,10 +41,10 @@ type Props = {
   request: RequestWithResponseType;
 };
 
-const OnlineApplicationRequestPage = ({ request }: Props) => {
+const TechnicalAssessmentRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
-  const { colors } = useMantineTheme();
+
   const { setIsLoading } = useLoadingActions();
   const [isNoteClosed, setIsNoteClosed] = useState(false);
 
@@ -355,32 +346,10 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
       safeParse(
         request.request_form.form_section[1].section_field[0].field_response[0]
           .request_response ?? ""
-      ) &&
-    request.isWithNextStep;
+      );
 
   return (
     <Container>
-      <JoyRideNoSSR
-        steps={[
-          {
-            target: ".online-assessment",
-            content: (
-              <Text>
-                You passed the online application, you can now continue with the
-                online assessment. To continue, simply click the &ldquo;Next
-                Step&ldquo; button.
-              </Text>
-            ),
-            disableBeacon: true,
-          },
-        ]}
-        run={true}
-        hideCloseButton
-        disableCloseOnEsc
-        disableOverlayClose
-        hideBackButton
-        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
-      />
       {!isNoteClosed && router.pathname.includes("public-request") && (
         <Alert
           mb="xl"
@@ -402,18 +371,6 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
         <Title order={2} color="dimmed">
           Request
         </Title>
-        {nextStep && (
-          <Button
-            className="online-assessment"
-            onClick={() =>
-              router.push(
-                `/public-form/cc410201-f5a6-49ce-a06c-c2ce2c169436/create?onlineApplicationId=${request.request_formsly_id}`
-              )
-            }
-          >
-            Next Step
-          </Button>
-        )}
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection
@@ -425,7 +382,7 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
           requestJira={requestJira}
         />
 
-        <Stack spacing="xl">
+        <Stack spacing="xl" mt="lg">
           {formSection.map((section, idx) => {
             return (
               <RequestSection
@@ -461,8 +418,8 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
             requestSignerId={isUserSigner?.request_signer_id}
           />
         )}
-        {/* 
-        <RequestSignerSection signerList={signerList} /> */}
+
+        {/* <RequestSignerSection signerList={signerList} /> */}
       </Stack>
 
       <RequestCommentList
@@ -478,4 +435,4 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
   );
 };
 
-export default OnlineApplicationRequestPage;
+export default TechnicalAssessmentRequestPage;

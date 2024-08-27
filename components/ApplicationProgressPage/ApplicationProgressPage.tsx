@@ -1,4 +1,4 @@
-import { HRScreeningTableRow, RequestViewRow } from "@/utils/types";
+import { HRPhoneInterviewTableRow, RequestViewRow } from "@/utils/types";
 import {
   Badge,
   Button,
@@ -17,29 +17,29 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import ApplicationInformation from "./ApplicationInformation";
-import HRScreening from "./HRScreening";
-import OnlineApplication from "./OnlineApplication";
-import OnlineAssessment from "./OnlineAssessment";
+import GeneralAssessment from "./GeneralAssessment";
+import HRPhoneInterview from "./HRPhoneInterview";
+import TechnicalAssessment from "./TechnicalAssessment";
 
 type Props = {
   applicationInformationData: RequestViewRow | null;
-  onlineApplicationData: RequestViewRow | null;
-  onlineAssessmentData: RequestViewRow | null;
-  hrScreeningData: HRScreeningTableRow;
+  generalAssessmentData: RequestViewRow | null;
+  technicalAssessmentData: RequestViewRow | null;
+  hrPhoneInterviewData: HRPhoneInterviewTableRow;
 };
 const ApplicationProgressPage = ({
   applicationInformationData,
-  onlineApplicationData,
-  onlineAssessmentData,
-  hrScreeningData,
+  generalAssessmentData,
+  technicalAssessmentData,
+  hrPhoneInterviewData,
 }: Props) => {
   let maxValue = 0;
 
-  if (Boolean(hrScreeningData)) {
+  if (Boolean(hrPhoneInterviewData)) {
     maxValue = 3;
-  } else if (Boolean(onlineAssessmentData)) {
+  } else if (Boolean(technicalAssessmentData)) {
     maxValue = 2;
-  } else if (Boolean(onlineApplicationData)) {
+  } else if (Boolean(generalAssessmentData)) {
     maxValue = 1;
   } else if (Boolean(applicationInformationData)) {
     maxValue = 0;
@@ -93,27 +93,31 @@ const ApplicationProgressPage = ({
             applicationInformationData={applicationInformationData}
             isWithNextStep={
               applicationInformationData.request_status === "APPROVED" &&
-              !Boolean(onlineApplicationData)
+              !Boolean(generalAssessmentData)
             }
           />
         );
       case 1:
-        if (!onlineApplicationData) return;
+        if (!generalAssessmentData) return;
         return (
-          <OnlineApplication
-            onlineApplicationData={onlineApplicationData}
+          <GeneralAssessment
+            generalAssessmentData={generalAssessmentData}
             isWithNextStep={
-              onlineApplicationData.request_status === "APPROVED" &&
-              !Boolean(onlineAssessmentData)
+              generalAssessmentData.request_status === "APPROVED" &&
+              !Boolean(technicalAssessmentData)
             }
           />
         );
       case 2:
-        if (!onlineAssessmentData) return;
-        return <OnlineAssessment onlineAssessmentData={onlineAssessmentData} />;
+        if (!technicalAssessmentData) return;
+        return (
+          <TechnicalAssessment
+            technicalAssessmentData={technicalAssessmentData}
+          />
+        );
       case 3:
-        if (!hrScreeningData) return;
-        return <HRScreening hrScreeningData={hrScreeningData} />;
+        if (!hrPhoneInterviewData) return;
+        return <HRPhoneInterview hrPhoneInterviewData={hrPhoneInterviewData} />;
     }
   };
 
@@ -138,21 +142,23 @@ const ApplicationProgressPage = ({
             )}
           />
           <Stepper.Step
-            label="Online Application"
-            disabled={!Boolean(onlineApplicationData)}
-            {...stepperProps(onlineApplicationData?.request_status as string)}
+            label="General Assessment"
+            disabled={!Boolean(generalAssessmentData)}
+            {...stepperProps(generalAssessmentData?.request_status as string)}
           />
           <Stepper.Step
-            label="Online Assessment"
-            disabled={!Boolean(onlineAssessmentData)}
-            {...stepperProps(onlineAssessmentData?.request_status as string)}
+            label="Technical Assessment"
+            disabled={!Boolean(technicalAssessmentData)}
+            {...stepperProps(technicalAssessmentData?.request_status as string)}
           />
           <Stepper.Step
-            label="HR Screening"
-            disabled={!Boolean(hrScreeningData)}
-            {...stepperProps(hrScreeningData?.hr_screening_status as string)}
+            label="HR Phone Interview"
+            disabled={!Boolean(hrPhoneInterviewData)}
+            {...stepperProps(
+              hrPhoneInterviewData?.hr_phone_interview_status as string
+            )}
           />
-          <Stepper.Step label="Director Screening" disabled />
+          <Stepper.Step label="Qualifier Interview" disabled />
           <Stepper.Step label="Job Offer" disabled />
         </Stepper>
         <Paper p="xl" shadow="xs" sx={{ flex: 1 }}>

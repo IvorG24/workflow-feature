@@ -1,42 +1,48 @@
 import { formatDate } from "@/utils/constant";
 import { getStatusToColor } from "@/utils/styling";
-import { HRScreeningTableRow } from "@/utils/types";
+import { HRPhoneInterviewTableRow } from "@/utils/types";
 import { Alert, Badge, Group, Stack, Text, Title } from "@mantine/core";
 import { IconNote } from "@tabler/icons-react";
 
 type Props = {
-  hrScreeningData: HRScreeningTableRow;
+  hrPhoneInterviewData: HRPhoneInterviewTableRow;
 };
-const HRScreening = ({ hrScreeningData }: Props) => {
+const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
-      <Title order={3}>HR Screening</Title>
+      <Title order={3}>HR Phone Interview</Title>
       <Stack>
         <Group>
           <Text>Date Created: </Text>
           <Title order={5}>
             {formatDate(
-              new Date(hrScreeningData.hr_screening_date_created ?? "")
+              new Date(
+                hrPhoneInterviewData.hr_phone_interview_date_created ?? ""
+              )
             )}
           </Title>
         </Group>
         <Group>
           <Text>Status: </Text>
           <Badge
-            color={getStatusToColor(hrScreeningData.hr_screening_status ?? "")}
+            color={getStatusToColor(
+              hrPhoneInterviewData.hr_phone_interview_status ?? ""
+            )}
           >
-            {hrScreeningData.hr_screening_status}
+            {hrPhoneInterviewData.hr_phone_interview_status}
           </Badge>
-          {hrScreeningData.hr_screening_status_date_updated && (
+          {hrPhoneInterviewData.hr_phone_interview_status_date_updated && (
             <Text color="dimmed">
               on{" "}
               {formatDate(
-                new Date(hrScreeningData.hr_screening_status_date_updated)
+                new Date(
+                  hrPhoneInterviewData.hr_phone_interview_status_date_updated
+                )
               )}
             </Text>
           )}
         </Group>
-        {hrScreeningData.hr_screening_status === "PENDING" && (
+        {hrPhoneInterviewData.hr_phone_interview_status === "PENDING" && (
           <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
             <Text>
               Thank you for your application. We are currently reviewing your
@@ -50,4 +56,4 @@ const HRScreening = ({ hrScreeningData }: Props) => {
   );
 };
 
-export default HRScreening;
+export default HRPhoneInterview;

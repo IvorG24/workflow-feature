@@ -1312,7 +1312,7 @@ export const cancelPCVRequestByCostEngineer = async (
   await createNotification(supabaseClient, notification);
 };
 
-export const updateHRScreeningStatus = async (
+export const updateHRPhoneInterviewStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     applicationinformationRqeuestId: string;
@@ -1325,12 +1325,12 @@ export const updateHRScreeningStatus = async (
 
   const { error } = await supabaseClient
     .schema("hr_schema")
-    .from("hr_screening_table")
+    .from("hr_phone_interview_table")
     .update({
-      hr_screening_status: status,
-      hr_screening_status_date_updated: currentDate,
-      hr_screening_team_member_id: teamMemberId,
+      hr_phone_interview_status: status,
+      hr_phone_interview_status_date_updated: currentDate,
+      hr_phone_interview_team_member_id: teamMemberId,
     })
-    .eq("hr_screening_request_id", applicationinformationRqeuestId);
+    .eq("hr_phone_interview_request_id", applicationinformationRqeuestId);
   if (error) throw error;
 };

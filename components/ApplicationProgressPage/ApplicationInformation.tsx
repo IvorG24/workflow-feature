@@ -83,7 +83,7 @@ const ApplicationInformation = ({
             <Text>Next Step: </Text>
             <Button
               rightIcon={<IconPlus size={16} />}
-              className="online-application"
+              className="general-assessment"
               onClick={() => {
                 router.push(
                   `/public-form/71f569a0-70a8-4609-82d2-5cc26ac1fe8c/create?applicationInformationId=${applicationInformationData.request_formsly_id}`
@@ -98,10 +98,10 @@ const ApplicationInformation = ({
       <JoyRideNoSSR
         steps={[
           {
-            target: ".online-application",
+            target: ".general-assessment",
             content: (
               <Text>
-                You can now continue with the online application since your
+                You can now continue with the general assessment since your
                 application information has been approved. To continue, simply
                 click the &ldquo;Create Request&ldquo; button.
               </Text>

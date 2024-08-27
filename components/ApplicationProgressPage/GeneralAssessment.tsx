@@ -15,11 +15,11 @@ import { IconMaximize, IconPlus } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 
 type Props = {
-  onlineApplicationData: RequestViewRow;
+  generalAssessmentData: RequestViewRow;
   isWithNextStep: boolean;
 };
-const OnlineApplication = ({
-  onlineApplicationData,
+const GeneralAssessment = ({
+  generalAssessmentData,
   isWithNextStep,
 }: Props) => {
   const router = useRouter();
@@ -27,31 +27,31 @@ const OnlineApplication = ({
 
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
-      <Title order={3}>Online Application</Title>
+      <Title order={3}>General Assessment</Title>
       <Stack>
         <Group>
           <Text>Request ID: </Text>
-          <Title order={5}>{onlineApplicationData.request_formsly_id}</Title>
+          <Title order={5}>{generalAssessmentData.request_formsly_id}</Title>
         </Group>
         <Group>
           <Text>Date Created: </Text>
           <Title order={5}>
             {formatDate(
-              new Date(onlineApplicationData.request_date_created ?? "")
+              new Date(generalAssessmentData.request_date_created ?? "")
             )}
           </Title>
         </Group>
         <Group>
           <Text>Status: </Text>
           <Badge
-            color={getStatusToColor(onlineApplicationData.request_status ?? "")}
+            color={getStatusToColor(generalAssessmentData.request_status ?? "")}
           >
-            {onlineApplicationData.request_status}
+            {generalAssessmentData.request_status}
           </Badge>
           <Text color="dimmed">
             on{" "}
             {formatDate(
-              new Date(onlineApplicationData.request_status_date_updated ?? "")
+              new Date(generalAssessmentData.request_status_date_updated ?? "")
             )}
           </Text>
         </Group>
@@ -62,7 +62,7 @@ const OnlineApplication = ({
             variant="light"
             onClick={() => {
               window.open(
-                `/user/requests/${onlineApplicationData.request_formsly_id}`,
+                `/user/requests/${generalAssessmentData.request_formsly_id}`,
                 "_blank"
               );
             }}
@@ -75,10 +75,10 @@ const OnlineApplication = ({
             <Text>Next Step: </Text>
             <Button
               rightIcon={<IconPlus size={16} />}
-              className="online-assessment"
+              className="technical-assessment"
               onClick={() => {
                 router.push(
-                  `/public-form/cc410201-f5a6-49ce-a06c-c2ce2c169436/create?onlineApplicationId=${onlineApplicationData.request_formsly_id}`
+                  `/public-form/cc410201-f5a6-49ce-a06c-c2ce2c169436/create?generalAssessmentId=${generalAssessmentData.request_formsly_id}`
                 );
               }}
             >
@@ -90,12 +90,12 @@ const OnlineApplication = ({
       <JoyRideNoSSR
         steps={[
           {
-            target: ".online-assessment",
+            target: ".technical-assessment",
             content: (
               <Text>
-                You passed the online application, you can now continue with the
-                online assessment. To continue, simply click the &ldquo;Create
-                Request&ldquo; button.
+                You passed the general assessment, you can now continue with the
+                technical assessment. To continue, simply click the
+                &ldquo;Create Request&ldquo; button.
               </Text>
             ),
             disableBeacon: true,
@@ -112,4 +112,4 @@ const OnlineApplication = ({
   );
 };
 
-export default OnlineApplication;
+export default GeneralAssessment;

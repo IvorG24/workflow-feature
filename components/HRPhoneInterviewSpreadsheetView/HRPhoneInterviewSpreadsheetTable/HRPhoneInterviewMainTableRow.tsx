@@ -3,7 +3,7 @@ import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor } from "@/utils/styling";
-import { HRScreeningSpreadsheetData } from "@/utils/types";
+import { HRPhoneInterviewSpreadsheetData } from "@/utils/types";
 import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { IconCheck, IconX } from "@tabler/icons-react";
@@ -17,18 +17,18 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  item: HRScreeningSpreadsheetData;
+  item: HRPhoneInterviewSpreadsheetData;
   hiddenColumnList: string[];
-  handleUpdateHRScreeningStatus: (
+  handleUpdateHRPhoneInterviewStatus: (
     applicationinformationRqeuestId: string,
     status: string
   ) => void;
 };
 
-const HRScreeningMainTableRow = ({
+const HRPhoneInterviewMainTableRow = ({
   item,
   hiddenColumnList,
-  handleUpdateHRScreeningStatus,
+  handleUpdateHRPhoneInterviewStatus,
 }: Props) => {
   const { classes } = useStyles();
   const team = useActiveTeam();
@@ -39,13 +39,16 @@ const HRScreeningMainTableRow = ({
       children: (
         <Text>{`Are you sure you want to ${
           action === "APPORVED" ? "approve" : "reject"
-        } this screening?`}</Text>
+        } this applicant?`}</Text>
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
       confirmProps: { color: action === "APPROVED" ? "green" : "red" },
       onConfirm: async () =>
-        handleUpdateHRScreeningStatus(item.hr_request_reference_id, action),
+        handleUpdateHRPhoneInterviewStatus(
+          item.hr_request_reference_id,
+          action
+        ),
     });
 
   if (!team.team_name) return null;
@@ -69,57 +72,57 @@ const HRScreeningMainTableRow = ({
           </Anchor>
         </td>
       )}
-      {!hiddenColumnList.includes("online_application_request_id") && (
+      {!hiddenColumnList.includes("general_assessment_request_id") && (
         <td>
           <Anchor
             target="_blank"
             href={`/${formatTeamNameToUrlKey(team.team_name)}/requests/${
-              item.online_application_request_id
+              item.general_assessment_request_id
             }`}
           >
-            {item.online_application_request_id}
+            {item.general_assessment_request_id}
           </Anchor>
         </td>
       )}
-      {!hiddenColumnList.includes("online_application_score") && (
+      {!hiddenColumnList.includes("general_assessment_score") && (
         <td>
-          <Text>{item.online_application_score}</Text>
+          <Text>{item.general_assessment_score}</Text>
         </td>
       )}
-      {!hiddenColumnList.includes("online_assessment_request_id") && (
+      {!hiddenColumnList.includes("technical_assessment_request_id") && (
         <td>
           <Anchor
             target="_blank"
             href={`/${formatTeamNameToUrlKey(team.team_name)}/requests/${
-              item.online_assessment_request_id
+              item.technical_assessment_request_id
             }`}
           >
-            {item.online_assessment_request_id}
+            {item.technical_assessment_request_id}
           </Anchor>
         </td>
       )}
-      {!hiddenColumnList.includes("online_assessment_score") && (
+      {!hiddenColumnList.includes("technical_assessment_score") && (
         <td>
-          <Text>{item.online_assessment_score}</Text>
+          <Text>{item.technical_assessment_score}</Text>
         </td>
       )}
-      {!hiddenColumnList.includes("online_assessment_date") && (
+      {!hiddenColumnList.includes("technical_assessment_date") && (
         <td>
-          <Text>{formatDate(new Date(item.online_assessment_date))}</Text>
+          <Text>{formatDate(new Date(item.technical_assessment_date))}</Text>
         </td>
       )}
-      {!hiddenColumnList.includes("hr_screening_status") && (
+      {!hiddenColumnList.includes("hr_phone_interview_status") && (
         <td>
           <Badge
             variant="filled"
-            color={getStatusToColor(item.hr_screening_status)}
+            color={getStatusToColor(item.hr_phone_interview_status)}
           >
-            {item.hr_screening_status}
+            {item.hr_phone_interview_status}
           </Badge>
         </td>
       )}
       <td>
-        {item.hr_screening_status === "PENDING" && (
+        {item.hr_phone_interview_status === "PENDING" && (
           <Flex align="center" justify="center" gap="xs" wrap="wrap">
             <Button
               color="green"
@@ -144,4 +147,4 @@ const HRScreeningMainTableRow = ({
   );
 };
 
-export default HRScreeningMainTableRow;
+export default HRPhoneInterviewMainTableRow;

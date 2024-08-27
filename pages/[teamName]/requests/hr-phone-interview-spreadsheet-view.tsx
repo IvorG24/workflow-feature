@@ -1,5 +1,5 @@
 import { getAllPoisitions } from "@/backend/api/get";
-import HRScreeningSpreadsheetView from "@/components/HRScreeningSpreadsheetView/HRScreeningSpreadsheetView";
+import HRPhoneInterviewSpreadsheetView from "@/components/HRPhoneInterviewSpreadsheetView/HRPhoneInterviewSpreadsheetView";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { OptionType } from "@/utils/types";
@@ -37,7 +37,9 @@ const Page = ({ positionOptionList }: Props) => {
         description="Application Information View Page"
         url="/{teamName}/requests/application-information-spreadsheet-view"
       />
-      <HRScreeningSpreadsheetView positionOptionList={positionOptionList} />
+      <HRPhoneInterviewSpreadsheetView
+        positionOptionList={positionOptionList}
+      />
     </>
   );
 };

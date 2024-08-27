@@ -1,7 +1,7 @@
 import ApplicationProgressPage from "@/components/ApplicationProgressPage/ApplicationProgressPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { HRScreeningTableRow, RequestViewRow } from "@/utils/types";
+import { HRPhoneInterviewTableRow, RequestViewRow } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -32,16 +32,16 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   applicationInformationData: RequestViewRow;
-  onlineApplicationData: RequestViewRow;
-  onlineAssessmentData: RequestViewRow;
-  hrScreeningData: HRScreeningTableRow;
+  generalAssessmentData: RequestViewRow;
+  technicalAssessmentData: RequestViewRow;
+  hrPhoneInterviewData: HRPhoneInterviewTableRow;
 };
 
 const Page = ({
   applicationInformationData,
-  onlineApplicationData,
-  onlineAssessmentData,
-  hrScreeningData,
+  generalAssessmentData,
+  technicalAssessmentData,
+  hrPhoneInterviewData,
 }: Props) => {
   return (
     <>
@@ -51,9 +51,9 @@ const Page = ({
       />
       <ApplicationProgressPage
         applicationInformationData={applicationInformationData}
-        onlineApplicationData={onlineApplicationData}
-        onlineAssessmentData={onlineAssessmentData}
-        hrScreeningData={hrScreeningData}
+        generalAssessmentData={generalAssessmentData}
+        technicalAssessmentData={technicalAssessmentData}
+        hrPhoneInterviewData={hrPhoneInterviewData}
       />
     </>
   );

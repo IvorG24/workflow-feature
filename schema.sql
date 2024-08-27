@@ -1407,10 +1407,10 @@ AS $$
         endId = `PCVB`;
       } else if(formName === 'Application Information') {
         endId = `AI`;
-      } else if(formName === 'Online Application') {
-        endId = `OAP`;
-      } else if(formName === 'Online Assessment') {
-        endId = `OAS`;
+      } else if(formName === 'General Assessment') {
+        endId = `GA`;
+      } else if(formName === 'Technical Assessment') {
+        endId = `TA`;
       } 
       formslyIdPrefix = `${project ? `${project.team_project_code}` : ""}${endId}`;
     }
@@ -1475,7 +1475,7 @@ AS $$
 
       if (status === 'APPROVED' && formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
         const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id;
-        plv8.execute(`INSERT INTO hr_schema.hr_screening_table (hr_screening_request_id) VALUES ('${requestUUID}')`)
+        plv8.execute(`INSERT INTO hr_schema.hr_phone_interview_table (hr_phone_interview_request_id) VALUES ('${requestUUID}')`)
       }
     }
 
@@ -1502,10 +1502,10 @@ AS $$
       plv8.execute(`INSERT INTO hr_schema.request_connection_table (request_connection_application_information_request_id) VALUES ('${requestId}')`)
     } else if (formId === '71f569a0-70a8-4609-82d2-5cc26ac1fe8c') {
       const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
-      plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_online_application_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
+      plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_general_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
     } else if (formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
       const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
-      plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_online_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
+      plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_technical_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
     }
  });
  return request_data;
@@ -3550,7 +3550,7 @@ AS $$
       }
     }
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information', 'Online Application', 'Online Assessment'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information', 'General Assessment', 'Technical Assessment'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -13837,7 +13837,7 @@ AS $$
     const { 
       formId,
       applicationInformationId,
-      onlineApplicationId
+      generalAssessmentId
     } = input_data;
 
     const isStringParsable = (str) => {
@@ -13995,7 +13995,7 @@ AS $$
     };
 
     if (form.form_is_formsly_form) {
-      if (form.form_name === 'Online Application' && applicationInformationId) {
+      if (form.form_name === 'General Assessment' && applicationInformationId) {
         const requestData = plv8.execute(
           `
             SELECT request_id
@@ -14065,12 +14065,12 @@ AS $$
           }
         }
         return;
-      } else if (form.form_name === 'Online Assessment' && onlineApplicationId) {
+      } else if (form.form_name === 'Technical Assessment' && generalAssessmentId) {
         const requestData = plv8.execute(
           `
             SELECT request_id
             FROM public.request_view
-            WHERE request_formsly_id = '${onlineApplicationId}'
+            WHERE request_formsly_id = '${generalAssessmentId}'
           `
         );
         if(!requestData.length) throw new Error('Request not found');
@@ -14109,7 +14109,7 @@ AS $$
                   },
                   {
                     ...form.form_section[0].section_field[1],
-                    field_response: onlineApplicationId,
+                    field_response: generalAssessmentId,
                   },
                   ...form.form_section[0].section_field.slice(2)
                 ]
@@ -14579,7 +14579,7 @@ AS $$
       });
 
       let isWithViewIndicator = false;
-      if(request.request_status === 'APPROVED' && ['Application Information', 'Online Application'].includes(request.form_name)){
+      if(request.request_status === 'APPROVED' && ['Application Information', 'General Assessment'].includes(request.form_name)){
         const connectedRequestCount = plv8.execute(
           `
             SELECT COUNT(request_response_id)
@@ -14683,9 +14683,9 @@ AS $$
     } = input_data;
 
     let applicationInformationData = {};
-    let onlineApplicationData = {};
-    let onlineAssessmentData = {};
-    let hrScreeningData = {};
+    let generalAssessmentData = {};
+    let technicalAssessmentData = {};
+    let hrPhoneInterviewData = {};
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
     
@@ -14698,7 +14698,7 @@ AS $$
       `
     );
     if(applicationInformationData.length){
-      onlineApplicationData = plv8.execute(
+      generalAssessmentData = plv8.execute(
         `
           SELECT request_view.*
           FROM public.request_view
@@ -14708,8 +14708,8 @@ AS $$
             AND request_response = '"${requestId}"'
         `
       );
-      if(onlineApplicationData.length){
-        onlineAssessmentData  = plv8.execute(
+      if(generalAssessmentData.length){
+        technicalAssessmentData  = plv8.execute(
           `
             SELECT 
               request_date_created,
@@ -14740,30 +14740,30 @@ AS $$
                 OR
                 (
                   request_response_field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
-                  AND request_response = '"${onlineApplicationData[0].request_formsly_id}"'
+                  AND request_response = '"${generalAssessmentData[0].request_formsly_id}"'
                 )
             ) AS a
             WHERE a.RowNumber = 2
           `
         );
 
-        if (onlineAssessmentData.length) {
-          hrScreeningData = plv8.execute(`SELECT * FROM hr_schema.hr_screening_table WHERE hr_screening_request_id = '${requestUUID}'`)
+        if (technicalAssessmentData.length) {
+          hrPhoneInterviewData = plv8.execute(`SELECT * FROM hr_schema.hr_phone_interview_table WHERE hr_phone_interview_request_id = '${requestUUID}'`)
         }
       }
     }
 
     returnData = {
       applicationInformationData: applicationInformationData.length ? applicationInformationData[0] : null,
-      onlineApplicationData: onlineApplicationData.length ? onlineApplicationData[0] : null,
-      onlineAssessmentData: onlineAssessmentData.length ? onlineAssessmentData[0] : null,
-      hrScreeningData: hrScreeningData.length ? hrScreeningData[0] : null
+      generalAssessmentData: generalAssessmentData.length ? generalAssessmentData[0] : null,
+      technicalAssessmentData: technicalAssessmentData.length ? technicalAssessmentData[0] : null,
+      hrPhoneInterviewData: hrPhoneInterviewData.length ? hrPhoneInterviewData[0] : null
     }
   });
   return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_hr_screening_summary_table(
+CREATE OR REPLACE FUNCTION get_hr_phone_interview_summary_table(
   input_data JSON
 )
 RETURNS JSON 
@@ -14778,12 +14778,12 @@ AS $$
       sort,
       position,
       application_information_request_id,
-      online_application_request_id,
-      online_application_score,
-      online_assessment_request_id,
-      online_assessment_score,
-      online_assessment_date,
-      hr_screening_status
+      general_assessment_request_id,
+      general_assessment_score,
+      technical_assessment_request_id,
+      technical_assessment_score,
+      technical_assessment_date,
+      hr_phone_interview_status
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -14796,44 +14796,44 @@ AS $$
     if (application_information_request_id) {
       applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
     }
-    let onlineApplicationRequestIdCondition = '';
-    if (online_application_request_id) {
-      onlineApplicationRequestIdCondition = `AND onlineApplication.request_formsly_id ILIKE '%${online_application_request_id}%'`;
+    let generalAssessmentRequestIdCondition = '';
+    if (general_assessment_request_id) {
+      generalAssessmentRequestIdCondition = `AND generalAssessment.request_formsly_id ILIKE '%${general_assessment_request_id}%'`;
     }
-    let onlineApplicationScoreCondition = '';
-    if (online_application_score) {
-      if (online_application_score.start) {
-        onlineApplicationRequestIdCondition += ` AND onlineApplicationScore.request_score_value >= ${online_application_score.start}`;
+    let generalAssessmentScoreCondition = '';
+    if (general_assessment_score) {
+      if (general_assessment_score.start) {
+        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
       }
-      if (online_application_score.end) {
-        onlineApplicationRequestIdCondition += ` AND onlineApplicationScore.request_score_value <= ${online_application_score.end}`;
-      }
-    }
-    let onlineAssessmentRequestIdCondition = '';
-    if (online_assessment_request_id) {
-      onlineAssessmentRequestIdCondition = `AND onlineAssessment.request_formsly_id ILIKE '%${online_assessment_request_id}%'`;
-    }
-    let onlineAssessmentScoreCondition = '';
-    if (online_assessment_score) {
-      if (online_assessment_score.start) {
-        onlineAssessmentRequestIdCondition += ` AND onlineAssessmentScore.request_score_value >= ${online_assessment_score.start}`;
-      }
-      if (online_assessment_score.end) {
-        onlineAssessmentRequestIdCondition += ` AND onlineAssessmentScore.request_score_value <= ${online_assessment_score.end}`;
+      if (general_assessment_score.end) {
+        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
       }
     }
-    let onlineAssessmentDateCondition = "";
-    if (online_assessment_date) {
-      if (online_assessment_date.start) {
-        onlineAssessmentDateCondition += ` AND onlineAssessment.request_date_created >= '${new Date(online_assessment_date.start).toISOString()}'`;
+    let technicalAssessmentRequestIdCondition = '';
+    if (technical_assessment_request_id) {
+      technicalAssessmentRequestIdCondition = `AND technicalAssessment.request_formsly_id ILIKE '%${technical_assessment_request_id}%'`;
+    }
+    let technicalAssessmentScoreCondition = '';
+    if (technical_assessment_score) {
+      if (technical_assessment_score.start) {
+        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
       }
-      if (online_assessment_date.end) {
-        onlineAssessmentDateCondition += ` AND onlineAssessment.request_date_created <= '${new Date(online_assessment_date.end).toISOString()}'`;
+      if (technical_assessment_score.end) {
+        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
       }
     }
-    let hrScreeningCondition = "";
-    if (hr_screening_status && hr_screening_status.length) {
-      hrScreeningCondition = `AND hr_screening_status IN (${hr_screening_status.map(status => `'${status}'`).join(", ")})`;
+    let technicalAssessmentDateCondition = "";
+    if (technical_assessment_date) {
+      if (technical_assessment_date.start) {
+        technicalAssessmentDateCondition += ` AND technicalAssessment.request_date_created >= '${new Date(technical_assessment_date.start).toISOString()}'`;
+      }
+      if (technical_assessment_date.end) {
+        technicalAssessmentDateCondition += ` AND technicalAssessment.request_date_created <= '${new Date(technical_assessment_date.end).toISOString()}'`;
+      }
+    }
+    let hrPhoneInterviewCondition = "";
+    if (hr_phone_interview_status && hr_phone_interview_status.length) {
+      hrPhoneInterviewCondition = `AND hr_phone_interview_status IN (${hr_phone_interview_status.map(status => `'${status}'`).join(", ")})`;
     }
 
     const parentRequests = plv8.execute(
@@ -14842,33 +14842,33 @@ AS $$
           applicationInformation.request_id AS hr_request_reference_id,
           request_response AS position,
           applicationInformation.request_formsly_id AS application_information_request_id,
-          onlineApplication.request_formsly_id AS online_application_request_id,
-          onlineApplicationScore.request_score_value AS online_application_score,
-          onlineAssessment.request_formsly_id AS online_assessment_request_id,
-          onlineAssessmentScore.request_score_value AS online_assessment_score,
-          onlineAssessment.request_date_created AS online_assessment_date,
-          hr_screening_status
+          generalAssessment.request_formsly_id AS general_assessment_request_id,
+          generalAssessmentScore.request_score_value AS general_assessment_score,
+          technicalAssessment.request_formsly_id AS technical_assessment_request_id,
+          technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          technicalAssessment.request_date_created AS technical_assessment_date,
+          hr_phone_interview_status
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
           AND request_response_field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
-        INNER JOIN public.request_view AS onlineApplication ON onlineApplication.request_id = request_connection_online_application_request_id
-        INNER JOIN request_schema.request_score_table AS onlineApplicationScore ON onlineApplicationScore.request_score_request_id = onlineApplication.request_id
-        INNER JOIN public.request_view AS onlineAssessment ON onlineAssessment.request_id = request_connection_online_assessment_request_id
-        INNER JOIN request_schema.request_score_table AS onlineAssessmentScore ON onlineAssessmentScore.request_score_request_id = onlineAssessment.request_id
-        INNER JOIN hr_schema.hr_screening_table ON hr_screening_request_id = applicationInformation.request_id
+        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
+        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
+        INNER JOIN hr_schema.hr_phone_interview_table ON hr_phone_interview_request_id = applicationInformation.request_id
         WHERE 
           applicationInformation.request_status = 'APPROVED'
-          AND onlineApplication.request_status = 'APPROVED'
-          AND onlineAssessment.request_status = 'APPROVED'
+          AND generalAssessment.request_status = 'APPROVED'
+          AND technicalAssessment.request_status = 'APPROVED'
           ${positionCondition}
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
-          ${onlineApplicationRequestIdCondition.length ? onlineApplicationRequestIdCondition : ""}
-          ${onlineApplicationScoreCondition.length ? onlineApplicationScoreCondition : ""}
-          ${onlineAssessmentRequestIdCondition.length ? onlineAssessmentRequestIdCondition : ""}
-          ${onlineAssessmentScoreCondition.length ? onlineAssessmentScoreCondition : ""}
-          ${onlineAssessmentDateCondition.length ? onlineAssessmentDateCondition : ""}
-          ${hrScreeningCondition}
+          ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
+          ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
+          ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
+          ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
+          ${technicalAssessmentDateCondition.length ? technicalAssessmentDateCondition : ""}
+          ${hrPhoneInterviewCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'

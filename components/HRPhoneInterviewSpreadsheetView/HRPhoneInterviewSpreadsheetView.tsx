@@ -1,10 +1,10 @@
-import { getHRScreeningSummaryData } from "@/backend/api/get";
-import { updateHRScreeningStatus } from "@/backend/api/update";
+import { getHRPhoneInterviewSummaryData } from "@/backend/api/get";
+import { updateHRPhoneInterviewStatus } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
-  HRScreeningFilterFormValues,
-  HRScreeningSpreadsheetData,
+  HRPhoneInterviewFilterFormValues,
+  HRPhoneInterviewSpreadsheetData,
   OptionType,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
@@ -15,58 +15,59 @@ import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
-import ApplicationInformationColumnsMenu from "./HRScreeningColumnsMenu";
-import HRScreeningFilterMenu from "./HRScreeningFilterMenu";
-import HRScreeningSpreadsheetTable from "./HRScreeningSpreadsheetTable/HRScreeningSpreadsheetTable";
+import ApplicationInformationColumnsMenu from "./HRPhoneInterviewColumnsMenu";
+import HRPhoneInterviewFilterMenu from "./HRPhoneInterviewFilterMenu";
+import HRPhoneInterviewSpreadsheetTable from "./HRPhoneInterviewSpreadsheetTable/HRPhoneInterviewSpreadsheetTable";
 
 const initialSort = {
-  sortBy: "onlineAssessment.request_date_created",
+  sortBy: "technicalAssessment.request_date_created",
   order: "DESC",
 };
 
 const formDefaultValues = {
   position: "",
   application_information_request_id: "",
-  online_application_request_id: "",
-  online_application_score: {
+  general_assessment_request_id: "",
+  general_assessment_score: {
     start: null,
     end: null,
   },
-  online_assessment_request_id: "",
-  online_assessment_score: {
+  technical_assessment_request_id: "",
+  technical_assessment_score: {
     start: null,
     end: null,
   },
-  online_assessment_date: {
+  technical_assessment_date: {
     start: "",
     end: "",
   },
-  hr_screening_status: "",
+  hr_phone_interview_status: "",
 };
 
 type Props = {
   positionOptionList: OptionType[];
 };
 
-const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
+const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
-  const [data, setData] = useState<HRScreeningSpreadsheetData[]>([]);
+  const [data, setData] = useState<HRPhoneInterviewSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [isMax, setIsMax] = useState(false);
   const [hiddenColumnList, setHiddenColumnList] = useLocalStorage<string[]>({
-    key: "HRScreeningColumns",
+    key: "HRPhoneInterviewColumns",
     defaultValue: [],
   });
 
-  const filterFormMethods = useForm<HRScreeningFilterFormValues>({
-    defaultValues: formDefaultValues as unknown as HRScreeningFilterFormValues,
+  const filterFormMethods = useForm<HRPhoneInterviewFilterFormValues>({
+    defaultValues:
+      formDefaultValues as unknown as HRPhoneInterviewFilterFormValues,
   });
 
-  const fetchData = async (data?: HRScreeningFilterFormValues) => {
+  const fetchData = async (data?: HRPhoneInterviewFilterFormValues) => {
     try {
       if (!user) return;
       setIsLoading(true);
@@ -74,7 +75,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
 
       const filterData = filterFormMethods.getValues();
 
-      const newData = await getHRScreeningSummaryData(supabaseClient, {
+      const newData = await getHRPhoneInterviewSummaryData(supabaseClient, {
         ...filterData,
         ...data,
         userId: user.id,
@@ -111,7 +112,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
 
   const handleReset = () => {
     filterFormMethods.reset(
-      formDefaultValues as unknown as HRScreeningFilterFormValues
+      formDefaultValues as unknown as HRPhoneInterviewFilterFormValues
     );
     setPage(1);
     fetchData({ page: 1 });
@@ -120,7 +121,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
   useBeforeunload(() => {
     const filterData = filterFormMethods.getValues();
     localStorage.setItem(
-      "hrScreeningSpreadsheetView",
+      "hrPhoneInterviewSpreadsheetView",
       JSON.stringify({
         ...filterData,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
@@ -141,11 +142,14 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
       await fetchData({
         page: 1,
       });
-      const storedData = localStorage.getItem("hrScreeningSpreadsheetView");
+      const storedData = localStorage.getItem(
+        "hrPhoneInterviewSpreadsheetView"
+      );
       if (storedData) {
-        const filterData: HRScreeningFilterFormValues = JSON.parse(storedData);
+        const filterData: HRPhoneInterviewFilterFormValues =
+          JSON.parse(storedData);
         setSort(filterData.sort ?? initialSort);
-        filterFormMethods.reset(filterData as HRScreeningFilterFormValues);
+        filterFormMethods.reset(filterData as HRPhoneInterviewFilterFormValues);
         await fetchData({
           ...filterData,
         });
@@ -158,7 +162,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
     fetchInitialData();
   }, [user?.id]);
 
-  const handleUpdateHRScreeningStatus = async (
+  const handleUpdateHRPhoneInterviewStatus = async (
     applicationinformationRqeuestId: string,
     status: string
   ) => {
@@ -166,7 +170,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
     try {
       if (!teamMember?.team_member_id) throw new Error();
 
-      await updateHRScreeningStatus(supabaseClient, {
+      await updateHRPhoneInterviewStatus(supabaseClient, {
         applicationinformationRqeuestId,
         status,
         teamMemberId: teamMember.team_member_id,
@@ -178,12 +182,12 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
 
           return {
             ...data,
-            hr_screening_status: status,
+            hr_phone_interview_status: status,
           };
         })
       );
       notifications.show({
-        message: `HR screening ${status.toLowerCase()}.`,
+        message: `HR phone interview ${status.toLowerCase()}.`,
         color: "green",
       });
     } catch (e) {
@@ -201,7 +205,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            HR Screening Spreadsheet View
+            HR Phone Interview Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}
@@ -210,7 +214,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
             Refresh
           </Button>
           <FormProvider {...filterFormMethods}>
-            <HRScreeningFilterMenu
+            <HRPhoneInterviewFilterMenu
               fetchData={fetchData}
               handleReset={handleReset}
               positionOptionList={positionOptionList}
@@ -223,7 +227,7 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
           />
         </Group>
       </Box>
-      <HRScreeningSpreadsheetTable
+      <HRPhoneInterviewSpreadsheetTable
         data={data}
         isLoading={isLoading}
         page={page}
@@ -232,10 +236,10 @@ const HRScreeningSpreadsheetView = ({ positionOptionList }: Props) => {
         setSort={setSort}
         isMax={isMax}
         hiddenColumnList={hiddenColumnList}
-        handleUpdateHRScreeningStatus={handleUpdateHRScreeningStatus}
+        handleUpdateHRPhoneInterviewStatus={handleUpdateHRPhoneInterviewStatus}
       />
     </Stack>
   );
 };
 
-export default HRScreeningSpreadsheetView;
+export default HRPhoneInterviewSpreadsheetView;

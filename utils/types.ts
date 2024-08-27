@@ -512,12 +512,12 @@ export type FieldCorrectResponseTableInsert =
 export type FieldCorrectResponseTableUpdate =
   Database["form_schema"]["Tables"]["correct_response_table"]["Update"];
 
-export type HRScreeningTableRow =
-  Database["hr_schema"]["Tables"]["hr_screening_table"]["Row"];
-export type HRScreeningTableInsert =
-  Database["hr_schema"]["Tables"]["hr_screening_table"]["Insert"];
-export type HRScreeningTableUpdate =
-  Database["hr_schema"]["Tables"]["hr_screening_table"]["Update"];
+export type HRPhoneInterviewTableRow =
+  Database["hr_schema"]["Tables"]["hr_phone_interview_table"]["Row"];
+export type HRPhoneInterviewTableInsert =
+  Database["hr_schema"]["Tables"]["hr_phone_interview_table"]["Insert"];
+export type HRPhoneInterviewTableUpdate =
+  Database["hr_schema"]["Tables"]["hr_phone_interview_table"]["Update"];
 
 export type TeamDepartmentTableRow =
   Database["team_schema"]["Tables"]["team_department_table"]["Row"];
@@ -2225,19 +2225,19 @@ export type FetchUserRequestListParams = {
   form?: string[];
 };
 
-export type HRScreeningSpreadsheetData = {
+export type HRPhoneInterviewSpreadsheetData = {
   hr_request_reference_id: string;
   position: string;
   application_information_request_id: string;
-  online_application_request_id: string;
-  online_application_score: number;
-  online_assessment_request_id: string;
-  online_assessment_score: number;
-  online_assessment_date: string;
-  hr_screening_status: string;
+  general_assessment_request_id: string;
+  general_assessment_score: number;
+  technical_assessment_request_id: string;
+  technical_assessment_score: number;
+  technical_assessment_date: string;
+  hr_phone_interview_status: string;
 };
 
-export type HRScreeningFilterFormValues = {
+export type HRPhoneInterviewFilterFormValues = {
   limit?: number;
   page?: number;
   sort?: {
@@ -2246,19 +2246,19 @@ export type HRScreeningFilterFormValues = {
   };
   position?: string;
   application_information_request_id?: string;
-  online_application_request_id?: string;
-  online_application_score?: {
+  general_assessment_request_id?: string;
+  general_assessment_score?: {
     start?: number;
     end?: number;
   };
-  online_assessment_request_id?: string;
-  online_assessment_score?: {
+  technical_assessment_request_id?: string;
+  technical_assessment_score?: {
     start?: number;
     end?: number;
   };
-  online_assessment_date?: {
+  technical_assessment_date?: {
     start?: string;
     end?: string;
   };
-  hr_screening_status?: string;
+  hr_phone_interview_status?: string;
 };

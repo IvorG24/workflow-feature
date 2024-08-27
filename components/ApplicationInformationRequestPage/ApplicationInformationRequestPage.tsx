@@ -360,10 +360,10 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
       <JoyRideNoSSR
         steps={[
           {
-            target: ".online-application",
+            target: ".general-assessment",
             content: (
               <Text>
-                You can now continue with the online application since your
+                You can now continue with the general assessment since your
                 application information has been approved. To continue, simply
                 click the &ldquo;Next Step&ldquo; button.
               </Text>
@@ -401,7 +401,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         </Title>
         {nextStep && (
           <Button
-            className="online-application"
+            className="general-assessment"
             onClick={() =>
               router.push(
                 `/public-form/71f569a0-70a8-4609-82d2-5cc26ac1fe8c/create?applicationInformationId=${request.request_formsly_id}`

@@ -1,4 +1,4 @@
-import { HRScreeningSpreadsheetData } from "@/utils/types";
+import { HRPhoneInterviewSpreadsheetData } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -20,7 +20,7 @@ import {
 } from "@tabler/icons-react";
 
 import { Dispatch, SetStateAction } from "react";
-import HRScreeningMainTableRow from "./HRScreeningMainTableRow";
+import HRPhoneInterviewMainTableRow from "./HRPhoneInterviewMainTableRow";
 
 const useStyles = createStyles((theme) => ({
   parentTable: {
@@ -29,7 +29,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  data: HRScreeningSpreadsheetData[];
+  data: HRPhoneInterviewSpreadsheetData[];
   isLoading: boolean;
   page: number;
   handlePagination: (page: number) => void;
@@ -37,13 +37,13 @@ type Props = {
   setSort: Dispatch<SetStateAction<{ sortBy: string; order: string }>>;
   isMax: boolean;
   hiddenColumnList: string[];
-  handleUpdateHRScreeningStatus: (
+  handleUpdateHRPhoneInterviewStatus: (
     applicationinformationRqeuestId: string,
     status: string
   ) => void;
 };
 
-const HRScreeningSpreadsheetTable = ({
+const HRPhoneInterviewSpreadsheetTable = ({
   data,
   isLoading,
   page,
@@ -52,7 +52,7 @@ const HRScreeningSpreadsheetTable = ({
   setSort,
   isMax,
   hiddenColumnList,
-  handleUpdateHRScreeningStatus,
+  handleUpdateHRPhoneInterviewStatus,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -123,54 +123,58 @@ const HRScreeningSpreadsheetTable = ({
                   </th>
                 )}
                 {!hiddenColumnList.includes(
-                  "online_application_request_id"
+                  "general_assessment_request_id"
                 ) && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Online Application Request ID</Text>
-                      {sortButtons("onlineApplication.request_formsly_id")}
+                      <Text>General Assessment Request ID</Text>
+                      {sortButtons("generalAssessment.request_formsly_id")}
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("online_application_score") && (
+                {!hiddenColumnList.includes("general_assessment_score") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Online Application Score</Text>
+                      <Text>General Assessment Score</Text>
                       {sortButtons(
-                        "onlineApplicationScore.request_score_value"
+                        "generalAssessmentScore.request_score_value"
                       )}
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("online_assessment_request_id") && (
+                {!hiddenColumnList.includes(
+                  "technical_assessment_request_id"
+                ) && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Online Assessment Request ID</Text>
-                      {sortButtons("onlineAssessment.request_formsly_id")}
+                      <Text>Technical Assessment Request ID</Text>
+                      {sortButtons("technicalAssessment.request_formsly_id")}
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("online_assessment_score") && (
+                {!hiddenColumnList.includes("technical_assessment_score") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Online Assessment Score</Text>
-                      {sortButtons("onlineAssessmentScore.request_score_value")}
+                      <Text>Technical Assessment Score</Text>
+                      {sortButtons(
+                        "technicalAssessmentScore.request_score_value"
+                      )}
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("online_assessment_date") && (
+                {!hiddenColumnList.includes("technical_assessment_date") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Online Assessment Date</Text>
-                      {sortButtons("onlineAssessment.request_date_created")}
+                      <Text>Technical Assessment Date</Text>
+                      {sortButtons("technicalAssessment.request_date_created")}
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("hr_screening_status") && (
+                {!hiddenColumnList.includes("hr_phone_interview_status") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>HR Screening Status</Text>
-                      {sortButtons("hr_screening_status")}
+                      <Text>HR Phone Interview Status</Text>
+                      {sortButtons("hr_phone_interview_status")}
                     </Flex>
                   </th>
                 )}
@@ -183,11 +187,13 @@ const HRScreeningSpreadsheetTable = ({
             </thead>
             <tbody>
               {data.map((item) => (
-                <HRScreeningMainTableRow
+                <HRPhoneInterviewMainTableRow
                   key={item.application_information_request_id}
                   item={item}
                   hiddenColumnList={hiddenColumnList}
-                  handleUpdateHRScreeningStatus={handleUpdateHRScreeningStatus}
+                  handleUpdateHRPhoneInterviewStatus={
+                    handleUpdateHRPhoneInterviewStatus
+                  }
                 />
               ))}
             </tbody>
@@ -210,4 +216,4 @@ const HRScreeningSpreadsheetTable = ({
   );
 };
 
-export default HRScreeningSpreadsheetTable;
+export default HRPhoneInterviewSpreadsheetTable;

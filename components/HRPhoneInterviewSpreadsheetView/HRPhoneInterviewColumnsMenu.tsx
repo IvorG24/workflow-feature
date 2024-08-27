@@ -19,7 +19,7 @@ type Props = {
   columnList: string[];
 };
 
-const HRScreeningColumnsMenu = ({
+const HRPhoneInterviewColumnsMenu = ({
   hiddenColumnList,
   setHiddenColumnList,
   columnList,
@@ -41,7 +41,7 @@ const HRScreeningColumnsMenu = ({
         opened={isColumnMenuOpen}
         onClose={closeColumnMenu}
         position="right"
-        title="HR Screening Columns Menu"
+        title="HR Phone Interview Columns Menu"
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >
@@ -91,4 +91,4 @@ const HRScreeningColumnsMenu = ({
   );
 };
 
-export default HRScreeningColumnsMenu;
+export default HRPhoneInterviewColumnsMenu;

@@ -1,4 +1,4 @@
-import { HRScreeningFilterFormValues, OptionType } from "@/utils/types";
+import { HRPhoneInterviewFilterFormValues, OptionType } from "@/utils/types";
 import {
   Button,
   Drawer,
@@ -16,12 +16,12 @@ import { IconCalendar, IconFilter } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form";
 
 type Props = {
-  fetchData: (data?: HRScreeningFilterFormValues) => void;
+  fetchData: (data?: HRPhoneInterviewFilterFormValues) => void;
   handleReset: () => void;
   positionOptionList: OptionType[];
 };
 
-const HRScreeningFilterMenu = ({
+const HRPhoneInterviewFilterMenu = ({
   fetchData,
   handleReset,
   positionOptionList,
@@ -30,7 +30,7 @@ const HRScreeningFilterMenu = ({
     useDisclosure(false);
 
   const { handleSubmit, control, register } =
-    useFormContext<HRScreeningFilterFormValues>();
+    useFormContext<HRPhoneInterviewFilterFormValues>();
 
   return (
     <>
@@ -45,7 +45,7 @@ const HRScreeningFilterMenu = ({
         opened={isFilterMenuOpen}
         onClose={closeFilterMenu}
         position="right"
-        title="HR Screening Filter Menu"
+        title="HR Phone Interview Filter Menu"
         p={0}
         scrollAreaComponent={ScrollArea.Autosize}
       >
@@ -75,17 +75,17 @@ const HRScreeningFilterMenu = ({
               {...register("application_information_request_id")}
             />
             <TextInput
-              label="Online Application Request ID"
-              {...register("online_application_request_id")}
+              label="General Assessment Request ID"
+              {...register("general_assessment_request_id")}
             />
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Online Application Score
+                General Assessment Score
               </Text>
               <Flex gap="xs">
                 <Controller
                   control={control}
-                  name="online_application_score.start"
+                  name="general_assessment_score.start"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ?? "";
                     return (
@@ -101,7 +101,7 @@ const HRScreeningFilterMenu = ({
                 />
                 <Controller
                   control={control}
-                  name="online_application_score.end"
+                  name="general_assessment_score.end"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ?? "";
                     return (
@@ -118,17 +118,17 @@ const HRScreeningFilterMenu = ({
               </Flex>
             </Stack>
             <TextInput
-              label="Online Assessment Request ID"
-              {...register("online_assessment_request_id")}
+              label="Technical Assessment Request ID"
+              {...register("technical_assessment_request_id")}
             />
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Online Assessment Score
+                Technical Assessment Score
               </Text>
               <Flex gap="xs">
                 <Controller
                   control={control}
-                  name="online_assessment_score.start"
+                  name="technical_assessment_score.start"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ?? "";
                     return (
@@ -144,7 +144,7 @@ const HRScreeningFilterMenu = ({
                 />
                 <Controller
                   control={control}
-                  name="online_assessment_score.end"
+                  name="technical_assessment_score.end"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ?? "";
                     return (
@@ -162,12 +162,12 @@ const HRScreeningFilterMenu = ({
             </Stack>
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Online Assessment Date
+                Technical Assessment Date
               </Text>
               <Flex gap="xs">
                 <Controller
                   control={control}
-                  name="online_assessment_date.start"
+                  name="technical_assessment_date.start"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ? new Date(value as string) : null;
                     return (
@@ -184,7 +184,7 @@ const HRScreeningFilterMenu = ({
                 />
                 <Controller
                   control={control}
-                  name="online_assessment_date.end"
+                  name="technical_assessment_date.end"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ? new Date(value as string) : null;
                     return (
@@ -203,12 +203,12 @@ const HRScreeningFilterMenu = ({
             </Stack>
             <Controller
               control={control}
-              name="hr_screening_status"
+              name="hr_phone_interview_status"
               render={({ field: { value, onChange } }) => {
                 const newValue = value ?? [];
                 return (
                   <MultiSelect
-                    label="HR Screening Status"
+                    label="HR Phone Interview Status"
                     data={[
                       { value: "APPROVED", label: "Approved" },
                       { value: "PENDING", label: "Pending" },
@@ -233,4 +233,4 @@ const HRScreeningFilterMenu = ({
   );
 };
 
-export default HRScreeningFilterMenu;
+export default HRPhoneInterviewFilterMenu;

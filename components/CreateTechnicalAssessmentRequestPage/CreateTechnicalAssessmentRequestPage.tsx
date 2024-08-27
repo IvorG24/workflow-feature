@@ -31,7 +31,7 @@ type Props = {
   form: FormType;
 };
 
-const CreateOnlineApplicationRequestPage = ({ form }: Props) => {
+const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const router = useRouter();
 
@@ -75,7 +75,7 @@ const CreateOnlineApplicationRequestPage = ({ form }: Props) => {
           }
         });
       });
-      if (requestScore >= 6) {
+      if (requestScore >= 1) {
         status = "APPROVED";
       } else {
         status = "REJECTED";
@@ -110,6 +110,7 @@ const CreateOnlineApplicationRequestPage = ({ form }: Props) => {
 
       await router.push(`/public-request/${request.request_id}`);
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -151,4 +152,4 @@ const CreateOnlineApplicationRequestPage = ({ form }: Props) => {
   );
 };
 
-export default CreateOnlineApplicationRequestPage;
+export default CreateTechnicalAssessmentRequestPage;

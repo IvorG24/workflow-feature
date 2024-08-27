@@ -1,12 +1,11 @@
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import { default as EquipmentServiceReportRequestPage } from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
+import GeneralAssessmentRequestPage from "@/components/GeneralAssessmentRequestPage/GeneralAssessmentRequestPage";
 import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPage";
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
 import Meta from "@/components/Meta/Meta";
-import OnlineApplicationRequestPage from "@/components/OnlineApplicationRequestPage/OnlineApplicationRequestPage";
-import OnlineAssessmentRequestPage from "@/components/OnlineAssessmentRequestPage/OnlineAssessmentRequestPage";
 import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
@@ -19,6 +18,7 @@ import RequestForPaymentRequestPage from "@/components/RequestForPaymentRequestP
 import RequestForPaymentv1RequestPage from "@/components/RequestForPaymentv1RequestPage/RequestForPaymentv1RequestPage";
 import RequestPage from "@/components/RequestPage/RequestPage";
 import ServicesRequestPage from "@/components/ServicesRequestPage/ServicesRequestPage";
+import TechnicalAssessmentRequestPage from "@/components/TechnicalAssessmentRequestPage/TechnicalAssessmentRequestPage";
 import { withAuthAndOnboardingRequestPage } from "@/utils/server-side-protections";
 import { RequestWithResponseType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -175,10 +175,10 @@ const Page = ({
       return <PettyCashVoucherBalanceRequestPage request={request} />;
     } else if (request.request_form.form_name === "Application Information") {
       return <ApplicationInformationRequestPage request={request} />;
-    } else if (request.request_form.form_name === "Online Application") {
-      return <OnlineApplicationRequestPage request={request} />;
-    } else if (request.request_form.form_name === "Online Assessment") {
-      return <OnlineAssessmentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "General Assessment") {
+      return <GeneralAssessmentRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Technical Assessment") {
+      return <TechnicalAssessmentRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }
