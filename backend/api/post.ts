@@ -470,6 +470,7 @@ export const createRequest = async (
     teamName: string;
     status?: string;
     requestScore?: number;
+    rootFormslyRequestId?: string;
   }
 ) => {
   const {
@@ -483,6 +484,7 @@ export const createRequest = async (
     teamName,
     status,
     requestScore,
+    rootFormslyRequestId,
   } = params;
 
   const requestId = uuidv4();
@@ -600,6 +602,7 @@ export const createRequest = async (
         teamId,
         status,
         requestScore,
+        rootFormslyRequestId
       },
     })
     .select()

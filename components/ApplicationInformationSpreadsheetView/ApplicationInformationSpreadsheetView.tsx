@@ -154,6 +154,7 @@ const ApplicationInformationSpreadsheetView = ({
         setData((prev) => [...prev, ...newData]);
       }
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Failed to fetch data",
         color: "red",

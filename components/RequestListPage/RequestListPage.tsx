@@ -247,6 +247,17 @@ const RequestListPage = ({
               >
                 Application Information Spreadhsheet View
               </Menu.Item>
+              <Menu.Item
+                onClick={async () =>
+                  await router.push(
+                    `/${formatTeamNameToUrlKey(
+                      activeTeam.team_name
+                    )}/requests/hr-screening-spreadsheet-view`
+                  )
+                }
+              >
+                HR Screening Spreadhsheet View
+              </Menu.Item>
             </Menu.Dropdown>
           </Menu>
         ) : null}

@@ -171,7 +171,7 @@ const UserRequestListTable = ({
           textAlignment: "center",
           render: ({
             request_form_id,
-            request_is_with_indicator,
+            request_is_with_progress_indicator,
             request_formsly_id,
             request_id,
           }) => {
@@ -193,7 +193,7 @@ const UserRequestListTable = ({
                     );
                   }}
                 >
-                  {request_is_with_indicator ? (
+                  {request_is_with_progress_indicator ? (
                     <Indicator color="red" size={8} offset={-4}>
                       <IconGraph size={16} />
                     </Indicator>
@@ -213,7 +213,7 @@ const UserRequestListTable = ({
           render: ({
             request_id,
             request_formsly_id,
-            request_is_with_indicator,
+            request_is_with_view_indicator,
           }) => {
             const requestId =
               request_formsly_id === "-" ? request_id : request_formsly_id;
@@ -227,7 +227,7 @@ const UserRequestListTable = ({
                     await router.push(`/user/requests/${requestId}`)
                   }
                 >
-                  {request_is_with_indicator ? (
+                  {request_is_with_view_indicator ? (
                     <Indicator color="red" size={8} offset={-4}>
                       <IconArrowsMaximize size={16} />
                     </Indicator>

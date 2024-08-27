@@ -1,4 +1,4 @@
-import { RequestViewRow } from "@/utils/types";
+import { HRScreeningTableRow, RequestViewRow } from "@/utils/types";
 import {
   Badge,
   Button,
@@ -17,30 +17,34 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import ApplicationInformation from "./ApplicationInformation";
+import HRScreening from "./HRScreening";
 import OnlineApplication from "./OnlineApplication";
+import OnlineAssessment from "./OnlineAssessment";
 
 type Props = {
   applicationInformationData: RequestViewRow | null;
   onlineApplicationData: RequestViewRow | null;
   onlineAssessmentData: RequestViewRow | null;
+  hrScreeningData: HRScreeningTableRow;
 };
 const ApplicationProgressPage = ({
   applicationInformationData,
   onlineApplicationData,
   onlineAssessmentData,
+  hrScreeningData,
 }: Props) => {
-  const [stepperValue, setStepperValue] = useState(0);
+  let maxValue = 0;
 
-  let maxValue = 2;
-  if (!Boolean(applicationInformationData)) {
-    maxValue -= 1;
+  if (Boolean(hrScreeningData)) {
+    maxValue = 3;
+  } else if (Boolean(onlineAssessmentData)) {
+    maxValue = 2;
+  } else if (Boolean(onlineApplicationData)) {
+    maxValue = 1;
+  } else if (Boolean(applicationInformationData)) {
+    maxValue = 0;
   }
-  if (!Boolean(onlineApplicationData)) {
-    maxValue -= 1;
-  }
-  if (!Boolean(onlineAssessmentData)) {
-    maxValue -= 1;
-  }
+  const [stepperValue, setStepperValue] = useState(maxValue);
 
   const stepperProps = (value: string) => {
     switch (value) {
@@ -104,6 +108,12 @@ const ApplicationProgressPage = ({
             }
           />
         );
+      case 2:
+        if (!onlineAssessmentData) return;
+        return <OnlineAssessment onlineAssessmentData={onlineAssessmentData} />;
+      case 3:
+        if (!hrScreeningData) return;
+        return <HRScreening hrScreeningData={hrScreeningData} />;
     }
   };
 
@@ -137,7 +147,11 @@ const ApplicationProgressPage = ({
             disabled={!Boolean(onlineAssessmentData)}
             {...stepperProps(onlineAssessmentData?.request_status as string)}
           />
-          <Stepper.Step label="HR Screening" disabled />
+          <Stepper.Step
+            label="HR Screening"
+            disabled={!Boolean(hrScreeningData)}
+            {...stepperProps(hrScreeningData?.hr_screening_status as string)}
+          />
           <Stepper.Step label="Director Screening" disabled />
           <Stepper.Step label="Job Offer" disabled />
         </Stepper>

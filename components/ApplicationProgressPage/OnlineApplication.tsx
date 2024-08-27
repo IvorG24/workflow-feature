@@ -27,27 +27,6 @@ const OnlineApplication = ({
 
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
-      <JoyRideNoSSR
-        steps={[
-          {
-            target: ".online-assessment",
-            content: (
-              <Text>
-                You can now continue with the online assessment since your
-                online application has been approved. To continue, simply click
-                the &ldquo;Create Request&ldquo; button.
-              </Text>
-            ),
-            disableBeacon: true,
-          },
-        ]}
-        run={true}
-        hideCloseButton
-        disableCloseOnEsc
-        disableOverlayClose
-        hideBackButton
-        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
-      />
       <Title order={3}>Online Application</Title>
       <Stack>
         <Group>
@@ -108,6 +87,27 @@ const OnlineApplication = ({
           </Group>
         )}
       </Stack>
+      <JoyRideNoSSR
+        steps={[
+          {
+            target: ".online-assessment",
+            content: (
+              <Text>
+                You passed the online application, you can now continue with the
+                online assessment. To continue, simply click the &ldquo;Create
+                Request&ldquo; button.
+              </Text>
+            ),
+            disableBeacon: true,
+          },
+        ]}
+        run={true}
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        hideBackButton
+        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+      />
     </Stack>
   );
 };

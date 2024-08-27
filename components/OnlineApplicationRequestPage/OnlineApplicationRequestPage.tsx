@@ -28,12 +28,10 @@ import {
   RequestWithResponseType,
 } from "@/utils/types";
 import {
-  Accordion,
   Alert,
   Button,
   Container,
   Flex,
-  Paper,
   Stack,
   Text,
   Title,
@@ -82,11 +80,11 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
     request.request_form.form_section
   );
 
-  const isWithDuplicatableSection = request.request_form.form_section.some(
-    (section) =>
-      section.section_is_duplicatable &&
-      section.section_field[0].field_response.length
-  );
+  // const isWithDuplicatableSection = request.request_form.form_section.some(
+  //   (section) =>
+  //     section.section_is_duplicatable &&
+  //     section.section_field[0].field_response.length
+  // );
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -368,9 +366,9 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
             target: ".online-assessment",
             content: (
               <Text>
-                You can now continue with the online assessment since your
-                online application has been approved. To continue, simply click
-                the &ldquo;Next Step&ldquo; button.
+                You passed the online application, you can now continue with the
+                online assessment. To continue, simply click the &ldquo;Next
+                Step&ldquo; button.
               </Text>
             ),
             disableBeacon: true,
@@ -429,12 +427,6 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
 
         <Stack spacing="xl">
           {formSection.map((section, idx) => {
-            if (
-              !section.section_field[0].field_response ||
-              section.section_is_duplicatable ||
-              section.section_name === "Resume"
-            )
-              return null;
             return (
               <RequestSection
                 key={section.section_id + idx}
@@ -446,38 +438,6 @@ const OnlineApplicationRequestPage = ({ request }: Props) => {
               />
             );
           })}
-
-          {isWithDuplicatableSection && (
-            <Accordion>
-              <Accordion.Item value={"workExperience"}>
-                <Paper shadow="xs">
-                  <Accordion.Control>
-                    <Title order={4} color="dimmed">
-                      Most Recent Work Experience
-                    </Title>
-                  </Accordion.Control>
-                </Paper>
-                <Accordion.Panel>
-                  <Stack spacing="xl" mt="lg">
-                    {formSection
-                      .filter((section) => section.section_is_duplicatable)
-                      .map((section, index) => {
-                        return (
-                          <RequestSection
-                            key={section.section_id + index}
-                            section={section}
-                            isFormslyForm={true}
-                            isOnlyWithResponse
-                            index={index + 1}
-                            isPublicRequest={true}
-                          />
-                        );
-                      })}
-                  </Stack>
-                </Accordion.Panel>
-              </Accordion.Item>
-            </Accordion>
-          )}
         </Stack>
 
         {isRequestActionSectionVisible && (

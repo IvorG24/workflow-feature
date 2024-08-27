@@ -247,7 +247,7 @@ const sectionList = [
       },
       {
         id: "responseFilter.expectedSalary",
-        label: "Expected Salary",
+        label: "Expected Monthly Salary (PHP)",
         type: "NUMBER",
       },
     ],

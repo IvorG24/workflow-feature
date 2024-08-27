@@ -5,6 +5,8 @@ import ITAssetRequestPage from "@/components/ITAssetRequestPage/ITAssetRequestPa
 import ItemRequestPage from "@/components/ItemRequestPage/ItemRequestPage";
 import LiquidationReimbursementRequestPage from "@/components/LiquidationReimbursementRequestPage/LiquidationReimbursementRequestPage";
 import Meta from "@/components/Meta/Meta";
+import OnlineApplicationRequestPage from "@/components/OnlineApplicationRequestPage/OnlineApplicationRequestPage";
+import OnlineAssessmentRequestPage from "@/components/OnlineAssessmentRequestPage/OnlineAssessmentRequestPage";
 import OtherExpensesRequestPage from "@/components/OtherExpensesRequestPage/OtherExpensesRequestPage";
 import PEDEquipmentRequestPage from "@/components/PEDEquipmentRequestPage/PEDEquipmentRequestPage";
 import PEDItemRequestPage from "@/components/PEDItemRequestPage/PEDItemRequestPage";
@@ -173,6 +175,10 @@ const Page = ({
       return <PettyCashVoucherBalanceRequestPage request={request} />;
     } else if (request.request_form.form_name === "Application Information") {
       return <ApplicationInformationRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Online Application") {
+      return <OnlineApplicationRequestPage request={request} />;
+    } else if (request.request_form.form_name === "Online Assessment") {
+      return <OnlineAssessmentRequestPage request={request} />;
     } else {
       return <RequestPage request={request} isFormslyForm />;
     }

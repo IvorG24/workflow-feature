@@ -42,6 +42,8 @@ import {
   FieldTableRow,
   FormTableRow,
   FormType,
+  HRScreeningFilterFormValues,
+  HRScreeningSpreadsheetData,
   InitialFormType,
   ItemCategoryType,
   ItemCategoryWithSigner,
@@ -5925,7 +5927,7 @@ export const getApplicationInformationSummaryData = async (
       },
     },
   };
-
+  console.log(updatedParams);
   const { data, error } = await supabaseClient.rpc(
     "get_application_information_summary_table",
     {
@@ -6054,4 +6056,53 @@ export const getPublicFormList = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getHRScreeningSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: HRScreeningFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    online_assessment_date: {
+      start: params.online_assessment_date?.start
+        ? new Date(params.online_assessment_date?.start).toLocaleDateString()
+        : undefined,
+      end: params.online_assessment_date?.end
+        ? moment(params.online_assessment_date?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_hr_screening_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as HRScreeningSpreadsheetData[];
+};
+
+export const getAllPoisitions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("position")
+    .eq("position_team_id", teamId)
+    .order("position");
+  if (error) throw error;
+  return data.map(({ position }) => {
+    return { label: position, value: position };
+  });
 };

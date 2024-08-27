@@ -1342,7 +1342,8 @@ AS $$
       projectId,
       teamId,
       status,
-      requestScore
+      requestScore,
+      rootFormslyRequestId
     } = input_data;
 
     let formslyIdPrefix = '';
@@ -1471,6 +1472,11 @@ AS $$
       plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues}`);
     } else {
       plv8.execute(`INSERT INTO request_schema.request_score_table (request_score_value,request_score_request_id) VALUES (${requestScore}, '${requestId}')`);
+
+      if (status === 'APPROVED' && formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
+        const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id;
+        plv8.execute(`INSERT INTO hr_schema.hr_screening_table (hr_screening_request_id) VALUES ('${requestUUID}')`)
+      }
     }
 
     const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}'`);
@@ -1492,6 +1498,15 @@ AS $$
       }
     }
     
+    if (formId === '151cc6d7-94d7-4c54-b5ae-44de9f59d170') {
+      plv8.execute(`INSERT INTO hr_schema.request_connection_table (request_connection_application_information_request_id) VALUES ('${requestId}')`)
+    } else if (formId === '71f569a0-70a8-4609-82d2-5cc26ac1fe8c') {
+      const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
+      plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_online_application_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
+    } else if (formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
+      const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id
+      plv8.execute(`UPDATE hr_schema.request_connection_table SET request_connection_online_assessment_request_id = '${requestId}' WHERE request_connection_application_information_request_id = '${requestUUID}'`);
+    }
  });
  return request_data;
 $$ LANGUAGE plv8;
@@ -2979,8 +2994,8 @@ AS $$
         LEFT JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
         INNER JOIN team_schema.team_member_table AS ftmt ON ftmt.team_member_id = form_team_member_id
-        INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
-        INNER JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
+        LEFT JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
+        LEFT JOIN form_schema.signer_table ON request_signer_table.request_signer_signer_id = signer_table.signer_id
         WHERE 
           ftmt.team_member_team_id = '${teamId}'
           AND request_is_disabled = false
@@ -14563,18 +14578,36 @@ AS $$
         }
       });
 
-      let isWithIndicator = false;
+      let isWithViewIndicator = false;
       if(request.request_status === 'APPROVED' && ['Application Information', 'Online Application'].includes(request.form_name)){
         const connectedRequestCount = plv8.execute(
           `
             SELECT COUNT(request_response_id)
             FROM request_schema.request_response_table
+            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
             WHERE
               request_response = '"${request.request_formsly_id}"'
           `
         )[0].count;
         if(!connectedRequestCount){
-          isWithIndicator = true;
+          isWithViewIndicator = true;
+        }
+      }
+
+      let isWithProgressIndicator = false;
+      if(request.request_status === 'APPROVED' && request.form_name === 'Application Information'){
+        const connectedRequestCount = plv8.execute(
+          `
+            SELECT COUNT(request_response_id)
+            FROM request_schema.request_response_table
+            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+            WHERE
+              request_response = '"${request.request_formsly_id}"'
+              AND request_status != 'APPROVED'
+          `
+        )[0].count;
+        if(!connectedRequestCount){
+          isWithProgressIndicator = true;
         }
       }
 
@@ -14586,7 +14619,8 @@ AS $$
         request_form_id: request.request_form_id,
         form_name: request.form_name,
         request_signer: request_signer,
-        request_is_with_indicator: isWithIndicator
+        request_is_with_view_indicator: isWithViewIndicator,
+        request_is_with_progress_indicator: isWithProgressIndicator
       }
     });
 
@@ -14651,6 +14685,9 @@ AS $$
     let applicationInformationData = {};
     let onlineApplicationData = {};
     let onlineAssessmentData = {};
+    let hrScreeningData = {};
+
+    const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
     
     applicationInformationData = plv8.execute(
       `
@@ -14709,16 +14746,129 @@ AS $$
             WHERE a.RowNumber = 2
           `
         );
+
+        if (onlineAssessmentData.length) {
+          hrScreeningData = plv8.execute(`SELECT * FROM hr_schema.hr_screening_table WHERE hr_screening_request_id = '${requestUUID}'`)
+        }
       }
     }
 
     returnData = {
       applicationInformationData: applicationInformationData.length ? applicationInformationData[0] : null,
       onlineApplicationData: onlineApplicationData.length ? onlineApplicationData[0] : null,
-      onlineAssessmentData: onlineAssessmentData.length ? onlineAssessmentData[0] : null
+      onlineAssessmentData: onlineAssessmentData.length ? onlineAssessmentData[0] : null,
+      hrScreeningData: hrScreeningData.length ? hrScreeningData[0] : null
     }
   });
   return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_hr_screening_summary_table(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const { 
+      userId,
+      limit,
+      page,
+      sort,
+      position,
+      application_information_request_id,
+      online_application_request_id,
+      online_application_score,
+      online_assessment_request_id,
+      online_assessment_score,
+      online_assessment_date
+    } = input_data;
+
+    const offset = (page - 1) * limit;
+
+    let positionCondition = '';
+    if (position && position.length) {
+      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+    }
+    let applicationInformationRequestIdCondition = '';
+    if (application_information_request_id) {
+      applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
+    }
+    let onlineApplicationRequestIdCondition = '';
+    if (online_application_request_id) {
+      onlineApplicationRequestIdCondition = `AND onlineApplication.request_formsly_id ILIKE '%${online_application_request_id}%'`;
+    }
+    let onlineApplicationScoreCondition = '';
+    if (online_application_score) {
+      if (online_application_score.start) {
+        onlineApplicationRequestIdCondition += ` AND onlineApplicationScore.request_score_value >= ${online_application_score.start}`;
+      }
+      if (online_application_score.end) {
+        onlineApplicationRequestIdCondition += ` AND onlineApplicationScore.request_score_value <= ${online_application_score.end}`;
+      }
+    }
+    let onlineAssessmentRequestIdCondition = '';
+    if (online_assessment_request_id) {
+      onlineAssessmentRequestIdCondition = `AND onlineAssessment.request_formsly_id ILIKE '%${online_assessment_request_id}%'`;
+    }
+    let onlineAssessmentScoreCondition = '';
+    if (online_assessment_score) {
+      if (online_assessment_score.start) {
+        onlineAssessmentRequestIdCondition += ` AND onlineAssessmentScore.request_score_value >= ${online_assessment_score.start}`;
+      }
+      if (online_assessment_score.end) {
+        onlineAssessmentRequestIdCondition += ` AND onlineAssessmentScore.request_score_value <= ${online_assessment_score.end}`;
+      }
+    }
+    let onlineAssessmentDateCondition = "";
+    if (online_assessment_date) {
+      if (online_assessment_date.start) {
+        onlineAssessmentDateCondition += ` AND onlineAssessment.request_date_created >= '${new Date(online_assessment_date.start).toISOString()}'`;
+      }
+      if (online_assessment_date.end) {
+        onlineAssessmentDateCondition += ` AND onlineAssessment.request_date_created <= '${new Date(online_assessment_date.end).toISOString()}'`;
+      }
+    }
+
+    const parentRequests = plv8.execute(
+      `
+        SELECT
+          request_response AS position,
+          applicationInformation.request_formsly_id AS application_information_request_id,
+          onlineApplication.request_formsly_id AS online_application_request_id,
+          onlineApplicationScore.request_score_value AS online_application_score,
+          onlineAssessment.request_formsly_id AS online_assessment_request_id,
+          onlineAssessmentScore.request_score_value AS online_assessment_score,
+          onlineAssessment.request_date_created AS online_assessment_date
+        FROM hr_schema.request_connection_table
+        INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
+          AND request_response_field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
+        INNER JOIN public.request_view AS onlineApplication ON onlineApplication.request_id = request_connection_online_application_request_id
+        INNER JOIN request_schema.request_score_table AS onlineApplicationScore ON onlineApplicationScore.request_score_request_id = onlineApplication.request_id
+        INNER JOIN public.request_view AS onlineAssessment ON onlineAssessment.request_id = request_connection_online_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS onlineAssessmentScore ON onlineAssessmentScore.request_score_request_id = onlineAssessment.request_id
+        WHERE 
+          applicationInformation.request_status = 'APPROVED'
+          AND onlineApplication.request_status = 'APPROVED'
+          AND onlineAssessment.request_status = 'APPROVED'
+          ${positionCondition}
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
+          ${onlineApplicationRequestIdCondition.length ? onlineApplicationRequestIdCondition : ""}
+          ${onlineApplicationScoreCondition.length ? onlineApplicationScoreCondition : ""}
+          ${onlineAssessmentRequestIdCondition.length ? onlineAssessmentRequestIdCondition : ""}
+          ${onlineAssessmentScoreCondition.length ? onlineAssessmentScoreCondition : ""}
+          ${onlineAssessmentDateCondition.length ? onlineAssessmentDateCondition : ""}
+        ORDER BY ${sort.sortBy} ${sort.order}
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+      `
+    );
+
+    returnData = parentRequests;
+});
+return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS

@@ -1,7 +1,6 @@
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
-import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -44,10 +43,10 @@ const CreateOnlineAssessmentRequestPage = ({ form }: Props) => {
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
-  const signerList = form.form_signer.map((signer) => ({
-    ...signer,
-    signer_action: signer.signer_action.toUpperCase(),
-  }));
+  // const signerList = form.form_signer.map((signer) => ({
+  //   ...signer,
+  //   signer_action: signer.signer_action.toUpperCase(),
+  // }));
 
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, control } = requestFormMethods;
@@ -63,6 +62,28 @@ const CreateOnlineAssessmentRequestPage = ({ form }: Props) => {
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       setIsLoading(true);
+
+      let requestScore = 0;
+      let status = "PENDING";
+      data.sections.forEach((section) => {
+        section.section_field.forEach((field) => {
+          if (
+            field.field_response ===
+            field.field_correct_response?.correct_response_value
+          ) {
+            requestScore += 1;
+          }
+        });
+      });
+      if (requestScore >= 1) {
+        status = "APPROVED";
+      } else {
+        status = "REJECTED";
+      }
+
+      const rootFormslyRequestId = data.sections[0].section_field[0]
+        .field_response as string;
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId: form.form_id,
@@ -78,6 +99,9 @@ const CreateOnlineAssessmentRequestPage = ({ form }: Props) => {
         teamName: formatTeamNameToUrlKey(
           process.env.NODE_ENV === "production" ? "SCIC" : "Sta Clara"
         ),
+        status,
+        requestScore,
+        rootFormslyRequestId,
       });
       notifications.show({
         message: "Request created.",
@@ -118,7 +142,7 @@ const CreateOnlineAssessmentRequestPage = ({ form }: Props) => {
                 </Box>
               );
             })}
-            <RequestFormSigner signerList={signerList} />
+            {/* <RequestFormSigner signerList={signerList} /> */}
             <Button type="submit">Submit</Button>
           </Stack>
         </form>

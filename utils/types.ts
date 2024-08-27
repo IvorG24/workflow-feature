@@ -512,6 +512,13 @@ export type FieldCorrectResponseTableInsert =
 export type FieldCorrectResponseTableUpdate =
   Database["form_schema"]["Tables"]["correct_response_table"]["Update"];
 
+export type HRScreeningTableRow =
+  Database["hr_schema"]["Tables"]["hr_screening_table"]["Row"];
+export type HRScreeningTableInsert =
+  Database["hr_schema"]["Tables"]["hr_screening_table"]["Insert"];
+export type HRScreeningTableUpdate =
+  Database["hr_schema"]["Tables"]["hr_screening_table"]["Update"];
+
 export type TeamDepartmentTableRow =
   Database["team_schema"]["Tables"]["team_department_table"]["Row"];
 
@@ -1217,7 +1224,8 @@ export type RequestListItemType = {
   user_last_name: string;
   user_avatar: string | null;
   form_name: string;
-  request_is_with_indicator: boolean;
+  request_is_with_view_indicator: boolean;
+  request_is_with_progress_indicator: boolean;
 };
 
 export type ConnectedRequestItemType = {
@@ -2215,4 +2223,39 @@ export type FetchUserRequestListParams = {
   isAscendingSort: boolean;
   email: string;
   form?: string[];
+};
+
+export type HRScreeningSpreadsheetData = {
+  position: string;
+  application_information_request_id: string;
+  online_application_request_id: string;
+  online_application_score: number;
+  online_assessment_request_id: string;
+  online_assessment_score: number;
+  online_assessment_date: string;
+};
+
+export type HRScreeningFilterFormValues = {
+  limit?: number;
+  page?: number;
+  sort?: {
+    sortBy: string;
+    order: string;
+  };
+  position?: string;
+  application_information_request_id?: string;
+  online_application_request_id?: string;
+  online_application_score?: {
+    start?: number;
+    end?: number;
+  };
+  online_assessment_request_id?: string;
+  online_assessment_score?: {
+    start?: number;
+    end?: number;
+  };
+  online_assessment_date?: {
+    start?: string;
+    end?: string;
+  };
 };

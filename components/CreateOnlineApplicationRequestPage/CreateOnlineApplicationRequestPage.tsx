@@ -81,6 +81,9 @@ const CreateOnlineApplicationRequestPage = ({ form }: Props) => {
         status = "REJECTED";
       }
 
+      const rootFormslyRequestId = data.sections[0].section_field[0]
+        .field_response as string;
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId: form.form_id,
@@ -98,6 +101,7 @@ const CreateOnlineApplicationRequestPage = ({ form }: Props) => {
         ),
         status,
         requestScore,
+        rootFormslyRequestId,
       });
       notifications.show({
         message: "Request created.",

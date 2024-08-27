@@ -8,7 +8,6 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -28,16 +27,7 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import {
-  Accordion,
-  Alert,
-  Container,
-  Flex,
-  Paper,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
+import { Alert, Container, Flex, Stack, Text, Title } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -81,11 +71,11 @@ const OnlineAssessmentRequestPage = ({ request }: Props) => {
     request.request_form.form_section
   );
 
-  const isWithDuplicatableSection = request.request_form.form_section.some(
-    (section) =>
-      section.section_is_duplicatable &&
-      section.section_field[0].field_response.length
-  );
+  // const isWithDuplicatableSection = request.request_form.form_section.some(
+  //   (section) =>
+  //     section.section_is_duplicatable &&
+  //     section.section_field[0].field_response.length
+  // );
 
   const teamMember = useUserTeamMember();
   const user = useUserProfile();
@@ -394,12 +384,6 @@ const OnlineAssessmentRequestPage = ({ request }: Props) => {
 
         <Stack spacing="xl" mt="lg">
           {formSection.map((section, idx) => {
-            if (
-              !section.section_field[0].field_response ||
-              section.section_is_duplicatable ||
-              section.section_name === "Resume"
-            )
-              return null;
             return (
               <RequestSection
                 key={section.section_id + idx}
@@ -411,45 +395,6 @@ const OnlineAssessmentRequestPage = ({ request }: Props) => {
               />
             );
           })}
-
-          {isWithDuplicatableSection && (
-            <Accordion>
-              <Accordion.Item value={"workExperience"}>
-                <Paper shadow="xs">
-                  <Accordion.Control>
-                    <Title order={4} color="dimmed">
-                      Most Recent Work Experience
-                    </Title>
-                  </Accordion.Control>
-                </Paper>
-                <Accordion.Panel>
-                  <Stack spacing="xl" mt="lg">
-                    {formSection
-                      .filter((section) => section.section_is_duplicatable)
-                      .map((section, index) => {
-                        return (
-                          <RequestSection
-                            key={section.section_id + index}
-                            section={section}
-                            isFormslyForm={true}
-                            isOnlyWithResponse
-                            index={index + 1}
-                            isPublicRequest={true}
-                          />
-                        );
-                      })}
-                  </Stack>
-                </Accordion.Panel>
-              </Accordion.Item>
-            </Accordion>
-          )}
-
-          <RequestSection
-            section={formSection[formSection.length - 1]}
-            isFormslyForm={true}
-            isOnlyWithResponse
-            isPublicRequest={true}
-          />
         </Stack>
 
         {isRequestActionSectionVisible && (
@@ -474,7 +419,7 @@ const OnlineAssessmentRequestPage = ({ request }: Props) => {
           />
         )}
 
-        <RequestSignerSection signerList={signerList} />
+        {/* <RequestSignerSection signerList={signerList} /> */}
       </Stack>
 
       <RequestCommentList
