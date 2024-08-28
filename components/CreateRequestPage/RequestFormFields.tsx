@@ -622,7 +622,7 @@ const RequestFormFields = ({
                   {...inputProps}
                   error={fieldError}
                   formatter={formatter}
-                  parser={(value) => value.replace(/\D/g, "")}
+                  parser={(value) => value.replace(/[^\d.]/g, "")}
                   maxLength={maxLength}
                   precision={
                     [
