@@ -50,6 +50,11 @@ const sectionList = [
         label: "Date Updated",
         type: "DATE",
       },
+      {
+        id: "requestFilter.requestScoreRange",
+        label: "Score",
+        type: "NUMBER",
+      },
     ],
   },
   {

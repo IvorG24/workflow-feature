@@ -1471,12 +1471,14 @@ AS $$
     if (!status) {
       plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues}`);
     } else {
-      plv8.execute(`INSERT INTO request_schema.request_score_table (request_score_value,request_score_request_id) VALUES (${requestScore}, '${requestId}')`);
-
       if (status === 'APPROVED' && formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
         const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id;
         plv8.execute(`INSERT INTO hr_schema.hr_phone_interview_table (hr_phone_interview_request_id) VALUES ('${requestUUID}')`)
       }
+    }
+
+    if (requestScore !== undefined) { 
+      plv8.execute(`INSERT INTO request_schema.request_score_table (request_score_value,request_score_request_id) VALUES (${requestScore}, '${requestId}')`);
     }
 
     const activeTeamResult = plv8.execute(`SELECT * FROM team_schema.team_table WHERE team_id='${teamId}'`);
@@ -14248,6 +14250,8 @@ AS $$
     Boolean(requestFilter.dateCreatedRange.end) ? requestFilterCondition.push(`request_date_created :: DATE <= '${requestFilter.dateCreatedRange.end}'`) : null;
     Boolean(requestFilter.dateUpdatedRange.start) ? requestFilterCondition.push(`request_status_date_updated :: DATE >= '${requestFilter.dateUpdatedRange.start}'`) : null;
     Boolean(requestFilter.dateUpdatedRange.end) ? requestFilterCondition.push(`request_status_date_updated :: DATE <= '${requestFilter.dateUpdatedRange.end}'`) : null;
+    requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.start) ? requestFilterCondition.push(`request_score_value  >= ${requestFilter.requestScoreRange.start}`) : null;
+    requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.end) ? requestFilterCondition.push(`request_score_value <= ${requestFilter.requestScoreRange.end}`) : null;
 
     const filterCount = responseFilterCondition.length;
 
@@ -14269,11 +14273,13 @@ AS $$
             request_status,
             request_status_date_updated,
             request_response,
+            request_score_value,
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber 
           FROM public.request_view
           INNER JOIN form_schema.form_table ON form_id = request_form_id
           INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+          INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
           WHERE
             team_member_team_id = '${teamId}'
             AND request_is_disabled = FALSE
@@ -14343,6 +14349,7 @@ AS $$
         request_date_created: parentRequest.request_date_created,
         request_status: parentRequest.request_status,
         request_status_date_updated: parentRequest.request_status_date_updated,
+        request_score_value: parentRequest.request_score_value,
         request_response_list: responseList,
         request_signer_list: signerList.map(signer => {
           return {

@@ -203,6 +203,33 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       setIsLoading(true);
+
+      let requestScore = 0;
+      let workInformationIndex = 4;
+      if (
+        data.sections[workInformationIndex].section_name !== "Work Information"
+      ) {
+        workInformationIndex = 5;
+      }
+
+      if (
+        data.sections[workInformationIndex].section_field[0].field_response ===
+        "Unemployed"
+      ) {
+        requestScore += 2;
+      }
+      if (
+        Number(
+          data.sections[workInformationIndex].section_field[
+            data.sections[workInformationIndex].section_field.length - 2
+          ].field_response
+        ) >= 1
+      ) {
+        requestScore += 2;
+      } else {
+        requestScore += 1;
+      }
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId: form.form_id,
@@ -218,6 +245,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         teamName: formatTeamNameToUrlKey(
           process.env.NODE_ENV === "production" ? "SCIC" : "Sta Clara"
         ),
+        requestScore
       });
       notifications.show({
         message: "Request created.",

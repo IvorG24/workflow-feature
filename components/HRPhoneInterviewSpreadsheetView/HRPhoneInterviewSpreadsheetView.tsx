@@ -187,7 +187,7 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
         })
       );
       notifications.show({
-        message: `HR phone interview ${status.toLowerCase()}.`,
+        message: "Status updated.",
         color: "green",
       });
     } catch (e) {

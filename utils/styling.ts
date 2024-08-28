@@ -50,8 +50,10 @@ export const getStatusToColor = (status: string) => {
     case "pending":
       return "blue";
     case "approved":
+    case "qualified":
       return "green";
     case "rejected":
+    case "unqualified":
       return "red";
     case "canceled":
       return "gray";

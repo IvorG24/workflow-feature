@@ -65,6 +65,11 @@ export const requestColumnList = [
     field_name: "Approver",
     field_type: "Approver",
   },
+  {
+    field_id: "request_score_value",
+    field_name: "Score",
+    field_type: "NUMBER",
+  },
 ];
 
 export type ClassNameType =

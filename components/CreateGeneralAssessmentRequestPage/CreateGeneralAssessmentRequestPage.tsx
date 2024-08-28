@@ -110,7 +110,6 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
 
       await router.push(`/public-request/${request.request_id}`);
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",

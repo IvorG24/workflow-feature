@@ -37,13 +37,13 @@ const HRPhoneInterviewMainTableRow = ({
     modals.openConfirmModal({
       title: <Text>Please confirm your action.</Text>,
       children: (
-        <Text>{`Are you sure you want to ${
-          action === "APPORVED" ? "approve" : "reject"
-        } this applicant?`}</Text>
+        <Text>{`Are you sure this applicant is ${
+          action === "QUALIFIED" ? "qualified" : "unqualified"
+        }?`}</Text>
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
-      confirmProps: { color: action === "APPROVED" ? "green" : "red" },
+      confirmProps: { color: action === "QUALIFIED" ? "green" : "red" },
       onConfirm: async () =>
         handleUpdateHRPhoneInterviewStatus(
           item.hr_request_reference_id,
@@ -126,19 +126,19 @@ const HRPhoneInterviewMainTableRow = ({
           <Flex align="center" justify="center" gap="xs" wrap="wrap">
             <Button
               color="green"
-              w={120}
+              w={130}
               leftIcon={<IconCheck size={16} />}
-              onClick={() => openModel("APPROVED")}
+              onClick={() => openModel("QUALIFIED")}
             >
-              Approve
+              Qualified
             </Button>
             <Button
               color="red"
-              w={120}
+              w={130}
               leftIcon={<IconX size={16} />}
-              onClick={() => openModel("REJECTED")}
+              onClick={() => openModel("UNQUALIFIED")}
             >
-              Reject
+              Unqualified
             </Button>
           </Flex>
         )}

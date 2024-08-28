@@ -54,6 +54,10 @@ const requestColumnList = {
       field_id: "Approver",
       field_name: "Approver",
     },
+    {
+      field_id: "Score",
+      field_name: "Score",
+    },
   ],
 };
 

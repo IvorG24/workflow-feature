@@ -44,6 +44,10 @@ const formDefaultValues = {
     status: [],
     dateUpdatedRange: { start: "", end: "" },
     approver: [],
+    requestScoreRange: {
+      start: null,
+      end: null,
+    },
   },
   responseFilter: {
     position: [],

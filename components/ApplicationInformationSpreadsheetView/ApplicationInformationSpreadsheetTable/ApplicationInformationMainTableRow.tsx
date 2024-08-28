@@ -209,6 +209,11 @@ const ApplicationInformationMainTableRow = ({
           <RequestSignerList signerList={item.request_signer_list} />
         </td>
       )}
+      {!hiddenColumnList.includes("Score") && (
+        <td className={classes["Request"]}>
+          <Text>{item.request_score_value}</Text>
+        </td>
+      )}
       {sortedFields
         .filter(
           (row) =>

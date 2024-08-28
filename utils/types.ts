@@ -2102,6 +2102,7 @@ export type ApplicationInformationSpreadsheetData = {
   request_date_created: string;
   request_status: string;
   request_status_date_updated: string;
+  request_score_value: string;
   request_response_list: (RequestResponseTableRow & { field_id: string })[];
   request_signer_list: RequestListItemSignerType[];
 };
@@ -2143,6 +2144,10 @@ export type ApplicationInformationFilterFormValues = {
     status?: string[];
     dateUpdatedRange?: { start?: string; end?: string };
     approver?: string[];
+    requestScoreRange?: {
+      start?: number;
+      end?: number;
+    };
   };
   responseFilter?: {
     position?: string[];
