@@ -2234,12 +2234,17 @@ export type HRPhoneInterviewSpreadsheetData = {
   hr_request_reference_id: string;
   position: string;
   application_information_request_id: string;
+  application_information_score: number;
   general_assessment_request_id: string;
   general_assessment_score: number;
   technical_assessment_request_id: string;
   technical_assessment_score: number;
   technical_assessment_date: string;
   hr_phone_interview_status: string;
+  hr_phone_interview_schedule: string;
+  application_information_full_name: string;
+  application_information_contact_number: string;
+  application_information_email: string;
 };
 
 export type HRPhoneInterviewFilterFormValues = {
@@ -2251,6 +2256,10 @@ export type HRPhoneInterviewFilterFormValues = {
   };
   position?: string;
   application_information_request_id?: string;
+  application_information_score?: {
+    start?: number;
+    end?: number;
+  };
   general_assessment_request_id?: string;
   general_assessment_score?: {
     start?: number;
@@ -2266,4 +2275,8 @@ export type HRPhoneInterviewFilterFormValues = {
     end?: string;
   };
   hr_phone_interview_status?: string;
+  hr_phone_interview_schedule?: {
+    start?: string;
+    end?: string;
+  };
 };

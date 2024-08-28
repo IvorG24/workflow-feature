@@ -10,7 +10,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { DateInput } from "@mantine/dates";
+import { DateInput, DateTimePicker } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { IconCalendar, IconFilter } from "@tabler/icons-react";
 import { Controller, useFormContext } from "react-hook-form";
@@ -74,6 +74,45 @@ const HRPhoneInterviewFilterMenu = ({
               label="Application Information Request ID"
               {...register("application_information_request_id")}
             />
+            <Stack spacing={0}>
+              <Text size={14} fw={500}>
+                Application Information Score
+              </Text>
+              <Flex gap="xs">
+                <Controller
+                  control={control}
+                  name="application_information_score.start"
+                  render={({ field: { value, onChange } }) => {
+                    const newValue = value ?? "";
+                    return (
+                      <NumberInput
+                        placeholder="Start"
+                        value={newValue as number}
+                        onChange={onChange}
+                        sx={{ flex: 1 }}
+                        hideControls
+                      />
+                    );
+                  }}
+                />
+                <Controller
+                  control={control}
+                  name="application_information_score.end"
+                  render={({ field: { value, onChange } }) => {
+                    const newValue = value ?? "";
+                    return (
+                      <NumberInput
+                        placeholder="End"
+                        value={newValue as number}
+                        onChange={onChange}
+                        sx={{ flex: 1 }}
+                        hideControls
+                      />
+                    );
+                  }}
+                />
+              </Flex>
+            </Stack>
             <TextInput
               label="General Assessment Request ID"
               {...register("general_assessment_request_id")}
@@ -210,9 +249,13 @@ const HRPhoneInterviewFilterMenu = ({
                   <MultiSelect
                     label="HR Phone Interview Status"
                     data={[
-                      { value: "APPROVED", label: "Approved" },
+                      { value: "QUALIFIED", label: "Qualified" },
                       { value: "PENDING", label: "Pending" },
-                      { value: "REJECTED", label: "Rejected" },
+                      { value: "UNQUALIFIED", label: "Unqualified" },
+                      {
+                        value: "WAITING FOR SCHEDULE",
+                        label: "Waiting for Schedule",
+                      },
                     ]}
                     value={newValue as string[]}
                     onChange={onChange}
@@ -222,6 +265,47 @@ const HRPhoneInterviewFilterMenu = ({
                 );
               }}
             />
+            <Stack spacing={0}>
+              <Text size={14} fw={500}>
+                HR Phone Interview Schedule
+              </Text>
+              <Flex gap="xs">
+                <Controller
+                  control={control}
+                  name="hr_phone_interview_schedule.start"
+                  render={({ field: { value, onChange } }) => {
+                    const newValue = value ? new Date(value as string) : null;
+                    return (
+                      <DateTimePicker
+                        placeholder="Start"
+                        value={newValue as Date}
+                        onChange={onChange}
+                        clearable
+                        icon={<IconCalendar size={16} />}
+                        sx={{ flex: 1 }}
+                      />
+                    );
+                  }}
+                />
+                <Controller
+                  control={control}
+                  name="hr_phone_interview_schedule.end"
+                  render={({ field: { value, onChange } }) => {
+                    const newValue = value ? new Date(value as string) : null;
+                    return (
+                      <DateTimePicker
+                        placeholder="End"
+                        value={newValue as Date}
+                        onChange={onChange}
+                        clearable
+                        icon={<IconCalendar size={16} />}
+                        sx={{ flex: 1 }}
+                      />
+                    );
+                  }}
+                />
+              </Flex>
+            </Stack>
             <Button variant="light" mt="xs" onClick={handleReset}>
               Reset Filter
             </Button>

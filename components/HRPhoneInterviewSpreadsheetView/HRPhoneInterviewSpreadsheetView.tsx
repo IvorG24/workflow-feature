@@ -15,7 +15,7 @@ import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
-import ApplicationInformationColumnsMenu from "./HRPhoneInterviewColumnsMenu";
+import HRPhoneInterviewColumnsMenu from "./HRPhoneInterviewColumnsMenu";
 import HRPhoneInterviewFilterMenu from "./HRPhoneInterviewFilterMenu";
 import HRPhoneInterviewSpreadsheetTable from "./HRPhoneInterviewSpreadsheetTable/HRPhoneInterviewSpreadsheetTable";
 
@@ -26,7 +26,14 @@ const initialSort = {
 
 const formDefaultValues = {
   position: "",
+  application_information_full_name: "",
+  application_information_contact_number: "",
+  application_information_email: "",
   application_information_request_id: "",
+  application_information_score: {
+    start: null,
+    end: null,
+  },
   general_assessment_request_id: "",
   general_assessment_score: {
     start: null,
@@ -42,6 +49,10 @@ const formDefaultValues = {
     end: "",
   },
   hr_phone_interview_status: "",
+  hr_phone_interview_schedule: {
+    start: null,
+    end: null,
+  },
 };
 
 type Props = {
@@ -220,7 +231,7 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
               positionOptionList={positionOptionList}
             />
           </FormProvider>
-          <ApplicationInformationColumnsMenu
+          <HRPhoneInterviewColumnsMenu
             hiddenColumnList={hiddenColumnList}
             setHiddenColumnList={setHiddenColumnList}
             columnList={Object.keys(formDefaultValues)}

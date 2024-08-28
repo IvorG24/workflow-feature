@@ -113,12 +113,51 @@ const HRPhoneInterviewSpreadsheetTable = ({
                   </th>
                 )}
                 {!hiddenColumnList.includes(
+                  "application_information_full_name"
+                ) && (
+                  <th>
+                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
+                      <Text>Name</Text>
+                    </Flex>
+                  </th>
+                )}
+                {!hiddenColumnList.includes(
+                  "application_information_contact_number"
+                ) && (
+                  <th>
+                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
+                      <Text>Contact Number</Text>
+                    </Flex>
+                  </th>
+                )}
+                {!hiddenColumnList.includes(
+                  "application_information_email"
+                ) && (
+                  <th>
+                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
+                      <Text>Email</Text>
+                    </Flex>
+                  </th>
+                )}
+                {!hiddenColumnList.includes(
                   "application_information_request_id"
                 ) && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
                       <Text>Application Information Request ID</Text>
                       {sortButtons("applicationInformation.request_formsly_id")}
+                    </Flex>
+                  </th>
+                )}
+                {!hiddenColumnList.includes(
+                  "application_information_score"
+                ) && (
+                  <th>
+                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
+                      <Text>Application Information Score</Text>
+                      {sortButtons(
+                        "applicationInformationScore.request_score_value"
+                      )}
                     </Flex>
                   </th>
                 )}
@@ -175,6 +214,14 @@ const HRPhoneInterviewSpreadsheetTable = ({
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
                       <Text>HR Phone Interview Status</Text>
                       {sortButtons("hr_phone_interview_status")}
+                    </Flex>
+                  </th>
+                )}
+                {!hiddenColumnList.includes("hr_phone_interview_schedule") && (
+                  <th>
+                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
+                      <Text>HR Phone Interview Schedule</Text>
+                      {sortButtons("hr_phone_interview_schedule")}
                     </Flex>
                   </th>
                 )}

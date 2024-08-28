@@ -14785,12 +14785,14 @@ AS $$
       sort,
       position,
       application_information_request_id,
+      application_information_score,
       general_assessment_request_id,
       general_assessment_score,
       technical_assessment_request_id,
       technical_assessment_score,
       technical_assessment_date,
-      hr_phone_interview_status
+      hr_phone_interview_status,
+      hr_phone_interview_schedule
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -14802,6 +14804,15 @@ AS $$
     let applicationInformationRequestIdCondition = '';
     if (application_information_request_id) {
       applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
+    }
+    let applicationInformationScoreCondition = '';
+    if (application_information_score) {
+      if (application_information_score.start) {
+        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value >= ${application_information_score.start}`;
+      }
+      if (application_information_score.end) {
+        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value <= ${application_information_score.end}`;
+      }
     }
     let generalAssessmentRequestIdCondition = '';
     if (general_assessment_request_id) {
@@ -14842,21 +14853,33 @@ AS $$
     if (hr_phone_interview_status && hr_phone_interview_status.length) {
       hrPhoneInterviewCondition = `AND hr_phone_interview_status IN (${hr_phone_interview_status.map(status => `'${status}'`).join(", ")})`;
     }
+    let hrPhoneInterviewScheduleCondition = "";
+    if (hr_phone_interview_schedule) {
+      if (hr_phone_interview_schedule.start) {
+        hrPhoneInterviewScheduleCondition += ` AND hr_phone_interview_schedule >= '${hr_phone_interview_schedule.start}'`;
+      }
+      if (hr_phone_interview_schedule.end) {
+        hrPhoneInterviewScheduleCondition += ` AND hr_phone_interview_schedule <= '${hr_phone_interview_schedule.end}'`;
+      }
+    }
 
     const parentRequests = plv8.execute(
       `
         SELECT
-          applicationInformation.request_id AS hr_request_reference_id,
           request_response AS position,
+          applicationInformation.request_id AS hr_request_reference_id,
           applicationInformation.request_formsly_id AS application_information_request_id,
+          applicationInformationScore.request_score_value AS application_information_score,
           generalAssessment.request_formsly_id AS general_assessment_request_id,
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
           technicalAssessment.request_date_created AS technical_assessment_date,
-          hr_phone_interview_status
+          hr_phone_interview_status,
+          hr_phone_interview_schedule
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+        INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
           AND request_response_field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
         INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
@@ -14870,19 +14893,52 @@ AS $$
           AND technicalAssessment.request_status = 'APPROVED'
           ${positionCondition}
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
           ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
           ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
           ${technicalAssessmentDateCondition.length ? technicalAssessmentDateCondition : ""}
           ${hrPhoneInterviewCondition}
+          ${hrPhoneInterviewScheduleCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'
       `
     );
 
-    returnData = parentRequests;
+    returnData = parentRequests.map(request => {
+      const additionalData = plv8.execute(
+        `
+          SELECT
+            request_response,
+            request_response_field_id
+          FROM request_schema.request_response_table
+          WHERE
+            request_response_request_id = '${request.hr_request_reference_id}'
+            AND request_response_field_id IN ('7201c77e-b24a-4006-a4e5-8f38db887804', '859ac939-10c8-4094-aa7a-634f84b950b0', '0080798c-2359-4162-b8ae-441ac80512b6', '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 'ee6ec8af-0a9e-40a5-8353-7d851218fa87')
+        `
+      );
+
+      let firstName = middleName = lastName = contactNumber = email = "";
+      additionalData.forEach(response => {
+        const parsedResponse = response.request_response.replaceAll('"', "");
+        switch(response.request_response_field_id) {
+          case "7201c77e-b24a-4006-a4e5-8f38db887804": firstName = parsedResponse; break;
+          case "859ac939-10c8-4094-aa7a-634f84b950b0": middleName = parsedResponse; break;
+          case "0080798c-2359-4162-b8ae-441ac80512b6": lastName = parsedResponse; break;
+          case "5b43279b-88d6-41ce-ac69-b396e5a7a48f": contactNumber = parsedResponse; break;
+          case "ee6ec8af-0a9e-40a5-8353-7d851218fa87": email = parsedResponse; break;
+        }
+      });
+
+      return {
+        ...request,
+        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
+        application_information_contact_number: contactNumber,
+        application_information_email: email
+      }
+    });
 });
 return returnData;
 $$ LANGUAGE plv8;

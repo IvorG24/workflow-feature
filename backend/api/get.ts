@@ -6076,6 +6076,18 @@ export const getHRPhoneInterviewSummaryData = async (
             .format("MM-DD-YYYY")
         : undefined,
     },
+    hr_phone_interview_schedule: {
+      start: params.hr_phone_interview_schedule?.start
+        ? moment(params.hr_phone_interview_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.hr_phone_interview_schedule?.end
+        ? moment(params.hr_phone_interview_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
   };
 
   const { data, error } = await supabaseClient.rpc(

@@ -1,8 +1,8 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { formatDate } from "@/utils/constant";
+import { formatDate, formatTime } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
-import { getStatusToColor } from "@/utils/styling";
+import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { HRPhoneInterviewSpreadsheetData } from "@/utils/types";
 import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
@@ -60,6 +60,25 @@ const HRPhoneInterviewMainTableRow = ({
           <Text>{safeParse(item.position)}</Text>
         </td>
       )}
+      {!hiddenColumnList.includes("application_information_full_name") && (
+        <td>
+          <Text sx={{ whiteSpace: "nowrap" }}>
+            {item.application_information_full_name}
+          </Text>
+        </td>
+      )}
+      {!hiddenColumnList.includes("application_information_contact_number") && (
+        <td>
+          <Text sx={{ whiteSpace: "nowrap" }}>
+            {mobileNumberFormatter(item.application_information_contact_number)}
+          </Text>
+        </td>
+      )}
+      {!hiddenColumnList.includes("application_information_email") && (
+        <td>
+          <Text>{item.application_information_email}</Text>
+        </td>
+      )}
       {!hiddenColumnList.includes("application_information_request_id") && (
         <td>
           <Anchor
@@ -70,6 +89,11 @@ const HRPhoneInterviewMainTableRow = ({
           >
             {item.application_information_request_id}
           </Anchor>
+        </td>
+      )}
+      {!hiddenColumnList.includes("application_information_score") && (
+        <td>
+          <Text>{item.application_information_score}</Text>
         </td>
       )}
       {!hiddenColumnList.includes("general_assessment_request_id") && (
@@ -119,6 +143,22 @@ const HRPhoneInterviewMainTableRow = ({
           >
             {item.hr_phone_interview_status}
           </Badge>
+        </td>
+      )}
+      {!hiddenColumnList.includes("hr_phone_interview_schedule") && (
+        <td>
+          {item.hr_phone_interview_schedule ? (
+            <>
+              <Text sx={{ whiteSpace: "nowrap" }}>
+                Date: {formatDate(new Date(item.hr_phone_interview_schedule))}
+              </Text>
+              <Text sx={{ whiteSpace: "nowrap" }}>
+                Time: {formatTime(new Date(item.hr_phone_interview_schedule))}
+              </Text>
+            </>
+          ) : (
+            ""
+          )}
         </td>
       )}
       <td>
