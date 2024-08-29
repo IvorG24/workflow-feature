@@ -25,12 +25,18 @@ type HrSlotType = {
 
 const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, status, isRefetchingData }: SchedulingType) => {
     const supabaseClient = useSupabaseClient();
-    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+    const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+        if (intialDate) {
+            return new Date(intialDate);
+        }
+        return new Date();
+    })
     const [selectedSlot, setSelectedSlot] = useState<string>('');
     const [hrSlot, setHrSlot] = useState<HrSlotType[]>([])
     const [isLoading, setIsloading] = useState(false)
     const [isEdit, setIsEdit] = useState<boolean | null>(null)
     const [opened, { open, close }] = useDisclosure(false);
+    const [isReschedule, setIsReschedule] = useState(false)
 
     const today = new Date();
     const minDate = today;
@@ -69,6 +75,7 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
     const rescheduleHandler = () => {
         refetchData()
         setIsEdit(true)
+        setIsReschedule(true)
     }
 
     const setScheduleHandler = async () => {
@@ -198,8 +205,6 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
         }
     }, [selectedDate])
 
-    console.log(status)
-
     return (
         <>
             <Modal opened={opened} onClose={close} centered title='Please confirm your action.' pos="relative">
@@ -264,15 +269,28 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
                             />
                         }
 
-                        {selectedSlot &&
-                            <Button onClick={setScheduleHandler} disabled={isLoading || isRefetchingData}>
-                                <Text fz='md' fw='bold' >Set Schedule</Text>
-                            </Button>
-                        }
+                        <Flex direction='column'>
+                            {selectedSlot &&
+                                <Button mb={10} onClick={setScheduleHandler} disabled={isLoading || isRefetchingData} style={{ width: 'min-content' }}>
+                                    <Text fz='md' fw='bold' >Set Schedule</Text>
+                                </Button>
+                            }
+                            {isReschedule &&
+                                <Button style={{ width: 'min-content' }} color="dark" onClick={() => {
+                                    setIsReschedule(false)
+                                    setIsEdit(false)
+                                }} disabled={isLoading || isRefetchingData}>
+                                    <Text fz='md' fw='bold' >Cancel</Text>
+                                </Button>
+                            }
+
+                        </Flex>
 
 
                     </div>
+
                 }
+
 
             </Flex>
         </>
