@@ -6058,6 +6058,21 @@ export const getPublicFormList = async (
   return data;
 };
 
+export const getPositionType = async (
+  supabaseClient: SupabaseClient<Database>,
+  position: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("position_type")
+    .eq("position", position)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0].position_type;
+};
+
 export const getHRPhoneInterviewSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: HRPhoneInterviewFilterFormValues & {

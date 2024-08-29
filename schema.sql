@@ -2992,8 +2992,8 @@ AS $$
           user_last_name,
           user_avatar
         FROM public.request_view
-        LEFT JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
         INNER JOIN team_schema.team_member_table AS ftmt ON ftmt.team_member_id = form_team_member_id
         LEFT JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
@@ -3014,7 +3014,7 @@ AS $$
       `
         SELECT COUNT(DISTINCT request_id)
         FROM public.request_view
-        LEFT JOIN team_schema.team_member_table AS rtm ON request_view.request_team_member_id = rtm.team_member_id
+        INNER JOIN team_schema.team_member_table AS rtm ON request_view.request_team_member_id = rtm.team_member_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
         INNER JOIN team_schema.team_member_table AS ftm ON ftm.team_member_id = form_table.form_team_member_id
         INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id

@@ -3,6 +3,8 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_IN_MB,
+  MAX_INT,
+  MAX_TEXT_LENGTH,
   SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
 import {
@@ -498,6 +500,7 @@ const RequestFormFields = ({
               }
             }}
             type={field.field_name === "Email Address" ? "email" : undefined}
+            maxLength={MAX_TEXT_LENGTH}
           />
         );
 
@@ -516,6 +519,7 @@ const RequestFormFields = ({
             minRows={4}
             maxRows={12}
             withAsterisk={field.field_is_required}
+            maxLength={MAX_TEXT_LENGTH}
           />
         );
 
@@ -624,7 +628,7 @@ const RequestFormFields = ({
                   {...inputProps}
                   error={fieldError}
                   formatter={formatter}
-                  parser={(value) => value.replace(/\D/g, "")}
+                  parser={(value) => value.replace(/[^\d.]/g, "")}
                   maxLength={maxLength}
                   precision={
                     [
@@ -673,6 +677,8 @@ const RequestFormFields = ({
                     }
                   }}
                   icon={field.field_name === "Contact Number" ? "+63" : ""}
+                  min={0}
+                  max={MAX_INT}
                 />
               )}
               rules={{
