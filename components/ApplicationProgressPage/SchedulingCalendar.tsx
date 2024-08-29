@@ -17,10 +17,6 @@ type SchedulingType = {
     isRefetchingData: boolean
 }
 
-type MeetingInfo = {
-    breakDuration: number;
-    slotDuration: number;
-};
 
 type HrSlotType = {
     slot_start: string,
@@ -29,8 +25,7 @@ type HrSlotType = {
 
 const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, status, isRefetchingData }: SchedulingType) => {
     const supabaseClient = useSupabaseClient();
-    const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
     const [selectedSlot, setSelectedSlot] = useState<string>('');
     const [hrSlot, setHrSlot] = useState<HrSlotType[]>([])
     const [isLoading, setIsloading] = useState(false)
@@ -61,10 +56,12 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
             close()
             notifications.show({
                 message: 'Interview cancellation successful!',
+                color: 'green'
             });
         } catch (error) {
             notifications.show({
                 message: 'Error cancelling interview:',
+                color: 'orange'
             });
         }
     }
@@ -79,6 +76,7 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
         if (!selectedSlot || !selectedDate) {
             notifications.show({
                 message: 'No slot selected or meeting info available.',
+                color: 'orange'
             })
             return;
         }
@@ -112,12 +110,14 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
             refetchData()
 
             notifications.show({
-                message: 'Interview updated successfully!',
+                message: ' HR phone interview scheduled successfully',
+                color: 'green'
             })
 
         } catch (error) {
             notifications.show({
                 message: 'Error updating interview:',
+                color: 'orange'
             })
         } finally {
             setIsloading(false);
@@ -126,28 +126,8 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
 
     }
 
-
-    useEffect(() => {
-        if (meeting_type === 'technical') {
-            setMeetingInfo({ breakDuration: 10, slotDuration: 15 });
-        }
-        if (meeting_type === 'qualifying') {
-            setMeetingInfo({ breakDuration: 10, slotDuration: 15 });
-        }
-        if (meeting_type === 'phone') {
-            setMeetingInfo({ breakDuration: 10, slotDuration: 5 });
-        }
-        if (intialDate !== null) {
-            const initialDate = new Date(intialDate);
-            setSelectedDate(initialDate);
-            setIsEdit(false);
-        } else {
-            setIsEdit(true)
-        }
-    }, [meeting_type]);
-
-    useEffect(() => {
-        if (selectedDate !== null && meetingInfo !== null) {
+    const fetchTime = async ({ slotDuration, breakDuration }: { slotDuration: number, breakDuration: number }) => {
+        if (selectedDate !== null) {
             const start = new Date(selectedDate);
             start.setHours(8, 0, 0, 0); // Set to 8 AM
 
@@ -157,29 +137,57 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
             const params = {
                 start: start.toISOString(),
                 end: end.toISOString(),
-                slotDuration: meetingInfo.slotDuration * 60 * 1000,
-                breakDuration: meetingInfo.breakDuration * 60 * 1000
+                slotDuration: slotDuration * 60 * 1000,
+                breakDuration: breakDuration * 60 * 1000
             }
 
-            const fetchData = async () => {
-                try {
-                    setIsloading(true)
-                    const data = await getMeetingSlots(supabaseClient, params);
-                    setHrSlot(data)
-                } catch (error) {
-                    notifications.show({
-                        message: 'Error fetching meeting slots',
-                    })
-                } finally {
-                    setIsloading(false)
-                }
-            };
-
-            fetchData()
-
+            try {
+                setIsloading(true)
+                const data = await getMeetingSlots(supabaseClient, params);
+                setHrSlot(data)
+                setSelectedSlot(data.map(slot => `${formatTimeToLocal(slot.slot_start)}`)[0])
+            } catch (error) {
+                notifications.show({
+                    message: 'Error fetching meeting slots',
+                    color: 'orange'
+                })
+            } finally {
+                setIsloading(false)
+            }
         }
-    }, [selectedDate]);
+    }
 
+
+    useEffect(() => {
+        if (meeting_type === 'technical') {
+            fetchTime({ breakDuration: 10, slotDuration: 15 })
+        }
+        if (meeting_type === 'qualifying') {
+            fetchTime({ breakDuration: 10, slotDuration: 15 })
+        }
+        if (meeting_type === 'phone') {
+            fetchTime({ breakDuration: 10, slotDuration: 5 })
+        }
+        if (intialDate !== null) {
+            const initialDate = new Date(intialDate);
+            setSelectedDate(initialDate);
+            setIsEdit(false);
+        } else {
+            setIsEdit(true)
+        }
+    }, []);
+
+    useEffect(() => {
+        if (meeting_type === 'technical') {
+            fetchTime({ breakDuration: 10, slotDuration: 15 })
+        }
+        if (meeting_type === 'qualifying') {
+            fetchTime({ breakDuration: 10, slotDuration: 15 })
+        }
+        if (meeting_type === 'phone') {
+            fetchTime({ breakDuration: 10, slotDuration: 5 })
+        }
+    }, [selectedDate])
 
     return (
         <>
@@ -199,7 +207,7 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
                     </div>
                 }
 
-                {!isEdit && selectedDate && meetingInfo && status !== 'BACKOUT' && status !== "QUALIFIED" &&
+                {isEdit === false && selectedDate &&
                     <div>
                         {(() => {
                             const hours = selectedDate.getHours();
@@ -212,8 +220,8 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
                                         <Text component="a" fw='bold'> {formatDate(selectedDate)} at {timeString}</Text>
                                     </Text>
                                     <Flex gap={10} direction='column'>
-                                        <Button onClick={rescheduleHandler} style={{ width: 'max-content' }} disabled={isLoading || isRefetchingData}>Reschedule</Button>
-                                        <Button onClick={open} style={{ width: 'max-content' }} disabled={isLoading || isRefetchingData}>Cancel Interview</Button>
+                                        <Button onClick={rescheduleHandler} style={{ width: 'max-content' }} disabled={isLoading || isRefetchingData} color="orange">Reschedule</Button>
+                                        <Button onClick={open} style={{ width: 'max-content' }} disabled={isLoading || isRefetchingData} color="dark">Cancel</Button>
                                     </Flex>
                                 </div>
                             );
@@ -224,8 +232,7 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
                 {isEdit &&
                     <div>
                         <DatePickerInput
-                            label="Pick dates"
-                            placeholder="Pick dates"
+                            label="Select Date"
                             maw='max-content'
                             value={selectedDate}
                             onChange={setSelectedDate}
@@ -234,21 +241,21 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
                             mb={10}
                         />
 
-                        {!isLoading && !isRefetchingData && selectedDate !== null &&
+                        {hrSlot &&
                             <NativeSelect
-                                data={['select time', ...hrSlot.map(slot => `${formatTimeToLocal(slot.slot_start)}`)]}
-                                label="Pick Time"
+                                data={hrSlot.map(slot => `${formatTimeToLocal(slot.slot_start)}`)}
+                                label="Select Time"
                                 maw='max-content'
                                 value={selectedSlot}
                                 onChange={(event) => setSelectedSlot(event.currentTarget.value)}
                                 mb={10}
+                                disabled={isLoading || isRefetchingData}
                             />
-
                         }
 
                         {selectedSlot &&
                             <Button onClick={setScheduleHandler} disabled={isLoading || isRefetchingData}>
-                                <Text fz='md' fw='bold'  >Set Schedule</Text>
+                                <Text fz='md' fw='bold' >Set Schedule</Text>
                             </Button>
                         }
 
