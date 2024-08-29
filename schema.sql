@@ -15013,7 +15013,7 @@ AS $$
 return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_meeting_available(
+CREATE OR REPLACE FUNCTION get_phone_meeting_available(
   input_data JSON
 )
 RETURNS JSON 

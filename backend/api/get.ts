@@ -6137,39 +6137,36 @@ export const getAllPoisitions = async (
   });
 };
 
-export const getMeetingSlots = async (
+export const getPhoneMeetingSlots = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    start: string,
-    end: string,
-    slotDuration: number,
-    breakDuration: number,
+    start: string;
+    end: string;
+    slotDuration: number;
+    breakDuration: number;
   }
 ) => {
-
   const { data: data, error } = await supabaseClient.rpc(
-    "get_meeting_available",
+    "get_phone_meeting_available",
     {
-      input_data: params
+      input_data: params,
     }
   );
 
-
   if (error) throw error;
-  
-  return data as {slot_start: string, slot_end: string}[]
+
+  return data as { slot_start: string; slot_end: string }[];
 };
 
 export const getPhoneInterview = async (
-  supabaseClient: SupabaseClient<Database>,
+  supabaseClient: SupabaseClient<Database>
 ) => {
-
   const { data, error } = await supabaseClient
-    .schema('hr_schema')
-    .from('hr_phone_interview_table')
-    .select()
+    .schema("hr_schema")
+    .from("hr_phone_interview_table")
+    .select();
 
   if (error) throw error;
-  
-  return data as HRPhoneInterviewTableRow[]
+
+  return data as HRPhoneInterviewTableRow[];
 };
