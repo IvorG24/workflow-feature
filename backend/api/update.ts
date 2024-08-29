@@ -1334,3 +1334,32 @@ export const updateHRPhoneInterviewStatus = async (
     .eq("hr_phone_interview_request_id", applicationinformationRqeuestId);
   if (error) throw error;
 };
+
+export const updatePhoneInterview = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    interview_schedule?: string;
+    interview_status_date_updated?: string;
+    target_id: string;
+    status: string;
+  }
+) => {
+  const { interview_schedule, interview_status_date_updated, target_id, status } = params;
+
+  const updateData: { [key: string]: any } = {
+    hr_phone_interview_status_date_updated: interview_status_date_updated,
+    hr_phone_interview_status: status
+  };
+
+  if (interview_schedule) {
+    updateData.hr_phone_interview_schedule = interview_schedule;
+  }
+
+  const { error } = await supabaseClient
+    .schema('hr_schema')
+    .from('hr_phone_interview_table')
+    .update(updateData)
+    .eq('hr_phone_interview_id', target_id);
+
+  if (error) throw error;
+};

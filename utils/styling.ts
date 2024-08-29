@@ -59,6 +59,8 @@ export const getStatusToColor = (status: string) => {
       return "gray";
     case "waiting for schedule":
       return "orange";
+    case "backout":
+      return "dark"
     default:
       return "";
   }

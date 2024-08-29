@@ -44,6 +44,7 @@ import {
   FormType,
   HRPhoneInterviewFilterFormValues,
   HRPhoneInterviewSpreadsheetData,
+  HRPhoneInterviewTableRow,
   InitialFormType,
   ItemCategoryType,
   ItemCategoryWithSigner,
@@ -6117,4 +6118,41 @@ export const getAllPoisitions = async (
   return data.map(({ position }) => {
     return { label: position, value: position };
   });
+};
+
+export const getMeetingSlots = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    start: string,
+    end: string,
+    slotDuration: number,
+    breakDuration: number,
+  }
+) => {
+
+  const { data: data, error } = await supabaseClient.rpc(
+    "get_meeting_available",
+    {
+      input_data: params
+    }
+  );
+
+
+  if (error) throw error;
+  
+  return data as {slot_start: string, slot_end: string}[]
+};
+
+export const getPhoneInterview = async (
+  supabaseClient: SupabaseClient<Database>,
+) => {
+
+  const { data, error } = await supabaseClient
+    .schema('hr_schema')
+    .from('hr_phone_interview_table')
+    .select()
+
+  if (error) throw error;
+  
+  return data as HRPhoneInterviewTableRow[]
 };

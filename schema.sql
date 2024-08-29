@@ -14943,6 +14943,75 @@ AS $$
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_meeting_available(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+let free_slot;
+plv8.subtransaction(function(){
+  const {
+    start,
+    end,
+    slotDuration,
+    breakDuration,
+  } = input_data;
+
+  // todo make sure to also get schedule from different interview process 
+  const scheduledList = plv8.execute(
+    `
+    SELECT 
+      hr_phone_interview_schedule as meeting_start_time,
+      hr_phone_interview_schedule + INTERVAL '5 minutes' as meeting_end_time 
+    FROM hr_schema.hr_phone_interview_table
+    `
+  )
+
+  const generateSlot = ({start, end, scheduledList, slotDuration, breakDuration}) => {
+    const startTime = new Date(start);
+    const endTime = new Date(end);
+
+    let slots = [];
+    let currentSlotStart = new Date(startTime);
+
+    while (currentSlotStart < endTime) {
+        const currentSlotEnd = new Date(currentSlotStart.getTime() + slotDuration);
+
+        if (currentSlotEnd <= endTime) {
+            slots.push({
+                slot_start: currentSlotStart.toISOString(),
+                slot_end: currentSlotEnd.toISOString()
+            });
+        }
+
+        currentSlotStart = new Date(currentSlotStart.getTime() + slotDuration + breakDuration);
+    }
+
+    const filteredSlots = slots.filter(slot => {
+        return !scheduledList.some(meeting => {
+            const meetingStart = new Date(meeting.meeting_start_time);
+            const meetingEnd = new Date(meeting.meeting_end_time);
+
+            return (
+                (new Date(slot.slot_start) < meetingEnd) &&
+                (new Date(slot.slot_end) > meetingStart)
+            );
+        });
+    });
+
+    return filteredSlots;
+
+  }
+
+  
+  free_slot = generateSlot({start, end, scheduledList, slotDuration, breakDuration})
+  
+
+});
+return free_slot;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
