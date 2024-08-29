@@ -676,7 +676,7 @@ const RequestFormFields = ({
                   }}
                   icon={field.field_name === "Contact Number" ? "+63" : ""}
                   min={0}
-                  max={MAX_INT}
+                  max={maxLength ? undefined : MAX_INT}
                 />
               )}
               rules={{
