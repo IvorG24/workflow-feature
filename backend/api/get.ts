@@ -5942,6 +5942,8 @@ export const getFormSectionWithFieldList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formId: string;
+    userId: string;
+    teamId: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(

@@ -14383,8 +14383,24 @@ AS $$
   let returnData;
   plv8.subtransaction(function(){
     const { 
-      formId
+      formId,
+      userId,
+      teamId
     } = input_data;
+
+    const teamMemberGroup = plv8.execute(
+      `
+        SELECT COUNT(tmt.team_member_id)
+        FROM team_schema.team_member_table AS tmt
+        INNER JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
+        WHERE
+          tmt.team_member_user_id = '${userId}'
+          AND tmt.team_member_team_id = '${teamId}'
+          AND tmt.team_member_is_disabled = false
+          AND tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+      `
+    );
+    if(!teamMemberGroup.length) throw new Error();
 
     const optionList = [];
 
