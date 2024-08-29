@@ -1,7 +1,7 @@
 import { getMeetingSlots } from "@/backend/api/get";
 import { updatePhoneInterview } from "@/backend/api/update";
 import { formatDate } from "@/utils/constant";
-import { Button, Flex, Modal, NativeSelect, Text } from "@mantine/core";
+import { Button, Flex, Modal, NativeSelect, Stack, Text } from "@mantine/core";
 import { DatePickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -132,7 +132,16 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
             start.setHours(8, 0, 0, 0); // Set to 8 AM
 
             const end = new Date(selectedDate);
-            end.setHours(17, 0, 0, 0); // Set to 5 PM
+            end.setHours(18, 30, 0, 0); // Set to 6:30 PM
+
+            // meeting duration
+            // technical = 15 mins
+            // qualifying = 15 mins
+            // phone = 5 mins
+
+            // restriction
+            // 10 mins rest between meeting
+            // schedule limited to 30 days into the future
 
             const params = {
                 start: start.toISOString(),
@@ -191,14 +200,12 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
 
     return (
         <>
-            <Modal opened={opened} onClose={close} centered title='Confirm Cancellation'>
-                <Flex direction='column'>
+            <Modal opened={opened} onClose={close} centered title='Confirm Cancellation' pos="relative">
+                <Stack h="auto">
                     <Text mb={15} align="center">Are you sure you want to cancel your {meeting_type} interview?</Text>
-                </Flex>
-                <Flex justify='space-between'>
                     <Button onClick={cancelInterviewHandler} mb={5} color="red">Yes</Button>
                     <Button color="gray" onClick={close}>No</Button>
-                </Flex>
+                </Stack>
             </Modal>
             <Flex direction='column' gap={10} mb={20}>
                 {status === 'BACKOUT' &&
