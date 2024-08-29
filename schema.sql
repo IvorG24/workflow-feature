@@ -944,11 +944,19 @@ CREATE TABLE lookup_schema.position_table (
   position_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   position_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   position VARCHAR(4000) NOT NULL,
-  position_type VARCHAR(4000) NOT NULL,
+  position_category VARCHAR(4000) NOT NULL,
+  position_classification VARCHAR(4000) NOT NULL,
   position_is_disabled BOOLEAN DEFAULT false NOT NULL,
   position_is_available BOOLEAN DEFAULT true NOT NULL,
   position_is_with_certificate BOOLEAN DEFAULT false NOT NULL,
   position_is_with_license BOOLEAN DEFAULT false NOT NULL,
+  position_certificate_label VARCHAR(4000),
+  position_license_label VARCHAR(4000),
+  position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
+  position_minimum_years_of_experience INT DEFAULT 1 NOT NULL,
+  position_is_ped_position BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_director_interview BOOLEAN DEFAULT false NOT NULL,
 
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
@@ -2992,8 +3000,8 @@ AS $$
           user_last_name,
           user_avatar
         FROM public.request_view
-        LEFT JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
-        LEFT JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
+        INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = request_view.request_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
         INNER JOIN team_schema.team_member_table AS ftmt ON ftmt.team_member_id = form_team_member_id
         LEFT JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
@@ -3014,7 +3022,7 @@ AS $$
       `
         SELECT COUNT(DISTINCT request_id)
         FROM public.request_view
-        LEFT JOIN team_schema.team_member_table AS rtm ON request_view.request_team_member_id = rtm.team_member_id
+        INNER JOIN team_schema.team_member_table AS rtm ON request_view.request_team_member_id = rtm.team_member_id
         INNER JOIN form_schema.form_table ON request_view.request_form_id = form_table.form_id
         INNER JOIN team_schema.team_member_table AS ftm ON ftm.team_member_id = form_table.form_team_member_id
         INNER JOIN request_schema.request_signer_table ON request_view.request_id = request_signer_table.request_signer_request_id
@@ -14383,8 +14391,24 @@ AS $$
   let returnData;
   plv8.subtransaction(function(){
     const { 
-      formId
+      formId,
+      userId,
+      teamId
     } = input_data;
+
+    const teamMemberGroup = plv8.execute(
+      `
+        SELECT COUNT(tmt.team_member_id)
+        FROM team_schema.team_member_table AS tmt
+        INNER JOIN team_schema.team_group_member_table AS tgmt ON tgmt.team_member_id = tmt.team_member_id
+        WHERE
+          tmt.team_member_user_id = '${userId}'
+          AND tmt.team_member_team_id = '${teamId}'
+          AND tmt.team_member_is_disabled = false
+          AND tgmt.team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+      `
+    );
+    if(!teamMemberGroup.length) throw new Error();
 
     const optionList = [];
 
@@ -14601,21 +14625,65 @@ AS $$
         }
       }
 
-      let isWithProgressIndicator = false;
-      if(request.request_status === 'APPROVED' && request.form_name === 'Application Information'){
-        const connectedRequestCount = plv8.execute(
+      const checkProgress = (formslyId, requestId) => {
+        const generalAssessmentCount = plv8.execute(
           `
             SELECT COUNT(request_response_id)
             FROM request_schema.request_response_table
             INNER JOIN request_schema.request_table ON request_id = request_response_request_id
             WHERE
-              request_response = '"${request.request_formsly_id}"'
-              AND request_status != 'APPROVED'
+              request_response = '"${formslyId}"'
+              AND request_form_id = '71f569a0-70a8-4609-82d2-5cc26ac1fe8c'
           `
         )[0].count;
-        if(!connectedRequestCount){
-          isWithProgressIndicator = true;
+        if(!generalAssessmentCount){
+          return true;
         }
+
+        const technicalAssessmentCount = plv8.execute(
+          `
+            SELECT COUNT(request_response_id)
+            FROM request_schema.request_response_table
+            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+            WHERE
+              request_response = '"${formslyId}"'
+              AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
+          `
+        )[0].count;
+        if(!technicalAssessmentCount){
+          return true;
+        }
+
+        const hrPhoneInterviewCount = plv8.execute(
+          `
+            SELECT COUNT(hr_phone_interview_id)
+            FROM hr_schema.hr_phone_interview_table
+            WHERE
+              hr_phone_interview_request_id = '${requestId}'
+              AND hr_phone_interview_schedule IS NOT NULL
+          `
+        )[0].count;
+        if(!hrPhoneInterviewCount){
+          return true;
+        }
+
+        const phoneInterviewCount = plv8.execute(
+          `
+            SELECT COUNT(hr_phone_interview_id)
+            FROM hr_schema.hr_phone_interview_table
+            WHERE
+              hr_phone_interview_request_id = '${requestId}'
+              AND hr_phone_interview_schedule IS NOT NULL
+          `
+        )[0].count;
+        if(!phoneInterviewCount){
+          return true;
+        }
+      }
+
+      let isWithProgressIndicator = false;
+      if(request.request_status === 'APPROVED' && request.form_name === 'Application Information'){
+        isWithProgressIndicator = checkProgress(request.request_formsly_id, request.request_id);
       }
 
       return {
@@ -14695,6 +14763,8 @@ AS $$
     let hrPhoneInterviewData = {};
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
+    const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'`)[0].request_response.replaceAll('"', "");
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position = '${positionValue}'`);
     
     applicationInformationData = plv8.execute(
       `

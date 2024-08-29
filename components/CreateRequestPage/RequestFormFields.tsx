@@ -3,6 +3,8 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import {
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_IN_MB,
+  MAX_INT,
+  MAX_TEXT_LENGTH,
   SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
 import {
@@ -48,6 +50,7 @@ type RequestFormFieldsProps = {
     options: OptionTableRow[];
   } & {
     field_section_duplicatable_id: string | undefined;
+    field_description?: string;
     field_prefix?: string | null;
   };
   sectionIndex: number;
@@ -498,6 +501,7 @@ const RequestFormFields = ({
               }
             }}
             type={field.field_name === "Email Address" ? "email" : undefined}
+            maxLength={MAX_TEXT_LENGTH}
           />
         );
 
@@ -516,6 +520,7 @@ const RequestFormFields = ({
             minRows={4}
             maxRows={12}
             withAsterisk={field.field_is_required}
+            maxLength={MAX_TEXT_LENGTH}
           />
         );
 
@@ -624,7 +629,7 @@ const RequestFormFields = ({
                   {...inputProps}
                   error={fieldError}
                   formatter={formatter}
-                  parser={(value) => value.replace(/\D/g, "")}
+                  parser={(value) => value.replace(/[^\d.]/g, "")}
                   maxLength={maxLength}
                   precision={
                     [
@@ -673,6 +678,8 @@ const RequestFormFields = ({
                     }
                   }}
                   icon={field.field_name === "Contact Number" ? "+63" : ""}
+                  min={0}
+                  max={maxLength ? undefined : MAX_INT}
                 />
               )}
               rules={{
@@ -1267,7 +1274,7 @@ const RequestFormFields = ({
               <Flex w="100%" align="flex-end" gap="xs">
                 {["Certification", "License"].includes(field.field_name) && (
                   <Checkbox
-                    checked={field.field_is_required}
+                    checked={!field.field_is_read_only}
                     mb="xs"
                     readOnly
                   />
@@ -1282,6 +1289,7 @@ const RequestFormFields = ({
                   error={fieldError}
                   sx={{ width: prevFileLink ? "96%" : "100%" }}
                   disabled={field.field_is_read_only}
+                  description={field.field_description}
                 />
                 {parseJSONIfValid(`${value}`) && isEdit !== undefined ? (
                   <Tooltip

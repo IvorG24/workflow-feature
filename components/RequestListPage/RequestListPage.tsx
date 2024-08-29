@@ -1,7 +1,10 @@
 import { getRequestList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import {
   DEFAULT_REQUEST_LIST_LIMIT,
   REQUEST_LIST_HIDDEN_FORMS,
@@ -49,6 +52,7 @@ const RequestListPage = ({
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
   const teamMember = useUserTeamMember();
+  const teamMemberGroupList = useUserTeamMemberGroupList();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
@@ -75,7 +79,10 @@ const RequestListPage = ({
   });
 
   const filteredFormList = formList
-    .filter(({ form_name }) => !REQUEST_LIST_HIDDEN_FORMS.includes(form_name))
+    .filter(
+      ({ form_name, form_is_public_form }) =>
+        !REQUEST_LIST_HIDDEN_FORMS.includes(form_name) && !form_is_public_form
+    )
     .map(({ form_name: label, form_id: value }) => ({ label, value }))
     .sort((a, b) => a.label.localeCompare(b.label));
 
@@ -223,7 +230,7 @@ const RequestListPage = ({
                   )
                 }
               >
-                SSOT Spreadsheet View
+                SSOT
               </Menu.Item>
               <Menu.Item
                 onClick={async () =>
@@ -234,30 +241,34 @@ const RequestListPage = ({
                   )
                 }
               >
-                Liquidation Spreadsheet View
+                Liquidation
               </Menu.Item>
-              <Menu.Item
-                onClick={async () =>
-                  await router.push(
-                    `/${formatTeamNameToUrlKey(
-                      activeTeam.team_name
-                    )}/requests/application-information-spreadsheet-view`
-                  )
-                }
-              >
-                Application Information Spreadhsheet View
-              </Menu.Item>
-              <Menu.Item
-                onClick={async () =>
-                  await router.push(
-                    `/${formatTeamNameToUrlKey(
-                      activeTeam.team_name
-                    )}/requests/hr-phone-interview-spreadsheet-view`
-                  )
-                }
-              >
-                HR Phone Interview Spreadhsheet View
-              </Menu.Item>
+              {teamMemberGroupList.includes("HUMAN RESOURCES") && (
+                <>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/application-information-spreadsheet-view`
+                      )
+                    }
+                  >
+                    Application Information
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/hr-phone-interview-spreadsheet-view`
+                      )
+                    }
+                  >
+                    HR Phone Interview
+                  </Menu.Item>
+                </>
+              )}
             </Menu.Dropdown>
           </Menu>
         ) : null}

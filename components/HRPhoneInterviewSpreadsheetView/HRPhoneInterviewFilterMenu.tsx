@@ -249,12 +249,24 @@ const HRPhoneInterviewFilterMenu = ({
                   <MultiSelect
                     label="HR Phone Interview Status"
                     data={[
-                      { value: "QUALIFIED", label: "Qualified" },
                       { value: "PENDING", label: "Pending" },
+                      { value: "QUALIFIED", label: "Qualified" },
                       { value: "UNQUALIFIED", label: "Unqualified" },
                       {
                         value: "WAITING FOR SCHEDULE",
                         label: "Waiting for Schedule",
+                      },
+                      {
+                        value: "UNRESPONSIVE",
+                        label: "Unresponsive",
+                      },
+                      {
+                        value: "CANCELLED",
+                        label: "Cancelled",
+                      },
+                      {
+                        value: "MISSED",
+                        label: "Missed",
                       },
                     ]}
                     value={newValue as string[]}

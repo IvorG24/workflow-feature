@@ -6,7 +6,6 @@ import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { HRPhoneInterviewSpreadsheetData } from "@/utils/types";
 import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { IconCheck, IconX } from "@tabler/icons-react";
 
 const useStyles = createStyles((theme) => ({
   row: {
@@ -33,17 +32,21 @@ const HRPhoneInterviewMainTableRow = ({
   const { classes } = useStyles();
   const team = useActiveTeam();
 
+  const statusColor: Record<string, string> = {
+    QUALIFIED: "green",
+    UNQUALIFIED: "red",
+    UNRESPONSIVE: "gray",
+  };
+
   const openModel = (action: string) =>
     modals.openConfirmModal({
       title: <Text>Please confirm your action.</Text>,
       children: (
-        <Text>{`Are you sure this applicant is ${
-          action === "QUALIFIED" ? "qualified" : "unqualified"
-        }?`}</Text>
+        <Text>{`Are you sure this applicant is ${action.toLocaleLowerCase()}?`}</Text>
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
-      confirmProps: { color: action === "QUALIFIED" ? "green" : "red" },
+      confirmProps: { color: statusColor[action] },
       onConfirm: async () =>
         handleUpdateHRPhoneInterviewStatus(
           item.hr_request_reference_id,
@@ -167,7 +170,6 @@ const HRPhoneInterviewMainTableRow = ({
             <Button
               color="green"
               w={130}
-              leftIcon={<IconCheck size={16} />}
               onClick={() => openModel("QUALIFIED")}
             >
               Qualified
@@ -175,10 +177,16 @@ const HRPhoneInterviewMainTableRow = ({
             <Button
               color="red"
               w={130}
-              leftIcon={<IconX size={16} />}
               onClick={() => openModel("UNQUALIFIED")}
             >
               Unqualified
+            </Button>
+            <Button
+              color="gray"
+              w={130}
+              onClick={() => openModel("UNRESPONSIVE")}
+            >
+              Unresponsive
             </Button>
           </Flex>
         )}

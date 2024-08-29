@@ -1,3 +1,4 @@
+import { MAX_INT } from "@/utils/constant";
 import {
   Box,
   Flex,
@@ -59,6 +60,7 @@ const CurrencyFormField = ({
           }}
           sx={{ flex: 1 }}
           hideControls
+          max={MAX_INT}
         />
       </Flex>
     </Stack>

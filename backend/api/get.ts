@@ -5943,6 +5943,8 @@ export const getFormSectionWithFieldList = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     formId: string;
+    userId: string;
+    teamId: string;
   }
 ) => {
   const { data, error } = await supabaseClient.rpc(
@@ -6057,6 +6059,21 @@ export const getPublicFormList = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getPositionClassification = async (
+  supabaseClient: SupabaseClient<Database>,
+  position: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("position_table")
+    .select("position_classification")
+    .eq("position", position)
+    .limit(1);
+  if (error) throw error;
+
+  return data[0].position_classification;
 };
 
 export const getHRPhoneInterviewSummaryData = async (
