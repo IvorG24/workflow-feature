@@ -173,6 +173,44 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
         }
     }
 
+    const removePrevTime = () => {
+        const parseTimeString = (timeString: string): Date => {
+            const [time, period] = timeString.split(' ');
+            const [hours, minutes] = time.split(':').map(Number);
+            const formattedHours = period === 'PM' ? (hours % 12) + 12 : hours % 12;
+
+            const now = new Date();
+            now.setHours(formattedHours, minutes, 0, 0);
+            return now;
+        };
+
+        const today = new Date().toDateString(); // Get today's date as a string
+        const selectedDateStr = selectedDate ? new Date(selectedDate).toDateString() : '';
+
+        if (today === selectedDateStr) {
+            const data = hrSlot.map(slot => `${formatTimeToLocal(slot.slot_start)}`);
+
+            const now = new Date();
+            const currentTime = parseTimeString(`${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`);
+
+            const filteredSlots = data.filter(slotTime => {
+                const slotTimeDate = parseTimeString(slotTime);
+                return slotTimeDate >= currentTime;
+            });
+
+            if (filteredSlots.length > 0) {
+                filteredSlots.shift();
+            }
+
+            return filteredSlots
+        } else {
+            const data = hrSlot.map(slot => `${formatTimeToLocal(slot.slot_start)}`);
+            return data
+        }
+
+    };
+
+
 
     useEffect(() => {
         if (meeting_type === 'technical') {
@@ -259,7 +297,7 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
 
                         {hrSlot &&
                             <NativeSelect
-                                data={hrSlot.map(slot => `${formatTimeToLocal(slot.slot_start)}`)}
+                                data={removePrevTime()}
                                 label="Select Time"
                                 maw='max-content'
                                 value={selectedSlot}
