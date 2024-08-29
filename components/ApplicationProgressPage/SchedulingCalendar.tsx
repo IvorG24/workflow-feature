@@ -255,13 +255,13 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
                 </Flex>
             </Modal>
             <Flex direction='column' gap={10} mb={20}>
-                {status === 'BACKOUT' &&
+                {status === 'CANCELLED' &&
                     <div>
                         <Text mb={10} color="red">You cancelled your interview</Text>
                     </div>
                 }
 
-                {isEdit === false && selectedDate && status !== 'BACKOUT' &&
+                {isEdit === false && selectedDate && status !== 'CANCELLED' &&
                     <div>
                         {(() => {
                             const hours = selectedDate.getHours();
