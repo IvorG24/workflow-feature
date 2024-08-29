@@ -50,6 +50,7 @@ type RequestFormFieldsProps = {
     options: OptionTableRow[];
   } & {
     field_section_duplicatable_id: string | undefined;
+    field_description?: string;
     field_prefix?: string | null;
   };
   sectionIndex: number;
@@ -678,7 +679,7 @@ const RequestFormFields = ({
                   }}
                   icon={field.field_name === "Contact Number" ? "+63" : ""}
                   min={0}
-                  max={MAX_INT}
+                  max={maxLength ? undefined : MAX_INT}
                 />
               )}
               rules={{
@@ -1273,7 +1274,7 @@ const RequestFormFields = ({
               <Flex w="100%" align="flex-end" gap="xs">
                 {["Certification", "License"].includes(field.field_name) && (
                   <Checkbox
-                    checked={field.field_is_required}
+                    checked={!field.field_is_read_only}
                     mb="xs"
                     readOnly
                   />
@@ -1288,6 +1289,7 @@ const RequestFormFields = ({
                   error={fieldError}
                   sx={{ width: prevFileLink ? "96%" : "100%" }}
                   disabled={field.field_is_read_only}
+                  description={field.field_description}
                 />
                 {parseJSONIfValid(`${value}`) && isEdit !== undefined ? (
                   <Tooltip

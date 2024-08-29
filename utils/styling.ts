@@ -59,6 +59,16 @@ export const getStatusToColor = (status: string) => {
       return "gray";
     case "waiting for schedule":
       return "orange";
+    case "unresponsive":
+      return "gray";
+    case "unresponsive":
+      return "gray";
+    case "unresponsive":
+      return "gray";
+    case "cancelled":
+      return "dark";
+    case "missed":
+      return "grape";
     default:
       return "";
   }

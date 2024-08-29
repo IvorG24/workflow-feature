@@ -11,8 +11,12 @@ import {
   Title,
 } from "@mantine/core";
 import {
+  IconAlertCircle,
+  IconBan,
+  IconCalendarExclamation,
   IconCircleCheck,
   IconCircleX,
+  IconClockOff,
   IconProgress,
 } from "@tabler/icons-react";
 import { useState } from "react";
@@ -35,38 +39,41 @@ const ApplicationProgressPage = ({
 }: Props) => {
   let maxValue = 0;
 
-  if (Boolean(hrPhoneInterviewData)) {
-    maxValue = 3;
-  } else if (Boolean(technicalAssessmentData)) {
-    maxValue = 2;
-  } else if (Boolean(generalAssessmentData)) {
-    maxValue = 1;
-  } else if (Boolean(applicationInformationData)) {
-    maxValue = 0;
+  if (Boolean(generalAssessmentData)) {
+    maxValue += 1;
   }
+  if (Boolean(technicalAssessmentData)) {
+    maxValue += 1;
+  }
+  if (Boolean(hrPhoneInterviewData)) {
+    maxValue += 1;
+  }
+
   const [stepperValue, setStepperValue] = useState(maxValue);
 
   const stepperProps = (value: string) => {
     switch (value) {
       case "APPROVED":
+      case "QUALIFIED":
         return {
           description: (
             <Badge color="green">
               <Text>{value}</Text>
             </Badge>
           ),
-          icon: <IconCircleCheck color={"green"} />,
+          icon: <IconCircleCheck color={"#40C057"} />,
           completedIcon: <IconCircleCheck color={"white"} />,
           color: "green",
         };
       case "REJECTED":
+      case "UNQUALIFIED":
         return {
           description: (
             <Badge color="red">
               <Text>{value}</Text>
             </Badge>
           ),
-          icon: <IconCircleX color={"red"} />,
+          icon: <IconCircleX color={"#FA5252"} />,
           completedIcon: <IconCircleX color={"white"} />,
           color: "red",
         };
@@ -77,9 +84,53 @@ const ApplicationProgressPage = ({
               <Text>{value}</Text>
             </Badge>
           ),
-          icon: <IconProgress color={"blue"} />,
+          icon: <IconProgress color={"#228BE6"} />,
           completedIcon: <IconProgress color={"white"} />,
           color: "blue",
+        };
+      case "WAITING FOR SCHEDULE":
+        return {
+          description: (
+            <Badge color="orange">
+              <Text>{value}</Text>
+            </Badge>
+          ),
+          icon: <IconCalendarExclamation color={"#FD7E14"} />,
+          completedIcon: <IconCalendarExclamation color={"white"} />,
+          color: "orange",
+        };
+      case "UNRESPONSIVE":
+        return {
+          description: (
+            <Badge color="gray">
+              <Text>{value}</Text>
+            </Badge>
+          ),
+          icon: <IconAlertCircle color={"#868E96"} />,
+          completedIcon: <IconAlertCircle color={"white"} />,
+          color: "gray",
+        };
+      case "CANCELLED":
+        return {
+          description: (
+            <Badge color="dark">
+              <Text>{value}</Text>
+            </Badge>
+          ),
+          icon: <IconBan color="#25262B" />,
+          completedIcon: <IconBan color={"white"} />,
+          color: "dark",
+        };
+      case "MISSED":
+        return {
+          description: (
+            <Badge color="grape">
+              <Text>{value}</Text>
+            </Badge>
+          ),
+          icon: <IconClockOff color={"#BE4BDB"} />,
+          completedIcon: <IconClockOff color={"white"} />,
+          color: "grape",
         };
     }
   };
@@ -158,7 +209,10 @@ const ApplicationProgressPage = ({
               hrPhoneInterviewData?.hr_phone_interview_status as string
             )}
           />
-          <Stepper.Step label="Qualifier Interview" disabled />
+          <Stepper.Step label="Trade Test" disabled />
+          <Stepper.Step label="Technical Interview" disabled />
+          <Stepper.Step label="Director Interview" disabled />
+          <Stepper.Step label="Background Check" disabled />
           <Stepper.Step label="Job Offer" disabled />
         </Stepper>
         <Paper p="xl" shadow="xs" sx={{ flex: 1 }}>

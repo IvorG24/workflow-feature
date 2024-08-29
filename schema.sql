@@ -944,11 +944,19 @@ CREATE TABLE lookup_schema.position_table (
   position_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   position_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   position VARCHAR(4000) NOT NULL,
-  position_type VARCHAR(4000) NOT NULL,
+  position_category VARCHAR(4000) NOT NULL,
+  position_classification VARCHAR(4000) NOT NULL,
   position_is_disabled BOOLEAN DEFAULT false NOT NULL,
   position_is_available BOOLEAN DEFAULT true NOT NULL,
   position_is_with_certificate BOOLEAN DEFAULT false NOT NULL,
   position_is_with_license BOOLEAN DEFAULT false NOT NULL,
+  position_certificate_label VARCHAR(4000),
+  position_license_label VARCHAR(4000),
+  position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
+  position_minimum_years_of_experience INT DEFAULT 1 NOT NULL,
+  position_is_ped_position BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_director_interview BOOLEAN DEFAULT false NOT NULL,
 
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
@@ -14617,21 +14625,65 @@ AS $$
         }
       }
 
-      let isWithProgressIndicator = false;
-      if(request.request_status === 'APPROVED' && request.form_name === 'Application Information'){
-        const connectedRequestCount = plv8.execute(
+      const checkProgress = (formslyId, requestId) => {
+        const generalAssessmentCount = plv8.execute(
           `
             SELECT COUNT(request_response_id)
             FROM request_schema.request_response_table
             INNER JOIN request_schema.request_table ON request_id = request_response_request_id
             WHERE
-              request_response = '"${request.request_formsly_id}"'
-              AND request_status != 'APPROVED'
+              request_response = '"${formslyId}"'
+              AND request_form_id = '71f569a0-70a8-4609-82d2-5cc26ac1fe8c'
           `
         )[0].count;
-        if(!connectedRequestCount){
-          isWithProgressIndicator = true;
+        if(!generalAssessmentCount){
+          return true;
         }
+
+        const technicalAssessmentCount = plv8.execute(
+          `
+            SELECT COUNT(request_response_id)
+            FROM request_schema.request_response_table
+            INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+            WHERE
+              request_response = '"${formslyId}"'
+              AND request_form_id = 'cc410201-f5a6-49ce-a06c-c2ce2c169436'
+          `
+        )[0].count;
+        if(!technicalAssessmentCount){
+          return true;
+        }
+
+        const hrPhoneInterviewCount = plv8.execute(
+          `
+            SELECT COUNT(hr_phone_interview_id)
+            FROM hr_schema.hr_phone_interview_table
+            WHERE
+              hr_phone_interview_request_id = '${requestId}'
+              AND hr_phone_interview_schedule IS NOT NULL
+          `
+        )[0].count;
+        if(!hrPhoneInterviewCount){
+          return true;
+        }
+
+        const phoneInterviewCount = plv8.execute(
+          `
+            SELECT COUNT(hr_phone_interview_id)
+            FROM hr_schema.hr_phone_interview_table
+            WHERE
+              hr_phone_interview_request_id = '${requestId}'
+              AND hr_phone_interview_schedule IS NOT NULL
+          `
+        )[0].count;
+        if(!phoneInterviewCount){
+          return true;
+        }
+      }
+
+      let isWithProgressIndicator = false;
+      if(request.request_status === 'APPROVED' && request.form_name === 'Application Information'){
+        isWithProgressIndicator = checkProgress(request.request_formsly_id, request.request_id);
       }
 
       return {
@@ -14711,6 +14763,8 @@ AS $$
     let hrPhoneInterviewData = {};
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
+    const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'`)[0].request_response.replaceAll('"', "");
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position = '${positionValue}'`);
     
     applicationInformationData = plv8.execute(
       `

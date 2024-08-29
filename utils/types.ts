@@ -643,9 +643,9 @@ export type RequestWithResponseType = RequestTableRow & {
     form_section: (SectionTableRow & {
       section_field: (FieldTableRow & {
         field_section_duplicatable_id?: string;
+        field_description?: string;
         field_option: OptionTableRow[];
         field_response: RequestResponseTableRow[];
-      } & {
         field_options?: OptionTableRow[] | null;
       })[];
     })[];
@@ -837,6 +837,7 @@ export type FormWithResponseType = {
   form_section: (SectionTableRow & {
     section_field: (FieldTableRow & {
       field_section_duplicatable_id?: string;
+      field_description?: string;
       field_option: OptionTableRow[];
       field_correct_response?: FieldCorrectResponseTableRow | null;
       field_response?: unknown;

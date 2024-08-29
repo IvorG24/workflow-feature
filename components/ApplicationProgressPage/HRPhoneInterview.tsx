@@ -42,7 +42,8 @@ const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
             </Text>
           )}
         </Group>
-        {hrPhoneInterviewData.hr_phone_interview_status === "PENDING" && (
+        {hrPhoneInterviewData.hr_phone_interview_status ===
+          "WAITING FOR SCHEDULE" && (
           <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
             <Text>
               Thank you for your application. We are currently reviewing your

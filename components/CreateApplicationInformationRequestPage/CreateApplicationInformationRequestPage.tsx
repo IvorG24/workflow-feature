@@ -67,6 +67,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   const [loadingFieldList, setLoadingFieldList] = useState<
     { sectionIndex: number; fieldIndex: number }[]
   >([]);
+  const [minimumExperience, setMinimumExperience] = useState(1);
 
   const { setIsLoading } = useLoadingActions();
 
@@ -223,7 +224,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           data.sections[workInformationIndex].section_field[
             data.sections[workInformationIndex].section_field.length - 2
           ].field_response
-        ) >= 1
+        ) >= minimumExperience
       ) {
         requestScore += 2;
       } else {
@@ -245,7 +246,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         teamName: formatTeamNameToUrlKey(
           process.env.NODE_ENV === "production" ? "SCIC" : "Sta Clara"
         ),
-        requestScore
+        requestScore,
       });
       notifications.show({
         message: "Request created.",
@@ -363,6 +364,9 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         const position = positionList.find(
           (position) => position.position === value
         );
+        if (!position) throw new Error();
+
+        setMinimumExperience(position.position_minimum_years_of_experience);
 
         updateSection(0, {
           ...newSection,
@@ -370,30 +374,32 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
             newSection.section_field[0],
             {
               ...form.form_section[0].section_field[1],
-              field_is_required: Boolean(
-                position?.position_is_with_certificate
-              ),
+              field_is_required: Boolean(position.position_certificate_label),
               field_is_read_only: !Boolean(
-                position?.position_is_with_certificate
+                position.position_is_with_certificate
               ),
+              field_description:
+                position.position_certificate_label ?? undefined,
             },
             {
               ...form.form_section[0].section_field[2],
-              field_is_required: Boolean(position?.position_is_with_license),
-              field_is_read_only: !Boolean(position?.position_is_with_license),
+              field_is_required: Boolean(position.position_license_label),
+              field_is_read_only: !Boolean(position.position_is_with_license),
+              field_description: position.position_license_label ?? undefined,
             },
             newSection.section_field[newSection.section_field.length - 1],
           ],
         });
 
         if (
-          position?.position_type === "STAFF" &&
+          position.position_classification === "NOT APPLICABLE" &&
           !isWithEducationalBackground
         ) {
           insertSection(4, form.form_section[4], { shouldFocus: false });
           insertSection(6, form.form_section[6], { shouldFocus: false });
         } else if (
-          position?.position_type === "RANK AND FILE" &&
+          (position.position_classification === "SKILLED" ||
+            position.position_classification === "NON-SKILLED") &&
           isWithEducationalBackground
         ) {
           removeSection([4, 6]);

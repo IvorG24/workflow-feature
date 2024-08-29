@@ -230,7 +230,7 @@ const RequestListPage = ({
                   )
                 }
               >
-                SSOT Spreadsheet View
+                SSOT
               </Menu.Item>
               <Menu.Item
                 onClick={async () =>
@@ -241,32 +241,34 @@ const RequestListPage = ({
                   )
                 }
               >
-                Liquidation Spreadsheet View
+                Liquidation
               </Menu.Item>
               {teamMemberGroupList.includes("HUMAN RESOURCES") && (
-                <Menu.Item
-                  onClick={async () =>
-                    await router.push(
-                      `/${formatTeamNameToUrlKey(
-                        activeTeam.team_name
-                      )}/requests/application-information-spreadsheet-view`
-                    )
-                  }
-                >
-                  Application Information Spreadsheet View
-                </Menu.Item>
+                <>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/application-information-spreadsheet-view`
+                      )
+                    }
+                  >
+                    Application Information
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/hr-phone-interview-spreadsheet-view`
+                      )
+                    }
+                  >
+                    HR Phone Interview
+                  </Menu.Item>
+                </>
               )}
-              <Menu.Item
-                onClick={async () =>
-                  await router.push(
-                    `/${formatTeamNameToUrlKey(
-                      activeTeam.team_name
-                    )}/requests/hr-phone-interview-spreadsheet-view`
-                  )
-                }
-              >
-                HR Phone Interview Spreadhsheet View
-              </Menu.Item>
             </Menu.Dropdown>
           </Menu>
         ) : null}

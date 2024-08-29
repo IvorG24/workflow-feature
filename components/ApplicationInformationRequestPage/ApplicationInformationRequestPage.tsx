@@ -1,6 +1,6 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
-  getPositionType,
+  getPositionClassification,
   getRequestComment,
   getUserIdInApplicationInformation,
 } from "@/backend/api/get";
@@ -281,7 +281,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
       const applicantPosition = safeParse(
         `${formSection[0].section_field[0].field_response?.request_response}`
       );
-      const positionType = await getPositionType(
+      const positionType = await getPositionClassification(
         supabaseClient,
         applicantPosition
       );
