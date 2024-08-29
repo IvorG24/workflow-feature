@@ -9,15 +9,18 @@ import {
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ supabaseClient }) => {
+  async ({ supabaseClient, user, userActiveTeam }) => {
     try {
       const data = await getFormSectionWithFieldList(supabaseClient, {
         formId: "151cc6d7-94d7-4c54-b5ae-44de9f59d170",
+        userId: user.id,
+        teamId: userActiveTeam.team_id,
       });
       return {
         props: { ...data },
       };
     } catch (e) {
+      console.log(e);
       return {
         redirect: {
           destination: "/500",
