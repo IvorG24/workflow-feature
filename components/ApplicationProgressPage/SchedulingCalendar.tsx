@@ -52,7 +52,7 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
         try {
             const params = {
                 target_id,
-                status: 'BACKOUT',
+                status: 'CANCELLED',
             };
 
             if (meeting_type === 'phone') {
