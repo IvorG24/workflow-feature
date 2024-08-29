@@ -198,6 +198,8 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
         }
     }, [selectedDate])
 
+    console.log(status)
+
     return (
         <>
             <Modal opened={opened} onClose={close} centered title='Please confirm your action.' pos="relative">
@@ -216,7 +218,7 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
                     </div>
                 }
 
-                {isEdit === false && selectedDate &&
+                {isEdit === false && selectedDate && status !== 'BACKOUT' &&
                     <div>
                         {(() => {
                             const hours = selectedDate.getHours();
