@@ -83,11 +83,12 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
             return;
         }
 
+        if (selectedSlot === 'select time') return
+
         setIsloading(true);
 
         try {
-            const [startTime,] = selectedSlot.split(' - ');
-            const [time] = startTime.split(' ');
+            const [time] = selectedSlot.split(' ');
             const [hours, minutes] = time.split(':').map(Number);
 
             const tempDate = new Date(selectedDate);
@@ -235,7 +236,7 @@ const SchedulingCalendar = ({ meeting_type, target_id, intialDate, refetchData, 
 
                         {!isLoading && !isRefetchingData && selectedDate !== null &&
                             <NativeSelect
-                                data={hrSlot.map(slot => `${formatTimeToLocal(slot.slot_start)} - ${formatTimeToLocal(slot.slot_end)}`)}
+                                data={['select time', ...hrSlot.map(slot => `${formatTimeToLocal(slot.slot_start)}`)]}
                                 label="Pick Time"
                                 maw='max-content'
                                 value={selectedSlot}
