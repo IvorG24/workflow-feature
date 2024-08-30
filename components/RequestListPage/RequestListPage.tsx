@@ -267,6 +267,17 @@ const RequestListPage = ({
                   >
                     HR Phone Interview
                   </Menu.Item>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/trade-test-spreadsheet-view`
+                      )
+                    }
+                  >
+                    Trade Test
+                  </Menu.Item>
                 </>
               )}
             </Menu.Dropdown>

@@ -68,15 +68,15 @@ const Page = ({
         url="/user/application-progress/[requestId]"
       />
       <ApplicationProgressPage
-        applicationInformationData = {applicationInformationData}
-        generalAssessmentData = {generalAssessmentData}
-        technicalAssessmentData = {technicalAssessmentData}
-        hrPhoneInterviewData = {hrPhoneInterviewData}
-        tradeTestData = {tradeTestData}
-        technicalInterviewData = {technicalInterviewData}
-        directorInterviewData = {directorInterviewData}
-        backgroundCheckData = {backgroundCheckData}
-        jobOfferData = {jobOfferData}
+        applicationInformationData={applicationInformationData}
+        generalAssessmentData={generalAssessmentData}
+        technicalAssessmentData={technicalAssessmentData}
+        hrPhoneInterviewData={hrPhoneInterviewData}
+        tradeTestData={tradeTestData}
+        technicalInterviewData={technicalInterviewData}
+        directorInterviewData={directorInterviewData}
+        backgroundCheckData={backgroundCheckData}
+        jobOfferData={jobOfferData}
       />
     </>
   );

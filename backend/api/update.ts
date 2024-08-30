@@ -32,6 +32,7 @@ import {
   TeamTableUpdate,
   TicketTableRow,
   TicketType,
+  TradeTestSpreadsheetData,
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -1327,5 +1328,19 @@ export const updateHRPhoneInterviewStatus = async (
       input_data: params,
     }
   );
+  if (error) throw error;
+};
+
+export const updateTradeTestStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: TradeTestSpreadsheetData;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_trade_test_status", {
+    input_data: params,
+  });
   if (error) throw error;
 };

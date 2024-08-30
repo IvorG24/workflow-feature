@@ -2266,7 +2266,7 @@ export type FetchUserRequestListParams = {
   form?: string[];
 };
 
-export type HRPhoneInterviewSpreadsheetData = {
+export type HRSpreadsheetGeneralData = {
   hr_request_reference_id: string;
   position: string;
   application_information_request_id: string;
@@ -2276,14 +2276,12 @@ export type HRPhoneInterviewSpreadsheetData = {
   technical_assessment_request_id: string;
   technical_assessment_score: number;
   technical_assessment_date: string;
-  hr_phone_interview_status: string;
-  hr_phone_interview_schedule: string;
   application_information_full_name: string;
   application_information_contact_number: string;
   application_information_email: string;
 };
 
-export type HRPhoneInterviewFilterFormValues = {
+export type HRSpreadsheetGeneralFilterFormValues = {
   limit?: number;
   page?: number;
   sort?: {
@@ -2310,8 +2308,30 @@ export type HRPhoneInterviewFilterFormValues = {
     start?: string;
     end?: string;
   };
-  hr_phone_interview_status?: string;
-  hr_phone_interview_schedule?: {
+};
+
+export type HRPhoneInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  hr_phone_interview_status: string;
+  hr_phone_interview_schedule: string;
+};
+
+export type HRPhoneInterviewFilterFormValues =
+  HRSpreadsheetGeneralFilterFormValues & {
+    hr_phone_interview_status?: string;
+    hr_phone_interview_schedule?: {
+      start?: string;
+      end?: string;
+    };
+  };
+
+export type TradeTestSpreadsheetData = HRSpreadsheetGeneralData & {
+  trade_test_status: string;
+  trade_test_schedule: string;
+};
+
+export type TradeTestFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
+  trade_test_status?: string;
+  trade_test_schedule?: {
     start?: string;
     end?: string;
   };
