@@ -20,6 +20,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useSession } from "@supabase/auth-helpers-react";
 import { IconCalendarDollar, IconReportMoney } from "@tabler/icons-react";
 import moment from "moment";
 
@@ -43,6 +44,7 @@ const Payment = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const { setIsLoading } = useLoadingActions();
+  const session = useSession();
   const activeTeam = useActiveTeam();
   const router = useRouter();
 
@@ -93,7 +95,9 @@ const Payment = ({
 
       const requestOptions = {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           action: "formsly_transaction",
           totalAmount: outstandingBalance,
@@ -105,6 +109,7 @@ const Payment = ({
           userId: activeTeam.team_user_id,
           appSourceId: encryptedAppSourceId,
           quantity,
+          token: `Bearer ${session?.access_token}`,
         }),
       };
       const response = await fetch(
@@ -149,6 +154,7 @@ const Payment = ({
           userId: activeTeam.team_user_id,
           appSourceId: encryptedAppSourceId,
           quantity: months,
+          token: `Bearer ${session?.access_token}`,
         }),
       };
       const response = await fetch(
