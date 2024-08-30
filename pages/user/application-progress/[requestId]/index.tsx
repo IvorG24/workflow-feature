@@ -1,7 +1,15 @@
 import ApplicationProgressPage from "@/components/ApplicationProgressPage/ApplicationProgressPage";
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
-import { HRPhoneInterviewTableRow, RequestViewRow } from "@/utils/types";
+import {
+  BackgroundCheckTableRow,
+  DirectorInterviewTableRow,
+  HRPhoneInterviewTableRow,
+  JobOfferTableRow,
+  RequestViewRow,
+  TechnicalInterviewTableRow,
+  TradeTestTableRow,
+} from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
@@ -32,9 +40,14 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
 
 type Props = {
   applicationInformationData: RequestViewRow;
-  generalAssessmentData: RequestViewRow;
-  technicalAssessmentData: RequestViewRow;
-  hrPhoneInterviewData: HRPhoneInterviewTableRow;
+  generalAssessmentData?: RequestViewRow;
+  technicalAssessmentData?: RequestViewRow;
+  hrPhoneInterviewData?: HRPhoneInterviewTableRow;
+  tradeTestData?: TradeTestTableRow | null;
+  technicalInterviewData?: TechnicalInterviewTableRow | null;
+  directorInterviewData?: DirectorInterviewTableRow | null;
+  backgroundCheckData?: BackgroundCheckTableRow | null;
+  jobOfferData?: JobOfferTableRow | null;
 };
 
 const Page = ({
@@ -42,6 +55,11 @@ const Page = ({
   generalAssessmentData,
   technicalAssessmentData,
   hrPhoneInterviewData,
+  tradeTestData,
+  technicalInterviewData,
+  directorInterviewData,
+  backgroundCheckData,
+  jobOfferData,
 }: Props) => {
   return (
     <>
@@ -50,10 +68,15 @@ const Page = ({
         url="/user/application-progress/[requestId]"
       />
       <ApplicationProgressPage
-        applicationInformationData={applicationInformationData}
-        generalAssessmentData={generalAssessmentData}
-        technicalAssessmentData={technicalAssessmentData}
-        hrPhoneInterviewData={hrPhoneInterviewData}
+        applicationInformationData = {applicationInformationData}
+        generalAssessmentData = {generalAssessmentData}
+        technicalAssessmentData = {technicalAssessmentData}
+        hrPhoneInterviewData = {hrPhoneInterviewData}
+        tradeTestData = {tradeTestData}
+        technicalInterviewData = {technicalInterviewData}
+        directorInterviewData = {directorInterviewData}
+        backgroundCheckData = {backgroundCheckData}
+        jobOfferData = {jobOfferData}
       />
     </>
   );

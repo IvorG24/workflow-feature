@@ -1,4 +1,12 @@
-import { HRPhoneInterviewTableRow, RequestViewRow } from "@/utils/types";
+import {
+  BackgroundCheckTableRow,
+  DirectorInterviewTableRow,
+  HRPhoneInterviewTableRow,
+  JobOfferTableRow,
+  RequestViewRow,
+  TechnicalInterviewTableRow,
+  TradeTestTableRow,
+} from "@/utils/types";
 import {
   Badge,
   Button,
@@ -24,32 +32,81 @@ import ApplicationInformation from "./ApplicationInformation";
 import GeneralAssessment from "./GeneralAssessment";
 import HRPhoneInterview from "./HRPhoneInterview";
 import TechnicalAssessment from "./TechnicalAssessment";
+import TradeTest from "./TradeTest";
 
 type Props = {
-  applicationInformationData: RequestViewRow | null;
-  generalAssessmentData: RequestViewRow | null;
-  technicalAssessmentData: RequestViewRow | null;
-  hrPhoneInterviewData: HRPhoneInterviewTableRow;
+  applicationInformationData: RequestViewRow;
+  generalAssessmentData?: RequestViewRow;
+  technicalAssessmentData?: RequestViewRow;
+  hrPhoneInterviewData?: HRPhoneInterviewTableRow;
+  tradeTestData?: TradeTestTableRow | null;
+  technicalInterviewData?: TechnicalInterviewTableRow | null;
+  directorInterviewData?: DirectorInterviewTableRow | null;
+  backgroundCheckData?: BackgroundCheckTableRow | null;
+  jobOfferData?: JobOfferTableRow | null;
 };
-const ApplicationProgressPage = ({
-  applicationInformationData,
-  generalAssessmentData,
-  technicalAssessmentData,
-  hrPhoneInterviewData,
-}: Props) => {
-  let maxValue = 0;
+const ApplicationProgressPage = (props: Props) => {
+  const {
+    applicationInformationData,
+    generalAssessmentData,
+    technicalAssessmentData,
+    hrPhoneInterviewData,
+    tradeTestData,
+    technicalInterviewData,
+    directorInterviewData,
+    backgroundCheckData,
+    jobOfferData,
+  } = props;
 
-  if (Boolean(generalAssessmentData)) {
-    maxValue += 1;
-  }
-  if (Boolean(technicalAssessmentData)) {
-    maxValue += 1;
-  }
-  if (Boolean(hrPhoneInterviewData)) {
-    maxValue += 1;
-  }
+  const typeCastedProps = props as unknown as Record<string, string>;
+  const keyIndexMatcher: Record<number, string> = {};
+  const indexComponentMatcher: Record<string, JSX.Element | null> = {
+    applicationInformationData: (
+      <ApplicationInformation
+        applicationInformationData={applicationInformationData}
+        isWithNextStep={
+          applicationInformationData.request_status === "APPROVED" &&
+          !Boolean(generalAssessmentData)
+        }
+      />
+    ),
+    generalAssessmentData: generalAssessmentData ? (
+      <GeneralAssessment
+        generalAssessmentData={generalAssessmentData}
+        isWithNextStep={
+          generalAssessmentData.request_status === "APPROVED" &&
+          !Boolean(technicalAssessmentData)
+        }
+      />
+    ) : null,
+    technicalAssessmentData: technicalAssessmentData ? (
+      <TechnicalAssessment technicalAssessmentData={technicalAssessmentData} />
+    ) : null,
+    hrPhoneInterviewData: hrPhoneInterviewData ? (
+      <HRPhoneInterview hrPhoneInterviewData={hrPhoneInterviewData} />
+    ) : null,
+    tradeTestData: tradeTestData ? (
+      <TradeTest tradeTestData={tradeTestData} />
+    ) : null,
+    directorInterviewData: null,
+    jobOfferData: null,
+  };
+  let maxValue = -1;
+  let currentMaxValue = -1;
+  Object.keys(props).forEach((key) => {
+    if (Boolean(typeCastedProps[key])) {
+      currentMaxValue += 1;
+      maxValue += 1;
+      keyIndexMatcher[maxValue] = key;
+    } else {
+      if (typeCastedProps[key] === undefined) {
+        maxValue += 1;
+        keyIndexMatcher[maxValue] = key;
+      }
+    }
+  });
 
-  const [stepperValue, setStepperValue] = useState(maxValue);
+  const [stepperValue, setStepperValue] = useState(currentMaxValue);
 
   const stepperProps = (value: string) => {
     switch (value) {
@@ -136,40 +193,7 @@ const ApplicationProgressPage = ({
   };
 
   const renderContent = () => {
-    switch (stepperValue) {
-      case 0:
-        if (!applicationInformationData) return;
-        return (
-          <ApplicationInformation
-            applicationInformationData={applicationInformationData}
-            isWithNextStep={
-              applicationInformationData.request_status === "APPROVED" &&
-              !Boolean(generalAssessmentData)
-            }
-          />
-        );
-      case 1:
-        if (!generalAssessmentData) return;
-        return (
-          <GeneralAssessment
-            generalAssessmentData={generalAssessmentData}
-            isWithNextStep={
-              generalAssessmentData.request_status === "APPROVED" &&
-              !Boolean(technicalAssessmentData)
-            }
-          />
-        );
-      case 2:
-        if (!technicalAssessmentData) return;
-        return (
-          <TechnicalAssessment
-            technicalAssessmentData={technicalAssessmentData}
-          />
-        );
-      case 3:
-        if (!hrPhoneInterviewData) return;
-        return <HRPhoneInterview hrPhoneInterviewData={hrPhoneInterviewData} />;
-    }
+    return indexComponentMatcher[keyIndexMatcher[stepperValue]];
   };
 
   return (
@@ -209,11 +233,45 @@ const ApplicationProgressPage = ({
               hrPhoneInterviewData?.hr_phone_interview_status as string
             )}
           />
-          <Stepper.Step label="Trade Test" disabled />
-          <Stepper.Step label="Technical Interview" disabled />
-          <Stepper.Step label="Director Interview" disabled />
-          <Stepper.Step label="Background Check" disabled />
-          <Stepper.Step label="Job Offer" disabled />
+          {tradeTestData !== null && (
+            <Stepper.Step
+              label="Trade Test"
+              disabled={!Boolean(tradeTestData)}
+              {...stepperProps(tradeTestData?.trade_test_status as string)}
+            />
+          )}
+          {technicalInterviewData !== null && (
+            <Stepper.Step
+              label="Technical Interview"
+              disabled={!Boolean(technicalInterviewData)}
+              {...stepperProps(
+                technicalInterviewData?.technical_interview_status as string
+              )}
+            />
+          )}
+          {directorInterviewData !== null && (
+            <Stepper.Step
+              label="Director Interview"
+              disabled={!Boolean(directorInterviewData)}
+              {...stepperProps(
+                directorInterviewData?.director_interview_status as string
+              )}
+            />
+          )}
+          {backgroundCheckData !== null && (
+            <Stepper.Step
+              label="Background Check"
+              disabled={!Boolean(backgroundCheckData)}
+              {...stepperProps(
+                backgroundCheckData?.background_check_status as string
+              )}
+            />
+          )}
+          <Stepper.Step
+            label="Job Offer"
+            disabled={!Boolean(jobOfferData)}
+            {...stepperProps(jobOfferData?.job_offer_status as string)}
+          />
         </Stepper>
         <Paper p="xl" shadow="xs" sx={{ flex: 1 }}>
           <Flex direction="column" h="100%" justify="space-between">
@@ -236,7 +294,7 @@ const ApplicationProgressPage = ({
                   onClick={() => {
                     setStepperValue((prev) => prev + 1);
                   }}
-                  disabled={stepperValue === maxValue}
+                  disabled={stepperValue === currentMaxValue}
                 >
                   Next
                 </Button>

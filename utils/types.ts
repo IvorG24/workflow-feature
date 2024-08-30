@@ -519,6 +519,41 @@ export type HRPhoneInterviewTableInsert =
 export type HRPhoneInterviewTableUpdate =
   Database["hr_schema"]["Tables"]["hr_phone_interview_table"]["Update"];
 
+export type TradeTestTableRow =
+  Database["hr_schema"]["Tables"]["trade_test_table"]["Row"];
+export type TradeTestTableInsert =
+  Database["hr_schema"]["Tables"]["trade_test_table"]["Insert"];
+export type TradeTestTableUpdate =
+  Database["hr_schema"]["Tables"]["trade_test_table"]["Update"];
+
+export type TechnicalInterviewTableRow =
+  Database["hr_schema"]["Tables"]["technical_interview_table"]["Row"];
+export type TechnicalInterviewTableInsert =
+  Database["hr_schema"]["Tables"]["technical_interview_table"]["Insert"];
+export type TechnicalInterviewTableUpdate =
+  Database["hr_schema"]["Tables"]["technical_interview_table"]["Update"];
+
+export type DirectorInterviewTableRow =
+  Database["hr_schema"]["Tables"]["director_interview_table"]["Row"];
+export type DirectorInterviewTableInsert =
+  Database["hr_schema"]["Tables"]["director_interview_table"]["Insert"];
+export type DirectorInterviewTableUpdate =
+  Database["hr_schema"]["Tables"]["director_interview_table"]["Update"];
+
+export type BackgroundCheckTableRow =
+  Database["hr_schema"]["Tables"]["background_check_table"]["Row"];
+export type BackgroundCheckTableInsert =
+  Database["hr_schema"]["Tables"]["background_check_table"]["Insert"];
+export type BackgroundCheckTableUpdate =
+  Database["hr_schema"]["Tables"]["background_check_table"]["Update"];
+
+export type JobOfferTableRow =
+  Database["hr_schema"]["Tables"]["job_offer_table"]["Row"];
+export type JobOfferTableInsert =
+  Database["hr_schema"]["Tables"]["job_offer_table"]["Insert"];
+export type JobOfferTableUpdate =
+  Database["hr_schema"]["Tables"]["job_offer_table"]["Update"];
+
 export type TeamDepartmentTableRow =
   Database["team_schema"]["Tables"]["team_department_table"]["Row"];
 

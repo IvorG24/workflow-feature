@@ -19,8 +19,8 @@ type Props = {
   item: HRPhoneInterviewSpreadsheetData;
   hiddenColumnList: string[];
   handleUpdateHRPhoneInterviewStatus: (
-    applicationinformationRqeuestId: string,
-    status: string
+    status: string,
+    data: HRPhoneInterviewSpreadsheetData
   ) => void;
 };
 
@@ -47,11 +47,7 @@ const HRPhoneInterviewMainTableRow = ({
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
       confirmProps: { color: statusColor[action] },
-      onConfirm: async () =>
-        handleUpdateHRPhoneInterviewStatus(
-          item.hr_request_reference_id,
-          action
-        ),
+      onConfirm: async () => handleUpdateHRPhoneInterviewStatus(action, item),
     });
 
   if (!team.team_name) return null;

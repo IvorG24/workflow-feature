@@ -174,25 +174,25 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
   }, [user?.id]);
 
   const handleUpdateHRPhoneInterviewStatus = async (
-    applicationinformationRqeuestId: string,
-    status: string
+    status: string,
+    data: HRPhoneInterviewSpreadsheetData
   ) => {
     setIsLoading(true);
     try {
       if (!teamMember?.team_member_id) throw new Error();
 
       await updateHRPhoneInterviewStatus(supabaseClient, {
-        applicationinformationRqeuestId,
         status,
         teamMemberId: teamMember.team_member_id,
+        data,
       });
       setData((prev) =>
-        prev.map((data) => {
-          if (data.hr_request_reference_id !== applicationinformationRqeuestId)
-            return data;
+        prev.map((prevData) => {
+          if (prevData.hr_request_reference_id !== data.hr_request_reference_id)
+            return prevData;
 
           return {
-            ...data,
+            ...prevData,
             hr_phone_interview_status: status,
           };
         })

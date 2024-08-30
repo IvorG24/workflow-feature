@@ -11,6 +11,7 @@ import {
   EquipmentLookupTableUpdate,
   EquipmentPartTableUpdate,
   EquipmentTableUpdate,
+  HRPhoneInterviewSpreadsheetData,
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
@@ -34,7 +35,6 @@ import {
   UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
-import moment from "moment";
 import { getCurrentDate, getMemoFormat } from "./get";
 import { createNotification, uploadImage } from "./post";
 
@@ -1316,24 +1316,16 @@ export const cancelPCVRequestByCostEngineer = async (
 export const updateHRPhoneInterviewStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    applicationinformationRqeuestId: string;
     status: string;
     teamMemberId: string;
+    data: HRPhoneInterviewSpreadsheetData;
   }
 ) => {
-  const { applicationinformationRqeuestId, status, teamMemberId } = params;
-  const currentDate = await getCurrentDate(supabaseClient);
-
-  const { error } = await supabaseClient
-    .schema("hr_schema")
-    .from("hr_phone_interview_table")
-    .update({
-      hr_phone_interview_status: status,
-      hr_phone_interview_status_date_updated: moment(currentDate).format(
-        "YYYY-MM-DD HH:mm:ssZZ"
-      ),
-      hr_phone_interview_team_member_id: teamMemberId,
-    })
-    .eq("hr_phone_interview_request_id", applicationinformationRqeuestId);
+  const { error } = await supabaseClient.rpc(
+    "update_hr_phone_interview_status",
+    {
+      input_data: params,
+    }
+  );
   if (error) throw error;
 };

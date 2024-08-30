@@ -38,8 +38,8 @@ type Props = {
   isMax: boolean;
   hiddenColumnList: string[];
   handleUpdateHRPhoneInterviewStatus: (
-    applicationinformationRqeuestId: string,
-    status: string
+    status: string,
+    data: HRPhoneInterviewSpreadsheetData
   ) => void;
 };
 
