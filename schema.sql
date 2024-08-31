@@ -15019,68 +15019,178 @@ CREATE OR REPLACE FUNCTION get_phone_meeting_available(
 RETURNS JSON 
 SET search_path TO ''
 AS $$
-let free_slot;
-plv8.subtransaction(function(){
-  const {
-    start,
-    end,
-    slotDuration,
-    breakDuration,
-  } = input_data;
+  let free_slots;
+  plv8.subtransaction(function() {
+    const {
+      startTime,
+      endTime,
+      meetingDuration,
+      breakDuration
+    } = input_data;
 
-  // todo make sure to also get schedule from different interview process 
-  const scheduledList = plv8.execute(
-    `
-    SELECT 
-      hr_phone_interview_schedule as meeting_start_time,
-      hr_phone_interview_schedule + INTERVAL '5 minutes' as meeting_end_time 
-    FROM hr_schema.hr_phone_interview_table
-    `
-  )
+    // Convert start and end times to UTC
+    const startUtc = new Date(startTime).toISOString();
+    const endUtc = new Date(endTime).toISOString();
 
-  const generateSlot = ({start, end, scheduledList, slotDuration, breakDuration}) => {
-    const startTime = new Date(start);
-    const endTime = new Date(end);
+    const hrCountResult = plv8.execute(`
+      SELECT COUNT(*) AS count
+      FROM team_schema.team_group_table tgt
+      JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
+      JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id  
+      WHERE tgt.team_group_name = 'HUMAN RESOURCES'
+        AND tmt.team_member_is_disabled = false
+    `);
+    const hrCount = hrCountResult[0].count;
 
-    let slots = [];
-    let currentSlotStart = new Date(startTime);
+    const selectedDate = new Date(startTime).toISOString().split('T')[0];
+    const scheduledList = plv8.execute(`
+      SELECT 
+        hr_phone_interview_schedule AS meeting_start_time,
+        hr_phone_interview_schedule + INTERVAL '5 minutes' AS meeting_end_time 
+      FROM hr_schema.hr_phone_interview_table
+      WHERE DATE(hr_phone_interview_table.hr_phone_interview_schedule) = '${selectedDate}'
+    `);
 
-    while (currentSlotStart < endTime) {
-        const currentSlotEnd = new Date(currentSlotStart.getTime() + slotDuration);
+    const generateSlots = ({ startTime, endTime, scheduledList, meetingDuration, breakDuration }) => {
+      let validStartTime = new Date(startTime);
+      let validEndTime = new Date(endTime);
 
-        if (currentSlotEnd <= endTime) {
-            slots.push({
-                slot_start: currentSlotStart.toISOString(),
-                slot_end: currentSlotEnd.toISOString()
-            });
+      let slots = [];
+
+      // Generate all possible slots
+      while (validStartTime < validEndTime) {
+        const currentSlotEnd = new Date(validStartTime.getTime() + meetingDuration);
+
+        if (currentSlotEnd <= validEndTime) {
+          slots.push({
+            slot_start: validStartTime.toISOString(),
+            slot_end: currentSlotEnd.toISOString()
+          });
         }
 
-        currentSlotStart = new Date(currentSlotStart.getTime() + slotDuration + breakDuration);
-    }
+        validStartTime = new Date(validStartTime.getTime() + meetingDuration + breakDuration);
+      }
 
-    const filteredSlots = slots.filter(slot => {
-        return !scheduledList.some(meeting => {
-            const meetingStart = new Date(meeting.meeting_start_time);
-            const meetingEnd = new Date(meeting.meeting_end_time);
+      // Remove slots based on scheduled list and hrCount
+      const filteredSlots = slots.filter(slot => {
+        const slotStart = new Date(slot.slot_start).toISOString();
+        const slotEnd = new Date(slot.slot_end).toISOString();
 
-            return (
-                (new Date(slot.slot_start) < meetingEnd) &&
-                (new Date(slot.slot_end) > meetingStart)
-            );
-        });
-    });
+        const countScheduledInSlot = scheduledList.filter(meeting => {
+          const meetingStart = new Date(meeting.meeting_start_time).toISOString();
+          const meetingEnd = new Date(meeting.meeting_end_time).toISOString();
+          
+          return (
+            (slotStart < meetingEnd) &&
+            (slotEnd > meetingStart)
+          );
+        }).length;
 
-    return filteredSlots;
+        return countScheduledInSlot < hrCount;
+      });
 
-  }
+      return filteredSlots;
+    };
 
-  
-  free_slot = generateSlot({start, end, scheduledList, slotDuration, breakDuration})
-  
-
-});
-return free_slot;
+    free_slots = generateSlots({ startTime: startUtc, endTime: endUtc, scheduledList, meetingDuration, breakDuration });
+  });
+  return free_slots;
 $$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_phone_interview(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let message;
+  plv8.subtransaction(function() {
+    const { 
+      interview_schedule, 
+      interview_status_date_updated, 
+      target_id, 
+      status 
+    } = input_data;
+
+    // Get count of HR members
+    const hrCountResult = plv8.execute(
+      `
+      SELECT COUNT(*) AS count
+      FROM team_schema.team_group_table tgt
+      JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
+      JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id  
+      WHERE tgt.team_group_name = 'HUMAN RESOURCES'
+        AND tmt.team_member_is_disabled = false
+      `
+    );
+    const hrCount = hrCountResult[0].count;
+
+    const selectedDate = new Date(interview_schedule).toISOString().split('T')[0];
+    const scheduledList = plv8.execute(
+      `
+      SELECT 
+        hr_phone_interview_schedule AS meeting_start_time,
+        hr_phone_interview_schedule + INTERVAL '5 minutes' AS meeting_end_time 
+      FROM hr_schema.hr_phone_interview_table
+      WHERE DATE(hr_phone_interview_table.hr_phone_interview_schedule) = '${selectedDate}'
+      `
+    );
+
+    // Function to check if the schedule is full
+    const isScheduleFull = (targetStartTime) => {
+      const targetStart = new Date(targetStartTime);
+      const targetEnd = new Date(targetStartTime);
+      targetEnd.setMinutes(targetEnd.getMinutes() + 5); // Meeting duration is 5 minutes
+
+      const countScheduledInSlot = scheduledList.filter(meeting => {
+        const meetingStart = new Date(meeting.meeting_start_time);
+        const meetingEnd = new Date(meeting.meeting_end_time);
+
+        // Check if there is an overlap with the target slot
+        return (
+          (targetStart < meetingEnd) &&
+          (targetEnd > meetingStart)
+        );
+      }).length;
+
+      // Return true if the number of scheduled meetings at this time plus 1 is equal to hrCount
+      return (countScheduledInSlot + 1) > hrCount;
+    };
+
+    if (isScheduleFull(interview_schedule)) {
+      message = { 
+        status: 'error', 
+        message: 'Schedule is full for the selected time.'
+      };
+    } else {
+      // Perform the update if the schedule is not full
+      plv8.execute(
+        `
+        UPDATE hr_schema.hr_phone_interview_table
+        SET
+          hr_phone_interview_status_date_updated = COALESCE(
+            '${interview_status_date_updated}', 
+            hr_phone_interview_status_date_updated
+          ),
+          hr_phone_interview_status = '${status}',
+          hr_phone_interview_schedule = COALESCE(
+            '${interview_schedule}', 
+            hr_phone_interview_schedule
+          )
+        WHERE
+          hr_phone_interview_id = '${target_id}';
+        `
+      );
+
+      message = { 
+        status: 'success', 
+        message: 'HR phone interview scheduled successfully.'
+      };
+    }
+  });
+  return message;
+$$ LANGUAGE plv8;
+
 
 ----- END: FUNCTIONS
 

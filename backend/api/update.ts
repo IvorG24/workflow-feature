@@ -31,7 +31,7 @@ import {
   TeamTableUpdate,
   TicketTableRow,
   TicketType,
-  UserTableUpdate,
+  UserTableUpdate
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -1347,22 +1347,11 @@ export const updatePhoneInterview = async (
     status: string;
   }
 ) => {
-  const { interview_schedule, interview_status_date_updated, target_id, status } = params;
-
-  const updateData: { [key: string]: any } = {
-    hr_phone_interview_status_date_updated: interview_status_date_updated,
-    hr_phone_interview_status: status
-  };
-
-  if (interview_schedule) {
-    updateData.hr_phone_interview_schedule = interview_schedule;
-  }
-
-  const { error } = await supabaseClient
-    .schema('hr_schema')
-    .from('hr_phone_interview_table')
-    .update(updateData)
-    .eq('hr_phone_interview_id', target_id);
+  const { data, error } = await supabaseClient.rpc("update_phone_interview", {
+    input_data: params,
+  });
 
   if (error) throw error;
+
+  return data as {status: string, message: string}
 };

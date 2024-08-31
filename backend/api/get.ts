@@ -5,13 +5,11 @@ import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup"
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   APP_SOURCE_ID,
-  FETCH_OPTION_LIMIT,
-  FORMSLY_FORM_ORDER,
+  FETCH_OPTION_LIMIT, formatDate, FORMSLY_FORM_ORDER,
   ITEM_FIELD_ID_LIST,
   IT_ASSET_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
-  SELECT_OPTION_LIMIT,
-  formatDate,
+  SELECT_OPTION_LIMIT
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
@@ -20,20 +18,14 @@ import {
   escapeQuotes,
   escapeQuotesForObject,
   parseJSONIfValid,
-  startCase,
+  startCase
 } from "@/utils/string";
 import {
-  AddressTableRow,
-  AppType,
-  ApplicationInformationFilterFormValues,
+  AddressTableRow, ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
-  ApproverUnresolvedRequestCountType,
-  AttachmentBucketType,
-  AttachmentTableRow,
-  CSICodeTableRow,
-  CreateTicketFormValues,
-  CreateTicketPageOnLoad,
-  EquipmentDescriptionTableRow,
+  ApproverUnresolvedRequestCountType, AppType, AttachmentBucketType,
+  AttachmentTableRow, CreateTicketFormValues,
+  CreateTicketPageOnLoad, CSICodeTableRow, EquipmentDescriptionTableRow,
   EquipmentPartTableInsert,
   EquipmentPartType,
   EquipmentTableRow,
@@ -70,14 +62,11 @@ import {
   RequestListOnLoad,
   RequestResponseTableRow,
   RequestTableRow,
-  RequestWithResponseType,
-  SSOTOnLoad,
-  SectionWithFieldType,
+  RequestWithResponseType, SectionWithFieldType,
   ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
   SignerRequestSLA,
-  SignerWithProfile,
-  TeamMemberOnLoad,
+  SignerWithProfile, SSOTOnLoad, TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUser,
   TeamMemberWithUserDetails,
@@ -89,7 +78,7 @@ import {
   TicketPageOnLoad,
   TicketStatusType,
   TransactionTableRow,
-  UserIssuedItem,
+  UserIssuedItem
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -99,7 +88,7 @@ import {
   getCity,
   getProvince,
   getRegion,
-  getTransactionList,
+  getTransactionList
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -6140,13 +6129,13 @@ export const getAllPoisitions = async (
 export const getPhoneMeetingSlots = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    start: string;
-    end: string;
-    slotDuration: number;
+    startTime: string;
+    endTime: string;
+    meetingDuration: number;
     breakDuration: number;
   }
 ) => {
-  const { data: data, error } = await supabaseClient.rpc(
+  const { data, error } = await supabaseClient.rpc(
     "get_phone_meeting_available",
     {
       input_data: params,
@@ -6159,12 +6148,14 @@ export const getPhoneMeetingSlots = async (
 };
 
 export const getPhoneInterview = async (
-  supabaseClient: SupabaseClient<Database>
+  supabaseClient: SupabaseClient<Database>,
+  interviewId: string
 ) => {
   const { data, error } = await supabaseClient
     .schema("hr_schema")
     .from("hr_phone_interview_table")
-    .select();
+    .select()
+    .eq("hr_phone_interview_id", interviewId);
 
   if (error) throw error;
 

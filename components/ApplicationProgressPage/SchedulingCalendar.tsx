@@ -6,6 +6,7 @@ import { DatePickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import moment from 'moment';
 import { useEffect, useState } from "react";
 
 type SchedulingType = {
@@ -45,14 +46,12 @@ const SchedulingCalendar = ({
   const [isReschedule, setIsReschedule] = useState(false);
   const [isReadyToSelect, setIsReadyToSelect] = useState(false);
 
-  const today = new Date();
-  const minDate = today;
-  const maxDate = new Date(today);
-  maxDate.setDate(today.getDate() + 30);
+  const today = moment().startOf('day');
+  const minDate = today.toDate();
+  const maxDate = today.clone().add(30, 'days').toDate();
 
   const formatTimeToLocal = (dateTime: string) => {
-    const date = new Date(dateTime);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return moment(dateTime).format('hh:mm A');
   };
 
   const cancelInterviewHandler = async () => {
@@ -80,10 +79,8 @@ const SchedulingCalendar = ({
   };
 
   const rescheduleHandler = () => {
-    refetchData();
     setIsEdit(true);
     setIsReschedule(true);
-    setSelectedDate(null);
     setIsReadyToSelect(false);
   };
 
@@ -96,7 +93,7 @@ const SchedulingCalendar = ({
       return;
     }
 
-    if (selectedSlot === "select time") return;
+    if (selectedSlot === "") return;
 
     setIsloading(true);
 
@@ -105,29 +102,37 @@ const SchedulingCalendar = ({
       const [hours, minutes] = time.split(":").map(Number);
 
       const tempDate = new Date(selectedDate);
-      tempDate.setHours(hours, minutes, 0, 0);
+      tempDate.setHours(hours, minutes);
 
-      setSelectedDate(tempDate);
-
-      const nowUtc = new Date().toISOString();
-
-      const params = {
-        interview_schedule: tempDate.toISOString(),
-        interview_status_date_updated: nowUtc,
-        target_id,
-        status: "PENDING",
-      };
+      const nowUtc = moment().toISOString();
 
       if (meeting_type === "phone") {
-        await updatePhoneInterview(supabaseClient, params);
+        const params = {
+          interview_schedule: tempDate.toISOString(),
+          interview_status_date_updated: nowUtc,
+          target_id,
+          status: "PENDING",
+        };
+        const { message, status } = await updatePhoneInterview(supabaseClient, params);
+
+        if (status === 'success') {
+          setSelectedDate(tempDate);
+          notifications.show({
+            message: message,
+            color: "green",
+          });
+        }
+        if (status === 'error') {
+          notifications.show({
+            message: message,
+            color: "orange",
+          });
+        }
       }
 
-      refetchData();
+      await refetchData();
 
-      notifications.show({
-        message: " HR phone interview scheduled successfully",
-        color: "green",
-      });
+
     } catch (error) {
       notifications.show({
         message: "Error updating interview:",
@@ -147,11 +152,8 @@ const SchedulingCalendar = ({
     breakDuration: number;
   }) => {
     if (selectedDate !== null) {
-      const start = new Date(selectedDate);
-      start.setHours(8, 0, 0, 0); // Set to 8 AM
-
-      const end = new Date(selectedDate);
-      end.setHours(18, 30, 0, 0); // Set to 6:30 PM
+      const start = moment(selectedDate).set({ hour: 8, minute: 0, second: 0, millisecond: 0 }); // Set to 8 AM
+      const end = moment(selectedDate).set({ hour: 18, minute: 30, second: 0, millisecond: 0 }); // Set to 6:30 PM
 
       // meeting duration
       // technical = 15 mins
@@ -163,9 +165,9 @@ const SchedulingCalendar = ({
       // schedule limited to 30 days into the future
 
       const params = {
-        start: start.toISOString(),
-        end: end.toISOString(),
-        slotDuration: slotDuration * 60 * 1000,
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        meetingDuration: slotDuration * 60 * 1000,
         breakDuration: breakDuration * 60 * 1000,
       };
 
@@ -187,64 +189,55 @@ const SchedulingCalendar = ({
   };
 
   const removePrevTime = () => {
-    const parseTimeString = (timeString: string): Date => {
+    const parseTimeString = (timeString: string): moment.Moment => {
       const [time, period] = timeString.split(" ");
       const [hours, minutes] = time.split(":").map(Number);
       const formattedHours = period === "PM" ? (hours % 12) + 12 : hours % 12;
 
-      const now = new Date();
-      now.setHours(formattedHours, minutes, 0, 0);
-      return now;
+      return moment().set({ hour: formattedHours, minute: minutes, second: 0, millisecond: 0 });
     };
 
-    const today = new Date().toDateString(); // Get today's date as a string
-    const selectedDateStr = selectedDate
-      ? new Date(selectedDate).toDateString()
-      : "";
+    const today = moment().startOf('day');
+    const selectedDateMoment = selectedDate ? moment(selectedDate).startOf('day') : null;
 
-    if (today === selectedDateStr) {
-      const data = hrSlot.map(
-        (slot) => `${formatTimeToLocal(slot.slot_start)}`
-      );
+    if (selectedDateMoment && today.isSame(selectedDateMoment, 'day')) {
+      const now = moment();
+      const currentTime = moment().set({ hour: now.hour(), minute: now.minute(), second: 0, millisecond: 0 });
 
-      const now = new Date();
-      const currentTime = parseTimeString(
-        `${now.getHours()}:${now.getMinutes().toString().padStart(2, "0")} ${
-          now.getHours() >= 12 ? "PM" : "AM"
-        }`
-      );
+      const filteredSlots = hrSlot
+        .map(slot => formatTimeToLocal(slot.slot_start))
+        .map(slotTime => parseTimeString(slotTime))
+        .filter(slotTime => slotTime.isSameOrAfter(currentTime));
 
-      const filteredSlots = data.filter((slotTime) => {
-        const slotTimeDate = parseTimeString(slotTime);
-        return slotTimeDate >= currentTime;
-      });
-
+      // Remove the current first time slot
       if (filteredSlots.length > 0) {
         filteredSlots.shift();
       }
 
-      return filteredSlots;
+      return filteredSlots.map(time => time.format('hh:mm A'));
     } else {
-      const data = hrSlot.map(
-        (slot) => `${formatTimeToLocal(slot.slot_start)}`
-      );
-      return data;
+      return hrSlot.map(slot => formatTimeToLocal(slot.slot_start));
+    }
+  };
+
+  const fetchSlot = () => {
+    if (meeting_type === "technical") {
+      fetchTime({ breakDuration: 10, slotDuration: 15 });
+      setSelectedSlot("");
+    }
+    if (meeting_type === "qualifying") {
+      fetchTime({ breakDuration: 10, slotDuration: 15 });
+      setSelectedSlot("");
+    }
+    if (meeting_type === "phone") {
+      fetchTime({ breakDuration: 10, slotDuration: 5 });
+      setSelectedSlot("");
     }
   };
 
   useEffect(() => {
-    if (meeting_type === "technical") {
-      fetchTime({ breakDuration: 10, slotDuration: 15 });
-    }
-    if (meeting_type === "qualifying") {
-      fetchTime({ breakDuration: 10, slotDuration: 15 });
-    }
-    if (meeting_type === "phone") {
-      fetchTime({ breakDuration: 10, slotDuration: 5 });
-    }
+    fetchSlot();
     if (intialDate !== null) {
-      const initialDate = new Date(intialDate);
-      setSelectedDate(initialDate);
       setIsEdit(false);
     } else {
       setIsEdit(true);
@@ -252,15 +245,7 @@ const SchedulingCalendar = ({
   }, []);
 
   useEffect(() => {
-    if (meeting_type === "technical") {
-      fetchTime({ breakDuration: 10, slotDuration: 15 });
-    }
-    if (meeting_type === "qualifying") {
-      fetchTime({ breakDuration: 10, slotDuration: 15 });
-    }
-    if (meeting_type === "phone") {
-      fetchTime({ breakDuration: 10, slotDuration: 5 });
-    }
+    fetchSlot();
   }, [selectedDate]);
 
   return (
@@ -338,12 +323,27 @@ const SchedulingCalendar = ({
           </div>
         )}
 
-        {!isReadyToSelect && (
+        {!isReadyToSelect && isEdit && (
           <Flex style={{ alignItems: "baseline" }} gap={5}>
             <Text>Schedule: </Text>
-            <Button onClick={() => setIsReadyToSelect(true)}>
+            <Button
+              onClick={async () => {
+                setIsReadyToSelect(true);
+              }}
+            >
               Set Schedule
             </Button>
+            {isReschedule && isEdit && (
+              <Button
+                color="dark"
+                onClick={() => {
+                  setIsEdit(false);
+                  setIsReschedule(false);
+                }}
+              >
+                Cancel
+              </Button>
+            )}
           </Flex>
         )}
 
@@ -366,6 +366,7 @@ const SchedulingCalendar = ({
                 maw="max-content"
                 value={selectedSlot}
                 onChange={(event) => {
+                  refetchData();
                   setSelectedSlot(event.currentTarget.value);
                 }}
                 mb={10}

@@ -3,9 +3,9 @@ import { formatDate } from "@/utils/constant";
 import { getStatusToColor } from "@/utils/styling";
 import { HRPhoneInterviewTableRow } from "@/utils/types";
 import { Badge, Group, Stack, Text, Title } from "@mantine/core";
-import { notifications } from '@mantine/notifications';
+import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import { useState } from 'react';
+import { useState } from "react";
 import SchedulingCalendar from "./SchedulingCalendar";
 
 type Props = {
@@ -13,22 +13,25 @@ type Props = {
 };
 const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
   const supabaseClient = useSupabaseClient();
-  const [phoneInterviewData, setPhoneInterviewData] = useState<HRPhoneInterviewTableRow>(hrPhoneInterviewData)
-  const [isLoading, setIsLoading] = useState(false)
+  const [phoneInterviewData, setPhoneInterviewData] =
+    useState<HRPhoneInterviewTableRow>(hrPhoneInterviewData);
+  const [isLoading, setIsLoading] = useState(false);
 
   const refetchData = async () => {
     try {
-      setIsLoading(true)
-      const data = await getPhoneInterview(supabaseClient)
-      setPhoneInterviewData(data[0])
+      setIsLoading(true);
+      const targetId = hrPhoneInterviewData.hr_phone_interview_id;
+      const data = await getPhoneInterview(supabaseClient, targetId);
+      setPhoneInterviewData(data[0]);
     } catch (error) {
       notifications.show({
-        message: 'Theres something wrong, Please Try Again',
-      })
+        message: "Theres something wrong, Please Try Again",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
       <Title order={3}>HR Phone Interview</Title>
@@ -37,9 +40,7 @@ const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
           <Text>Date Created: </Text>
           <Title order={5}>
             {formatDate(
-              new Date(
-                phoneInterviewData.hr_phone_interview_date_created ?? ""
-              )
+              new Date(phoneInterviewData.hr_phone_interview_date_created ?? "")
             )}
           </Title>
         </Group>
