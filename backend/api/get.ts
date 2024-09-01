@@ -5,11 +5,13 @@ import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup"
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   APP_SOURCE_ID,
-  FETCH_OPTION_LIMIT, formatDate, FORMSLY_FORM_ORDER,
-  ITEM_FIELD_ID_LIST,
+  FETCH_OPTION_LIMIT,
+  formatDate,
+  FORMSLY_FORM_ORDER,
   IT_ASSET_FIELD_ID_LIST,
+  ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
-  SELECT_OPTION_LIMIT
+  SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
@@ -18,14 +20,20 @@ import {
   escapeQuotes,
   escapeQuotesForObject,
   parseJSONIfValid,
-  startCase
+  startCase,
 } from "@/utils/string";
 import {
-  AddressTableRow, ApplicationInformationFilterFormValues,
+  AddressTableRow,
+  ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
-  ApproverUnresolvedRequestCountType, AppType, AttachmentBucketType,
-  AttachmentTableRow, CreateTicketFormValues,
-  CreateTicketPageOnLoad, CSICodeTableRow, EquipmentDescriptionTableRow,
+  ApproverUnresolvedRequestCountType,
+  AppType,
+  AttachmentBucketType,
+  AttachmentTableRow,
+  CreateTicketFormValues,
+  CreateTicketPageOnLoad,
+  CSICodeTableRow,
+  EquipmentDescriptionTableRow,
   EquipmentPartTableInsert,
   EquipmentPartType,
   EquipmentTableRow,
@@ -62,11 +70,14 @@ import {
   RequestListOnLoad,
   RequestResponseTableRow,
   RequestTableRow,
-  RequestWithResponseType, SectionWithFieldType,
+  RequestWithResponseType,
+  SectionWithFieldType,
   ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
   SignerRequestSLA,
-  SignerWithProfile, SSOTOnLoad, TeamMemberOnLoad,
+  SignerWithProfile,
+  SSOTOnLoad,
+  TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUser,
   TeamMemberWithUserDetails,
@@ -78,17 +89,17 @@ import {
   TicketPageOnLoad,
   TicketStatusType,
   TransactionTableRow,
-  UserIssuedItem
+  UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  Database as OneOfficeDatabase,
   getBarangay,
   getCity,
   getProvince,
   getRegion,
-  getTransactionList
+  getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 

@@ -6,7 +6,7 @@ import { DatePickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
-import moment from 'moment';
+import moment from "moment";
 import { useEffect, useState } from "react";
 
 type SchedulingType = {
@@ -46,12 +46,12 @@ const SchedulingCalendar = ({
   const [isReschedule, setIsReschedule] = useState(false);
   const [isReadyToSelect, setIsReadyToSelect] = useState(false);
 
-  const today = moment().startOf('day');
+  const today = moment().startOf("day");
   const minDate = today.toDate();
-  const maxDate = today.clone().add(30, 'days').toDate();
+  const maxDate = today.clone().add(30, "days").toDate();
 
   const formatTimeToLocal = (dateTime: string) => {
-    return moment(dateTime).format('hh:mm A');
+    return moment(dateTime).format("hh:mm A");
   };
 
   const cancelInterviewHandler = async () => {
@@ -113,9 +113,12 @@ const SchedulingCalendar = ({
           target_id,
           status: "PENDING",
         };
-        const { message, status } = await updatePhoneInterview(supabaseClient, params);
+        const { message, status } = await updatePhoneInterview(
+          supabaseClient,
+          params
+        );
 
-        if (status === 'success') {
+        if (status === "success") {
           setSelectedDate(tempDate);
           notifications.show({
             message: message,
@@ -123,7 +126,7 @@ const SchedulingCalendar = ({
           });
           setIsEdit(false);
         }
-        if (status === 'error') {
+        if (status === "error") {
           notifications.show({
             message: message,
             color: "orange",
@@ -132,8 +135,6 @@ const SchedulingCalendar = ({
       }
 
       await refetchData();
-
-
     } catch (error) {
       notifications.show({
         message: "Error updating interview:",
@@ -152,8 +153,18 @@ const SchedulingCalendar = ({
     breakDuration: number;
   }) => {
     if (selectedDate !== null) {
-      const start = moment(selectedDate).set({ hour: 8, minute: 0, second: 0, millisecond: 0 }); // Set to 8 AM
-      const end = moment(selectedDate).set({ hour: 18, minute: 30, second: 0, millisecond: 0 }); // Set to 6:30 PM
+      const start = moment(selectedDate).set({
+        hour: 8,
+        minute: 0,
+        second: 0,
+        millisecond: 0,
+      }); // Set to 8 AM
+      const end = moment(selectedDate).set({
+        hour: 18,
+        minute: 30,
+        second: 0,
+        millisecond: 0,
+      }); // Set to 6:30 PM
 
       // meeting duration
       // technical = 15 mins
@@ -194,29 +205,41 @@ const SchedulingCalendar = ({
       const [hours, minutes] = time.split(":").map(Number);
       const formattedHours = period === "PM" ? (hours % 12) + 12 : hours % 12;
 
-      return moment().set({ hour: formattedHours, minute: minutes, second: 0, millisecond: 0 });
+      return moment().set({
+        hour: formattedHours,
+        minute: minutes,
+        second: 0,
+        millisecond: 0,
+      });
     };
 
-    const today = moment().startOf('day');
-    const selectedDateMoment = selectedDate ? moment(selectedDate).startOf('day') : null;
+    const today = moment().startOf("day");
+    const selectedDateMoment = selectedDate
+      ? moment(selectedDate).startOf("day")
+      : null;
 
-    if (selectedDateMoment && today.isSame(selectedDateMoment, 'day')) {
+    if (selectedDateMoment && today.isSame(selectedDateMoment, "day")) {
       const now = moment();
-      const currentTime = moment().set({ hour: now.hour(), minute: now.minute(), second: 0, millisecond: 0 });
+      const currentTime = moment().set({
+        hour: now.hour(),
+        minute: now.minute(),
+        second: 0,
+        millisecond: 0,
+      });
 
       const filteredSlots = hrSlot
-        .map(slot => formatTimeToLocal(slot.slot_start))
-        .map(slotTime => parseTimeString(slotTime))
-        .filter(slotTime => slotTime.isSameOrAfter(currentTime));
+        .map((slot) => formatTimeToLocal(slot.slot_start))
+        .map((slotTime) => parseTimeString(slotTime))
+        .filter((slotTime) => slotTime.isSameOrAfter(currentTime));
 
       // Remove the current first time slot
       if (filteredSlots.length > 0) {
         filteredSlots.shift();
       }
 
-      return filteredSlots.map(time => time.format('hh:mm A'));
+      return filteredSlots.map((time) => time.format("hh:mm A"));
     } else {
-      return hrSlot.map(slot => formatTimeToLocal(slot.slot_start));
+      return hrSlot.map((slot) => formatTimeToLocal(slot.slot_start));
     }
   };
 

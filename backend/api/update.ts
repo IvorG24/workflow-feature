@@ -31,7 +31,7 @@ import {
   TeamTableUpdate,
   TicketTableRow,
   TicketType,
-  UserTableUpdate
+  UserTableUpdate,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
@@ -1353,5 +1353,5 @@ export const updatePhoneInterview = async (
 
   if (error) throw error;
 
-  return data as {status: string, message: string}
+  return data as { status: string; message: string };
 };
