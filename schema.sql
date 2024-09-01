@@ -15135,7 +15135,6 @@ AS $$
     const isScheduleFull = (targetStartTime) => {
       const targetStart = new Date(targetStartTime);
       const targetEnd = new Date(targetStartTime);
-      targetEnd.setMinutes(targetEnd.getMinutes() + 5);
 
       const countScheduledInSlot = scheduledList.filter(meeting => {
         const meetingStart = new Date(meeting.meeting_start_time);
