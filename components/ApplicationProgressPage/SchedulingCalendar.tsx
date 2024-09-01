@@ -121,6 +121,7 @@ const SchedulingCalendar = ({
             message: message,
             color: "green",
           });
+          setIsEdit(false);
         }
         if (status === 'error') {
           notifications.show({
@@ -140,7 +141,6 @@ const SchedulingCalendar = ({
       });
     } finally {
       setIsloading(false);
-      setIsEdit(false);
     }
   };
 
