@@ -15028,7 +15028,6 @@ AS $$
       breakDuration
     } = input_data;
 
-    // Convert start and end times to UTC
     const startUtc = new Date(startTime).toISOString();
     const endUtc = new Date(endTime).toISOString();
 
@@ -15057,7 +15056,6 @@ AS $$
 
       let slots = [];
 
-      // Generate all possible slots
       while (validStartTime < validEndTime) {
         const currentSlotEnd = new Date(validStartTime.getTime() + meetingDuration);
 
@@ -15071,7 +15069,6 @@ AS $$
         validStartTime = new Date(validStartTime.getTime() + meetingDuration + breakDuration);
       }
 
-      // Remove slots based on scheduled list and hrCount
       const filteredSlots = slots.filter(slot => {
         const slotStart = new Date(slot.slot_start).toISOString();
         const slotEnd = new Date(slot.slot_end).toISOString();
@@ -15112,7 +15109,6 @@ AS $$
       status 
     } = input_data;
 
-    // Get count of HR members
     const hrCountResult = plv8.execute(
       `
       SELECT COUNT(*) AS count
@@ -15136,24 +15132,21 @@ AS $$
       `
     );
 
-    // Function to check if the schedule is full
     const isScheduleFull = (targetStartTime) => {
       const targetStart = new Date(targetStartTime);
       const targetEnd = new Date(targetStartTime);
-      targetEnd.setMinutes(targetEnd.getMinutes() + 5); // Meeting duration is 5 minutes
+      targetEnd.setMinutes(targetEnd.getMinutes() + 5);
 
       const countScheduledInSlot = scheduledList.filter(meeting => {
         const meetingStart = new Date(meeting.meeting_start_time);
         const meetingEnd = new Date(meeting.meeting_end_time);
 
-        // Check if there is an overlap with the target slot
         return (
           (targetStart < meetingEnd) &&
           (targetEnd > meetingStart)
         );
       }).length;
 
-      // Return true if the number of scheduled meetings at this time plus 1 is equal to hrCount
       return (countScheduledInSlot + 1) > hrCount;
     };
 
@@ -15163,7 +15156,6 @@ AS $$
         message: 'Schedule is full for the selected time.'
       };
     } else {
-      // Perform the update if the schedule is not full
       plv8.execute(
         `
         UPDATE hr_schema.hr_phone_interview_table
