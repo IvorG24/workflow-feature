@@ -18601,6 +18601,24 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Allow READ for anon team members" on team_schema.team_group_table;
+CREATE policy "Allow READ for anon team members" on team_schema.team_group_table
+AS PERMISSIVE FOR SELECT
+TO anon
+USING (true);
+
+DROP POLICY IF EXISTS "Allow READ for anon team members" on team_schema.team_group_member_table;
+CREATE policy "Allow READ for anon team members" on team_schema.team_group_member_table
+AS PERMISSIVE FOR SELECT 
+TO anon
+USING (true);
+
+DROP POLICY IF EXISTS "Allow READ for anon team members" on team_schema.team_member_table;
+CREATE policy "Allow READ for anon team members" on team_schema.team_member_table
+AS PERMISSIVE FOR SELECT 
+TO anon
+USING (true);
+
 ----- END: POLICIES
 
 ----- START: INDEXES
