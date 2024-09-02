@@ -86,6 +86,8 @@ import {
   TeamOnLoad,
   TeamProjectTableRow,
   TeamTableRow,
+  TechnicalInterviewFilterFormValues,
+  TechnicalInterviewSpreadsheetData,
   TicketListOnLoad,
   TicketListType,
   TicketPageOnLoad,
@@ -6267,4 +6269,48 @@ export const getDirectorInterviewSummaryData = async (
   );
   if (error) throw error;
   return data as DirectorInterviewSpreadsheetData[];
+};
+
+export const getTechnicalInterviewSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TechnicalInterviewFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    technical_interview_date_created: {
+      start: params.technical_interview_date_created?.start
+        ? new Date(
+            params.technical_interview_date_created?.start
+          ).toLocaleDateString()
+        : undefined,
+      end: params.technical_interview_date_created?.end
+        ? moment(params.technical_interview_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+    technical_interview_schedule: {
+      start: params.technical_interview_schedule?.start
+        ? moment(params.technical_interview_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.technical_interview_schedule?.end
+        ? moment(params.technical_interview_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_technical_interview_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as TechnicalInterviewSpreadsheetData[];
 };
