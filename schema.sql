@@ -15547,14 +15547,15 @@ AS $$
         if (currentSlotEnd <= validEndTime) {
           slots.push({
             slot_start: validStartTime.toISOString(),
-            slot_end: currentSlotEnd.toISOString()
+            slot_end: currentSlotEnd.toISOString(),
+            isDisabled: false
           });
         }
 
         validStartTime = new Date(validStartTime.getTime() + meetingDuration + breakDuration);
       }
 
-      const filteredSlots = slots.filter(slot => {
+      const filteredSlots = slots.map(slot => {
         const slotStart = new Date(slot.slot_start).toISOString();
         const slotEnd = new Date(slot.slot_end).toISOString();
 
@@ -15568,7 +15569,12 @@ AS $$
           );
         }).length;
 
-        return countScheduledInSlot < hrCount;
+        const isDisabled = countScheduledInSlot >= hrCount
+
+        return {
+          ...slot,
+          isDisabled
+        };
       });
 
       return filteredSlots;

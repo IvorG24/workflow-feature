@@ -21,6 +21,7 @@ type SchedulingType = {
 type HrSlotType = {
   slot_start: string;
   slot_end: string;
+  isDisabled: boolean;
 };
 
 const SchedulingCalendar = ({
@@ -230,18 +231,26 @@ const SchedulingCalendar = ({
       });
 
       const filteredSlots = hrSlot
-        .map((slot) => formatTimeToLocal(slot.slot_start))
-        .map((slotTime) => parseTimeString(slotTime))
-        .filter((slotTime) => slotTime.isSameOrAfter(currentTime));
+        .map((slot) => ({
+          value: formatTimeToLocal(slot.slot_start),
+          label: formatTimeToLocal(slot.slot_start),
+          isDisabled: slot.isDisabled,
+          time: parseTimeString(formatTimeToLocal(slot.slot_start)),
+        }))
+        .filter((slot) => slot.time.isSameOrAfter(currentTime));
 
       // Remove the current first time slot
       if (filteredSlots.length > 0) {
         filteredSlots.shift();
       }
 
-      return filteredSlots.map((time) => time.format("hh:mm A"));
+      return filteredSlots;
     } else {
-      return hrSlot.map((slot) => formatTimeToLocal(slot.slot_start));
+      return hrSlot.map((slot) => ({
+        value: formatTimeToLocal(slot.slot_start),
+        label: formatTimeToLocal(slot.slot_start),
+        disabled: slot.isDisabled,
+      }));
     }
   };
 

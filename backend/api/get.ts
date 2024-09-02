@@ -6157,7 +6157,11 @@ export const getPhoneMeetingSlots = async (
 
   if (error) throw error;
 
-  return data as { slot_start: string; slot_end: string }[];
+  return data as {
+    slot_start: string;
+    slot_end: string;
+    isDisabled: boolean;
+  }[];
 };
 
 export const getPhoneInterview = async (
