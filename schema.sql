@@ -15499,6 +15499,62 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION update_trade_test_schedule(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId,
+      schedule,
+      requestReferenceId,
+      userEmail,
+      applicationInformationFormslyId,
+      notificationMessage
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.trade_test_table
+        SET
+          trade_test_status = 'PENDING',
+          trade_test_status_date_updated = '${currentDate}',
+          trade_test_team_member_id = '${teamMemberId}',
+          trade_test_schedule = '${schedule}'
+        WHERE 
+          trade_test_request_id = '${requestReferenceId}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table 
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES 
+        (
+          'REQUEST',
+          'REQUEST',
+          '${notificationMessage}',
+          '/user/application-progress/${applicationInformationFormslyId}',
+          '${userId}'
+        )
+      `
+    );
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES

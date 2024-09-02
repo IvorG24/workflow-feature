@@ -245,6 +245,7 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
         isMax={isMax}
         hiddenColumnList={hiddenColumnList}
         handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
+        setData={setData}
       />
     </Stack>
   );

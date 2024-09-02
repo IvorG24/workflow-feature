@@ -6110,7 +6110,7 @@ export const getHRPhoneInterviewSummaryData = async (
         : undefined,
     },
   };
-  console.log(updatedParams.hr_phone_interview_date_created);
+
   const { data, error } = await supabaseClient.rpc(
     "get_hr_phone_interview_summary_table",
     {
