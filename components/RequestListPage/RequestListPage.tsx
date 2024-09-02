@@ -278,6 +278,28 @@ const RequestListPage = ({
                   >
                     Trade Test
                   </Menu.Item>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/technical-interview-spreadsheet-view`
+                      )
+                    }
+                  >
+                    Technical Interview
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/director-interview-spreadsheet-view`
+                      )
+                    }
+                  >
+                    Director Interview
+                  </Menu.Item>
                 </>
               )}
             </Menu.Dropdown>

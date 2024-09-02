@@ -2341,3 +2341,41 @@ export type TradeTestFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
     end?: string;
   };
 };
+
+export type TechnicalInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  technical_interview_date_created: string;
+  technical_interview_status: string;
+  technical_interview_schedule: string;
+};
+
+export type TechnicalInterviewFilterFormValues =
+  HRSpreadsheetGeneralFilterFormValues & {
+    technical_interview_date_created?: {
+      start?: string;
+      end?: string;
+    };
+    technical_interview_status?: string;
+    technical_interview_schedule?: {
+      start?: string;
+      end?: string;
+    };
+  };
+
+export type DirectorInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  director_interview_date_created: string;
+  director_interview_status: string;
+  director_interview_schedule: string;
+};
+
+export type DirectorInterviewFilterFormValues =
+  HRSpreadsheetGeneralFilterFormValues & {
+    director_interview_date_created?: {
+      start?: string;
+      end?: string;
+    };
+    director_interview_status?: string;
+    director_interview_schedule?: {
+      start?: string;
+      end?: string;
+    };
+  };
