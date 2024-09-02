@@ -1,6 +1,6 @@
 import { getAllPoisitions } from "@/backend/api/get";
-import HRPhoneInterviewSpreadsheetView from "@/components/HRPhoneInterviewSpreadsheetView/HRPhoneInterviewSpreadsheetView";
 import Meta from "@/components/Meta/Meta";
+import TradeTestSpreadsheetView from "@/components/TradeTestSpreadsheetView/TradeTestSpreadsheetView";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import { OptionType } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -34,12 +34,10 @@ const Page = ({ positionOptionList }: Props) => {
   return (
     <>
       <Meta
-        description="HR Phone Interview Spreadsheet View Page"
-        url="/{teamName}/requests/hr-phone-interview-spreadsheet-view"
+        description="Trade Test Spreadsheet View Page"
+        url="/{teamName}/requests/trade-test-spreadsheet-view"
       />
-      <HRPhoneInterviewSpreadsheetView
-        positionOptionList={positionOptionList}
-      />
+      <TradeTestSpreadsheetView positionOptionList={positionOptionList} />
     </>
   );
 };

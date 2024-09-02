@@ -1,11 +1,11 @@
-import { getHRPhoneInterviewSummaryData } from "@/backend/api/get";
-import { updateHRPhoneInterviewStatus } from "@/backend/api/update";
+import { getTradeTestSummaryData } from "@/backend/api/get";
+import { updateTradeTestStatus } from "@/backend/api/update";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
-  HRPhoneInterviewFilterFormValues,
-  HRPhoneInterviewSpreadsheetData,
   OptionType,
+  TradeTestFilterFormValues,
+  TradeTestSpreadsheetData,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -15,9 +15,10 @@ import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
-import HRPhoneInterviewColumnsMenu from "./HRPhoneInterviewColumnsMenu";
-import HRPhoneInterviewFilterMenu from "./HRPhoneInterviewFilterMenu";
-import HRPhoneInterviewSpreadsheetTable from "./HRPhoneInterviewSpreadsheetTable/HRPhoneInterviewSpreadsheetTable";
+import TradeTestColumnsMenu from "./TradeTestColumnsMenu";
+
+import TradeTestFilterMenu from "./TradeTestFilterMenu";
+import TradeTestSpreadsheetTable from "./TradeTestSpreadsheetTable/TradeTestSpreadsheetTable";
 
 const initialSort = {
   sortBy: "technicalAssessment.request_date_created",
@@ -48,8 +49,8 @@ const formDefaultValues = {
     start: "",
     end: "",
   },
-  hr_phone_interview_status: "",
-  hr_phone_interview_schedule: {
+  trade_test_status: "",
+  trade_test_schedule: {
     start: null,
     end: null,
   },
@@ -59,26 +60,25 @@ type Props = {
   positionOptionList: OptionType[];
 };
 
-const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
+const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
-  const [data, setData] = useState<HRPhoneInterviewSpreadsheetData[]>([]);
+  const [data, setData] = useState<TradeTestSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [isMax, setIsMax] = useState(false);
   const [hiddenColumnList, setHiddenColumnList] = useLocalStorage<string[]>({
-    key: "HRPhoneInterviewColumns",
+    key: "TradeTestColumns",
     defaultValue: [],
   });
 
-  const filterFormMethods = useForm<HRPhoneInterviewFilterFormValues>({
-    defaultValues:
-      formDefaultValues as unknown as HRPhoneInterviewFilterFormValues,
+  const filterFormMethods = useForm<TradeTestFilterFormValues>({
+    defaultValues: formDefaultValues as unknown as TradeTestFilterFormValues,
   });
 
-  const fetchData = async (data?: HRPhoneInterviewFilterFormValues) => {
+  const fetchData = async (data?: TradeTestFilterFormValues) => {
     try {
       if (!user) return;
       setIsLoading(true);
@@ -86,7 +86,7 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
 
       const filterData = filterFormMethods.getValues();
 
-      const newData = await getHRPhoneInterviewSummaryData(supabaseClient, {
+      const newData = await getTradeTestSummaryData(supabaseClient, {
         ...filterData,
         ...data,
         userId: user.id,
@@ -123,7 +123,7 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
 
   const handleReset = () => {
     filterFormMethods.reset(
-      formDefaultValues as unknown as HRPhoneInterviewFilterFormValues
+      formDefaultValues as unknown as TradeTestFilterFormValues
     );
     setPage(1);
     fetchData({ page: 1 });
@@ -132,7 +132,7 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
   useBeforeunload(() => {
     const filterData = filterFormMethods.getValues();
     localStorage.setItem(
-      "hrPhoneInterviewSpreadsheetView",
+      "tradeTestSpreadsheetView",
       JSON.stringify({
         ...filterData,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
@@ -153,14 +153,11 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
       await fetchData({
         page: 1,
       });
-      const storedData = localStorage.getItem(
-        "hrPhoneInterviewSpreadsheetView"
-      );
+      const storedData = localStorage.getItem("tradeTestSpreadsheetView");
       if (storedData) {
-        const filterData: HRPhoneInterviewFilterFormValues =
-          JSON.parse(storedData);
+        const filterData: TradeTestFilterFormValues = JSON.parse(storedData);
         setSort(filterData.sort ?? initialSort);
-        filterFormMethods.reset(filterData as HRPhoneInterviewFilterFormValues);
+        filterFormMethods.reset(filterData as TradeTestFilterFormValues);
         await fetchData({
           ...filterData,
         });
@@ -173,15 +170,15 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
     fetchInitialData();
   }, [user?.id]);
 
-  const handleUpdateHRPhoneInterviewStatus = async (
+  const handleUpdateTradeTestStatus = async (
     status: string,
-    data: HRPhoneInterviewSpreadsheetData
+    data: TradeTestSpreadsheetData
   ) => {
     setIsLoading(true);
     try {
       if (!teamMember?.team_member_id) throw new Error();
 
-      await updateHRPhoneInterviewStatus(supabaseClient, {
+      await updateTradeTestStatus(supabaseClient, {
         status,
         teamMemberId: teamMember.team_member_id,
         data,
@@ -193,7 +190,7 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
 
           return {
             ...prevData,
-            hr_phone_interview_status: status,
+            trade_test_status: status,
           };
         })
       );
@@ -216,7 +213,7 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            HR Phone Interview Spreadsheet View
+            Trade Test Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}
@@ -225,20 +222,20 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
             Refresh
           </Button>
           <FormProvider {...filterFormMethods}>
-            <HRPhoneInterviewFilterMenu
+            <TradeTestFilterMenu
               fetchData={fetchData}
               handleReset={handleReset}
               positionOptionList={positionOptionList}
             />
           </FormProvider>
-          <HRPhoneInterviewColumnsMenu
+          <TradeTestColumnsMenu
             hiddenColumnList={hiddenColumnList}
             setHiddenColumnList={setHiddenColumnList}
             columnList={Object.keys(formDefaultValues)}
           />
         </Group>
       </Box>
-      <HRPhoneInterviewSpreadsheetTable
+      <TradeTestSpreadsheetTable
         data={data}
         isLoading={isLoading}
         page={page}
@@ -247,10 +244,10 @@ const HRPhoneInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
         setSort={setSort}
         isMax={isMax}
         hiddenColumnList={hiddenColumnList}
-        handleUpdateHRPhoneInterviewStatus={handleUpdateHRPhoneInterviewStatus}
+        handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
       />
     </Stack>
   );
 };
 
-export default HRPhoneInterviewSpreadsheetView;
+export default TradeTestSpreadsheetView;

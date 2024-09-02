@@ -88,6 +88,8 @@ import {
   TicketListType,
   TicketPageOnLoad,
   TicketStatusType,
+  TradeTestFilterFormValues,
+  TradeTestSpreadsheetData,
   TransactionTableRow,
   UserIssuedItem,
 } from "@/utils/types";
@@ -6137,6 +6139,7 @@ export const getAllPoisitions = async (
   });
 };
 
+<<<<<<< HEAD
 export const getPhoneMeetingSlots = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6172,3 +6175,46 @@ export const getPhoneInterview = async (
 
   return data as HRPhoneInterviewTableRow[];
 };
+=======
+export const getTradeTestSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TradeTestFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    technical_assessment_date: {
+      start: params.technical_assessment_date?.start
+        ? new Date(params.technical_assessment_date?.start).toLocaleDateString()
+        : undefined,
+      end: params.technical_assessment_date?.end
+        ? moment(params.technical_assessment_date?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+    trade_test_schedule: {
+      start: params.trade_test_schedule?.start
+        ? moment(params.trade_test_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.trade_test_schedule?.end
+        ? moment(params.trade_test_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_trade_test_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as TradeTestSpreadsheetData[];
+};
+>>>>>>> lance/hr-application-progress

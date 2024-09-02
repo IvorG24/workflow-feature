@@ -954,9 +954,10 @@ CREATE TABLE lookup_schema.position_table (
   position_license_label VARCHAR(4000),
   position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
   position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_technical_interview BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_director_interview BOOLEAN DEFAULT false NOT NULL,
   position_minimum_years_of_experience INT DEFAULT 1 NOT NULL,
   position_is_ped_position BOOLEAN DEFAULT false NOT NULL,
-  position_is_with_director_interview BOOLEAN DEFAULT false NOT NULL,
 
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
@@ -14757,14 +14758,34 @@ AS $$
       requestId
     } = input_data;
 
-    let applicationInformationData = {};
-    let generalAssessmentData = {};
-    let technicalAssessmentData = {};
-    let hrPhoneInterviewData = {};
+    let applicationInformationData 
+      = generalAssessmentData 
+      = technicalAssessmentData 
+      = hrPhoneInterviewData 
+      = jobOfferData
+      = undefined;
+    let tradeTestData 
+      = technicalInterviewData 
+      = directorInterviewData 
+      = backgroundCheckData 
+      = null;
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
     const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'`)[0].request_response.replaceAll('"', "");
-    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position = '${positionValue}'`);
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position = '${positionValue}'`)[0];
+
+    if (positionData.position_is_with_trade_test) {
+      tradeTestData = undefined;
+    }
+    if (positionData.position_is_with_technical_interview) {
+      technicalInterviewData = undefined;
+    }
+    if (positionData.position_is_with_director_interview) {
+      directorInterviewData = undefined;
+    }
+    if (positionData.position_is_with_background_check) {
+      backgroundCheckData = undefined;
+    }
     
     applicationInformationData = plv8.execute(
       `
@@ -14773,68 +14794,207 @@ AS $$
         WHERE
           request_formsly_id = '${requestId}'
       `
+    )[0];
+
+    generalAssessmentData = plv8.execute(
+      `
+        SELECT request_view.*
+        FROM public.request_view
+        INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
+        WHERE
+          request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
+          AND request_response = '"${requestId}"'
+      `
     );
-    if(applicationInformationData.length){
-      generalAssessmentData = plv8.execute(
-        `
-          SELECT request_view.*
+    if (!generalAssessmentData.length) {
+      returnData = {
+        applicationInformationData,
+        generalAssessmentData: undefined,
+        technicalAssessmentData,
+        hrPhoneInterviewData,
+        tradeTestData,
+        technicalInterviewData,
+        directorInterviewData,
+        backgroundCheckData,
+        jobOfferData
+      }
+      return;
+    }
+    generalAssessmentData = generalAssessmentData[0];
+
+    technicalAssessmentData = plv8.execute(
+      `
+        SELECT 
+          request_date_created,
+          request_form_id,
+          request_formsly_id,
+          request_formsly_id_prefix,
+          request_formsly_id_serial,
+          request_id,
+          request_is_disabled,
+          request_jira_id,
+          request_jira_link,
+          request_otp_id,
+          request_project_id,
+          request_status,
+          request_status_date_updated,
+          request_team_member_id
+        FROM (
+          SELECT 
+            request_view.*,
+            ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS RowNumber 
           FROM public.request_view
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
           WHERE
-            request_response_field_id = 'be0e130b-455b-47e0-a804-f90943f7bc07'
-            AND request_response = '"${requestId}"'
-        `
-      );
-      if(generalAssessmentData.length){
-        technicalAssessmentData  = plv8.execute(
-          `
-            SELECT 
-              request_date_created,
-              request_form_id,
-              request_formsly_id,
-              request_formsly_id_prefix,
-              request_formsly_id_serial,
-              request_id,
-              request_is_disabled,
-              request_jira_id,
-              request_jira_link,
-              request_otp_id,
-              request_project_id,
-              request_status,
-              request_status_date_updated,
-              request_team_member_id
-            FROM (
-              SELECT 
-                request_view.*,
-                ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS RowNumber 
-              FROM public.request_view
-              INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
-              WHERE
-                (
-                  request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
-                  AND request_response = '"${requestId}"'
-                )
-                OR
-                (
-                  request_response_field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
-                  AND request_response = '"${generalAssessmentData[0].request_formsly_id}"'
-                )
-            ) AS a
-            WHERE a.RowNumber = 2
-          `
-        );
-
-        if (technicalAssessmentData.length) {
-          hrPhoneInterviewData = plv8.execute(`SELECT * FROM hr_schema.hr_phone_interview_table WHERE hr_phone_interview_request_id = '${requestUUID}'`)
-        }
+            (
+              request_response_field_id = 'ef1e47d2-413f-4f92-b541-20c88f3a67b2'
+              AND request_response = '"${requestId}"'
+            )
+            OR
+            (
+              request_response_field_id = '362bff3d-54fa-413b-992c-fd344d8552c6'
+              AND request_response = '"${generalAssessmentData.request_formsly_id}"'
+            )
+        ) AS a
+        WHERE a.RowNumber = 2
+      `
+    );
+    if (!technicalAssessmentData.length) {
+      returnData = {
+        applicationInformationData,
+        generalAssessmentData,
+        technicalAssessmentData: undefined,
+        hrPhoneInterviewData,
+        tradeTestData,
+        technicalInterviewData,
+        directorInterviewData,
+        backgroundCheckData,
+        jobOfferData
       }
+      return;
+    }
+    technicalAssessmentData = technicalAssessmentData[0];
+
+    hrPhoneInterviewData = plv8.execute(`SELECT * FROM hr_schema.hr_phone_interview_table WHERE hr_phone_interview_request_id = '${requestUUID}'`);
+    if (!hrPhoneInterviewData.length) {
+      returnData = {
+        applicationInformationData,
+        generalAssessmentData,
+        technicalAssessmentData,
+        hrPhoneInterviewData: undefined,
+        tradeTestData,
+        technicalInterviewData,
+        directorInterviewData,
+        backgroundCheckData,
+        jobOfferData
+      }
+      return;
+    }
+    hrPhoneInterviewData = hrPhoneInterviewData[0];
+  
+    if (positionData.position_is_with_trade_test) {
+      tradeTestData = plv8.execute(`SELECT * FROM hr_schema.trade_test_table WHERE trade_test_request_id = '${requestUUID}'`);
+       if (!tradeTestData.length) {
+        returnData = {
+          applicationInformationData,
+          generalAssessmentData,
+          technicalAssessmentData,
+          hrPhoneInterviewData,
+          tradeTestData: undefined,
+          technicalInterviewData,
+          directorInterviewData,
+          backgroundCheckData,
+          jobOfferData
+        }
+        return;
+      }
+      tradeTestData = tradeTestData[0];
     }
 
+    if (positionData.position_is_with_technical_interview) {
+      technicalInterviewData = plv8.execute(`SELECT * FROM hr_schema.tehcnical_interview_table WHERE technical_interview_request_id = '${requestUUID}'`);
+       if (!technicalInterviewData.length) {
+        returnData = {
+          applicationInformationData,
+          generalAssessmentData,
+          technicalAssessmentData,
+          hrPhoneInterviewData,
+          tradeTestData,
+          technicalInterviewData: undefined,
+          directorInterviewData,
+          backgroundCheckData,
+          jobOfferData
+        }
+        return;
+      }
+      technicalInterviewData = technicalInterviewData[0];
+    }
+
+    if (positionData.position_is_with_director_interview) {
+      directorInterviewData = plv8.execute(`SELECT * FROM hr_schema.director_interview_table WHERE director_interview_request_id = '${requestUUID}'`);
+       if (!hrPhoneInterviewData.length) {
+        returnData = {
+          applicationInformationData,
+          generalAssessmentData,
+          technicalAssessmentData,
+          hrPhoneInterviewData,
+          tradeTestData,
+          technicalInterviewData,
+          directorInterviewData: undefined,
+          backgroundCheckData,
+          jobOfferData
+        }
+        return;
+      }
+      directorInterviewData = directorInterviewData[0];
+    }
+
+    if (positionData.position_is_with_background_check) {
+      backgroundCheckData = plv8.execute(`SELECT * FROM hr_schema.background_check_table WHERE background_check_request_id = '${requestUUID}'`);
+       if (!backgroundCheckData.length) {
+        returnData = {
+          applicationInformationData,
+          generalAssessmentData,
+          technicalAssessmentData,
+          hrPhoneInterviewData,
+          tradeTestData,
+          technicalInterviewData,
+          directorInterviewData,
+          backgroundCheckData: undefined,
+          jobOfferData
+        }
+        return;
+      }
+      backgroundCheckData = backgroundCheckData[0];
+    }
+
+    jobOfferData = plv8.execute(`SELECT * FROM hr_schema.job_offer_table WHERE job_offer_request_id = '${requestUUID}'`);
+    if (!jobOfferData.length) {
+      returnData = {
+        applicationInformationData,
+        generalAssessmentData,
+        technicalAssessmentData,
+        hrPhoneInterviewData,
+        tradeTestData,
+        technicalInterviewData,
+        directorInterviewData,
+        backgroundCheckData,
+        jobOfferData: undefined
+      }
+      return;
+    }
+    jobOfferData = jobOfferData[0];
+
     returnData = {
-      applicationInformationData: applicationInformationData.length ? applicationInformationData[0] : null,
-      generalAssessmentData: generalAssessmentData.length ? generalAssessmentData[0] : null,
-      technicalAssessmentData: technicalAssessmentData.length ? technicalAssessmentData[0] : null,
-      hrPhoneInterviewData: hrPhoneInterviewData.length ? hrPhoneInterviewData[0] : null
+      applicationInformationData,
+      generalAssessmentData,
+      technicalAssessmentData,
+      hrPhoneInterviewData,
+      tradeTestData,
+      technicalInterviewData,
+      directorInterviewData,
+      backgroundCheckData,
+      jobOfferData
     }
   });
   return returnData;
@@ -15011,6 +15171,331 @@ AS $$
     });
 });
 return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION application_information_next_step(
+  input_data JSON
+)
+RETURNS VOID 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      qualifiedStep,
+      position,
+      requestId
+    } = input_data;
+
+    const steps = [
+      'hr_phone_interview',
+      'trade_test',
+      'technical_interview',
+      'director_interview',
+      'background_check'
+    ];
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position = '${position}' LIMIT 1`)[0];
+    const currentStep = steps.indexOf(qualifiedStep);
+    
+    if (positionData.position_is_with_trade_test && currentStep <= 0) {
+      plv8.execute(`INSERT INTO hr_schema.trade_test_table (trade_test_request_id) VALUES ('${requestId}')`);
+    } else if (positionData.position_is_with_technical_interview && currentStep <= 1) {
+      plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id) VALUES ('${requestId}')`);
+    } else if (positionData.position_is_with_director_interview && currentStep <= 2) {
+      plv8.execute(`INSERT INTO hr_schema.director_interview_table (director_interview_request_id) VALUES ('${requestId}')`);
+    } else if (positionData.position_is_with_background_check && currentStep <= 3) {
+      plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id) VALUES ('${requestId}')`);
+    } else {
+      plv8.execute(`INSERT INTO hr_schema.job_offer_table (job_offer_request_id) VALUES ('${requestId}')`);
+    }
+  });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_hr_phone_interview_status(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      status,
+      teamMemberId,
+      data
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.hr_phone_interview_table
+        SET
+          hr_phone_interview_status = '${status}',
+          hr_phone_interview_status_date_updated = '${currentDate}',
+          hr_phone_interview_team_member_id = '${teamMemberId}'
+        WHERE 
+          hr_phone_interview_request_id = '${data.hr_request_reference_id}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table 
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES 
+        (
+          'REQUEST',
+          '${status}',
+          'HR phone interview status is updated to ${status}',
+          '/user/application-progress/${data.application_information_request_id}',
+          '${userId}'
+        )
+      `
+    );
+
+    if (status === 'QUALIFIED') {
+      const parsedPosition = data.position.replaceAll('"', '');
+      plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "hr_phone_interview", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
+    }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_trade_test_summary_table(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const { 
+      userId,
+      limit,
+      page,
+      sort,
+      position,
+      application_information_request_id,
+      application_information_score,
+      general_assessment_request_id,
+      general_assessment_score,
+      technical_assessment_request_id,
+      technical_assessment_score,
+      technical_assessment_date,
+      trade_test_status,
+      trade_test_schedule
+    } = input_data;
+
+    const offset = (page - 1) * limit;
+
+    let positionCondition = '';
+    if (position && position.length) {
+      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+    }
+    let applicationInformationRequestIdCondition = '';
+    if (application_information_request_id) {
+      applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
+    }
+    let applicationInformationScoreCondition = '';
+    if (application_information_score) {
+      if (application_information_score.start) {
+        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value >= ${application_information_score.start}`;
+      }
+      if (application_information_score.end) {
+        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value <= ${application_information_score.end}`;
+      }
+    }
+    let generalAssessmentRequestIdCondition = '';
+    if (general_assessment_request_id) {
+      generalAssessmentRequestIdCondition = `AND generalAssessment.request_formsly_id ILIKE '%${general_assessment_request_id}%'`;
+    }
+    let generalAssessmentScoreCondition = '';
+    if (general_assessment_score) {
+      if (general_assessment_score.start) {
+        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
+      }
+      if (general_assessment_score.end) {
+        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
+      }
+    }
+    let technicalAssessmentRequestIdCondition = '';
+    if (technical_assessment_request_id) {
+      technicalAssessmentRequestIdCondition = `AND technicalAssessment.request_formsly_id ILIKE '%${technical_assessment_request_id}%'`;
+    }
+    let technicalAssessmentScoreCondition = '';
+    if (technical_assessment_score) {
+      if (technical_assessment_score.start) {
+        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
+      }
+      if (technical_assessment_score.end) {
+        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
+      }
+    }
+    let technicalAssessmentDateCondition = "";
+    if (technical_assessment_date) {
+      if (technical_assessment_date.start) {
+        technicalAssessmentDateCondition += ` AND technicalAssessment.request_date_created >= '${new Date(technical_assessment_date.start).toISOString()}'`;
+      }
+      if (technical_assessment_date.end) {
+        technicalAssessmentDateCondition += ` AND technicalAssessment.request_date_created <= '${new Date(technical_assessment_date.end).toISOString()}'`;
+      }
+    }
+    let tradeTestCondition = "";
+    if (trade_test_status && trade_test_status.length) {
+      tradeTestCondition = `AND trade_test_status IN (${trade_test_status.map(status => `'${status}'`).join(", ")})`;
+    }
+    let tradeTestScheduleCondition = "";
+    if (trade_test_schedule) {
+      if (trade_test_schedule.start) {
+        tradeTestScheduleCondition += ` AND trade_test_schedule >= '${trade_test_schedule.start}'`;
+      }
+      if (trade_test_schedule.end) {
+        tradeTestScheduleCondition += ` AND trade_test_schedule <= '${trade_test_schedule.end}'`;
+      }
+    }
+
+    const parentRequests = plv8.execute(
+      `
+        SELECT
+          request_response AS position,
+          applicationInformation.request_id AS hr_request_reference_id,
+          applicationInformation.request_formsly_id AS application_information_request_id,
+          applicationInformationScore.request_score_value AS application_information_score,
+          generalAssessment.request_formsly_id AS general_assessment_request_id,
+          generalAssessmentScore.request_score_value AS general_assessment_score,
+          technicalAssessment.request_formsly_id AS technical_assessment_request_id,
+          technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          technicalAssessment.request_date_created AS technical_assessment_date,
+          trade_test_status,
+          trade_test_schedule
+        FROM hr_schema.request_connection_table
+        INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+        INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
+          AND request_response_field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
+        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
+        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
+        INNER JOIN hr_schema.trade_test_table ON trade_test_request_id = applicationInformation.request_id
+        WHERE 
+          applicationInformation.request_status = 'APPROVED'
+          AND generalAssessment.request_status = 'APPROVED'
+          AND technicalAssessment.request_status = 'APPROVED'
+          ${positionCondition}
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
+          ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
+          ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
+          ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
+          ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
+          ${technicalAssessmentDateCondition.length ? technicalAssessmentDateCondition : ""}
+          ${tradeTestCondition}
+          ${tradeTestScheduleCondition}
+        ORDER BY ${sort.sortBy} ${sort.order}
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+      `
+    );
+
+    returnData = parentRequests.map(request => {
+      const additionalData = plv8.execute(
+        `
+          SELECT
+            request_response,
+            request_response_field_id
+          FROM request_schema.request_response_table
+          WHERE
+            request_response_request_id = '${request.hr_request_reference_id}'
+            AND request_response_field_id IN ('7201c77e-b24a-4006-a4e5-8f38db887804', '859ac939-10c8-4094-aa7a-634f84b950b0', '0080798c-2359-4162-b8ae-441ac80512b6', '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 'ee6ec8af-0a9e-40a5-8353-7d851218fa87')
+        `
+      );
+
+      let firstName = middleName = lastName = contactNumber = email = "";
+      additionalData.forEach(response => {
+        const parsedResponse = response.request_response.replaceAll('"', "");
+        switch(response.request_response_field_id) {
+          case "7201c77e-b24a-4006-a4e5-8f38db887804": firstName = parsedResponse; break;
+          case "859ac939-10c8-4094-aa7a-634f84b950b0": middleName = parsedResponse; break;
+          case "0080798c-2359-4162-b8ae-441ac80512b6": lastName = parsedResponse; break;
+          case "5b43279b-88d6-41ce-ac69-b396e5a7a48f": contactNumber = parsedResponse; break;
+          case "ee6ec8af-0a9e-40a5-8353-7d851218fa87": email = parsedResponse; break;
+        }
+      });
+
+      return {
+        ...request,
+        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
+        application_information_contact_number: contactNumber,
+        application_information_email: email
+      }
+    });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_trade_test_status(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      status,
+      teamMemberId,
+      data
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.trade_test_table
+        SET
+          trade_test_status = '${status}',
+          trade_test_status_date_updated = '${currentDate}',
+          trade_test_team_member_id = '${teamMemberId}'
+        WHERE 
+          trade_test_request_id = '${data.hr_request_reference_id}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table 
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES 
+        (
+          'REQUEST',
+          '${status}',
+          'Trade Test status is updated to ${status}',
+          '/user/application-progress/${data.application_information_request_id}',
+          '${userId}'
+        )
+      `
+    );
+
+    if (status === 'QUALIFIED') {
+      const parsedPosition = data.position.replaceAll('"', '');
+      plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "trade_test", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
+    }
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_phone_meeting_available(

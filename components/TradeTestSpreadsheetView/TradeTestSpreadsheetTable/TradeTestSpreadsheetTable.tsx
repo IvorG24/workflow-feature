@@ -1,4 +1,4 @@
-import { HRPhoneInterviewSpreadsheetData } from "@/utils/types";
+import { TradeTestSpreadsheetData } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -20,7 +20,7 @@ import {
 } from "@tabler/icons-react";
 
 import { Dispatch, SetStateAction } from "react";
-import HRPhoneInterviewMainTableRow from "./HRPhoneInterviewMainTableRow";
+import TradeTestMainTableRow from "./TradeTestMainTableRow";
 
 const useStyles = createStyles((theme) => ({
   parentTable: {
@@ -29,7 +29,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  data: HRPhoneInterviewSpreadsheetData[];
+  data: TradeTestSpreadsheetData[];
   isLoading: boolean;
   page: number;
   handlePagination: (page: number) => void;
@@ -37,13 +37,13 @@ type Props = {
   setSort: Dispatch<SetStateAction<{ sortBy: string; order: string }>>;
   isMax: boolean;
   hiddenColumnList: string[];
-  handleUpdateHRPhoneInterviewStatus: (
+  handleUpdateTradeTestStatus: (
     status: string,
-    data: HRPhoneInterviewSpreadsheetData
+    data: TradeTestSpreadsheetData
   ) => void;
 };
 
-const HRPhoneInterviewSpreadsheetTable = ({
+const TradeTestSpreadsheetTable = ({
   data,
   isLoading,
   page,
@@ -52,7 +52,7 @@ const HRPhoneInterviewSpreadsheetTable = ({
   setSort,
   isMax,
   hiddenColumnList,
-  handleUpdateHRPhoneInterviewStatus,
+  handleUpdateTradeTestStatus,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -209,19 +209,19 @@ const HRPhoneInterviewSpreadsheetTable = ({
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("hr_phone_interview_status") && (
+                {!hiddenColumnList.includes("trade_test_status") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>HR Phone Interview Status</Text>
-                      {sortButtons("hr_phone_interview_status")}
+                      <Text>Trade Test Status</Text>
+                      {sortButtons("trade_test_status")}
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("hr_phone_interview_schedule") && (
+                {!hiddenColumnList.includes("trade_test_schedule") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>HR Phone Interview Schedule</Text>
-                      {sortButtons("hr_phone_interview_schedule")}
+                      <Text>Trade Test Schedule</Text>
+                      {sortButtons("trade_test_schedule")}
                     </Flex>
                   </th>
                 )}
@@ -234,13 +234,11 @@ const HRPhoneInterviewSpreadsheetTable = ({
             </thead>
             <tbody>
               {data.map((item) => (
-                <HRPhoneInterviewMainTableRow
+                <TradeTestMainTableRow
                   key={item.application_information_request_id}
                   item={item}
                   hiddenColumnList={hiddenColumnList}
-                  handleUpdateHRPhoneInterviewStatus={
-                    handleUpdateHRPhoneInterviewStatus
-                  }
+                  handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
                 />
               ))}
             </tbody>
@@ -263,4 +261,4 @@ const HRPhoneInterviewSpreadsheetTable = ({
   );
 };
 
-export default HRPhoneInterviewSpreadsheetTable;
+export default TradeTestSpreadsheetTable;
