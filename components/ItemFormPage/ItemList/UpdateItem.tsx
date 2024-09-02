@@ -439,12 +439,7 @@ const UpdateItem = ({ formId, setItemList, setEditItem, editItem }: Props) => {
                     }}
                     label={"PED Item"}
                     checked={value}
-                    onChange={(v) => {
-                      onChange(v);
-                      if (getValues("isITAsset")) {
-                        setValue("isITAsset", false);
-                      }
-                    }}
+                    onChange={onChange}
                   />
                 )}
               />
@@ -460,12 +455,7 @@ const UpdateItem = ({ formId, setItemList, setEditItem, editItem }: Props) => {
                     }}
                     label={"IT Asset Item"}
                     checked={value}
-                    onChange={(v) => {
-                      onChange(v);
-                      if (getValues("isPedItem")) {
-                        setValue("isPedItem", false);
-                      }
-                    }}
+                    onChange={onChange}
                   />
                 )}
               />
