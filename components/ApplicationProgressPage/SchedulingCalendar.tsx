@@ -374,7 +374,7 @@ const SchedulingCalendar = ({
 
         {isEdit && isReadyToSelect && (
           <div>
-            <Flex gap={10}>
+            <Flex gap={10} wrap="wrap" style={{ alignItems: "end" }}>
               <DatePickerInput
                 label="Select Date"
                 maw="max-content"
@@ -399,20 +399,20 @@ const SchedulingCalendar = ({
                   disabled={isLoading || isRefetchingData}
                 />
               )}
-            </Flex>
 
-            {selectedSlot && !isReschedule && (
-              <Button
-                mb={10}
-                onClick={setScheduleHandler}
-                disabled={isLoading || isRefetchingData}
-                style={{ width: "min-content" }}
-              >
-                <Text fz="md" fw="bold">
-                  Submit
-                </Text>
-              </Button>
-            )}
+              {selectedSlot && !isReschedule && (
+                <Button
+                  mb={10}
+                  onClick={setScheduleHandler}
+                  disabled={isLoading || isRefetchingData}
+                  style={{ width: "min-content" }}
+                >
+                  <Text fz="md" fw="bold">
+                    Submit
+                  </Text>
+                </Button>
+              )}
+            </Flex>
 
             {isReschedule && selectedSlot && selectedDate && (
               <Flex gap={5} style={{ alignItems: "baseline" }}>
