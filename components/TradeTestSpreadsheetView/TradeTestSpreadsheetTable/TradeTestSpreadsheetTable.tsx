@@ -41,6 +41,7 @@ type Props = {
     status: string,
     data: TradeTestSpreadsheetData
   ) => void;
+  setData: Dispatch<SetStateAction<TradeTestSpreadsheetData[]>>;
 };
 
 const TradeTestSpreadsheetTable = ({
@@ -53,6 +54,7 @@ const TradeTestSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   handleUpdateTradeTestStatus,
+  setData
 }: Props) => {
   const { classes } = useStyles();
 
@@ -201,11 +203,11 @@ const TradeTestSpreadsheetTable = ({
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("technical_assessment_date") && (
+                {!hiddenColumnList.includes("trade_test_date_created") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Technical Assessment Date</Text>
-                      {sortButtons("technicalAssessment.request_date_created")}
+                      <Text>Trade Test Date Created</Text>
+                      {sortButtons("trade_test_date_created")}
                     </Flex>
                   </th>
                 )}
@@ -239,6 +241,8 @@ const TradeTestSpreadsheetTable = ({
                   item={item}
                   hiddenColumnList={hiddenColumnList}
                   handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
+                  setData={setData}
+
                 />
               ))}
             </tbody>

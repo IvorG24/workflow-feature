@@ -129,9 +129,11 @@ const HRPhoneInterviewMainTableRow = ({
           <Text>{item.technical_assessment_score}</Text>
         </td>
       )}
-      {!hiddenColumnList.includes("technical_assessment_date") && (
+      {!hiddenColumnList.includes("hr_phone_interview_date_created") && (
         <td>
-          <Text>{formatDate(new Date(item.technical_assessment_date))}</Text>
+          <Text>
+            {formatDate(new Date(item.hr_phone_interview_date_created))}
+          </Text>
         </td>
       )}
       {!hiddenColumnList.includes("hr_phone_interview_status") && (

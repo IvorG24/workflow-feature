@@ -45,7 +45,7 @@ const formDefaultValues = {
     start: null,
     end: null,
   },
-  technical_assessment_date: {
+  trade_test_date_created: {
     start: "",
     end: "",
   },
@@ -245,6 +245,7 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
         isMax={isMax}
         hiddenColumnList={hiddenColumnList}
         handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
+        setData={setData}
       />
     </Stack>
   );

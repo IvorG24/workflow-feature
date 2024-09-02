@@ -1,4 +1,4 @@
-import { formatDate } from "@/utils/constant";
+import { formatDate, formatTime } from "@/utils/constant";
 import { getStatusToColor } from "@/utils/styling";
 import { TradeTestTableRow } from "@/utils/types";
 import { Alert, Badge, Group, Stack, Text, Title } from "@mantine/core";
@@ -34,6 +34,22 @@ const TradeTest = ({ tradeTestData }: Props) => {
             </Text>
           )}
         </Group>
+        {tradeTestData.trade_test_schedule && (
+          <>
+            <Group>
+              <Text>Schedule Date: </Text>
+              <Title order={5}>
+                {formatDate(new Date(tradeTestData.trade_test_schedule))}
+              </Title>
+            </Group>
+            <Group>
+              <Text>Schedule Time: </Text>
+              <Title order={5}>
+                {formatTime(new Date(tradeTestData.trade_test_schedule))}
+              </Title>
+            </Group>
+          </>
+        )}
         {tradeTestData.trade_test_status === "WAITING FOR SCHEDULE" && (
           <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
             <Text>

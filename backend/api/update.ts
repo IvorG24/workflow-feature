@@ -1362,3 +1362,20 @@ export const updatePhoneInterview = async (
 
   return data as { status: string; message: string };
 };
+
+export const updateTradeTestSchedule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    schedule: string;
+    requestReferenceId: string;
+    userEmail: string;
+    applicationInformationFormslyId: string;
+    notificationMessage: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_trade_test_schedule", {
+    input_data: params,
+  });
+  if (error) throw error;
+};

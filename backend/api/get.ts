@@ -6086,12 +6086,14 @@ export const getHRPhoneInterviewSummaryData = async (
 ) => {
   const updatedParams = {
     ...params,
-    technical_assessment_date: {
-      start: params.technical_assessment_date?.start
-        ? new Date(params.technical_assessment_date?.start).toLocaleDateString()
+    hr_phone_interview_date_created: {
+      start: params.hr_phone_interview_date_created?.start
+        ? new Date(
+            params.hr_phone_interview_date_created?.start
+          ).toLocaleDateString()
         : undefined,
-      end: params.technical_assessment_date?.end
-        ? moment(params.technical_assessment_date?.end)
+      end: params.hr_phone_interview_date_created?.end
+        ? moment(params.hr_phone_interview_date_created?.end)
             .add(1, "day")
             .format("MM-DD-YYYY")
         : undefined,
@@ -6187,12 +6189,12 @@ export const getTradeTestSummaryData = async (
 ) => {
   const updatedParams = {
     ...params,
-    technical_assessment_date: {
-      start: params.technical_assessment_date?.start
-        ? new Date(params.technical_assessment_date?.start).toLocaleDateString()
+    trade_test_date_created: {
+      start: params.trade_test_date_created?.start
+        ? new Date(params.trade_test_date_created?.start).toLocaleDateString()
         : undefined,
-      end: params.technical_assessment_date?.end
-        ? moment(params.technical_assessment_date?.end)
+      end: params.trade_test_date_created?.end
+        ? moment(params.trade_test_date_created?.end)
             .add(1, "day")
             .format("MM-DD-YYYY")
         : undefined,

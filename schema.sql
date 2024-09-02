@@ -15020,9 +15020,9 @@ AS $$
       general_assessment_score,
       technical_assessment_request_id,
       technical_assessment_score,
-      technical_assessment_date,
       hr_phone_interview_status,
-      hr_phone_interview_schedule
+      hr_phone_interview_schedule,
+      hr_phone_interview_date_created
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -15070,15 +15070,7 @@ AS $$
         technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
       }
     }
-    let technicalAssessmentDateCondition = "";
-    if (technical_assessment_date) {
-      if (technical_assessment_date.start) {
-        technicalAssessmentDateCondition += ` AND technicalAssessment.request_date_created >= '${new Date(technical_assessment_date.start).toISOString()}'`;
-      }
-      if (technical_assessment_date.end) {
-        technicalAssessmentDateCondition += ` AND technicalAssessment.request_date_created <= '${new Date(technical_assessment_date.end).toISOString()}'`;
-      }
-    }
+   
     let hrPhoneInterviewCondition = "";
     if (hr_phone_interview_status && hr_phone_interview_status.length) {
       hrPhoneInterviewCondition = `AND hr_phone_interview_status IN (${hr_phone_interview_status.map(status => `'${status}'`).join(", ")})`;
@@ -15090,6 +15082,15 @@ AS $$
       }
       if (hr_phone_interview_schedule.end) {
         hrPhoneInterviewScheduleCondition += ` AND hr_phone_interview_schedule <= '${hr_phone_interview_schedule.end}'`;
+      }
+    }
+    let hrPhoneInterviewDateCondition = "";
+    if (hr_phone_interview_date_created) {
+      if (hr_phone_interview_date_created.start) {
+        hrPhoneInterviewDateCondition += ` AND hr_phone_interview_date_created >= '${new Date(hr_phone_interview_date_created.start).toISOString()}'`;
+      }
+      if (hr_phone_interview_date_created.end) {
+        hrPhoneInterviewDateCondition += ` AND hr_phone_interview_date_created <= '${new Date(hr_phone_interview_date_created.end).toISOString()}'`;
       }
     }
 
@@ -15104,7 +15105,7 @@ AS $$
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
-          technicalAssessment.request_date_created AS technical_assessment_date,
+          hr_phone_interview_date_created,
           hr_phone_interview_status,
           hr_phone_interview_schedule
         FROM hr_schema.request_connection_table
@@ -15128,7 +15129,7 @@ AS $$
           ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
-          ${technicalAssessmentDateCondition.length ? technicalAssessmentDateCondition : ""}
+          ${hrPhoneInterviewDateCondition.length ? hrPhoneInterviewDateCondition : ""}
           ${hrPhoneInterviewCondition}
           ${hrPhoneInterviewScheduleCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
@@ -15288,7 +15289,7 @@ AS $$
       general_assessment_score,
       technical_assessment_request_id,
       technical_assessment_score,
-      technical_assessment_date,
+      trade_test_date_created,
       trade_test_status,
       trade_test_schedule
     } = input_data;
@@ -15338,14 +15339,14 @@ AS $$
         technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
       }
     }
-    let technicalAssessmentDateCondition = "";
-    if (technical_assessment_date) {
-      if (technical_assessment_date.start) {
-        technicalAssessmentDateCondition += ` AND technicalAssessment.request_date_created >= '${new Date(technical_assessment_date.start).toISOString()}'`;
+    let tradeTestDateCondition = "";
+    if (trade_test_date_created) {
+      if (trade_test_date_created.start) {
+        tradeTestDateCondition += ` AND trade_test_date_created >= '${new Date(trade_test_date_created.start).toISOString()}'`;
       }
-      if (technical_assessment_date.end) {
-        technicalAssessmentDateCondition += ` AND technicalAssessment.request_date_created <= '${new Date(technical_assessment_date.end).toISOString()}'`;
-      }
+      if (trade_test_date_created.end) {
+        tradeTestDateCondition += ` AND trade_test_date_created <= '${new Date(trade_test_date_created.end).toISOString()}'`;
+      }trade_test_date_created
     }
     let tradeTestCondition = "";
     if (trade_test_status && trade_test_status.length) {
@@ -15372,7 +15373,7 @@ AS $$
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
-          technicalAssessment.request_date_created AS technical_assessment_date,
+          trade_test_date_created,
           trade_test_status,
           trade_test_schedule
         FROM hr_schema.request_connection_table
@@ -15396,7 +15397,7 @@ AS $$
           ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
           ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
-          ${technicalAssessmentDateCondition.length ? technicalAssessmentDateCondition : ""}
+          ${tradeTestDateCondition.length ? tradeTestDateCondition : ""}
           ${tradeTestCondition}
           ${tradeTestScheduleCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
@@ -15674,6 +15675,62 @@ AS $$
   return message;
 $$ LANGUAGE plv8;
 
+
+CREATE OR REPLACE FUNCTION update_trade_test_schedule(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId,
+      schedule,
+      requestReferenceId,
+      userEmail,
+      applicationInformationFormslyId,
+      notificationMessage
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.trade_test_table
+        SET
+          trade_test_status = 'PENDING',
+          trade_test_status_date_updated = '${currentDate}',
+          trade_test_team_member_id = '${teamMemberId}',
+          trade_test_schedule = '${schedule}'
+        WHERE 
+          trade_test_request_id = '${requestReferenceId}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table 
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES 
+        (
+          'REQUEST',
+          'REQUEST',
+          '${notificationMessage}',
+          '/user/application-progress/${applicationInformationFormslyId}',
+          '${userId}'
+        )
+      `
+    );
+  });
+  return returnData;
+$$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
 

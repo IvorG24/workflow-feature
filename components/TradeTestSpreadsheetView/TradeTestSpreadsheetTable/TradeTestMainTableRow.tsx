@@ -1,5 +1,7 @@
 import { getCurrentDate } from "@/backend/api/get";
+import { updateTradeTestSchedule } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
@@ -21,10 +23,11 @@ import {
 import { DateInput, TimeInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
+import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
-import { useEffect, useRef } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 
 const useStyles = createStyles((theme) => ({
@@ -42,19 +45,23 @@ type Props = {
     status: string,
     data: TradeTestSpreadsheetData
   ) => void;
+  setData: Dispatch<SetStateAction<TradeTestSpreadsheetData[]>>;
 };
 
 const TradeTestMainTableRow = ({
   item,
   hiddenColumnList,
   handleUpdateTradeTestStatus,
+  setData,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
   const team = useActiveTeam();
+  const teamMember = useUserTeamMember();
   const dateRef = useRef<HTMLInputElement | null>(null);
   const timeRef = useRef<HTMLInputElement | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
+  const [isScheduling, setIsScheduling] = useState(false);
 
   const {
     handleSubmit,
@@ -94,8 +101,49 @@ const TradeTestMainTableRow = ({
     }
   }, [opened]);
 
-  if (!team.team_name) return null;
+  const handleSchedule = async (schedule: string) => {
+    try {
+      if (!teamMember?.team_member_id) throw new Error();
+      setIsScheduling(true);
+      const formattedScheduleMessage = moment(schedule).format(
+        "MMMM Do YYYY, h:mm A"
+      );
+      await updateTradeTestSchedule(supabaseClient, {
+        teamMemberId: teamMember.team_member_id,
+        schedule: schedule,
+        requestReferenceId: item.hr_request_reference_id,
+        userEmail: item.application_information_email,
+        applicationInformationFormslyId:
+          item.application_information_request_id,
+        notificationMessage: `Your trade test schedule is on ${formattedScheduleMessage}`,
+      });
 
+      setData((prev) =>
+        prev.map((prevItem) => {
+          if (prevItem.hr_request_reference_id !== item.hr_request_reference_id)
+            return prevItem;
+          return {
+            ...prevItem,
+            trade_test_status: "PENDING",
+            trade_test_schedule: schedule,
+          };
+        })
+      );
+      notifications.show({
+        message: "Trade test scheduled successfully.",
+        color: "green",
+      });
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsScheduling(false);
+    }
+  };
+
+  if (!team.team_name) return null;
   return (
     <tr className={classes.row}>
       <Modal
@@ -116,7 +164,14 @@ const TradeTestMainTableRow = ({
 
           <form
             id="schedule"
-            onSubmit={handleSubmit((data) => console.log(data))}
+            onSubmit={handleSubmit(async (data) => {
+              await handleSchedule(
+                moment(`${moment().format("YYYY-MM-DD")} ${data.time}`)
+                  .utc()
+                  .format("YYYY-MM-DD HH:mm:ssZZ")
+              );
+              close();
+            })}
           >
             <Stack spacing="xs">
               <Controller
@@ -151,9 +206,10 @@ const TradeTestMainTableRow = ({
                   validate: {
                     checkDate: async (value) => {
                       const currentDate = await getCurrentDate(supabaseClient);
+
                       if (
-                        new Date(value).toDateString() <
-                        currentDate.toDateString()
+                        new Date(value).setHours(0, 0, 0, 0) <
+                        currentDate.setHours(0, 0, 0, 0)
                       )
                         return "Invalid Date";
                       return true;
@@ -187,11 +243,17 @@ const TradeTestMainTableRow = ({
                   validate: {
                     checkTime: async (value) => {
                       const currentDate = await getCurrentDate(supabaseClient);
+                      const dateComparison = new Date(currentDate);
+
                       if (
-                        new Date(getValues("date")).toDateString() ===
-                        currentDate.toDateString()
+                        new Date(getValues("date")).setHours(0, 0, 0, 0) ===
+                        dateComparison.setHours(0, 0, 0, 0)
                       ) {
-                        if (value < moment(currentDate).format("HH:mm")) {
+                        if (
+                          moment(value, "HH:mm").isBefore(
+                            moment(currentDate, "HH:mm")
+                          )
+                        ) {
                           return "Invalid Time";
                         }
                       }
@@ -204,10 +266,10 @@ const TradeTestMainTableRow = ({
           </form>
 
           <Group spacing="xs" position="right">
-            <Button variant="outline" onClick={close}>
+            <Button variant="outline" onClick={close} disabled={isScheduling}>
               Cancel
             </Button>
-            <Button type="submit" form="schedule">
+            <Button type="submit" form="schedule" loading={isScheduling}>
               Confirm
             </Button>
           </Group>
@@ -289,9 +351,11 @@ const TradeTestMainTableRow = ({
           <Text>{item.technical_assessment_score}</Text>
         </td>
       )}
-      {!hiddenColumnList.includes("technical_assessment_date") && (
+      {!hiddenColumnList.includes("trade_test_date_created") && (
         <td>
-          <Text>{formatDate(new Date(item.technical_assessment_date))}</Text>
+          <Text sx={{ whiteSpace: "nowrap" }}>
+            {formatDate(new Date(item.trade_test_date_created))}
+          </Text>
         </td>
       )}
       {!hiddenColumnList.includes("trade_test_status") && (

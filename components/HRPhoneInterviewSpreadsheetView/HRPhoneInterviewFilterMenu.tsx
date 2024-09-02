@@ -201,12 +201,12 @@ const HRPhoneInterviewFilterMenu = ({
             </Stack>
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Technical Assessment Date
+                HR Phone Interview Date Created
               </Text>
               <Flex gap="xs">
                 <Controller
                   control={control}
-                  name="technical_assessment_date.start"
+                  name="hr_phone_interview_date_created.start"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ? new Date(value as string) : null;
                     return (
@@ -223,7 +223,7 @@ const HRPhoneInterviewFilterMenu = ({
                 />
                 <Controller
                   control={control}
-                  name="technical_assessment_date.end"
+                  name="hr_phone_interview_date_created.end"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ? new Date(value as string) : null;
                     return (
