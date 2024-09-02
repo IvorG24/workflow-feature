@@ -29,9 +29,12 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import ApplicationInformation from "./ApplicationInformation";
+import DirectorInterview from "./DirectorInterview";
 import GeneralAssessment from "./GeneralAssessment";
 import HRPhoneInterview from "./HRPhoneInterview";
+import JobOffer from "./JobOffer";
 import TechnicalAssessment from "./TechnicalAssessment";
+import TechnicalInterview from "./TechnicalInterview";
 import TradeTest from "./TradeTest";
 
 type Props = {
@@ -88,8 +91,15 @@ const ApplicationProgressPage = (props: Props) => {
     tradeTestData: tradeTestData ? (
       <TradeTest tradeTestData={tradeTestData} />
     ) : null,
-    directorInterviewData: null,
-    jobOfferData: null,
+    technicalInterviewData: technicalInterviewData ? (
+      <TechnicalInterview technicalInterviewData={technicalInterviewData} />
+    ) : null,
+    directorInterviewData: directorInterviewData ? (
+      <DirectorInterview directorInterviewData={directorInterviewData} />
+    ) : null,
+    jobOfferData: jobOfferData ? (
+      <JobOffer jobOfferData={jobOfferData} />
+    ) : null,
   };
   let maxValue = -1;
   let currentMaxValue = -1;

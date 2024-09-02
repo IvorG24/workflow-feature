@@ -5,6 +5,7 @@ import { Database } from "@/utils/database";
 import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import {
   AppType,
+  DirectorInterviewSpreadsheetData,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
   EquipmentLookupChoices,
@@ -30,6 +31,7 @@ import {
   SignerTableUpdate,
   TeamTableRow,
   TeamTableUpdate,
+  TechnicalInterviewSpreadsheetData,
   TicketTableRow,
   TicketType,
   TradeTestSpreadsheetData,
@@ -1359,5 +1361,79 @@ export const updateTradeTestSchedule = async (
   const { error } = await supabaseClient.rpc("update_trade_test_schedule", {
     input_data: params,
   });
+  if (error) throw error;
+};
+
+export const updateTechnicalInterviewStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: TechnicalInterviewSpreadsheetData;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_technical_interview_status",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+};
+
+export const updateTechnicalInterviewSchedule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    schedule: string;
+    requestReferenceId: string;
+    userEmail: string;
+    applicationInformationFormslyId: string;
+    notificationMessage: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_technical_interview_schedule",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+};
+
+export const updateDirectorInterviewStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: DirectorInterviewSpreadsheetData;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_director_interview_status",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+};
+
+export const updateDirectorInterviewSchedule = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    schedule: string;
+    requestReferenceId: string;
+    userEmail: string;
+    applicationInformationFormslyId: string;
+    notificationMessage: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc(
+    "update_director_interview_schedule",
+    {
+      input_data: params,
+    }
+  );
   if (error) throw error;
 };

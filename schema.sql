@@ -14912,7 +14912,7 @@ AS $$
     }
 
     if (positionData.position_is_with_technical_interview) {
-      technicalInterviewData = plv8.execute(`SELECT * FROM hr_schema.tehcnical_interview_table WHERE technical_interview_request_id = '${requestUUID}'`);
+      technicalInterviewData = plv8.execute(`SELECT * FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestUUID}'`);
        if (!technicalInterviewData.length) {
         returnData = {
           applicationInformationData,
@@ -14932,7 +14932,7 @@ AS $$
 
     if (positionData.position_is_with_director_interview) {
       directorInterviewData = plv8.execute(`SELECT * FROM hr_schema.director_interview_table WHERE director_interview_request_id = '${requestUUID}'`);
-       if (!hrPhoneInterviewData.length) {
+       if (!directorInterviewData.length) {
         returnData = {
           applicationInformationData,
           generalAssessmentData,
@@ -15528,6 +15528,578 @@ AS $$
           trade_test_schedule = '${schedule}'
         WHERE 
           trade_test_request_id = '${requestReferenceId}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table 
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES 
+        (
+          'REQUEST',
+          'REQUEST',
+          '${notificationMessage}',
+          '/user/application-progress/${applicationInformationFormslyId}',
+          '${userId}'
+        )
+      `
+    );
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_technical_interview_summary_table(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const { 
+      userId,
+      limit,
+      page,
+      sort,
+      position,
+      application_information_request_id,
+      application_information_score,
+      general_assessment_request_id,
+      general_assessment_score,
+      technical_assessment_request_id,
+      technical_assessment_score,
+      technical_interview_date_created,
+      technical_interview_status,
+      technical_interview_schedule
+    } = input_data;
+
+    const offset = (page - 1) * limit;
+
+    let positionCondition = '';
+    if (position && position.length) {
+      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+    }
+    let applicationInformationRequestIdCondition = '';
+    if (application_information_request_id) {
+      applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
+    }
+    let applicationInformationScoreCondition = '';
+    if (application_information_score) {
+      if (application_information_score.start) {
+        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value >= ${application_information_score.start}`;
+      }
+      if (application_information_score.end) {
+        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value <= ${application_information_score.end}`;
+      }
+    }
+    let generalAssessmentRequestIdCondition = '';
+    if (general_assessment_request_id) {
+      generalAssessmentRequestIdCondition = `AND generalAssessment.request_formsly_id ILIKE '%${general_assessment_request_id}%'`;
+    }
+    let generalAssessmentScoreCondition = '';
+    if (general_assessment_score) {
+      if (general_assessment_score.start) {
+        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
+      }
+      if (general_assessment_score.end) {
+        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
+      }
+    }
+    let technicalAssessmentRequestIdCondition = '';
+    if (technical_assessment_request_id) {
+      technicalAssessmentRequestIdCondition = `AND technicalAssessment.request_formsly_id ILIKE '%${technical_assessment_request_id}%'`;
+    }
+    let technicalAssessmentScoreCondition = '';
+    if (technical_assessment_score) {
+      if (technical_assessment_score.start) {
+        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
+      }
+      if (technical_assessment_score.end) {
+        technicalAssessmentRequestIdCondition += ` AND technicalAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
+      }
+    }
+    let technicalInterviewDateCondition = "";
+    if (technical_interview_date_created) {
+      if (technical_interview_date_created.start) {
+        technicalInterviewDateCondition += ` AND technical_interview_date_created >= '${new Date(technical_interview_date_created.start).toISOString()}'`;
+      }
+      if (technical_interview_date_created.end) {
+        technicalInterviewDateCondition += ` AND technical_interview_date_created <= '${new Date(technical_interview_date_created.end).toISOString()}'`;
+      }technical_interview_date_created
+    }
+    let technicalInterviewCondition = "";
+    if (technical_interview_status && technical_interview_status.length) {
+      technicalInterviewCondition = `AND technical_interview_status IN (${technical_interview_status.map(status => `'${status}'`).join(", ")})`;
+    }
+    let technicalInterviewScheduleCondition = "";
+    if (technical_interview_schedule) {
+      if (technical_interview_schedule.start) {
+        technicalInterviewScheduleCondition += ` AND technical_interview_schedule >= '${technical_interview_schedule.start}'`;
+      }
+      if (technical_interview_schedule.end) {
+        technicalInterviewScheduleCondition += ` AND technical_interview_schedule <= '${technical_interview_schedule.end}'`;
+      }
+    }
+
+    const parentRequests = plv8.execute(
+      `
+        SELECT
+          request_response AS position,
+          applicationInformation.request_id AS hr_request_reference_id,
+          applicationInformation.request_formsly_id AS application_information_request_id,
+          applicationInformationScore.request_score_value AS application_information_score,
+          generalAssessment.request_formsly_id AS general_assessment_request_id,
+          generalAssessmentScore.request_score_value AS general_assessment_score,
+          technicalAssessment.request_formsly_id AS technical_assessment_request_id,
+          technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          technical_interview_date_created,
+          technical_interview_status,
+          technical_interview_schedule
+        FROM hr_schema.request_connection_table
+        INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+        INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
+          AND request_response_field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
+        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
+        INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
+        INNER JOIN hr_schema.technical_interview_table ON technical_interview_request_id = applicationInformation.request_id
+        WHERE 
+          applicationInformation.request_status = 'APPROVED'
+          AND generalAssessment.request_status = 'APPROVED'
+          AND technicalAssessment.request_status = 'APPROVED'
+          ${positionCondition}
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
+          ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
+          ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
+          ${technicalAssessmentRequestIdCondition.length ? technicalAssessmentRequestIdCondition : ""}
+          ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
+          ${technicalInterviewDateCondition.length ? technicalInterviewDateCondition : ""}
+          ${technicalInterviewCondition}
+          ${technicalInterviewScheduleCondition}
+        ORDER BY ${sort.sortBy} ${sort.order}
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+      `
+    );
+
+    returnData = parentRequests.map(request => {
+      const additionalData = plv8.execute(
+        `
+          SELECT
+            request_response,
+            request_response_field_id
+          FROM request_schema.request_response_table
+          WHERE
+            request_response_request_id = '${request.hr_request_reference_id}'
+            AND request_response_field_id IN ('7201c77e-b24a-4006-a4e5-8f38db887804', '859ac939-10c8-4094-aa7a-634f84b950b0', '0080798c-2359-4162-b8ae-441ac80512b6', '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 'ee6ec8af-0a9e-40a5-8353-7d851218fa87')
+        `
+      );
+
+      let firstName = middleName = lastName = contactNumber = email = "";
+      additionalData.forEach(response => {
+        const parsedResponse = response.request_response.replaceAll('"', "");
+        switch(response.request_response_field_id) {
+          case "7201c77e-b24a-4006-a4e5-8f38db887804": firstName = parsedResponse; break;
+          case "859ac939-10c8-4094-aa7a-634f84b950b0": middleName = parsedResponse; break;
+          case "0080798c-2359-4162-b8ae-441ac80512b6": lastName = parsedResponse; break;
+          case "5b43279b-88d6-41ce-ac69-b396e5a7a48f": contactNumber = parsedResponse; break;
+          case "ee6ec8af-0a9e-40a5-8353-7d851218fa87": email = parsedResponse; break;
+        }
+      });
+
+      return {
+        ...request,
+        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
+        application_information_contact_number: contactNumber,
+        application_information_email: email
+      }
+    });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_technical_interview_status(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      status,
+      teamMemberId,
+      data
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.technical_interview_table
+        SET
+          technical_interview_status = '${status}',
+          technical_interview_status_date_updated = '${currentDate}',
+          technical_interview_team_member_id = '${teamMemberId}'
+        WHERE 
+          technical_interview_request_id = '${data.hr_request_reference_id}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table 
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES 
+        (
+          'REQUEST',
+          '${status}',
+          'Technical Interview status is updated to ${status}',
+          '/user/application-progress/${data.application_information_request_id}',
+          '${userId}'
+        )
+      `
+    );
+
+    if (status === 'QUALIFIED') {
+      const parsedPosition = data.position.replaceAll('"', '');
+      plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "technical_interview", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
+    }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_technical_interview_schedule(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId,
+      schedule,
+      requestReferenceId,
+      userEmail,
+      applicationInformationFormslyId,
+      notificationMessage
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.technical_interview_table
+        SET
+          technical_interview_status = 'PENDING',
+          technical_interview_status_date_updated = '${currentDate}',
+          technical_interview_team_member_id = '${teamMemberId}',
+          technical_interview_schedule = '${schedule}'
+        WHERE 
+          technical_interview_request_id = '${requestReferenceId}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table 
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES 
+        (
+          'REQUEST',
+          'REQUEST',
+          '${notificationMessage}',
+          '/user/application-progress/${applicationInformationFormslyId}',
+          '${userId}'
+        )
+      `
+    );
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_director_interview_summary_table(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const { 
+      userId,
+      limit,
+      page,
+      sort,
+      position,
+      application_information_request_id,
+      application_information_score,
+      general_assessment_request_id,
+      general_assessment_score,
+      technical_assessment_request_id,
+      technical_assessment_score,
+      director_interview_date_created,
+      director_interview_status,
+      director_interview_schedule
+    } = input_data;
+
+    const offset = (page - 1) * limit;
+
+    let positionCondition = '';
+    if (position && position.length) {
+      positionCondition = `AND request_response IN (${position.map(position => `'"${position}"'`).join(", ")})`;
+    }
+    let applicationInformationRequestIdCondition = '';
+    if (application_information_request_id) {
+      applicationInformationRequestIdCondition = `AND applicationInformation.request_formsly_id ILIKE '%${application_information_request_id}%'`;
+    }
+    let applicationInformationScoreCondition = '';
+    if (application_information_score) {
+      if (application_information_score.start) {
+        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value >= ${application_information_score.start}`;
+      }
+      if (application_information_score.end) {
+        applicationInformationScoreCondition += ` AND applicationInformationScore.request_score_value <= ${application_information_score.end}`;
+      }
+    }
+    let generalAssessmentRequestIdCondition = '';
+    if (general_assessment_request_id) {
+      generalAssessmentRequestIdCondition = `AND generalAssessment.request_formsly_id ILIKE '%${general_assessment_request_id}%'`;
+    }
+    let generalAssessmentScoreCondition = '';
+    if (general_assessment_score) {
+      if (general_assessment_score.start) {
+        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value >= ${general_assessment_score.start}`;
+      }
+      if (general_assessment_score.end) {
+        generalAssessmentRequestIdCondition += ` AND generalAssessmentScore.request_score_value <= ${general_assessment_score.end}`;
+      }
+    }
+    let directorAssessmentRequestIdCondition = '';
+    if (technical_assessment_request_id) {
+      directorAssessmentRequestIdCondition = `AND directorAssessment.request_formsly_id ILIKE '%${technical_assessment_request_id}%'`;
+    }
+    let directorAssessmentScoreCondition = '';
+    if (technical_assessment_score) {
+      if (technical_assessment_score.start) {
+        directorAssessmentRequestIdCondition += ` AND directorAssessmentScore.request_score_value >= ${technical_assessment_score.start}`;
+      }
+      if (technical_assessment_score.end) {
+        directorAssessmentRequestIdCondition += ` AND directorAssessmentScore.request_score_value <= ${technical_assessment_score.end}`;
+      }
+    }
+    let directorInterviewDateCondition = "";
+    if (director_interview_date_created) {
+      if (director_interview_date_created.start) {
+        directorInterviewDateCondition += ` AND director_interview_date_created >= '${new Date(director_interview_date_created.start).toISOString()}'`;
+      }
+      if (director_interview_date_created.end) {
+        directorInterviewDateCondition += ` AND director_interview_date_created <= '${new Date(director_interview_date_created.end).toISOString()}'`;
+      }director_interview_date_created
+    }
+    let directorInterviewCondition = "";
+    if (director_interview_status && director_interview_status.length) {
+      directorInterviewCondition = `AND director_interview_status IN (${director_interview_status.map(status => `'${status}'`).join(", ")})`;
+    }
+    let directorInterviewScheduleCondition = "";
+    if (director_interview_schedule) {
+      if (director_interview_schedule.start) {
+        directorInterviewScheduleCondition += ` AND director_interview_schedule >= '${director_interview_schedule.start}'`;
+      }
+      if (director_interview_schedule.end) {
+        directorInterviewScheduleCondition += ` AND director_interview_schedule <= '${director_interview_schedule.end}'`;
+      }
+    }
+
+    const parentRequests = plv8.execute(
+      `
+        SELECT
+          request_response AS position,
+          applicationInformation.request_id AS hr_request_reference_id,
+          applicationInformation.request_formsly_id AS application_information_request_id,
+          applicationInformationScore.request_score_value AS application_information_score,
+          generalAssessment.request_formsly_id AS general_assessment_request_id,
+          generalAssessmentScore.request_score_value AS general_assessment_score,
+          directorAssessment.request_formsly_id AS technical_assessment_request_id,
+          directorAssessmentScore.request_score_value AS technical_assessment_score,
+          director_interview_date_created,
+          director_interview_status,
+          director_interview_schedule
+        FROM hr_schema.request_connection_table
+        INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+        INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+        INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
+          AND request_response_field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
+        INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
+        INNER JOIN public.request_view AS directorAssessment ON directorAssessment.request_id = request_connection_technical_assessment_request_id
+        INNER JOIN request_schema.request_score_table AS directorAssessmentScore ON directorAssessmentScore.request_score_request_id = directorAssessment.request_id
+        INNER JOIN hr_schema.director_interview_table ON director_interview_request_id = applicationInformation.request_id
+        WHERE 
+          applicationInformation.request_status = 'APPROVED'
+          AND generalAssessment.request_status = 'APPROVED'
+          AND directorAssessment.request_status = 'APPROVED'
+          ${positionCondition}
+          ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
+          ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
+          ${generalAssessmentRequestIdCondition.length ? generalAssessmentRequestIdCondition : ""}
+          ${generalAssessmentScoreCondition.length ? generalAssessmentScoreCondition : ""}
+          ${directorAssessmentRequestIdCondition.length ? directorAssessmentRequestIdCondition : ""}
+          ${directorAssessmentScoreCondition.length ? directorAssessmentScoreCondition : ""}
+          ${directorInterviewDateCondition.length ? directorInterviewDateCondition : ""}
+          ${directorInterviewCondition}
+          ${directorInterviewScheduleCondition}
+        ORDER BY ${sort.sortBy} ${sort.order}
+        LIMIT '${limit}'
+        OFFSET '${offset}'
+      `
+    );
+
+    returnData = parentRequests.map(request => {
+      const additionalData = plv8.execute(
+        `
+          SELECT
+            request_response,
+            request_response_field_id
+          FROM request_schema.request_response_table
+          WHERE
+            request_response_request_id = '${request.hr_request_reference_id}'
+            AND request_response_field_id IN ('7201c77e-b24a-4006-a4e5-8f38db887804', '859ac939-10c8-4094-aa7a-634f84b950b0', '0080798c-2359-4162-b8ae-441ac80512b6', '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 'ee6ec8af-0a9e-40a5-8353-7d851218fa87')
+        `
+      );
+
+      let firstName = middleName = lastName = contactNumber = email = "";
+      additionalData.forEach(response => {
+        const parsedResponse = response.request_response.replaceAll('"', "");
+        switch(response.request_response_field_id) {
+          case "7201c77e-b24a-4006-a4e5-8f38db887804": firstName = parsedResponse; break;
+          case "859ac939-10c8-4094-aa7a-634f84b950b0": middleName = parsedResponse; break;
+          case "0080798c-2359-4162-b8ae-441ac80512b6": lastName = parsedResponse; break;
+          case "5b43279b-88d6-41ce-ac69-b396e5a7a48f": contactNumber = parsedResponse; break;
+          case "ee6ec8af-0a9e-40a5-8353-7d851218fa87": email = parsedResponse; break;
+        }
+      });
+
+      return {
+        ...request,
+        application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
+        application_information_contact_number: contactNumber,
+        application_information_email: email
+      }
+    });
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_director_interview_status(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      status,
+      teamMemberId,
+      data
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.director_interview_table
+        SET
+          director_interview_status = '${status}',
+          director_interview_status_date_updated = '${currentDate}',
+          director_interview_team_member_id = '${teamMemberId}'
+        WHERE 
+          director_interview_request_id = '${data.hr_request_reference_id}'
+      `
+    );
+
+    const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${data.application_information_email}' LIMIT 1`)[0].user_id;
+    plv8.execute(
+      `
+        INSERT INTO public.notification_table 
+        (
+          notification_app,
+          notification_type,
+          notification_content,
+          notification_redirect_url,
+          notification_user_id
+        ) VALUES 
+        (
+          'REQUEST',
+          '${status}',
+          'Director Interview status is updated to ${status}',
+          '/user/application-progress/${data.application_information_request_id}',
+          '${userId}'
+        )
+      `
+    );
+
+    if (status === 'QUALIFIED') {
+      const parsedPosition = data.position.replaceAll('"', '');
+      plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "director_interview", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
+    }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_director_interview_schedule(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = {};
+  plv8.subtransaction(function(){
+    const {
+      teamMemberId,
+      schedule,
+      requestReferenceId,
+      userEmail,
+      applicationInformationFormslyId,
+      notificationMessage
+    } = input_data;
+
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
+
+    plv8.execute(
+      `
+        UPDATE hr_schema.director_interview_table
+        SET
+          director_interview_status = 'PENDING',
+          director_interview_status_date_updated = '${currentDate}',
+          director_interview_team_member_id = '${teamMemberId}',
+          director_interview_schedule = '${schedule}'
+        WHERE 
+          director_interview_request_id = '${requestReferenceId}'
       `
     );
 
