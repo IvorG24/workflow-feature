@@ -6,12 +6,12 @@ import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
   APP_SOURCE_ID,
   FETCH_OPTION_LIMIT,
+  formatDate,
   FORMSLY_FORM_ORDER,
-  ITEM_FIELD_ID_LIST,
   IT_ASSET_FIELD_ID_LIST,
+  ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
   SELECT_OPTION_LIMIT,
-  formatDate,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
@@ -24,15 +24,15 @@ import {
 } from "@/utils/string";
 import {
   AddressTableRow,
-  AppType,
   ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
   ApproverUnresolvedRequestCountType,
+  AppType,
   AttachmentBucketType,
   AttachmentTableRow,
-  CSICodeTableRow,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
+  CSICodeTableRow,
   DirectorInterviewFilterFormValues,
   DirectorInterviewSpreadsheetData,
   EquipmentDescriptionTableRow,
@@ -46,6 +46,7 @@ import {
   FormType,
   HRPhoneInterviewFilterFormValues,
   HRPhoneInterviewSpreadsheetData,
+  HRPhoneInterviewTableRow,
   InitialFormType,
   ItemCategoryType,
   ItemCategoryWithSigner,
@@ -72,12 +73,12 @@ import {
   RequestResponseTableRow,
   RequestTableRow,
   RequestWithResponseType,
-  SSOTOnLoad,
   SectionWithFieldType,
   ServiceWithScopeAndChoice,
   SignatureHistoryTableRow,
   SignerRequestSLA,
   SignerWithProfile,
+  SSOTOnLoad,
   TeamMemberOnLoad,
   TeamMemberType,
   TeamMemberWithUser,
@@ -99,12 +100,12 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  Database as OneOfficeDatabase,
   getBarangay,
   getCity,
   getProvince,
   getRegion,
   getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -6144,6 +6145,46 @@ export const getAllPoisitions = async (
   });
 };
 
+export const getPhoneMeetingSlots = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    startTime: string;
+    endTime: string;
+    meetingDuration: number;
+    breakDuration: number;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_phone_meeting_available",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as {
+    slot_start: string;
+    slot_end: string;
+    isDisabled: boolean;
+  }[];
+};
+
+export const getPhoneInterview = async (
+  supabaseClient: SupabaseClient<Database>,
+  interviewId: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("hr_phone_interview_table")
+    .select()
+    .eq("hr_phone_interview_id", interviewId);
+
+  if (error) throw error;
+
+  return data as HRPhoneInterviewTableRow[];
+};
+
 export const getTradeTestSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: TradeTestFilterFormValues & {
@@ -6184,50 +6225,6 @@ export const getTradeTestSummaryData = async (
   );
   if (error) throw error;
   return data as TradeTestSpreadsheetData[];
-};
-
-export const getTechnicalInterviewSummaryData = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: TechnicalInterviewFilterFormValues & {
-    userId: string;
-  }
-) => {
-  const updatedParams = {
-    ...params,
-    technical_interview_date_created: {
-      start: params.technical_interview_date_created?.start
-        ? new Date(
-            params.technical_interview_date_created?.start
-          ).toLocaleDateString()
-        : undefined,
-      end: params.technical_interview_date_created?.end
-        ? moment(params.technical_interview_date_created?.end)
-            .add(1, "day")
-            .format("MM-DD-YYYY")
-        : undefined,
-    },
-    technical_interview_schedule: {
-      start: params.technical_interview_schedule?.start
-        ? moment(params.technical_interview_schedule?.start)
-            .utc()
-            .format("YYYY-MM-DD HH:mm:ssZZ")
-        : undefined,
-      end: params.technical_interview_schedule?.end
-        ? moment(params.technical_interview_schedule?.end)
-            .utc()
-            .format("YYYY-MM-DD HH:mm:ssZZ")
-        : undefined,
-    },
-  };
-
-  const { data, error } = await supabaseClient.rpc(
-    "get_technical_interview_summary_table",
-    {
-      input_data: updatedParams,
-    }
-  );
-  if (error) throw error;
-  return data as TechnicalInterviewSpreadsheetData[];
 };
 
 export const getDirectorInterviewSummaryData = async (
@@ -6272,4 +6269,48 @@ export const getDirectorInterviewSummaryData = async (
   );
   if (error) throw error;
   return data as DirectorInterviewSpreadsheetData[];
+};
+
+export const getTechnicalInterviewSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TechnicalInterviewFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    technical_interview_date_created: {
+      start: params.technical_interview_date_created?.start
+        ? new Date(
+            params.technical_interview_date_created?.start
+          ).toLocaleDateString()
+        : undefined,
+      end: params.technical_interview_date_created?.end
+        ? moment(params.technical_interview_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+    technical_interview_schedule: {
+      start: params.technical_interview_schedule?.start
+        ? moment(params.technical_interview_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.technical_interview_schedule?.end
+        ? moment(params.technical_interview_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_technical_interview_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as TechnicalInterviewSpreadsheetData[];
 };

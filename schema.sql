@@ -15499,6 +15499,183 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_phone_meeting_available(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let free_slots;
+  plv8.subtransaction(function() {
+    const {
+      startTime,
+      endTime,
+      meetingDuration,
+      breakDuration
+    } = input_data;
+
+    const startUtc = new Date(startTime).toISOString();
+    const endUtc = new Date(endTime).toISOString();
+
+    const hrCountResult = plv8.execute(`
+      SELECT COUNT(*) AS count
+      FROM team_schema.team_group_table tgt
+      JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
+      JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id  
+      WHERE tgt.team_group_name = 'HUMAN RESOURCES'
+        AND tmt.team_member_is_disabled = false
+    `);
+    const hrCount = hrCountResult[0].count;
+
+    const selectedDate = new Date(startTime).toISOString().split('T')[0];
+    const scheduledList = plv8.execute(`
+      SELECT 
+        hr_phone_interview_schedule AS meeting_start_time,
+        hr_phone_interview_schedule + INTERVAL '5 minutes' AS meeting_end_time 
+      FROM hr_schema.hr_phone_interview_table
+      WHERE DATE(hr_phone_interview_table.hr_phone_interview_schedule) = '${selectedDate}'
+    `);
+
+    const generateSlots = ({ startTime, endTime, scheduledList, meetingDuration, breakDuration }) => {
+      let validStartTime = new Date(startTime);
+      let validEndTime = new Date(endTime);
+
+      let slots = [];
+
+      while (validStartTime < validEndTime) {
+        const currentSlotEnd = new Date(validStartTime.getTime() + meetingDuration);
+
+        if (currentSlotEnd <= validEndTime) {
+          slots.push({
+            slot_start: validStartTime.toISOString(),
+            slot_end: currentSlotEnd.toISOString(),
+            isDisabled: false
+          });
+        }
+
+        validStartTime = new Date(validStartTime.getTime() + meetingDuration + breakDuration);
+      }
+
+      const filteredSlots = slots.map(slot => {
+        const slotStart = new Date(slot.slot_start).toISOString();
+        const slotEnd = new Date(slot.slot_end).toISOString();
+
+        const countScheduledInSlot = scheduledList.filter(meeting => {
+          const meetingStart = new Date(meeting.meeting_start_time).toISOString();
+          const meetingEnd = new Date(meeting.meeting_end_time).toISOString();
+          
+          return (
+            (slotStart < meetingEnd) &&
+            (slotEnd > meetingStart)
+          );
+        }).length;
+
+        const isDisabled = countScheduledInSlot >= hrCount
+
+        return {
+          ...slot,
+          isDisabled
+        };
+      });
+
+      return filteredSlots;
+    };
+
+    free_slots = generateSlots({ startTime: startUtc, endTime: endUtc, scheduledList, meetingDuration, breakDuration });
+  });
+  return free_slots;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION update_phone_interview(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let message;
+  plv8.subtransaction(function() {
+    const { 
+      interview_schedule, 
+      interview_status_date_updated, 
+      target_id, 
+      status 
+    } = input_data;
+
+    const hrCountResult = plv8.execute(
+      `
+      SELECT COUNT(*) AS count
+      FROM team_schema.team_group_table tgt
+      JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
+      JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id  
+      WHERE tgt.team_group_name = 'HUMAN RESOURCES'
+        AND tmt.team_member_is_disabled = false
+      `
+    );
+    const hrCount = hrCountResult[0].count;
+
+    const selectedDate = new Date(interview_schedule).toISOString().split('T')[0];
+    const scheduledList = plv8.execute(
+      `
+      SELECT 
+        hr_phone_interview_schedule AS meeting_start_time,
+        hr_phone_interview_schedule + INTERVAL '5 minutes' AS meeting_end_time 
+      FROM hr_schema.hr_phone_interview_table
+      WHERE DATE(hr_phone_interview_table.hr_phone_interview_schedule) = '${selectedDate}'
+      `
+    );
+
+    const isScheduleFull = (targetStartTime) => {
+      const targetStart = new Date(targetStartTime);
+      const targetEnd = new Date(targetStartTime);
+      targetEnd.setMinutes(targetEnd.getMinutes() + 5);
+
+      const countScheduledInSlot = scheduledList.filter(meeting => {
+        const meetingStart = new Date(meeting.meeting_start_time);
+        const meetingEnd = new Date(meeting.meeting_end_time);
+
+        return (
+          (targetStart < meetingEnd) &&
+          (targetEnd > meetingStart)
+        );
+      }).length;
+
+      return (countScheduledInSlot + 1) > hrCount;
+    };
+
+    if (isScheduleFull(interview_schedule)) {
+      message = { 
+        status: 'error', 
+        message: 'Schedule is full for the selected time.'
+      };
+    } else {
+      plv8.execute(
+        `
+        UPDATE hr_schema.hr_phone_interview_table
+        SET
+          hr_phone_interview_status_date_updated = COALESCE(
+            '${interview_status_date_updated}', 
+            hr_phone_interview_status_date_updated
+          ),
+          hr_phone_interview_status = '${status}',
+          hr_phone_interview_schedule = COALESCE(
+            '${interview_schedule}', 
+            hr_phone_interview_schedule
+          )
+        WHERE
+          hr_phone_interview_id = '${target_id}';
+        `
+      );
+
+      message = { 
+        status: 'success', 
+        message: 'HR phone interview scheduled successfully.'
+      };
+    }
+  });
+  return message;
+$$ LANGUAGE plv8;
+
+
 CREATE OR REPLACE FUNCTION update_trade_test_schedule(
   input_data JSON
 )
@@ -19535,6 +19712,24 @@ USING (
       AND team_member_team_id = team_transaction_team_id
   )
 );
+
+DROP POLICY IF EXISTS "Allow READ for anon team members" on team_schema.team_group_table;
+CREATE policy "Allow READ for anon team members" on team_schema.team_group_table
+AS PERMISSIVE FOR SELECT
+TO anon
+USING (true);
+
+DROP POLICY IF EXISTS "Allow READ for anon team members" on team_schema.team_group_member_table;
+CREATE policy "Allow READ for anon team members" on team_schema.team_group_member_table
+AS PERMISSIVE FOR SELECT 
+TO anon
+USING (true);
+
+DROP POLICY IF EXISTS "Allow READ for anon team members" on team_schema.team_member_table;
+CREATE policy "Allow READ for anon team members" on team_schema.team_member_table
+AS PERMISSIVE FOR SELECT 
+TO anon
+USING (true);
 
 ----- END: POLICIES
 
