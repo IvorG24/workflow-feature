@@ -6139,7 +6139,6 @@ export const getAllPoisitions = async (
   });
 };
 
-<<<<<<< HEAD
 export const getPhoneMeetingSlots = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6175,7 +6174,7 @@ export const getPhoneInterview = async (
 
   return data as HRPhoneInterviewTableRow[];
 };
-=======
+
 export const getTradeTestSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: TradeTestFilterFormValues & {
@@ -6217,4 +6216,3 @@ export const getTradeTestSummaryData = async (
   if (error) throw error;
   return data as TradeTestSpreadsheetData[];
 };
->>>>>>> lance/hr-application-progress
