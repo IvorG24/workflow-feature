@@ -21,7 +21,7 @@ import DirectorInterviewFilterMenu from "./DirectorInterviewFilterMenu";
 import DirectorInterviewSpreadsheetTable from "./DirectorInterviewSpreadsheetTable/DirectorInterviewSpreadsheetTable";
 
 const initialSort = {
-  sortBy: "directorAssessment.request_date_created",
+  sortBy: "director_interview_date_created",
   order: "DESC",
 };
 
@@ -40,8 +40,8 @@ const formDefaultValues = {
     start: null,
     end: null,
   },
-  director_assessment_request_id: "",
-  director_assessment_score: {
+  technical_assessment_request_id: "",
+  technical_assessment_score: {
     start: null,
     end: null,
   },

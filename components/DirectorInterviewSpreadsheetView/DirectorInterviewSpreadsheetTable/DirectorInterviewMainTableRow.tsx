@@ -115,7 +115,7 @@ const DirectorInterviewMainTableRow = ({
         userEmail: item.application_information_email,
         applicationInformationFormslyId:
           item.application_information_request_id,
-        notificationMessage: `Your Director interview schedule is on ${formattedScheduleMessage}`,
+        notificationMessage: `Your Director Interview schedule is on ${formattedScheduleMessage}`,
       });
 
       setData((prev) =>
@@ -130,7 +130,7 @@ const DirectorInterviewMainTableRow = ({
         })
       );
       notifications.show({
-        message: "Director interview scheduled successfully.",
+        message: "Director Interview scheduled successfully.",
         color: "green",
       });
     } catch (e) {

@@ -21,7 +21,7 @@ import TechnicalInterviewFilterMenu from "./TechnicalInterviewFilterMenu";
 import TechnicalInterviewSpreadsheetTable from "./TechnicalInterviewSpreadsheetTable/TechnicalInterviewSpreadsheetTable";
 
 const initialSort = {
-  sortBy: "technicalAssessment.request_date_created",
+  sortBy: "technical_interview_date_created",
   order: "DESC",
 };
 

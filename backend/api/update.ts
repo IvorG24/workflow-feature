@@ -1455,3 +1455,40 @@ export const updateDirectorInterviewSchedule = async (
   );
   if (error) throw error;
 };
+
+export const updateJobOffer = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+    requestReferenceId: string;
+    userEmail: string;
+    applicationInformationFormslyId: string;
+    jobTitle: string;
+    attachmentId: string;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_job_offer", {
+    input_data: params,
+  });
+  if (error) throw error;
+};
+
+export const updateJobOfferStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    jobOfferId: string;
+  }
+) => {
+  const { status, jobOfferId } = params;
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  const { error } = await supabaseClient
+    .schema("hr_schema")
+    .from("job_offer_table")
+    .update({
+      job_offer_status: status,
+      job_offer_status_date_updated: currentDate,
+    })
+    .eq("job_offer_id", jobOfferId);
+  if (error) throw error;
+};

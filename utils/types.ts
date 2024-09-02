@@ -573,7 +573,8 @@ export type AttachmentBucketType =
   | "REQUEST_ATTACHMENTS"
   | "MEMO_ATTACHMENTS"
   | "TEAM_PROJECT_ATTACHMENTS"
-  | "TICKET_ATTACHMENTS";
+  | "TICKET_ATTACHMENTS"
+  | "JOB_OFFER_ATTACHMENTS";
 export type ReceiverStatusType = "PENDING" | "APPROVED" | "REJECTED";
 export type FormStatusType = ReceiverStatusType | "CANCELED";
 export type TicketStatusType =
@@ -2379,3 +2380,16 @@ export type DirectorInterviewFilterFormValues =
       end?: string;
     };
   };
+
+export type JobOfferSpreadsheetData = HRSpreadsheetGeneralData & {
+  job_offer_date_created: string;
+  job_offer_status: string;
+};
+
+export type JobOfferFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
+  job_offer_date_created?: {
+    start?: string;
+    end?: string;
+  };
+  job_offer_status?: string;
+};

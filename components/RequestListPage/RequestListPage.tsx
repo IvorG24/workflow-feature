@@ -300,6 +300,17 @@ const RequestListPage = ({
                   >
                     Director Interview
                   </Menu.Item>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/job-offer-spreadsheet-view`
+                      )
+                    }
+                  >
+                    Job Offer
+                  </Menu.Item>
                 </>
               )}
             </Menu.Dropdown>

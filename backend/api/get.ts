@@ -59,6 +59,8 @@ import {
   JiraItemCategoryDataType,
   JiraOrganizationTableRow,
   JiraProjectDataType,
+  JobOfferFilterFormValues,
+  JobOfferSpreadsheetData,
   LRFSpreadsheetData,
   MemoListItemType,
   MemoType,
@@ -6227,6 +6229,50 @@ export const getTradeTestSummaryData = async (
   return data as TradeTestSpreadsheetData[];
 };
 
+export const getTechnicalInterviewSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: TechnicalInterviewFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    technical_interview_date_created: {
+      start: params.technical_interview_date_created?.start
+        ? new Date(
+            params.technical_interview_date_created?.start
+          ).toLocaleDateString()
+        : undefined,
+      end: params.technical_interview_date_created?.end
+        ? moment(params.technical_interview_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+    technical_interview_schedule: {
+      start: params.technical_interview_schedule?.start
+        ? moment(params.technical_interview_schedule?.start)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+      end: params.technical_interview_schedule?.end
+        ? moment(params.technical_interview_schedule?.end)
+            .utc()
+            .format("YYYY-MM-DD HH:mm:ssZZ")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_technical_interview_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as TechnicalInterviewSpreadsheetData[];
+};
+
 export const getDirectorInterviewSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: DirectorInterviewFilterFormValues & {
@@ -6271,46 +6317,32 @@ export const getDirectorInterviewSummaryData = async (
   return data as DirectorInterviewSpreadsheetData[];
 };
 
-export const getTechnicalInterviewSummaryData = async (
+export const getJobOfferSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
-  params: TechnicalInterviewFilterFormValues & {
+  params: JobOfferFilterFormValues & {
     userId: string;
   }
 ) => {
   const updatedParams = {
     ...params,
-    technical_interview_date_created: {
-      start: params.technical_interview_date_created?.start
-        ? new Date(
-            params.technical_interview_date_created?.start
-          ).toLocaleDateString()
+    job_offer_date_created: {
+      start: params.job_offer_date_created?.start
+        ? new Date(params.job_offer_date_created?.start).toLocaleDateString()
         : undefined,
-      end: params.technical_interview_date_created?.end
-        ? moment(params.technical_interview_date_created?.end)
+      end: params.job_offer_date_created?.end
+        ? moment(params.job_offer_date_created?.end)
             .add(1, "day")
             .format("MM-DD-YYYY")
-        : undefined,
-    },
-    technical_interview_schedule: {
-      start: params.technical_interview_schedule?.start
-        ? moment(params.technical_interview_schedule?.start)
-            .utc()
-            .format("YYYY-MM-DD HH:mm:ssZZ")
-        : undefined,
-      end: params.technical_interview_schedule?.end
-        ? moment(params.technical_interview_schedule?.end)
-            .utc()
-            .format("YYYY-MM-DD HH:mm:ssZZ")
         : undefined,
     },
   };
 
   const { data, error } = await supabaseClient.rpc(
-    "get_technical_interview_summary_table",
+    "get_job_offer_summary_table",
     {
       input_data: updatedParams,
     }
   );
   if (error) throw error;
-  return data as TechnicalInterviewSpreadsheetData[];
+  return data as JobOfferSpreadsheetData[];
 };

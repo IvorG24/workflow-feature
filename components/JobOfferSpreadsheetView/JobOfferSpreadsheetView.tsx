@@ -1,11 +1,9 @@
-import { getTradeTestSummaryData } from "@/backend/api/get";
-import { updateTradeTestStatus } from "@/backend/api/update";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import { getJobOfferSummaryData } from "@/backend/api/get";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
+  JobOfferFilterFormValues,
+  JobOfferSpreadsheetData,
   OptionType,
-  TradeTestFilterFormValues,
-  TradeTestSpreadsheetData,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
@@ -15,13 +13,13 @@ import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
 import { FormProvider, useForm } from "react-hook-form";
-import TradeTestColumnsMenu from "./TradeTestColumnsMenu";
+import JobOfferColumnsMenu from "./JobOfferColumnsMenu";
 
-import TradeTestFilterMenu from "./TradeTestFilterMenu";
-import TradeTestSpreadsheetTable from "./TradeTestSpreadsheetTable/TradeTestSpreadsheetTable";
+import JobOfferFilterMenu from "./JobOfferFilterMenu";
+import JobOfferSpreadsheetTable from "./JobOfferSpreadsheetTable/JobOfferSpreadsheetTable";
 
 const initialSort = {
-  sortBy: "trade_test_date_created",
+  sortBy: "job_offer_date_created",
   order: "DESC",
 };
 
@@ -45,40 +43,36 @@ const formDefaultValues = {
     start: null,
     end: null,
   },
-  trade_test_date_created: {
+  job_offer_date_created: {
     start: "",
     end: "",
   },
-  trade_test_status: "",
-  trade_test_schedule: {
-    start: null,
-    end: null,
-  },
+  job_offer_status: "",
 };
 
 type Props = {
   positionOptionList: OptionType[];
 };
 
-const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
+const JobOfferSpreadsheetView = ({ positionOptionList }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
-  const teamMember = useUserTeamMember();
-  const [data, setData] = useState<TradeTestSpreadsheetData[]>([]);
+
+  const [data, setData] = useState<JobOfferSpreadsheetData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState(initialSort);
   const [isMax, setIsMax] = useState(false);
   const [hiddenColumnList, setHiddenColumnList] = useLocalStorage<string[]>({
-    key: "TradeTestColumns",
+    key: "JobOfferColumns",
     defaultValue: [],
   });
 
-  const filterFormMethods = useForm<TradeTestFilterFormValues>({
-    defaultValues: formDefaultValues as unknown as TradeTestFilterFormValues,
+  const filterFormMethods = useForm<JobOfferFilterFormValues>({
+    defaultValues: formDefaultValues as unknown as JobOfferFilterFormValues,
   });
 
-  const fetchData = async (data?: TradeTestFilterFormValues) => {
+  const fetchData = async (data?: JobOfferFilterFormValues) => {
     try {
       if (!user) return;
       setIsLoading(true);
@@ -86,7 +80,7 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
 
       const filterData = filterFormMethods.getValues();
 
-      const newData = await getTradeTestSummaryData(supabaseClient, {
+      const newData = await getJobOfferSummaryData(supabaseClient, {
         ...filterData,
         ...data,
         userId: user.id,
@@ -123,7 +117,7 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
 
   const handleReset = () => {
     filterFormMethods.reset(
-      formDefaultValues as unknown as TradeTestFilterFormValues
+      formDefaultValues as unknown as JobOfferFilterFormValues
     );
     setPage(1);
     fetchData({ page: 1 });
@@ -132,7 +126,7 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
   useBeforeunload(() => {
     const filterData = filterFormMethods.getValues();
     localStorage.setItem(
-      "tradeTestSpreadsheetView",
+      "jobOfferSpreadsheetView",
       JSON.stringify({
         ...filterData,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
@@ -153,11 +147,11 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
       await fetchData({
         page: 1,
       });
-      const storedData = localStorage.getItem("tradeTestSpreadsheetView");
+      const storedData = localStorage.getItem("jobOfferSpreadsheetView");
       if (storedData) {
-        const filterData: TradeTestFilterFormValues = JSON.parse(storedData);
+        const filterData: JobOfferFilterFormValues = JSON.parse(storedData);
         setSort(filterData.sort ?? initialSort);
-        filterFormMethods.reset(filterData as TradeTestFilterFormValues);
+        filterFormMethods.reset(filterData as JobOfferFilterFormValues);
         await fetchData({
           ...filterData,
         });
@@ -170,50 +164,12 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
     fetchInitialData();
   }, [user?.id]);
 
-  const handleUpdateTradeTestStatus = async (
-    status: string,
-    data: TradeTestSpreadsheetData
-  ) => {
-    setIsLoading(true);
-    try {
-      if (!teamMember?.team_member_id) throw new Error();
-
-      await updateTradeTestStatus(supabaseClient, {
-        status,
-        teamMemberId: teamMember.team_member_id,
-        data,
-      });
-      setData((prev) =>
-        prev.map((prevData) => {
-          if (prevData.hr_request_reference_id !== data.hr_request_reference_id)
-            return prevData;
-
-          return {
-            ...prevData,
-            trade_test_status: status,
-          };
-        })
-      );
-      notifications.show({
-        message: "Status updated.",
-        color: "green",
-      });
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <Stack pos="relative">
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            Trade Test Spreadsheet View
+            Job Offer Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}
@@ -222,20 +178,20 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
             Refresh
           </Button>
           <FormProvider {...filterFormMethods}>
-            <TradeTestFilterMenu
+            <JobOfferFilterMenu
               fetchData={fetchData}
               handleReset={handleReset}
               positionOptionList={positionOptionList}
             />
           </FormProvider>
-          <TradeTestColumnsMenu
+          <JobOfferColumnsMenu
             hiddenColumnList={hiddenColumnList}
             setHiddenColumnList={setHiddenColumnList}
             columnList={Object.keys(formDefaultValues)}
           />
         </Group>
       </Box>
-      <TradeTestSpreadsheetTable
+      <JobOfferSpreadsheetTable
         data={data}
         isLoading={isLoading}
         page={page}
@@ -244,11 +200,11 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
         setSort={setSort}
         isMax={isMax}
         hiddenColumnList={hiddenColumnList}
-        handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
         setData={setData}
+        positionOptionList={positionOptionList}
       />
     </Stack>
   );
 };
 
-export default TradeTestSpreadsheetView;
+export default JobOfferSpreadsheetView;

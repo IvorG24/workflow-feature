@@ -1,4 +1,5 @@
 import {
+  AttachmentTableRow,
   BackgroundCheckTableRow,
   DirectorInterviewTableRow,
   HRPhoneInterviewTableRow,
@@ -26,6 +27,7 @@ import {
   IconCircleX,
   IconClockOff,
   IconProgress,
+  IconTag,
 } from "@tabler/icons-react";
 import { useState } from "react";
 import ApplicationInformation from "./ApplicationInformation";
@@ -46,7 +48,7 @@ type Props = {
   technicalInterviewData?: TechnicalInterviewTableRow | null;
   directorInterviewData?: DirectorInterviewTableRow | null;
   backgroundCheckData?: BackgroundCheckTableRow | null;
-  jobOfferData?: JobOfferTableRow | null;
+  jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
 };
 const ApplicationProgressPage = (props: Props) => {
   const {
@@ -198,6 +200,17 @@ const ApplicationProgressPage = (props: Props) => {
           icon: <IconClockOff color={"#BE4BDB"} />,
           completedIcon: <IconClockOff color={"white"} />,
           color: "grape",
+        };
+      case "WAITING FOR OFFER":
+        return {
+          description: (
+            <Badge color="orange">
+              <Text>{value}</Text>
+            </Badge>
+          ),
+          icon: <IconTag color={"#FD7E14"} />,
+          completedIcon: <IconTag color={"white"} />,
+          color: "orange",
         };
     }
   };

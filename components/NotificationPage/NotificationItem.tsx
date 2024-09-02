@@ -97,11 +97,11 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
 
             <Flex direction="column" w="100%">
               <Tooltip
-                label={startCase(notification.notification_content)}
+                label={notification.notification_content}
                 openDelay={2000}
               >
                 <Text size="sm" lineClamp={2}>
-                  {startCase(notification.notification_content)}
+                  {notification.notification_content}
                 </Text>
               </Tooltip>
               <Flex justify="space-between" w="100%">

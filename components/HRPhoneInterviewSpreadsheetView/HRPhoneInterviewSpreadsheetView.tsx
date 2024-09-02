@@ -20,7 +20,7 @@ import HRPhoneInterviewFilterMenu from "./HRPhoneInterviewFilterMenu";
 import HRPhoneInterviewSpreadsheetTable from "./HRPhoneInterviewSpreadsheetTable/HRPhoneInterviewSpreadsheetTable";
 
 const initialSort = {
-  sortBy: "technicalAssessment.request_date_created",
+  sortBy: "hr_phone_interview_date_created",
   order: "DESC",
 };
 

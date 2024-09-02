@@ -1,4 +1,4 @@
-import { DirectorInterviewSpreadsheetData } from "@/utils/types";
+import { JobOfferSpreadsheetData, OptionType } from "@/utils/types";
 import {
   ActionIcon,
   Button,
@@ -20,7 +20,7 @@ import {
 } from "@tabler/icons-react";
 
 import { Dispatch, SetStateAction } from "react";
-import DirectorInterviewMainTableRow from "./DirectorInterviewMainTableRow";
+import JobOfferMainTableRow from "./JobOfferMainTableRow";
 
 const useStyles = createStyles((theme) => ({
   parentTable: {
@@ -29,7 +29,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 type Props = {
-  data: DirectorInterviewSpreadsheetData[];
+  data: JobOfferSpreadsheetData[];
   isLoading: boolean;
   page: number;
   handlePagination: (page: number) => void;
@@ -37,14 +37,11 @@ type Props = {
   setSort: Dispatch<SetStateAction<{ sortBy: string; order: string }>>;
   isMax: boolean;
   hiddenColumnList: string[];
-  handleUpdateDirectorInterviewStatus: (
-    status: string,
-    data: DirectorInterviewSpreadsheetData
-  ) => void;
-  setData: Dispatch<SetStateAction<DirectorInterviewSpreadsheetData[]>>;
+  setData: Dispatch<SetStateAction<JobOfferSpreadsheetData[]>>;
+  positionOptionList: OptionType[];
 };
 
-const DirectorInterviewSpreadsheetTable = ({
+const JobOfferSpreadsheetTable = ({
   data,
   isLoading,
   page,
@@ -53,8 +50,8 @@ const DirectorInterviewSpreadsheetTable = ({
   setSort,
   isMax,
   hiddenColumnList,
-  handleUpdateDirectorInterviewStatus,
   setData,
+  positionOptionList
 }: Props) => {
   const { classes } = useStyles();
 
@@ -203,32 +200,23 @@ const DirectorInterviewSpreadsheetTable = ({
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes(
-                  "director_interview_date_created"
-                ) && (
+                {!hiddenColumnList.includes("job_offer_date_created") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Director Interview Date Created</Text>
-                      {sortButtons("director_interview_date_created")}
+                      <Text>Job Offer Date Created</Text>
+                      {sortButtons("job_offer_date_created")}
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("director_interview_status") && (
+                {!hiddenColumnList.includes("job_offer_status") && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Director Interview Status</Text>
-                      {sortButtons("director_interview_status")}
+                      <Text>Job Offer Status</Text>
+                      {sortButtons("job_offer_status")}
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("director_interview_schedule") && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Director Interview Schedule</Text>
-                      {sortButtons("director_interview_schedule")}
-                    </Flex>
-                  </th>
-                )}
+
                 <th>
                   <Flex gap="xs" align="center" justify="center" wrap="wrap">
                     <Text>Action</Text>
@@ -238,14 +226,12 @@ const DirectorInterviewSpreadsheetTable = ({
             </thead>
             <tbody>
               {data.map((item) => (
-                <DirectorInterviewMainTableRow
+                <JobOfferMainTableRow
                   key={item.application_information_request_id}
                   item={item}
                   hiddenColumnList={hiddenColumnList}
-                  handleUpdateDirectorInterviewStatus={
-                    handleUpdateDirectorInterviewStatus
-                  }
                   setData={setData}
+                  positionOptionList={positionOptionList}
                 />
               ))}
             </tbody>
@@ -268,4 +254,4 @@ const DirectorInterviewSpreadsheetTable = ({
   );
 };
 
-export default DirectorInterviewSpreadsheetTable;
+export default JobOfferSpreadsheetTable;

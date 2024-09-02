@@ -2,6 +2,7 @@ import ApplicationProgressPage from "@/components/ApplicationProgressPage/Applic
 import Meta from "@/components/Meta/Meta";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
+  AttachmentTableRow,
   BackgroundCheckTableRow,
   DirectorInterviewTableRow,
   HRPhoneInterviewTableRow,
@@ -28,6 +29,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         props: data as Props,
       };
     } catch (e) {
+      console.log(e);
       return {
         redirect: {
           destination: "/500",
@@ -47,7 +49,7 @@ type Props = {
   technicalInterviewData?: TechnicalInterviewTableRow | null;
   directorInterviewData?: DirectorInterviewTableRow | null;
   backgroundCheckData?: BackgroundCheckTableRow | null;
-  jobOfferData?: JobOfferTableRow | null;
+  jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
 };
 
 const Page = ({
