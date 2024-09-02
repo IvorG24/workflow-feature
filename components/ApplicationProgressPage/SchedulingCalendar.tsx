@@ -384,29 +384,32 @@ const SchedulingCalendar = ({
         {isEdit && isReadyToSelect && (
           <div>
             <Flex gap={10} wrap="wrap" style={{ alignItems: "end" }}>
-              <DatePickerInput
-                label="Select Date"
-                maw="max-content"
-                value={selectedDate}
-                onChange={setSelectedDate}
-                minDate={minDate}
-                maxDate={maxDate}
-                mb={10}
-              />
+              <Flex align="center" mb={10} gap={5}>
+                <Text>Select Date:</Text>
+                <DatePickerInput
+                  maw="max-content"
+                  value={selectedDate}
+                  onChange={setSelectedDate}
+                  minDate={minDate}
+                  maxDate={maxDate}
+                  style={{ minWidth: "4rem" }}
+                />
+              </Flex>
 
               {hrSlot && selectedDate && (
-                <NativeSelect
-                  data={["", ...removePrevTime()]}
-                  label="Select Time"
-                  maw="max-content"
-                  value={selectedSlot}
-                  onChange={(event) => {
-                    refetchData();
-                    setSelectedSlot(event.currentTarget.value);
-                  }}
-                  mb={10}
-                  disabled={isLoading || isRefetchingData}
-                />
+                <Flex align="center" mb={10} gap={5}>
+                  <Text>Select Time:</Text>
+                  <NativeSelect
+                    data={["", ...removePrevTime()]}
+                    maw="max-content"
+                    value={selectedSlot}
+                    onChange={(event) => {
+                      refetchData();
+                      setSelectedSlot(event.currentTarget.value);
+                    }}
+                    disabled={isLoading || isRefetchingData}
+                  />
+                </Flex>
               )}
 
               {selectedSlot && !isReschedule && (
