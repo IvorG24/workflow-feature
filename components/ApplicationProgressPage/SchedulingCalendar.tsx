@@ -84,67 +84,6 @@ const SchedulingCalendar = ({
     setIsReadyToSelect(false);
   };
 
-  const setScheduleHandler = async () => {
-    if (!selectedSlot || !selectedDate || selectedSlot === "") {
-      notifications.show({
-        message: "No slot selected or meeting info available.",
-        color: "orange",
-      });
-      return;
-    }
-
-    if (selectedSlot === "") return;
-
-    setIsloading(true);
-
-    try {
-      const [time] = selectedSlot.split(" ");
-      const [hours, minutes] = time.split(":").map(Number);
-
-      const tempDate = new Date(selectedDate);
-      tempDate.setHours(hours, minutes);
-
-      const nowUtc = moment().toISOString();
-
-      if (meeting_type === "phone") {
-        const params = {
-          interview_schedule: tempDate.toISOString(),
-          interview_status_date_updated: nowUtc,
-          target_id,
-          status: "PENDING",
-        };
-        const { message, status } = await updatePhoneInterview(
-          supabaseClient,
-          params
-        );
-
-        if (status === "success") {
-          setSelectedDate(tempDate);
-          notifications.show({
-            message: message,
-            color: "green",
-          });
-          setIsEdit(false);
-        }
-        if (status === "error") {
-          notifications.show({
-            message: message,
-            color: "orange",
-          });
-        }
-      }
-
-      await refetchData();
-    } catch (error) {
-      notifications.show({
-        message: "Error updating interview:",
-        color: "orange",
-      });
-    } finally {
-      setIsloading(false);
-    }
-  };
-
   const fetchTime = async ({
     slotDuration,
     breakDuration,
@@ -196,6 +135,69 @@ const SchedulingCalendar = ({
       } finally {
         setIsloading(false);
       }
+    }
+  };
+
+  const setScheduleHandler = async () => {
+    if (!selectedSlot || !selectedDate || selectedSlot === "") {
+      notifications.show({
+        message: "No slot selected or meeting info available.",
+        color: "orange",
+      });
+      return;
+    }
+
+    if (selectedSlot === "") return;
+
+    setIsloading(true);
+
+    try {
+      const [time] = selectedSlot.split(" ");
+      const [hours, minutes] = time.split(":").map(Number);
+
+      const tempDate = new Date(selectedDate);
+      tempDate.setHours(hours, minutes);
+
+      const nowUtc = moment().toISOString();
+
+      if (meeting_type === "phone") {
+        const params = {
+          interview_schedule: tempDate.toISOString(),
+          interview_status_date_updated: nowUtc,
+          target_id,
+          status: "PENDING",
+        };
+        const { message, status } = await updatePhoneInterview(
+          supabaseClient,
+          params
+        );
+
+        if (status === "success") {
+          setSelectedDate(tempDate);
+          notifications.show({
+            message: message,
+            color: "green",
+          });
+          setIsEdit(false);
+        }
+        if (status === "error") {
+          notifications.show({
+            message: message,
+            color: "orange",
+          });
+          fetchTime({ breakDuration: 10, slotDuration: 5 });
+          setSelectedSlot("");
+        }
+      }
+
+      await refetchData();
+    } catch (error) {
+      notifications.show({
+        message: "Error updating interview:",
+        color: "orange",
+      });
+    } finally {
+      setIsloading(false);
     }
   };
 
