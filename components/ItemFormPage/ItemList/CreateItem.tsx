@@ -365,12 +365,7 @@ const CreateItem = ({ formId, setIsCreatingItem }: Props) => {
                     }}
                     label={"PED Item"}
                     checked={value}
-                    onChange={(v) => {
-                      onChange(v);
-                      if (getValues("isITAsset")) {
-                        setValue("isITAsset", false);
-                      }
-                    }}
+                    onChange={onChange}
                   />
                 )}
               />
@@ -386,12 +381,7 @@ const CreateItem = ({ formId, setIsCreatingItem }: Props) => {
                     }}
                     label={"IT Asset Item"}
                     checked={value}
-                    onChange={(v) => {
-                      onChange(v);
-                      if (getValues("isPedItem")) {
-                        setValue("isPedItem", false);
-                      }
-                    }}
+                    onChange={onChange}
                   />
                 )}
               />
