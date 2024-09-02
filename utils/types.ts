@@ -2275,7 +2275,6 @@ export type HRSpreadsheetGeneralData = {
   general_assessment_score: number;
   technical_assessment_request_id: string;
   technical_assessment_score: number;
-  technical_assessment_date: string;
   application_information_full_name: string;
   application_information_contact_number: string;
   application_information_email: string;
@@ -2304,19 +2303,20 @@ export type HRSpreadsheetGeneralFilterFormValues = {
     start?: number;
     end?: number;
   };
-  technical_assessment_date?: {
-    start?: string;
-    end?: string;
-  };
 };
 
 export type HRPhoneInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  hr_phone_interview_date_created: string;
   hr_phone_interview_status: string;
   hr_phone_interview_schedule: string;
 };
 
 export type HRPhoneInterviewFilterFormValues =
   HRSpreadsheetGeneralFilterFormValues & {
+    hr_phone_interview_date_created?: {
+      start?: string;
+      end?: string;
+    };
     hr_phone_interview_status?: string;
     hr_phone_interview_schedule?: {
       start?: string;
@@ -2325,11 +2325,16 @@ export type HRPhoneInterviewFilterFormValues =
   };
 
 export type TradeTestSpreadsheetData = HRSpreadsheetGeneralData & {
+  trade_test_date_created: string;
   trade_test_status: string;
   trade_test_schedule: string;
 };
 
 export type TradeTestFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
+  trade_test_date_created?: {
+    start?: string;
+    end?: string;
+  };
   trade_test_status?: string;
   trade_test_schedule?: {
     start?: string;

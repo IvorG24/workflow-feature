@@ -45,7 +45,7 @@ const formDefaultValues = {
     start: null,
     end: null,
   },
-  technical_assessment_date: {
+  trade_test_date_created: {
     start: "",
     end: "",
   },

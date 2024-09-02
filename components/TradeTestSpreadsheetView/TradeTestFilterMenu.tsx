@@ -201,12 +201,12 @@ const TradeTestFilterMenu = ({
             </Stack>
             <Stack spacing={0}>
               <Text size={14} fw={500}>
-                Technical Assessment Date
+                Trade Test Date Created
               </Text>
               <Flex gap="xs">
                 <Controller
                   control={control}
-                  name="technical_assessment_date.start"
+                  name="trade_test_date_created.start"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ? new Date(value as string) : null;
                     return (
@@ -223,7 +223,7 @@ const TradeTestFilterMenu = ({
                 />
                 <Controller
                   control={control}
-                  name="technical_assessment_date.end"
+                  name="trade_test_date_created.end"
                   render={({ field: { value, onChange } }) => {
                     const newValue = value ? new Date(value as string) : null;
                     return (

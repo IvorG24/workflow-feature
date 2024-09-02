@@ -289,9 +289,11 @@ const TradeTestMainTableRow = ({
           <Text>{item.technical_assessment_score}</Text>
         </td>
       )}
-      {!hiddenColumnList.includes("technical_assessment_date") && (
+      {!hiddenColumnList.includes("trade_test_date_created") && (
         <td>
-          <Text>{formatDate(new Date(item.technical_assessment_date))}</Text>
+          <Text sx={{ whiteSpace: "nowrap" }}>
+            {formatDate(new Date(item.trade_test_date_created))}
+          </Text>
         </td>
       )}
       {!hiddenColumnList.includes("trade_test_status") && (

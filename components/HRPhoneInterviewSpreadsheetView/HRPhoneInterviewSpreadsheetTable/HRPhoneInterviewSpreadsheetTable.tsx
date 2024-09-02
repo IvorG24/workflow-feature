@@ -201,11 +201,13 @@ const HRPhoneInterviewSpreadsheetTable = ({
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("technical_assessment_date") && (
+                {!hiddenColumnList.includes(
+                  "hr_phone_interview_date_created"
+                ) && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Technical Assessment Date</Text>
-                      {sortButtons("technicalAssessment.request_date_created")}
+                      <Text>HR Phone Interview Date Created</Text>
+                      {sortButtons("hr_phone_interview_date_created")}
                     </Flex>
                   </th>
                 )}
