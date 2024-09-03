@@ -64,6 +64,10 @@ const ApplicationProgressPage = (props: Props) => {
     jobOfferData,
   } = props;
 
+  const [jobOfferStatus, setJobOfferStatus] = useState(
+    jobOfferData?.job_offer_status ?? ""
+  );
+
   const typeCastedProps = props as unknown as Record<string, string>;
   const keyIndexMatcher: Record<number, string> = {};
   const indexComponentMatcher: Record<string, JSX.Element | null> = {
@@ -104,7 +108,11 @@ const ApplicationProgressPage = (props: Props) => {
       <BackgroundCheck backgroundCheckData={backgroundCheckData} />
     ) : null,
     jobOfferData: jobOfferData ? (
-      <JobOffer jobOfferData={jobOfferData} />
+      <JobOffer
+        jobOfferData={jobOfferData}
+        jobOfferStatus={jobOfferStatus}
+        setJobOfferStatus={setJobOfferStatus}
+      />
     ) : null,
   };
   let maxValue = -1;
@@ -128,6 +136,7 @@ const ApplicationProgressPage = (props: Props) => {
     switch (value) {
       case "APPROVED":
       case "QUALIFIED":
+      case "ACCEPTED":
         return {
           description: (
             <Badge color="green">
@@ -297,7 +306,7 @@ const ApplicationProgressPage = (props: Props) => {
           <Stepper.Step
             label="Job Offer"
             disabled={!Boolean(jobOfferData)}
-            {...stepperProps(jobOfferData?.job_offer_status as string)}
+            {...stepperProps(jobOfferStatus as string)}
           />
         </Stepper>
         <Paper p="xl" shadow="xs" sx={{ flex: 1 }}>

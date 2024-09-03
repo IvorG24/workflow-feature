@@ -9,17 +9,21 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFile, IconNote } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 type Props = {
   jobOfferData: JobOfferTableRow & AttachmentTableRow;
+  jobOfferStatus: string;
+  setJobOfferStatus: Dispatch<SetStateAction<string>>;
 };
-const JobOffer = ({ jobOfferData }: Props) => {
+const JobOffer = ({
+  jobOfferData,
+  jobOfferStatus,
+  setJobOfferStatus,
+}: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [attachmentUrl, setAttachmentUrl] = useState("");
-  const [initialStatus, setInitialStatus] = useState(
-    jobOfferData.job_offer_status
-  );
+
   const { setIsLoading } = useLoadingActions();
 
   useEffect(() => {
@@ -38,7 +42,7 @@ const JobOffer = ({ jobOfferData }: Props) => {
         status: newStatus,
       });
 
-      setInitialStatus(newStatus);
+      setJobOfferStatus(newStatus);
       notifications.show({
         message: `Job offer ${action === "Accept" ? "accepted" : "rejected"}.`,
         color: "green",
@@ -79,8 +83,8 @@ const JobOffer = ({ jobOfferData }: Props) => {
         </Group>
         <Group>
           <Text>Status: </Text>
-          <Badge color={getStatusToColor(initialStatus ?? "")}>
-            {initialStatus}
+          <Badge color={getStatusToColor(jobOfferStatus ?? "")}>
+            {jobOfferStatus}
           </Badge>
           {jobOfferData.job_offer_status_date_updated && (
             <Text color="dimmed">
@@ -89,7 +93,7 @@ const JobOffer = ({ jobOfferData }: Props) => {
             </Text>
           )}
         </Group>
-        {initialStatus === "WAITING FOR OFFER" && (
+        {jobOfferStatus === "WAITING FOR OFFER" && (
           <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
             <Text>
               Thank you for your application. We are currently reviewing your
@@ -118,7 +122,7 @@ const JobOffer = ({ jobOfferData }: Props) => {
             </Group>
           </>
         )}
-        {initialStatus === "PENDING" && (
+        {jobOfferStatus === "PENDING" && (
           <Group>
             <Text>Action: </Text>
             <Group spacing="xs">
@@ -131,7 +135,7 @@ const JobOffer = ({ jobOfferData }: Props) => {
             </Group>
           </Group>
         )}
-        {initialStatus === "ACCEPTED" && (
+        {jobOfferStatus === "ACCEPTED" && (
           <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
             <Text>
               We appreciate you taking us up on our job offer. Kindly expect to
