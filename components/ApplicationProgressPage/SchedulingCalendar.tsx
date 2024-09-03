@@ -1,11 +1,20 @@
 import { getPhoneMeetingSlots } from "@/backend/api/get";
 import { updatePhoneInterview } from "@/backend/api/update";
 import { formatDate } from "@/utils/constant";
-import { Button, Flex, Modal, NativeSelect, Text } from "@mantine/core";
+import {
+  Button,
+  Flex,
+  Group,
+  Loader,
+  Modal,
+  Select,
+  Text,
+} from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
@@ -140,16 +149,20 @@ const SchedulingCalendar = ({
   };
 
   const setScheduleHandler = async () => {
-    if (!selectedSlot || !selectedDate || selectedSlot === "") {
+    if (!selectedDate) {
       notifications.show({
-        message: "No slot selected or meeting info available.",
+        message: "Date is required.",
         color: "orange",
       });
       return;
     }
-
-    if (selectedSlot === "") return;
-
+    if (!selectedSlot) {
+      notifications.show({
+        message: "Time is required.",
+        color: "orange",
+      });
+      return;
+    }
     setIsloading(true);
 
     try {
@@ -192,9 +205,10 @@ const SchedulingCalendar = ({
       }
 
       await refetchData();
-    } catch (error) {
+    } catch (e) {
+      console.log(e);
       notifications.show({
-        message: "Error updating interview:",
+        message: "Error updating schedule",
         color: "orange",
       });
     } finally {
@@ -313,7 +327,7 @@ const SchedulingCalendar = ({
         )}
 
         {isEdit === false && selectedDate && status !== "CANCELLED" && (
-          <div>
+          <>
             {(() => {
               const hours = selectedDate.getHours();
               const minutes = selectedDate.getMinutes();
@@ -322,7 +336,7 @@ const SchedulingCalendar = ({
                 .toString()
                 .padStart(2, "0")} ${period}`;
               return (
-                <div>
+                <>
                   <Text mb={10}>
                     Schedule:
                     <Text component="a" fw="bold">
@@ -330,9 +344,9 @@ const SchedulingCalendar = ({
                       {formatDate(selectedDate)} at {timeString}
                     </Text>
                   </Text>
-                  <Flex gap={5} style={{ alignItems: "baseline" }}>
+                  <Group>
                     <Text>Action: </Text>
-                    <Flex gap={5}>
+                    <Group spacing="xs">
                       <Button
                         onClick={rescheduleHandler}
                         style={{ width: "max-content" }}
@@ -349,24 +363,28 @@ const SchedulingCalendar = ({
                       >
                         Cancel
                       </Button>
-                    </Flex>
-                  </Flex>
-                </div>
+                    </Group>
+                  </Group>
+                </>
               );
             })()}
-          </div>
+          </>
         )}
 
-        {!isReadyToSelect && isEdit && (
-          <Flex style={{ alignItems: "baseline" }} gap={5}>
+        {status === "WAITING FOR SCHEDULE" && (
+          <Group>
             <Text>Schedule: </Text>
-            <Button
-              onClick={async () => {
-                setIsReadyToSelect(true);
-              }}
-            >
-              Set Schedule
-            </Button>
+            <Group spacing="xs">
+              <Button
+                onClick={async () => {
+                  setIsReadyToSelect(true);
+                }}
+                disabled={!Boolean(!isReadyToSelect && isEdit)}
+              >
+                Set Schedule
+              </Button>
+            </Group>
+
             {isReschedule && isEdit && (
               <Button
                 color="dark"
@@ -378,58 +396,70 @@ const SchedulingCalendar = ({
                 Cancel
               </Button>
             )}
-          </Flex>
+          </Group>
         )}
 
         {isEdit && isReadyToSelect && (
-          <div>
-            <Flex gap={10} wrap="wrap" style={{ alignItems: "end" }}>
-              <Flex align="center" mb={10} gap={5}>
-                <Text>Select Date:</Text>
-                <DatePickerInput
-                  maw="max-content"
-                  value={selectedDate}
-                  onChange={setSelectedDate}
-                  minDate={minDate}
-                  maxDate={maxDate}
-                  style={{ minWidth: "4rem" }}
-                />
-              </Flex>
+          <>
+            <Group>
+              <Text>Select Date:</Text>
+              <DatePickerInput
+                value={selectedDate}
+                onChange={setSelectedDate}
+                minDate={minDate}
+                maxDate={maxDate}
+                clearable
+                icon={<IconCalendar size={16} />}
+                w={260}
+              />
+            </Group>
 
-              {hrSlot && selectedDate && (
-                <Flex align="center" mb={10} gap={5}>
-                  <Text>Select Time:</Text>
-                  <NativeSelect
-                    data={["", ...removePrevTime()]}
-                    maw="max-content"
-                    value={selectedSlot}
-                    onChange={(event) => {
-                      refetchData();
-                      setSelectedSlot(event.currentTarget.value);
-                    }}
-                    disabled={isLoading || isRefetchingData}
-                  />
-                </Flex>
-              )}
+            <Group>
+              <Text>Select Time:</Text>
+              <Select
+                data={[...removePrevTime()]}
+                value={selectedSlot}
+                onChange={(value) => {
+                  refetchData();
+                  setSelectedSlot(value as string);
+                }}
+                disabled={isLoading || isRefetchingData}
+                clearable
+                icon={<IconClock size={16} />}
+                w={260}
+                rightSection={
+                  (isLoading || isRefetchingData) && <Loader size={16} />
+                }
+              />
+            </Group>
 
-              {selectedSlot && !isReschedule && (
-                <Button
-                  mb={10}
-                  onClick={setScheduleHandler}
-                  disabled={isLoading || isRefetchingData}
-                  style={{ width: "min-content" }}
-                >
-                  <Text fz="md" fw="bold">
-                    Submit
-                  </Text>
-                </Button>
-              )}
-            </Flex>
+            <Group spacing="xs">
+              <Button
+                onClick={async () => {
+                  setIsReadyToSelect(false);
+                  setSelectedDate(null);
+                  setSelectedSlot("");
+                }}
+                variant="outline"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                onClick={setScheduleHandler}
+                disabled={isLoading || isRefetchingData}
+                style={{ width: "min-content" }}
+              >
+                <Text fz="md" fw="bold">
+                  Submit
+                </Text>
+              </Button>
+            </Group>
 
             {isReschedule && selectedSlot && selectedDate && (
-              <Flex gap={5} style={{ alignItems: "baseline" }}>
+              <Group>
                 <Text>Action: </Text>
-                <Flex gap={5}>
+                <Group>
                   <Button
                     style={{ width: "min-content" }}
                     color="dark"
@@ -453,10 +483,10 @@ const SchedulingCalendar = ({
                       Submit
                     </Text>
                   </Button>
-                </Flex>
-              </Flex>
+                </Group>
+              </Group>
             )}
-          </div>
+          </>
         )}
       </Flex>
     </>

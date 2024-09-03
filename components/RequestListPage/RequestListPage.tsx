@@ -305,6 +305,17 @@ const RequestListPage = ({
                       await router.push(
                         `/${formatTeamNameToUrlKey(
                           activeTeam.team_name
+                        )}/requests/background-check-spreadsheet-view`
+                      )
+                    }
+                  >
+                    Background Check
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
                         )}/requests/job-offer-spreadsheet-view`
                       )
                     }

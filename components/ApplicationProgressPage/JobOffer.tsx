@@ -98,7 +98,7 @@ const JobOffer = ({ jobOfferData }: Props) => {
             </Text>
           </Alert>
         )}
-        {attachmentUrl && (
+        {jobOfferData.job_offer_attachment_id && (
           <>
             <Group>
               <Text>Job Title: </Text>

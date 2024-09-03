@@ -9,7 +9,6 @@ import RequestActionSection from "@/components/RequestPage/RequestActionSection"
 import RequestCommentList from "@/components/RequestPage/RequestCommentList";
 import RequestDetailsSection from "@/components/RequestPage/RequestDetailsSection";
 import RequestSection from "@/components/RequestPage/RequestSection";
-import RequestSignerSection from "@/components/RequestPage/RequestSignerSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
@@ -43,6 +42,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import RequestSignerSection from "../RequestPage/RequestSignerSection";
 
 type Props = {
   request: RequestWithResponseType;
@@ -51,6 +51,7 @@ type Props = {
 const ApplicationInformationRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
+
   const { colors } = useMantineTheme();
   const { setIsLoading } = useLoadingActions();
   const [isNoteClosed, setIsNoteClosed] = useState(false);
@@ -551,8 +552,10 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             onCreateJiraTicket={onCreateJiraTicket}
           />
         )}
-
-        <RequestSignerSection signerList={signerList} />
+        {
+          !router.pathname.includes("/user/requests/") && <RequestSignerSection signerList={signerList} />
+        }
+ 
       </Stack>
 
       <RequestCommentList

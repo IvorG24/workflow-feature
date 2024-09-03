@@ -2381,6 +2381,20 @@ export type DirectorInterviewFilterFormValues =
     };
   };
 
+export type BackgroundCheckSpreadsheetData = HRSpreadsheetGeneralData & {
+  background_check_date_created: string;
+  background_check_status: string;
+};
+
+export type BackgroundCheckFilterFormValues =
+  HRSpreadsheetGeneralFilterFormValues & {
+    background_check_date_created?: {
+      start?: string;
+      end?: string;
+    };
+    background_check_status?: string;
+  };
+
 export type JobOfferSpreadsheetData = HRSpreadsheetGeneralData & {
   job_offer_date_created: string;
   job_offer_status: string;

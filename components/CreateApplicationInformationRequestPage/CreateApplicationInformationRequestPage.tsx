@@ -8,7 +8,6 @@ import {
 import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
-import RequestFormSigner from "@/components/CreateRequestPage/RequestFormSigner";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
@@ -409,7 +408,14 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           ...newSection,
           section_field: [
             newSection.section_field[0],
-            newSection.section_field[newSection.section_field.length - 1],
+            ...form.form_section[0].section_field.slice(1, 3).map((field) => {
+              return {
+                ...field,
+                field_is_read_only: true,
+                field_is_required: false,
+              };
+            }),
+            ...newSection.section_field.slice(3),
           ],
         });
 
@@ -897,7 +903,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
                 </Box>
               );
             })}
-            <RequestFormSigner signerList={signerList} />
+            {/* <RequestFormSigner signerList={signerList} /> */}
             <Button type="submit">Submit</Button>
           </Stack>
         </form>

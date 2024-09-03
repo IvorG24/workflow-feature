@@ -64,14 +64,18 @@ const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
             </Text>
           )}
         </Group>
-        <SchedulingCalendar
-          refetchData={refetchData}
-          meeting_type="phone"
-          target_id={phoneInterviewData.hr_phone_interview_id}
-          intialDate={phoneInterviewData.hr_phone_interview_schedule}
-          status={phoneInterviewData.hr_phone_interview_status}
-          isRefetchingData={isLoading}
-        />
+        {["PENDING", "WAITING FOR SCHEDULE"].includes(
+          phoneInterviewData.hr_phone_interview_status
+        ) && (
+          <SchedulingCalendar
+            refetchData={refetchData}
+            meeting_type="phone"
+            target_id={phoneInterviewData.hr_phone_interview_id}
+            intialDate={phoneInterviewData.hr_phone_interview_schedule}
+            status={phoneInterviewData.hr_phone_interview_status}
+            isRefetchingData={isLoading}
+          />
+        )}
       </Stack>
     </Stack>
   );

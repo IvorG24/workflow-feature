@@ -5,6 +5,7 @@ import { Database } from "@/utils/database";
 import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import {
   AppType,
+  BackgroundCheckSpreadsheetData,
   DirectorInterviewSpreadsheetData,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
@@ -1453,6 +1454,20 @@ export const updateDirectorInterviewSchedule = async (
       input_data: params,
     }
   );
+  if (error) throw error;
+};
+
+export const updateBackgroundCheckStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    status: string;
+    teamMemberId: string;
+    data: BackgroundCheckSpreadsheetData;
+  }
+) => {
+  const { error } = await supabaseClient.rpc("update_background_check_status", {
+    input_data: params,
+  });
   if (error) throw error;
 };
 

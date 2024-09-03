@@ -30,6 +30,8 @@ import {
   AppType,
   AttachmentBucketType,
   AttachmentTableRow,
+  BackgroundCheckFilterFormValues,
+  BackgroundCheckSpreadsheetData,
   CreateTicketFormValues,
   CreateTicketPageOnLoad,
   CSICodeTableRow,
@@ -6315,6 +6317,38 @@ export const getDirectorInterviewSummaryData = async (
   );
   if (error) throw error;
   return data as DirectorInterviewSpreadsheetData[];
+};
+
+export const getBackgroundCheckSummaryData = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: BackgroundCheckFilterFormValues & {
+    userId: string;
+  }
+) => {
+  const updatedParams = {
+    ...params,
+    background_check_date_created: {
+      start: params.background_check_date_created?.start
+        ? new Date(
+            params.background_check_date_created?.start
+          ).toLocaleDateString()
+        : undefined,
+      end: params.background_check_date_created?.end
+        ? moment(params.background_check_date_created?.end)
+            .add(1, "day")
+            .format("MM-DD-YYYY")
+        : undefined,
+    },
+  };
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_background_check_summary_table",
+    {
+      input_data: updatedParams,
+    }
+  );
+  if (error) throw error;
+  return data as BackgroundCheckSpreadsheetData[];
 };
 
 export const getJobOfferSummaryData = async (

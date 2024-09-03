@@ -31,6 +31,7 @@ import {
 } from "@tabler/icons-react";
 import { useState } from "react";
 import ApplicationInformation from "./ApplicationInformation";
+import BackgroundCheck from "./BackgroundCheck";
 import DirectorInterview from "./DirectorInterview";
 import GeneralAssessment from "./GeneralAssessment";
 import HRPhoneInterview from "./HRPhoneInterview";
@@ -98,6 +99,9 @@ const ApplicationProgressPage = (props: Props) => {
     ) : null,
     directorInterviewData: directorInterviewData ? (
       <DirectorInterview directorInterviewData={directorInterviewData} />
+    ) : null,
+    backgroundCheckData: backgroundCheckData ? (
+      <BackgroundCheck backgroundCheckData={backgroundCheckData} />
     ) : null,
     jobOfferData: jobOfferData ? (
       <JobOffer jobOfferData={jobOfferData} />
