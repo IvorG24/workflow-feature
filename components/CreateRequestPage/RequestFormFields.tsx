@@ -576,12 +576,23 @@ const RequestFormFields = ({
               maxLength = 10;
               break;
             case "SSS ID Number":
-            case "Philhealth Number":
               maxLength = 10;
               formatter = (value: string) => {
                 if (!value) return "";
                 const cleaned = ("" + value).replace(/\D/g, "");
                 const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+            case "Philhealth Number":
+              maxLength = 12;
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{2})(\d{9})(\d{1})$/);
                 if (match) {
                   return `${match[1]}-${match[2]}-${match[3]}`;
                 }
