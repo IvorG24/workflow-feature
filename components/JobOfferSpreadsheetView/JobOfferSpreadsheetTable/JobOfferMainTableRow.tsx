@@ -1,9 +1,11 @@
+import { getJobHistory } from "@/backend/api/get";
 import { createAttachment } from "@/backend/api/post";
-import { updateJobOffer } from "@/backend/api/update";
+import { addJobOffer } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   formatDate,
+  formatTime,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_IN_MB,
 } from "@/utils/constant";
@@ -11,24 +13,45 @@ import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
-import { JobOfferSpreadsheetData, OptionType } from "@/utils/types";
 import {
+  JobOfferHistoryType,
+  JobOfferSpreadsheetData,
+  OptionType,
+} from "@/utils/types";
+import {
+  ActionIcon,
   Anchor,
   Badge,
   Button,
+  Center,
   createStyles,
   FileInput,
   Flex,
   Group,
+  Loader,
   Modal,
+  ScrollArea,
   Select,
   Stack,
   Text,
+  Timeline,
+  Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconBriefcase, IconFile } from "@tabler/icons-react";
+import {
+  IconBriefcase,
+  IconCheck,
+  IconFile,
+  IconHistory,
+  IconHourglass,
+  IconLocation,
+  IconProgress,
+  IconTag,
+  IconX,
+} from "@tabler/icons-react";
+
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
@@ -59,8 +82,17 @@ const JobOfferMainTableRow = ({
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
 
-  const [opened, { open, close }] = useDisclosure(false);
+  const [
+    jobOfferModalIsOpen,
+    { open: openJobOfferModal, close: closeJobOfferModal },
+  ] = useDisclosure(false);
+  const [
+    historyModalIsOpen,
+    { open: openHistoryModal, close: closeHistoryModal },
+  ] = useDisclosure(false);
   const [isScheduling, setIsScheduling] = useState(false);
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+  const [history, setHistory] = useState<JobOfferHistoryType[]>([]);
 
   const {
     handleSubmit,
@@ -71,19 +103,45 @@ const JobOfferMainTableRow = ({
   } = useForm<{
     title: string;
     attachment: File | null;
-  }>({ defaultValues: { title: "", attachment: null } });
+    projectAssignment: string;
+  }>({ defaultValues: { title: "", attachment: null, projectAssignment: "" } });
 
   useEffect(() => {
-    if (!opened) {
+    if (!jobOfferModalIsOpen) {
       setValue("title", "");
       setValue("attachment", null);
+      setValue("projectAssignment", "");
       clearErrors();
     }
-  }, [opened]);
+  }, [jobOfferModalIsOpen]);
+
+  useEffect(() => {
+    if (historyModalIsOpen) {
+      const fetchHistory = async () => {
+        try {
+          setIsFetchingHistory(true);
+          const historyData = await getJobHistory(supabaseClient, {
+            requestId: item.hr_request_reference_id,
+          });
+
+          setHistory(historyData);
+        } catch (e) {
+          notifications.show({
+            message: "Something went wrong. Please try again later.",
+            color: "red",
+          });
+        } finally {
+          setIsFetchingHistory(false);
+        }
+      };
+      fetchHistory();
+    }
+  }, [historyModalIsOpen]);
 
   const handleAddOffer = async (data: {
     title: string;
     attachment: File | null;
+    projectAssignment: string;
   }) => {
     try {
       if (!teamMember?.team_member_id || !data.attachment) throw new Error();
@@ -101,7 +159,7 @@ const JobOfferMainTableRow = ({
         }
       );
 
-      await updateJobOffer(supabaseClient, {
+      await addJobOffer(supabaseClient, {
         teamMemberId: teamMember.team_member_id,
         requestReferenceId: item.hr_request_reference_id,
         userEmail: item.application_information_email,
@@ -109,6 +167,7 @@ const JobOfferMainTableRow = ({
           item.application_information_request_id,
         jobTitle: data.title,
         attachmentId: attachmentData.attachment_id,
+        projectAssignment: data.projectAssignment,
       });
 
       setData((prev) =>
@@ -121,15 +180,15 @@ const JobOfferMainTableRow = ({
             job_offer_attachment_url: url,
             job_offer_status: "PENDING",
             job_offer_attachment_id: attachmentData.attachment_id,
+            job_offer_project_assignment: data.projectAssignment,
           };
         })
       );
       notifications.show({
-        message: "Job Offer scheduled successfully.",
+        message: "Job Offer Added.",
         color: "green",
       });
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -139,13 +198,30 @@ const JobOfferMainTableRow = ({
     }
   };
 
+  const statusToIcon = (status: string) => {
+    switch (status) {
+      case "ACCEPTED":
+        return <IconCheck size={14} />;
+      case "WAITING FOR OFFER":
+        return <IconTag size={14} />;
+      case "REJECTED":
+        return <IconX size={14} />;
+      case "WAITING FOR OFFER":
+        return <IconTag size={14} />;
+      case "PENDING":
+        return <IconProgress size={14} />;
+      case "FOR POOLING":
+        return <IconHourglass size={14} />;
+    }
+  };
+
   if (!team.team_name) return null;
   return (
     <tr className={classes.row}>
       <Modal
-        opened={opened}
-        onClose={close}
-        title="Add Offer"
+        opened={jobOfferModalIsOpen}
+        onClose={closeJobOfferModal}
+        title="Add / Update Offer"
         centered
         closeOnEscape={false}
         closeOnClickOutside={false}
@@ -162,7 +238,7 @@ const JobOfferMainTableRow = ({
             id="offer"
             onSubmit={handleSubmit(async (data) => {
               await handleAddOffer(data);
-              close();
+              closeJobOfferModal();
             })}
           >
             <Stack spacing="xs">
@@ -188,6 +264,34 @@ const JobOfferMainTableRow = ({
                 }}
                 rules={{
                   required: "Job title is required.",
+                }}
+              />
+              <Controller
+                control={control}
+                name="projectAssignment"
+                render={({ field: { value, onChange } }) => {
+                  return (
+                    <Select
+                      label="Project Assignment"
+                      icon={<IconLocation size={16} />}
+                      clearable
+                      value={value}
+                      required
+                      searchable
+                      onChange={onChange}
+                      error={errors.projectAssignment?.message}
+                      data={[
+                        { label: "Project 1", value: "Project 1" },
+                        { label: "Project 2", value: "Project 2" },
+                        { label: "Project 3", value: "Project 3" },
+                      ]}
+                      withinPortal
+                      autoFocus={false}
+                    />
+                  );
+                }}
+                rules={{
+                  required: "Project assignment is required.",
                 }}
               />
               <Controller
@@ -224,7 +328,11 @@ const JobOfferMainTableRow = ({
           </form>
 
           <Group spacing="xs" position="right">
-            <Button variant="outline" onClick={close} disabled={isScheduling}>
+            <Button
+              variant="outline"
+              onClick={closeJobOfferModal}
+              disabled={isScheduling}
+            >
               Cancel
             </Button>
             <Button type="submit" form="offer" loading={isScheduling}>
@@ -232,6 +340,95 @@ const JobOfferMainTableRow = ({
             </Button>
           </Group>
         </Stack>
+      </Modal>
+
+      <Modal
+        opened={historyModalIsOpen}
+        onClose={closeHistoryModal}
+        title="Job Offer History"
+        centered
+      >
+        {isFetchingHistory && (
+          <Center p="xl">
+            <Loader />
+          </Center>
+        )}
+        {!isFetchingHistory && (
+          <Stack spacing="xl" mt="xs">
+            <ScrollArea h={500} type="auto" offsetScrollbars>
+              <Timeline active={history.length} bulletSize={24} lineWidth={2}>
+                {history.map((value) => {
+                  return (
+                    <Timeline.Item
+                      title={value.job_offer_status}
+                      key={value.job_offer_id}
+                      color={getStatusToColor(value.job_offer_status)}
+                      bullet={statusToIcon(value.job_offer_status)}
+                    >
+                      <Text size="xs" mt={4} color="dimmed">
+                        {`${formatDate(
+                          new Date(value.job_offer_date_created)
+                        )} at ${formatTime(
+                          new Date(value.job_offer_date_created)
+                        )}`}
+                      </Text>
+                      <Stack spacing="xs" mt="xs">
+                        {value.job_offer_attachment && (
+                          <Group>
+                            <Text size={14}>Job Offer: </Text>
+                            <ActionIcon
+                              variant="outline"
+                              color="blue"
+                              onClick={async () => {
+                                const attachment_public_url =
+                                  supabaseClient.storage
+                                    .from(
+                                      `${value?.job_offer_attachment?.attachment_bucket}`
+                                    )
+                                    .getPublicUrl(
+                                      `${value?.job_offer_attachment?.attachment_value}`
+                                    ).data.publicUrl;
+                                window.open(attachment_public_url, "_blank");
+                              }}
+                              w={100}
+                            >
+                              <Flex align="center" justify="center" gap={5}>
+                                <Text size={14}>View File</Text>{" "}
+                                <IconFile size={14} />
+                              </Flex>
+                            </ActionIcon>
+                          </Group>
+                        )}
+                        {value.job_offer_title && (
+                          <Group>
+                            <Text size={14}>Job Title: </Text>
+                            <Title order={6}>{value.job_offer_title}</Title>
+                          </Group>
+                        )}
+                        {value.job_offer_project_assignment && (
+                          <Group>
+                            <Text size={14}>Project Assignment: </Text>
+                            <Title order={6}>
+                              {value.job_offer_project_assignment}
+                            </Title>
+                          </Group>
+                        )}
+
+                        <Group>
+                          <Title order={6}>{}</Title>
+                        </Group>
+                      </Stack>
+
+                      <Text c="dimmed" size="sm">
+                        {value.job_offer_reason_for_rejection}
+                      </Text>
+                    </Timeline.Item>
+                  );
+                })}
+              </Timeline>
+            </ScrollArea>
+          </Stack>
+        )}
       </Modal>
 
       {!hiddenColumnList.includes("position") && (
@@ -326,15 +523,68 @@ const JobOfferMainTableRow = ({
           </Badge>
         </td>
       )}
+      {!hiddenColumnList.includes("job_offer_attachment") && (
+        <td>
+          {item.job_offer_attachment && (
+            <ActionIcon
+              w="100%"
+              variant="outline"
+              color="blue"
+              onClick={async () => {
+                const attachment_public_url = supabaseClient.storage
+                  .from(`${item?.job_offer_attachment?.attachment_bucket}`)
+                  .getPublicUrl(
+                    `${item?.job_offer_attachment?.attachment_value}`
+                  ).data.publicUrl;
+                window.open(attachment_public_url, "_blank");
+              }}
+            >
+              <Flex align="center" justify="center" gap={5}>
+                <Text size={14}>File</Text> <IconFile size={14} />
+              </Flex>
+            </ActionIcon>
+          )}
+        </td>
+      )}
+      {!hiddenColumnList.includes("job_offer_project_assignment") && (
+        <td>
+          <Text>{item.job_offer_project_assignment}</Text>
+        </td>
+      )}
+      {!hiddenColumnList.includes("job_offer_history") && (
+        <td>
+          {item.job_offer_status !== "WAITING FOR OFFER" && (
+            <ActionIcon
+              w="100%"
+              variant="outline"
+              color="blue"
+              onClick={openHistoryModal}
+            >
+              <Flex align="center" justify="center" gap={5}>
+                <Text size={14}>History</Text> <IconHistory size={14} />
+              </Flex>
+            </ActionIcon>
+          )}
+        </td>
+      )}
 
       <td>
-        {item.job_offer_status === "WAITING FOR OFFER" && (
-          <Flex align="center" justify="center" gap="xs" wrap="wrap">
-            <Button color="green" w={130} onClick={open}>
+        <Stack spacing="xs">
+          {!["ACCEPTED", "PENDING", "FOR POOLING"].includes(
+            item.job_offer_status
+          ) && (
+            <Button color="yellow" w={130} onClick={openJobOfferModal}>
+              For Pooling
+            </Button>
+          )}
+          {["WAITING FOR OFFER", "REJECTED"].includes(
+            item.job_offer_status
+          ) && (
+            <Button color="green" w={130} onClick={openJobOfferModal}>
               Add Offer
             </Button>
-          </Flex>
-        )}
+          )}
+        </Stack>
       </td>
     </tr>
   );

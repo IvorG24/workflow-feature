@@ -48,6 +48,9 @@ const formDefaultValues = {
     end: "",
   },
   job_offer_status: "",
+  job_offer_attachment: "",
+  job_offer_project_assignment: "",
+  job_offer_history: "",
 };
 
 type Props = {

@@ -2398,6 +2398,8 @@ export type BackgroundCheckFilterFormValues =
 export type JobOfferSpreadsheetData = HRSpreadsheetGeneralData & {
   job_offer_date_created: string;
   job_offer_status: string;
+  job_offer_project_assignment: string;
+  job_offer_attachment: AttachmentTableRow | null;
 };
 
 export type JobOfferFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
@@ -2406,4 +2408,9 @@ export type JobOfferFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
     end?: string;
   };
   job_offer_status?: string;
+};
+
+export type JobOfferHistoryType = JobOfferTableRow & {
+  job_offer_attachment: AttachmentTableRow | null;
+  job_offer_reason_for_rejection: string | null;
 };

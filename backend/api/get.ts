@@ -62,6 +62,7 @@ import {
   JiraOrganizationTableRow,
   JiraProjectDataType,
   JobOfferFilterFormValues,
+  JobOfferHistoryType,
   JobOfferSpreadsheetData,
   LRFSpreadsheetData,
   MemoListItemType,
@@ -6379,4 +6380,16 @@ export const getJobOfferSummaryData = async (
   );
   if (error) throw error;
   return data as JobOfferSpreadsheetData[];
+};
+
+export const getJobHistory = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { requestId: string }
+) => {
+  const { data, error } = await supabaseClient.rpc("get_job_history", {
+    input_data: params,
+  });
+  if (error) throw error;
+
+  return data as unknown as JobOfferHistoryType[];
 };

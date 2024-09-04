@@ -1471,7 +1471,7 @@ export const updateBackgroundCheckStatus = async (
   if (error) throw error;
 };
 
-export const updateJobOffer = async (
+export const addJobOffer = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     teamMemberId: string;
@@ -1480,30 +1480,30 @@ export const updateJobOffer = async (
     applicationInformationFormslyId: string;
     jobTitle: string;
     attachmentId: string;
+    projectAssignment: string;
+    reason?: string;
   }
 ) => {
-  const { error } = await supabaseClient.rpc("update_job_offer", {
+  const { error } = await supabaseClient.rpc("add_job_offer", {
     input_data: params,
   });
   if (error) throw error;
 };
 
-export const updateJobOfferStatus = async (
+export const acceptOrRejectJobOffer = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     status: string;
-    jobOfferId: string;
+    requestReferenceId: string;
+    title: string;
+    attachmentId: string;
+    teamMemberId: string;
+    projectAssignment: string;
+    reason?: string;
   }
 ) => {
-  const { status, jobOfferId } = params;
-  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
-  const { error } = await supabaseClient
-    .schema("hr_schema")
-    .from("job_offer_table")
-    .update({
-      job_offer_status: status,
-      job_offer_status_date_updated: currentDate,
-    })
-    .eq("job_offer_id", jobOfferId);
+  const { error } = await supabaseClient.rpc("accept_or_reject_job_offer", {
+    input_data: params,
+  });
   if (error) throw error;
 };

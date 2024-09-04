@@ -83,7 +83,7 @@ const ApplicationInformation = ({
             <Text>Next Step: </Text>
             <Button
               rightIcon={<IconPlus size={16} />}
-              className="general-assessment"
+              className="next-step"
               onClick={() => {
                 router.push(
                   `/public-form/71f569a0-70a8-4609-82d2-5cc26ac1fe8c/create?applicationInformationId=${applicationInformationData.request_formsly_id}`
@@ -98,7 +98,7 @@ const ApplicationInformation = ({
       <JoyRideNoSSR
         steps={[
           {
-            target: ".general-assessment",
+            target: ".next-step",
             content: (
               <Text>
                 You can now continue with the general assessment since your

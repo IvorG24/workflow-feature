@@ -51,7 +51,7 @@ const JobOfferSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   setData,
-  positionOptionList
+  positionOptionList,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -214,6 +214,21 @@ const JobOfferSpreadsheetTable = ({
                       <Text>Job Offer Status</Text>
                       {sortButtons("job_offer_status")}
                     </Flex>
+                  </th>
+                )}
+                {!hiddenColumnList.includes("job_offer_attachment") && (
+                  <th style={{ minWidth: 120 }}>
+                    <Text>Job Offer Attachment</Text>
+                  </th>
+                )}
+                {!hiddenColumnList.includes("job_offer_project_assignment") && (
+                  <th style={{ minWidth: 120 }}>
+                    <Text>Job Offer Project Assignment</Text>
+                  </th>
+                )}
+                {!hiddenColumnList.includes("job_offer_history") && (
+                  <th style={{ minWidth: 120 }}>
+                    <Text>Job Offer History</Text>
                   </th>
                 )}
 

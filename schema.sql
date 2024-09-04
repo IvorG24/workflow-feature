@@ -14977,6 +14977,8 @@ AS $$
         FROM hr_schema.job_offer_table 
         LEFT JOIN public.attachment_table ON attachment_id = job_offer_attachment_id
         WHERE job_offer_request_id = '${requestUUID}'
+        ORDER BY job_offer_date_created DESC
+        LIMIT 1
       `
     );
     if (!jobOfferData.length) {
@@ -16626,7 +16628,9 @@ AS $$
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
           job_offer_date_created,
-          job_offer_status
+          job_offer_status,
+          job_offer_attachment_id,
+          job_offer_project_assignment
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
@@ -16636,11 +16640,17 @@ AS $$
         INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
-        INNER JOIN hr_schema.job_offer_table ON job_offer_request_id = applicationInformation.request_id
+        INNER JOIN (
+          SELECT
+            JobOffer.*,
+            ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY JobOffer.job_offer_date_created DESC) AS RowNumber
+          FROM hr_schema.job_offer_table JobOffer
+        ) JobOffer ON JobOffer.job_offer_request_id = applicationInformation.request_id
         WHERE 
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
           AND technicalAssessment.request_status = 'APPROVED'
+          AND JobOffer.RowNumber = 1
           ${positionCondition}
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
@@ -16669,6 +16679,20 @@ AS $$
         `
       );
 
+      let attachmentData = [];
+      if (request.job_offer_attachment_id) {
+        attachmentData = plv8.execute(
+          `
+            SELECT * 
+            FROM public.attachment_table
+            WHERE
+              attachment_id = '${request.job_offer_attachment_id}'
+            LIMIT 1
+          `
+        );
+      }
+      
+
       let firstName = middleName = lastName = contactNumber = email = "";
       additionalData.forEach(response => {
         const parsedResponse = response.request_response.replaceAll('"', "");
@@ -16685,14 +16709,15 @@ AS $$
         ...request,
         application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
         application_information_contact_number: contactNumber,
-        application_information_email: email
+        application_information_email: email,
+        job_offer_attachment: attachmentData.length ? attachmentData[0] : null
       }
     });
 });
 return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION update_job_offer(
+CREATE OR REPLACE FUNCTION add_job_offer(
   input_data JSON
 )
 RETURNS JSON 
@@ -16706,24 +16731,33 @@ AS $$
       userEmail,
       applicationInformationFormslyId,
       jobTitle,
-      attachmentId
+      attachmentId,
+      projectAssignment,
+      reason
     } = input_data;
 
-    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
-
-    plv8.execute(
+    const jobOfferId = plv8.execute(
       `
-        UPDATE hr_schema.job_offer_table
-        SET
-          job_offer_status = 'PENDING',
-          job_offer_status_date_updated = '${currentDate}',
-          job_offer_team_member_id = '${teamMemberId}',
-          job_offer_title = '${jobTitle}',
-          job_offer_attachment_id = '${attachmentId}'
-        WHERE 
-          job_offer_request_id = '${requestReferenceId}'
+        INSERT INTO hr_schema.job_offer_table
+        (
+          job_offer_status, 
+          job_offer_team_member_id, 
+          job_offer_title, 
+          job_offer_attachment_id, 
+          job_offer_project_assignment, 
+          job_offer_request_id)
+        VALUES
+        (
+          'PENDING',
+          '${teamMemberId}',
+          '${jobTitle}',
+          '${attachmentId}',
+          '${projectAssignment}',
+          '${requestReferenceId}'
+        )
+        RETURNING job_offer_id
       `
-    );
+    )[0].job_offer_id;
 
     const userId = plv8.execute(`SELECT user_id FROM user_schema.user_table WHERE user_email = '${userEmail}' LIMIT 1`)[0].user_id;
     plv8.execute(
@@ -16749,7 +16783,7 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION update_job_status_offer(
+CREATE OR REPLACE FUNCTION accept_or_reject_job_offer(
   input_data JSON
 )
 RETURNS JSON 
@@ -16759,21 +16793,90 @@ AS $$
   plv8.subtransaction(function(){
     const {
       status,
-      applicationInformationRequestId,
-      userEmail
+      requestReferenceId,
+      title,
+      attachmentId,
+      teamMemberId,
+      projectAssignment,
+      reason
     } = input_data;
 
-    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
-    plv8.execute(
+    const jobOfferId = plv8.execute(
       `
-        UPDATE hr_schema.job_offer_table
-        SET
-          job_offer_status = '${status}',
-          job_offer_status_date_updated = '${currentDate}',
-        WHERE 
-          job_offer_request_id = '${applicationInformationRequestId}'
+        INSERT INTO hr_schema.job_offer_table
+        (
+          job_offer_status,
+          job_offer_title,
+          job_offer_request_id,
+          job_offer_attachment_id,
+          job_offer_team_member_id,
+          job_offer_project_assignment
+        )
+        VALUES
+        (
+          '${status}',
+          '${title}',
+          '${requestReferenceId}',
+          '${attachmentId}',
+          '${teamMemberId}',
+          '${projectAssignment}'
+        )
+        RETURNING job_offer_id
+      `
+    )[0].job_offer_id;
+
+    if (reason) {
+      plv8.execute(
+        `
+          INSERT INTO hr_schema.job_offer_reason_for_rejection_table
+          (
+            job_offer_reason_for_rejection,
+            job_offer_reason_for_rejection_job_offer_id
+          )
+          VALUES
+          (
+            '${reason}',
+            '${jobOfferId}'
+          )
+        `
+      );
+    }
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_job_history(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function(){
+    const {
+      requestId
+    } = input_data;
+
+    const jobOfferData = plv8.execute(
+      `
+        SELECT * FROM hr_schema.job_offer_table 
+        LEFT JOIN hr_schema.job_offer_reason_for_rejection_table ON job_offer_id = job_offer_reason_for_rejection_job_offer_id
+        WHERE job_offer_request_id = '${requestId}'
+        ORDER BY job_offer_date_created
       `
     );
+
+    returnData = jobOfferData.map(jobOffer => {
+      let attachmentData = [];
+      if (jobOffer.job_offer_attachment_id) {
+        attachmentData = plv8.execute(`SELECT * FROM public.attachment_table WHERE attachment_id = '${jobOffer.job_offer_attachment_id}'`);
+      }
+
+      return {
+        ...jobOffer,
+        job_offer_attachment: attachmentData.length ? attachmentData[0] : null
+      }
+    });
   });
   return returnData;
 $$ LANGUAGE plv8;
