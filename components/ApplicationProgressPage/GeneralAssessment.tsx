@@ -75,7 +75,7 @@ const GeneralAssessment = ({
             <Text>Next Step: </Text>
             <Button
               rightIcon={<IconPlus size={16} />}
-              className="technical-assessment"
+              className="next-step"
               onClick={() => {
                 router.push(
                   `/public-form/cc410201-f5a6-49ce-a06c-c2ce2c169436/create?generalAssessmentId=${generalAssessmentData.request_formsly_id}`
@@ -90,7 +90,7 @@ const GeneralAssessment = ({
       <JoyRideNoSSR
         steps={[
           {
-            target: ".technical-assessment",
+            target: ".next-step",
             content: (
               <Text>
                 You passed the general assessment, you can now continue with the

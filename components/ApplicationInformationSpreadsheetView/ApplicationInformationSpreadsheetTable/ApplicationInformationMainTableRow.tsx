@@ -2,7 +2,11 @@ import RequestSignerList from "@/components/RequestListPage/RequestSignerList";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
-import { formatTeamNameToUrlKey, pesoFormatter } from "@/utils/string";
+import {
+  capitalizeEachWord,
+  formatTeamNameToUrlKey,
+  pesoFormatter,
+} from "@/utils/string";
 import {
   getStatusToColor,
   mobileNumberFormatter,
@@ -162,6 +166,8 @@ const ApplicationInformationMainTableRow = ({
       case "MULTISELECT":
         return response && response.join(", ");
       default:
+        if (["First Name", "Middle Name", "Last Name"].includes(row.field_name))
+          return capitalizeEachWord(response);
         return response;
     }
   };

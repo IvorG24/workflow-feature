@@ -81,7 +81,7 @@ const TechnicalInterviewMainTableRow = ({
     UNRESPONSIVE: "gray",
   };
 
-  const openModel = (action: string) =>
+  const openModal = (action: string) =>
     modals.openConfirmModal({
       title: <Text>Please confirm your action.</Text>,
       children: (
@@ -397,21 +397,21 @@ const TechnicalInterviewMainTableRow = ({
             <Button
               color="green"
               w={130}
-              onClick={() => openModel("QUALIFIED")}
+              onClick={() => openModal("QUALIFIED")}
             >
               Qualified
             </Button>
             <Button
               color="red"
               w={130}
-              onClick={() => openModel("UNQUALIFIED")}
+              onClick={() => openModal("UNQUALIFIED")}
             >
               Unqualified
             </Button>
             <Button
               color="gray"
               w={130}
-              onClick={() => openModel("UNRESPONSIVE")}
+              onClick={() => openModal("UNRESPONSIVE")}
             >
               Unresponsive
             </Button>

@@ -71,6 +71,8 @@ export const getStatusToColor = (status: string) => {
       return "dark";
     case "missed":
       return "grape";
+    case "for pooling":
+      return "yellow";
     default:
       return "";
   }

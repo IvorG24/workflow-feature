@@ -13,7 +13,7 @@ import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { BASE_URL, formatDate } from "@/utils/constant";
-import { safeParse } from "@/utils/functions";
+import { JoyRideNoSSR, safeParse } from "@/utils/functions";
 import {
   createJiraTicket,
   formatJiraRequisitionPayload,
@@ -27,7 +27,16 @@ import {
   RequestCommentType,
   RequestWithResponseType,
 } from "@/utils/types";
-import { Alert, Container, Flex, Stack, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Button,
+  Container,
+  Flex,
+  Stack,
+  Text,
+  Title,
+  useMantineTheme,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
@@ -45,6 +54,7 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
 
+  const { colors } = useMantineTheme();
   const { setIsLoading } = useLoadingActions();
   const [isNoteClosed, setIsNoteClosed] = useState(false);
 
@@ -367,10 +377,46 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
           </Text>
         </Alert>
       )}
+      <JoyRideNoSSR
+        steps={[
+          {
+            target: ".next-step",
+            content: (
+              <Text>
+                You can now continue to HR Phone Interview since the technical
+                assessment has been approved. To continue, simply click the
+                &ldquo;Next Step&ldquo; button.
+              </Text>
+            ),
+            disableBeacon: true,
+          },
+        ]}
+        run={true}
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        hideBackButton
+        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+      />
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
         </Title>
+        {nextStep && (
+          <Button
+            className="next-step"
+            onClick={() =>
+              router.push(
+                `/user/application-progress/${safeParse(
+                  request.request_form.form_section[0].section_field[0]
+                    .field_response[0].request_response
+                )}`
+              )
+            }
+          >
+            Next Step
+          </Button>
+        )}
       </Flex>
       <Stack spacing="xl" mt="xl">
         <RequestDetailsSection

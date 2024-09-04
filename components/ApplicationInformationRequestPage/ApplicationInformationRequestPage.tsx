@@ -409,7 +409,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
       <JoyRideNoSSR
         steps={[
           {
-            target: ".general-assessment",
+            target: ".next-step",
             content: (
               <Text>
                 You can now continue with the general assessment since your
@@ -450,7 +450,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         </Title>
         {nextStep && (
           <Button
-            className="general-assessment"
+            className="next-step"
             onClick={() =>
               router.push(
                 `/public-form/71f569a0-70a8-4609-82d2-5cc26ac1fe8c/create?applicationInformationId=${request.request_formsly_id}`
@@ -552,10 +552,9 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             onCreateJiraTicket={onCreateJiraTicket}
           />
         )}
-        {
-          !router.pathname.includes("/user/requests/") && <RequestSignerSection signerList={signerList} />
-        }
- 
+        {!router.pathname.includes("/user/requests/") && (
+          <RequestSignerSection signerList={signerList} />
+        )}
       </Stack>
 
       <RequestCommentList

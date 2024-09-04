@@ -206,7 +206,6 @@ const SchedulingCalendar = ({
 
       await refetchData();
     } catch (e) {
-      console.log(e);
       notifications.show({
         message: "Error updating schedule",
         color: "orange",

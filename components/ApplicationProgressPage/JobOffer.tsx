@@ -1,15 +1,25 @@
-import { updateJobOfferStatus } from "@/backend/api/update";
+import { acceptOrRejectJobOffer } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { getStatusToColor } from "@/utils/styling";
 import { AttachmentTableRow, JobOfferTableRow } from "@/utils/types";
-import { Alert, Badge, Button, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Badge,
+  Button,
+  Group,
+  Stack,
+  Text,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconFile, IconNote } from "@tabler/icons-react";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 type Props = {
   jobOfferData: JobOfferTableRow & AttachmentTableRow;
@@ -23,8 +33,16 @@ const JobOffer = ({
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
   const [attachmentUrl, setAttachmentUrl] = useState("");
-
   const { setIsLoading } = useLoadingActions();
+
+  const {
+    register,
+    setValue,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<{
+    reason: string;
+  }>({ defaultValues: { reason: "" } });
 
   useEffect(() => {
     const attachment_public_url = supabaseClient.storage
@@ -33,13 +51,18 @@ const JobOffer = ({
     setAttachmentUrl(attachment_public_url);
   }, [jobOfferData]);
 
-  const handleUpdateJobOffer = async (action: string) => {
+  const handleUpdateJobOffer = async (action: string, reason?: string) => {
     try {
       setIsLoading(true);
       const newStatus = action === "Accept" ? "ACCEPTED" : "REJECTED";
-      await updateJobOfferStatus(supabaseClient, {
-        jobOfferId: jobOfferData.job_offer_id,
+      await acceptOrRejectJobOffer(supabaseClient, {
         status: newStatus,
+        requestReferenceId: jobOfferData.job_offer_request_id,
+        title: jobOfferData.job_offer_title as string,
+        attachmentId: jobOfferData.attachment_id,
+        teamMemberId: jobOfferData.job_offer_team_member_id as string,
+        projectAssignment: jobOfferData.job_offer_project_assignment as string,
+        reason,
       });
 
       setJobOfferStatus(newStatus);
@@ -47,6 +70,7 @@ const JobOffer = ({
         message: `Job offer ${action === "Accept" ? "accepted" : "rejected"}.`,
         color: "green",
       });
+      modals.closeAll();
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
@@ -57,18 +81,52 @@ const JobOffer = ({
     }
   };
 
-  const openModel = (action: string) =>
+  const approveModal = () =>
     modals.openConfirmModal({
       title: <Text>Please confirm your action.</Text>,
-      children: (
-        <Text>{`Are you sure you want to ${action.toLocaleLowerCase()} this job offer?`}</Text>
-      ),
+      children: <Text>Are you sure you want to accept this job offer?</Text>,
       labels: { confirm: "Confirm", cancel: "Cancel" },
       centered: true,
-      confirmProps: {
-        color: action === "Accept" ? "green" : "red",
-      },
-      onConfirm: async () => handleUpdateJobOffer(action),
+      confirmProps: { color: "green" },
+      onConfirm: async () => handleUpdateJobOffer("Accept"),
+    });
+
+  const rejectModal = () =>
+    modals.open({
+      title: <Text>Please confirm your action.</Text>,
+      children: (
+        <>
+          <Text>Are you sure you want to reject this job offer?</Text>
+          <form
+            onSubmit={handleSubmit((data) =>
+              handleUpdateJobOffer("Reject", data.reason)
+            )}
+          >
+            <TextInput
+              label="Reason for rejection"
+              {...register("reason")}
+              error={errors.reason?.message}
+              required={true}
+            />
+            <Group position="right" mt="xl">
+              <Button
+                onClick={() => {
+                  setValue("reason", "");
+                  modals.closeAll();
+                }}
+                color="red"
+                variant="default"
+              >
+                Cancel
+              </Button>
+              <Button color="red" type="submit">
+                Confirm
+              </Button>
+            </Group>
+          </form>
+        </>
+      ),
+      centered: true,
     });
 
   return (
@@ -76,20 +134,13 @@ const JobOffer = ({
       <Title order={3}>Job Offer</Title>
       <Stack>
         <Group>
-          <Text>Date Created: </Text>
-          <Title order={5}>
-            {formatDate(new Date(jobOfferData.job_offer_date_created ?? ""))}
-          </Title>
-        </Group>
-        <Group>
           <Text>Status: </Text>
           <Badge color={getStatusToColor(jobOfferStatus ?? "")}>
             {jobOfferStatus}
           </Badge>
-          {jobOfferData.job_offer_status_date_updated && (
+          {jobOfferData.job_offer_date_created && (
             <Text color="dimmed">
-              on{" "}
-              {formatDate(new Date(jobOfferData.job_offer_status_date_updated))}
+              on {formatDate(new Date(jobOfferData.job_offer_date_created))}
             </Text>
           )}
         </Group>
@@ -109,6 +160,12 @@ const JobOffer = ({
               <Title order={5}>{jobOfferData.job_offer_title}</Title>
             </Group>
             <Group>
+              <Text>Project Assignment: </Text>
+              <Title order={5}>
+                {jobOfferData.job_offer_project_assignment}
+              </Title>
+            </Group>
+            <Group>
               <Text>Job Offer: </Text>
               <Button
                 variant="light"
@@ -126,10 +183,10 @@ const JobOffer = ({
           <Group>
             <Text>Action: </Text>
             <Group spacing="xs">
-              <Button color="green" w={100} onClick={() => openModel("Accept")}>
+              <Button color="green" w={100} onClick={() => approveModal()}>
                 Accept
               </Button>
-              <Button color="red" w={100} onClick={() => openModel("Reject")}>
+              <Button color="red" w={100} onClick={() => rejectModal()}>
                 Reject
               </Button>
             </Group>
