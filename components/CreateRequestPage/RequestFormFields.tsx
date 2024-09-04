@@ -715,6 +715,31 @@ const RequestFormFields = ({
                       ? true
                       : "Contact number must start with 9";
                   },
+                  checkNumberOfCharacter: (value) => {
+                    const stringifiedValue = `${value}`;
+                    if (!stringifiedValue.length) return true;
+                    switch (field.field_name) {
+                      case "Contact Number":
+                        maxLength = 10;
+                        break;
+                      case "SSS ID Number":
+                        if (stringifiedValue.length !== 10) {
+                          return "Invalid number";
+                        }
+                        return true;
+                      case "Philhealth Number":
+                      case "Pag-IBIG Number":
+                        if (stringifiedValue.length !== 12) {
+                          return "Invalid number";
+                        }
+                        return true;
+                      case "TIN":
+                        if (stringifiedValue.length !== 9) {
+                          return "Invalid number";
+                        }
+                        return true;
+                    }
+                  },
                 },
               }}
             />
