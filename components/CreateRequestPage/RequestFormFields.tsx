@@ -720,8 +720,6 @@ const RequestFormFields = ({
                     if (!stringifiedValue.length) return true;
                     switch (field.field_name) {
                       case "Contact Number":
-                        maxLength = 10;
-                        break;
                       case "SSS ID Number":
                         if (stringifiedValue.length !== 10) {
                           return "Invalid number";
