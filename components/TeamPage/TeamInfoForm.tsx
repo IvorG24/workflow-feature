@@ -4,6 +4,7 @@ import {
   Button,
   Container,
   Divider,
+  Flex,
   Group,
   LoadingOverlay,
   Paper,
@@ -11,6 +12,8 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { IconKey } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { Dispatch, SetStateAction } from "react";
 import { useFormContext } from "react-hook-form";
 import UploadAvatar from "../UploadAvatar/UploadAvatar";
@@ -23,6 +26,7 @@ type Props = {
   teamLogoFile: File | null;
   onTeamLogoFileChange: Dispatch<SetStateAction<File | null>>;
   isOwnerOrAdmin: boolean;
+  isOwner: boolean;
 };
 
 const TeamInfoForm = ({
@@ -32,6 +36,7 @@ const TeamInfoForm = ({
   teamLogoFile,
   onTeamLogoFileChange,
   isOwnerOrAdmin,
+  isOwner,
 }: Props) => {
   const {
     register,
@@ -40,7 +45,13 @@ const TeamInfoForm = ({
     setError,
     formState: { errors, isDirty },
   } = useFormContext<UpdateTeamInfoForm>();
-
+  const router = useRouter();
+  const path = router.asPath;
+  const modifiedPath = path
+    .split("/")
+    .slice(0, -1)
+    .join("/")
+    .replace(/^\/+|\/+$/g, "");
   return (
     <Container p={0} mt="xl" pos="relative" fluid>
       <LoadingOverlay
@@ -99,15 +110,26 @@ const TeamInfoForm = ({
               variant={isOwnerOrAdmin ? "default" : "filled"}
             />
 
-            {isOwnerOrAdmin && (
-              <Button
-                type="submit"
-                sx={{ alignSelf: "flex-end" }}
-                disabled={!isDirty && teamLogoFile === null}
-              >
-                Save Changes
-              </Button>
-            )}
+            <Flex gap={6} justify={"end"}>
+              {isOwner && (
+                <Button
+                  leftIcon={<IconKey size={16} />}
+                  sx={{ alignSelf: "flex-end" }}
+                  onClick={() => router.push(`/${modifiedPath}/generate-key`)}
+                >
+                  Generate Api Key
+                </Button>
+              )}
+              {isOwnerOrAdmin && (
+                <Button
+                  type="submit"
+                  sx={{ alignSelf: "flex-end" }}
+                  disabled={!isDirty && teamLogoFile === null}
+                >
+                  Save Changes
+                </Button>
+              )}
+            </Flex>
           </Stack>
         </form>
       </Paper>

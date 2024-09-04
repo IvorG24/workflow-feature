@@ -187,7 +187,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert
+    } & TeamMemberTableInsert,
   ];
 };
 
@@ -2070,4 +2070,29 @@ export const addMemberToAllProject = async (
   if (error) throw error;
 
   return data as InvitationTableRow[];
+};
+export const generateApiKey = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+    keyLabel: string;
+  }
+) => {
+  const apiKey = uuidv4();
+  const { teamId, keyLabel } = params;
+
+  const { data, error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_key_table")
+    .insert({
+      team_key_team_id: teamId,
+      team_key_api_key: apiKey,
+      team_key_label: keyLabel.toUpperCase(),
+    })
+    .select("team_key_api_key, team_key_label")
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data;
 };

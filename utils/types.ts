@@ -2207,3 +2207,8 @@ export type FetchUserRequestListParams = {
   email: string;
   form?: string[];
 };
+
+export type ApiKeyData = {
+  team_key_api_key: string;
+  team_key_label: string;
+};

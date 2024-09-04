@@ -4,6 +4,7 @@ import { TeamApproverChoiceType } from "@/components/TeamPage/TeamGroup/Approver
 import { Database } from "@/utils/database";
 import { escapeQuotes, formatTeamNameToUrlKey } from "@/utils/string";
 import {
+  ApiKeyData,
   AppType,
   EditMemoType,
   EquipmentDescriptionTableUpdate,
@@ -1310,4 +1311,23 @@ export const cancelPCVRequestByCostEngineer = async (
   };
 
   await createNotification(supabaseClient, notification);
+};
+
+export const disableApikey = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    apiKeyId: string;
+  }
+) => {
+  const { apiKeyId } = params;
+  const { data, error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_key_table")
+    .update({ team_key_is_disabled: true })
+    .eq("team_key_api_key", apiKeyId)
+    .select("team_key_api_key, team_key_label");
+
+  if (error) throw error;
+
+  return data as unknown as ApiKeyData[];
 };
