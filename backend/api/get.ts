@@ -6125,7 +6125,7 @@ export const validateEnvApiKey = async (
     .schema("team_schema")
     .from("team_key_record_table")
     .insert({
-      team_key_record_key_id: apiKeyData.team_key_id,
+      team_key_record_team_key_id: apiKeyData.team_key_id,
       team_key_record_access_api: endPoint,
     });
 
