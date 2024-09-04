@@ -38,6 +38,7 @@ const GenerateKeyPage = ({ teamName, apiKeyData: initialApiData }: Props) => {
 
   const {
     register,
+    handleSubmit,
     getValues,
     formState: { errors },
     reset,
@@ -135,29 +136,33 @@ const GenerateKeyPage = ({ teamName, apiKeyData: initialApiData }: Props) => {
             toggleVisibility={toggleVisibility}
             visibleKeys={visibleKeys}
           />
+          <form onSubmit={handleSubmit(handleGenerateApiKey)}>
+            <Stack>
+              {labelVisible && (
+                <TextInput
+                  label="API Key Label"
+                  placeholder="Input a label for the API key"
+                  required
+                  withAsterisk
+                  disabled={loading}
+                  {...register("apiKeyLabel", {
+                    required: "API Key Label is required",
+                  })}
+                  error={errors.apiKeyLabel?.message}
+                />
+              )}
 
-          {labelVisible && (
-            <TextInput
-              label="API Key Label"
-              placeholder="Input a label for the API key"
-              required
-              withAsterisk
-              disabled={loading}
-              {...register("apiKeyLabel", {
-                required: "API Key Label is required",
-              })}
-              error={errors.apiKeyLabel?.message}
-            />
-          )}
-
-          <Button
-            leftIcon={<IconKey size={22} />}
-            onClick={handleGenerateApiKey}
-            loading={loading}
-            disabled={loading}
-          >
-            {labelVisible ? "Generate API Key" : "Generate API Key"}
-          </Button>
+              <Button
+                leftIcon={<IconKey size={22} />}
+                fullWidth
+                type="submit"
+                loading={loading}
+                disabled={loading}
+              >
+                {labelVisible ? "Generate API Key" : "Generate API Key"}
+              </Button>
+            </Stack>
+          </form>
         </Stack>
       </Container>
     </Container>

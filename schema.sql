@@ -197,22 +197,22 @@ CREATE TABLE team_schema.supplier_table (
 );
 
 CREATE TABLE team_schema.team_key_table (
-    team_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    team_key_api_key VARCHAR(4000) NOT NULL,
-    team_key_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    team_key_label VARCHAR(4000) NOT NULL,
-    team_key_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+  team_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_key_api_key VARCHAR(4000) NOT NULL,
+  team_key_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_key_label VARCHAR(4000) NOT NULL,
+  team_key_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
 
-    team_key_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
-)
+  team_key_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+);
 
 CREATE TABLE team_schema.team_key_record_table (
-    team_key_record_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-    team_key_record_access_time TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    team_key_record_access_api UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL,
+  team_key_record_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  team_key_record_access_time TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  team_key_record_access_api UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL,
 
-    team_key_record_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
-)
+  team_key_record_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
+);
 
 CREATE TABLE user_schema.user_valid_id_table (
   user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
@@ -14754,7 +14754,8 @@ AS $$
         team_schema.team_table t
         ON t.team_id = tmt.team_member_team_id
       WHERE
-        r.request_status = 'APPROVED'
+        r.request_status = 'APPROVED' AND
+        r.request_is_disabled = false
         AND t.team_id = '${teamId}'`;
 
     if (startDate) {
@@ -14773,9 +14774,10 @@ AS $$
     let groupedData = {};
 
     mainQueryData.forEach((data) => {
+      const {request_team_member_id,request_form_id,request_module_request_id,requester_user_id,request_project_id,request_is_disabled, ...filteredData}=data;
       const requestId = data.request_id;
       groupedData[requestId] = {
-        ...data,
+        ...filteredData,
          requester: {
           user_first_name: data.requester_first_name,
           user_last_name: data.requester_last_name,
@@ -15303,7 +15305,6 @@ let returnData = [];
 
   return returnData;
 $$ LANGUAGE plv8;
-
 
 ----- END: FUNCTIONS
 
@@ -18714,7 +18715,7 @@ USING (
   )
 );
 
---- team_key_table
+--- team_schema.team_key_table
 DROP POLICY IF EXISTS "Allow Read for anon users on team key table" ON team_schema.team_key_table;
 CREATE POLICY "Allow Read for anon users on team key table" ON team_schema.team_key_table
 AS PERMISSIVE FOR SELECT
@@ -18772,6 +18773,7 @@ DROP POLICY IF EXISTS "Allow ALL for anon users on team key record table" ON tea
 CREATE POLICY "Allow ALL for anon users on team key record table" ON team_schema.team_key_record_table
 AS PERMISSIVE FOR ALL
 USING (true);
+
 
 ----- END: POLICIES
 
