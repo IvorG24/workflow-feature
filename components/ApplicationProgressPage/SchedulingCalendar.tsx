@@ -1,6 +1,8 @@
 import { getPhoneMeetingSlots } from "@/backend/api/get";
 import { updatePhoneInterview } from "@/backend/api/update";
+import { useUserProfile } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
+import { startCase } from "@/utils/string";
 import {
   Button,
   Flex,
@@ -41,6 +43,7 @@ const SchedulingCalendar = ({
   status,
   isRefetchingData,
 }: SchedulingType) => {
+  const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
     if (intialDate) {
@@ -187,6 +190,31 @@ const SchedulingCalendar = ({
         );
 
         if (status === "success") {
+          // TODO: add MS teams create meeting/event
+          const hrRepresentativeName = "John Doe";
+          const meetingLink = "temp-meeting-link.com";
+          const emailNotificationProps = {
+            to: user?.user_email,
+            subject: `HR Interview Schedule.`,
+            recipientName: `${startCase(
+              user?.user_first_name as string
+            )} ${startCase(user?.user_last_name as string)}`,
+            message: `You are scheduled for an interview with HR representative ${hrRepresentativeName} on ${moment(
+              tempDate
+            ).format(
+              "dddd, MMMM Do YYYY, h:mm:ss a"
+            )}. Click the link below to join the meeting. If you need further assistance, please reach out to careers@staclara.com.ph`,
+            callbackLink: meetingLink,
+            callbackLinkLabel: "HR Interview meeting link.",
+          };
+          await fetch("/api/resend/send", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(emailNotificationProps),
+          });
+
           setSelectedDate(tempDate);
           notifications.show({
             message: message,

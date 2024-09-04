@@ -15,7 +15,7 @@ import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { generateSectionWithDuplicateList } from "@/utils/arrayFunctions/arrayFunctions";
 import { formatDate } from "@/utils/constant";
 import { JoyRideNoSSR, safeParse } from "@/utils/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   CommentType,
   ReceiverStatusType,
@@ -126,6 +126,40 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         requestFormslyId: request.request_formsly_id,
         userId,
       });
+
+      if (status === "APPROVED") {
+        const emailAddress = safeParse(
+          `${formSection[2].section_field[1].field_response?.request_response}`
+        );
+        const firstName = safeParse(
+          `${formSection[1].section_field[0].field_response?.request_response}`
+        );
+        const lastName = safeParse(
+          `${formSection[1].section_field[2].field_response?.request_response}`
+        );
+        const applicantPosition = safeParse(
+          `${formSection[0].section_field[0].field_response?.request_response}`
+        );
+
+        const emailNotificationProps = {
+          to: emailAddress,
+          subject: `You're application has been approved. Please read below on how you can proceed to the next step.`,
+          recipientName: `${startCase(firstName)} ${startCase(lastName)}`,
+          message:
+            "We invite you to proceed to the next step, the General Assessment, by clicking the link below. Please create an account with Formsly, and we recommend using Google to sign up. If you need further assistance, please reach out to careers@staclara.com.ph",
+          callbackLink: `${process.env.NEXT_PUBLIC_SITE_URL}/user/application-progress/${request.request_formsly_id}`,
+          callbackLinkLabel: `${startCase(
+            applicantPosition
+          )} General Assessment`,
+        };
+        await fetch("/api/resend/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(emailNotificationProps),
+        });
+      }
 
       notifications.show({
         message: `Request ${status.toLowerCase()}.`,
@@ -552,10 +586,9 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
             onCreateJiraTicket={onCreateJiraTicket}
           />
         )}
-        {
-          !router.pathname.includes("/user/requests/") && <RequestSignerSection signerList={signerList} />
-        }
- 
+        {!router.pathname.includes("/user/requests/") && (
+          <RequestSignerSection signerList={signerList} />
+        )}
       </Stack>
 
       <RequestCommentList
