@@ -1524,7 +1524,6 @@ export const updateInterviewOnlineMeeting = async (
     .select("*");
 
   if (error) throw error;
-  console.log(data[0]);
 
   return data[0] as InterviewOnlineMeetingTableRow;
 };

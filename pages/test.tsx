@@ -389,7 +389,6 @@ const Page = () => {
         color: "green",
       });
     } catch (e) {
-      console.log("ERROR: ", e);
     } finally {
       setIsLoading(false);
     }

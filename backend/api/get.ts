@@ -142,7 +142,6 @@ export const getCurrentDate = async (
     .single();
   if (error) throw error;
   if (!data) throw error;
-  console.log(data);
 
   return new Date(data);
 };
