@@ -579,12 +579,23 @@ const RequestFormFields = ({
               maxLength = 10;
               break;
             case "SSS ID Number":
-            case "Philhealth Number":
               maxLength = 10;
               formatter = (value: string) => {
                 if (!value) return "";
                 const cleaned = ("" + value).replace(/\D/g, "");
                 const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+            case "Philhealth Number":
+              maxLength = 12;
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{2})(\d{9})(\d{1})$/);
                 if (match) {
                   return `${match[1]}-${match[2]}-${match[3]}`;
                 }
@@ -706,6 +717,29 @@ const RequestFormFields = ({
                     return `${value}`[0] === "9"
                       ? true
                       : "Contact number must start with 9";
+                  },
+                  checkNumberOfCharacter: (value) => {
+                    const stringifiedValue = `${value}`;
+                    if (!stringifiedValue.length) return true;
+                    switch (field.field_name) {
+                      case "Contact Number":
+                      case "SSS ID Number":
+                        if (stringifiedValue.length !== 10) {
+                          return "Invalid number";
+                        }
+                        return true;
+                      case "Philhealth Number":
+                      case "Pag-IBIG Number":
+                        if (stringifiedValue.length !== 12) {
+                          return "Invalid number";
+                        }
+                        return true;
+                      case "TIN":
+                        if (stringifiedValue.length !== 9) {
+                          return "Invalid number";
+                        }
+                        return true;
+                    }
                   },
                 },
               }}

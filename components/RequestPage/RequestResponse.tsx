@@ -183,11 +183,21 @@ const RequestResponse = ({
           let formatter = undefined;
           switch (response.label) {
             case "SSS ID Number":
-            case "Philhealth Number":
               formatter = (value: string) => {
                 if (!value) return "";
                 const cleaned = ("" + value).replace(/\D/g, "");
                 const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
+                if (match) {
+                  return `${match[1]}-${match[2]}-${match[3]}`;
+                }
+                return value;
+              };
+              break;
+            case "Philhealth Number":
+              formatter = (value: string) => {
+                if (!value) return "";
+                const cleaned = ("" + value).replace(/\D/g, "");
+                const match = cleaned.match(/^(\d{2})(\d{9})(\d{1})$/);
                 if (match) {
                   return `${match[1]}-${match[2]}-${match[3]}`;
                 }
