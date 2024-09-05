@@ -587,18 +587,22 @@ const RequestFormFields = ({
                   switch (field.field_name) {
                     case "SSS ID Number":
                       if (stringifiedValue.length !== maxLength + 2) {
-                        return "Invalid number";
+                        return "Invalid SSS ID Number";
                       }
                       return true;
                     case "Philhealth Number":
+                      if (stringifiedValue.length !== maxLength + 2) {
+                        return "Invalid Philhealth Number";
+                      }
+                      return true;
                     case "Pag-IBIG Number":
                       if (stringifiedValue.length !== maxLength + 2) {
-                        return "Invalid number";
+                        return "Invalid Pag-IBIG Number";
                       }
                       return true;
                     case "TIN":
                       if (stringifiedValue.length !== maxLength + 2) {
-                        return "Invalid number";
+                        return "Invalid TIN Number";
                       }
                       return true;
                   }
