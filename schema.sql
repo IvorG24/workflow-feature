@@ -16783,7 +16783,7 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION accept_or_reject_job_offer(
+CREATE OR REPLACE FUNCTION update_job_offer_status(
   input_data JSON
 )
 RETURNS JSON 
@@ -16815,11 +16815,11 @@ AS $$
         VALUES
         (
           '${status}',
-          '${title}',
+          ${title ? `'${title}'` : "NULL"},
           '${requestReferenceId}',
-          '${attachmentId}',
+          ${attachmentId ? `'${attachmentId}'` : "NULL"},
           '${teamMemberId}',
-          '${projectAssignment}'
+          ${projectAssignment ? `'${projectAssignment}'` : "NULL"}
         )
         RETURNING job_offer_id
       `

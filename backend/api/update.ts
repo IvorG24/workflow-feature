@@ -1490,7 +1490,7 @@ export const addJobOffer = async (
   if (error) throw error;
 };
 
-export const acceptOrRejectJobOffer = async (
+export const updateJobOfferStatus = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
     status: string;
@@ -1502,7 +1502,7 @@ export const acceptOrRejectJobOffer = async (
     reason?: string;
   }
 ) => {
-  const { error } = await supabaseClient.rpc("accept_or_reject_job_offer", {
+  const { error } = await supabaseClient.rpc("update_job_offer_status", {
     input_data: params,
   });
   if (error) throw error;

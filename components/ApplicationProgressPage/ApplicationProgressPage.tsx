@@ -26,6 +26,7 @@ import {
   IconCircleCheck,
   IconCircleX,
   IconClockOff,
+  IconHourglass,
   IconProgress,
   IconTag,
 } from "@tabler/icons-react";
@@ -224,6 +225,17 @@ const ApplicationProgressPage = (props: Props) => {
           icon: <IconTag color={"#FD7E14"} />,
           completedIcon: <IconTag color={"white"} />,
           color: "orange",
+        };
+      case "FOR POOLING":
+        return {
+          description: (
+            <Badge color="yellow">
+              <Text>{value}</Text>
+            </Badge>
+          ),
+          icon: <IconHourglass color={"#FBB605"} />,
+          completedIcon: <IconHourglass color={"white"} />,
+          color: "yellow",
         };
     }
   };

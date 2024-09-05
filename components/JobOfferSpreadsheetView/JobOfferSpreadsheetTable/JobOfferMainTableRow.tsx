@@ -1,6 +1,7 @@
 import { getJobHistory } from "@/backend/api/get";
 import { createAttachment } from "@/backend/api/post";
-import { addJobOffer } from "@/backend/api/update";
+import { addJobOffer, updateJobOfferStatus } from "@/backend/api/update";
+import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import {
@@ -38,6 +39,7 @@ import {
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
@@ -81,6 +83,7 @@ const JobOfferMainTableRow = ({
   const supabaseClient = createPagesBrowserClient<Database>();
   const team = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const { setIsLoading } = useLoadingActions();
 
   const [
     jobOfferModalIsOpen,
@@ -214,6 +217,58 @@ const JobOfferMainTableRow = ({
         return <IconHourglass size={14} />;
     }
   };
+
+  const handleUpdateJobOffer = async () => {
+    try {
+      setIsLoading(true);
+      await updateJobOfferStatus(supabaseClient, {
+        status: "FOR POOLING",
+        requestReferenceId: item.hr_request_reference_id,
+        title: "",
+        attachmentId: "",
+        teamMemberId: teamMember?.team_member_id as string,
+        projectAssignment: "",
+      });
+
+      setData((prev) =>
+        prev.map((prevItem) => {
+          if (prevItem.hr_request_reference_id !== item.hr_request_reference_id)
+            return prevItem;
+          return {
+            ...prevItem,
+            job_offer_status: "FOR POOLING",
+          };
+        })
+      );
+      notifications.show({
+        message: `Applicant's status is set to "For Pooling".`,
+        color: "green",
+      });
+      modals.closeAll();
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const poolingModal = () =>
+    modals.openConfirmModal({
+      title: <Text>Please confirm your action.</Text>,
+      children: (
+        <Text>
+          Are you sure you want to set the status of the applicant to &quot;For
+          Pooling&quot;?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      centered: true,
+      confirmProps: { color: "yellow" },
+      onConfirm: async () => handleUpdateJobOffer(),
+    });
 
   if (!team.team_name) return null;
   return (
@@ -372,7 +427,7 @@ const JobOfferMainTableRow = ({
                           new Date(value.job_offer_date_created)
                         )}`}
                       </Text>
-                      <Stack spacing="xs" mt="xs">
+                      <Stack spacing="xs" mt="md">
                         {value.job_offer_attachment && (
                           <Group>
                             <Text size={14}>Job Offer: </Text>
@@ -414,14 +469,15 @@ const JobOfferMainTableRow = ({
                           </Group>
                         )}
 
-                        <Group>
-                          <Title order={6}>{}</Title>
-                        </Group>
+                        {value.job_offer_reason_for_rejection && (
+                          <Group>
+                            <Text size={14}>Reason for rejection: </Text>
+                            <Title order={6}>
+                              {value.job_offer_reason_for_rejection}
+                            </Title>
+                          </Group>
+                        )}
                       </Stack>
-
-                      <Text c="dimmed" size="sm">
-                        {value.job_offer_reason_for_rejection}
-                      </Text>
                     </Timeline.Item>
                   );
                 })}
@@ -573,11 +629,11 @@ const JobOfferMainTableRow = ({
           {!["ACCEPTED", "PENDING", "FOR POOLING"].includes(
             item.job_offer_status
           ) && (
-            <Button color="yellow" w={130} onClick={openJobOfferModal}>
+            <Button color="yellow" w={130} onClick={poolingModal}>
               For Pooling
             </Button>
           )}
-          {["WAITING FOR OFFER", "REJECTED"].includes(
+          {["WAITING FOR OFFER", "REJECTED", "FOR POOLING"].includes(
             item.job_offer_status
           ) && (
             <Button color="green" w={130} onClick={openJobOfferModal}>

@@ -62,13 +62,12 @@ const DirectorInterview = ({ directorInterviewData }: Props) => {
             </Group>
           </>
         )}
-        {directorInterviewData.director_interview_status ===
-          "WAITING FOR SCHEDULE" && (
+        {directorInterviewData.director_interview_status === "PENDING" && (
           <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
             <Text>
-              Thank you for your application. We are currently reviewing your
-              informations, and we’re excited to connect with you soon. Please
-              look forward for the director interview schedule.
+              Your director interview is scheduled. Please wait for further
+              details and let us know if you have any questions. Looking forward
+              to discussing your skills and experience!
             </Text>
           </Alert>
         )}
