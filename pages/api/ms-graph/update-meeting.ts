@@ -17,10 +17,21 @@ export default async function handler(
       return res.status(405).json({ error: "Missing required credentials" });
     }
 
-    const { access_token, meeting_details, meeting_id } = req.body;
+    const access_token_response = await fetch(
+      `${process.env.NEXT_PUBLIC_SITE_URL}/api/ms-graph/create-oauth-token`,
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const access_token = await access_token_response.json();
 
     const response = await fetch(
-      `https://graph.microsoft.com/v1.0/users/dev@staclara.com.ph/events/${meeting_id}`,
+      `https://graph.microsoft.com/v1.0/users/dev@staclara.com.ph/events/${req.body.meetingId}`,
       {
         method: "PATCH",
         headers: {
@@ -28,7 +39,7 @@ export default async function handler(
           Accept: "application/json",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(meeting_details),
+        body: JSON.stringify(req.body.meetingDetails),
       }
     );
 
