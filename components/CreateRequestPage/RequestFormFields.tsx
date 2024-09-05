@@ -716,7 +716,8 @@ const RequestFormFields = ({
                       : "Contact number must start with 9";
                   },
                   checkNumberOfCharacter: (value) => {
-                    const stringifiedValue = `${value}`;
+                    const stringifiedValue = value ? `${value}` : "";
+
                     if (!stringifiedValue.length) return true;
                     switch (field.field_name) {
                       case "Contact Number":
