@@ -50,6 +50,7 @@ import {
   HRPhoneInterviewSpreadsheetData,
   HRPhoneInterviewTableRow,
   InitialFormType,
+  InterviewOnlineMeetingTableRow,
   ItemCategoryType,
   ItemCategoryWithSigner,
   ItemDescriptionFieldWithUoM,
@@ -6393,4 +6394,20 @@ export const getJobHistory = async (
   if (error) throw error;
 
   return data as unknown as JobOfferHistoryType[];
+};
+
+export const getInterviewOnlineMeeting = async (
+  supabaseClient: SupabaseClient<Database>,
+  interviewId: string
+) => {
+  const { data, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("interview_online_meeting_table")
+    .select("*")
+    .eq("interview_meeting_interview_id", interviewId)
+    .limit(1);
+
+  if (error) throw error;
+
+  return data[0] as InterviewOnlineMeetingTableRow;
 };

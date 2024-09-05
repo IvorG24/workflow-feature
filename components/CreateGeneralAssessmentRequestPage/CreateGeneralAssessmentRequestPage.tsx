@@ -2,7 +2,8 @@ import { createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { safeParse } from "@/utils/functions";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   FormType,
   FormWithResponseType,
@@ -79,6 +80,46 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
         status = "APPROVED";
       } else {
         status = "REJECTED";
+      }
+
+      if (status === "APPROVED") {
+        const applicantSection = data.sections.find(
+          (section) => section.section_name === "Applicant"
+        );
+        const emailAddress = safeParse(
+          applicantSection?.section_field[0].field_response as string
+        );
+        const firstName = safeParse(
+          applicantSection?.section_field[1].field_response as string
+        );
+        const lastName = safeParse(
+          applicantSection?.section_field[3].field_response as string
+        );
+
+        const applicantInformationIdSection = data.sections.find(
+          (section) => section.section_name === "ID"
+        );
+        const applicantInformationId = safeParse(
+          applicantInformationIdSection?.section_field[0]
+            .field_response as string
+        );
+
+        const emailNotificationProps = {
+          to: emailAddress,
+          subject: `You passed our General Assessment. Please read below on how you can proceed to the next step.`,
+          recipientName: `${startCase(firstName)} ${startCase(lastName)}`,
+          message:
+            "We invite you to proceed to the next step, Technical Assessment, by clicking the link below. If you need further assistance, please reach out to careers@staclara.com.ph",
+          callbackLink: `${process.env.NEXT_PUBLIC_SITE_URL}/user/application-progress/${applicantInformationId}`,
+          callbackLinkLabel: `Technical Assessment`,
+        };
+        await fetch("/api/resend/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(emailNotificationProps),
+        });
       }
 
       const rootFormslyRequestId = data.sections[0].section_field[0]

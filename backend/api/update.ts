@@ -14,6 +14,8 @@ import {
   EquipmentPartTableUpdate,
   EquipmentTableUpdate,
   HRPhoneInterviewSpreadsheetData,
+  InterviewOnlineMeetingTableRow,
+  InterviewOnlineMeetingTableUpdate,
   ItemDescriptionTableUpdate,
   ItemForm,
   ItemTableInsert,
@@ -1508,4 +1510,20 @@ export const updateJobOfferStatus = async (
     input_data: params,
   });
   if (error) throw error;
+};
+
+export const updateInterviewOnlineMeeting = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: InterviewOnlineMeetingTableUpdate
+) => {
+  const { data, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("interview_online_meeting_table")
+    .update(params)
+    .eq("inverview_meeting_id", params.inverview_meeting_id as string)
+    .select("*");
+
+  if (error) throw error;
+
+  return data[0] as InterviewOnlineMeetingTableRow;
 };
