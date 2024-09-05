@@ -2,7 +2,6 @@ import { getPhoneMeetingSlots } from "@/backend/api/get";
 import { updatePhoneInterview } from "@/backend/api/update";
 import { useUserProfile } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
-import { startCase } from "@/utils/string";
 import {
   Button,
   Flex,
@@ -191,22 +190,68 @@ const SchedulingCalendar = ({
 
         if (status === "success") {
           // TODO: add MS teams create meeting/event
-          const hrRepresentativeName = "John Doe";
-          const meetingLink = "temp-meeting-link.com";
+          const hrRepresentativeName = "John Doe"; // replace with actual hr rep name
+          const hrRepresentativeEmail = "johndoe@gmail.com"; // replace with actual hr rep email
+          const formattedDate = moment(tempDate).format(
+            "dddd, MMMM Do YYYY, h:mm:ss a"
+          );
+          const userFullname = `${user?.user_first_name} ${user?.user_last_name}`;
+          const meetingDetails = {
+            subject: "HR Interview",
+            body: {
+              contentType: "HTML",
+              content: `Interview with HR representative ${hrRepresentativeName} and applicant ${userFullname} on ${formattedDate}.`,
+            },
+            start: {
+              dateTime: moment(tempDate).format(),
+              timeZone: "Asia/Manila",
+            },
+            end: {
+              dateTime: moment(tempDate).add(15, "m").format(),
+              timeZone: "Asia/Manila",
+            },
+            attendees: [
+              {
+                emailAddress: {
+                  address: hrRepresentativeEmail, // replace with actual hr rep email
+                  name: hrRepresentativeName,
+                },
+                type: "required",
+              },
+              {
+                emailAddress: {
+                  address: user?.user_email, // replace with actual user
+                  name: userFullname,
+                },
+                type: "required",
+              },
+            ],
+            allowNewTimeProposals: true,
+            isOnlineMeeting: true,
+            onlineMeetingProvider: "teamsForBusiness",
+          };
+
+          const createMeetingResponse = await fetch(
+            "/api/ms-graph/create-meeting",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(meetingDetails),
+            }
+          );
+          const createMeetingData = await createMeetingResponse.json();
+
           const emailNotificationProps = {
             to: user?.user_email,
             subject: `HR Interview Schedule.`,
-            recipientName: `${startCase(
-              user?.user_first_name as string
-            )} ${startCase(user?.user_last_name as string)}`,
-            message: `You are scheduled for an interview with HR representative ${hrRepresentativeName} on ${moment(
-              tempDate
-            ).format(
-              "dddd, MMMM Do YYYY, h:mm:ss a"
-            )}. Click the link below to join the meeting. If you need further assistance, please reach out to careers@staclara.com.ph`,
-            callbackLink: meetingLink,
-            callbackLinkLabel: "HR Interview meeting link.",
+            recipientName: userFullname,
+            message: `You are scheduled for an interview with HR representative ${hrRepresentativeName} on ${formattedDate}. Click the link below to join the meeting. If you need further assistance, please reach out to careers@staclara.com.ph`,
+            callbackLink: createMeetingData.onlineMeeting.joinUrl,
+            callbackLinkLabel: "HR Interview Meeting Link",
           };
+
           await fetch("/api/resend/send", {
             method: "POST",
             headers: {
