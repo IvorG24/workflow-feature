@@ -205,10 +205,10 @@ const SchedulingCalendar = ({
         if (status === "success") {
           if (interviewOnlineMeeting) {
             // update online meeting
-            handleRescheduleOnlineMeeting(tempDate);
+            await handleRescheduleOnlineMeeting(tempDate);
           } else {
             // create online meeting
-            handleCreateOnlineMeeting(tempDate);
+            await handleCreateOnlineMeeting(tempDate);
           }
 
           setSelectedDate(tempDate);
@@ -356,6 +356,7 @@ const SchedulingCalendar = ({
       body: JSON.stringify(meetingDetails),
     });
     const createMeetingData = await createMeetingResponse.json();
+
     const meetingUrl = createMeetingData.onlineMeeting.joinUrl;
 
     const interviewOnlineMeeting: InterviewOnlineMeetingTableInsert = {
