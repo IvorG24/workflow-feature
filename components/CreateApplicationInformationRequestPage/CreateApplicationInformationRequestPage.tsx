@@ -226,6 +226,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         requestScore += 1;
       }
 
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId: form.form_id,
