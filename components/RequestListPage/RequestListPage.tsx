@@ -283,11 +283,22 @@ const RequestListPage = ({
                       await router.push(
                         `/${formatTeamNameToUrlKey(
                           activeTeam.team_name
-                        )}/requests/technical-interview-spreadsheet-view`
+                        )}/requests/technical-interview-1-spreadsheet-view`
                       )
                     }
                   >
-                    Technical Interview
+                    Technical Interview 1
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={async () =>
+                      await router.push(
+                        `/${formatTeamNameToUrlKey(
+                          activeTeam.team_name
+                        )}/requests/technical-interview-2-spreadsheet-view`
+                      )
+                    }
+                  >
+                    Technical Interview 2
                   </Menu.Item>
                   <Menu.Item
                     onClick={async () =>

@@ -6,11 +6,15 @@ import { IconNote } from "@tabler/icons-react";
 
 type Props = {
   technicalInterviewData: TechnicalInterviewTableRow;
+  technicalInterviewNumber?: number;
 };
-const TechnicalInterview = ({ technicalInterviewData }: Props) => {
+const TechnicalInterview = ({
+  technicalInterviewData,
+  technicalInterviewNumber,
+}: Props) => {
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
-      <Title order={3}>Technical Interview</Title>
+      <Title order={3}>Technical Interview {technicalInterviewNumber}</Title>
       <Stack>
         <Group>
           <Text>Date Created: </Text>

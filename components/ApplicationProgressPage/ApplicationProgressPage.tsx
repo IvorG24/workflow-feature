@@ -47,7 +47,8 @@ type Props = {
   technicalAssessmentData?: RequestViewRow;
   hrPhoneInterviewData?: HRPhoneInterviewTableRow;
   tradeTestData?: TradeTestTableRow | null;
-  technicalInterviewData?: TechnicalInterviewTableRow | null;
+  technicalInterview1Data?: TechnicalInterviewTableRow | null;
+  technicalInterview2Data?: TechnicalInterviewTableRow | null;
   directorInterviewData?: DirectorInterviewTableRow | null;
   backgroundCheckData?: BackgroundCheckTableRow | null;
   jobOfferData?: (JobOfferTableRow & AttachmentTableRow) | null;
@@ -59,7 +60,8 @@ const ApplicationProgressPage = (props: Props) => {
     technicalAssessmentData,
     hrPhoneInterviewData,
     tradeTestData,
-    technicalInterviewData,
+    technicalInterview1Data,
+    technicalInterview2Data,
     directorInterviewData,
     backgroundCheckData,
     jobOfferData,
@@ -99,8 +101,19 @@ const ApplicationProgressPage = (props: Props) => {
     tradeTestData: tradeTestData ? (
       <TradeTest tradeTestData={tradeTestData} />
     ) : null,
-    technicalInterviewData: technicalInterviewData ? (
-      <TechnicalInterview technicalInterviewData={technicalInterviewData} />
+    technicalInterview1Data: technicalInterview1Data ? (
+      <TechnicalInterview
+        technicalInterviewData={technicalInterview1Data}
+        technicalInterviewNumber={
+          technicalInterview2Data !== null ? 1 : undefined
+        }
+      />
+    ) : null,
+    technicalInterview2Data: technicalInterview2Data ? (
+      <TechnicalInterview
+        technicalInterviewData={technicalInterview2Data}
+        technicalInterviewNumber={2}
+      />
     ) : null,
     directorInterviewData: directorInterviewData ? (
       <DirectorInterview directorInterviewData={directorInterviewData} />
@@ -288,12 +301,23 @@ const ApplicationProgressPage = (props: Props) => {
               {...stepperProps(tradeTestData?.trade_test_status as string)}
             />
           )}
-          {technicalInterviewData !== null && (
+          {technicalInterview1Data !== null && (
             <Stepper.Step
-              label="Technical Interview"
-              disabled={!Boolean(technicalInterviewData)}
+              label={`Technical Interview ${
+                technicalInterview2Data !== null ? "1" : ""
+              }`}
+              disabled={!Boolean(technicalInterview1Data)}
               {...stepperProps(
-                technicalInterviewData?.technical_interview_status as string
+                technicalInterview1Data?.technical_interview_status as string
+              )}
+            />
+          )}
+          {technicalInterview2Data !== null && (
+            <Stepper.Step
+              label="Technical Interview 2"
+              disabled={!Boolean(technicalInterview1Data)}
+              {...stepperProps(
+                technicalInterview2Data?.technical_interview_status as string
               )}
             />
           )}

@@ -34,10 +34,10 @@ const Page = ({ positionOptionList }: Props) => {
   return (
     <>
       <Meta
-        description="Technical Interview Spreadsheet View Page"
-        url="/{teamName}/requests/technical-interview-spreadsheet-view"
+        description="Technical Interview 1 Spreadsheet View Page"
+        url="/{teamName}/requests/technical-interview-1-spreadsheet-view"
       />
-      <TechnicalInterviewSpreadsheetView positionOptionList={positionOptionList} />
+      <TechnicalInterviewSpreadsheetView positionOptionList={positionOptionList} technicalInterviewNumber={1}/>
     </>
   );
 };

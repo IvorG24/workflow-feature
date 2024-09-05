@@ -1389,6 +1389,7 @@ export const updateTechnicalInterviewStatus = async (
     status: string;
     teamMemberId: string;
     data: TechnicalInterviewSpreadsheetData;
+    technicalInterviewNumber: number;
   }
 ) => {
   const { error } = await supabaseClient.rpc(
@@ -1409,6 +1410,7 @@ export const updateTechnicalInterviewSchedule = async (
     userEmail: string;
     applicationInformationFormslyId: string;
     notificationMessage: string;
+    technicalInterviewNumber: number
   }
 ) => {
   const { error } = await supabaseClient.rpc(

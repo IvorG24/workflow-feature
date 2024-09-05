@@ -58,9 +58,13 @@ const formDefaultValues = {
 
 type Props = {
   positionOptionList: OptionType[];
+  technicalInterviewNumber: number;
 };
 
-const TechnicalInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
+const TechnicalInterviewSpreadsheetView = ({
+  positionOptionList,
+  technicalInterviewNumber,
+}: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
@@ -94,6 +98,7 @@ const TechnicalInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
         limit: DEFAULT_NUMBER_SSOT_ROWS,
         page: data?.page ?? page,
         sort: data?.sort ?? sort,
+        technicalInterviewNumber,
       });
 
       if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
@@ -188,6 +193,7 @@ const TechnicalInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
         status,
         teamMemberId: teamMember.team_member_id,
         data,
+        technicalInterviewNumber,
       });
       setData((prev) =>
         prev.map((prevData) => {
@@ -219,7 +225,7 @@ const TechnicalInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
       <Box>
         <Group>
           <Title order={2} color="dimmed">
-            Technical Interview Spreadsheet View
+            Technical Interview {technicalInterviewNumber} Spreadsheet View
           </Title>
           <Button
             leftIcon={<IconReload size={16} />}
@@ -254,6 +260,7 @@ const TechnicalInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
           handleUpdateTechnicalInterviewStatus
         }
         setData={setData}
+        technicalInterviewNumber={technicalInterviewNumber}
       />
     </Stack>
   );

@@ -955,7 +955,8 @@ CREATE TABLE lookup_schema.position_table (
   position_license_label VARCHAR(4000),
   position_is_with_trade_test BOOLEAN DEFAULT false NOT NULL,
   position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
-  position_is_with_technical_interview BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_technical_interview_1 BOOLEAN DEFAULT false NOT NULL,
+  position_is_with_technical_interview_2 BOOLEAN DEFAULT false NOT NULL,
   position_is_with_director_interview BOOLEAN DEFAULT false NOT NULL,
   position_minimum_years_of_experience INT DEFAULT 1 NOT NULL,
   position_is_ped_position BOOLEAN DEFAULT false NOT NULL,
@@ -14766,7 +14767,8 @@ AS $$
       = jobOfferData
       = undefined;
     let tradeTestData 
-      = technicalInterviewData 
+      = technicalInterview1Data 
+      = technicalInterview2Data 
       = directorInterviewData 
       = backgroundCheckData 
       = null;
@@ -14778,8 +14780,11 @@ AS $$
     if (positionData.position_is_with_trade_test) {
       tradeTestData = undefined;
     }
-    if (positionData.position_is_with_technical_interview) {
-      technicalInterviewData = undefined;
+    if (positionData.position_is_with_technical_interview_1) {
+      technicalInterview1Data = undefined;
+    }
+    if (positionData.position_is_with_technical_interview_2) {
+      technicalInterview2Data = undefined;
     }
     if (positionData.position_is_with_director_interview) {
       directorInterviewData = undefined;
@@ -14814,7 +14819,8 @@ AS $$
         technicalAssessmentData,
         hrPhoneInterviewData,
         tradeTestData,
-        technicalInterviewData,
+        technicalInterview1Data,
+        technicalInterview2Data,
         directorInterviewData,
         backgroundCheckData,
         jobOfferData
@@ -14867,7 +14873,8 @@ AS $$
         technicalAssessmentData: undefined,
         hrPhoneInterviewData,
         tradeTestData,
-        technicalInterviewData,
+        technicalInterview1Data,
+        technicalInterview2Data,
         directorInterviewData,
         backgroundCheckData,
         jobOfferData
@@ -14884,7 +14891,8 @@ AS $$
         technicalAssessmentData,
         hrPhoneInterviewData: undefined,
         tradeTestData,
-        technicalInterviewData,
+        technicalInterview1Data,
+        technicalInterview2Data,
         directorInterviewData,
         backgroundCheckData,
         jobOfferData
@@ -14902,7 +14910,8 @@ AS $$
           technicalAssessmentData,
           hrPhoneInterviewData,
           tradeTestData: undefined,
-          technicalInterviewData,
+          technicalInterview1Data,
+          technicalInterview2Data,
           directorInterviewData,
           backgroundCheckData,
           jobOfferData
@@ -14912,23 +14921,44 @@ AS $$
       tradeTestData = tradeTestData[0];
     }
 
-    if (positionData.position_is_with_technical_interview) {
-      technicalInterviewData = plv8.execute(`SELECT * FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestUUID}'`);
-       if (!technicalInterviewData.length) {
+    if (positionData.position_is_with_technical_interview_1) {
+      technicalInterview1Data = plv8.execute(`SELECT * FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestUUID}' AND technical_interview_number = 1`);
+       if (!technicalInterview1Data.length) {
         returnData = {
           applicationInformationData,
           generalAssessmentData,
           technicalAssessmentData,
           hrPhoneInterviewData,
           tradeTestData,
-          technicalInterviewData: undefined,
+          technicalInterview1Data: undefined,
+          technicalInterview2Data,
           directorInterviewData,
           backgroundCheckData,
           jobOfferData
         }
         return;
       }
-      technicalInterviewData = technicalInterviewData[0];
+      technicalInterview1Data = technicalInterview1Data[0];
+    }
+
+    if (positionData.position_is_with_technical_interview_2) {
+      technicalInterview2Data = plv8.execute(`SELECT * FROM hr_schema.technical_interview_table WHERE technical_interview_request_id = '${requestUUID}' AND technical_interview_number = 2`);
+       if (!technicalInterview2Data.length) {
+        returnData = {
+          applicationInformationData,
+          generalAssessmentData,
+          technicalAssessmentData,
+          hrPhoneInterviewData,
+          tradeTestData,
+          technicalInterview1Data,
+          technicalInterview2Data: undefined,
+          directorInterviewData,
+          backgroundCheckData,
+          jobOfferData
+        }
+        return;
+      }
+      technicalInterview2Data = technicalInterview2Data[0];
     }
 
     if (positionData.position_is_with_director_interview) {
@@ -14940,7 +14970,8 @@ AS $$
           technicalAssessmentData,
           hrPhoneInterviewData,
           tradeTestData,
-          technicalInterviewData,
+          technicalInterview1Data,
+          technicalInterview2Data,
           directorInterviewData: undefined,
           backgroundCheckData,
           jobOfferData
@@ -14959,7 +14990,8 @@ AS $$
           technicalAssessmentData,
           hrPhoneInterviewData,
           tradeTestData,
-          technicalInterviewData,
+          technicalInterview1Data,
+          technicalInterview2Data,
           directorInterviewData,
           backgroundCheckData: undefined,
           jobOfferData
@@ -14988,7 +15020,8 @@ AS $$
         technicalAssessmentData,
         hrPhoneInterviewData,
         tradeTestData,
-        technicalInterviewData,
+        technicalInterview1Data,
+        technicalInterview2Data,
         directorInterviewData,
         backgroundCheckData,
         jobOfferData: undefined
@@ -15003,7 +15036,8 @@ AS $$
       technicalAssessmentData,
       hrPhoneInterviewData,
       tradeTestData,
-      technicalInterviewData,
+      technicalInterview1Data,
+      technicalInterview2Data,
       directorInterviewData,
       backgroundCheckData,
       jobOfferData
@@ -15199,11 +15233,12 @@ AS $$
       position,
       requestId
     } = input_data;
-
+    
     const steps = [
       'hr_phone_interview',
       'trade_test',
-      'technical_interview',
+      'technical_interview_1',
+      'technical_interview_2', 
       'director_interview',
       'background_check'
     ];
@@ -15212,11 +15247,13 @@ AS $$
     
     if (positionData.position_is_with_trade_test && currentStep <= 0) {
       plv8.execute(`INSERT INTO hr_schema.trade_test_table (trade_test_request_id) VALUES ('${requestId}')`);
-    } else if (positionData.position_is_with_technical_interview && currentStep <= 1) {
-      plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id) VALUES ('${requestId}')`);
-    } else if (positionData.position_is_with_director_interview && currentStep <= 2) {
+    } else if (positionData.position_is_with_technical_interview_1 && currentStep <= 1) {
+      plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id, technical_interview_number) VALUES ('${requestId}', 1)`);
+    } else if (positionData.position_is_with_technical_interview_2 && currentStep <= 2) {
+      plv8.execute(`INSERT INTO hr_schema.technical_interview_table (technical_interview_request_id, technical_interview_number) VALUES ('${requestId}', 2)`);
+    } else if (positionData.position_is_with_director_interview && currentStep <= 3) {
       plv8.execute(`INSERT INTO hr_schema.director_interview_table (director_interview_request_id) VALUES ('${requestId}')`);
-    } else if (positionData.position_is_with_background_check && currentStep <= 3) {
+    } else if (positionData.position_is_with_background_check && currentStep <= 4) {
       plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id) VALUES ('${requestId}')`);
     } else {
       plv8.execute(`INSERT INTO hr_schema.job_offer_table (job_offer_request_id) VALUES ('${requestId}')`);
@@ -15765,7 +15802,8 @@ AS $$
       technical_assessment_score,
       technical_interview_date_created,
       technical_interview_status,
-      technical_interview_schedule
+      technical_interview_schedule,
+      technicalInterviewNumber
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -15864,6 +15902,7 @@ AS $$
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
           AND technicalAssessment.request_status = 'APPROVED'
+          AND technical_interview_number = ${technicalInterviewNumber}
           ${positionCondition}
           ${applicationInformationRequestIdCondition.length ? applicationInformationRequestIdCondition : ""}
           ${applicationInformationScoreCondition.length ? applicationInformationScoreCondition : ""}
@@ -15927,7 +15966,8 @@ AS $$
     const {
       status,
       teamMemberId,
-      data
+      data,
+      technicalInterviewNumber
     } = input_data;
 
     const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
@@ -15941,6 +15981,7 @@ AS $$
           technical_interview_team_member_id = '${teamMemberId}'
         WHERE 
           technical_interview_request_id = '${data.hr_request_reference_id}'
+          AND technical_interview_number = ${technicalInterviewNumber}
       `
     );
 
@@ -15958,7 +15999,7 @@ AS $$
         (
           'REQUEST',
           '${status}',
-          'Technical Interview status is updated to ${status}',
+          'Technical Interview ${technicalInterviewNumber} status is updated to ${status}',
           '/user/application-progress/${data.application_information_request_id}',
           '${userId}'
         )
@@ -15967,7 +16008,8 @@ AS $$
 
     if (status === 'QUALIFIED') {
       const parsedPosition = data.position.replaceAll('"', '');
-      plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "technical_interview", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
+      const qualifiedStep = `technical_interview_${technicalInterviewNumber}`;
+      plv8.execute(`SELECT public.application_information_next_step('{ "qualifiedStep": "${qualifiedStep}", "position": "${parsedPosition}", "requestId": "${data.hr_request_reference_id}" }')`);
     }
   });
   return returnData;
@@ -15987,7 +16029,8 @@ AS $$
       requestReferenceId,
       userEmail,
       applicationInformationFormslyId,
-      notificationMessage
+      notificationMessage,
+      technicalInterviewNumber
     } = input_data;
 
     const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
@@ -16002,6 +16045,7 @@ AS $$
           technical_interview_schedule = '${schedule}'
         WHERE 
           technical_interview_request_id = '${requestReferenceId}'
+          AND technical_interview_number = ${technicalInterviewNumber}
       `
     );
 

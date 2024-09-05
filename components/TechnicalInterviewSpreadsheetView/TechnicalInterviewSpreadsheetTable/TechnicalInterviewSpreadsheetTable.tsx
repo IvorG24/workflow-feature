@@ -42,6 +42,7 @@ type Props = {
     data: TechnicalInterviewSpreadsheetData
   ) => void;
   setData: Dispatch<SetStateAction<TechnicalInterviewSpreadsheetData[]>>;
+  technicalInterviewNumber: number;
 };
 
 const TechnicalInterviewSpreadsheetTable = ({
@@ -54,7 +55,8 @@ const TechnicalInterviewSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   handleUpdateTechnicalInterviewStatus,
-  setData
+  setData,
+  technicalInterviewNumber,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -203,7 +205,9 @@ const TechnicalInterviewSpreadsheetTable = ({
                     </Flex>
                   </th>
                 )}
-                {!hiddenColumnList.includes("technical_interview_date_created") && (
+                {!hiddenColumnList.includes(
+                  "technical_interview_date_created"
+                ) && (
                   <th>
                     <Flex gap="xs" align="center" justify="center" wrap="wrap">
                       <Text>Technical Interview Date Created</Text>
@@ -240,9 +244,11 @@ const TechnicalInterviewSpreadsheetTable = ({
                   key={item.application_information_request_id}
                   item={item}
                   hiddenColumnList={hiddenColumnList}
-                  handleUpdateTechnicalInterviewStatus={handleUpdateTechnicalInterviewStatus}
+                  handleUpdateTechnicalInterviewStatus={
+                    handleUpdateTechnicalInterviewStatus
+                  }
                   setData={setData}
-
+                  technicalInterviewNumber={technicalInterviewNumber}
                 />
               ))}
             </tbody>

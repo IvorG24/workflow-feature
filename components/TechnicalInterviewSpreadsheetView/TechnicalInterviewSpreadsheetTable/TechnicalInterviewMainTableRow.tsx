@@ -46,6 +46,7 @@ type Props = {
     data: TechnicalInterviewSpreadsheetData
   ) => void;
   setData: Dispatch<SetStateAction<TechnicalInterviewSpreadsheetData[]>>;
+  technicalInterviewNumber: number;
 };
 
 const TechnicalInterviewMainTableRow = ({
@@ -53,6 +54,7 @@ const TechnicalInterviewMainTableRow = ({
   hiddenColumnList,
   handleUpdateTechnicalInterviewStatus,
   setData,
+  technicalInterviewNumber,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -116,6 +118,7 @@ const TechnicalInterviewMainTableRow = ({
         applicationInformationFormslyId:
           item.application_information_request_id,
         notificationMessage: `Your technical interview schedule is on ${formattedScheduleMessage}`,
+        technicalInterviewNumber,
       });
 
       setData((prev) =>
@@ -130,7 +133,7 @@ const TechnicalInterviewMainTableRow = ({
         })
       );
       notifications.show({
-        message: "technical interview scheduled successfully.",
+        message: "Technical interview scheduled successfully.",
         color: "green",
       });
     } catch (e) {

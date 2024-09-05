@@ -6236,6 +6236,7 @@ export const getTechnicalInterviewSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: TechnicalInterviewFilterFormValues & {
     userId: string;
+    technicalInterviewNumber: number;
   }
 ) => {
   const updatedParams = {
