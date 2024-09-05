@@ -1,4 +1,4 @@
-import { acceptOrRejectJobOffer } from "@/backend/api/update";
+import { updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
@@ -55,7 +55,7 @@ const JobOffer = ({
     try {
       setIsLoading(true);
       const newStatus = action === "Accept" ? "ACCEPTED" : "REJECTED";
-      await acceptOrRejectJobOffer(supabaseClient, {
+      await updateJobOfferStatus(supabaseClient, {
         status: newStatus,
         requestReferenceId: jobOfferData.job_offer_request_id,
         title: jobOfferData.job_offer_title as string,
@@ -144,15 +144,6 @@ const JobOffer = ({
             </Text>
           )}
         </Group>
-        {jobOfferStatus === "WAITING FOR OFFER" && (
-          <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
-            <Text>
-              Thank you for your application. We are currently reviewing your
-              informations, and we’re excited to connect with you soon. Please
-              look forward for the job offer information.
-            </Text>
-          </Alert>
-        )}
         {jobOfferData.job_offer_attachment_id && (
           <>
             <Group>
@@ -197,6 +188,26 @@ const JobOffer = ({
             <Text>
               We appreciate you taking us up on our job offer. Kindly expect to
               get the message from HR.
+            </Text>
+          </Alert>
+        )}
+        {jobOfferStatus === "WAITING FOR OFFER" && (
+          <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+            <Text>
+              We’re finalizing your job offer. Please wait for further details
+              and feel free to contact us if you have any questions. We
+              appreciate your patience and look forward to updating you soon!
+            </Text>
+          </Alert>
+        )}
+        {jobOfferStatus === "FOR POOLING" && (
+          <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+            <Text>
+              Thank you for your interest! We’ve placed your application in our
+              candidate pool for future opportunities. While we don’t have a
+              current opening that fits, we’re impressed with your
+              qualifications and will keep you in mind for suitable roles.
+              Please don’t hesitate to reach out if you have any questions.
             </Text>
           </Alert>
         )}

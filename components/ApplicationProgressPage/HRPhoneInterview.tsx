@@ -2,9 +2,10 @@ import { getPhoneInterview } from "@/backend/api/get";
 import { formatDate } from "@/utils/constant";
 import { getStatusToColor } from "@/utils/styling";
 import { HRPhoneInterviewTableRow } from "@/utils/types";
-import { Badge, Group, Stack, Text, Title } from "@mantine/core";
+import { Alert, Badge, Group, Stack, Text, Title } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { IconNote } from "@tabler/icons-react";
 import { useState } from "react";
 import SchedulingCalendar from "./SchedulingCalendar";
 
@@ -75,6 +76,15 @@ const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
             status={phoneInterviewData.hr_phone_interview_status}
             isRefetchingData={isLoading}
           />
+        )}
+        {phoneInterviewData.hr_phone_interview_status === "PENDING" && (
+          <Alert title="Note!" icon={<IconNote size={16} />}>
+            <Text>
+              Your HR phone interview is scheduled. Please wait for further
+              details and let us know if you have any questions. Looking forward
+              to speaking with you soon!
+            </Text>
+          </Alert>
         )}
       </Stack>
     </Stack>
