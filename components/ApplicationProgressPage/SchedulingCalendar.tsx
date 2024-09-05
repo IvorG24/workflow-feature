@@ -11,7 +11,6 @@ import {
 } from "@/backend/api/update";
 import { useUserProfile } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
-import { JoyRideNoSSR } from "@/utils/functions";
 import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
@@ -85,7 +84,6 @@ const SchedulingCalendar = ({
   const [interviewOnlineMeeting, setInterviewOnlineMeeting] =
     useState<InterviewOnlineMeetingTableRow | null>(null);
   const [currentDate, setCurrentDate] = useState<Date>();
-
   const appliedDate = moment(date_created);
   const minDate = moment(currentDate).format();
   const maxDate = appliedDate.clone().add(30, "days").toDate();
@@ -127,7 +125,7 @@ const SchedulingCalendar = ({
   const rescheduleHandler = () => {
     setIsEdit(true);
     setIsReschedule(true);
-    setIsReadyToSelect(false);
+    setIsReadyToSelect(true);
   };
 
   const fetchTime = async ({
@@ -202,6 +200,8 @@ const SchedulingCalendar = ({
       return;
     }
     setIsloading(true);
+    setIsReadyToSelect(false);
+    setIsEdit(false);
 
     try {
       const [time] = selectedSlot.split(" ");
@@ -254,6 +254,7 @@ const SchedulingCalendar = ({
           }
 
           setSelectedDate(tempDate);
+
           notifications.show({
             message: message,
             color: "green",
@@ -678,6 +679,7 @@ const SchedulingCalendar = ({
               <Button
                 onClick={async () => {
                   setIsReadyToSelect(true);
+                  setIsEdit(true);
                 }}
                 disabled={!Boolean(!isReadyToSelect && isEdit)}
               >
@@ -689,7 +691,6 @@ const SchedulingCalendar = ({
               <Button
                 color="dark"
                 onClick={() => {
-                  setIsEdit(false);
                   setIsReschedule(false);
                 }}
               >
@@ -699,7 +700,7 @@ const SchedulingCalendar = ({
           </Group>
         )}
 
-        {isEdit && true && (
+        {isReadyToSelect && (
           <>
             <Group>
               <Text>Select Date:</Text>
@@ -732,7 +733,30 @@ const SchedulingCalendar = ({
                 }
               />
             </Group>
-
+            {!isReschedule && selectedSlot && selectedDate && (
+              <Group position="left" align="center" spacing="md">
+                <Text style={{ marginBottom: 0 }}>Action:</Text>
+                <Button
+                  style={{ width: "min-content" }}
+                  color="dark"
+                  onClick={() => {
+                    setIsReschedule(false);
+                    setIsReadyToSelect(false);
+                  }}
+                  disabled={
+                    isLoading || isRefetchingData || isDayBeforeSchedule
+                  }
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={setScheduleHandler}
+                  disabled={isLoading || isRefetchingData}
+                >
+                  Submit
+                </Button>
+              </Group>
+            )}
             {isReschedule && selectedSlot && selectedDate && (
               <Group position="left" align="center" spacing="md">
                 <Text style={{ marginBottom: 0 }}>Action:</Text>
@@ -741,7 +765,6 @@ const SchedulingCalendar = ({
                   color="dark"
                   onClick={() => {
                     setIsReschedule(false);
-                    setIsEdit(false);
                   }}
                   disabled={
                     isLoading || isRefetchingData || isDayBeforeSchedule
@@ -766,27 +789,6 @@ const SchedulingCalendar = ({
             <Text>Online Meeting:</Text>
 
             {/* JoyRide for showing the next step after scheduling */}
-            <JoyRideNoSSR
-              steps={[
-                {
-                  target: ".meeting-link",
-                  content: (
-                    <Text>
-                      You successfully scheduled your interview. The next step
-                      is to wait for the actual date of the interview for the
-                      button to be available. Best of luck!
-                    </Text>
-                  ),
-                  disableBeacon: true,
-                },
-              ]}
-              run={true}
-              hideCloseButton
-              disableCloseOnEsc
-              disableOverlayClose
-              hideBackButton
-              styles={{ buttonNext: { backgroundColor: "blue" } }} // Custom styles for "Next" button
-            />
 
             {/* Button to join the online meeting */}
             <Button
