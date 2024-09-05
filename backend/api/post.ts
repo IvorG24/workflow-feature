@@ -21,6 +21,8 @@ import {
   EquipmentTableInsert,
   FormTableRow,
   FormType,
+  InterviewOnlineMeetingTableInsert,
+  InterviewOnlineMeetingTableRow,
   InvitationTableRow,
   ItemDescriptionFieldTableInsert,
   ItemDescriptionFieldUOMTableInsert,
@@ -602,7 +604,7 @@ export const createRequest = async (
         teamId,
         status,
         requestScore,
-        rootFormslyRequestId
+        rootFormslyRequestId,
       },
     })
     .select()
@@ -2079,4 +2081,20 @@ export const addMemberToAllProject = async (
   if (error) throw error;
 
   return data as InvitationTableRow[];
+};
+
+export const createInterviewOnlineMeeting = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: InterviewOnlineMeetingTableInsert
+) => {
+  const { data, error } = await supabaseClient
+    .schema("hr_schema")
+    .from("interview_online_meeting_table")
+    .insert(params)
+    .select("*")
+    .limit(1);
+
+  if (error) throw error;
+
+  return data[0] as InterviewOnlineMeetingTableRow;
 };

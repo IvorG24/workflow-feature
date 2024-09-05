@@ -559,6 +559,13 @@ export type TeamDepartmentTableRow =
 
 export type RequestViewRow = Database["public"]["Views"]["request_view"]["Row"];
 
+export type InterviewOnlineMeetingTableRow =
+  Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Row"];
+export type InterviewOnlineMeetingTableInsert =
+  Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Insert"];
+export type InterviewOnlineMeetingTableUpdate =
+  Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Update"];
+
 // End: Database Table Types
 
 // Start: Database Enums
