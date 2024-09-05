@@ -31,6 +31,13 @@ import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
+const testOnlineMeetingProps = {
+  interview_meeting_date_created: "TEST",
+  interview_meeting_interview_id: "TEST",
+  interview_meeting_provider_id: "TEST",
+  interview_meeting_url: "TEST",
+};
+
 type SchedulingType = {
   meeting_type: "technical" | "qualifying" | "phone";
   target_id: string;
@@ -205,10 +212,30 @@ const SchedulingCalendar = ({
         if (status === "success") {
           if (interviewOnlineMeeting) {
             // update online meeting
-            await handleRescheduleOnlineMeeting(tempDate);
+            if (process.env.NODE_ENV === "production") {
+              await handleRescheduleOnlineMeeting(tempDate);
+            } else {
+              const newInterviewOnlineMeeting =
+                await updateInterviewOnlineMeeting(supabaseClient, {
+                  ...testOnlineMeetingProps,
+                  inverview_meeting_id:
+                    interviewOnlineMeeting.inverview_meeting_id,
+                });
+              setInterviewOnlineMeeting(newInterviewOnlineMeeting);
+            }
           } else {
             // create online meeting
-            await handleCreateOnlineMeeting(tempDate);
+            if (process.env.NODE_ENV === "production") {
+              await handleCreateOnlineMeeting(tempDate);
+            } else {
+              const newInterviewOnlineMeeting =
+                await createInterviewOnlineMeeting(
+                  supabaseClient,
+                  testOnlineMeetingProps
+                );
+
+              setInterviewOnlineMeeting(newInterviewOnlineMeeting);
+            }
           }
 
           setSelectedDate(tempDate);
@@ -309,9 +336,7 @@ const SchedulingCalendar = ({
   const handleCreateOnlineMeeting = async (tempDate: Date) => {
     const hrRepresentativeName = "John Doe"; // replace with actual hr rep name
     const hrRepresentativeEmail = "johndoe@gmail.com"; // replace with actual hr rep email
-    const formattedDate = moment(tempDate).format(
-      "dddd, MMMM Do YYYY, h:mm:ss a"
-    );
+    const formattedDate = moment(tempDate).format("dddd, MMMM Do YYYY, h:mm A");
     const userFullname = `${user?.user_first_name} ${user?.user_last_name}`;
     const meetingDetails = {
       subject: "HR Interview",
