@@ -406,7 +406,7 @@ const SchedulingCalendar = ({
       },
     };
 
-    const updateMeetingResponse = await fetch("/api/ms-graph/create-meeting", {
+    const updateMeetingResponse = await fetch("/api/ms-graph/update-meeting", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -605,7 +605,7 @@ const SchedulingCalendar = ({
           </Group>
         )}
 
-        {isEdit && isReadyToSelect && (
+        {isEdit && true && (
           <>
             <Group>
               <Text>Select Date:</Text>

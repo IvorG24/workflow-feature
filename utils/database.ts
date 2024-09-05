@@ -1329,6 +1329,7 @@ export type Database = {
           job_offer_attachment_id: string | null
           job_offer_date_created: string
           job_offer_id: string
+          job_offer_project_assignment: string | null
           job_offer_request_id: string
           job_offer_status: string
           job_offer_status_date_updated: string | null
@@ -1339,6 +1340,7 @@ export type Database = {
           job_offer_attachment_id?: string | null
           job_offer_date_created?: string
           job_offer_id?: string
+          job_offer_project_assignment?: string | null
           job_offer_request_id: string
           job_offer_status?: string
           job_offer_status_date_updated?: string | null
@@ -1349,6 +1351,7 @@ export type Database = {
           job_offer_attachment_id?: string | null
           job_offer_date_created?: string
           job_offer_id?: string
+          job_offer_project_assignment?: string | null
           job_offer_request_id?: string
           job_offer_status?: string
           job_offer_status_date_updated?: string | null

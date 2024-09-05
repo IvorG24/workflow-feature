@@ -1519,8 +1519,7 @@ export const updateInterviewOnlineMeeting = async (
     .from("interview_online_meeting_table")
     .update(params)
     .eq("inverview_meeting_id", params.inverview_meeting_id as string)
-    .select("*")
-    .limit(1);
+    .select("*");
 
   if (error) throw error;
 
