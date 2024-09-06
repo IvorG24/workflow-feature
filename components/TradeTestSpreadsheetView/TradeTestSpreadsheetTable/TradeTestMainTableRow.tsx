@@ -9,16 +9,16 @@ import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { TradeTestSpreadsheetData } from "@/utils/types";
 import {
-    ActionIcon,
-    Anchor,
-    Badge,
-    Button,
-    createStyles,
-    Flex,
-    Group,
-    Modal,
-    Stack,
-    Text,
+  ActionIcon,
+  Anchor,
+  Badge,
+  Button,
+  createStyles,
+  Flex,
+  Group,
+  Modal,
+  Stack,
+  Text,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
@@ -77,8 +77,8 @@ const TradeTestMainTableRow = ({
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
-    NOT QUALIFIED: "red",
-    NOT RESPONSIVE: "gray",
+    "NOT QUALIFIED": "red",
+    "NOT RESPONSIVE": "gray",
   };
 
   const openModal = (action: string) =>

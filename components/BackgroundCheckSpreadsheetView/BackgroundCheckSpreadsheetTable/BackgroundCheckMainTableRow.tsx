@@ -36,8 +36,8 @@ const BackgroundCheckMainTableRow = ({
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
-    NOT QUALIFIED: "red",
-    NOT RESPONSIVE: "gray",
+    "NOT QUALIFIED": "red",
+    "NOT RESPONSIVE": "gray",
   };
 
   const openModal = (action: string) =>
