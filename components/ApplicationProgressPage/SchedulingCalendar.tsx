@@ -84,6 +84,7 @@ const SchedulingCalendar = ({
   const [isEdit, setIsEdit] = useState<boolean | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [isReschedule, setIsReschedule] = useState(false);
+
   const [interviewOnlineMeeting, setInterviewOnlineMeeting] =
     useState<InterviewOnlineMeetingTableRow | null>(null);
   const [currentDate, setCurrentDate] = useState<Date>();
@@ -91,17 +92,34 @@ const SchedulingCalendar = ({
   const minDate = moment(currentDate).format();
   const maxDate = appliedDate.clone().add(30, "days").toDate();
   const scheduleDate = intialDate ? moment(intialDate) : moment();
+  const initialDate = moment(intialDate).format();
   const isDayBeforeSchedule =
     scheduleDate.startOf("day").diff(moment(minDate).startOf("day"), "days") ===
     1;
   const isAfterSchedule = scheduleDate
     .startOf("day")
     .isBefore(moment(minDate).startOf("day"));
+  const isToday = moment(intialDate).isSame(
+    moment(currentDate).format(),
+    "day"
+  );
+  const cancelRestricted = moment(minDate).isSameOrAfter(
+    moment(initialDate),
+    "minutes"
+  );
+
   const formatTimeToLocal = (dateTime: string) => {
     return moment(dateTime).format("hh:mm A");
   };
 
   const cancelInterviewHandler = async () => {
+    if (cancelRestricted) {
+      notifications.show({
+        message: "Cannot cancel interview.",
+        color: "orange",
+      });
+      return;
+    }
     try {
       const params = {
         target_id,
@@ -549,6 +567,8 @@ const SchedulingCalendar = ({
     handleFetchInterviewOnlineMeeting();
   }, [target_id]);
 
+  console.log("current Date", minDate);
+
   return (
     <>
       <Modal
@@ -616,7 +636,7 @@ const SchedulingCalendar = ({
           </>
         )}
         {isReadyToSelect === false &&
-          selectedDate &&
+          intialDate &&
           status !== "CANCELLED" &&
           status !== "QUALIFIED" && (
             <>
@@ -635,9 +655,11 @@ const SchedulingCalendar = ({
                         <Text>Scheduled Time:</Text>
                         <Text component="a" fw="bold">
                           {" "}
-                          {intialDate
-                            ? moment(new Date(intialDate)).format("hh:mm A")
-                            : ""}
+                          {selectedSlot && intialDate
+                            ? selectedSlot
+                            : intialDate
+                              ? formatTimeToLocal(intialDate)
+                              : ""}
                         </Text>
                       </Group>
                     </Stack>
@@ -651,7 +673,8 @@ const SchedulingCalendar = ({
                             isLoading ||
                             isRefetchingData ||
                             isDayBeforeSchedule ||
-                            isAfterSchedule
+                            isAfterSchedule ||
+                            isToday
                           }
                           color="orange"
                         >
@@ -660,7 +683,9 @@ const SchedulingCalendar = ({
                         <Button
                           onClick={open}
                           style={{ width: "max-content" }}
-                          disabled={isLoading || isRefetchingData}
+                          disabled={
+                            isLoading || isRefetchingData || cancelRestricted
+                          }
                           color="dark"
                         >
                           Cancel
@@ -680,9 +705,10 @@ const SchedulingCalendar = ({
               <Button
                 onClick={async () => {
                   setIsReadyToSelect(true);
+                  setSelectedDate(null);
                   setIsEdit(true);
                 }}
-                disabled={!Boolean(!isReadyToSelect && isEdit)}
+                disabled={!Boolean(!isReadyToSelect)}
               >
                 Set Schedule
               </Button>
@@ -693,7 +719,9 @@ const SchedulingCalendar = ({
                 color="dark"
                 onClick={() => {
                   setIsReschedule(false);
+                  setIsReadyToSelect(true);
                 }}
+                disabled={isToday}
               >
                 Cancel
               </Button>
@@ -793,7 +821,7 @@ const SchedulingCalendar = ({
             {/* Button to join the online meeting */}
             <Button
               className="meeting-link"
-              disabled={moment(selectedDate).format() !== minDate}
+              disabled={!moment(initialDate).isSame(moment(minDate), "day")}
               onClick={() =>
                 window.open(
                   interviewOnlineMeeting.interview_meeting_url,
