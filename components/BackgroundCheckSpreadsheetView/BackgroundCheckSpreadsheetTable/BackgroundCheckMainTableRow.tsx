@@ -1,7 +1,7 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { BackgroundCheckSpreadsheetData } from "@/utils/types";
 import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
@@ -63,7 +63,7 @@ const BackgroundCheckMainTableRow = ({
       {!hiddenColumnList.includes("application_information_full_name") && (
         <td>
           <Text sx={{ whiteSpace: "nowrap" }}>
-            {item.application_information_full_name}
+            {capitalizeEachWord(item.application_information_full_name)}
           </Text>
         </td>
       )}

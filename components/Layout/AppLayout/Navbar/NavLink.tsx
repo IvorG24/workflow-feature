@@ -2,7 +2,10 @@ import { getApproverRequestCount } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { REQUEST_LIST_HIDDEN_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
@@ -21,18 +24,26 @@ import {
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
+  IconBriefcase,
+  IconCode,
   IconDashboard,
   IconFile,
+  IconFileCertificate,
   IconFileDescription,
   IconFilePlus,
   IconFileReport,
   IconFileStack,
   IconFileText,
   IconFiles,
+  IconInfoCircle,
   IconListDetails,
+  IconPhoneCall,
   IconReportAnalytics,
   IconSettingsAutomation,
+  IconShieldCheck,
+  IconTerminal,
   IconTicket,
+  IconTools,
   IconUsersGroup,
 } from "@tabler/icons-react";
 import { useRouter } from "next/router";
@@ -56,6 +67,7 @@ const ReviewAppNavLink = () => {
   const activeTeamNameToUrl = formatTeamNameToUrlKey(
     activeTeam.team_name ?? ""
   );
+  const teamMemberGroup = useUserTeamMemberGroupList();
 
   const router = useRouter();
   const unhiddenForms = forms.filter(
@@ -333,6 +345,81 @@ const ReviewAppNavLink = () => {
     // },
   ];
 
+  const hrSection = [
+    {
+      label: `Application Information`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconInfoCircle {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/application-information-spreadsheet-view`,
+    },
+    {
+      label: `HR Phone Interview`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconPhoneCall {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/hr-phone-interview-spreadsheet-view`,
+    },
+    {
+      label: `Trade Test`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconTools {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/trade-test-spreadsheet-view`,
+    },
+    {
+      label: `Technical Interview 1`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconCode {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/technical-interview-1-spreadsheet-view`,
+    },
+    {
+      label: `Technical Interview 2`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconTerminal {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/technical-interview-2-spreadsheet-view`,
+    },
+    {
+      label: `Director Interview`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconBriefcase {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/director-interview-spreadsheet-view`,
+    },
+    {
+      label: `Background Check`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconShieldCheck {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/background-check-spreadsheet-view`,
+    },
+    {
+      label: `Job Offer`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconFileCertificate {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/requests/job-offer-spreadsheet-view`,
+    },
+  ];
+
   // const teamSection = [
   //   {
   //     label: "Create Team",
@@ -388,6 +475,16 @@ const ReviewAppNavLink = () => {
           {...defaultNavLinkProps}
         />
       ) : null}
+
+      {!isEmpty(activeTeam) &&
+        hasTeam &&
+        teamMemberGroup.includes("HUMAN RESOURCES") && (
+          <NavLinkSection
+            label={"Human Resources"}
+            links={hrSection}
+            {...defaultNavLinkProps}
+          />
+        )}
 
       {itemForm &&
       itemForm.form_is_hidden === false &&

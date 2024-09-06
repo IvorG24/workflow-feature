@@ -16925,6 +16925,59 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION check_if_group_member(
+  input_data JSON
+)
+RETURNS BOOLEAN
+SET search_path TO ''
+AS $$
+  let returnData;
+  plv8.subtransaction(function(){
+    const {
+      userId,
+      groupName,
+      teamId
+    } = input_data;
+
+    const teamMemberId = plv8.execute(
+      `
+        SELECT team_member_id 
+        FROM team_schema.team_member_table 
+        WHERE
+          team_member_is_disabled = false
+          AND team_member_user_id = '${userId}'
+          AND team_member_team_id = '${teamId}'
+        LIMIT 1
+      `
+    )[0].team_member_id;
+
+    const teamGroupId = plv8.execute(
+      `
+        SELECT team_group_id
+        FROM team_schema.team_group_table
+        WHERE
+          team_group_is_disabled = false
+          AND team_group_team_id = '${teamId}'
+          AND team_group_name = '${groupName}'
+        LIMIT 1
+      `
+    )[0].team_group_id;
+
+    const teamGroupMemberCount = plv8.execute(
+      `
+        SELECT COUNT(team_group_member_id)
+        FROM team_schema.team_group_member_table
+        WHERE
+          team_member_id = '${teamMemberId}'
+          AND team_group_id = '${teamGroupId}'
+      `
+    )[0].count;
+
+    returnData = Boolean(teamGroupMemberCount);
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES

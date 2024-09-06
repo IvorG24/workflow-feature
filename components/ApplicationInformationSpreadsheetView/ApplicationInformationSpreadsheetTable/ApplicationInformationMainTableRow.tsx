@@ -161,6 +161,12 @@ const ApplicationInformationMainTableRow = ({
           case "TIN":
             return tinNumberFormatter(`${response}`);
           default:
+            if (
+              ["First Name", "Middle Name", "Last Name"].includes(
+                row.field_name
+              )
+            )
+              return capitalizeEachWord(response);
             return response;
         }
       case "MULTISELECT":
@@ -173,8 +179,6 @@ const ApplicationInformationMainTableRow = ({
             return response;
         }
       default:
-        if (["First Name", "Middle Name", "Last Name"].includes(row.field_name))
-          return capitalizeEachWord(response);
         return response;
     }
   };
