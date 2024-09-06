@@ -65,12 +65,13 @@ const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
             </Text>
           )}
         </Group>
-        {["PENDING", "WAITING FOR SCHEDULE"].includes(
+        {["PENDING", "WAITING FOR SCHEDULE", "CANCELED", "QUALIFIED"].includes(
           phoneInterviewData.hr_phone_interview_status
         ) && (
           <SchedulingCalendar
             refetchData={refetchData}
             meeting_type="phone"
+            date_created={phoneInterviewData.hr_phone_interview_date_created}
             target_id={phoneInterviewData.hr_phone_interview_id}
             intialDate={phoneInterviewData.hr_phone_interview_schedule}
             status={phoneInterviewData.hr_phone_interview_status}
