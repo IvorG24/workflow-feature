@@ -6072,3 +6072,15 @@ export const getPositionType = async (
 
   return data[0].position_type;
 };
+
+export const getAdOwnerList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("ad_owner_table")
+    .select("*");
+  if (error) throw error;
+
+  return data;
+};
