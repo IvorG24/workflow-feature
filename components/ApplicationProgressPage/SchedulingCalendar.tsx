@@ -34,6 +34,7 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 
 type SchedulingType = {
   meeting_type: "technical" | "qualifying" | "phone";
@@ -444,11 +445,33 @@ const SchedulingCalendar = ({
     setInterviewOnlineMeeting(newInterviewOnlineMeeting);
 
     const emailNotificationProps = {
-      subject: `HR Interview Schedule.`,
+      subject: `HR Phone Interview Schedule | Sta. Clara International Corporation`,
       userFullname,
-      message: `You are scheduled for an interview with HR representative ${hrRepresentativeName} on ${formattedDate}. Click the link below to join the meeting. If you need further assistance, please reach out to careers@staclara.com.ph`,
-      callbackLink: meetingUrl,
-      callbackLinkLabel: "HR Interview Meeting Link",
+      message: `
+          <p>
+            Your HR phone interview has been scheduled. Please find the details
+            of your interview below:
+          </p>
+          <p>
+            <strong>Date</strong>:{" "}
+            <span>${moment(tempDate).format("dddd, MMMM Do YYYY")}</span>
+          </p>
+          <p>
+            <strong>Time</strong>:{" "}
+            <span>${moment(tempDate).format("h:mm A")}</span>
+          </p>
+          <p>
+            <strong>Meeting Link</strong>
+            <a href=${meetingUrl}>Interview Meeting Link</a>
+          </p>
+          <p>
+            If you have any questions or need to make adjustments, please
+            contact us at recruitment@staclara.com.ph. We look forward to
+            speaking with you.
+          </p>
+      )`,
+      closingPhrase: "Best regards,",
+      signature: "Sta. Clara International Corporation Recruitment Team",
     };
 
     await handleSendEmailNotification(emailNotificationProps);
@@ -462,10 +485,6 @@ const SchedulingCalendar = ({
       });
       return;
     }
-    const hrRepresentativeName = "John Doe"; // replace with actual hr rep name
-    const formattedDate = moment(tempDate).format(
-      "dddd, MMMM Do YYYY, h:mm:ss a"
-    );
     const userFullname = `${user?.user_first_name} ${user?.user_last_name}`;
     const meetingDetails = {
       start: {
@@ -505,11 +524,33 @@ const SchedulingCalendar = ({
     setInterviewOnlineMeeting(newInterviewOnlineMeeting);
 
     const emailNotificationProps = {
-      subject: `HR Interview Schedule.`,
+      subject: `HR Phone Interview Schedule | Sta. Clara International Corporation`,
       userFullname,
-      message: `You interview with HR representative ${hrRepresentativeName} has been rescheduled to ${formattedDate}. Click the link below to join the meeting. If you need further assistance, please reach out to careers@staclara.com.ph`,
-      callbackLink: meetingUrl,
-      callbackLinkLabel: "HR Interview Meeting Link",
+      message: `
+          <p>
+            Your HR phone interview has been rescheduled. Please find the
+            details of your interview new interview below:
+          </p>
+          <p>
+            <strong>Date</strong>:{" "}
+            <span>${moment(tempDate).format("dddd, MMMM Do YYYY")}</span>
+          </p>
+          <p>
+            <strong>Time</strong>:{" "}
+            <span>${moment(tempDate).format("h:mm A")}</span>
+          </p>
+          <p>
+            <strong>Meeting Link</strong>
+            <a href=${meetingUrl}>Interview Meeting Link</a>
+          </p>
+          <p>
+            If you have any questions or need to make adjustments, please
+            contact us at recruitment@staclara.com.ph. We look forward to
+            speaking with you.
+          </p>
+      )`,
+      closingPhrase: "Best regards,",
+      signature: "Sta. Clara International Corporation Recruitment Team",
     };
 
     await handleSendEmailNotification(emailNotificationProps);
@@ -552,22 +593,25 @@ const SchedulingCalendar = ({
     userFullname,
     subject,
     message,
-    callbackLink,
-    callbackLinkLabel,
+    closingPhrase,
+    signature,
   }: {
     userFullname: string;
     subject: string;
     message: string;
-    callbackLink: string;
-    callbackLinkLabel: string;
+    closingPhrase: string;
+    signature: string;
   }) => {
-    const emailNotificationProps = {
-      to: user?.user_email,
+    const emailNotificationProps: {
+      to: string;
+      subject: string;
+    } & EmailNotificationTemplateProps = {
+      to: user?.user_email as string,
       subject: subject,
-      recipientName: userFullname,
+      greetingPhrase: `Dear ${userFullname},`,
       message: message,
-      callbackLink: callbackLink,
-      callbackLinkLabel: callbackLinkLabel,
+      closingPhrase,
+      signature,
     };
 
     await fetch("/api/resend/send", {

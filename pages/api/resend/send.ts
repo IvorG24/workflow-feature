@@ -1,4 +1,6 @@
-import EmailNotificationTemplate from "@/components/Resend/EmailNotificationTemplate";
+import EmailNotificationTemplate, {
+  EmailNotificationTemplateProps,
+} from "@/components/Resend/EmailNotificationTemplate";
 import { createPagesServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextApiRequest, NextApiResponse } from "next";
 import { Resend } from "resend";
@@ -30,20 +32,14 @@ export default async function handler(
           "The user does not have an active session or is not authenticated",
       });
 
-    const {
-      to,
-      subject,
-      message,
-      recipientName,
-      callbackLink,
-      callbackLinkLabel,
-    } = req.body;
+    const { to, subject, message, greetingPhrase, closingPhrase, signature } =
+      req.body;
 
-    const emailProps = {
+    const emailProps: EmailNotificationTemplateProps = {
       message,
-      recipientName,
-      callbackLink,
-      callbackLinkLabel,
+      greetingPhrase,
+      closingPhrase,
+      signature,
     };
 
     const domain =
@@ -58,11 +54,13 @@ export default async function handler(
       react: EmailNotificationTemplate(emailProps),
     });
     if (error) {
+      console.log(error);
       return res.status(400).json(error);
     }
 
     return res.status(200).json({ message: "Email sent successfully", data });
   } catch (e) {
+    console.log(e);
     return res.status(500).json({ error: "Error sending email" });
   }
 }
