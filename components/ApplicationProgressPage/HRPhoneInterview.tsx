@@ -65,7 +65,7 @@ const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
             </Text>
           )}
         </Group>
-        {["PENDING", "WAITING FOR SCHEDULE", "CANCELED", "QUALIFIED"].includes(
+        {["PENDING", "WAITING FOR SCHEDULE", "CANCELLED", "QUALIFIED"].includes(
           phoneInterviewData.hr_phone_interview_status
         ) && (
           <SchedulingCalendar
@@ -81,9 +81,10 @@ const HRPhoneInterview = ({ hrPhoneInterviewData }: Props) => {
         {phoneInterviewData.hr_phone_interview_status === "PENDING" && (
           <Alert title="Note!" icon={<IconNote size={16} />}>
             <Text>
-              Your HR phone interview is scheduled. Please wait for further
-              details and let us know if you have any questions. Looking forward
-              to speaking with you soon!
+              Your HR phone interview is scheduled. The meeting link will be
+              made available on the exact date of the meeting. Please wait for
+              further details and let us know if you have any questions. Looking
+              forward to speaking with you soon!
             </Text>
           </Alert>
         )}
