@@ -510,6 +510,12 @@ export type TeamDepartmentTableRow =
 
 export type RequestViewRow = Database["public"]["Views"]["request_view"]["Row"];
 
+export type AdOwnerTableRow =
+  Database["lookup_schema"]["Tables"]["ad_owner_table"]["Row"];
+
+export type AdOwnerRequestTableInsert =
+  Database["lookup_schema"]["Tables"]["ad_owner_request_table"]["Insert"];
+
 // End: Database Table Types
 
 // Start: Database Enums
