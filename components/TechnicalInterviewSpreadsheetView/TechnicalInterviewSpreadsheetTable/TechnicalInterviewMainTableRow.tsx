@@ -399,21 +399,21 @@ const TechnicalInterviewMainTableRow = ({
           <Flex align="center" justify="center" gap="xs" wrap="wrap">
             <Button
               color="green"
-              w={130}
+              w={140}
               onClick={() => openModal("QUALIFIED")}
             >
               Qualified
             </Button>
             <Button
               color="red"
-              w={130}
+              w={140}
               onClick={() => openModal("NOT QUALIFIED")}
             >
               Not Qualified
             </Button>
             <Button
               color="gray"
-              w={130}
+              w={140}
               onClick={() => openModal("NOT RESPONSIVE")}
             >
               Not Responsive
