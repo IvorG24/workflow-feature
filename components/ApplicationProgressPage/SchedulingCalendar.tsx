@@ -102,7 +102,7 @@ const SchedulingCalendar = ({
     try {
       const params = {
         target_id,
-        status: "CANCELED",
+        status: "CANCELLED",
       };
 
       if (meeting_type === "phone") {
@@ -344,7 +344,7 @@ const SchedulingCalendar = ({
       setSelectedSlot("");
     }
     if (meeting_type === "phone") {
-      fetchTime({ breakDuration: 10, slotDuration: 5 });
+      fetchTime({ breakDuration: 15, slotDuration: 5 });
       setSelectedSlot("");
     }
   };
@@ -566,7 +566,7 @@ const SchedulingCalendar = ({
         </Flex>
       </Modal>
       <Flex direction="column" gap={10} mb={20}>
-        {status === "CANCELED" && (
+        {status === "CANCELLED" && (
           <>
             {intialDate && (
               <Stack>
@@ -612,7 +612,7 @@ const SchedulingCalendar = ({
         )}
         {isEdit === false &&
           selectedDate &&
-          status !== "CANCELED" &&
+          status !== "CANCELLED" &&
           status !== "QUALIFIED" && (
             <>
               {(() => {
