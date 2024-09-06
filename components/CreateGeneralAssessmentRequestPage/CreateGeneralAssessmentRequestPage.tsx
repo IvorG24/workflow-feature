@@ -112,7 +112,7 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
           subject: string;
         } & EmailNotificationTemplateProps = {
           to: emailAddress,
-          subject: `Application Information | Sta. Clara International Corporation.`,
+          subject: `General Assessment | Sta. Clara International Corporation`,
           greetingPhrase: `Dear ${startCase(firstName)} ${startCase(
             lastName
           )},`,

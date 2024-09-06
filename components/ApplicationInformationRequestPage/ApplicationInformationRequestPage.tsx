@@ -146,7 +146,7 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
           subject: string;
         } & EmailNotificationTemplateProps = {
           to: emailAddress,
-          subject: `Application Information | Sta. Clara International Corporation.`,
+          subject: `Application Information | Sta. Clara International Corporation`,
           greetingPhrase: `Dear ${startCase(firstName)} ${startCase(
             lastName
           )},`,
