@@ -319,7 +319,7 @@ const SchedulingCalendar = ({
         .map((slot) => ({
           value: formatTimeToLocal(slot.slot_start),
           label: formatTimeToLocal(slot.slot_start),
-          isDisabled: slot.isDisabled,
+          disabled: slot.isDisabled,
           time: parseTimeString(formatTimeToLocal(slot.slot_start)),
         }))
         .filter((slot) => slot.time.isSameOrAfter(currentTime));
@@ -719,7 +719,7 @@ const SchedulingCalendar = ({
             <Group>
               <Text>Select Time:</Text>
               <Select
-                data={[...removePrevTime()]}
+                data={removePrevTime()}
                 value={selectedSlot}
                 onChange={(value) => {
                   refetchData();
