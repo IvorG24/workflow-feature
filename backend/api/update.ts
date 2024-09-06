@@ -1412,7 +1412,7 @@ export const updateTechnicalInterviewSchedule = async (
     userEmail: string;
     applicationInformationFormslyId: string;
     notificationMessage: string;
-    technicalInterviewNumber: number
+    technicalInterviewNumber: number;
   }
 ) => {
   const { error } = await supabaseClient.rpc(

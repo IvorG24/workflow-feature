@@ -95,6 +95,13 @@ const SchedulingCalendar = ({
       };
 
       if (meeting_type === "phone") {
+        // interviewOnlineMeeting && process.env.NODE_ENV === "production"
+        if (interviewOnlineMeeting) {
+          console.log("called");
+          await handleCancelOnlineMeeting(
+            interviewOnlineMeeting.interview_meeting_provider_id
+          );
+        }
         await updatePhoneInterview(supabaseClient, params);
       }
       refetchData();
@@ -467,6 +474,32 @@ const SchedulingCalendar = ({
     };
 
     await handleSendEmailNotification(emailNotificationProps);
+  };
+
+  const handleCancelOnlineMeeting = async (meetingId: string) => {
+    if (!interviewOnlineMeeting) {
+      notifications.show({
+        message: "Cannot cancel meeting because it does not exist",
+        color: "red",
+      });
+      return;
+    }
+    try {
+      await fetch("/api/ms-graph/cancel-meeting", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          meetingId,
+        }),
+      });
+    } catch (error) {
+      notifications.show({
+        message: "Failed to cancel meeting",
+        color: "red",
+      });
+    }
   };
 
   const handleSendEmailNotification = async ({
