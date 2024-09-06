@@ -1,6 +1,7 @@
 import {
   ApplicationInformationFieldOptionType,
   ApplicationInformationFilterFormValues,
+  OptionType,
 } from "@/utils/types";
 import {
   Accordion,
@@ -49,6 +50,11 @@ const sectionList = [
         id: "requestFilter.dateUpdatedRange",
         label: "Date Updated",
         type: "DATE",
+      },
+      {
+        id: "requestFilter.approver",
+        label: "Approver",
+        type: "MULTISELECT",
       },
       {
         id: "requestFilter.requestScoreRange",
@@ -263,12 +269,14 @@ type Props = {
   fetchData: (data?: ApplicationInformationFilterFormValues) => void;
   optionList: ApplicationInformationFieldOptionType[];
   handleReset: () => void;
+  approverOptionList: OptionType[];
 };
 
 const ApplicationInformationFilterMenu = ({
   fetchData,
   optionList,
   handleReset,
+  approverOptionList,
 }: Props) => {
   const theme = useMantineTheme();
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
@@ -301,6 +309,8 @@ const ApplicationInformationFilterMenu = ({
           { label: "APPROVED", value: "APPROVED" },
           { label: "REJECTED", value: "REJECTED" },
         ];
+      } else if (field.label === "Approver") {
+        fieldOptions = approverOptionList;
       }
     }
 

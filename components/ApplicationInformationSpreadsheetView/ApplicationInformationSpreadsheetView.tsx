@@ -8,6 +8,7 @@ import {
   ApplicationInformationFieldOptionType,
   ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
+  OptionType,
   SectionWithFieldType,
 } from "@/utils/types";
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
@@ -105,11 +106,13 @@ const formDefaultValues = {
 type Props = {
   sectionList: SectionWithFieldType[];
   optionList: ApplicationInformationFieldOptionType[];
+  approverOptionList: OptionType[];
 };
 
 const ApplicationInformationSpreadsheetView = ({
   sectionList,
   optionList: initialOptionList,
+  approverOptionList,
 }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
@@ -266,6 +269,7 @@ const ApplicationInformationSpreadsheetView = ({
               fetchData={fetchData}
               optionList={optionList}
               handleReset={handleReset}
+              approverOptionList={approverOptionList}
             />
           </FormProvider>
           <ApplicationInformationColumnsMenu

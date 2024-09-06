@@ -7,6 +7,7 @@ import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
 import {
   ApplicationInformationFieldOptionType,
+  OptionType,
   SectionWithFieldType,
 } from "@/utils/types";
 import { GetServerSideProps } from "next";
@@ -50,9 +51,10 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 type Props = {
   sectionList: SectionWithFieldType[];
   optionList: ApplicationInformationFieldOptionType[];
+  approverOptionList: OptionType[];
 };
 
-const Page = ({ sectionList, optionList }: Props) => {
+const Page = ({ sectionList, optionList, approverOptionList }: Props) => {
   return (
     <>
       <Meta
@@ -62,6 +64,7 @@ const Page = ({ sectionList, optionList }: Props) => {
       <ApplicationInformationSpreadsheetView
         sectionList={sectionList}
         optionList={optionList}
+        approverOptionList={approverOptionList}
       />
     </>
   );

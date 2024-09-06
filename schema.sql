@@ -14349,6 +14349,9 @@ AS $$
     Boolean(requestFilter.dateUpdatedRange.end) ? requestFilterCondition.push(`request_status_date_updated :: DATE <= '${requestFilter.dateUpdatedRange.end}'`) : null;
     requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.start) ? requestFilterCondition.push(`request_score_value  >= ${requestFilter.requestScoreRange.start}`) : null;
     requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.end) ? requestFilterCondition.push(`request_score_value <= ${requestFilter.requestScoreRange.end}`) : null;
+    
+    let requestSignerCondition = "";
+    Boolean(requestFilter.approver) && requestFilter.approver.length ? requestSignerCondition = `request_signer_signer_id IN (${requestFilter.approver.map(approver => `'${approver}'`)})` : null;
 
     const filterCount = responseFilterCondition.length;
 
@@ -14374,6 +14377,7 @@ AS $$
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
           INNER JOIN form_schema.form_table ON form_id = request_form_id
+          INNER JOIN form_schema.signer_table ON signer_form_id = form_id
           INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
           INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id
@@ -14384,8 +14388,10 @@ AS $$
             ${responseFilterCondition.length ? `AND (${responseFilterCondition.join(" OR ")})` : ""}
             ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
         ) AS a
+        INNER JOIN request_schema.request_signer_table ON request_id = request_signer_request_id
         WHERE
           a.rowNumber = ${filterCount ? filterCount : 1}
+          ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
           ${requestFilterCondition.length ? `AND (${requestFilterCondition.join(" AND ")})` : ""}
           ${responseBooleanFilterCondition.length ? `AND (${responseBooleanFilterCondition.join(" AND ")})` : ""}
         ${isSortByResponse ?
@@ -14535,6 +14541,32 @@ AS $$
       });
     }
 
+    const signerIdList = plv8.execute(
+      `
+        SELECT DISTINCT(signer_id)
+        FROM request_schema.request_signer_table
+        INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id 
+        WHERE
+          request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+          AND request_is_disabled = false
+      `
+    ).map(signer => `'${signer.signer_id}'`);
+
+    const approverOptionList = plv8.execute(
+      `
+        SELECT 
+          signer_id,
+          user_first_name,
+          user_last_name
+        FROM form_schema.signer_table
+        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        WHERE
+          signer_id IN (${signerIdList})
+      `
+    );
+
     returnData = {
       sectionList: sectionList.map(section => {
         const fieldData = plv8.execute(
@@ -14572,7 +14604,13 @@ AS $$
           section_field: fieldWithOptionData
         }
       }),
-      optionList
+      optionList,
+      approverOptionList: approverOptionList.map(approver => {
+        return {
+          label: [approver.user_first_name, approver.user_last_name].join(" "),
+          value: approver.signer_id
+        }
+      })
     }
 });
 return returnData;
