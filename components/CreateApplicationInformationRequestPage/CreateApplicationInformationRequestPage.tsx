@@ -203,6 +203,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       setIsLoading(true);
+
       const request = await createRequest(supabaseClient, {
         requestFormValues: data,
         formId: form.form_id,
