@@ -42,6 +42,8 @@ type SchedulingType = {
   status: string;
   isRefetchingData: boolean;
   date_created: string;
+  setIsReadyToSelect: React.Dispatch<React.SetStateAction<boolean>>;
+  isReadyToSelect: boolean;
 };
 
 type HrSlotType = {
@@ -51,6 +53,8 @@ type HrSlotType = {
 };
 
 const SchedulingCalendar = ({
+  setIsReadyToSelect,
+  isReadyToSelect,
   meeting_type,
   target_id,
   intialDate,
@@ -80,7 +84,6 @@ const SchedulingCalendar = ({
   const [isEdit, setIsEdit] = useState<boolean | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [isReschedule, setIsReschedule] = useState(false);
-  const [isReadyToSelect, setIsReadyToSelect] = useState(false);
   const [interviewOnlineMeeting, setInterviewOnlineMeeting] =
     useState<InterviewOnlineMeetingTableRow | null>(null);
   const [currentDate, setCurrentDate] = useState<Date>();
@@ -125,6 +128,8 @@ const SchedulingCalendar = ({
   const rescheduleHandler = () => {
     setIsEdit(true);
     setIsReschedule(true);
+    setSelectedSlot("");
+    setSelectedDate(null);
     setIsReadyToSelect(true);
   };
 
@@ -344,7 +349,7 @@ const SchedulingCalendar = ({
       setSelectedSlot("");
     }
     if (meeting_type === "phone") {
-      fetchTime({ breakDuration: 15, slotDuration: 5 });
+      fetchTime({ breakDuration: 0, slotDuration: 5 });
       setSelectedSlot("");
     }
   };
@@ -610,18 +615,12 @@ const SchedulingCalendar = ({
             )}
           </>
         )}
-        {isEdit === false &&
+        {isReadyToSelect === false &&
           selectedDate &&
           status !== "CANCELLED" &&
           status !== "QUALIFIED" && (
             <>
               {(() => {
-                const hours = selectedDate.getHours();
-                const minutes = selectedDate.getMinutes();
-                const period = hours >= 12 ? "PM" : "AM";
-                const timeString = `${hours.toString().padStart(2, "0")}:${minutes
-                  .toString()
-                  .padStart(2, "0")} ${period}`;
                 return (
                   <>
                     <Stack>
@@ -629,14 +628,16 @@ const SchedulingCalendar = ({
                         <Text>Scheduled Date:</Text>
                         <Text component="a" fw="bold">
                           {" "}
-                          {formatDate(new Date(selectedDate))}
+                          {intialDate ? formatDate(new Date(intialDate)) : ""}
                         </Text>
                       </Group>
                       <Group>
                         <Text>Scheduled Time:</Text>
                         <Text component="a" fw="bold">
                           {" "}
-                          {timeString}
+                          {intialDate
+                            ? moment(new Date(intialDate)).format("hh:mm A")
+                            : ""}
                         </Text>
                       </Group>
                     </Stack>
@@ -733,14 +734,13 @@ const SchedulingCalendar = ({
                 }
               />
             </Group>
-            {!isReschedule && selectedSlot && selectedDate && (
-              <Group position="left" align="center" spacing="md">
+            {!isReschedule && (
+              <Group position="left" align="center" spacing="xs">
                 <Text style={{ marginBottom: 0 }}>Action:</Text>
                 <Button
                   style={{ width: "min-content" }}
                   color="dark"
                   onClick={() => {
-                    setIsReschedule(false);
                     setIsReadyToSelect(false);
                   }}
                   disabled={
@@ -757,14 +757,14 @@ const SchedulingCalendar = ({
                 </Button>
               </Group>
             )}
-            {isReschedule && selectedSlot && selectedDate && (
-              <Group position="left" align="center" spacing="md">
+            {isReschedule && (
+              <Group position="left" align="center" spacing="xs">
                 <Text style={{ marginBottom: 0 }}>Action:</Text>
                 <Button
                   style={{ width: "min-content" }}
                   color="dark"
                   onClick={() => {
-                    setIsReschedule(false);
+                    setIsReadyToSelect(false);
                   }}
                   disabled={
                     isLoading || isRefetchingData || isDayBeforeSchedule
@@ -784,7 +784,7 @@ const SchedulingCalendar = ({
         )}
 
         {/* meeting details */}
-        {interviewOnlineMeeting && status === "PENDING" ? (
+        {!isReadyToSelect && interviewOnlineMeeting && status === "PENDING" ? (
           <Flex gap="xs" align="center" mt="sm">
             <Text>Online Meeting:</Text>
 
