@@ -1,3 +1,4 @@
+import { deleteInterviewOnlineMeeting } from "@/backend/api/delete";
 import {
   getCurrentDate,
   getInterviewOnlineMeeting,
@@ -21,13 +22,13 @@ import {
   Flex,
   Group,
   Loader,
-  Modal,
+  LoadingOverlay,
   Select,
   Stack,
   Text,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { useDisclosure } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconCalendar, IconClock } from "@tabler/icons-react";
@@ -82,7 +83,6 @@ const SchedulingCalendar = ({
   const [hrSlot, setHrSlot] = useState<HrSlotType[]>([]);
   const [isLoading, setIsloading] = useState(false);
   const [isEdit, setIsEdit] = useState<boolean | null>(null);
-  const [opened, { open, close }] = useDisclosure(false);
   const [isReschedule, setIsReschedule] = useState(false);
 
   const [interviewOnlineMeeting, setInterviewOnlineMeeting] =
@@ -121,15 +121,14 @@ const SchedulingCalendar = ({
       return;
     }
     try {
+      setIsloading(true);
       const params = {
         target_id,
         status: "CANCELLED",
       };
 
       if (meeting_type === "phone") {
-        // interviewOnlineMeeting && process.env.NODE_ENV === "production"
         if (interviewOnlineMeeting) {
-          console.log("called");
           await handleCancelOnlineMeeting(
             interviewOnlineMeeting.interview_meeting_provider_id
           );
@@ -137,7 +136,6 @@ const SchedulingCalendar = ({
         await cancelPhoneInterview(supabaseClient, params);
       }
       refetchData();
-      close();
       notifications.show({
         message: "Interview cancellation successful!",
         color: "green",
@@ -147,6 +145,8 @@ const SchedulingCalendar = ({
         message: "Error cancelling interview:",
         color: "orange",
       });
+    } finally {
+      setIsloading(false);
     }
   };
 
@@ -263,8 +263,8 @@ const SchedulingCalendar = ({
               const newInterviewOnlineMeeting =
                 await updateInterviewOnlineMeeting(supabaseClient, {
                   ...testOnlineMeetingProps,
-                  inverview_meeting_id:
-                    interviewOnlineMeeting.inverview_meeting_id,
+                  interview_meeting_id:
+                    interviewOnlineMeeting.interview_meeting_id,
                 });
               setInterviewOnlineMeeting(newInterviewOnlineMeeting);
             }
@@ -494,7 +494,7 @@ const SchedulingCalendar = ({
     const interviewOnlineMeetingProps: InterviewOnlineMeetingTableUpdate = {
       interview_meeting_url: meetingUrl,
       interview_meeting_provider_id: updateMeetingData.id,
-      inverview_meeting_id: interviewOnlineMeeting.inverview_meeting_id,
+      interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
     };
 
     const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(
@@ -524,18 +524,25 @@ const SchedulingCalendar = ({
       return;
     }
     try {
-      await fetch("/api/ms-graph/cancel-meeting", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          meetingId,
-        }),
-      });
+      if (process.env.NODE_ENV === "production") {
+        await fetch("/api/ms-graph/cancel-meeting", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            meetingId,
+          }),
+        });
+      }
+
+      await deleteInterviewOnlineMeeting(
+        supabaseClient,
+        interviewOnlineMeeting.interview_meeting_id
+      );
     } catch (error) {
       notifications.show({
-        message: "Failed to cancel meeting",
+        message: "Failed to cancel MS Teams meeting",
         color: "red",
       });
     }
@@ -583,6 +590,20 @@ const SchedulingCalendar = ({
     }
   };
 
+  const openCancelInterviewModal = () =>
+    modals.openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you want to cancel your {meeting_type} interview?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: () => cancelInterviewHandler(),
+      confirmProps: { color: "dark" },
+      centered: true,
+    });
+
   useEffect(() => {
     fetchSlot();
     if (intialDate !== null) {
@@ -602,26 +623,8 @@ const SchedulingCalendar = ({
 
   return (
     <>
-      <Modal
-        opened={opened}
-        onClose={close}
-        centered
-        title="Please confirm your action."
-        pos="relative"
-      >
-        <Text mb={15} size="sm">
-          Are you sure you want to cancel your {meeting_type} interview?
-        </Text>
-        <Flex justify="end" gap={5}>
-          <Button variant="outline" color="dark" onClick={close}>
-            <Text color="black">Cancel</Text>
-          </Button>
-          <Button onClick={cancelInterviewHandler} mb={5} color="dark">
-            Confirm
-          </Button>
-        </Flex>
-      </Modal>
       <Flex direction="column" gap={10} mb={20}>
+        <LoadingOverlay visible={isLoading} />
         {status === "CANCELLED" && (
           <>
             {intialDate && (
@@ -712,7 +715,7 @@ const SchedulingCalendar = ({
                           Reschedule
                         </Button>
                         <Button
-                          onClick={open}
+                          onClick={openCancelInterviewModal}
                           style={{ width: "max-content" }}
                           disabled={
                             isLoading || isRefetchingData || cancelRestricted

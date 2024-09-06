@@ -43,10 +43,12 @@ export default async function handler(
       }
     );
 
-    const data = await response.json();
-    console.log(req.body.meetingId, data);
-    return res.status(200).json(data);
+    if (response.ok) {
+      return res.status(202).json({ message: "Meeting cancelled." });
+    } else {
+      throw new Error();
+    }
   } catch (e) {
-    return res.status(500).json({ error: "Error creating OAuth token" });
+    return res.status(500).json({ error: "Error cancelling meeting" });
   }
 }
