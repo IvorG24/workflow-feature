@@ -53,8 +53,8 @@ export default async function handler(
         customfield_11481: {
           value: parsedPositionType,
         },
-        customfield_10442: sssID as number,
-        customfield_10120: contactNumber as number,
+        customfield_10442: Number(sssID),
+        customfield_10120: Number(contactNumber),
         customfield_10121: emailAddress,
         customfield_11519: {
           value: candidateSource,
@@ -84,7 +84,7 @@ export default async function handler(
     const createTicketData = await createTicketResponse.json();
     jiraTicketId = createTicketData.key;
     jiraTicketLink = createTicketData.self;
-
+    console.log(createTicketData);
     return res.status(200).json({ jiraTicketId, jiraTicketLink });
   } catch (e) {
     return res.status(500).json({ error: e });
