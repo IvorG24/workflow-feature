@@ -131,7 +131,7 @@ const HRPhoneInterviewMainTableRow = ({
       )}
       {!hiddenColumnList.includes("hr_phone_interview_date_created") && (
         <td>
-          <Text>
+          <Text sx={{ whiteSpace: "nowrap" }}>
             {formatDate(new Date(item.hr_phone_interview_date_created))}
           </Text>
         </td>

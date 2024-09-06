@@ -567,8 +567,6 @@ const SchedulingCalendar = ({
     handleFetchInterviewOnlineMeeting();
   }, [target_id]);
 
-  console.log("current Date", minDate);
-
   return (
     <>
       <Modal
@@ -658,8 +656,8 @@ const SchedulingCalendar = ({
                           {selectedSlot && intialDate
                             ? selectedSlot
                             : intialDate
-                              ? formatTimeToLocal(intialDate)
-                              : ""}
+                            ? formatTimeToLocal(intialDate)
+                            : ""}
                         </Text>
                       </Group>
                     </Stack>

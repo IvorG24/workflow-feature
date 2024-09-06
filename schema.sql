@@ -1480,7 +1480,49 @@ AS $$
     plv8.execute(`INSERT INTO request_schema.request_response_table (request_response,request_response_duplicatable_section_id,request_response_field_id,request_response_request_id,request_response_prefix) VALUES ${responseValues}`);
 
     if (!status) {
-      plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues}`);
+      if (formId === '151cc6d7-94d7-4c54-b5ae-44de9f59d170') {
+        const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+        const teamMemberIdList = plv8.execute(
+          `
+            SELECT team_member_id 
+            FROM team_schema.team_group_member_table
+            WHERE 
+              team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+          `
+        ).map(teamMember => `'${teamMember.team_member_id}'`);
+
+        const signerIdList = plv8.execute(
+          `
+            SELECT signer_id
+            FROM form_schema.signer_table
+            WHERE
+              signer_team_member_id IN (${teamMemberIdList})
+              AND signer_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+          `
+        ).map(signer => `'${signer.signer_id}'`);
+        
+        const selectedSigner = plv8.execute(
+          `
+            SELECT 
+              signer_id, 
+              COUNT(request_signer_id)
+            FROM form_schema.signer_table
+            LEFT JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
+            WHERE
+              signer_id IN (${signerIdList})
+            GROUP BY signer_id
+            ORDER BY COUNT ASC
+            LIMIT 1
+          `
+        )[0].signer_id;
+
+        plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ('${selectedSigner}', '${requestId}')`);
+      } else {
+        plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues}`);
+      }
     } else {
       if (status === 'APPROVED' && formId === 'cc410201-f5a6-49ce-a06c-c2ce2c169436') {
         const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${rootFormslyRequestId}'`)[0].request_id;
@@ -3217,6 +3259,50 @@ AS $$
         )
       })
     })
+
+    if (groupId === 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a') {
+      teamMemberIdList.forEach(teamMemberId => {
+        const signerData = plv8.execute(
+          `
+            SELECT *
+            FROM form_schema.signer_table
+            WHERE
+              signer_is_primary_signer = true
+              AND signer_order = 1
+              AND signer_action = 'Approved'
+              AND signer_is_disabled = true
+              AND signer_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+              AND signer_team_member_id = '${teamMemberId}'
+            LIMIT 1
+          `
+        );
+
+        if (!signerData.length) {
+          plv8.execute(
+            `
+              INSERT INTO form_schema.signer_table
+              (
+                signer_is_primary_signer,
+                signer_order,
+                signer_action,
+                signer_is_disabled,
+                signer_form_id,
+                signer_team_member_id
+              )
+              VALUES
+              (
+                true,
+                1,
+                'Approved',
+                true,
+                '151cc6d7-94d7-4c54-b5ae-44de9f59d170',
+                '${teamMemberId}'
+              )
+            `
+          );
+        }
+      });
+    }
 
     group_data = {data: groupJoin, count: groupJoin.length};
  });
