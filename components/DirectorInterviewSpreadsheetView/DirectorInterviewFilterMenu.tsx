@@ -251,14 +251,14 @@ const DirectorInterviewFilterMenu = ({
                     data={[
                       { value: "PENDING", label: "Pending" },
                       { value: "QUALIFIED", label: "Qualified" },
-                      { value: "UNQUALIFIED", label: "Unqualified" },
+                      { value: "NOT QUALIFIED", label: "Not Qualified" },
                       {
                         value: "WAITING FOR SCHEDULE",
                         label: "Waiting for Schedule",
                       },
                       {
-                        value: "UNRESPONSIVE",
-                        label: "Unresponsive",
+                        value: "NOT RESPONSIVE",
+                        label: "Not Responsive",
                       },
                       {
                         value: "CANCELLED",

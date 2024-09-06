@@ -9,16 +9,16 @@ import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { DirectorInterviewSpreadsheetData } from "@/utils/types";
 import {
-  ActionIcon,
-  Anchor,
-  Badge,
-  Button,
-  createStyles,
-  Flex,
-  Group,
-  Modal,
-  Stack,
-  Text,
+    ActionIcon,
+    Anchor,
+    Badge,
+    Button,
+    createStyles,
+    Flex,
+    Group,
+    Modal,
+    Stack,
+    Text,
 } from "@mantine/core";
 import { DateInput, TimeInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
@@ -77,8 +77,8 @@ const DirectorInterviewMainTableRow = ({
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
-    UNQUALIFIED: "red",
-    UNRESPONSIVE: "gray",
+    NOT QUALIFIED: "red",
+    NOT RESPONSIVE: "gray",
   };
 
   const openModal = (action: string) =>
@@ -404,16 +404,16 @@ const DirectorInterviewMainTableRow = ({
             <Button
               color="red"
               w={130}
-              onClick={() => openModal("UNQUALIFIED")}
+              onClick={() => openModal("NOT QUALIFIED")}
             >
-              Unqualified
+              Not Qualified
             </Button>
             <Button
               color="gray"
               w={130}
-              onClick={() => openModal("UNRESPONSIVE")}
+              onClick={() => openModal("NOT RESPONSIVE")}
             >
-              Unresponsive
+              Not Responsive
             </Button>
           </Flex>
         )}

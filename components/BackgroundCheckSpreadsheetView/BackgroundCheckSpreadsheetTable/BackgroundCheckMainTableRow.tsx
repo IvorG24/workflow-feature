@@ -36,8 +36,8 @@ const BackgroundCheckMainTableRow = ({
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
-    UNQUALIFIED: "red",
-    UNRESPONSIVE: "gray",
+    NOT QUALIFIED: "red",
+    NOT RESPONSIVE: "gray",
   };
 
   const openModal = (action: string) =>
@@ -160,9 +160,9 @@ const BackgroundCheckMainTableRow = ({
             <Button
               color="red"
               w={130}
-              onClick={() => openModal("UNQUALIFIED")}
+              onClick={() => openModal("NOT QUALIFIED")}
             >
-              Unqualified
+              Not Qualified
             </Button>
           </Flex>
         )}

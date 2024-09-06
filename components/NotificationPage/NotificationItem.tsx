@@ -40,7 +40,7 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
     const type = notification.notification_type;
     if (type === "APPROVE" || type === "QUALIFIED")
       return <IconFileLike size={20} color="#40C057" />;
-    else if (type === "REJECT" || type === "UNQUALIFIED")
+    else if (type === "REJECT" || type === "NOT QUALIFIED")
       return <IconFileDislike size={20} color="#FA5252" />;
     else if (type === "PAUSE")
       return <IconFileAlert size={20} color="#FD7E14" />;
@@ -55,7 +55,7 @@ const NotificationItem = ({ notification, onReadNotification }: Props) => {
       return <IconFileDescription size={20} color="#FF922B" />;
     else if (type === "MEMO-APPROVED")
       return <IconFileDescription size={20} color="#40C057" />;
-    else if (type === "UNRESPONSIVE")
+    else if (type === "NOT RESPONSIVE")
       return <IconAlertCircle size={20} color="#868E96" />;
   };
 

@@ -162,7 +162,7 @@ const ApplicationProgressPage = (props: Props) => {
           color: "green",
         };
       case "REJECTED":
-      case "UNQUALIFIED":
+      case "NOT QUALIFIED":
         return {
           description: (
             <Badge color="red">
@@ -195,7 +195,7 @@ const ApplicationProgressPage = (props: Props) => {
           completedIcon: <IconCalendarExclamation color={"white"} />,
           color: "orange",
         };
-      case "UNRESPONSIVE":
+      case "NOT RESPONSIVE":
         return {
           description: (
             <Badge color="gray">
