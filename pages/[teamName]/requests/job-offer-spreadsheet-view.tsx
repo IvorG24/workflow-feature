@@ -1,4 +1,4 @@
-import { getAllPoisitions } from "@/backend/api/get";
+import { checkIfGroupMember, getAllPoisitions } from "@/backend/api/get";
 import JobOfferSpreadsheetView from "@/components/JobOfferSpreadsheetView/JobOfferSpreadsheetView";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -6,8 +6,22 @@ import { OptionType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ supabaseClient, userActiveTeam }) => {
+  async ({ supabaseClient, user, userActiveTeam }) => {
     try {
+      const iSHumanResourcesMember = await checkIfGroupMember(supabaseClient, {
+        userId: user.id,
+        groupName: "HUMAN RESOURCES",
+        teamId: userActiveTeam.team_id,
+      });
+      if (!iSHumanResourcesMember) {
+        return {
+          redirect: {
+            destination: "/401",
+            permanent: false,
+          },
+        };
+      }
+
       const data = await getAllPoisitions(supabaseClient, {
         teamId: userActiveTeam.team_id,
       });

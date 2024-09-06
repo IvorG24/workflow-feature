@@ -1,10 +1,7 @@
 import { getRequestList } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import {
   DEFAULT_REQUEST_LIST_LIMIT,
   REQUEST_LIST_HIDDEN_FORMS,
@@ -52,7 +49,6 @@ const RequestListPage = ({
   const supabaseClient = useSupabaseClient();
   const formList = useFormList();
   const teamMember = useUserTeamMember();
-  const teamMemberGroupList = useUserTeamMemberGroupList();
   const [activePage, setActivePage] = useState(1);
   const [isFetchingRequestList, setIsFetchingRequestList] = useState(false);
   const [requestList, setRequestList] = useState<RequestListItemType[]>([]);
@@ -243,98 +239,6 @@ const RequestListPage = ({
               >
                 Liquidation
               </Menu.Item>
-              {teamMemberGroupList.includes("HUMAN RESOURCES") && (
-                <>
-                  <Menu.Item
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name
-                        )}/requests/application-information-spreadsheet-view`
-                      )
-                    }
-                  >
-                    Application Information
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name
-                        )}/requests/hr-phone-interview-spreadsheet-view`
-                      )
-                    }
-                  >
-                    HR Phone Interview
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name
-                        )}/requests/trade-test-spreadsheet-view`
-                      )
-                    }
-                  >
-                    Trade Test
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name
-                        )}/requests/technical-interview-1-spreadsheet-view`
-                      )
-                    }
-                  >
-                    Technical Interview 1
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name
-                        )}/requests/technical-interview-2-spreadsheet-view`
-                      )
-                    }
-                  >
-                    Technical Interview 2
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name
-                        )}/requests/director-interview-spreadsheet-view`
-                      )
-                    }
-                  >
-                    Director Interview
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name
-                        )}/requests/background-check-spreadsheet-view`
-                      )
-                    }
-                  >
-                    Background Check
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={async () =>
-                      await router.push(
-                        `/${formatTeamNameToUrlKey(
-                          activeTeam.team_name
-                        )}/requests/job-offer-spreadsheet-view`
-                      )
-                    }
-                  >
-                    Job Offer
-                  </Menu.Item>
-                </>
-              )}
             </Menu.Dropdown>
           </Menu>
         ) : null}

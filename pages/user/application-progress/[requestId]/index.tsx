@@ -24,6 +24,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
           },
         }
       );
+
       if (error) throw error;
       return {
         props: data as Props,

@@ -12,7 +12,7 @@ import {
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import {
   JobOfferHistoryType,
@@ -495,7 +495,7 @@ const JobOfferMainTableRow = ({
       {!hiddenColumnList.includes("application_information_full_name") && (
         <td>
           <Text sx={{ whiteSpace: "nowrap" }}>
-            {item.application_information_full_name}
+            {capitalizeEachWord(item.application_information_full_name)}
           </Text>
         </td>
       )}

@@ -1527,3 +1527,24 @@ export const updateInterviewOnlineMeeting = async (
 
   return data[0] as InterviewOnlineMeetingTableRow;
 };
+
+export const cancelPhoneInterview = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    target_id: string;
+    status: string;
+  }
+) => {
+  const { target_id, status } = params;
+
+  const { error } = await supabaseClient
+    .schema("hr_schema")
+    .from("hr_phone_interview_table")
+    .update({
+      hr_phone_interview_status: status,
+      hr_phone_interview_status_date_updated: new Date().toISOString(),
+    })
+    .eq("hr_phone_interview_id", target_id);
+
+  if (error) throw error;
+};

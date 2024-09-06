@@ -142,6 +142,7 @@ export const getCurrentDate = async (
     .single();
   if (error) throw error;
   if (!data) throw error;
+
   return new Date(data);
 };
 
@@ -6410,4 +6411,21 @@ export const getInterviewOnlineMeeting = async (
   if (error) throw error;
 
   return data[0] as InterviewOnlineMeetingTableRow;
+};
+
+export const checkIfGroupMember = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    groupName: string;
+    teamId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc("check_if_group_member", {
+    input_data: params,
+  });
+
+  if (error) throw error;
+
+  return data;
 };

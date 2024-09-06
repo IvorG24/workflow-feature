@@ -1,7 +1,7 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate, formatTime } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { HRPhoneInterviewSpreadsheetData } from "@/utils/types";
 import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
@@ -34,8 +34,8 @@ const HRPhoneInterviewMainTableRow = ({
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
-    UNQUALIFIED: "red",
-    UNRESPONSIVE: "gray",
+    "NOT QUALIFIED": "red",
+    "NOT RESPONSIVE": "gray",
   };
 
   const openModal = (action: string) =>
@@ -62,7 +62,7 @@ const HRPhoneInterviewMainTableRow = ({
       {!hiddenColumnList.includes("application_information_full_name") && (
         <td>
           <Text sx={{ whiteSpace: "nowrap" }}>
-            {item.application_information_full_name}
+            {capitalizeEachWord(item.application_information_full_name)}
           </Text>
         </td>
       )}
@@ -131,7 +131,7 @@ const HRPhoneInterviewMainTableRow = ({
       )}
       {!hiddenColumnList.includes("hr_phone_interview_date_created") && (
         <td>
-          <Text>
+          <Text sx={{ whiteSpace: "nowrap" }}>
             {formatDate(new Date(item.hr_phone_interview_date_created))}
           </Text>
         </td>
@@ -167,24 +167,24 @@ const HRPhoneInterviewMainTableRow = ({
           <Flex align="center" justify="center" gap="xs" wrap="wrap">
             <Button
               color="green"
-              w={130}
+              w={140}
               onClick={() => openModal("QUALIFIED")}
             >
               Qualified
             </Button>
             <Button
               color="red"
-              w={130}
-              onClick={() => openModal("UNQUALIFIED")}
+              w={140}
+              onClick={() => openModal("NOT QUALIFIED")}
             >
-              Unqualified
+              Not Qualified
             </Button>
             <Button
               color="gray"
-              w={130}
-              onClick={() => openModal("UNRESPONSIVE")}
+              w={140}
+              onClick={() => openModal("NOT RESPONSIVE")}
             >
-              Unresponsive
+              Not Responsive
             </Button>
           </Flex>
         )}

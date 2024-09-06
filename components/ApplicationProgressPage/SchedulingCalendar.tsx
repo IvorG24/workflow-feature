@@ -1,9 +1,11 @@
 import {
+  getCurrentDate,
   getInterviewOnlineMeeting,
   getPhoneMeetingSlots,
 } from "@/backend/api/get";
 import { createInterviewOnlineMeeting } from "@/backend/api/post";
 import {
+  cancelPhoneInterview,
   updateInterviewOnlineMeeting,
   updatePhoneInterview,
 } from "@/backend/api/update";
@@ -21,6 +23,7 @@ import {
   Loader,
   Modal,
   Select,
+  Stack,
   Text,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
@@ -31,13 +34,6 @@ import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
 
-const testOnlineMeetingProps = {
-  interview_meeting_date_created: "TEST",
-  interview_meeting_interview_id: "TEST",
-  interview_meeting_provider_id: "TEST",
-  interview_meeting_url: "TEST",
-};
-
 type SchedulingType = {
   meeting_type: "technical" | "qualifying" | "phone";
   target_id: string;
@@ -45,6 +41,9 @@ type SchedulingType = {
   refetchData: () => Promise<void>;
   status: string;
   isRefetchingData: boolean;
+  date_created: string;
+  setIsReadyToSelect: React.Dispatch<React.SetStateAction<boolean>>;
+  isReadyToSelect: boolean;
 };
 
 type HrSlotType = {
@@ -54,13 +53,23 @@ type HrSlotType = {
 };
 
 const SchedulingCalendar = ({
+  setIsReadyToSelect,
+  isReadyToSelect,
   meeting_type,
   target_id,
   intialDate,
   refetchData,
   status,
+  date_created,
   isRefetchingData,
 }: SchedulingType) => {
+  const testOnlineMeetingProps = {
+    interview_meeting_date_created: moment().toISOString(),
+    interview_meeting_interview_id: target_id,
+    interview_meeting_provider_id: "test-provider-id",
+    interview_meeting_url: "https://mock-url.com/meeting",
+  };
+
   const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
@@ -75,19 +84,42 @@ const SchedulingCalendar = ({
   const [isEdit, setIsEdit] = useState<boolean | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [isReschedule, setIsReschedule] = useState(false);
-  const [isReadyToSelect, setIsReadyToSelect] = useState(false);
+
   const [interviewOnlineMeeting, setInterviewOnlineMeeting] =
     useState<InterviewOnlineMeetingTableRow | null>(null);
-
-  const today = moment().startOf("day");
-  const minDate = today.toDate();
-  const maxDate = today.clone().add(30, "days").toDate();
+  const [currentDate, setCurrentDate] = useState<Date>();
+  const appliedDate = moment(date_created);
+  const minDate = moment(currentDate).format();
+  const maxDate = appliedDate.clone().add(30, "days").toDate();
+  const scheduleDate = intialDate ? moment(intialDate) : moment();
+  const initialDate = moment(intialDate).format();
+  const isDayBeforeSchedule =
+    scheduleDate.startOf("day").diff(moment(minDate).startOf("day"), "days") ===
+    1;
+  const isAfterSchedule = scheduleDate
+    .startOf("day")
+    .isBefore(moment(minDate).startOf("day"));
+  const isToday = moment(intialDate).isSame(
+    moment(currentDate).format(),
+    "day"
+  );
+  const cancelRestricted = moment(minDate).isSameOrAfter(
+    moment(initialDate),
+    "minutes"
+  );
 
   const formatTimeToLocal = (dateTime: string) => {
     return moment(dateTime).format("hh:mm A");
   };
 
   const cancelInterviewHandler = async () => {
+    if (cancelRestricted) {
+      notifications.show({
+        message: "Cannot cancel interview.",
+        color: "orange",
+      });
+      return;
+    }
     try {
       const params = {
         target_id,
@@ -102,7 +134,7 @@ const SchedulingCalendar = ({
             interviewOnlineMeeting.interview_meeting_provider_id
           );
         }
-        await updatePhoneInterview(supabaseClient, params);
+        await cancelPhoneInterview(supabaseClient, params);
       }
       refetchData();
       close();
@@ -121,7 +153,9 @@ const SchedulingCalendar = ({
   const rescheduleHandler = () => {
     setIsEdit(true);
     setIsReschedule(true);
-    setIsReadyToSelect(false);
+    setSelectedSlot("");
+    setSelectedDate(null);
+    setIsReadyToSelect(true);
   };
 
   const fetchTime = async ({
@@ -165,6 +199,8 @@ const SchedulingCalendar = ({
         setIsloading(true);
         if (meeting_type === "phone") {
           const data = await getPhoneMeetingSlots(supabaseClient, params);
+          const newDate = await getCurrentDate(supabaseClient);
+          setCurrentDate(newDate);
           setHrSlot(data);
         }
       } catch (error) {
@@ -194,6 +230,8 @@ const SchedulingCalendar = ({
       return;
     }
     setIsloading(true);
+    setIsReadyToSelect(false);
+    setIsEdit(false);
 
     try {
       const [time] = selectedSlot.split(" ");
@@ -246,6 +284,7 @@ const SchedulingCalendar = ({
           }
 
           setSelectedDate(tempDate);
+
           notifications.show({
             message: message,
             color: "green",
@@ -305,7 +344,7 @@ const SchedulingCalendar = ({
         .map((slot) => ({
           value: formatTimeToLocal(slot.slot_start),
           label: formatTimeToLocal(slot.slot_start),
-          isDisabled: slot.isDisabled,
+          disabled: slot.isDisabled,
           time: parseTimeString(formatTimeToLocal(slot.slot_start)),
         }))
         .filter((slot) => slot.time.isSameOrAfter(currentTime));
@@ -335,7 +374,7 @@ const SchedulingCalendar = ({
       setSelectedSlot("");
     }
     if (meeting_type === "phone") {
-      fetchTime({ breakDuration: 10, slotDuration: 5 });
+      fetchTime({ breakDuration: 0, slotDuration: 5 });
       setSelectedSlot("");
     }
   };
@@ -584,57 +623,111 @@ const SchedulingCalendar = ({
       </Modal>
       <Flex direction="column" gap={10} mb={20}>
         {status === "CANCELLED" && (
-          <div>
-            <Text mb={10} color="red">
-              You cancelled your interview
-            </Text>
-          </div>
-        )}
-
-        {isEdit === false && selectedDate && status !== "CANCELLED" && (
           <>
-            {(() => {
-              const hours = selectedDate.getHours();
-              const minutes = selectedDate.getMinutes();
-              const period = hours >= 12 ? "PM" : "AM";
-              const timeString = `${hours.toString().padStart(2, "0")}:${minutes
-                .toString()
-                .padStart(2, "0")} ${period}`;
-              return (
-                <>
-                  <Text mb={10}>
-                    Schedule:
-                    <Text component="a" fw="bold">
-                      {" "}
-                      {formatDate(selectedDate)} at {timeString}
-                    </Text>
+            {intialDate && (
+              <Stack>
+                <Group>
+                  <Text>Scheduled Date:</Text>
+                  <Text component="a" fw="bold">
+                    {" "}
+                    {formatDate(new Date(intialDate))}
                   </Text>
-                  <Group>
-                    <Text>Action: </Text>
-                    <Group spacing="xs">
-                      <Button
-                        onClick={rescheduleHandler}
-                        style={{ width: "max-content" }}
-                        disabled={isLoading || isRefetchingData}
-                        color="orange"
-                      >
-                        Reschedule
-                      </Button>
-                      <Button
-                        onClick={open}
-                        style={{ width: "max-content" }}
-                        disabled={isLoading || isRefetchingData}
-                        color="dark"
-                      >
-                        Cancel
-                      </Button>
-                    </Group>
-                  </Group>
-                </>
-              );
-            })()}
+                </Group>
+                <Group>
+                  <Text>Scheduled Time:</Text>
+                  <Text component="a" fw="bold">
+                    {" "}
+                    {moment(new Date(intialDate)).format("hh:mm A")}
+                  </Text>
+                </Group>
+              </Stack>
+            )}
           </>
         )}
+        {status === "QUALIFIED" && (
+          <>
+            {intialDate && (
+              <Stack>
+                <Group>
+                  <Text>Scheduled Date:</Text>
+                  <Text component="a" fw="bold">
+                    {" "}
+                    {formatDate(new Date(intialDate))}
+                  </Text>
+                </Group>
+                <Group>
+                  <Text>Scheduled Time:</Text>
+                  <Text component="a" fw="bold">
+                    {" "}
+                    {moment(new Date(intialDate)).format("hh:mm A")}
+                  </Text>
+                </Group>
+              </Stack>
+            )}
+          </>
+        )}
+        {isReadyToSelect === false &&
+          intialDate &&
+          status !== "CANCELLED" &&
+          status !== "QUALIFIED" && (
+            <>
+              {(() => {
+                return (
+                  <>
+                    <Stack>
+                      <Group>
+                        <Text>Scheduled Date:</Text>
+                        <Text component="a" fw="bold">
+                          {" "}
+                          {intialDate ? formatDate(new Date(intialDate)) : ""}
+                        </Text>
+                      </Group>
+                      <Group>
+                        <Text>Scheduled Time:</Text>
+                        <Text component="a" fw="bold">
+                          {" "}
+                          {selectedSlot && intialDate
+                            ? selectedSlot
+                            : intialDate
+                            ? formatTimeToLocal(intialDate)
+                            : ""}
+                        </Text>
+                      </Group>
+                    </Stack>
+                    <Group>
+                      <Text>Action: </Text>
+                      <Group spacing="xs">
+                        <Button
+                          onClick={rescheduleHandler}
+                          style={{ width: "max-content" }}
+                          disabled={
+                            isLoading ||
+                            isRefetchingData ||
+                            isDayBeforeSchedule ||
+                            isAfterSchedule ||
+                            isToday
+                          }
+                          color="orange"
+                        >
+                          Reschedule
+                        </Button>
+                        <Button
+                          onClick={open}
+                          style={{ width: "max-content" }}
+                          disabled={
+                            isLoading || isRefetchingData || cancelRestricted
+                          }
+                          color="dark"
+                        >
+                          Cancel
+                        </Button>
+                      </Group>
+                    </Group>
+                  </>
+                );
+              })()}
+            </>
+          )}
 
         {status === "WAITING FOR SCHEDULE" && (
           <Group>
@@ -643,8 +736,10 @@ const SchedulingCalendar = ({
               <Button
                 onClick={async () => {
                   setIsReadyToSelect(true);
+                  setSelectedDate(null);
+                  setIsEdit(true);
                 }}
-                disabled={!Boolean(!isReadyToSelect && isEdit)}
+                disabled={!Boolean(!isReadyToSelect)}
               >
                 Set Schedule
               </Button>
@@ -654,9 +749,10 @@ const SchedulingCalendar = ({
               <Button
                 color="dark"
                 onClick={() => {
-                  setIsEdit(false);
                   setIsReschedule(false);
+                  setIsReadyToSelect(true);
                 }}
+                disabled={isToday}
               >
                 Cancel
               </Button>
@@ -664,14 +760,14 @@ const SchedulingCalendar = ({
           </Group>
         )}
 
-        {isEdit && true && (
+        {isReadyToSelect && (
           <>
             <Group>
               <Text>Select Date:</Text>
               <DatePickerInput
                 value={selectedDate}
                 onChange={setSelectedDate}
-                minDate={minDate}
+                minDate={moment(minDate).toDate()}
                 maxDate={maxDate}
                 clearable
                 icon={<IconCalendar size={16} />}
@@ -682,7 +778,7 @@ const SchedulingCalendar = ({
             <Group>
               <Text>Select Time:</Text>
               <Select
-                data={[...removePrevTime()]}
+                data={removePrevTime()}
                 value={selectedSlot}
                 onChange={(value) => {
                   refetchData();
@@ -697,72 +793,70 @@ const SchedulingCalendar = ({
                 }
               />
             </Group>
-
-            <Group spacing="xs">
-              <Button
-                onClick={async () => {
-                  setIsReadyToSelect(false);
-                  setSelectedDate(null);
-                  setSelectedSlot("");
-                }}
-                variant="outline"
-              >
-                Cancel
-              </Button>
-
-              <Button
-                onClick={setScheduleHandler}
-                disabled={isLoading || isRefetchingData}
-                style={{ width: "min-content" }}
-              >
-                <Text fz="md" fw="bold">
+            {!isReschedule && (
+              <Group position="left" align="center" spacing="xs">
+                <Text style={{ marginBottom: 0 }}>Action:</Text>
+                <Button
+                  style={{ width: "min-content" }}
+                  color="dark"
+                  onClick={() => {
+                    setIsReadyToSelect(false);
+                  }}
+                  disabled={
+                    isLoading || isRefetchingData || isDayBeforeSchedule
+                  }
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={setScheduleHandler}
+                  disabled={isLoading || isRefetchingData}
+                >
                   Submit
-                </Text>
-              </Button>
-            </Group>
-
-            {isReschedule && selectedSlot && selectedDate && (
-              <Group>
-                <Text>Action: </Text>
-                <Group>
-                  <Button
-                    style={{ width: "min-content" }}
-                    color="dark"
-                    onClick={() => {
-                      setIsReschedule(false);
-                      setIsEdit(false);
-                    }}
-                    disabled={isLoading || isRefetchingData}
-                  >
-                    <Text fz="md" fw="bold">
-                      Cancel
-                    </Text>
-                  </Button>
-                  <Button
-                    mb={10}
-                    onClick={setScheduleHandler}
-                    disabled={isLoading || isRefetchingData}
-                    style={{ width: "min-content" }}
-                  >
-                    <Text fz="md" fw="bold">
-                      Submit
-                    </Text>
-                  </Button>
-                </Group>
+                </Button>
+              </Group>
+            )}
+            {isReschedule && (
+              <Group position="left" align="center" spacing="xs">
+                <Text style={{ marginBottom: 0 }}>Action:</Text>
+                <Button
+                  style={{ width: "min-content" }}
+                  color="dark"
+                  onClick={() => {
+                    setIsReadyToSelect(false);
+                  }}
+                  disabled={
+                    isLoading || isRefetchingData || isDayBeforeSchedule
+                  }
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={setScheduleHandler}
+                  disabled={isLoading || isRefetchingData}
+                >
+                  Submit
+                </Button>
               </Group>
             )}
           </>
         )}
 
         {/* meeting details */}
-        {interviewOnlineMeeting ? (
+        {!isReadyToSelect && interviewOnlineMeeting && status === "PENDING" ? (
           <Flex gap="xs" align="center" mt="sm">
             <Text>Online Meeting:</Text>
+
+            {/* JoyRide for showing the next step after scheduling */}
+
+            {/* Button to join the online meeting */}
             <Button
+              className="meeting-link"
+              disabled={!moment(initialDate).isSame(moment(minDate), "day")}
               onClick={() =>
                 window.open(
                   interviewOnlineMeeting.interview_meeting_url,
-                  "_blank"
+                  "_blank" // Opens the meeting URL in a new tab
                 )
               }
             >

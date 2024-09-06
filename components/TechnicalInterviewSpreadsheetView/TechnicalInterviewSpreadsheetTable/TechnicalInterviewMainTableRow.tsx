@@ -5,7 +5,7 @@ import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { TechnicalInterviewSpreadsheetData } from "@/utils/types";
 import {
@@ -79,8 +79,8 @@ const TechnicalInterviewMainTableRow = ({
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
-    UNQUALIFIED: "red",
-    UNRESPONSIVE: "gray",
+    "NOT QUALIFIED": "red",
+    "NOT RESPONSIVE": "gray",
   };
 
   const openModal = (action: string) =>
@@ -287,7 +287,7 @@ const TechnicalInterviewMainTableRow = ({
       {!hiddenColumnList.includes("application_information_full_name") && (
         <td>
           <Text sx={{ whiteSpace: "nowrap" }}>
-            {item.application_information_full_name}
+            {capitalizeEachWord(item.application_information_full_name)}
           </Text>
         </td>
       )}
@@ -399,24 +399,24 @@ const TechnicalInterviewMainTableRow = ({
           <Flex align="center" justify="center" gap="xs" wrap="wrap">
             <Button
               color="green"
-              w={130}
+              w={140}
               onClick={() => openModal("QUALIFIED")}
             >
               Qualified
             </Button>
             <Button
               color="red"
-              w={130}
-              onClick={() => openModal("UNQUALIFIED")}
+              w={140}
+              onClick={() => openModal("NOT QUALIFIED")}
             >
-              Unqualified
+              Not Qualified
             </Button>
             <Button
               color="gray"
-              w={130}
-              onClick={() => openModal("UNRESPONSIVE")}
+              w={140}
+              onClick={() => openModal("NOT RESPONSIVE")}
             >
-              Unresponsive
+              Not Responsive
             </Button>
           </Flex>
         )}

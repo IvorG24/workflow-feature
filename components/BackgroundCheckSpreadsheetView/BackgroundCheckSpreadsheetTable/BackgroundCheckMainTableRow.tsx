@@ -1,7 +1,7 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { BackgroundCheckSpreadsheetData } from "@/utils/types";
 import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
@@ -36,8 +36,8 @@ const BackgroundCheckMainTableRow = ({
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
-    UNQUALIFIED: "red",
-    UNRESPONSIVE: "gray",
+    "NOT QUALIFIED": "red",
+    "NOT RESPONSIVE": "gray",
   };
 
   const openModal = (action: string) =>
@@ -63,7 +63,7 @@ const BackgroundCheckMainTableRow = ({
       {!hiddenColumnList.includes("application_information_full_name") && (
         <td>
           <Text sx={{ whiteSpace: "nowrap" }}>
-            {item.application_information_full_name}
+            {capitalizeEachWord(item.application_information_full_name)}
           </Text>
         </td>
       )}
@@ -160,9 +160,9 @@ const BackgroundCheckMainTableRow = ({
             <Button
               color="red"
               w={130}
-              onClick={() => openModal("UNQUALIFIED")}
+              onClick={() => openModal("NOT QUALIFIED")}
             >
-              Unqualified
+              Not Qualified
             </Button>
           </Flex>
         )}

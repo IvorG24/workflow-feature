@@ -496,6 +496,7 @@ export const createRequest = async (
   for (const section of requestFormValues.sections) {
     for (const field of section.section_field) {
       let responseValue = field.field_response;
+
       if (
         typeof responseValue === "boolean" ||
         responseValue ||
@@ -526,6 +527,20 @@ export const createRequest = async (
         } else if (field.field_type === "SWITCH" && !field.field_response) {
           responseValue = false;
         }
+
+        if (
+          isFormslyForm &&
+          formName === "Application Information" &&
+          [
+            "SSS ID Number",
+            "Philhealth Number",
+            "Pag-IBIG Number",
+            "TIN",
+          ].includes(field.field_name)
+        ) {
+          responseValue = `${responseValue}`.replace(/\D/g, "");
+        }
+
         const response = {
           request_response: JSON.stringify(responseValue),
           request_response_duplicatable_section_id:
