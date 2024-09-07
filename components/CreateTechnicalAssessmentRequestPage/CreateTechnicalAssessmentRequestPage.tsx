@@ -16,6 +16,7 @@ import { useRouter } from "next/router";
 import { Database } from "oneoffice-api";
 import { useEffect } from "react";
 import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 
 export type Section = FormWithResponseType["form_section"][0];
 export type Field = FormType["form_section"][0]["section_field"][0];
@@ -104,14 +105,35 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
             .field_response as string
         );
 
-        const emailNotificationProps = {
+        const requestLink = `${process.env.NEXT_PUBLIC_SITE_URL}/user/application-progress/${applicantInformationId}`;
+
+        const emailNotificationProps: {
+          to: string;
+          subject: string;
+        } & EmailNotificationTemplateProps = {
           to: emailAddress,
-          subject: `You passed our Technical Assessment. Please read below on how you can proceed to the next step.`,
-          recipientName: `${startCase(firstName)} ${startCase(lastName)}`,
-          message:
-            "We invite you to proceed to the next step, HR Phone Interview, by clicking the link below. If you need further assistance, please reach out to careers@staclara.com.ph",
-          callbackLink: `${process.env.NEXT_PUBLIC_SITE_URL}/user/application-progress/${applicantInformationId}`,
-          callbackLinkLabel: `HR Phone Interview`,
+          subject: `Technical Assessment | Sta. Clara International Corporation`,
+          greetingPhrase: `Dear ${startCase(firstName)} ${startCase(
+            lastName
+          )},`,
+          message: `
+              <p>Congratulations on completing and passing the Assessments!</p>
+              <p>
+                In line with this, you will be proceeding to HR phone interview.
+                Please select your preferred date and time by using the calendar
+                link below. Our team will reach out to you based on your
+                availability.
+              </p>
+              <p>
+                <a href=${requestLink}>${requestLink}</a>
+              </p>
+              <p>
+                If you have any questions or need assistance, don&apos;t
+                hesitate to reach out to us at recruitment@staclara.com.ph.
+              </p>
+          `,
+          closingPhrase: "Best regards,",
+          signature: "Sta. Clara International Corporation Recruitment Team",
         };
         await fetch("/api/resend/send", {
           method: "POST",

@@ -43,6 +43,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import RequestSignerSection from "../RequestPage/RequestSignerSection";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 
 type Props = {
   request: RequestWithResponseType;
@@ -137,20 +138,36 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         const lastName = safeParse(
           `${formSection[1].section_field[2].field_response?.request_response}`
         );
-        const applicantPosition = safeParse(
-          `${formSection[0].section_field[0].field_response?.request_response}`
-        );
 
-        const emailNotificationProps = {
+        const requestLink = `${process.env.NEXT_PUBLIC_SITE_URL}/user/application-progress/${request.request_formsly_id}`;
+
+        const emailNotificationProps: {
+          to: string;
+          subject: string;
+        } & EmailNotificationTemplateProps = {
           to: emailAddress,
-          subject: `You're application has been approved. Please read below on how you can proceed to the next step.`,
-          recipientName: `${startCase(firstName)} ${startCase(lastName)}`,
-          message:
-            "We invite you to proceed to the next step, the General Assessment, by clicking the link below. Please create an account with Formsly, and we recommend using Google to sign up. If you need further assistance, please reach out to careers@staclara.com.ph",
-          callbackLink: `${process.env.NEXT_PUBLIC_SITE_URL}/user/application-progress/${request.request_formsly_id}`,
-          callbackLinkLabel: `${startCase(
-            applicantPosition
-          )} General Assessment`,
+          subject: `Application Information | Sta. Clara International Corporation`,
+          greetingPhrase: `Dear ${startCase(firstName)} ${startCase(
+            lastName
+          )},`,
+          message: `
+              <p>
+                We are pleased to inform you that your application has been
+                received. You may now proceed to the{" "}
+                <strong>General Assessment</strong> by clicking the link below.
+              </p>
+              <p>
+                <a href=${requestLink}>${requestLink}</a>
+              </p>
+              <p>
+                To get started, please create an account with Formsly. We
+                recommend signing up using your Google account for a smoother
+                process. If you need any assistance, feel free to contact us at
+                recruitment@staclara.com.ph.
+              </p>
+          `,
+          closingPhrase: "Best regards,",
+          signature: "Sta. Clara International Corporation Recruitment Team",
         };
         await fetch("/api/resend/send", {
           method: "POST",

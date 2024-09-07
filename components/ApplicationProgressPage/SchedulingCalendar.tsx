@@ -1,3 +1,4 @@
+import { deleteInterviewOnlineMeeting } from "@/backend/api/delete";
 import {
   getCurrentDate,
   getInterviewOnlineMeeting,
@@ -21,18 +22,19 @@ import {
   Flex,
   Group,
   Loader,
-  Modal,
+  LoadingOverlay,
   Select,
   Stack,
   Text,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
-import { useDisclosure } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
+import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
 
 type SchedulingType = {
   meeting_type: "technical" | "qualifying" | "phone";
@@ -82,7 +84,6 @@ const SchedulingCalendar = ({
   const [hrSlot, setHrSlot] = useState<HrSlotType[]>([]);
   const [isLoading, setIsloading] = useState(false);
   const [isEdit, setIsEdit] = useState<boolean | null>(null);
-  const [opened, { open, close }] = useDisclosure(false);
   const [isReschedule, setIsReschedule] = useState(false);
 
   const [interviewOnlineMeeting, setInterviewOnlineMeeting] =
@@ -121,16 +122,21 @@ const SchedulingCalendar = ({
       return;
     }
     try {
+      setIsloading(true);
       const params = {
         target_id,
         status: "CANCELLED",
       };
 
       if (meeting_type === "phone") {
+        if (interviewOnlineMeeting) {
+          await handleCancelOnlineMeeting(
+            interviewOnlineMeeting.interview_meeting_provider_id
+          );
+        }
         await cancelPhoneInterview(supabaseClient, params);
       }
       refetchData();
-      close();
       notifications.show({
         message: "Interview cancellation successful!",
         color: "green",
@@ -140,6 +146,8 @@ const SchedulingCalendar = ({
         message: "Error cancelling interview:",
         color: "orange",
       });
+    } finally {
+      setIsloading(false);
     }
   };
 
@@ -256,8 +264,8 @@ const SchedulingCalendar = ({
               const newInterviewOnlineMeeting =
                 await updateInterviewOnlineMeeting(supabaseClient, {
                   ...testOnlineMeetingProps,
-                  inverview_meeting_id:
-                    interviewOnlineMeeting.inverview_meeting_id,
+                  interview_meeting_id:
+                    interviewOnlineMeeting.interview_meeting_id,
                 });
               setInterviewOnlineMeeting(newInterviewOnlineMeeting);
             }
@@ -437,11 +445,33 @@ const SchedulingCalendar = ({
     setInterviewOnlineMeeting(newInterviewOnlineMeeting);
 
     const emailNotificationProps = {
-      subject: `HR Interview Schedule.`,
+      subject: `HR Phone Interview Schedule | Sta. Clara International Corporation`,
       userFullname,
-      message: `You are scheduled for an interview with HR representative ${hrRepresentativeName} on ${formattedDate}. Click the link below to join the meeting. If you need further assistance, please reach out to careers@staclara.com.ph`,
-      callbackLink: meetingUrl,
-      callbackLinkLabel: "HR Interview Meeting Link",
+      message: `
+          <p>
+            Your HR phone interview has been scheduled. Please find the details
+            of your interview below:
+          </p>
+          <p>
+            <strong>Date</strong>:{" "}
+            <span>${moment(tempDate).format("dddd, MMMM Do YYYY")}</span>
+          </p>
+          <p>
+            <strong>Time</strong>:{" "}
+            <span>${moment(tempDate).format("h:mm A")}</span>
+          </p>
+          <p>
+            <strong>Meeting Link</strong>
+            <a href=${meetingUrl}>Interview Meeting Link</a>
+          </p>
+          <p>
+            If you have any questions or need to make adjustments, please
+            contact us at recruitment@staclara.com.ph. We look forward to
+            speaking with you.
+          </p>
+      )`,
+      closingPhrase: "Best regards,",
+      signature: "Sta. Clara International Corporation Recruitment Team",
     };
 
     await handleSendEmailNotification(emailNotificationProps);
@@ -455,10 +485,6 @@ const SchedulingCalendar = ({
       });
       return;
     }
-    const hrRepresentativeName = "John Doe"; // replace with actual hr rep name
-    const formattedDate = moment(tempDate).format(
-      "dddd, MMMM Do YYYY, h:mm:ss a"
-    );
     const userFullname = `${user?.user_first_name} ${user?.user_last_name}`;
     const meetingDetails = {
       start: {
@@ -487,7 +513,7 @@ const SchedulingCalendar = ({
     const interviewOnlineMeetingProps: InterviewOnlineMeetingTableUpdate = {
       interview_meeting_url: meetingUrl,
       interview_meeting_provider_id: updateMeetingData.id,
-      inverview_meeting_id: interviewOnlineMeeting.inverview_meeting_id,
+      interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
     };
 
     const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(
@@ -498,36 +524,94 @@ const SchedulingCalendar = ({
     setInterviewOnlineMeeting(newInterviewOnlineMeeting);
 
     const emailNotificationProps = {
-      subject: `HR Interview Schedule.`,
+      subject: `HR Phone Interview Schedule | Sta. Clara International Corporation`,
       userFullname,
-      message: `You interview with HR representative ${hrRepresentativeName} has been rescheduled to ${formattedDate}. Click the link below to join the meeting. If you need further assistance, please reach out to careers@staclara.com.ph`,
-      callbackLink: meetingUrl,
-      callbackLinkLabel: "HR Interview Meeting Link",
+      message: `
+          <p>
+            Your HR phone interview has been rescheduled. Please find the
+            details of your interview new interview below:
+          </p>
+          <p>
+            <strong>Date</strong>:{" "}
+            <span>${moment(tempDate).format("dddd, MMMM Do YYYY")}</span>
+          </p>
+          <p>
+            <strong>Time</strong>:{" "}
+            <span>${moment(tempDate).format("h:mm A")}</span>
+          </p>
+          <p>
+            <strong>Meeting Link</strong>
+            <a href=${meetingUrl}>Interview Meeting Link</a>
+          </p>
+          <p>
+            If you have any questions or need to make adjustments, please
+            contact us at recruitment@staclara.com.ph. We look forward to
+            speaking with you.
+          </p>
+      )`,
+      closingPhrase: "Best regards,",
+      signature: "Sta. Clara International Corporation Recruitment Team",
     };
 
     await handleSendEmailNotification(emailNotificationProps);
+  };
+
+  const handleCancelOnlineMeeting = async (meetingId: string) => {
+    if (!interviewOnlineMeeting) {
+      notifications.show({
+        message: "Cannot cancel meeting because it does not exist",
+        color: "red",
+      });
+      return;
+    }
+    try {
+      if (process.env.NODE_ENV === "production") {
+        await fetch("/api/ms-graph/cancel-meeting", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            meetingId,
+          }),
+        });
+      }
+
+      await deleteInterviewOnlineMeeting(
+        supabaseClient,
+        interviewOnlineMeeting.interview_meeting_id
+      );
+    } catch (error) {
+      notifications.show({
+        message: "Failed to cancel MS Teams meeting",
+        color: "red",
+      });
+    }
   };
 
   const handleSendEmailNotification = async ({
     userFullname,
     subject,
     message,
-    callbackLink,
-    callbackLinkLabel,
+    closingPhrase,
+    signature,
   }: {
     userFullname: string;
     subject: string;
     message: string;
-    callbackLink: string;
-    callbackLinkLabel: string;
+    closingPhrase: string;
+    signature: string;
   }) => {
-    const emailNotificationProps = {
-      to: user?.user_email,
+    const emailNotificationProps: {
+      to: string;
+      subject: string;
+    } & EmailNotificationTemplateProps = {
+      to: user?.user_email as string,
       subject: subject,
-      recipientName: userFullname,
+      greetingPhrase: `Dear ${userFullname},`,
       message: message,
-      callbackLink: callbackLink,
-      callbackLinkLabel: callbackLinkLabel,
+      closingPhrase,
+      signature,
     };
 
     await fetch("/api/resend/send", {
@@ -550,6 +634,20 @@ const SchedulingCalendar = ({
     }
   };
 
+  const openCancelInterviewModal = () =>
+    modals.openConfirmModal({
+      title: "Please confirm your action",
+      children: (
+        <Text size="sm">
+          Are you sure you want to cancel your {meeting_type} interview?
+        </Text>
+      ),
+      labels: { confirm: "Confirm", cancel: "Cancel" },
+      onConfirm: () => cancelInterviewHandler(),
+      confirmProps: { color: "dark" },
+      centered: true,
+    });
+
   useEffect(() => {
     fetchSlot();
     if (intialDate !== null) {
@@ -569,26 +667,8 @@ const SchedulingCalendar = ({
 
   return (
     <>
-      <Modal
-        opened={opened}
-        onClose={close}
-        centered
-        title="Please confirm your action."
-        pos="relative"
-      >
-        <Text mb={15} size="sm">
-          Are you sure you want to cancel your {meeting_type} interview?
-        </Text>
-        <Flex justify="end" gap={5}>
-          <Button variant="outline" color="dark" onClick={close}>
-            <Text color="black">Cancel</Text>
-          </Button>
-          <Button onClick={cancelInterviewHandler} mb={5} color="dark">
-            Confirm
-          </Button>
-        </Flex>
-      </Modal>
       <Flex direction="column" gap={10} mb={20}>
+        <LoadingOverlay visible={isLoading} />
         {status === "CANCELLED" && (
           <>
             {intialDate && (
@@ -679,7 +759,7 @@ const SchedulingCalendar = ({
                           Reschedule
                         </Button>
                         <Button
-                          onClick={open}
+                          onClick={openCancelInterviewModal}
                           style={{ width: "max-content" }}
                           disabled={
                             isLoading || isRefetchingData || cancelRestricted

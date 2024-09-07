@@ -1520,7 +1520,7 @@ export const updateInterviewOnlineMeeting = async (
     .schema("hr_schema")
     .from("interview_online_meeting_table")
     .update(params)
-    .eq("inverview_meeting_id", params.inverview_meeting_id as string)
+    .eq("inverview_meeting_id", params.interview_meeting_id as string)
     .select("*");
 
   if (error) throw error;

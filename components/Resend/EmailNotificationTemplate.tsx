@@ -1,28 +1,21 @@
-type Props = {
+export type EmailNotificationTemplateProps = {
   message: string;
-  recipientName?: string;
-  callbackLink?: string;
-  callbackLinkLabel?: string;
+  greetingPhrase?: string;
+  closingPhrase?: string;
+  signature?: string;
 };
 
 const EmailNotificationTemplate = ({
   message,
-  recipientName,
-  callbackLink,
-  callbackLinkLabel = "Click here",
-}: Props) => (
+  greetingPhrase = "Hi,",
+  closingPhrase = "Thank you",
+  signature = "Formsly Team",
+}: EmailNotificationTemplateProps) => (
   <div>
-    <p>{`Hi${recipientName ? ` ${recipientName}` : ""},`}</p>
-    <p>{message}</p>
-    &nbsp;
-    {callbackLink ? (
-      <p>
-        <a href={callbackLink}>{callbackLinkLabel}</a>
-      </p>
-    ) : null}
-    &nbsp;
-    <p>Thank you,</p>
-    <p>Formsly Team</p>
+    <p>{greetingPhrase}</p>
+    <div dangerouslySetInnerHTML={{ __html: message }} />
+    <p>{closingPhrase}</p>
+    <p>{signature}</p>
   </div>
 );
 
