@@ -15903,10 +15903,12 @@ AS $$
             ) = ANY($3)
             AND iom.interview_meeting_is_disabled = false
             GROUP BY
-            hpi.hr_phone_interview_team_member_id,
-            di.director_interview_team_member_id,
-            ti.technical_interview_team_member_id,
-            t.trade_test_team_member_id
+            COALESCE(
+                hpi.hr_phone_interview_team_member_id,
+                di.director_interview_team_member_id,
+                ti.technical_interview_team_member_id,
+                t.trade_test_team_member_id
+            )
         `,
         [startOfMonth, endOfMonth, availableHrMembers]
         );
