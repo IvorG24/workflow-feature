@@ -26,7 +26,7 @@ const initialSort = {
 };
 
 const formDefaultValues = {
-  position: "",
+  position: [],
   application_information_full_name: "",
   application_information_contact_number: "",
   application_information_email: "",
@@ -49,18 +49,23 @@ const formDefaultValues = {
     start: "",
     end: "",
   },
-  trade_test_status: "",
+  trade_test_status: [],
   trade_test_schedule: {
     start: null,
     end: null,
   },
+  assigned_hr: [],
 };
 
 type Props = {
   positionOptionList: OptionType[];
+  hrOptionList: OptionType[];
 };
 
-const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
+const TradeTestSpreadsheetView = ({
+  positionOptionList,
+  hrOptionList,
+}: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
@@ -226,6 +231,7 @@ const TradeTestSpreadsheetView = ({ positionOptionList }: Props) => {
               fetchData={fetchData}
               handleReset={handleReset}
               positionOptionList={positionOptionList}
+              hrOptionList={hrOptionList}
             />
           </FormProvider>
           <TradeTestColumnsMenu

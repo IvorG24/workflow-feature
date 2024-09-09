@@ -19,12 +19,14 @@ type Props = {
   fetchData: (data?: DirectorInterviewFilterFormValues) => void;
   handleReset: () => void;
   positionOptionList: OptionType[];
+  hrOptionList: OptionType[];
 };
 
 const DirectorInterviewFilterMenu = ({
   fetchData,
   handleReset,
   positionOptionList,
+  hrOptionList,
 }: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
@@ -317,7 +319,24 @@ const DirectorInterviewFilterMenu = ({
                   }}
                 />
               </Flex>
-            </Stack>
+            </Stack>{" "}
+            <Controller
+              control={control}
+              name="assigned_hr"
+              render={({ field: { value, onChange } }) => {
+                const newValue = value ?? [];
+                return (
+                  <MultiSelect
+                    label="Assigned HR"
+                    data={hrOptionList}
+                    value={newValue as string[]}
+                    onChange={onChange}
+                    clearable
+                    searchable
+                  />
+                );
+              }}
+            />
             <Button variant="light" mt="xs" onClick={handleReset}>
               Reset Filter
             </Button>

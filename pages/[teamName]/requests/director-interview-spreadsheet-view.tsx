@@ -1,4 +1,7 @@
-import { checkIfGroupMember, getAllPoisitions } from "@/backend/api/get";
+import {
+  checkIfGroupMember,
+  getHRSpreadsheetViewOnLoad,
+} from "@/backend/api/get";
 import DirectorInterviewSpreadsheetView from "@/components/DirectorInterviewSpreadsheetView/DirectorInterviewSpreadsheetView";
 import Meta from "@/components/Meta/Meta";
 import { withActiveTeam } from "@/utils/server-side-protections";
@@ -22,12 +25,12 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
         };
       }
 
-      const data = await getAllPoisitions(supabaseClient, {
+      const data = await getHRSpreadsheetViewOnLoad(supabaseClient, {
         teamId: userActiveTeam.team_id,
       });
 
       return {
-        props: { positionOptionList: data },
+        props: data,
       };
     } catch (e) {
       return {
@@ -42,9 +45,10 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
 
 type Props = {
   positionOptionList: OptionType[];
+  hrOptionList: OptionType[];
 };
 
-const Page = ({ positionOptionList }: Props) => {
+const Page = ({ positionOptionList, hrOptionList }: Props) => {
   return (
     <>
       <Meta
@@ -53,6 +57,7 @@ const Page = ({ positionOptionList }: Props) => {
       />
       <DirectorInterviewSpreadsheetView
         positionOptionList={positionOptionList}
+        hrOptionList={hrOptionList}
       />
     </>
   );

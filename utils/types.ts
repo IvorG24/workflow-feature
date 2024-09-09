@@ -2292,6 +2292,7 @@ export type HRSpreadsheetGeneralData = {
   application_information_full_name: string;
   application_information_contact_number: string;
   application_information_email: string;
+  assigned_hr: string;
 };
 
 export type HRSpreadsheetGeneralFilterFormValues = {
@@ -2317,6 +2318,7 @@ export type HRSpreadsheetGeneralFilterFormValues = {
     start?: number;
     end?: number;
   };
+  assigned_hr?: string;
 };
 
 export type HRPhoneInterviewSpreadsheetData = HRSpreadsheetGeneralData & {

@@ -19,12 +19,14 @@ type Props = {
   fetchData: (data?: BackgroundCheckFilterFormValues) => void;
   handleReset: () => void;
   positionOptionList: OptionType[];
+  hrOptionList: OptionType[];
 };
 
 const BackgroundCheckFilterMenu = ({
   fetchData,
   handleReset,
   positionOptionList,
+  hrOptionList,
 }: Props) => {
   const [isFilterMenuOpen, { open: openFilterMenu, close: closeFilterMenu }] =
     useDisclosure(false);
@@ -269,6 +271,23 @@ const BackgroundCheckFilterMenu = ({
                         label: "Missed",
                       },
                     ]}
+                    value={newValue as string[]}
+                    onChange={onChange}
+                    clearable
+                    searchable
+                  />
+                );
+              }}
+            />
+            <Controller
+              control={control}
+              name="assigned_hr"
+              render={({ field: { value, onChange } }) => {
+                const newValue = value ?? [];
+                return (
+                  <MultiSelect
+                    label="Assigned HR"
+                    data={hrOptionList}
                     value={newValue as string[]}
                     onChange={onChange}
                     clearable

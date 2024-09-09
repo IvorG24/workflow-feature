@@ -26,7 +26,7 @@ const initialSort = {
 };
 
 const formDefaultValues = {
-  position: "",
+  position: [],
   application_information_full_name: "",
   application_information_contact_number: "",
   application_information_email: "",
@@ -49,18 +49,20 @@ const formDefaultValues = {
     start: "",
     end: "",
   },
-  director_interview_status: "",
+  director_interview_status: [],
   director_interview_schedule: {
     start: null,
     end: null,
   },
+  assigned_hr: [],
 };
 
 type Props = {
   positionOptionList: OptionType[];
+  hrOptionList: OptionType[];
 };
 
-const DirectorInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
+const DirectorInterviewSpreadsheetView = ({ positionOptionList, hrOptionList }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
@@ -232,6 +234,7 @@ const DirectorInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
               fetchData={fetchData}
               handleReset={handleReset}
               positionOptionList={positionOptionList}
+              hrOptionList={hrOptionList}
             />
           </FormProvider>
           <DirectorInterviewColumnsMenu
