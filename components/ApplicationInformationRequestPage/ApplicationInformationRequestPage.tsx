@@ -95,7 +95,11 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
 
   const requestDateCreated = formatDate(new Date(request.request_date_created));
 
-  const handleUpdateRequest = async (status: "APPROVED" | "REJECTED") => {
+  const handleUpdateRequest = async (
+    status: "APPROVED" | "REJECTED",
+    jiraId?: string,
+    jiraLink?: string
+  ) => {
     try {
       setIsLoading(true);
       const signer = isUserSigner;
@@ -126,6 +130,8 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
         teamId: request.request_team_member.team_member_team_id,
         requestFormslyId: request.request_formsly_id,
         userId,
+        jiraId,
+        jiraLink,
       });
 
       if (status === "APPROVED") {

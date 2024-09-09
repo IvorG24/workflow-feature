@@ -214,7 +214,7 @@ export const sssIdNumberFormatter = (value: string | undefined) => {
 export const philHealthIdNumberFormatter = (value: string | undefined) => {
   const cleanedNumber = value ? value.replace(/\D/g, "") : "";
 
-  if (cleanedNumber.length === 10) {
+  if (cleanedNumber.length === 12) {
     const formattedNumber = cleanedNumber.replace(
       /(\d{2})(\d{9})(\d{1})/,
       "$1-$2-$3"

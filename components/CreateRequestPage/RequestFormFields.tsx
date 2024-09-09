@@ -588,6 +588,11 @@ const RequestFormFields = ({
 
                   if (!stringifiedValue.length || !maxLength) return true;
                   switch (field.field_name) {
+                    case "Contact Number":
+                      if (stringifiedValue.length !== maxLength) {
+                        return "Invalid Contact Number";
+                      }
+                      return true;
                     case "SSS ID Number":
                       if (stringifiedValue.length !== maxLength + 2) {
                         return "Invalid SSS ID Number";
@@ -609,6 +614,12 @@ const RequestFormFields = ({
                       }
                       return true;
                   }
+                },
+                startsWith: (value) => {
+                  if (field.field_name !== "Contact Number") return true;
+                  return `${value}`[0] === "9"
+                    ? true
+                    : "Contact number must start with 9";
                 },
               },
             }}
@@ -756,18 +767,6 @@ const RequestFormFields = ({
                     field.field_name === "Quantity" && Number(value) < 0
                       ? "Quantity must be a positive integer."
                       : true,
-                  valid: (value) => {
-                    if (field.field_name !== "Contact Number") return true;
-                    return `${value}`.length === 10
-                      ? true
-                      : "Invalid contact number";
-                  },
-                  startsWith: (value) => {
-                    if (field.field_name !== "Contact Number") return true;
-                    return `${value}`[0] === "9"
-                      ? true
-                      : "Contact number must start with 9";
-                  },
                 },
               }}
             />

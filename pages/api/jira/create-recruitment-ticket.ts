@@ -83,8 +83,8 @@ export default async function handler(
 
     const createTicketData = await createTicketResponse.json();
     jiraTicketId = createTicketData.key;
-    jiraTicketLink = createTicketData.self;
-    console.log(createTicketData);
+    jiraTicketLink = `https://scic.atlassian.net/jira/core/projects/REC/board?selectedIssue=${createTicketData.key}`; // link is hardcoded because the issue does not return a user facing web link unlike the other form tickets
+
     return res.status(200).json({ jiraTicketId, jiraTicketLink });
   } catch (e) {
     return res.status(500).json({ error: e });
