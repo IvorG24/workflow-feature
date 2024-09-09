@@ -15308,8 +15308,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.hr_phone_interview_table ON hr_phone_interview_request_id = applicationInformation.request_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = hr_phone_interview_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = hr_phone_interview_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -15589,8 +15589,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.trade_test_table ON trade_test_request_id = applicationInformation.request_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = trade_test_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = trade_test_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -16182,8 +16182,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.technical_interview_table ON technical_interview_request_id = applicationInformation.request_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = technical_interview_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = technical_interview_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -16484,8 +16484,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.director_interview_table ON director_interview_request_id = applicationInformation.request_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = director_interview_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = director_interview_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -16656,8 +16656,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.background_check_table ON background_check_request_id = applicationInformation.request_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -17004,8 +17004,8 @@ AS $$
             ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY JobOffer.job_offer_date_created DESC) AS RowNumber
           FROM hr_schema.job_offer_table JobOffer
         ) JobOffer ON JobOffer.job_offer_request_id = applicationInformation.request_id
-        INNER JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+        LEFT JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
+        LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
