@@ -26,7 +26,7 @@ const initialSort = {
 };
 
 const formDefaultValues = {
-  position: "",
+  position: [],
   application_information_full_name: "",
   application_information_contact_number: "",
   application_information_email: "",
@@ -49,21 +49,24 @@ const formDefaultValues = {
     start: "",
     end: "",
   },
-  technical_interview_status: "",
+  technical_interview_status: [],
   technical_interview_schedule: {
     start: null,
     end: null,
   },
+  assigned_hr: [],
 };
 
 type Props = {
   positionOptionList: OptionType[];
   technicalInterviewNumber: number;
+  hrOptionList: OptionType[];
 };
 
 const TechnicalInterviewSpreadsheetView = ({
   positionOptionList,
   technicalInterviewNumber,
+  hrOptionList,
 }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
@@ -238,6 +241,7 @@ const TechnicalInterviewSpreadsheetView = ({
               fetchData={fetchData}
               handleReset={handleReset}
               positionOptionList={positionOptionList}
+              hrOptionList={hrOptionList}
             />
           </FormProvider>
           <TechnicalInterviewColumnsMenu

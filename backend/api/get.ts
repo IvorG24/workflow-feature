@@ -6132,25 +6132,6 @@ export const getHRPhoneInterviewSummaryData = async (
   return data as HRPhoneInterviewSpreadsheetData[];
 };
 
-export const getAllPoisitions = async (
-  supabaseClient: SupabaseClient<Database>,
-  params: {
-    teamId: string;
-  }
-) => {
-  const { teamId } = params;
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("position_table")
-    .select("position")
-    .eq("position_team_id", teamId)
-    .order("position");
-  if (error) throw error;
-  return data.map(({ position }) => {
-    return { label: position, value: position };
-  });
-};
-
 export const getPhoneMeetingSlots = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
@@ -6471,4 +6452,16 @@ export const phoneInterviewValidation = async (
     status: string;
     assigned_hr_team_member_id: string;
   };
+};
+
+export const getHRSpreadsheetViewOnLoad = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { teamId: string }
+) => {
+  const { data, error } = await supabaseClient
+    .rpc("get_hr_spreadsheet_view_on_load", { input_data: params })
+    .select("*");
+  if (error) throw error;
+
+  return data;
 };

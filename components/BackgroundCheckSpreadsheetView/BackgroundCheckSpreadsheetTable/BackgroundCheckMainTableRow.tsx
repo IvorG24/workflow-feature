@@ -147,6 +147,11 @@ const BackgroundCheckMainTableRow = ({
           </Badge>
         </td>
       )}
+      {!hiddenColumnList.includes("assigned_hr") && (
+        <td>
+          <Text sx={{ whiteSpace: "nowrap" }}>{item.assigned_hr}</Text>
+        </td>
+      )}
       <td>
         {item.background_check_status === "PENDING" && (
           <Flex align="center" justify="center" gap="xs" wrap="wrap">

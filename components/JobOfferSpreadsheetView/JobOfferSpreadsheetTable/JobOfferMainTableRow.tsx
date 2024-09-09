@@ -623,7 +623,11 @@ const JobOfferMainTableRow = ({
           )}
         </td>
       )}
-
+      {!hiddenColumnList.includes("assigned_hr") && (
+        <td>
+          <Text sx={{ whiteSpace: "nowrap" }}>{item.assigned_hr}</Text>
+        </td>
+      )}
       <td>
         <Stack spacing="xs">
           {!["ACCEPTED", "PENDING", "FOR POOLING"].includes(

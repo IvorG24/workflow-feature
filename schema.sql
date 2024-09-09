@@ -15205,7 +15205,8 @@ AS $$
       technical_assessment_score,
       hr_phone_interview_status,
       hr_phone_interview_schedule,
-      hr_phone_interview_date_created
+      hr_phone_interview_date_created,
+      assigned_hr
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -15276,6 +15277,10 @@ AS $$
         hrPhoneInterviewDateCondition += ` AND hr_phone_interview_date_created <= '${new Date(hr_phone_interview_date_created.end).toISOString()}'`;
       }
     }
+    let assignedHRCondition = '';
+    if (assigned_hr && assigned_hr.length) {
+      assignedHRCondition = `AND hr_phone_interview_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
+    }
 
     const parentRequests = plv8.execute(
       `
@@ -15290,7 +15295,9 @@ AS $$
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
           hr_phone_interview_date_created,
           hr_phone_interview_status,
-          hr_phone_interview_schedule
+          hr_phone_interview_schedule,
+          hr_phone_interview_team_member_id,
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
@@ -15301,6 +15308,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.hr_phone_interview_table ON hr_phone_interview_request_id = applicationInformation.request_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = hr_phone_interview_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -15315,6 +15324,7 @@ AS $$
           ${hrPhoneInterviewDateCondition.length ? hrPhoneInterviewDateCondition : ""}
           ${hrPhoneInterviewCondition}
           ${hrPhoneInterviewScheduleCondition}
+          ${assignedHRCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'
@@ -15477,7 +15487,8 @@ AS $$
       technical_assessment_score,
       trade_test_date_created,
       trade_test_status,
-      trade_test_schedule
+      trade_test_schedule,
+      assigned_hr
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -15547,6 +15558,10 @@ AS $$
         tradeTestScheduleCondition += ` AND trade_test_schedule <= '${trade_test_schedule.end}'`;
       }
     }
+    let assignedHRCondition = '';
+    if (assigned_hr && assigned_hr.length) {
+      assignedHRCondition = `AND trade_test_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
+    }
 
     const parentRequests = plv8.execute(
       `
@@ -15561,7 +15576,9 @@ AS $$
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
           trade_test_date_created,
           trade_test_status,
-          trade_test_schedule
+          trade_test_schedule,
+          trade_test_team_member_id,
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
@@ -15572,6 +15589,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.trade_test_table ON trade_test_request_id = applicationInformation.request_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = trade_test_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -15586,6 +15605,7 @@ AS $$
           ${tradeTestDateCondition.length ? tradeTestDateCondition : ""}
           ${tradeTestCondition}
           ${tradeTestScheduleCondition}
+          ${assignedHRCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'
@@ -15758,9 +15778,6 @@ AS $$
         const isPast = validStartTime.toISOString() < currentUtc;
         const isDisabled = isFullyBooked || isPast;
 
-
-
-
         if (currentSlotEnd <= validEndTime) {
           slots.push({
             slot_start: validStartTime.toISOString(),
@@ -15779,7 +15796,7 @@ AS $$
   });
 
   return free_slots;
-$$ LANGUAGE plv8
+$$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION phone_interview_validation(
     input_data JSON
@@ -16065,7 +16082,8 @@ AS $$
       technical_interview_date_created,
       technical_interview_status,
       technical_interview_schedule,
-      technicalInterviewNumber
+      technicalInterviewNumber,
+      assigned_hr
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -16135,6 +16153,10 @@ AS $$
         technicalInterviewScheduleCondition += ` AND technical_interview_schedule <= '${technical_interview_schedule.end}'`;
       }
     }
+    let assignedHRCondition = '';
+    if (assigned_hr && assigned_hr.length) {
+      assignedHRCondition = `AND technical_interview_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
+    }
 
     const parentRequests = plv8.execute(
       `
@@ -16149,7 +16171,9 @@ AS $$
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
           technical_interview_date_created,
           technical_interview_status,
-          technical_interview_schedule
+          technical_interview_schedule,
+          technical_interview_team_member_id,
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
@@ -16160,6 +16184,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.technical_interview_table ON technical_interview_request_id = applicationInformation.request_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = technical_interview_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -16175,6 +16201,7 @@ AS $$
           ${technicalInterviewDateCondition.length ? technicalInterviewDateCondition : ""}
           ${technicalInterviewCondition}
           ${technicalInterviewScheduleCondition}
+          ${assignedHRCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'
@@ -16357,7 +16384,8 @@ AS $$
       technical_assessment_score,
       director_interview_date_created,
       director_interview_status,
-      director_interview_schedule
+      director_interview_schedule,
+      assigned_hr
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -16427,6 +16455,10 @@ AS $$
         directorInterviewScheduleCondition += ` AND director_interview_schedule <= '${director_interview_schedule.end}'`;
       }
     }
+    let assignedHRCondition = '';
+    if (assigned_hr && assigned_hr.length) {
+      assignedHRCondition = `AND director_interview_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
+    }
 
     const parentRequests = plv8.execute(
       `
@@ -16441,7 +16473,9 @@ AS $$
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
           director_interview_date_created,
           director_interview_status,
-          director_interview_schedule
+          director_interview_schedule,
+          director_interview_team_member_id,
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
@@ -16452,6 +16486,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.director_interview_table ON director_interview_request_id = applicationInformation.request_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = director_interview_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -16466,6 +16502,7 @@ AS $$
           ${directorInterviewDateCondition.length ? directorInterviewDateCondition : ""}
           ${directorInterviewCondition}
           ${directorInterviewScheduleCondition}
+          ${assignedHRCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'
@@ -16529,7 +16566,8 @@ AS $$
       technical_assessment_request_id,
       technical_assessment_score,
       background_check_date_created,
-      background_check_status
+      background_check_status,
+      assigned_hr
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -16590,6 +16628,10 @@ AS $$
     if (background_check_status && background_check_status.length) {
       backgroundCheckCondition = `AND background_check_status IN (${background_check_status.map(status => `'${status}'`).join(", ")})`;
     }
+    let assignedHRCondition = '';
+    if (assigned_hr && assigned_hr.length) {
+      assignedHRCondition = `AND background_check_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
+    }
 
     const parentRequests = plv8.execute(
       `
@@ -16603,7 +16645,9 @@ AS $$
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
           background_check_date_created,
-          background_check_status
+          background_check_status,
+          background_check_team_member_id,
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
@@ -16614,6 +16658,8 @@ AS $$
         INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
         INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
         INNER JOIN hr_schema.background_check_table ON background_check_request_id = applicationInformation.request_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = background_check_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -16627,6 +16673,7 @@ AS $$
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
           ${backgroundCheckDateCondition.length ? backgroundCheckDateCondition : ""}
           ${backgroundCheckCondition}
+          ${assignedHRCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'
@@ -16860,7 +16907,8 @@ AS $$
       technical_assessment_request_id,
       technical_assessment_score,
       job_offer_date_created,
-      job_offer_status
+      job_offer_status,
+      assigned_hr
     } = input_data;
 
     const offset = (page - 1) * limit;
@@ -16921,6 +16969,10 @@ AS $$
     if (job_offer_status && job_offer_status.length) {
       jobOfferCondition = `AND job_offer_status IN (${job_offer_status.map(status => `'${status}'`).join(", ")})`;
     }
+    let assignedHRCondition = '';
+    if (assigned_hr && assigned_hr.length) {
+      assignedHRCondition = `AND job_offer_team_member_id IN (${assigned_hr.map(assigned_hr => `'${assigned_hr}'`).join(", ")})`;
+    }
 
     const parentRequests = plv8.execute(
       `
@@ -16936,7 +16988,9 @@ AS $$
           job_offer_date_created,
           job_offer_status,
           job_offer_attachment_id,
-          job_offer_project_assignment
+          job_offer_project_assignment,
+          job_offer_team_member_id,
+          CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
         INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
@@ -16952,6 +17006,8 @@ AS $$
             ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY JobOffer.job_offer_date_created DESC) AS RowNumber
           FROM hr_schema.job_offer_table JobOffer
         ) JobOffer ON JobOffer.job_offer_request_id = applicationInformation.request_id
+        INNER JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
+        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
         WHERE
           applicationInformation.request_status = 'APPROVED'
           AND generalAssessment.request_status = 'APPROVED'
@@ -16966,6 +17022,7 @@ AS $$
           ${technicalAssessmentScoreCondition.length ? technicalAssessmentScoreCondition : ""}
           ${jobOfferDateCondition.length ? jobOfferDateCondition : ""}
           ${jobOfferCondition}
+          ${assignedHRCondition}
         ORDER BY ${sort.sortBy} ${sort.order}
         LIMIT '${limit}'
         OFFSET '${offset}'
@@ -17243,12 +17300,14 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_ad_owner_request(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
 plv8.subtransaction(function(){
-    const {
-        ad_owner_request_owner_id,
-        ad_owner_request_request_id
-    } = input_data;
+  const {
+    ad_owner_request_owner_id,
+    ad_owner_request_request_id
+  } = input_data;
 
     const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
 
@@ -17256,17 +17315,70 @@ plv8.subtransaction(function(){
     const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
     const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
 
-    if (!is_valid_owner) {
-        const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
-        if (!scic) return;
-        insert_data.ad_owner_request_owner_id = scic.ad_owner_id;
-    }
+  if (!is_valid_owner) {
+    const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
+    if (!scic) return;
+    insert_data.ad_owner_request_owner_id = scic.ad_owner_id;
+  }
 
-    plv8.execute(`
-        INSERT INTO lookup_schema.ad_owner_request_table (ad_owner_request_owner_id, ad_owner_request_request_id)
-        VALUES ($1, $2)
-    `, [insert_data.ad_owner_request_owner_id, insert_data.ad_owner_request_request_id]);
+  plv8.execute(`
+    INSERT INTO lookup_schema.ad_owner_request_table (ad_owner_request_owner_id, ad_owner_request_request_id)
+    VALUES ($1, $2)
+  `, [insert_data.ad_owner_request_owner_id, insert_data.ad_owner_request_request_id]);
 });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_hr_spreadsheet_view_on_load(
+  input_data JSON
+)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+let returnData = {};
+plv8.subtransaction(function(){
+  const {
+    teamId
+  } = input_data;
+
+  const positionData = plv8.execute(
+    `
+      SELECT position
+      FROM lookup_schema.position_table
+      WHERE
+        position_team_id = '${teamId}'
+      ORDER BY position
+    `
+  );
+
+  const positionOptionList = positionData.map(position => {
+    return { label: position.position, value: position.position };
+  });
+
+  const hrMemberData = plv8.execute(
+    `
+      SELECT 
+        user_first_name,
+        user_last_name,
+        tmt.team_member_id
+      FROM team_schema.team_group_member_table AS tgmt
+      INNER JOIN team_schema.team_member_table AS tmt ON tmt.team_member_id = tgmt.team_member_id
+      INNER JOIN user_schema.user_table ON user_id = tmt.team_member_user_id
+      WHERE
+        team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+      ORDER BY user_first_name, user_last_name
+    `
+  );
+
+  const hrOptionList = hrMemberData.map(hr => {
+    return { label: `${hr.user_first_name} ${hr.user_last_name}`, value: hr.team_member_id };
+  });
+
+  returnData = {
+    positionOptionList,
+    hrOptionList
+  }
+});
+return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS

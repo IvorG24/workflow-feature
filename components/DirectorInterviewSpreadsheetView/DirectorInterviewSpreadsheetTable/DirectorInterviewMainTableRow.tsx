@@ -161,6 +161,11 @@ const DirectorInterviewMainTableRow = ({
           )}
         </td>
       )}
+      {!hiddenColumnList.includes("assigned_hr") && (
+        <td>
+          <Text sx={{ whiteSpace: "nowrap" }}>{item.assigned_hr}</Text>
+        </td>
+      )}
       <td>
         {item.director_interview_status === "PENDING" && (
           <Flex align="center" justify="center" gap="xs" wrap="wrap">

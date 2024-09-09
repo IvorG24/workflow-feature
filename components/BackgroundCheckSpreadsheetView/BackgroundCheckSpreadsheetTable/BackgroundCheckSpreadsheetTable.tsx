@@ -221,6 +221,13 @@ const BackgroundCheckSpreadsheetTable = ({
                     </Flex>
                   </th>
                 )}
+                {!hiddenColumnList.includes("assigned_hr") && (
+                  <th>
+                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
+                      <Text>Assigned HR</Text>
+                    </Flex>
+                  </th>
+                )}
                 <th>
                   <Flex gap="xs" align="center" justify="center" wrap="wrap">
                     <Text>Action</Text>

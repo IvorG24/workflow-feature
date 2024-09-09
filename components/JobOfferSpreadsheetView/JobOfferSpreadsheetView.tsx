@@ -24,7 +24,7 @@ const initialSort = {
 };
 
 const formDefaultValues = {
-  position: "",
+  position: [],
   application_information_full_name: "",
   application_information_contact_number: "",
   application_information_email: "",
@@ -47,17 +47,19 @@ const formDefaultValues = {
     start: "",
     end: "",
   },
-  job_offer_status: "",
+  job_offer_status: [],
   job_offer_attachment: "",
   job_offer_project_assignment: "",
   job_offer_history: "",
+  assigned_hr: [],
 };
 
 type Props = {
   positionOptionList: OptionType[];
+  hrOptionList: OptionType[];
 };
 
-const JobOfferSpreadsheetView = ({ positionOptionList }: Props) => {
+const JobOfferSpreadsheetView = ({ positionOptionList, hrOptionList }: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
 
@@ -185,6 +187,7 @@ const JobOfferSpreadsheetView = ({ positionOptionList }: Props) => {
               fetchData={fetchData}
               handleReset={handleReset}
               positionOptionList={positionOptionList}
+              hrOptionList={hrOptionList}
             />
           </FormProvider>
           <JobOfferColumnsMenu
