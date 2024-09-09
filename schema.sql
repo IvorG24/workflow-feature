@@ -964,6 +964,19 @@ CREATE TABLE lookup_schema.position_table (
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
+CREATE TABLE lookup_schema.ad_owner_table (
+  ad_owner_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  ad_owner_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ad_owner_name TEXT NOT NULL,
+  ad_owner_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+);
+
+CREATE TABLE lookup_schema.ad_owner_request_table (
+  ad_owner_request_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  ad_owner_request_owner_id UUID REFERENCES lookup_schema.ad_owner_table(ad_owner_id) NOT NULL,
+  ad_owner_request_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -17127,6 +17140,35 @@ AS $$
     returnData = Boolean(teamGroupMemberCount);
   });
   return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION create_ad_owner_request(
+  input_data JSON
+)
+RETURNS VOID AS $$
+plv8.subtransaction(function(){
+    const {
+        ad_owner_request_owner_id,
+        ad_owner_request_request_id
+    } = input_data;
+
+    const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
+    
+    const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
+    const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
+    const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
+
+    if (!is_valid_owner) {
+        const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
+        if (!scic) return;
+        insert_data.ad_owner_request_owner_id = scic.ad_owner_id;
+    }
+
+    plv8.execute(`
+        INSERT INTO lookup_schema.ad_owner_request_table (ad_owner_request_owner_id, ad_owner_request_request_id)
+        VALUES ($1, $2)
+    `, [insert_data.ad_owner_request_owner_id, insert_data.ad_owner_request_request_id]);
+});
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS

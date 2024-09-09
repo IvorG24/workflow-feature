@@ -5,7 +5,7 @@ import {
   fetchRegion,
   getApplicationInformationPositionOptions,
 } from "@/backend/api/get";
-import { createRequest } from "@/backend/api/post";
+import { createAdOwnerRequest, createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -243,6 +243,16 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         ),
         requestScore,
       });
+
+      const adOwnerId = router.query["ad-owner"] as string;
+      if (adOwnerId) {
+        const adOwnerRequest = {
+          ad_owner_request_owner_id: adOwnerId,
+          ad_owner_request_request_id: request.request_id,
+        };
+        await createAdOwnerRequest(supabaseClient, adOwnerRequest);
+      }
+
       notifications.show({
         message: "Request created.",
         color: "green",

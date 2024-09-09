@@ -12,6 +12,7 @@ import { formatJiraItemUserTableData } from "@/utils/functions";
 import { escapeQuotes, escapeQuotesForObject } from "@/utils/string";
 import {
   AddressTableInsert,
+  AdOwnerRequestTableInsert,
   AttachmentBucketType,
   AttachmentTableInsert,
   CommentTableInsert,
@@ -2112,4 +2113,15 @@ export const createInterviewOnlineMeeting = async (
   if (error) throw error;
 
   return data[0] as InterviewOnlineMeetingTableRow;
+};
+
+export const createAdOwnerRequest = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: AdOwnerRequestTableInsert
+) => {
+  const { error } = await supabaseClient.rpc("create_ad_owner_request", {
+    input_data: params,
+  });
+
+  if (error) throw error;
 };

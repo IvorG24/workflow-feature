@@ -566,6 +566,12 @@ export type InterviewOnlineMeetingTableInsert =
 export type InterviewOnlineMeetingTableUpdate =
   Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Update"];
 
+export type AdOwnerTableRow =
+  Database["lookup_schema"]["Tables"]["ad_owner_table"]["Row"];
+
+export type AdOwnerRequestTableInsert =
+  Database["lookup_schema"]["Tables"]["ad_owner_request_table"]["Insert"];
+
 // End: Database Table Types
 
 // Start: Database Enums

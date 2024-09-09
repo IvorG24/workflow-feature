@@ -2,6 +2,7 @@ import { updateFormSigner } from "@/backend/api/update";
 import { BASE_URL, UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import {
+  AdOwnerTableRow,
   InitialFormType,
   TeamGroupTableRow,
   TeamMemberWithUserType,
@@ -11,9 +12,9 @@ import {
   Button,
   Center,
   Container,
-  CopyButton,
   Flex,
   Group,
+  Menu,
   Paper,
   Space,
   Stack,
@@ -25,13 +26,13 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
-import { checkIfTeamGroupMember } from "@/backend/api/get";
+import { checkIfTeamGroupMember, getAdOwnerList } from "@/backend/api/get";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { isEmpty, isEqual } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 
-import { IconCopy } from "@tabler/icons-react";
+import { useClipboard } from "@mantine/hooks";
 import SignerSection, { RequestSigner } from "../FormBuilder/SignerSection";
 import FormDetailsSection from "../RequestFormPage/FormDetailsSection";
 import FormSectionList from "../RequestFormPage/FormSectionList";
@@ -52,6 +53,7 @@ const ApplicationInformationFormPage = ({ form, teamMemberList }: Props) => {
   const teamMember = useUserTeamMember();
 
   const team = useActiveTeam();
+  const clipboard = useClipboard({ timeout: 500 });
 
   const initialSignerIds: string[] = [];
   const [activeSigner, setActiveSigner] = useState<number | null>(null);
@@ -72,6 +74,7 @@ const ApplicationInformationFormPage = ({ form, teamMemberList }: Props) => {
   );
 
   const [isGroupMember, setIsGroupMember] = useState(false);
+  const [adOwnerList, setAdOwnerList] = useState<AdOwnerTableRow[]>([]);
 
   useEffect(() => {
     const checkIfMember = async () => {
@@ -143,6 +146,39 @@ const ApplicationInformationFormPage = ({ form, teamMemberList }: Props) => {
     setIsSavingSigners(false);
   };
 
+  const handleFetchAdOwners = async () => {
+    const adOwnerList = await getAdOwnerList(supabaseClient);
+    setAdOwnerList(adOwnerList);
+  };
+
+  const generateCreateRequestURLWithAdOwner = ({
+    url,
+    adOwnerId,
+  }: {
+    url: string;
+    adOwnerId: string;
+  }) => {
+    const newUrl = `${url}?ad-owner=${adOwnerId}`;
+    clipboard.copy(newUrl);
+    if (clipboard.copied) {
+      notifications.show({
+        message: "Request link copied.",
+        color: "green",
+      });
+      return;
+    } else {
+      notifications.show({
+        message: "Request link copied.",
+        color: "green",
+      });
+      return;
+    }
+  };
+
+  useEffect(() => {
+    handleFetchAdOwners();
+  }, []);
+
   return (
     <Container>
       <Flex justify="space-between">
@@ -163,24 +199,29 @@ const ApplicationInformationFormPage = ({ form, teamMemberList }: Props) => {
           >
             Analytics
           </Button>
-          <CopyButton value={`${BASE_URL}/public-form/${form.form_id}/create`}>
-            {({ copied, copy }) => (
-              <Button
-                rightIcon={<IconCopy size={16} />}
-                onClick={() => {
-                  copy();
-                  if (!copied) {
-                    notifications.show({
-                      message: "Request link copied.",
-                      color: "green",
-                    });
-                  }
-                }}
-              >
-                Copy Request Link
-              </Button>
-            )}
-          </CopyButton>
+          {adOwnerList.length > 0 ? (
+            <Menu withArrow>
+              <Menu.Target>
+                <Button>Copy Request Link</Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Ad Owners</Menu.Label>
+                {adOwnerList.map((adOwner) => (
+                  <Menu.Item
+                    key={adOwner.ad_owner_id}
+                    onClick={() =>
+                      generateCreateRequestURLWithAdOwner({
+                        url: `${BASE_URL}/public-form/${form.form_id}/create`,
+                        adOwnerId: adOwner.ad_owner_id,
+                      })
+                    }
+                  >
+                    {adOwner.ad_owner_name.toUpperCase()}
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
+          ) : null}
 
           {(form.form_is_formsly_form &&
             !UNHIDEABLE_FORMLY_FORMS.includes(form.form_name) &&

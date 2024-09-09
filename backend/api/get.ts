@@ -6429,3 +6429,15 @@ export const checkIfGroupMember = async (
 
   return data;
 };
+
+export const getAdOwnerList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("ad_owner_table")
+    .select("*");
+  if (error) throw error;
+
+  return data;
+};
