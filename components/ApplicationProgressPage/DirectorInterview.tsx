@@ -2,7 +2,16 @@ import { getInterview } from "@/backend/api/get";
 import { formatDate } from "@/utils/constant";
 import { getStatusToColor } from "@/utils/styling";
 import { DirectorInterviewTableRow } from "@/utils/types";
-import { Alert, Badge, Box, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Badge,
+  Box,
+  Group,
+  LoadingOverlay,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
@@ -17,11 +26,15 @@ const DirectorInterview = ({ directorInterviewData: initialData }: Props) => {
   const [directorInterviewData, setDirectorInterviewData] =
     useState<DirectorInterviewTableRow>(initialData);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [status, setStatus] = useState<string>(
+    directorInterviewData.director_interview_status
+  );
   const [isReadyToSelect, setIsReadyToSelect] = useState(false);
 
   const refetchData = async () => {
     try {
-      setIsLoading(true);
+      setIsFetching(true);
       const targetId = directorInterviewData.director_interview_id;
       const data = await getInterview(supabaseClient, {
         interviewId: targetId,
@@ -34,12 +47,13 @@ const DirectorInterview = ({ directorInterviewData: initialData }: Props) => {
         color: "red",
       });
     } finally {
-      setIsLoading(false);
+      setIsFetching(false);
     }
   };
 
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
+      <LoadingOverlay visible={isLoading} />
       <Title order={3}>Director Interview</Title>
       <Stack>
         <Group>
@@ -54,13 +68,7 @@ const DirectorInterview = ({ directorInterviewData: initialData }: Props) => {
         </Group>
         <Group>
           <Text>Status: </Text>
-          <Badge
-            color={getStatusToColor(
-              directorInterviewData.director_interview_status ?? ""
-            )}
-          >
-            {directorInterviewData.director_interview_status}
-          </Badge>
+          <Badge color={getStatusToColor(status ?? "")}>{status}</Badge>
           {directorInterviewData.director_interview_status_date_updated && (
             <Text color="dimmed">
               on{" "}
@@ -72,9 +80,7 @@ const DirectorInterview = ({ directorInterviewData: initialData }: Props) => {
             </Text>
           )}
         </Group>
-        {["PENDING", "WAITING FOR SCHEDULE", "CANCELLED", "QUALIFIED"].includes(
-          directorInterviewData.director_interview_status
-        ) && (
+        {status && (
           <SchedulingCalendar
             setIsReadyToSelect={setIsReadyToSelect}
             isReadyToSelect={isReadyToSelect}
@@ -84,7 +90,9 @@ const DirectorInterview = ({ directorInterviewData: initialData }: Props) => {
             targetId={directorInterviewData.director_interview_id}
             intialDate={directorInterviewData.director_interview_schedule}
             status={directorInterviewData.director_interview_status}
-            isRefetchingData={isLoading}
+            isRefetchingData={isFetching}
+            setStatus={setStatus}
+            setIsLoading={setIsLoading}
           />
         )}
         <Box mb={"xl"}>

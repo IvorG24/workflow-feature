@@ -2427,3 +2427,13 @@ export type JobOfferHistoryType = JobOfferTableRow & {
   job_offer_attachment: AttachmentTableRow | null;
   job_offer_reason_for_rejection: string | null;
 };
+export type MeetingDetails = {
+  breakDuration: number;
+  duration: number;
+};
+
+export type MeetingType =
+  | "hr_phone_interview"
+  | "trade_test"
+  | "technical_interview"
+  | "director_interview";

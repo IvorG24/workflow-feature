@@ -1358,6 +1358,7 @@ export const updateSchedule = async (
     status: string;
     table: string;
     meetingTypeNumber?: number;
+    team_member_id: string;
   }
 ) => {
   const { error } = await supabaseClient.rpc("update_schedule", {

@@ -3,6 +3,7 @@ import {
   getCurrentDate,
   getInterviewOnlineMeeting,
   getPhoneMeetingSlots,
+  phoneInterviewValidation,
 } from "@/backend/api/get";
 import { createInterviewOnlineMeeting } from "@/backend/api/post";
 import {
@@ -11,11 +12,18 @@ import {
   updateSchedule,
 } from "@/backend/api/update";
 import { useUserProfile } from "@/stores/useUserStore";
-import { formatDate } from "@/utils/constant";
+import {
+  APPLICATION_STATUS_CANCELLED,
+  APPLICATION_STATUS_PENDING,
+  formatDate,
+  MEETING_TYPE_DETAILS,
+} from "@/utils/constant";
+import { formatTimeToLocal } from "@/utils/functions";
 import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
   InterviewOnlineMeetingTableUpdate,
+  MeetingType,
 } from "@/utils/types";
 import {
   Button,
@@ -47,6 +55,8 @@ type SchedulingType = {
   refetchData: () => Promise<void>;
   status: string;
   isRefetchingData: boolean;
+  setStatus: React.Dispatch<React.SetStateAction<string>>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   dateCreated: string;
   setIsReadyToSelect: React.Dispatch<React.SetStateAction<boolean>>;
   isReadyToSelect: boolean;
@@ -69,6 +79,8 @@ const SchedulingCalendar = ({
   status,
   dateCreated,
   isRefetchingData,
+  setStatus,
+  setIsLoading,
 }: SchedulingType) => {
   const testOnlineMeetingProps = {
     interview_meeting_date_created: moment().toISOString(),
@@ -87,8 +99,6 @@ const SchedulingCalendar = ({
   });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [hrSlot, setHrSlot] = useState<HrSlotType[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isEdit, setIsEdit] = useState<boolean | null>(null);
   const [isReschedule, setIsReschedule] = useState(false);
 
   const [interviewOnlineMeeting, setInterviewOnlineMeeting] =
@@ -113,10 +123,6 @@ const SchedulingCalendar = ({
     moment(initialDate),
     "minutes"
   );
-
-  const formatTimeToLocal = (dateTime: string) => {
-    return moment(dateTime).format("hh:mm A");
-  };
 
   const cancelInterviewHandler = async () => {
     if (cancelRestricted) {
@@ -158,7 +164,6 @@ const SchedulingCalendar = ({
   };
 
   const rescheduleHandler = () => {
-    setIsEdit(true);
     setIsReschedule(true);
     setSelectedSlot("");
     setSelectedDate(null);
@@ -204,12 +209,11 @@ const SchedulingCalendar = ({
 
       try {
         setIsLoading(true);
-
         const data = await getPhoneMeetingSlots(supabaseClient, params);
         const newDate = await getCurrentDate(supabaseClient);
         setCurrentDate(newDate);
         setHrSlot(data);
-      } catch (error) {
+      } catch (e) {
         notifications.show({
           message: "Error fetching meeting slots",
           color: "orange",
@@ -220,7 +224,7 @@ const SchedulingCalendar = ({
     }
   };
 
-  const setScheduleHandler = async () => {
+  const handleCreateOrUpdateSchedule = async () => {
     if (!selectedDate) {
       notifications.show({
         message: "Date is required.",
@@ -237,53 +241,37 @@ const SchedulingCalendar = ({
     }
     setIsLoading(true);
     setIsReadyToSelect(false);
-    setIsEdit(false);
-
     try {
       const [time] = selectedSlot.split(" ");
       const [hours, minutes] = time.split(":").map(Number);
 
       const tempDate = new Date(selectedDate);
       tempDate.setHours(hours, minutes);
-
-      await updateSchedule(supabaseClient, {
-        interviewSchedule: tempDate.toISOString(),
-        targetId,
-        status: "PENDING",
-        table: meetingType,
-        meetingTypeNumber,
-      });
-
-      if (interviewOnlineMeeting) {
-        // update online meeting
-        if (process.env.NODE_ENV === "production") {
-          await handleRescheduleOnlineMeeting(tempDate);
-        } else {
-          const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(
-            supabaseClient,
-            {
-              ...testOnlineMeetingProps,
-              interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
-            }
-          );
-          setInterviewOnlineMeeting(newInterviewOnlineMeeting);
-        }
-      } else {
-        // create online meeting
-        if (process.env.NODE_ENV === "production") {
-          await handleCreateOnlineMeeting(tempDate);
-        } else {
-          const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
-            supabaseClient,
-            testOnlineMeetingProps
-          );
-
-          setInterviewOnlineMeeting(newInterviewOnlineMeeting);
-        }
+      const { status, assigned_hr_team_member_id } =
+        await phoneInterviewValidation(supabaseClient, {
+          interview_schedule: tempDate.toISOString(),
+        });
+      if (status === "success") {
+        await Promise.all([
+          handleCreateOrUpdateOnlineMeeting(
+            tempDate,
+            meetingType as MeetingType
+          ),
+          await updateSchedule(supabaseClient, {
+            interviewSchedule: tempDate.toISOString(),
+            targetId,
+            status: APPLICATION_STATUS_PENDING,
+            table: meetingType,
+            meetingTypeNumber,
+            team_member_id: assigned_hr_team_member_id,
+          }),
+        ]);
+        setStatus(APPLICATION_STATUS_PENDING);
+        setSelectedDate(tempDate);
       }
-      setSelectedDate(tempDate);
-      setIsEdit(false);
+      await refetchData();
 
+      setSelectedDate(tempDate);
       notifications.show({
         message: "Schedule updated successfully.",
         color: "green",
@@ -353,22 +341,43 @@ const SchedulingCalendar = ({
     }
   };
 
-  const fetchSlot = () => {
-    switch (meetingType) {
-      case "hr_phone_interview":
-        fetchTime({ breakDuration: 5, slotDuration: 15 });
-        break;
-      case "trade_test":
-        fetchTime({ breakDuration: 5, slotDuration: 60 });
-        break;
-      case "technical_interview":
-        fetchTime({ breakDuration: 5, slotDuration: 30 });
-        break;
-      case "director_interview":
-        fetchTime({ breakDuration: 5, slotDuration: 30 });
-        break;
+  const handleCreateOrUpdateOnlineMeeting = async (
+    tempDate: Date,
+    meeting_type: MeetingType
+  ) => {
+    const { breakDuration, duration } = MEETING_TYPE_DETAILS[meeting_type];
+
+    if (interviewOnlineMeeting) {
+      if (process.env.NODE_ENV === "production") {
+        await handleRescheduleOnlineMeeting(tempDate);
+      } else {
+        const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(
+          supabaseClient,
+          {
+            ...testOnlineMeetingProps,
+            interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
+          }
+        );
+        setInterviewOnlineMeeting(newInterviewOnlineMeeting);
+      }
+    } else {
+      // create online meeting
+      if (process.env.NODE_ENV === "production") {
+        await handleCreateOnlineMeeting(tempDate);
+      } else {
+        const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
+          supabaseClient,
+          {
+            ...testOnlineMeetingProps,
+            interview_meeting_break_duration: breakDuration,
+            interview_meeting_duration: duration,
+            interview_meeting_schedule: tempDate.toISOString(),
+          }
+        );
+
+        setInterviewOnlineMeeting(newInterviewOnlineMeeting);
+      }
     }
-    setSelectedSlot("");
   };
 
   const handleCreateOnlineMeeting = async (tempDate: Date) => {
@@ -426,6 +435,9 @@ const SchedulingCalendar = ({
       interview_meeting_interview_id: targetId,
       interview_meeting_url: meetingUrl,
       interview_meeting_provider_id: createMeetingData.id,
+      interview_meeting_break_duration: 0,
+      interview_meeting_duration: 0,
+      interview_meeting_schedule: "",
     };
 
     const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
@@ -572,8 +584,8 @@ const SchedulingCalendar = ({
         supabaseClient,
         interviewOnlineMeeting.interview_meeting_id
       );
+      setStatus(APPLICATION_STATUS_CANCELLED);
     } catch (e) {
-  
       notifications.show({
         message: "Failed to cancel MS Teams meeting",
         color: "red",
@@ -641,16 +653,26 @@ const SchedulingCalendar = ({
     });
 
   useEffect(() => {
-    fetchSlot();
-    if (intialDate !== null) {
-      setIsEdit(false);
-    } else {
-      setIsEdit(true);
-    }
-  }, []);
+    const handleFetchSlot = () => {
+      const slotConfigurations: Record<
+        string,
+        { breakDuration: number; slotDuration: number }
+      > = {
+        hr_phone_interview: { breakDuration: 5, slotDuration: 15 },
+        trade_test: { breakDuration: 5, slotDuration: 60 },
+        technical_interview: { breakDuration: 5, slotDuration: 30 },
+        director_interview: { breakDuration: 5, slotDuration: 30 },
+      };
 
-  useEffect(() => {
-    fetchSlot();
+      const config = slotConfigurations[meetingType];
+
+      if (config) {
+        fetchTime(config);
+        setSelectedSlot("");
+      }
+    };
+
+    handleFetchSlot();
   }, [selectedDate]);
 
   useEffect(() => {
@@ -660,113 +682,60 @@ const SchedulingCalendar = ({
   return (
     <>
       <Flex direction="column" gap={10} mb={20}>
-        {/* <LoadingOverlay visible={isLoading} /> */}
-        {status === "CANCELLED" && (
-          <>
-            {intialDate && (
-              <Stack>
-                <Group>
-                  <Text>Scheduled Date:</Text>
-                  <Text component="a" fw="bold">
-                    {" "}
-                    {formatDate(new Date(intialDate))}
-                  </Text>
-                </Group>
-                <Group>
-                  <Text>Scheduled Time:</Text>
-                  <Text component="a" fw="bold">
-                    {" "}
-                    {moment(new Date(intialDate)).format("hh:mm A")}
-                  </Text>
-                </Group>
-              </Stack>
-            )}
-          </>
+        {intialDate && (
+          <Stack>
+            <Group>
+              <Text>Scheduled Date:</Text>
+              <Text component="a" fw="bold">
+                {" "}
+                {formatDate(new Date(intialDate))}
+              </Text>
+            </Group>
+            <Group>
+              <Text>Scheduled Time:</Text>
+              <Text component="a" fw="bold">
+                {" "}
+                {moment(new Date(intialDate)).format("hh:mm A")}
+              </Text>
+            </Group>
+          </Stack>
         )}
-        {status === "QUALIFIED" && (
+        {isReadyToSelect === false && intialDate && status === "PENDING" && (
           <>
-            {intialDate && (
-              <Stack>
-                <Group>
-                  <Text>Scheduled Date:</Text>
-                  <Text component="a" fw="bold">
-                    {" "}
-                    {formatDate(new Date(intialDate))}
-                  </Text>
-                </Group>
-                <Group>
-                  <Text>Scheduled Time:</Text>
-                  <Text component="a" fw="bold">
-                    {" "}
-                    {moment(new Date(intialDate)).format("hh:mm A")}
-                  </Text>
-                </Group>
-              </Stack>
-            )}
-          </>
-        )}
-        {isReadyToSelect === false &&
-          intialDate &&
-          status !== "CANCELLED" &&
-          status !== "QUALIFIED" && (
-            <>
-              {(() => {
-                return (
-                  <>
-                    <Stack>
-                      <Group>
-                        <Text>Scheduled Date:</Text>
-                        <Text component="a" fw="bold">
-                          {" "}
-                          {intialDate ? formatDate(new Date(intialDate)) : ""}
-                        </Text>
-                      </Group>
-                      <Group>
-                        <Text>Scheduled Time:</Text>
-                        <Text component="a" fw="bold">
-                          {" "}
-                          {selectedSlot && intialDate
-                            ? selectedSlot
-                            : intialDate
-                            ? formatTimeToLocal(intialDate)
-                            : ""}
-                        </Text>
-                      </Group>
-                    </Stack>
-                    <Group>
-                      <Text>Action: </Text>
-                      <Group spacing="xs">
-                        <Button
-                          onClick={rescheduleHandler}
-                          style={{ width: "max-content" }}
-                          disabled={
-                            isLoading ||
-                            isRefetchingData ||
-                            isDayBeforeSchedule ||
-                            isAfterSchedule ||
-                            isToday
-                          }
-                          color="orange"
-                        >
-                          Reschedule
-                        </Button>
-                        <Button
-                          onClick={openCancelInterviewModal}
-                          style={{ width: "max-content" }}
-                          disabled={
-                            isLoading || isRefetchingData || cancelRestricted
-                          }
-                          color="dark"
-                        >
-                          Cancel
-                        </Button>
-                      </Group>
+            {(() => {
+              return (
+                <>
+                  <Group>
+                    <Text>Action: </Text>
+                    <Group spacing="xs">
+                      <Button
+                        onClick={rescheduleHandler}
+                        style={{ width: "max-content" }}
+                        disabled={
+                          isRefetchingData ||
+                          isDayBeforeSchedule ||
+                          isAfterSchedule ||
+                          isToday
+                        }
+                        color="orange"
+                      >
+                        Reschedule
+                      </Button>
+                      <Button
+                        onClick={openCancelInterviewModal}
+                        style={{ width: "max-content" }}
+                        disabled={isRefetchingData || cancelRestricted}
+                        color="dark"
+                      >
+                        Cancel
+                      </Button>
                     </Group>
-                  </>
-                );
-              })()}
-            </>
-          )}
+                  </Group>
+                </>
+              );
+            })()}
+          </>
+        )}
 
         {status === "WAITING FOR SCHEDULE" && (
           <Group>
@@ -776,7 +745,6 @@ const SchedulingCalendar = ({
                 onClick={async () => {
                   setIsReadyToSelect(true);
                   setSelectedDate(null);
-                  setIsEdit(true);
                 }}
                 disabled={!Boolean(!isReadyToSelect)}
               >
@@ -784,7 +752,7 @@ const SchedulingCalendar = ({
               </Button>
             </Group>
 
-            {isReschedule && isEdit && (
+            {isReschedule && (
               <Button
                 color="dark"
                 onClick={() => {
@@ -819,17 +787,16 @@ const SchedulingCalendar = ({
               <Select
                 data={removePrevTime()}
                 value={selectedSlot}
+                searchable
                 onChange={(value) => {
                   refetchData();
                   setSelectedSlot(value as string);
                 }}
-                disabled={isLoading || isRefetchingData}
+                disabled={isRefetchingData}
                 clearable
                 icon={<IconClock size={16} />}
                 w={260}
-                rightSection={
-                  (isLoading || isRefetchingData) && <Loader size={16} />
-                }
+                rightSection={isRefetchingData && <Loader size={16} />}
               />
             </Group>
             {!isReschedule && (
@@ -841,15 +808,13 @@ const SchedulingCalendar = ({
                   onClick={() => {
                     setIsReadyToSelect(false);
                   }}
-                  disabled={
-                    isLoading || isRefetchingData || isDayBeforeSchedule
-                  }
+                  disabled={isRefetchingData || isDayBeforeSchedule}
                 >
                   Cancel
                 </Button>
                 <Button
-                  onClick={setScheduleHandler}
-                  disabled={isLoading || isRefetchingData}
+                  onClick={handleCreateOrUpdateSchedule}
+                  disabled={isRefetchingData}
                 >
                   Submit
                 </Button>
@@ -864,15 +829,13 @@ const SchedulingCalendar = ({
                   onClick={() => {
                     setIsReadyToSelect(false);
                   }}
-                  disabled={
-                    isLoading || isRefetchingData || isDayBeforeSchedule
-                  }
+                  disabled={isRefetchingData || isDayBeforeSchedule}
                 >
                   Cancel
                 </Button>
                 <Button
-                  onClick={setScheduleHandler}
-                  disabled={isLoading || isRefetchingData}
+                  onClick={handleCreateOrUpdateSchedule}
+                  disabled={isRefetchingData}
                 >
                   Submit
                 </Button>
@@ -881,14 +844,9 @@ const SchedulingCalendar = ({
           </>
         )}
 
-        {/* meeting details */}
         {!isReadyToSelect && interviewOnlineMeeting && status === "PENDING" ? (
           <Flex gap="xs" align="center" mt="sm">
             <Text>Online Meeting:</Text>
-
-            {/* JoyRide for showing the next step after scheduling */}
-
-            {/* Button to join the online meeting */}
             <Button
               className="meeting-link"
               disabled={!moment(initialDate).isSame(moment(minDate), "day")}

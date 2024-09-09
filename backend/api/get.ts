@@ -6450,3 +6450,25 @@ export const getInterview = async (
 
   return data[0];
 };
+
+export const phoneInterviewValidation = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    interview_schedule?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "phone_interview_validation",
+    {
+      input_data: params,
+    }
+  );
+
+  if (error) throw error;
+
+  return data as {
+    message: string;
+    status: string;
+    assigned_hr_team_member_id: string;
+  };
+};

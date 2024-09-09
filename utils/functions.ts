@@ -231,3 +231,6 @@ export const sendEmailTeamInvite = async ({
 export const calculateInvoiceAmountWithVAT = (amount: number) => {
   return (amount / 1.12) * 0.12;
 };
+export const formatTimeToLocal = (dateTime: string) => {
+  return moment(dateTime).format("hh:mm A");
+};

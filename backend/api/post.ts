@@ -190,7 +190,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert
+    } & TeamMemberTableInsert,
   ];
 };
 

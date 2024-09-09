@@ -2,7 +2,16 @@ import { getInterview } from "@/backend/api/get";
 import { formatDate } from "@/utils/constant";
 import { getStatusToColor } from "@/utils/styling";
 import { TradeTestTableRow } from "@/utils/types";
-import { Alert, Badge, Box, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Badge,
+  Box,
+  Group,
+  LoadingOverlay,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
@@ -16,12 +25,14 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
   const supabaseClient = useSupabaseClient();
   const [tradeTestData, setTradeTestData] =
     useState<TradeTestTableRow>(initialData);
+  const [status, setStatus] = useState(tradeTestData.trade_test_status);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   const [isReadyToSelect, setIsReadyToSelect] = useState(false);
 
   const refetchData = async () => {
     try {
-      setIsLoading(true);
+      setIsFetching(true);
       const targetId = tradeTestData.trade_test_id;
       const data = await getInterview(supabaseClient, {
         interviewId: targetId,
@@ -34,12 +45,13 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
         color: "red",
       });
     } finally {
-      setIsLoading(false);
+      setIsFetching(false);
     }
   };
 
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
+      <LoadingOverlay visible={isLoading} />
       <Title order={3}>Trade Test</Title>
       <Stack>
         <Group>
@@ -50,11 +62,7 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
         </Group>
         <Group>
           <Text>Status: </Text>
-          <Badge
-            color={getStatusToColor(tradeTestData.trade_test_status ?? "")}
-          >
-            {tradeTestData.trade_test_status}
-          </Badge>
+          <Badge color={getStatusToColor(status ?? "")}>{status}</Badge>
           {tradeTestData.trade_test_status_date_updated && (
             <Text color="dimmed">
               on{" "}
@@ -64,9 +72,7 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
             </Text>
           )}
         </Group>
-        {["PENDING", "WAITING FOR SCHEDULE", "CANCELLED", "QUALIFIED"].includes(
-          tradeTestData.trade_test_status
-        ) && (
+        {status && (
           <SchedulingCalendar
             setIsReadyToSelect={setIsReadyToSelect}
             isReadyToSelect={isReadyToSelect}
@@ -75,8 +81,10 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
             dateCreated={tradeTestData.trade_test_date_created}
             targetId={tradeTestData.trade_test_id}
             intialDate={tradeTestData.trade_test_schedule}
-            status={tradeTestData.trade_test_status}
-            isRefetchingData={isLoading}
+            setIsLoading={setIsLoading}
+            status={status}
+            setStatus={setStatus}
+            isRefetchingData={isFetching}
           />
         )}
         <Box mb={"xl"}>
