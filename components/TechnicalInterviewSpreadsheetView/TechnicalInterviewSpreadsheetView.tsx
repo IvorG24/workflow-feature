@@ -259,8 +259,6 @@ const TechnicalInterviewSpreadsheetView = ({
         handleUpdateTechnicalInterviewStatus={
           handleUpdateTechnicalInterviewStatus
         }
-        setData={setData}
-        technicalInterviewNumber={technicalInterviewNumber}
       />
     </Stack>
   );

@@ -41,8 +41,6 @@ type Props = {
     status: string,
     data: TechnicalInterviewSpreadsheetData
   ) => void;
-  setData: Dispatch<SetStateAction<TechnicalInterviewSpreadsheetData[]>>;
-  technicalInterviewNumber: number;
 };
 
 const TechnicalInterviewSpreadsheetTable = ({
@@ -55,8 +53,6 @@ const TechnicalInterviewSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   handleUpdateTechnicalInterviewStatus,
-  setData,
-  technicalInterviewNumber,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -247,8 +243,6 @@ const TechnicalInterviewSpreadsheetTable = ({
                   handleUpdateTechnicalInterviewStatus={
                     handleUpdateTechnicalInterviewStatus
                   }
-                  setData={setData}
-                  technicalInterviewNumber={technicalInterviewNumber}
                 />
               ))}
             </tbody>

@@ -1350,22 +1350,20 @@ export const updateTradeTestStatus = async (
   if (error) throw error;
 };
 
-export const updatePhoneInterview = async (
+export const updateSchedule = async (
   supabaseClient: SupabaseClient<Database>,
   params: {
-    interview_schedule?: string;
-    interview_status_date_updated?: string;
-    target_id: string;
+    interviewSchedule: string;
+    targetId: string;
     status: string;
+    table: string;
+    meetingTypeNumber?: number;
   }
 ) => {
-  const { data, error } = await supabaseClient.rpc("update_phone_interview", {
+  const { error } = await supabaseClient.rpc("update_schedule", {
     input_data: params,
   });
-
   if (error) throw error;
-
-  return data as { status: string; message: string };
 };
 
 export const updateTradeTestSchedule = async (
@@ -1520,7 +1518,7 @@ export const updateInterviewOnlineMeeting = async (
     .schema("hr_schema")
     .from("interview_online_meeting_table")
     .update(params)
-    .eq("inverview_meeting_id", params.interview_meeting_id as string)
+    .eq("interview_meeting_id", params.interview_meeting_id as string)
     .select("*");
 
   if (error) throw error;
@@ -1528,23 +1526,30 @@ export const updateInterviewOnlineMeeting = async (
   return data[0] as InterviewOnlineMeetingTableRow;
 };
 
-export const cancelPhoneInterview = async (
-  supabaseClient: SupabaseClient<Database>,
+export const cancelInterview = async (
+  supabaseClient: SupabaseClient,
   params: {
-    target_id: string;
+    targetId: string;
     status: string;
+    table: string;
+    meetingTypeNumber?: number;
   }
 ) => {
-  const { target_id, status } = params;
+  const { targetId, status, table, meetingTypeNumber } = params;
 
-  const { error } = await supabaseClient
+  const currentDate = (await getCurrentDate(supabaseClient)).toLocaleString();
+  let query = supabaseClient
     .schema("hr_schema")
-    .from("hr_phone_interview_table")
+    .from(`${table}_table`)
     .update({
-      hr_phone_interview_status: status,
-      hr_phone_interview_status_date_updated: new Date().toISOString(),
+      [`${table}_status`]: status,
+      [`${table}_status_date_updated`]: currentDate,
     })
-    .eq("hr_phone_interview_id", target_id);
+    .eq(`${table}_id`, targetId);
 
+  if (meetingTypeNumber) {
+    query = query.eq(`${table}_number`, meetingTypeNumber);
+  }
+  const { error } = await query;
   if (error) throw error;
 };

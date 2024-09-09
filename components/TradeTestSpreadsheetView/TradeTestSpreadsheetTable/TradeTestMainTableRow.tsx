@@ -1,34 +1,11 @@
-import { getCurrentDate } from "@/backend/api/get";
-import { updateTradeTestSchedule } from "@/backend/api/update";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate, formatTime } from "@/utils/constant";
-import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import { TradeTestSpreadsheetData } from "@/utils/types";
-import {
-  ActionIcon,
-  Anchor,
-  Badge,
-  Button,
-  createStyles,
-  Flex,
-  Group,
-  Modal,
-  Stack,
-  Text,
-} from "@mantine/core";
-import { DateInput, TimeInput } from "@mantine/dates";
-import { useDisclosure } from "@mantine/hooks";
+import { Anchor, Badge, Button, createStyles, Flex, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { notifications } from "@mantine/notifications";
-import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
-import { IconCalendar, IconClock } from "@tabler/icons-react";
-import moment from "moment";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
 
 const useStyles = createStyles((theme) => ({
   row: {
@@ -45,35 +22,15 @@ type Props = {
     status: string,
     data: TradeTestSpreadsheetData
   ) => void;
-  setData: Dispatch<SetStateAction<TradeTestSpreadsheetData[]>>;
 };
 
 const TradeTestMainTableRow = ({
   item,
   hiddenColumnList,
   handleUpdateTradeTestStatus,
-  setData,
 }: Props) => {
   const { classes } = useStyles();
-  const supabaseClient = createPagesBrowserClient<Database>();
   const team = useActiveTeam();
-  const teamMember = useUserTeamMember();
-  const dateRef = useRef<HTMLInputElement | null>(null);
-  const timeRef = useRef<HTMLInputElement | null>(null);
-  const [opened, { open, close }] = useDisclosure(false);
-  const [isScheduling, setIsScheduling] = useState(false);
-
-  const {
-    handleSubmit,
-    control,
-    formState: { errors },
-    setValue,
-    clearErrors,
-    getValues,
-  } = useForm<{
-    date: string;
-    time: string;
-  }>({ defaultValues: { date: "", time: "" } });
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
@@ -93,189 +50,9 @@ const TradeTestMainTableRow = ({
       onConfirm: async () => handleUpdateTradeTestStatus(action, item),
     });
 
-  useEffect(() => {
-    if (!opened) {
-      setValue("date", "");
-      setValue("time", "");
-      clearErrors();
-    }
-  }, [opened]);
-
-  const handleSchedule = async (schedule: string) => {
-    try {
-      if (!teamMember?.team_member_id) throw new Error();
-      setIsScheduling(true);
-      const formattedScheduleMessage = moment(schedule).format(
-        "MMMM Do YYYY, h:mm A"
-      );
-      await updateTradeTestSchedule(supabaseClient, {
-        teamMemberId: teamMember.team_member_id,
-        schedule: schedule,
-        requestReferenceId: item.hr_request_reference_id,
-        userEmail: item.application_information_email,
-        applicationInformationFormslyId:
-          item.application_information_request_id,
-        notificationMessage: `Your trade test schedule is on ${formattedScheduleMessage}`,
-      });
-
-      setData((prev) =>
-        prev.map((prevItem) => {
-          if (prevItem.hr_request_reference_id !== item.hr_request_reference_id)
-            return prevItem;
-          return {
-            ...prevItem,
-            trade_test_status: "PENDING",
-            trade_test_schedule: schedule,
-          };
-        })
-      );
-      notifications.show({
-        message: "Trade test scheduled successfully.",
-        color: "green",
-      });
-    } catch (e) {
-      notifications.show({
-        message: "Something went wrong. Please try again later.",
-        color: "red",
-      });
-    } finally {
-      setIsScheduling(false);
-    }
-  };
-
   if (!team.team_name) return null;
   return (
     <tr className={classes.row}>
-      <Modal
-        opened={opened}
-        onClose={close}
-        title="Set Schedule"
-        centered
-        closeOnEscape={false}
-        closeOnClickOutside={false}
-        withCloseButton={false}
-      >
-        <Stack spacing="xl">
-          <Text color="dimmed" size={14}>
-            Trade Test schedule for{" "}
-            <b>{item.application_information_full_name}</b> applying for{" "}
-            <b>{item.position.replaceAll('"', "")}</b> position.
-          </Text>
-
-          <form
-            id="schedule"
-            onSubmit={handleSubmit(async (data) => {
-              await handleSchedule(
-                moment(`${moment().format("YYYY-MM-DD")} ${data.time}`)
-                  .utc()
-                  .format("YYYY-MM-DD HH:mm:ssZZ")
-              );
-              close();
-            })}
-          >
-            <Stack spacing="xs">
-              <Controller
-                control={control}
-                name="date"
-                render={({ field: { value, onChange } }) => {
-                  const newValue = value
-                    ? new Date(value as string)
-                    : undefined;
-                  return (
-                    <DateInput
-                      label="Date"
-                      popoverProps={{
-                        withinPortal: true,
-                      }}
-                      valueFormat="MM-DD-YYYY"
-                      ref={dateRef}
-                      rightSection={
-                        <ActionIcon onClick={() => dateRef?.current?.focus()}>
-                          <IconCalendar size="1rem" stroke={1.5} />
-                        </ActionIcon>
-                      }
-                      required
-                      value={newValue}
-                      onChange={onChange}
-                      error={errors.date?.message}
-                      minDate={new Date()}
-                    />
-                  );
-                }}
-                rules={{
-                  validate: {
-                    checkDate: async (value) => {
-                      const currentDate = await getCurrentDate(supabaseClient);
-
-                      if (
-                        new Date(value).setHours(0, 0, 0, 0) <
-                        currentDate.setHours(0, 0, 0, 0)
-                      )
-                        return "Invalid Date";
-                      return true;
-                    },
-                  },
-                }}
-              />
-              <Controller
-                control={control}
-                name="time"
-                render={({ field: { value, onChange } }) => {
-                  return (
-                    <TimeInput
-                      label="Time"
-                      ref={timeRef}
-                      rightSection={
-                        <ActionIcon
-                          onClick={() => timeRef?.current?.showPicker()}
-                        >
-                          <IconClock size="1rem" stroke={1.5} />
-                        </ActionIcon>
-                      }
-                      required
-                      value={value ?? ""}
-                      onChange={onChange}
-                      error={errors.time?.message}
-                    />
-                  );
-                }}
-                rules={{
-                  validate: {
-                    checkTime: async (value) => {
-                      const currentDate = await getCurrentDate(supabaseClient);
-                      const dateComparison = new Date(currentDate);
-
-                      if (
-                        new Date(getValues("date")).setHours(0, 0, 0, 0) ===
-                        dateComparison.setHours(0, 0, 0, 0)
-                      ) {
-                        if (
-                          moment(value, "HH:mm").isBefore(
-                            moment(currentDate, "HH:mm")
-                          )
-                        ) {
-                          return "Invalid Time";
-                        }
-                      }
-                      return true;
-                    },
-                  },
-                }}
-              />
-            </Stack>
-          </form>
-
-          <Group spacing="xs" position="right">
-            <Button variant="outline" onClick={close} disabled={isScheduling}>
-              Cancel
-            </Button>
-            <Button type="submit" form="schedule" loading={isScheduling}>
-              Confirm
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-
       {!hiddenColumnList.includes("position") && (
         <td>
           <Text>{safeParse(item.position)}</Text>
@@ -385,13 +162,6 @@ const TradeTestMainTableRow = ({
         </td>
       )}
       <td>
-        {item.trade_test_status === "WAITING FOR SCHEDULE" && (
-          <Flex align="center" justify="center" gap="xs" wrap="wrap">
-            <Button color="green" w={130} onClick={open}>
-              Set Schedule
-            </Button>
-          </Flex>
-        )}
         {item.trade_test_status === "PENDING" && (
           <Flex align="center" justify="center" gap="xs" wrap="wrap">
             <Button

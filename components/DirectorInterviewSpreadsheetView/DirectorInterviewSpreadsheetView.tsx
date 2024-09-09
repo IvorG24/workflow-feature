@@ -253,7 +253,6 @@ const DirectorInterviewSpreadsheetView = ({ positionOptionList }: Props) => {
         handleUpdateDirectorInterviewStatus={
           handleUpdateDirectorInterviewStatus
         }
-        setData={setData}
       />
     </Stack>
   );

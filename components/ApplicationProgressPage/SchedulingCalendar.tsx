@@ -6,9 +6,9 @@ import {
 } from "@/backend/api/get";
 import { createInterviewOnlineMeeting } from "@/backend/api/post";
 import {
-  cancelPhoneInterview,
+  cancelInterview,
   updateInterviewOnlineMeeting,
-  updatePhoneInterview,
+  updateSchedule,
 } from "@/backend/api/update";
 import { useUserProfile } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
@@ -22,7 +22,6 @@ import {
   Flex,
   Group,
   Loader,
-  LoadingOverlay,
   Select,
   Stack,
   Text,
@@ -34,16 +33,21 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
 import { useEffect, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
-
 type SchedulingType = {
-  meeting_type: "technical" | "qualifying" | "phone";
-  target_id: string;
+  meetingType:
+    | "hr_phone_interview"
+    | "trade_test"
+    | "technical_interview"
+    | "director_interview";
+  meetingTypeNumber?: number;
+  targetId: string;
   intialDate: string | null;
   refetchData: () => Promise<void>;
   status: string;
   isRefetchingData: boolean;
-  date_created: string;
+  dateCreated: string;
   setIsReadyToSelect: React.Dispatch<React.SetStateAction<boolean>>;
   isReadyToSelect: boolean;
 };
@@ -57,18 +61,19 @@ type HrSlotType = {
 const SchedulingCalendar = ({
   setIsReadyToSelect,
   isReadyToSelect,
-  meeting_type,
-  target_id,
+  meetingType,
+  meetingTypeNumber,
+  targetId,
   intialDate,
   refetchData,
   status,
-  date_created,
+  dateCreated,
   isRefetchingData,
 }: SchedulingType) => {
   const testOnlineMeetingProps = {
     interview_meeting_date_created: moment().toISOString(),
-    interview_meeting_interview_id: target_id,
-    interview_meeting_provider_id: "test-provider-id",
+    interview_meeting_interview_id: targetId,
+    interview_meeting_provider_id: uuidv4(),
     interview_meeting_url: "https://mock-url.com/meeting",
   };
 
@@ -82,14 +87,14 @@ const SchedulingCalendar = ({
   });
   const [selectedSlot, setSelectedSlot] = useState<string>("");
   const [hrSlot, setHrSlot] = useState<HrSlotType[]>([]);
-  const [isLoading, setIsloading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isEdit, setIsEdit] = useState<boolean | null>(null);
   const [isReschedule, setIsReschedule] = useState(false);
 
   const [interviewOnlineMeeting, setInterviewOnlineMeeting] =
     useState<InterviewOnlineMeetingTableRow | null>(null);
   const [currentDate, setCurrentDate] = useState<Date>();
-  const appliedDate = moment(date_created);
+  const appliedDate = moment(dateCreated);
   const minDate = moment(currentDate).format();
   const maxDate = appliedDate.clone().add(30, "days").toDate();
   const scheduleDate = intialDate ? moment(intialDate) : moment();
@@ -122,32 +127,33 @@ const SchedulingCalendar = ({
       return;
     }
     try {
-      setIsloading(true);
-      const params = {
-        target_id,
-        status: "CANCELLED",
-      };
+      setIsLoading(true);
 
-      if (meeting_type === "phone") {
-        if (interviewOnlineMeeting) {
-          await handleCancelOnlineMeeting(
-            interviewOnlineMeeting.interview_meeting_provider_id
-          );
-        }
-        await cancelPhoneInterview(supabaseClient, params);
+      if (interviewOnlineMeeting) {
+        await handleCancelOnlineMeeting(
+          interviewOnlineMeeting.interview_meeting_provider_id
+        );
       }
+
+      await cancelInterview(supabaseClient, {
+        targetId,
+        status: "CANCELLED",
+        table: meetingType,
+        meetingTypeNumber,
+      });
+
       refetchData();
       notifications.show({
         message: "Interview cancellation successful!",
         color: "green",
       });
-    } catch (error) {
+    } catch (e) {
       notifications.show({
-        message: "Error cancelling interview:",
-        color: "orange",
+        message: "Something went wrong. Please try again later.",
+        color: "red",
       });
     } finally {
-      setIsloading(false);
+      setIsLoading(false);
     }
   };
 
@@ -197,20 +203,19 @@ const SchedulingCalendar = ({
       };
 
       try {
-        setIsloading(true);
-        if (meeting_type === "phone") {
-          const data = await getPhoneMeetingSlots(supabaseClient, params);
-          const newDate = await getCurrentDate(supabaseClient);
-          setCurrentDate(newDate);
-          setHrSlot(data);
-        }
+        setIsLoading(true);
+
+        const data = await getPhoneMeetingSlots(supabaseClient, params);
+        const newDate = await getCurrentDate(supabaseClient);
+        setCurrentDate(newDate);
+        setHrSlot(data);
       } catch (error) {
         notifications.show({
           message: "Error fetching meeting slots",
           color: "orange",
         });
       } finally {
-        setIsloading(false);
+        setIsLoading(false);
       }
     }
   };
@@ -230,7 +235,7 @@ const SchedulingCalendar = ({
       });
       return;
     }
-    setIsloading(true);
+    setIsLoading(true);
     setIsReadyToSelect(false);
     setIsEdit(false);
 
@@ -241,75 +246,58 @@ const SchedulingCalendar = ({
       const tempDate = new Date(selectedDate);
       tempDate.setHours(hours, minutes);
 
-      const nowUtc = moment().toISOString();
+      await updateSchedule(supabaseClient, {
+        interviewSchedule: tempDate.toISOString(),
+        targetId,
+        status: "PENDING",
+        table: meetingType,
+        meetingTypeNumber,
+      });
 
-      if (meeting_type === "phone") {
-        const params = {
-          interview_schedule: tempDate.toISOString(),
-          interview_status_date_updated: nowUtc,
-          target_id,
-          status: "PENDING",
-        };
-        const { message, status } = await updatePhoneInterview(
-          supabaseClient,
-          params
-        );
-
-        if (status === "success") {
-          if (interviewOnlineMeeting) {
-            // update online meeting
-            if (process.env.NODE_ENV === "production") {
-              await handleRescheduleOnlineMeeting(tempDate);
-            } else {
-              const newInterviewOnlineMeeting =
-                await updateInterviewOnlineMeeting(supabaseClient, {
-                  ...testOnlineMeetingProps,
-                  interview_meeting_id:
-                    interviewOnlineMeeting.interview_meeting_id,
-                });
-              setInterviewOnlineMeeting(newInterviewOnlineMeeting);
+      if (interviewOnlineMeeting) {
+        // update online meeting
+        if (process.env.NODE_ENV === "production") {
+          await handleRescheduleOnlineMeeting(tempDate);
+        } else {
+          const newInterviewOnlineMeeting = await updateInterviewOnlineMeeting(
+            supabaseClient,
+            {
+              ...testOnlineMeetingProps,
+              interview_meeting_id: interviewOnlineMeeting.interview_meeting_id,
             }
-          } else {
-            // create online meeting
-            if (process.env.NODE_ENV === "production") {
-              await handleCreateOnlineMeeting(tempDate);
-            } else {
-              const newInterviewOnlineMeeting =
-                await createInterviewOnlineMeeting(
-                  supabaseClient,
-                  testOnlineMeetingProps
-                );
-
-              setInterviewOnlineMeeting(newInterviewOnlineMeeting);
-            }
-          }
-
-          setSelectedDate(tempDate);
-
-          notifications.show({
-            message: message,
-            color: "green",
-          });
-          setIsEdit(false);
+          );
+          setInterviewOnlineMeeting(newInterviewOnlineMeeting);
         }
-        if (status === "error") {
-          notifications.show({
-            message: message,
-            color: "orange",
-          });
-          fetchTime({ breakDuration: 10, slotDuration: 5 });
-          setSelectedSlot("");
+      } else {
+        // create online meeting
+        if (process.env.NODE_ENV === "production") {
+          await handleCreateOnlineMeeting(tempDate);
+        } else {
+          const newInterviewOnlineMeeting = await createInterviewOnlineMeeting(
+            supabaseClient,
+            testOnlineMeetingProps
+          );
+
+          setInterviewOnlineMeeting(newInterviewOnlineMeeting);
         }
       }
+      setSelectedDate(tempDate);
+      setIsEdit(false);
 
+      notifications.show({
+        message: "Schedule updated successfully.",
+        color: "green",
+      });
       await refetchData();
     } catch (e) {
       notifications.show({
         message: "Error updating schedule",
         color: "orange",
       });
+      fetchTime({ breakDuration: 10, slotDuration: 5 });
+      setSelectedSlot("");
     } finally {
-      setIsloading(false);
+      setIsLoading(false);
     }
   };
 
@@ -366,18 +354,21 @@ const SchedulingCalendar = ({
   };
 
   const fetchSlot = () => {
-    if (meeting_type === "technical") {
-      fetchTime({ breakDuration: 10, slotDuration: 15 });
-      setSelectedSlot("");
+    switch (meetingType) {
+      case "hr_phone_interview":
+        fetchTime({ breakDuration: 5, slotDuration: 15 });
+        break;
+      case "trade_test":
+        fetchTime({ breakDuration: 5, slotDuration: 60 });
+        break;
+      case "technical_interview":
+        fetchTime({ breakDuration: 5, slotDuration: 30 });
+        break;
+      case "director_interview":
+        fetchTime({ breakDuration: 5, slotDuration: 30 });
+        break;
     }
-    if (meeting_type === "qualifying") {
-      fetchTime({ breakDuration: 10, slotDuration: 15 });
-      setSelectedSlot("");
-    }
-    if (meeting_type === "phone") {
-      fetchTime({ breakDuration: 0, slotDuration: 5 });
-      setSelectedSlot("");
-    }
+    setSelectedSlot("");
   };
 
   const handleCreateOnlineMeeting = async (tempDate: Date) => {
@@ -432,7 +423,7 @@ const SchedulingCalendar = ({
     const meetingUrl = createMeetingData.onlineMeeting.joinUrl;
 
     const interviewOnlineMeeting: InterviewOnlineMeetingTableInsert = {
-      interview_meeting_interview_id: target_id,
+      interview_meeting_interview_id: targetId,
       interview_meeting_url: meetingUrl,
       interview_meeting_provider_id: createMeetingData.id,
     };
@@ -581,7 +572,8 @@ const SchedulingCalendar = ({
         supabaseClient,
         interviewOnlineMeeting.interview_meeting_id
       );
-    } catch (error) {
+    } catch (e) {
+  
       notifications.show({
         message: "Failed to cancel MS Teams meeting",
         color: "red",
@@ -626,7 +618,7 @@ const SchedulingCalendar = ({
   const handleFetchInterviewOnlineMeeting = async () => {
     const currentInterviewOnlineMeeting = await getInterviewOnlineMeeting(
       supabaseClient,
-      target_id
+      targetId
     );
 
     if (currentInterviewOnlineMeeting) {
@@ -639,7 +631,7 @@ const SchedulingCalendar = ({
       title: "Please confirm your action",
       children: (
         <Text size="sm">
-          Are you sure you want to cancel your {meeting_type} interview?
+          Are you sure you want to cancel your {meetingType} interview?
         </Text>
       ),
       labels: { confirm: "Confirm", cancel: "Cancel" },
@@ -663,12 +655,12 @@ const SchedulingCalendar = ({
 
   useEffect(() => {
     handleFetchInterviewOnlineMeeting();
-  }, [target_id]);
+  }, [targetId]);
 
   return (
     <>
       <Flex direction="column" gap={10} mb={20}>
-        <LoadingOverlay visible={isLoading} />
+        {/* <LoadingOverlay visible={isLoading} /> */}
         {status === "CANCELLED" && (
           <>
             {intialDate && (

@@ -41,7 +41,6 @@ type Props = {
     status: string,
     data: TradeTestSpreadsheetData
   ) => void;
-  setData: Dispatch<SetStateAction<TradeTestSpreadsheetData[]>>;
 };
 
 const TradeTestSpreadsheetTable = ({
@@ -54,7 +53,6 @@ const TradeTestSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   handleUpdateTradeTestStatus,
-  setData
 }: Props) => {
   const { classes } = useStyles();
 
@@ -241,8 +239,6 @@ const TradeTestSpreadsheetTable = ({
                   item={item}
                   hiddenColumnList={hiddenColumnList}
                   handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
-                  setData={setData}
-
                 />
               ))}
             </tbody>

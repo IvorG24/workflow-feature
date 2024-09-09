@@ -48,7 +48,6 @@ import {
   FormType,
   HRPhoneInterviewFilterFormValues,
   HRPhoneInterviewSpreadsheetData,
-  HRPhoneInterviewTableRow,
   InitialFormType,
   InterviewOnlineMeetingTableRow,
   ItemCategoryType,
@@ -6177,21 +6176,6 @@ export const getPhoneMeetingSlots = async (
   }[];
 };
 
-export const getPhoneInterview = async (
-  supabaseClient: SupabaseClient<Database>,
-  interviewId: string
-) => {
-  const { data, error } = await supabaseClient
-    .schema("hr_schema")
-    .from("hr_phone_interview_table")
-    .select()
-    .eq("hr_phone_interview_id", interviewId);
-
-  if (error) throw error;
-
-  return data as HRPhoneInterviewTableRow[];
-};
-
 export const getTradeTestSummaryData = async (
   supabaseClient: SupabaseClient<Database>,
   params: TradeTestFilterFormValues & {
@@ -6440,4 +6424,29 @@ export const getAdOwnerList = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getInterview = async (
+  supabaseClient: SupabaseClient,
+  params: {
+    interviewId: string;
+    table: string;
+    interviewNumber?: number;
+  }
+) => {
+  const { interviewId, table, interviewNumber } = params;
+  let query = supabaseClient
+    .schema("hr_schema")
+    .from(`${table}_table`)
+    .select()
+    .eq(`${table}_id`, interviewId)
+    .limit(1);
+
+  if (interviewNumber) {
+    query = query.eq(`${table}_number`, interviewNumber);
+  }
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return data[0];
 };

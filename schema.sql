@@ -14399,7 +14399,6 @@ AS $$
             AND request_is_disabled = FALSE
             AND request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
             ${responseFilterCondition.length ? `AND (${responseFilterCondition.join(" OR ")})` : ""}
-            ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
         ) AS a
         INNER JOIN request_schema.request_signer_table ON request_id = request_signer_request_id
         WHERE
@@ -14407,6 +14406,7 @@ AS $$
           ${requestSignerCondition.length ? `AND ${requestSignerCondition}` : ""}
           ${requestFilterCondition.length ? `AND (${requestFilterCondition.join(" AND ")})` : ""}
           ${responseBooleanFilterCondition.length ? `AND (${responseBooleanFilterCondition.join(" AND ")})` : ""}
+        ${!isSortByResponse ? `ORDER BY ${sort.field} ${sort.order}` : ""}
         ${isSortByResponse ?
         `
           ORDER BY ${castRequestResponse(`(
@@ -15772,121 +15772,92 @@ AS $$
   return free_slots;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION update_phone_interview(
+CREATE OR REPLACE FUNCTION update_schedule(
   input_data JSON
 )
-RETURNS JSON
+RETURNS VOID
 SET search_path TO ''
 AS $$
-  let message;
   plv8.subtransaction(function() {
     const {
-      interview_schedule,
-      interview_status_date_updated,
-      target_id,
-      status
+      interviewSchedule,
+      targetId,
+      status,
+      table,
+      meetingTypeNumber
     } = input_data;
 
     let hrCountResult;
     let hrCount;
     let selectedDate;
     let scheduledList;
-
-    try {
-      hrCountResult = plv8.execute(
-        `
-          SELECT COUNT(*) AS count
-          FROM team_schema.team_group_table tgt
-          JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
-          JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id
-          WHERE tgt.team_group_name = 'HUMAN RESOURCES'
-            AND tmt.team_member_is_disabled = false
-        `
-      );
-      if (!hrCountResult || hrCountResult.length === 0) {
-        throw new Error('Error fetching HR count.');
-      }
-      hrCount = hrCountResult[0].count;
-    } catch (err) {
-      throw new Error('Error in HR Count query: ' + err.message);
+  
+    hrCountResult = plv8.execute(
+      `
+        SELECT COUNT(*) AS count
+        FROM team_schema.team_group_table tgt
+        JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
+        JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id
+        WHERE tgt.team_group_name = 'HUMAN RESOURCES'
+          AND tmt.team_member_is_disabled = false
+      `
+    );
+    if (!hrCountResult || hrCountResult.length === 0) {
+      throw new Error('Error fetching HR count.');
     }
+    hrCount = hrCountResult[0].count;
 
-    try {
-      selectedDate = new Date(interview_schedule).toISOString().split('T')[0];
-      scheduledList = plv8.execute(
-        `
-          SELECT
-            hr_phone_interview_schedule AS meeting_start_time,
-            hr_phone_interview_schedule + INTERVAL '5 minutes' AS meeting_end_time
-          FROM hr_schema.hr_phone_interview_table
-          WHERE DATE(hr_phone_interview_table.hr_phone_interview_schedule) = '${selectedDate}'
-        `
-      );
-      if (!scheduledList) {
-        throw new Error('Error fetching scheduled list.');
-      }
-    } catch (err) {
-      throw new Error('Error in Scheduled List query: ' + err.message);
+    selectedDate = new Date(interviewSchedule).toISOString().split('T')[0];
+    scheduledList = plv8.execute(
+      `
+        SELECT
+          ${table}_schedule AS meeting_start_time,
+          ${table}_schedule + INTERVAL '5 minutes' AS meeting_end_time
+        FROM hr_schema.${table}_table
+        WHERE DATE(${table}_table.${table}_schedule) = '${selectedDate}'
+      `
+    );
+    if (!scheduledList) {
+      throw new Error('Error fetching scheduled list.');
     }
 
     const isScheduleFull = (targetStartTime) => {
-      try {
-        const targetStart = new Date(targetStartTime);
-        const targetEnd = new Date(targetStartTime);
-        targetEnd.setMinutes(targetEnd.getMinutes() + 5);
+      const targetStart = new Date(targetStartTime);
+      const targetEnd = new Date(targetStartTime);
+      targetEnd.setMinutes(targetEnd.getMinutes() + 5);
 
-        const countScheduledInSlot = scheduledList.filter(meeting => {
-          const meetingStart = new Date(meeting.meeting_start_time);
-          const meetingEnd = new Date(meeting.meeting_end_time);
+      const countScheduledInSlot = scheduledList.filter(meeting => {
+        const meetingStart = new Date(meeting.meeting_start_time);
+        const meetingEnd = new Date(meeting.meeting_end_time);
+        return (
+          (targetStart < meetingEnd) &&
+          (targetEnd > meetingStart)
+        );
+      }).length;
 
-          return (
-            (targetStart < meetingEnd) &&
-            (targetEnd > meetingStart)
-          );
-        }).length;
-
-        return (countScheduledInSlot + 1) > hrCount;
-      } catch (err) {
-        throw new Error('Error in Schedule Full check: ' + err.message);
-      }
+      return (countScheduledInSlot + 1) > hrCount;
     };
 
-    if (isScheduleFull(interview_schedule)) {
+    if (isScheduleFull(interviewSchedule)) {
       throw new Error('Schedule is full for the selected time.');
     }
 
-    try {
-      plv8.execute(
-        `
-          UPDATE hr_schema.hr_phone_interview_table
-          SET
-            hr_phone_interview_status_date_updated = COALESCE(
-              '${interview_status_date_updated}',
-              hr_phone_interview_status_date_updated
-            ),
-            hr_phone_interview_status = '${status}',
-            hr_phone_interview_schedule = COALESCE(
-              '${interview_schedule}',
-              hr_phone_interview_schedule
-            )
-          WHERE
-            hr_phone_interview_id = '${target_id}';
-        `
-      );
-    } catch (err) {
-      throw new Error('Error updating phone interview table: ' + err.message);
-    }
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
 
-    message = {
-      status: 'success',
-      message: 'HR phone interview scheduled successfully.'
-    };
+    plv8.execute(
+      `
+        UPDATE hr_schema.${table}_table
+        SET
+          ${table}_status_date_updated = '${currentDate}',
+          ${table}_status = '${status}',
+          ${table}_schedule = '${interviewSchedule}'
+          ${meetingTypeNumber ? `, ${table}_number = ${meetingTypeNumber}` : ""}
+        WHERE
+          ${table}_id = '${targetId}';
+      `
+    );
   });
-
-  return message;
 $$ LANGUAGE plv8;
-
-
 
 CREATE OR REPLACE FUNCTION update_trade_test_schedule(
   input_data JSON

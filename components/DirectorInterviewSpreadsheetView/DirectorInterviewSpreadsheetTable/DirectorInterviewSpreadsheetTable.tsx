@@ -41,7 +41,6 @@ type Props = {
     status: string,
     data: DirectorInterviewSpreadsheetData
   ) => void;
-  setData: Dispatch<SetStateAction<DirectorInterviewSpreadsheetData[]>>;
 };
 
 const DirectorInterviewSpreadsheetTable = ({
@@ -54,7 +53,6 @@ const DirectorInterviewSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   handleUpdateDirectorInterviewStatus,
-  setData,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -245,7 +243,6 @@ const DirectorInterviewSpreadsheetTable = ({
                   handleUpdateDirectorInterviewStatus={
                     handleUpdateDirectorInterviewStatus
                   }
-                  setData={setData}
                 />
               ))}
             </tbody>

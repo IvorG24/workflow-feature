@@ -54,13 +54,13 @@ export default async function handler(
       react: EmailNotificationTemplate(emailProps),
     });
     if (error) {
-      console.log(error);
+      console.error(error);
       return res.status(400).json(error);
     }
 
     return res.status(200).json({ message: "Email sent successfully", data });
   } catch (e) {
-    console.log(e);
+    console.error(e);
     return res.status(500).json({ error: "Error sending email" });
   }
 }
