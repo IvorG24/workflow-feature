@@ -1500,9 +1500,9 @@ AS $$
 
         const teamMemberIdList = plv8.execute(
           `
-            SELECT team_member_id 
+            SELECT team_member_id
             FROM team_schema.team_group_member_table
-            WHERE 
+            WHERE
               team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
           `
         ).map(teamMember => `'${teamMember.team_member_id}'`);
@@ -1516,11 +1516,11 @@ AS $$
               AND signer_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
           `
         ).map(signer => `'${signer.signer_id}'`);
-        
+
         const selectedSigner = plv8.execute(
           `
-            SELECT 
-              signer_id, 
+            SELECT
+              signer_id,
               COUNT(request_signer_id)
             FROM form_schema.signer_table
             LEFT JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
@@ -14362,7 +14362,7 @@ AS $$
     Boolean(requestFilter.dateUpdatedRange.end) ? requestFilterCondition.push(`request_status_date_updated :: DATE <= '${requestFilter.dateUpdatedRange.end}'`) : null;
     requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.start) ? requestFilterCondition.push(`request_score_value  >= ${requestFilter.requestScoreRange.start}`) : null;
     requestFilter.requestScoreRange && Boolean(requestFilter.requestScoreRange.end) ? requestFilterCondition.push(`request_score_value <= ${requestFilter.requestScoreRange.end}`) : null;
-    
+
     let requestSignerCondition = "";
     Boolean(requestFilter.approver) && requestFilter.approver.length ? requestSignerCondition = `request_signer_signer_id IN (${requestFilter.approver.map(approver => `'${approver}'`)})` : null;
 
@@ -14559,7 +14559,7 @@ AS $$
         SELECT DISTINCT(signer_id)
         FROM request_schema.request_signer_table
         INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
-        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id 
+        INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
         WHERE
           request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
           AND request_is_disabled = false
@@ -14568,7 +14568,7 @@ AS $$
 
     const approverOptionList = plv8.execute(
       `
-        SELECT 
+        SELECT
           signer_id,
           user_first_name,
           user_last_name
@@ -15685,6 +15685,7 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
+
 CREATE OR REPLACE FUNCTION get_phone_meeting_available(
   input_data JSON
 )
@@ -15702,7 +15703,7 @@ AS $$
 
     const startUtc = new Date(startTime).toISOString();
     const endUtc = new Date(endTime).toISOString();
-
+    const currentUtc = new Date().toISOString();
     const hrCountResult = plv8.execute(`
       SELECT COUNT(*) AS count
       FROM team_schema.team_group_table tgt
@@ -15714,62 +15715,238 @@ AS $$
     const hrCount = hrCountResult[0].count;
 
     const selectedDate = new Date(startTime).toISOString().split('T')[0];
-    const scheduledList = plv8.execute(`
-      SELECT
-        hr_phone_interview_schedule AS meeting_start_time,
-        hr_phone_interview_schedule + INTERVAL '5 minutes' AS meeting_end_time
-      FROM hr_schema.hr_phone_interview_table
-      WHERE DATE(hr_phone_interview_table.hr_phone_interview_schedule) = '${selectedDate}'
-    `);
 
-    const generateSlots = ({ startTime, endTime, scheduledList, meetingDuration, breakDuration }) => {
+
+    // Generate slots
+    const generateSlots = ({ startTime, endTime, meetingDuration, breakDuration }) => {
       let validStartTime = new Date(startTime);
       let validEndTime = new Date(endTime);
-
       let slots = [];
 
       while (validStartTime < validEndTime) {
         const currentSlotEnd = new Date(validStartTime.getTime() + meetingDuration);
 
+         const scheduledList = plv8.execute(`
+        SELECT
+          iom.interview_meeting_interview_id,
+          COALESCE(p.hr_phone_interview_id, d.director_interview_id, t.trade_test_id, ti.technical_interview_id) AS pending_interview_id
+        FROM hr_schema.interview_online_meeting_table iom
+        LEFT JOIN hr_schema.hr_phone_interview_table p
+          ON p.hr_phone_interview_id = iom.interview_meeting_interview_id
+          AND p.hr_phone_interview_status = 'PENDING'
+        LEFT JOIN hr_schema.director_interview_table d
+          ON d.director_interview_id = iom.interview_meeting_interview_id
+          AND d.director_interview_status = 'PENDING'
+        LEFT JOIN hr_schema.trade_test_table t
+          ON t.trade_test_id = iom.interview_meeting_interview_id
+          AND t.trade_test_status = 'PENDING'
+        LEFT JOIN hr_schema.technical_interview_table ti
+          ON ti.technical_interview_id = iom.interview_meeting_interview_id
+          AND ti.technical_interview_status = 'PENDING'
+        WHERE iom.interview_meeting_is_disabled = false
+          AND iom.interview_meeting_schedule = '${validStartTime.toISOString()}'
+          AND (
+            p.hr_phone_interview_status = 'PENDING'
+            OR d.director_interview_status = 'PENDING'
+            OR t.trade_test_status = 'PENDING'
+            OR ti.technical_interview_status = 'PENDING'
+          )
+      `);
+
+       const countScheduledInSlot = scheduledList.length;
+         const isFullyBooked = countScheduledInSlot >= hrCount;
+        const isPast = validStartTime.toISOString() < currentUtc;
+        const isDisabled = isFullyBooked || isPast;
+
+
+
+
         if (currentSlotEnd <= validEndTime) {
           slots.push({
             slot_start: validStartTime.toISOString(),
             slot_end: currentSlotEnd.toISOString(),
-            isDisabled: false
+            isDisabled: isDisabled
           });
         }
 
         validStartTime = new Date(validStartTime.getTime() + meetingDuration + breakDuration);
       }
 
-      const filteredSlots = slots.map(slot => {
-        const slotStart = new Date(slot.slot_start).toISOString();
-        const slotEnd = new Date(slot.slot_end).toISOString();
-
-        const countScheduledInSlot = scheduledList.filter(meeting => {
-          const meetingStart = new Date(meeting.meeting_start_time).toISOString();
-          const meetingEnd = new Date(meeting.meeting_end_time).toISOString();
-
-          return (
-            (slotStart < meetingEnd) &&
-            (slotEnd > meetingStart)
-          );
-        }).length;
-
-        const isDisabled = countScheduledInSlot >= hrCount
-
-        return {
-          ...slot,
-          isDisabled
-        };
-      });
-
-      return filteredSlots;
+      return slots;
     };
 
-    free_slots = generateSlots({ startTime: startUtc, endTime: endUtc, scheduledList, meetingDuration, breakDuration });
+    free_slots = generateSlots({ startTime: startUtc, endTime: endUtc, meetingDuration, breakDuration });
   });
+
   return free_slots;
+$$ LANGUAGE plv8
+
+CREATE OR REPLACE FUNCTION phone_interview_validation(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+
+  let message;
+  plv8.subtransaction(function() {
+    const {
+      interview_schedule
+    } = input_data;
+
+    const hrTeamMembers = plv8.execute(
+      `
+        SELECT tmt.team_member_id
+        FROM team_schema.team_group_table tgt
+        JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
+        JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id
+        WHERE tgt.team_group_name = 'HUMAN RESOURCES'
+          AND tmt.team_member_is_disabled = false
+      `
+    );
+
+    const hrMemberIds = hrTeamMembers.map(member => member.team_member_id);
+
+    if (hrMemberIds.length === 0) {
+      message = {
+        status: 'error',
+        message: 'No available HR members.'
+      };
+      return;
+    }
+
+        const overlappingSchedules = plv8.execute(
+        `
+            SELECT
+            iom.interview_meeting_schedule,
+            COALESCE(
+                hpi.hr_phone_interview_team_member_id,
+                di.director_interview_team_member_id,
+                ti.technical_interview_team_member_id,
+                t.trade_test_team_member_id
+            ) AS team_member_id,
+            hpi.hr_phone_interview_status,
+            di.director_interview_status,
+            ti.technical_interview_status,
+            t.trade_test_status
+            FROM hr_schema.interview_online_meeting_table iom
+            LEFT JOIN hr_schema.hr_phone_interview_table hpi
+            ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
+            LEFT JOIN hr_schema.director_interview_table di
+            ON iom.interview_meeting_interview_id = di.director_interview_id
+            LEFT JOIN hr_schema.trade_test_table t
+            ON iom.interview_meeting_interview_id = t.trade_test_id
+            LEFT JOIN hr_schema.technical_interview_table ti
+            ON iom.interview_meeting_interview_id = ti.technical_interview_id
+            WHERE iom.interview_meeting_schedule = $1
+            AND iom.interview_meeting_is_disabled = false
+            AND COALESCE(
+                hpi.hr_phone_interview_team_member_id,
+                di.director_interview_team_member_id,
+                ti.technical_interview_team_member_id,
+                t.trade_test_team_member_id
+            ) = ANY($2)
+            AND (
+                hpi.hr_phone_interview_status = 'PENDING'
+                OR di.director_interview_status = 'PENDING'
+                OR ti.technical_interview_status = 'PENDING'
+                OR t.trade_test_status = 'PENDING'
+            )
+        `,
+        [interview_schedule, hrMemberIds]
+        );
+
+    const membersWithOverlap = overlappingSchedules.map(schedule => schedule.team_member_id);
+    const availableHrMembers = hrMemberIds.filter(id => !membersWithOverlap.includes(id));
+
+    if (availableHrMembers.length === 0) {
+      message = {
+        status: 'error',
+        message: 'No available HR members due to overlapping schedules.'
+      };
+      return;
+    }
+
+    const targetDate = new Date(interview_schedule);
+    const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1).toISOString().split('T')[0];
+    const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split('T')[0];
+
+        const hrScheduledInterviews = plv8.execute(
+        `
+            SELECT
+            COALESCE(
+                hpi.hr_phone_interview_team_member_id,
+                di.director_interview_team_member_id,
+                ti.technical_interview_team_member_id,
+                t.trade_test_team_member_id
+            ) AS team_member_id,
+            COUNT(*) AS interview_count
+            FROM hr_schema.interview_online_meeting_table iom
+            LEFT JOIN hr_schema.hr_phone_interview_table hpi
+            ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
+            AND hpi.hr_phone_interview_status = 'PENDING'
+            LEFT JOIN hr_schema.director_interview_table di
+            ON iom.interview_meeting_interview_id = di.director_interview_id
+            AND di.director_interview_status = 'PENDING'
+            LEFT JOIN hr_schema.technical_interview_table ti
+            ON iom.interview_meeting_interview_id = ti.technical_interview_id
+            AND ti.technical_interview_status = 'PENDING'
+            LEFT JOIN hr_schema.trade_test_table t
+            ON iom.interview_meeting_interview_id = t.trade_test_id
+            AND t.trade_test_status = 'PENDING'
+            WHERE iom.interview_meeting_schedule BETWEEN $1 AND $2
+            AND COALESCE(
+                hpi.hr_phone_interview_team_member_id,
+                di.director_interview_team_member_id,
+                ti.technical_interview_team_member_id,
+                t.trade_test_team_member_id
+            ) = ANY($3)
+            AND iom.interview_meeting_is_disabled = false
+            GROUP BY
+            hpi.hr_phone_interview_team_member_id,
+            di.director_interview_team_member_id,
+            ti.technical_interview_team_member_id,
+            t.trade_test_team_member_id
+        `,
+        [startOfMonth, endOfMonth, availableHrMembers]
+        );
+
+
+    // Create a map to store the interview count for each HR member
+    const hrLoadMap = new Map();
+    availableHrMembers.forEach(memberId => {
+      hrLoadMap.set(memberId, 0);
+    });
+
+    hrScheduledInterviews.forEach(interview => {
+      hrLoadMap.set(interview.team_member_id, interview.interview_count);
+    });
+
+    // Find the HR member with the lowest interview load
+    let lowestLoadMember = null;
+    let lowestLoad = Infinity;
+
+    hrLoadMap.forEach((load, memberId) => {
+      if (load < lowestLoad) {
+        lowestLoad = load;
+        lowestLoadMember = memberId;
+      }
+    });
+
+    if (!lowestLoadMember) {
+      message = {
+        status: 'error',
+        message: 'No available HR member for the selected time.'
+      };
+    } else {
+      message = {
+        status: 'success',
+        message: 'HR phone interview scheduled successfully.',
+        assigned_hr_team_member_id: lowestLoadMember
+      };
+    }
+  });
+  return message;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_schedule(
@@ -15784,78 +15961,26 @@ AS $$
       targetId,
       status,
       table,
-      meetingTypeNumber
+      meetingTypeNumber,
+      team_member_id,
     } = input_data;
-
-    let hrCountResult;
-    let hrCount;
-    let selectedDate;
-    let scheduledList;
-  
-    hrCountResult = plv8.execute(
-      `
-        SELECT COUNT(*) AS count
-        FROM team_schema.team_group_table tgt
-        JOIN team_schema.team_group_member_table tgmt ON tgt.team_group_id = tgmt.team_group_id
-        JOIN team_schema.team_member_table tmt ON tmt.team_member_id = tgmt.team_member_id
-        WHERE tgt.team_group_name = 'HUMAN RESOURCES'
-          AND tmt.team_member_is_disabled = false
-      `
-    );
-    if (!hrCountResult || hrCountResult.length === 0) {
-      throw new Error('Error fetching HR count.');
-    }
-    hrCount = hrCountResult[0].count;
-
-    selectedDate = new Date(interviewSchedule).toISOString().split('T')[0];
-    scheduledList = plv8.execute(
-      `
-        SELECT
-          ${table}_schedule AS meeting_start_time,
-          ${table}_schedule + INTERVAL '5 minutes' AS meeting_end_time
-        FROM hr_schema.${table}_table
-        WHERE DATE(${table}_table.${table}_schedule) = '${selectedDate}'
-      `
-    );
-    if (!scheduledList) {
-      throw new Error('Error fetching scheduled list.');
-    }
-
-    const isScheduleFull = (targetStartTime) => {
-      const targetStart = new Date(targetStartTime);
-      const targetEnd = new Date(targetStartTime);
-      targetEnd.setMinutes(targetEnd.getMinutes() + 5);
-
-      const countScheduledInSlot = scheduledList.filter(meeting => {
-        const meetingStart = new Date(meeting.meeting_start_time);
-        const meetingEnd = new Date(meeting.meeting_end_time);
-        return (
-          (targetStart < meetingEnd) &&
-          (targetEnd > meetingStart)
-        );
-      }).length;
-
-      return (countScheduledInSlot + 1) > hrCount;
-    };
-
-    if (isScheduleFull(interviewSchedule)) {
-      throw new Error('Schedule is full for the selected time.');
-    }
 
     const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date).toISOString();
 
-    plv8.execute(
-      `
-        UPDATE hr_schema.${table}_table
-        SET
-          ${table}_status_date_updated = '${currentDate}',
-          ${table}_status = '${status}',
-          ${table}_schedule = '${interviewSchedule}'
-          ${meetingTypeNumber ? `, ${table}_number = ${meetingTypeNumber}` : ""}
-        WHERE
-          ${table}_id = '${targetId}';
-      `
-    );
+    let query = `
+      UPDATE hr_schema.` + table + `_table
+      SET
+        ` + table + `_status_date_updated = '` + currentDate + `',
+        ` + table + `_status = '` + status + `',
+        ` + table + `_schedule = '` + interviewSchedule + `',
+        ` + table + `_team_member_id = '` + team_member_id + `'`;
+    if (meetingTypeNumber) {
+      query += `,
+        ` + table + `_number = ` + meetingTypeNumber;
+    }
+    query += `
+      WHERE ` + table + `_id = '` + targetId + `';`;
+    plv8.execute(query);
   });
 $$ LANGUAGE plv8;
 
@@ -17076,8 +17201,8 @@ AS $$
 
     const teamMemberId = plv8.execute(
       `
-        SELECT team_member_id 
-        FROM team_schema.team_member_table 
+        SELECT team_member_id
+        FROM team_schema.team_member_table
         WHERE
           team_member_is_disabled = false
           AND team_member_user_id = '${userId}'
@@ -17124,7 +17249,7 @@ plv8.subtransaction(function(){
     } = input_data;
 
     const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
-    
+
     const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
     const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
     const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);

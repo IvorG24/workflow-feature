@@ -1,7 +1,7 @@
 import { RequestSigner } from "@/components/FormBuilder/SignerSection";
 import moment from "moment";
 import { v4 as uuidv4 } from "uuid";
-import { SectionWithField } from "./types";
+import { MeetingDetails, MeetingType, SectionWithField } from "./types";
 
 export const BASE_URL =
   process.env.NODE_ENV === "production"
@@ -36,6 +36,27 @@ export const SELECT_OPTION_LIMIT = 1000;
 export const TICKET_ADMIN_ANALYTICS_LIMIT = 10;
 export const FORMSLY_PRICE_PER_MONTH = 35000;
 
+export const APPLICATION_STATUS_CANCELLED = "CANCELLED";
+export const APPLICATION_STATUS_PENDING = "PENDING";
+
+export const MEETING_TYPE_DETAILS: Record<MeetingType, MeetingDetails> = {
+  hr_phone_interview: {
+    breakDuration: 5,
+    duration: 15,
+  },
+  director_interview: {
+    breakDuration: 5,
+    duration: 60,
+  },
+  technical_interview: {
+    breakDuration: 5,
+    duration: 30,
+  },
+  trade_test: {
+    breakDuration: 5,
+    duration: 30,
+  },
+};
 export const READ_ONLY_TICKET_CATEGORY_LIST = [
   "Incident Report for Employees",
   "Bug Report",

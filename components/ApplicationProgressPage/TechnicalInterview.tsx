@@ -2,7 +2,16 @@ import { getInterview } from "@/backend/api/get";
 import { formatDate } from "@/utils/constant";
 import { getStatusToColor } from "@/utils/styling";
 import { TechnicalInterviewTableRow } from "@/utils/types";
-import { Alert, Badge, Box, Group, Stack, Text, Title } from "@mantine/core";
+import {
+  Alert,
+  Badge,
+  Box,
+  Group,
+  LoadingOverlay,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
@@ -21,11 +30,15 @@ const TechnicalInterview = ({
   const [technicalInterviewData, setPhoneInterviewData] =
     useState<TechnicalInterviewTableRow>(initialData);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [status, setStatus] = useState<string>(
+    technicalInterviewData.technical_interview_status
+  );
   const [isReadyToSelect, setIsReadyToSelect] = useState(false);
 
   const refetchData = async () => {
     try {
-      setIsLoading(true);
+      setIsFetching(true);
       const targetId = technicalInterviewData.technical_interview_id;
       const data = await getInterview(supabaseClient, {
         interviewId: targetId,
@@ -39,12 +52,13 @@ const TechnicalInterview = ({
         color: "red",
       });
     } finally {
-      setIsLoading(false);
+      setIsFetching(false);
     }
   };
 
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
+      <LoadingOverlay visible={isLoading} />
       <Title order={3}>Technical Interview {technicalInterviewNumber}</Title>
       <Stack>
         <Group>
@@ -59,13 +73,7 @@ const TechnicalInterview = ({
         </Group>
         <Group>
           <Text>Status: </Text>
-          <Badge
-            color={getStatusToColor(
-              technicalInterviewData.technical_interview_status ?? ""
-            )}
-          >
-            {technicalInterviewData.technical_interview_status}
-          </Badge>
+          <Badge color={getStatusToColor(status ?? "")}>{status}</Badge>
           {technicalInterviewData.technical_interview_status_date_updated && (
             <Text color="dimmed">
               on{" "}
@@ -77,9 +85,7 @@ const TechnicalInterview = ({
             </Text>
           )}
         </Group>
-        {["PENDING", "WAITING FOR SCHEDULE", "CANCELLED", "QUALIFIED"].includes(
-          technicalInterviewData.technical_interview_status
-        ) && (
+        {status && (
           <SchedulingCalendar
             setIsReadyToSelect={setIsReadyToSelect}
             isReadyToSelect={isReadyToSelect}
@@ -91,8 +97,10 @@ const TechnicalInterview = ({
             }
             targetId={technicalInterviewData.technical_interview_id}
             intialDate={technicalInterviewData.technical_interview_schedule}
-            status={technicalInterviewData.technical_interview_status}
-            isRefetchingData={isLoading}
+            status={status}
+            setStatus={setStatus}
+            setIsLoading={setIsLoading}
+            isRefetchingData={isFetching}
           />
         )}
         <Box mb={"xl"}>
