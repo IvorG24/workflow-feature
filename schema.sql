@@ -15804,7 +15804,6 @@ CREATE OR REPLACE FUNCTION phone_interview_validation(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-
   let message;
   plv8.subtransaction(function() {
     const {
@@ -15832,46 +15831,46 @@ AS $$
       return;
     }
 
-        const overlappingSchedules = plv8.execute(
-        `
-            SELECT
-            iom.interview_meeting_schedule,
-            COALESCE(
-                hpi.hr_phone_interview_team_member_id,
-                di.director_interview_team_member_id,
-                ti.technical_interview_team_member_id,
-                t.trade_test_team_member_id
-            ) AS team_member_id,
-            hpi.hr_phone_interview_status,
-            di.director_interview_status,
-            ti.technical_interview_status,
-            t.trade_test_status
-            FROM hr_schema.interview_online_meeting_table iom
-            LEFT JOIN hr_schema.hr_phone_interview_table hpi
-            ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
-            LEFT JOIN hr_schema.director_interview_table di
-            ON iom.interview_meeting_interview_id = di.director_interview_id
-            LEFT JOIN hr_schema.trade_test_table t
-            ON iom.interview_meeting_interview_id = t.trade_test_id
-            LEFT JOIN hr_schema.technical_interview_table ti
-            ON iom.interview_meeting_interview_id = ti.technical_interview_id
-            WHERE iom.interview_meeting_schedule = $1
-            AND iom.interview_meeting_is_disabled = false
-            AND COALESCE(
-                hpi.hr_phone_interview_team_member_id,
-                di.director_interview_team_member_id,
-                ti.technical_interview_team_member_id,
-                t.trade_test_team_member_id
-            ) = ANY($2)
-            AND (
-                hpi.hr_phone_interview_status = 'PENDING'
-                OR di.director_interview_status = 'PENDING'
-                OR ti.technical_interview_status = 'PENDING'
-                OR t.trade_test_status = 'PENDING'
-            )
-        `,
-        [interview_schedule, hrMemberIds]
-        );
+    const overlappingSchedules = plv8.execute(
+      `
+        SELECT
+        iom.interview_meeting_schedule,
+        COALESCE(
+            hpi.hr_phone_interview_team_member_id,
+            di.director_interview_team_member_id,
+            ti.technical_interview_team_member_id,
+            t.trade_test_team_member_id
+        ) AS team_member_id,
+        hpi.hr_phone_interview_status,
+        di.director_interview_status,
+        ti.technical_interview_status,
+        t.trade_test_status
+        FROM hr_schema.interview_online_meeting_table iom
+        LEFT JOIN hr_schema.hr_phone_interview_table hpi
+        ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
+        LEFT JOIN hr_schema.director_interview_table di
+        ON iom.interview_meeting_interview_id = di.director_interview_id
+        LEFT JOIN hr_schema.trade_test_table t
+        ON iom.interview_meeting_interview_id = t.trade_test_id
+        LEFT JOIN hr_schema.technical_interview_table ti
+        ON iom.interview_meeting_interview_id = ti.technical_interview_id
+        WHERE iom.interview_meeting_schedule = $1
+        AND iom.interview_meeting_is_disabled = false
+        AND COALESCE(
+            hpi.hr_phone_interview_team_member_id,
+            di.director_interview_team_member_id,
+            ti.technical_interview_team_member_id,
+            t.trade_test_team_member_id
+        ) = ANY($2)
+        AND (
+            hpi.hr_phone_interview_status = 'PENDING'
+            OR di.director_interview_status = 'PENDING'
+            OR ti.technical_interview_status = 'PENDING'
+            OR t.trade_test_status = 'PENDING'
+        )
+      `,
+      [interview_schedule, hrMemberIds]
+    );
 
     const membersWithOverlap = overlappingSchedules.map(schedule => schedule.team_member_id);
     const availableHrMembers = hrMemberIds.filter(id => !membersWithOverlap.includes(id));
@@ -15888,50 +15887,40 @@ AS $$
     const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1).toISOString().split('T')[0];
     const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split('T')[0];
 
-        const hrScheduledInterviews = plv8.execute(
-        `
-            SELECT
-            COALESCE(
-                hpi.hr_phone_interview_team_member_id,
-                di.director_interview_team_member_id,
-                ti.technical_interview_team_member_id,
-                t.trade_test_team_member_id
-            ) AS team_member_id,
-            COUNT(*) AS interview_count
-            FROM hr_schema.interview_online_meeting_table iom
-            LEFT JOIN hr_schema.hr_phone_interview_table hpi
-            ON iom.interview_meeting_interview_id = hpi.hr_phone_interview_id
-            AND hpi.hr_phone_interview_status = 'PENDING'
-            LEFT JOIN hr_schema.director_interview_table di
-            ON iom.interview_meeting_interview_id = di.director_interview_id
-            AND di.director_interview_status = 'PENDING'
-            LEFT JOIN hr_schema.technical_interview_table ti
-            ON iom.interview_meeting_interview_id = ti.technical_interview_id
-            AND ti.technical_interview_status = 'PENDING'
-            LEFT JOIN hr_schema.trade_test_table t
-            ON iom.interview_meeting_interview_id = t.trade_test_id
-            AND t.trade_test_status = 'PENDING'
-            WHERE iom.interview_meeting_schedule BETWEEN $1 AND $2
-            AND COALESCE(
-                hpi.hr_phone_interview_team_member_id,
-                di.director_interview_team_member_id,
-                ti.technical_interview_team_member_id,
-                t.trade_test_team_member_id
-            ) = ANY($3)
-            AND iom.interview_meeting_is_disabled = false
-            GROUP BY
-            COALESCE(
-                hpi.hr_phone_interview_team_member_id,
-                di.director_interview_team_member_id,
-                ti.technical_interview_team_member_id,
-                t.trade_test_team_member_id
+    const hrScheduledInterviews = plv8.execute(
+      `
+        SELECT
+            tm.team_member_id,
+              COUNT(iom.interview_meeting_interview_id)
+      + COUNT(CASE WHEN ti.technical_interview_number = 1 THEN iom.interview_meeting_interview_id END)
+      + COUNT(CASE WHEN ti.technical_interview_number = 2 THEN iom.interview_meeting_interview_id END)
+      AS interview_count
+        FROM (
+            SELECT unnest(array[${availableHrMembers.map(id => `'${id}'`).join(',')}])::UUID AS team_member_id
+        ) tm
+        LEFT JOIN hr_schema.hr_phone_interview_table hpi
+            ON tm.team_member_id = hpi.hr_phone_interview_team_member_id
+        LEFT JOIN hr_schema.director_interview_table di
+            ON tm.team_member_id = di.director_interview_team_member_id
+        LEFT JOIN hr_schema.technical_interview_table ti
+            ON tm.team_member_id = ti.technical_interview_team_member_id
+        LEFT JOIN hr_schema.trade_test_table t
+            ON tm.team_member_id = t.trade_test_team_member_id
+        LEFT JOIN hr_schema.interview_online_meeting_table iom
+            ON iom.interview_meeting_interview_id = COALESCE(
+                hpi.hr_phone_interview_id,
+                di.director_interview_id,
+                ti.technical_interview_id,
+                t.trade_test_id
             )
-        `,
-        [startOfMonth, endOfMonth, availableHrMembers]
-        );
+            AND iom.interview_meeting_schedule BETWEEN $1 AND $2
+            AND iom.interview_meeting_is_disabled = false
+        GROUP BY tm.team_member_id
+        ORDER BY interview_count ASC
+      `,
+      [startOfMonth, endOfMonth]
+    );
 
-
-    // Create a map to store the interview count for each HR member
     const hrLoadMap = new Map();
     availableHrMembers.forEach(memberId => {
       hrLoadMap.set(memberId, 0);
@@ -15941,7 +15930,6 @@ AS $$
       hrLoadMap.set(interview.team_member_id, interview.interview_count);
     });
 
-    // Find the HR member with the lowest interview load
     let lowestLoadMember = null;
     let lowestLoad = Infinity;
 
@@ -17300,7 +17288,7 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_ad_owner_request(
   input_data JSON
 )
-RETURNS VOID 
+RETURNS VOID
 SET search_path TO ''
 AS $$
 plv8.subtransaction(function(){
@@ -17331,7 +17319,7 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION get_hr_spreadsheet_view_on_load(
   input_data JSON
 )
-RETURNS JSON 
+RETURNS JSON
 SET search_path TO ''
 AS $$
 let returnData = {};
@@ -17356,7 +17344,7 @@ plv8.subtransaction(function(){
 
   const hrMemberData = plv8.execute(
     `
-      SELECT 
+      SELECT
         user_first_name,
         user_last_name,
         tmt.team_member_id
