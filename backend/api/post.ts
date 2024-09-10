@@ -190,7 +190,7 @@ export const createTeamMemberReturnTeamName = async (
   return data as unknown as [
     {
       team: { team_name: string };
-    } & TeamMemberTableInsert,
+    } & TeamMemberTableInsert
   ];
 };
 
@@ -474,6 +474,7 @@ export const createRequest = async (
     status?: string;
     requestScore?: number;
     rootFormslyRequestId?: string;
+    recruiter?: string;
   }
 ) => {
   const {
@@ -488,6 +489,7 @@ export const createRequest = async (
     status,
     requestScore,
     rootFormslyRequestId,
+    recruiter
   } = params;
 
   const requestId = uuidv4();
@@ -621,6 +623,7 @@ export const createRequest = async (
         status,
         requestScore,
         rootFormslyRequestId,
+        recruiter,
       },
     })
     .select()

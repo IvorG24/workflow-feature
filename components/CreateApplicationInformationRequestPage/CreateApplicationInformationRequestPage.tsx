@@ -242,6 +242,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           process.env.NODE_ENV === "production" ? "SCIC" : "Sta Clara"
         ),
         requestScore,
+        recruiter: router.query.recruiter as string | undefined,
       });
 
       const adOwnerId = router.query["ad-owner"] as string;

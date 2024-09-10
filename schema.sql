@@ -1367,7 +1367,8 @@ AS $$
       teamId,
       status,
       requestScore,
-      rootFormslyRequestId
+      rootFormslyRequestId,
+      recruiter
     } = input_data;
 
     let formslyIdPrefix = '';
@@ -1533,6 +1534,10 @@ AS $$
         )[0].signer_id;
 
         plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ('${selectedSigner}', '${requestId}')`);
+
+        if (recruiter) {
+          plv8.execute(`INSERT INTO hr_schema.recruitment_table (recruitment_request_id, recruitment_team_member_id) VALUES ('${requestId}', '${recruiter}')`);
+        }
       } else {
         plv8.execute(`INSERT INTO request_schema.request_signer_table (request_signer_signer_id,request_signer_request_id) VALUES ${signerValues}`);
       }
