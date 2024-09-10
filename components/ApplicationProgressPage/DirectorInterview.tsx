@@ -92,6 +92,7 @@ const DirectorInterview = ({ directorInterviewData: initialData }: Props) => {
             status={directorInterviewData.director_interview_status}
             isRefetchingData={isFetching}
             setStatus={setStatus}
+            setIsFetching={setIsFetching}
             setIsLoading={setIsLoading}
           />
         )}

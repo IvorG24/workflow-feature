@@ -14571,20 +14571,23 @@ AS $$
       `
     ).map(signer => `'${signer.signer_id}'`);
 
-    const approverOptionList = plv8.execute(
-      `
-        SELECT
-          signer_id,
-          user_first_name,
-          user_last_name
-        FROM form_schema.signer_table
-        INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
-        INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-        WHERE
-          signer_id IN (${signerIdList})
-      `
-    );
-
+    const approverOptionList = [];
+    if (signerIdList.length) {
+      approverOptionList = plv8.execute(
+        `
+          SELECT
+            signer_id,
+            user_first_name,
+            user_last_name
+          FROM form_schema.signer_table
+          INNER JOIN team_schema.team_member_table ON team_member_id = signer_team_member_id
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          WHERE
+            signer_id IN (${signerIdList})
+        `
+      );
+    }
+    
     returnData = {
       sectionList: sectionList.map(section => {
         const fieldData = plv8.execute(
@@ -15406,11 +15409,56 @@ AS $$
     } else if (positionData.position_is_with_director_interview && currentStep <= 3) {
       plv8.execute(`INSERT INTO hr_schema.director_interview_table (director_interview_request_id) VALUES ('${requestId}')`);
     } else if (positionData.position_is_with_background_check && currentStep <= 4) {
-      plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id) VALUES ('${requestId}')`);
+      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_month('{ "table": "background_check" }')`)[0].get_hr_with_lowest_load_within_a_month;
+      plv8.execute(`INSERT INTO hr_schema.background_check_table (background_check_request_id, background_check_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     } else {
-      plv8.execute(`INSERT INTO hr_schema.job_offer_table (job_offer_request_id) VALUES ('${requestId}')`);
+      const hrTeamMemberId = plv8.execute(`SELECT public.get_hr_with_lowest_load_within_a_month('{ "table": "job_offer" }')`)[0].get_hr_with_lowest_load_within_a_month;
+      plv8.execute(`INSERT INTO hr_schema.job_offer_table (job_offer_request_id, job_offer_team_member_id) VALUES ('${requestId}', '${hrTeamMemberId}')`);
     }
   });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_hr_with_lowest_load_within_a_month(
+  input_data JSON
+)
+RETURNS TEXT
+SET search_path TO ''
+AS $$
+  let returnData = "";
+  plv8.subtransaction(function(){
+    const {
+      table
+    } = input_data;
+
+    const hrTeamMemberIdList = plv8.execute(
+      `
+        SELECT team_member_id
+        FROM team_schema.team_group_member_table
+        WHERE
+          team_group_id = 'a691a6ca-8209-4b7a-8f48-8a4582bbe75a'
+      `
+    ).map(teamMember => `('${teamMember.team_member_id}' :: UUID)`).join(", ");
+
+    if (!hrTeamMemberIdList.length) return;
+
+    const teamMemberData = plv8.execute(
+      `
+        WITH team_member_id_list (team_member_id) AS (
+          VALUES ${hrTeamMemberIdList}
+        )
+        SELECT team_member_id_list.team_member_id, COALESCE(COUNT(${table}_team_member_id), 0) AS count
+        FROM team_member_id_list
+        LEFT JOIN hr_schema.${table}_table ON ${table}_team_member_id = team_member_id_list.team_member_id
+        GROUP BY team_member_id_list.team_member_id
+        ORDER BY count
+        LIMIT 1
+      `
+    );
+
+    if (!teamMemberData.length) return;
+    returnData = teamMemberData[0].team_member_id
+  });
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION update_hr_phone_interview_status(

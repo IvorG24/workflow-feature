@@ -62,7 +62,10 @@ type Props = {
   hrOptionList: OptionType[];
 };
 
-const DirectorInterviewSpreadsheetView = ({ positionOptionList, hrOptionList }: Props) => {
+const DirectorInterviewSpreadsheetView = ({
+  positionOptionList,
+  hrOptionList,
+}: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
