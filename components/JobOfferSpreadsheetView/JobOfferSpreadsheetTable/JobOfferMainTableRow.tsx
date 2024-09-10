@@ -3,7 +3,7 @@ import { createAttachment } from "@/backend/api/post";
 import { addJobOffer, updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import {
   formatDate,
   formatTime,
@@ -82,6 +82,7 @@ const JobOfferMainTableRow = ({
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
   const team = useActiveTeam();
+  const user = useUserProfile();
   const teamMember = useUserTeamMember();
   const { setIsLoading } = useLoadingActions();
 
@@ -96,6 +97,7 @@ const JobOfferMainTableRow = ({
   const [isScheduling, setIsScheduling] = useState(false);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [history, setHistory] = useState<JobOfferHistoryType[]>([]);
+  const [isOverriding, setIsOverriding] = useState(false);
 
   const {
     handleSubmit,
@@ -147,7 +149,9 @@ const JobOfferMainTableRow = ({
     projectAssignment: string;
   }) => {
     try {
-      if (!teamMember?.team_member_id || !data.attachment) throw new Error();
+      if (!teamMember?.team_member_id || !data.attachment || !user)
+        throw new Error();
+
       setIsScheduling(true);
 
       const { data: attachmentData, url } = await createAttachment(
@@ -184,6 +188,8 @@ const JobOfferMainTableRow = ({
             job_offer_status: "PENDING",
             job_offer_attachment_id: attachmentData.attachment_id,
             job_offer_project_assignment: data.projectAssignment,
+            assigned_hr: `${user.user_first_name} ${user.user_last_name}`,
+            assigned_hr_team_member_id: teamMember.team_member_id,
           };
         })
       );
@@ -220,13 +226,15 @@ const JobOfferMainTableRow = ({
 
   const handleUpdateJobOffer = async () => {
     try {
+      if (!teamMember || !user) throw new Error();
+
       setIsLoading(true);
       await updateJobOfferStatus(supabaseClient, {
         status: "FOR POOLING",
         requestReferenceId: item.hr_request_reference_id,
         title: "",
         attachmentId: "",
-        teamMemberId: teamMember?.team_member_id as string,
+        teamMemberId: teamMember.team_member_id,
         projectAssignment: "",
       });
 
@@ -237,6 +245,8 @@ const JobOfferMainTableRow = ({
           return {
             ...prevItem,
             job_offer_status: "FOR POOLING",
+            assigned_hr: `${user.user_first_name} ${user.user_last_name}`,
+            assigned_hr_team_member_id: teamMember.team_member_id,
           };
         })
       );
@@ -269,6 +279,15 @@ const JobOfferMainTableRow = ({
       confirmProps: { color: "yellow" },
       onConfirm: async () => handleUpdateJobOffer(),
     });
+
+  const isForPooling = !["ACCEPTED", "PENDING", "FOR POOLING"].includes(
+    item.job_offer_status
+  );
+  const isForAddOffer = [
+    "WAITING FOR OFFER",
+    "REJECTED",
+    "FOR POOLING",
+  ].includes(item.job_offer_status);
 
   if (!team.team_name) return null;
   return (
@@ -629,22 +648,46 @@ const JobOfferMainTableRow = ({
         </td>
       )}
       <td>
-        <Stack spacing="xs">
-          {!["ACCEPTED", "PENDING", "FOR POOLING"].includes(
-            item.job_offer_status
-          ) && (
-            <Button color="yellow" w={130} onClick={poolingModal}>
-              For Pooling
-            </Button>
+        {teamMember?.team_member_id !== item.assigned_hr_team_member_id &&
+          !isOverriding && (
+            <Stack spacing="xs">
+              {(isForPooling || isForAddOffer) && (
+                <Button
+                  w={140}
+                  onClick={() =>
+                    modals.openConfirmModal({
+                      title: "Confirm Override",
+                      centered: true,
+                      children: (
+                        <Text size="sm">
+                          Are you sure you want to override this application?
+                        </Text>
+                      ),
+                      labels: { confirm: "Confirm", cancel: "Cancel" },
+                      onConfirm: () => setIsOverriding(true),
+                    })
+                  }
+                >
+                  Override
+                </Button>
+              )}
+            </Stack>
           )}
-          {["WAITING FOR OFFER", "REJECTED", "FOR POOLING"].includes(
-            item.job_offer_status
-          ) && (
-            <Button color="green" w={130} onClick={openJobOfferModal}>
-              Add Offer
-            </Button>
-          )}
-        </Stack>
+        {(teamMember?.team_member_id === item.assigned_hr_team_member_id ||
+          isOverriding) && (
+          <Stack spacing="xs">
+            {isForPooling && (
+              <Button color="yellow" w={140} onClick={poolingModal}>
+                For Pooling
+              </Button>
+            )}
+            {isForAddOffer && (
+              <Button color="green" w={140} onClick={openJobOfferModal}>
+                Add Offer
+              </Button>
+            )}
+          </Stack>
+        )}
       </td>
     </tr>
   );

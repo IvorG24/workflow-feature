@@ -1,6 +1,6 @@
 import { getHRPhoneInterviewSummaryData } from "@/backend/api/get";
 import { updateHRPhoneInterviewStatus } from "@/backend/api/update";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
   HRPhoneInterviewFilterFormValues,
@@ -10,7 +10,7 @@ import {
 import { Box, Button, Group, Stack, Title } from "@mantine/core";
 import { useLocalStorage } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconReload } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useBeforeunload } from "react-beforeunload";
@@ -65,7 +65,7 @@ const HRPhoneInterviewSpreadsheetView = ({
   positionOptionList,
   hrOptionList,
 }: Props) => {
-  const user = useUser();
+  const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const teamMember = useUserTeamMember();
   const [data, setData] = useState<HRPhoneInterviewSpreadsheetData[]>([]);
@@ -94,7 +94,7 @@ const HRPhoneInterviewSpreadsheetView = ({
       const newData = await getHRPhoneInterviewSummaryData(supabaseClient, {
         ...filterData,
         ...data,
-        userId: user.id,
+        userId: user.user_id,
         limit: DEFAULT_NUMBER_SSOT_ROWS,
         page: data?.page ?? page,
         sort: data?.sort ?? sort,
@@ -176,7 +176,7 @@ const HRPhoneInterviewSpreadsheetView = ({
       }
     };
     fetchInitialData();
-  }, [user?.id]);
+  }, [user?.user_id]);
 
   const handleUpdateHRPhoneInterviewStatus = async (
     status: string,
@@ -184,7 +184,7 @@ const HRPhoneInterviewSpreadsheetView = ({
   ) => {
     setIsLoading(true);
     try {
-      if (!teamMember?.team_member_id) throw new Error();
+      if (!teamMember?.team_member_id || !user) throw new Error();
 
       await updateHRPhoneInterviewStatus(supabaseClient, {
         status,
@@ -199,6 +199,8 @@ const HRPhoneInterviewSpreadsheetView = ({
           return {
             ...prevData,
             hr_phone_interview_status: status,
+            assigned_hr: `${user.user_first_name} ${user.user_last_name}`,
+            assigned_hr_team_member_id: teamMember.team_member_id,
           };
         })
       );

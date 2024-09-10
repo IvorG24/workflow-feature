@@ -2293,6 +2293,7 @@ export type HRSpreadsheetGeneralData = {
   application_information_contact_number: string;
   application_information_email: string;
   assigned_hr: string;
+  assigned_hr_team_member_id: string;
 };
 
 export type HRSpreadsheetGeneralFilterFormValues = {

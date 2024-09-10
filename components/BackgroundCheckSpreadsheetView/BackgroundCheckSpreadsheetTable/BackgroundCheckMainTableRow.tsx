@@ -1,4 +1,5 @@
 import { useActiveTeam } from "@/stores/useTeamStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { formatDate } from "@/utils/constant";
 import { safeParse } from "@/utils/functions";
 import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
@@ -33,6 +34,7 @@ const BackgroundCheckMainTableRow = ({
 }: Props) => {
   const { classes } = useStyles();
   const team = useActiveTeam();
+  const teamMember = useUserTeamMember();
 
   const statusColor: Record<string, string> = {
     QUALIFIED: "green",
@@ -153,24 +155,25 @@ const BackgroundCheckMainTableRow = ({
         </td>
       )}
       <td>
-        {item.background_check_status === "PENDING" && (
-          <Flex align="center" justify="center" gap="xs" wrap="wrap">
-            <Button
-              color="green"
-              w={130}
-              onClick={() => openModal("QUALIFIED")}
-            >
-              Qualified
-            </Button>
-            <Button
-              color="red"
-              w={130}
-              onClick={() => openModal("NOT QUALIFIED")}
-            >
-              Not Qualified
-            </Button>
-          </Flex>
-        )}
+        {teamMember?.team_member_id === item.assigned_hr_team_member_id &&
+          item.background_check_status === "PENDING" && (
+            <Flex align="center" justify="center" gap="xs" wrap="wrap">
+              <Button
+                color="green"
+                w={140}
+                onClick={() => openModal("QUALIFIED")}
+              >
+                Qualified
+              </Button>
+              <Button
+                color="red"
+                w={140}
+                onClick={() => openModal("NOT QUALIFIED")}
+              >
+                Not Qualified
+              </Button>
+            </Flex>
+          )}
       </td>
     </tr>
   );

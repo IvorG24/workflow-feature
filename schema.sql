@@ -14571,7 +14571,7 @@ AS $$
       `
     ).map(signer => `'${signer.signer_id}'`);
 
-    const approverOptionList = [];
+    let approverOptionList = [];
     if (signerIdList.length) {
       approverOptionList = plv8.execute(
         `
@@ -15304,7 +15304,7 @@ AS $$
           hr_phone_interview_date_created,
           hr_phone_interview_status,
           hr_phone_interview_schedule,
-          hr_phone_interview_team_member_id,
+          hr_phone_interview_team_member_id AS assigned_hr_team_member_id,
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
@@ -15630,7 +15630,7 @@ AS $$
           trade_test_date_created,
           trade_test_status,
           trade_test_schedule,
-          trade_test_team_member_id,
+          trade_test_team_member_id AS assigned_hr_team_member_id,
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
@@ -16213,7 +16213,7 @@ AS $$
           technical_interview_date_created,
           technical_interview_status,
           technical_interview_schedule,
-          technical_interview_team_member_id,
+          technical_interview_team_member_id AS assigned_hr_team_member_id,
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
@@ -16515,7 +16515,7 @@ AS $$
           director_interview_date_created,
           director_interview_status,
           director_interview_schedule,
-          director_interview_team_member_id,
+          director_interview_team_member_id AS assigned_hr_team_member_id,
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
@@ -16687,7 +16687,7 @@ AS $$
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
           background_check_date_created,
           background_check_status,
-          background_check_team_member_id,
+          background_check_team_member_id AS assigned_hr_team_member_id,
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
@@ -17030,7 +17030,7 @@ AS $$
           job_offer_status,
           job_offer_attachment_id,
           job_offer_project_assignment,
-          job_offer_team_member_id,
+          job_offer_team_member_id AS assigned_hr_team_member_id,
           CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
         FROM hr_schema.request_connection_table
         INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
