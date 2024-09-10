@@ -1,3 +1,4 @@
+import { createStyles } from "@mantine/core";
 import {
   documentExtensions,
   imageExtensions,
@@ -258,3 +259,34 @@ export const tinNumberFormatter = (value: string | undefined) => {
     return "Invalid TIN number";
   }
 };
+
+export const useStyles = createStyles((theme) => ({
+    parentTable: {
+      "&& th": {
+        color: "white",
+        fontSize: 14,
+        fontWeight: 900,
+        backgroundColor: theme.colors.blue[5],
+        transition: "background-color 0.3s ease",
+        padding: "10px",
+        "& svg": {
+          fill: "white",
+          color: "white",
+        },
+        "&:hover": {
+          backgroundColor: "#0042ab !important",
+          color: "white !important",
+          "& svg": {
+            fill: "white",
+            color: "white",
+          },
+        },
+      },
+      "&& td": {
+        borderBottom: "1px solid #CDD1D6",
+        minWidth: 150,
+        width: "100%",
+        padding: "10px",
+      },
+    },
+  }));

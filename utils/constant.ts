@@ -57,6 +57,15 @@ export const MEETING_TYPE_DETAILS: Record<MeetingType, MeetingDetails> = {
     duration: 30,
   },
 };
+
+export const unsortableFieldList = [
+  "Name",
+  "Contact Number",
+  "Email",
+  "Assigned HR",
+  "Action",
+];
+
 export const READ_ONLY_TICKET_CATEGORY_LIST = [
   "Incident Report for Employees",
   "Bug Report",
