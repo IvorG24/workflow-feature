@@ -92,6 +92,7 @@ const HRPhoneInterview = ({ hrPhoneInterviewData: initialData }: Props) => {
             status={hrPhoneInterviewData.hr_phone_interview_status}
             setIsLoading={setIsLoading}
             setStatus={setStatus}
+            setIsFetching={setIsFetching}
             isRefetchingData={isFetching}
           />
         )}

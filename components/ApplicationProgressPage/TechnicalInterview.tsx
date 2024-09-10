@@ -99,6 +99,7 @@ const TechnicalInterview = ({
             intialDate={technicalInterviewData.technical_interview_schedule}
             status={status}
             setStatus={setStatus}
+            setIsFetching={setIsFetching}
             setIsLoading={setIsLoading}
             isRefetchingData={isFetching}
           />
