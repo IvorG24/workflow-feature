@@ -126,7 +126,7 @@ const HRPhoneInterviewSpreadsheetTable = ({
       } else {
         return {
           sortBy,
-          order: "DESC", // Default to DESC if switching to a new field
+          order: "DESC",
         };
       }
     });
@@ -154,7 +154,7 @@ const HRPhoneInterviewSpreadsheetTable = ({
           key={index}
           onClick={
             !unsortableFieldList.includes(field.field_name)
-              ? () => handleSortClick(field.field_id) // Pass only field_id to handleSortClick
+              ? () => handleSortClick(field.field_id)
               : undefined
           }
           style={{

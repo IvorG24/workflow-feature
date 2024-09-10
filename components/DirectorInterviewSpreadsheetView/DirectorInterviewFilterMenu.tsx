@@ -52,7 +52,10 @@ const DirectorInterviewFilterMenu = ({
         scrollAreaComponent={ScrollArea.Autosize}
       >
         <form
-          onSubmit={handleSubmit((data) => fetchData({ ...data, page: 1 }))}
+          onSubmit={handleSubmit((data) => {
+            fetchData({ ...data, page: 1 });
+            closeFilterMenu();
+          })}
         >
           <Stack spacing="xs" sx={{ overflow: "hidden" }}>
             <Controller
