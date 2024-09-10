@@ -1,10 +1,11 @@
+import { unsortableFieldList } from "@/utils/constant";
+import { useStyles } from "@/utils/styling";
 import { BackgroundCheckSpreadsheetData } from "@/utils/types";
 import {
-  ActionIcon,
   Button,
   Center,
-  createStyles,
   Flex,
+  Group,
   LoadingOverlay,
   Paper,
   ScrollArea,
@@ -14,19 +15,56 @@ import {
 } from "@mantine/core";
 import {
   IconArrowDown,
-  IconArrowsSort,
+  IconArrowsVertical,
   IconArrowUp,
   IconChevronDown,
 } from "@tabler/icons-react";
-
 import { Dispatch, SetStateAction } from "react";
 import BackgroundCheckMainTableRow from "./BackgroundCheckMainTableRow";
 
-const useStyles = createStyles((theme) => ({
-  parentTable: {
-    backgroundColor: theme.colors.blue[3],
+const columnList = [
+  { field_id: "request_response", field_name: "Position" },
+  { field_id: "application_information_full_name", field_name: "Name" },
+  {
+    field_id: "application_information_contact_number",
+    field_name: "Contact Number",
   },
-}));
+  { field_id: "application_information_email", field_name: "Email" },
+  {
+    field_id: "application_information_request_id",
+    field_name: "Application Information Request ID",
+  },
+  {
+    field_id: "application_information_score",
+    field_name: "Application Information Score",
+  },
+  {
+    field_id: "general_assessment_request_id",
+    field_name: "General Assessment Request ID",
+  },
+  {
+    field_id: "general_assessment_score",
+    field_name: "General Assessment Score",
+  },
+  {
+    field_id: "technical_assessment_request_id",
+    field_name: "Technical Assessment Request ID",
+  },
+  {
+    field_id: "technical_assessment_score",
+    field_name: "Technical Assessment Score",
+  },
+  {
+    field_id: "background_check_date_created",
+    field_name: "Background Check Date Created",
+  },
+  {
+    field_id: "background_check_status",
+    field_name: "Background Check Status",
+  },
+  { field_id: "assigned_hr", field_name: "Assigned HR" },
+  { field_id: "action", field_name: "Action" },
+];
 
 type Props = {
   data: BackgroundCheckSpreadsheetData[];
@@ -76,24 +114,42 @@ const BackgroundCheckSpreadsheetTable = ({
 
   const sortButtons = (sortBy: string) => {
     return (
-      <ActionIcon
-        onClick={() => {
-          handleSortClick(sortBy);
-        }}
-        color={sort.sortBy !== sortBy ? "dark" : "blue"}
-        variant={sort.sortBy !== sortBy ? "subtle" : "light"}
-      >
-        {sort.sortBy !== sortBy && <IconArrowsSort size={14} />}
+      <Group>
+        {sort.sortBy !== sortBy && <IconArrowsVertical size={14} />}
         {sort.sortBy === sortBy && sort.order === "ASC" && (
           <IconArrowUp size={14} />
         )}
         {sort.sortBy === sortBy && sort.order === "DESC" && (
           <IconArrowDown size={14} />
         )}
-      </ActionIcon>
+      </Group>
     );
   };
-
+  const renderBackgroundCheckFieldList = () => {
+    return columnList
+      .filter((field) => !hiddenColumnList.includes(field.field_name))
+      .map((field, index) => (
+        <th
+          key={index}
+          onClick={
+            !unsortableFieldList.includes(field.field_name)
+              ? () => handleSortClick(field.field_id)
+              : undefined
+          }
+          style={{
+            cursor: !unsortableFieldList.includes(field.field_name)
+              ? "pointer"
+              : "default",
+          }}
+        >
+          <Flex gap="xs" align="center" justify="space-between">
+            <Text>{field.field_name}</Text>
+            {!unsortableFieldList.includes(field.field_name) &&
+              sortButtons(field.field_id)}
+          </Flex>
+        </th>
+      ));
+  };
   return (
     <Stack>
       <Paper p="xs" pos="relative">
@@ -105,135 +161,7 @@ const BackgroundCheckSpreadsheetTable = ({
           />
           <Table withBorder withColumnBorders className={classes.parentTable}>
             <thead>
-              <tr>
-                {!hiddenColumnList.includes("position") && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Position</Text>
-                      {sortButtons("request_response")}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes(
-                  "application_information_full_name"
-                ) && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Name</Text>
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes(
-                  "application_information_contact_number"
-                ) && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Contact Number</Text>
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes(
-                  "application_information_email"
-                ) && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Email</Text>
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes(
-                  "application_information_request_id"
-                ) && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Application Information Request ID</Text>
-                      {sortButtons("applicationInformation.request_formsly_id")}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes(
-                  "application_information_score"
-                ) && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Application Information Score</Text>
-                      {sortButtons(
-                        "applicationInformationScore.request_score_value"
-                      )}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes(
-                  "general_assessment_request_id"
-                ) && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>General Assessment Request ID</Text>
-                      {sortButtons("generalAssessment.request_formsly_id")}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes("general_assessment_score") && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>General Assessment Score</Text>
-                      {sortButtons(
-                        "generalAssessmentScore.request_score_value"
-                      )}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes(
-                  "technical_assessment_request_id"
-                ) && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Technical Assessment Request ID</Text>
-                      {sortButtons("technicalAssessment.request_formsly_id")}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes("technical_assessment_score") && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Technical Assessment Score</Text>
-                      {sortButtons(
-                        "technicalAssessmentScore.request_score_value"
-                      )}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes(
-                  "background_check_date_created"
-                ) && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Background Check Date Created</Text>
-                      {sortButtons("background_check_date_created")}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes("background_check_status") && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Background Check Status</Text>
-                      {sortButtons("background_check_status")}
-                    </Flex>
-                  </th>
-                )}
-                {!hiddenColumnList.includes("assigned_hr") && (
-                  <th>
-                    <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                      <Text>Assigned HR</Text>
-                    </Flex>
-                  </th>
-                )}
-                <th>
-                  <Flex gap="xs" align="center" justify="center" wrap="wrap">
-                    <Text>Action</Text>
-                  </Flex>
-                </th>
-              </tr>
+              <tr>{renderBackgroundCheckFieldList()}</tr>
             </thead>
             <tbody>
               {data.map((item) => (
