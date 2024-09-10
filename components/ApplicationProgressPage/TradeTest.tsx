@@ -84,6 +84,7 @@ const TradeTest = ({ tradeTestData: initialData }: Props) => {
             setIsLoading={setIsLoading}
             status={status}
             setStatus={setStatus}
+            setIsFetching={setIsFetching}
             isRefetchingData={isFetching}
           />
         )}

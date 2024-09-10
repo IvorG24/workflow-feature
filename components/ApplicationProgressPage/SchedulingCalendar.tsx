@@ -55,11 +55,12 @@ type SchedulingType = {
   refetchData: () => Promise<void>;
   status: string;
   isRefetchingData: boolean;
+  dateCreated: string;
+  isReadyToSelect: boolean;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  dateCreated: string;
+  setIsFetching: React.Dispatch<React.SetStateAction<boolean>>;
   setIsReadyToSelect: React.Dispatch<React.SetStateAction<boolean>>;
-  isReadyToSelect: boolean;
 };
 
 type HrSlotType = {
@@ -69,6 +70,7 @@ type HrSlotType = {
 };
 
 const SchedulingCalendar = ({
+  setIsFetching,
   setIsReadyToSelect,
   isReadyToSelect,
   meetingType,
@@ -208,7 +210,7 @@ const SchedulingCalendar = ({
       };
 
       try {
-        setIsLoading(true);
+        setIsFetching(true);
         const data = await getPhoneMeetingSlots(supabaseClient, params);
         const newDate = await getCurrentDate(supabaseClient);
         setCurrentDate(newDate);
@@ -219,7 +221,7 @@ const SchedulingCalendar = ({
           color: "orange",
         });
       } finally {
-        setIsLoading(false);
+        setIsFetching(false);
       }
     }
   };
