@@ -4134,7 +4134,9 @@ export const getItemUnitOfMeasurement = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("get_item_unit_of_measurement", { input_data: params })
+    .rpc("get_item_unit_of_measurement", {
+      input_data: escapeQuotesForObject(params),
+    })
     .select("*");
   if (error) throw error;
 
