@@ -143,7 +143,7 @@ const SchedulingCalendar = ({
 
       await cancelInterview(supabaseClient, {
         targetId,
-        status: "CANCELLED",
+        status: APPLICATION_STATUS_CANCELLED,
         table: meetingType,
         meetingTypeNumber,
       });
