@@ -31,6 +31,8 @@ UPDATE storage.buckets SET public = true;
 
 CREATE EXTENSION IF NOT EXISTS plv8;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" with schema extensions;
+CREATE EXTENSION IF NOT EXISTS pg_net;
+CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 ----- END: EXTENSIONS
 
@@ -17422,6 +17424,58 @@ plv8.subtransaction(function(){
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION handle_missed_schedule()
+RETURNS VOID
+SET search_path TO ''
+AS $$
+plv8.subtransaction(function(){
+  plv8.execute(
+    `
+      UPDATE hr_schema.hr_phone_interview_table 
+      SET 
+        hr_phone_interview_status = 'MISSED',
+        hr_phone_interview_status_date_updated = NOW()
+      WHERE 
+        hr_phone_interview_status = 'PENDING'
+        AND hr_phone_interview_schedule <= NOW()
+    `
+  );
+  plv8.execute(
+    `
+      UPDATE hr_schema.trade_test_table 
+      SET 
+        trade_test_status = 'MISSED',
+        trade_test_status_date_updated = NOW()
+      WHERE 
+        trade_test_status = 'PENDING'
+        AND trade_test_schedule <= NOW()
+    `
+  );
+  plv8.execute(
+    `
+      UPDATE hr_schema.technical_interview_table 
+      SET 
+        technical_interview_status = 'MISSED',
+        technical_interview_status_date_updated = NOW()
+      WHERE 
+        technical_interview_status = 'PENDING'
+        AND technical_interview_schedule <= NOW()
+    `
+  );
+  plv8.execute(
+    `
+      UPDATE hr_schema.director_interview_table 
+      SET 
+        director_interview_status = 'MISSED',
+        director_interview_status_date_updated = NOW()
+      WHERE 
+        director_interview_status = 'PENDING'
+        AND director_interview_schedule <= NOW()
+    `
+  );
+});
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
@@ -20838,6 +20892,24 @@ AS PERMISSIVE FOR INSERT
 WITH CHECK (true);
 
 ----- END: POLICIES
+
+----- START: SCHEDULED FUNCTIONS
+
+SELECT
+  cron.schedule(
+    'invoke-function-every-day',
+    '59 23 * * *', 
+    $$
+    SELECT
+      net.http_post(
+        url:='https://zlerahmorhbuqtryccxt.supabase.co/functions/v1/handle-missed-schedule',
+        headers:='{"Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpsZXJhaG1vcmhidXF0cnljY3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTcwOTQyMjEsImV4cCI6MjAxMjY3MDIyMX0.kUtimbpMLQnLfzohwcPX4rKRTKeSx2hIt03nAhdD5wc"}'::jsonb,
+        body:=concat('{"time": "', NOW(), '"}')::jsonb
+      ) AS request_id;
+    $$
+  );
+
+----- END: SCHEDULED FUNCTIONS
 
 ----- START: INDEXES
 
