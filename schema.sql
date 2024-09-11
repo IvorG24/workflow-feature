@@ -14708,29 +14708,31 @@ $$ LANGUAGE plv8;
 CREATE OR REPLACE FUNCTION create_ad_owner_request(
   input_data JSON
 )
-RETURNS VOID AS $$
+RETURNS VOID 
+SET search_path TO ''
+AS $$
 plv8.subtransaction(function(){
-    const {
-        ad_owner_request_owner_id,
-        ad_owner_request_request_id
-    } = input_data;
+  const {
+    ad_owner_request_owner_id,
+    ad_owner_request_request_id
+  } = input_data;
 
-    const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
-    
-    const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
-    const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
-    const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
+  const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
+  
+  const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
+  const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
+  const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
 
-    if (!is_valid_owner) {
-        const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
-        if (!scic) return;
-        insert_data.ad_owner_request_owner_id = scic.ad_owner_id;
-    }
+  if (!is_valid_owner) {
+    const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
+    if (!scic) return;
+    insert_data.ad_owner_request_owner_id = scic.ad_owner_id;
+  }
 
-    plv8.execute(`
-        INSERT INTO lookup_schema.ad_owner_request_table (ad_owner_request_owner_id, ad_owner_request_request_id)
-        VALUES ($1, $2)
-    `, [insert_data.ad_owner_request_owner_id, insert_data.ad_owner_request_request_id]);
+  plv8.execute(`
+    INSERT INTO lookup_schema.ad_owner_request_table (ad_owner_request_owner_id, ad_owner_request_request_id)
+    VALUES ($1, $2)
+  `, [insert_data.ad_owner_request_owner_id, insert_data.ad_owner_request_request_id]);
 });
 $$ LANGUAGE plv8;
 
@@ -18142,6 +18144,30 @@ USING (
       AND team_member_team_id = team_transaction_team_id
   )
 );
+
+--- lookup_schema.position_table
+ALTER TABLE lookup_schema.position_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.position_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.position_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- lookup_schema.ad_owner_table
+ALTER TABLE lookup_schema.ad_owner_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.ad_owner_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.ad_owner_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- lookup_schema.ad_owner_request_table
+ALTER TABLE lookup_schema.ad_owner_request_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_table;
+CREATE POLICY "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
 
 ----- END: POLICIES
 
