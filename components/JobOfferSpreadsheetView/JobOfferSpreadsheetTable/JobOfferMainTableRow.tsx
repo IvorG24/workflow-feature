@@ -447,6 +447,17 @@ const JobOfferMainTableRow = ({
                         )}`}
                       </Text>
                       <Stack spacing="xs" mt="md">
+                        {value.job_offer_title && (
+                          <Group>
+                            <Text size={14}>Job Offer By: </Text>
+                            <Title order={6}>
+                              {
+                                value.job_offer_team_member
+                                  .team_member_full_name
+                              }
+                            </Title>
+                          </Group>
+                        )}
                         {value.job_offer_attachment && (
                           <Group>
                             <Text size={14}>Job Offer: </Text>

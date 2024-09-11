@@ -17278,9 +17278,27 @@ AS $$
         attachmentData = plv8.execute(`SELECT * FROM public.attachment_table WHERE attachment_id = '${jobOffer.job_offer_attachment_id}'`);
       }
 
+      const teamMemberData = plv8.execute(
+        `
+          SELECT
+            team_member_id,
+            user_first_name,
+            user_last_name
+          FROM team_schema.team_member_table
+          INNER JOIN user_schema.user_table ON user_id = team_member_user_id
+          WHERE
+            team_member_id = '${jobOffer.job_offer_team_member_id}'
+          LIMIT 1
+        `
+      )[0];
+
       return {
         ...jobOffer,
-        job_offer_attachment: attachmentData.length ? attachmentData[0] : null
+        job_offer_attachment: attachmentData.length ? attachmentData[0] : null,
+        job_offer_team_member: {
+          team_member_id: teamMemberData.team_member_id,
+          team_member_full_name: `${teamMemberData.user_first_name} ${teamMemberData.user_last_name}`
+        }
       }
     });
   });

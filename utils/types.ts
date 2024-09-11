@@ -2429,6 +2429,10 @@ export type JobOfferFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
 export type JobOfferHistoryType = JobOfferTableRow & {
   job_offer_attachment: AttachmentTableRow | null;
   job_offer_reason_for_rejection: string | null;
+  job_offer_team_member: {
+    team_member_id: string;
+    team_member_full_name: string;
+  }
 };
 export type MeetingDetails = {
   breakDuration: number;
