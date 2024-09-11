@@ -14150,11 +14150,11 @@ AS $$
     const numberRangeCondition = (property, fieldId) => {
       let returnData = "";
       if (responseFilter[property]["start"] && responseFilter[property]["end"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND (CAST(request_response AS integer) >= ${responseFilter[property]["start"]} AND CAST(request_response AS integer) <= ${responseFilter[property]["end"]}))`;
+        returnData = `(request_response_field_id = '${fieldId}' AND (CAST(request_response AS NUMERIC) >= ${responseFilter[property]["start"]} AND CAST(request_response AS NUMERIC) <= ${responseFilter[property]["end"]}))`;
       } else if (responseFilter[property]["start"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS integer) >= ${responseFilter[property]["start"]})`;
+        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS NUMERIC) >= ${responseFilter[property]["start"]})`;
       } else if (responseFilter[property]["end"]){
-        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS integer) <= ${responseFilter[property]["end"]})`;
+        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS NUMERIC) <= ${responseFilter[property]["end"]})`;
       }
       return returnData;
     }
@@ -14226,7 +14226,7 @@ AS $$
 
     const castRequestResponse = (value) => {
       switch(sort.dataType) {
-        case "NUMBER": return `CAST(${value} AS INTEGER)`;
+        case "NUMBER": return `CAST(${value} AS NUMERIC)`;
         case "DATE": return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
         default: return value;
       }
