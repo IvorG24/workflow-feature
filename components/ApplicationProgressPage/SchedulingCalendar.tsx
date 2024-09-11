@@ -18,7 +18,7 @@ import {
   formatDate,
   MEETING_TYPE_DETAILS,
 } from "@/utils/constant";
-import { formatTimeToLocal } from "@/utils/functions";
+import { formatTimeToLocal, JoyRideNoSSR } from "@/utils/functions";
 import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
@@ -33,6 +33,7 @@ import {
   Select,
   Stack,
   Text,
+  useMantineTheme,
 } from "@mantine/core";
 import { DatePickerInput } from "@mantine/dates";
 import { modals } from "@mantine/modals";
@@ -91,6 +92,7 @@ const SchedulingCalendar = ({
     interview_meeting_url: "https://mock-url.com/meeting",
   };
 
+  const { colors } = useMantineTheme();
   const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
@@ -683,6 +685,26 @@ const SchedulingCalendar = ({
 
   return (
     <>
+      <JoyRideNoSSR
+        steps={[
+          {
+            target: ".set-schedule",
+            content: (
+              <Text>
+                You can now set a schedule. To continue, simply click the
+                &ldquo;Set Schedule&ldquo; button.
+              </Text>
+            ),
+            disableBeacon: true,
+          },
+        ]}
+        run={true}
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        hideBackButton
+        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+      />
       <Flex direction="column" gap={10} mb={20}>
         {intialDate && (
           <Stack>
@@ -749,6 +771,7 @@ const SchedulingCalendar = ({
                   setSelectedDate(null);
                 }}
                 disabled={!Boolean(!isReadyToSelect)}
+                className="set-schedule"
               >
                 Set Schedule
               </Button>
