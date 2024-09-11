@@ -14294,11 +14294,11 @@ AS $$
     const numberRangeCondition = (property, fieldId) => {
       let returnData = "";
       if (responseFilter[property]["start"] && responseFilter[property]["end"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND (CAST(request_response AS integer) >= ${responseFilter[property]["start"]} AND CAST(request_response AS integer) <= ${responseFilter[property]["end"]}))`;
+        returnData = `(request_response_field_id = '${fieldId}' AND (CAST(request_response AS NUMERIC) >= ${responseFilter[property]["start"]} AND CAST(request_response AS NUMERIC) <= ${responseFilter[property]["end"]}))`;
       } else if (responseFilter[property]["start"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS integer) >= ${responseFilter[property]["start"]})`;
+        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS NUMERIC) >= ${responseFilter[property]["start"]})`;
       } else if (responseFilter[property]["end"]){
-        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS integer) <= ${responseFilter[property]["end"]})`;
+        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS NUMERIC) <= ${responseFilter[property]["end"]})`;
       }
       return returnData;
     }
@@ -14375,7 +14375,7 @@ AS $$
 
     const castRequestResponse = (value) => {
       switch(sort.dataType) {
-        case "NUMBER": return `CAST(${value} AS INTEGER)`;
+        case "NUMBER": return `CAST(${value} AS NUMERIC)`;
         case "DATE": return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
         default: return value;
       }
@@ -17350,11 +17350,11 @@ plv8.subtransaction(function(){
     ad_owner_request_request_id
   } = input_data;
 
-    const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
-
-    const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
-    const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
-    const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
+  const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
+  
+  const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
+  const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
+  const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
 
   if (!is_valid_owner) {
     const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
@@ -20812,6 +20812,30 @@ USING (
       AND team_member_team_id = team_transaction_team_id
   )
 );
+
+--- lookup_schema.position_table
+ALTER TABLE lookup_schema.position_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.position_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.position_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- lookup_schema.ad_owner_table
+ALTER TABLE lookup_schema.ad_owner_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.ad_owner_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.ad_owner_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- lookup_schema.ad_owner_request_table
+ALTER TABLE lookup_schema.ad_owner_request_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_table;
+CREATE POLICY "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
 
 ----- END: POLICIES
 
