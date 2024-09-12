@@ -113,6 +113,7 @@ type Props = {
     status: string,
     data: TradeTestSpreadsheetData
   ) => void;
+  handleCheckRow: (item: TradeTestSpreadsheetData) => Promise<boolean>;
 };
 
 const TradeTestSpreadsheetTable = ({
@@ -125,6 +126,7 @@ const TradeTestSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   handleUpdateTradeTestStatus,
+  handleCheckRow,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -202,6 +204,7 @@ const TradeTestSpreadsheetTable = ({
                   item={item}
                   hiddenColumnList={hiddenColumnList}
                   handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
+                  handleCheckRow={handleCheckRow}
                 />
               ))}
             </tbody>

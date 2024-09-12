@@ -2323,6 +2323,7 @@ export type HRSpreadsheetGeneralFilterFormValues = {
 };
 
 export type HRPhoneInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  hr_phone_interview_id: string;
   hr_phone_interview_date_created: string;
   hr_phone_interview_status: string;
   hr_phone_interview_schedule: string;
@@ -2342,6 +2343,7 @@ export type HRPhoneInterviewFilterFormValues =
   };
 
 export type TradeTestSpreadsheetData = HRSpreadsheetGeneralData & {
+  trade_test_id: string;
   trade_test_date_created: string;
   trade_test_status: string;
   trade_test_schedule: string;
@@ -2360,6 +2362,7 @@ export type TradeTestFilterFormValues = HRSpreadsheetGeneralFilterFormValues & {
 };
 
 export type TechnicalInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  technical_interview_id: string;
   technical_interview_date_created: string;
   technical_interview_status: string;
   technical_interview_schedule: string;
@@ -2379,6 +2382,7 @@ export type TechnicalInterviewFilterFormValues =
   };
 
 export type DirectorInterviewSpreadsheetData = HRSpreadsheetGeneralData & {
+  director_interview_id: string;
   director_interview_date_created: string;
   director_interview_status: string;
   director_interview_schedule: string;
@@ -2398,6 +2402,7 @@ export type DirectorInterviewFilterFormValues =
   };
 
 export type BackgroundCheckSpreadsheetData = HRSpreadsheetGeneralData & {
+  background_check_id: string;
   background_check_date_created: string;
   background_check_status: string;
 };
@@ -2412,6 +2417,7 @@ export type BackgroundCheckFilterFormValues =
   };
 
 export type JobOfferSpreadsheetData = HRSpreadsheetGeneralData & {
+  job_offer_id: string;
   job_offer_date_created: string;
   job_offer_status: string;
   job_offer_project_assignment: string;

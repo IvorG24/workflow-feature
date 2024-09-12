@@ -1,4 +1,7 @@
-import { getTechnicalInterviewSummaryData } from "@/backend/api/get";
+import {
+  checkSpreadsheetRowStatus,
+  getTechnicalInterviewSummaryData,
+} from "@/backend/api/get";
 import { updateTechnicalInterviewStatus } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
@@ -188,6 +191,9 @@ const TechnicalInterviewSpreadsheetView = ({
     status: string,
     data: TechnicalInterviewSpreadsheetData
   ) => {
+    const isStatusMatched = await handleCheckRow(data);
+    if (!isStatusMatched) return;
+
     setIsLoading(true);
     try {
       if (!teamMember?.team_member_id || !user) throw new Error();
@@ -220,6 +226,40 @@ const TechnicalInterviewSpreadsheetView = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckRow = async (item: TechnicalInterviewSpreadsheetData) => {
+    try {
+      setIsLoading(true);
+      const fetchedRow = await checkSpreadsheetRowStatus(supabaseClient, {
+        id: item.technical_interview_id,
+        status: item.technical_interview_status,
+        table: "technical_interview",
+      });
+      if (fetchedRow) {
+        setData((prev) =>
+          prev.map((thisItem) => {
+            if (thisItem.technical_interview_id !== item.technical_interview_id)
+              return thisItem;
+            return fetchedRow as unknown as TechnicalInterviewSpreadsheetData;
+          })
+        );
+        notifications.show({
+          message: "This row is already updated.",
+          color: "orange",
+        });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -265,6 +305,7 @@ const TechnicalInterviewSpreadsheetView = ({
         handleUpdateTechnicalInterviewStatus={
           handleUpdateTechnicalInterviewStatus
         }
+        handleCheckRow={handleCheckRow}
       />
     </Stack>
   );

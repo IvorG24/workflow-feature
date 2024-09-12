@@ -1,4 +1,7 @@
-import { getDirectorInterviewSummaryData } from "@/backend/api/get";
+import {
+  checkSpreadsheetRowStatus,
+  getDirectorInterviewSummaryData,
+} from "@/backend/api/get";
 import { updateDirectorInterviewStatus } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
@@ -185,6 +188,9 @@ const DirectorInterviewSpreadsheetView = ({
     status: string,
     data: DirectorInterviewSpreadsheetData
   ) => {
+    const isStatusMatched = await handleCheckRow(data);
+    if (!isStatusMatched) return;
+
     setIsLoading(true);
     try {
       if (!teamMember?.team_member_id || !user) throw new Error();
@@ -216,6 +222,40 @@ const DirectorInterviewSpreadsheetView = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckRow = async (item: DirectorInterviewSpreadsheetData) => {
+    try {
+      setIsLoading(true);
+      const fetchedRow = await checkSpreadsheetRowStatus(supabaseClient, {
+        id: item.director_interview_id,
+        status: item.director_interview_status,
+        table: "director_interview",
+      });
+      if (fetchedRow) {
+        setData((prev) =>
+          prev.map((thisItem) => {
+            if (thisItem.director_interview_id !== item.director_interview_id)
+              return thisItem;
+            return fetchedRow as unknown as DirectorInterviewSpreadsheetData;
+          })
+        );
+        notifications.show({
+          message: "This row is already updated.",
+          color: "orange",
+        });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -261,6 +301,7 @@ const DirectorInterviewSpreadsheetView = ({
         handleUpdateDirectorInterviewStatus={
           handleUpdateDirectorInterviewStatus
         }
+        handleCheckRow={handleCheckRow}
       />
     </Stack>
   );

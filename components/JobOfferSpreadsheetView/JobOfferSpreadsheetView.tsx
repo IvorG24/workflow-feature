@@ -1,4 +1,4 @@
-import { getJobOfferSummaryData } from "@/backend/api/get";
+import { checkJobOfferRow, getJobOfferSummaryData } from "@/backend/api/get";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
 import {
   JobOfferFilterFormValues,
@@ -59,7 +59,10 @@ type Props = {
   hrOptionList: OptionType[];
 };
 
-const JobOfferSpreadsheetView = ({ positionOptionList, hrOptionList }: Props) => {
+const JobOfferSpreadsheetView = ({
+  positionOptionList,
+  hrOptionList,
+}: Props) => {
   const user = useUser();
   const supabaseClient = useSupabaseClient();
 
@@ -169,6 +172,40 @@ const JobOfferSpreadsheetView = ({ positionOptionList, hrOptionList }: Props) =>
     fetchInitialData();
   }, [user?.id]);
 
+  const handleCheckRow = async (item: JobOfferSpreadsheetData) => {
+    try {
+      setIsLoading(true);
+      const fetchedRow = await checkJobOfferRow(supabaseClient, {
+        id: item.job_offer_id,
+        status: item.job_offer_status,
+        requestId: item.hr_request_reference_id,
+      });
+
+      if (fetchedRow) {
+        setData((prev) =>
+          prev.map((thisItem) => {
+            if (thisItem.job_offer_id !== item.job_offer_id) return thisItem;
+            return fetchedRow as unknown as JobOfferSpreadsheetData;
+          })
+        );
+        notifications.show({
+          message: "This row is already updated.",
+          color: "orange",
+        });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Stack pos="relative">
       <Box>
@@ -208,6 +245,7 @@ const JobOfferSpreadsheetView = ({ positionOptionList, hrOptionList }: Props) =>
         hiddenColumnList={hiddenColumnList}
         setData={setData}
         positionOptionList={positionOptionList}
+        handleCheckRow={handleCheckRow}
       />
     </Stack>
   );

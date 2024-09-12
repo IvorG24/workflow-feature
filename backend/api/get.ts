@@ -6467,3 +6467,25 @@ export const getHRSpreadsheetViewOnLoad = async (
 
   return data;
 };
+
+export const checkSpreadsheetRowStatus = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { table: string, status: string, id: string }
+) => {
+  const { data, error } = await supabaseClient
+  .rpc("check_spreadsheet_row_status", { input_data: params })
+  .select("*");
+if (error) throw error;
+  return data
+};
+
+export const checkJobOfferRow = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: { id: string, status: string, requestId: string }
+) => {
+  const { data, error } = await supabaseClient
+  .rpc("check_job_offer_row", { input_data: params })
+  .select("*");
+if (error) throw error;
+  return data
+};

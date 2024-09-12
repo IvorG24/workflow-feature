@@ -15303,6 +15303,7 @@ AS $$
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          hr_phone_interview_id,
           hr_phone_interview_date_created,
           hr_phone_interview_status,
           hr_phone_interview_schedule,
@@ -15629,6 +15630,7 @@ AS $$
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          trade_test_id,
           trade_test_date_created,
           trade_test_status,
           trade_test_schedule,
@@ -16212,6 +16214,7 @@ AS $$
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          technical_interview_id,
           technical_interview_date_created,
           technical_interview_status,
           technical_interview_schedule,
@@ -16514,6 +16517,7 @@ AS $$
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          director_interview_id,
           director_interview_date_created,
           director_interview_status,
           director_interview_schedule,
@@ -16687,6 +16691,7 @@ AS $$
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          background_check_id,
           background_check_date_created,
           background_check_status,
           background_check_team_member_id AS assigned_hr_team_member_id,
@@ -17028,6 +17033,7 @@ AS $$
           generalAssessmentScore.request_score_value AS general_assessment_score,
           technicalAssessment.request_formsly_id AS technical_assessment_request_id,
           technicalAssessmentScore.request_score_value AS technical_assessment_score,
+          job_offer_id,
           job_offer_date_created,
           job_offer_status,
           job_offer_attachment_id,
@@ -17492,6 +17498,209 @@ plv8.subtransaction(function(){
     `
   );
 });
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION check_spreadsheet_row_status(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {};
+plv8.subtransaction(function(){
+  const {
+    table,
+    status,
+    id
+  } = input_data;
+
+  const request = plv8.execute(
+    `
+      SELECT
+        request_response AS position,
+        applicationInformation.request_id AS hr_request_reference_id,
+        applicationInformation.request_formsly_id AS application_information_request_id,
+        applicationInformationScore.request_score_value AS application_information_score,
+        generalAssessment.request_formsly_id AS general_assessment_request_id,
+        generalAssessmentScore.request_score_value AS general_assessment_score,
+        technicalAssessment.request_formsly_id AS technical_assessment_request_id,
+        technicalAssessmentScore.request_score_value AS technical_assessment_score,
+        ${table}_id,
+        ${table}_date_created,
+        ${table}_status,
+        ${table}_schedule,
+        ${table}_team_member_id AS assigned_hr_team_member_id,
+        CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+      FROM hr_schema.request_connection_table
+      INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+      INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+      INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
+        AND request_response_field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
+      INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+      INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
+      INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+      INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
+      INNER JOIN hr_schema.${table}_table ON ${table}_request_id = applicationInformation.request_id
+      LEFT JOIN team_schema.team_member_table ON team_member_id = ${table}_team_member_id
+      LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        ${table}_id = '${id}'
+      LIMIT 1
+    `
+  )[0];
+
+  if (request[`${table}_status`] === status) {
+    returnData = null;
+    return;
+  }
+
+  const additionalData = plv8.execute(
+    `
+      SELECT
+        request_response,
+        request_response_field_id
+      FROM request_schema.request_response_table
+      WHERE
+        request_response_request_id = '${request.hr_request_reference_id}'
+        AND request_response_field_id IN ('7201c77e-b24a-4006-a4e5-8f38db887804', '859ac939-10c8-4094-aa7a-634f84b950b0', '0080798c-2359-4162-b8ae-441ac80512b6', '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 'ee6ec8af-0a9e-40a5-8353-7d851218fa87')
+    `
+  );
+
+  let firstName = middleName = lastName = contactNumber = email = "";
+  additionalData.forEach(response => {
+    const parsedResponse = response.request_response.replaceAll('"', "");
+    switch(response.request_response_field_id) {
+      case "7201c77e-b24a-4006-a4e5-8f38db887804": firstName = parsedResponse; break;
+      case "859ac939-10c8-4094-aa7a-634f84b950b0": middleName = parsedResponse; break;
+      case "0080798c-2359-4162-b8ae-441ac80512b6": lastName = parsedResponse; break;
+      case "5b43279b-88d6-41ce-ac69-b396e5a7a48f": contactNumber = parsedResponse; break;
+      case "ee6ec8af-0a9e-40a5-8353-7d851218fa87": email = parsedResponse; break;
+    }
+  });
+
+  returnData =  {
+    ...request,
+    application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
+    application_information_contact_number: contactNumber,
+    application_information_email: email
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION check_job_offer_row(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {};
+plv8.subtransaction(function(){
+  const {
+    id,
+    status,
+    requestId
+  } = input_data;
+
+  const jobOfferData = plv8.execute(
+    `
+      SELECT *
+      FROM hr_schema.job_offer_table
+      WHERE
+        job_offer_request_id = '${requestId}'
+      ORDER BY job_offer_date_created DESC
+      LIMIT 1
+    `
+  )[0];
+
+  if(jobOfferData.job_offer_id === id && jobOfferData.job_offer_status === status) {
+    returnData = null;
+    return;
+  }
+
+  const request = plv8.execute(
+    `
+      SELECT
+        request_response AS position,
+        applicationInformation.request_id AS hr_request_reference_id,
+        applicationInformation.request_formsly_id AS application_information_request_id,
+        applicationInformationScore.request_score_value AS application_information_score,
+        generalAssessment.request_formsly_id AS general_assessment_request_id,
+        generalAssessmentScore.request_score_value AS general_assessment_score,
+        technicalAssessment.request_formsly_id AS technical_assessment_request_id,
+        technicalAssessmentScore.request_score_value AS technical_assessment_score,
+        job_offer_id,
+        job_offer_date_created,
+        job_offer_status,
+        job_offer_attachment_id,
+        job_offer_project_assignment,
+        job_offer_team_member_id AS assigned_hr_team_member_id,
+        CONCAT(user_first_name, ' ', user_last_name) AS assigned_hr
+      FROM hr_schema.request_connection_table
+      INNER JOIN public.request_view AS applicationInformation ON applicationInformation.request_id = request_connection_application_information_request_id
+      INNER JOIN request_schema.request_score_table AS applicationInformationScore ON applicationInformationScore.request_score_request_id = request_connection_application_information_request_id
+      INNER JOIN request_schema.request_response_table ON request_response_request_id = applicationInformation.request_id
+        AND request_response_field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
+      INNER JOIN public.request_view AS generalAssessment ON generalAssessment.request_id = request_connection_general_assessment_request_id
+      INNER JOIN request_schema.request_score_table AS generalAssessmentScore ON generalAssessmentScore.request_score_request_id = generalAssessment.request_id
+      INNER JOIN public.request_view AS technicalAssessment ON technicalAssessment.request_id = request_connection_technical_assessment_request_id
+      INNER JOIN request_schema.request_score_table AS technicalAssessmentScore ON technicalAssessmentScore.request_score_request_id = technicalAssessment.request_id
+      INNER JOIN hr_schema.job_offer_table ON job_offer_request_id = request_connection_application_information_request_id
+      LEFT JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
+      LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        request_connection_application_information_request_id = '${requestId}'
+        AND job_offer_id = '${jobOfferData.job_offer_id}'
+      LIMIT 1
+    `
+  )[0];
+
+  const additionalData = plv8.execute(
+    `
+      SELECT
+        request_response,
+        request_response_field_id
+      FROM request_schema.request_response_table
+      WHERE
+        request_response_request_id = '${request.hr_request_reference_id}'
+        AND request_response_field_id IN ('7201c77e-b24a-4006-a4e5-8f38db887804', '859ac939-10c8-4094-aa7a-634f84b950b0', '0080798c-2359-4162-b8ae-441ac80512b6', '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 'ee6ec8af-0a9e-40a5-8353-7d851218fa87')
+    `
+  );
+
+  let attachmentData = [];
+  if (request.job_offer_attachment_id) {
+    attachmentData = plv8.execute(
+      `
+        SELECT *
+        FROM public.attachment_table
+        WHERE
+          attachment_id = '${request.job_offer_attachment_id}'
+        LIMIT 1
+      `
+    );
+  }
+
+  let firstName = middleName = lastName = contactNumber = email = "";
+  additionalData.forEach(response => {
+    const parsedResponse = response.request_response.replaceAll('"', "");
+    switch(response.request_response_field_id) {
+      case "7201c77e-b24a-4006-a4e5-8f38db887804": firstName = parsedResponse; break;
+      case "859ac939-10c8-4094-aa7a-634f84b950b0": middleName = parsedResponse; break;
+      case "0080798c-2359-4162-b8ae-441ac80512b6": lastName = parsedResponse; break;
+      case "5b43279b-88d6-41ce-ac69-b396e5a7a48f": contactNumber = parsedResponse; break;
+      case "ee6ec8af-0a9e-40a5-8353-7d851218fa87": email = parsedResponse; break;
+    }
+  });
+
+  returnData = {
+    ...request,
+    application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
+    application_information_contact_number: contactNumber,
+    application_information_email: email,
+    job_offer_attachment: attachmentData.length ? attachmentData[0] : null
+  }
+});
+return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS

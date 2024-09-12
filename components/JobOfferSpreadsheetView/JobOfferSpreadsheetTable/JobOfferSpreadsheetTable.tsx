@@ -86,6 +86,7 @@ type Props = {
   hiddenColumnList: string[];
   setData: Dispatch<SetStateAction<JobOfferSpreadsheetData[]>>;
   positionOptionList: OptionType[];
+  handleCheckRow: (item: JobOfferSpreadsheetData) => Promise<boolean>;
 };
 
 const JobOfferSpreadsheetTable = ({
@@ -99,6 +100,7 @@ const JobOfferSpreadsheetTable = ({
   hiddenColumnList,
   setData,
   positionOptionList,
+  handleCheckRow
 }: Props) => {
   const { classes } = useStyles();
 
@@ -178,6 +180,7 @@ const JobOfferSpreadsheetTable = ({
                   hiddenColumnList={hiddenColumnList}
                   setData={setData}
                   positionOptionList={positionOptionList}
+                  handleCheckRow={handleCheckRow}
                 />
               ))}
             </tbody>

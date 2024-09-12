@@ -24,12 +24,14 @@ type Props = {
     status: string,
     data: TradeTestSpreadsheetData
   ) => void;
+  handleCheckRow: (item: TradeTestSpreadsheetData) => Promise<boolean>;
 };
 
 const TradeTestMainTableRow = ({
   item,
   hiddenColumnList,
   handleUpdateTradeTestStatus,
+  handleCheckRow,
 }: Props) => {
   const { classes } = useStyles();
   const team = useActiveTeam();
@@ -187,7 +189,12 @@ const TradeTestMainTableRow = ({
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
-                  onConfirm: () => setIsOverriding(true),
+                  onConfirm: async () => {
+                    const result = await handleCheckRow(item);
+                    if (result) {
+                      setIsOverriding(true);
+                    }
+                  },
                 })
               }
             >

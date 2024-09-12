@@ -120,6 +120,7 @@ type Props = {
     status: string,
     data: DirectorInterviewSpreadsheetData
   ) => void;
+  handleCheckRow: (item: DirectorInterviewSpreadsheetData) => Promise<boolean>;
 };
 
 const DirectorInterviewSpreadsheetTable = ({
@@ -132,6 +133,7 @@ const DirectorInterviewSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   handleUpdateDirectorInterviewStatus,
+  handleCheckRow,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -211,6 +213,7 @@ const DirectorInterviewSpreadsheetTable = ({
                   handleUpdateDirectorInterviewStatus={
                     handleUpdateDirectorInterviewStatus
                   }
+                  handleCheckRow={handleCheckRow}
                 />
               ))}
             </tbody>

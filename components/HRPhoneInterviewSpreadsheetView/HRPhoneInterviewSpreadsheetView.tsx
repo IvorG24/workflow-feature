@@ -1,4 +1,7 @@
-import { getHRPhoneInterviewSummaryData } from "@/backend/api/get";
+import {
+  checkSpreadsheetRowStatus,
+  getHRPhoneInterviewSummaryData,
+} from "@/backend/api/get";
 import { updateHRPhoneInterviewStatus } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
@@ -182,6 +185,9 @@ const HRPhoneInterviewSpreadsheetView = ({
     status: string,
     data: HRPhoneInterviewSpreadsheetData
   ) => {
+    const isStatusMatched = await handleCheckRow(data);
+    if (!isStatusMatched) return;
+
     setIsLoading(true);
     try {
       if (!teamMember?.team_member_id || !user) throw new Error();
@@ -213,6 +219,40 @@ const HRPhoneInterviewSpreadsheetView = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckRow = async (item: HRPhoneInterviewSpreadsheetData) => {
+    try {
+      setIsLoading(true);
+      const fetchedRow = await checkSpreadsheetRowStatus(supabaseClient, {
+        id: item.hr_phone_interview_id,
+        status: item.hr_phone_interview_status,
+        table: "hr_phone_interview",
+      });
+      if (fetchedRow) {
+        setData((prev) =>
+          prev.map((thisItem) => {
+            if (thisItem.hr_phone_interview_id !== item.hr_phone_interview_id)
+              return thisItem;
+            return fetchedRow as unknown as HRPhoneInterviewSpreadsheetData;
+          })
+        );
+        notifications.show({
+          message: "This row is already updated.",
+          color: "orange",
+        });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -256,6 +296,7 @@ const HRPhoneInterviewSpreadsheetView = ({
         isMax={isMax}
         hiddenColumnList={hiddenColumnList}
         handleUpdateHRPhoneInterviewStatus={handleUpdateHRPhoneInterviewStatus}
+        handleCheckRow={handleCheckRow}
       />
     </Stack>
   );

@@ -71,6 +71,7 @@ type Props = {
   hiddenColumnList: string[];
   setData: Dispatch<SetStateAction<JobOfferSpreadsheetData[]>>;
   positionOptionList: OptionType[];
+  handleCheckRow: (item: JobOfferSpreadsheetData) => Promise<boolean>;
 };
 
 const JobOfferMainTableRow = ({
@@ -78,6 +79,7 @@ const JobOfferMainTableRow = ({
   hiddenColumnList,
   setData,
   positionOptionList,
+  handleCheckRow,
 }: Props) => {
   const { classes } = useStyles();
   const supabaseClient = createPagesBrowserClient<Database>();
@@ -148,6 +150,9 @@ const JobOfferMainTableRow = ({
     attachment: File | null;
     projectAssignment: string;
   }) => {
+    const isJobOfferMatched = await handleCheckRow(item);
+    if (!isJobOfferMatched) return;
+
     try {
       if (!teamMember?.team_member_id || !data.attachment || !user)
         throw new Error();
@@ -225,6 +230,9 @@ const JobOfferMainTableRow = ({
   };
 
   const handleUpdateJobOffer = async () => {
+    const isJobOfferMatched = await handleCheckRow(item);
+    if (!isJobOfferMatched) return;
+
     try {
       if (!teamMember || !user) throw new Error();
 
@@ -675,7 +683,12 @@ const JobOfferMainTableRow = ({
                         </Text>
                       ),
                       labels: { confirm: "Confirm", cancel: "Cancel" },
-                      onConfirm: () => setIsOverriding(true),
+                      onConfirm: async () => {
+                        const result = await handleCheckRow(item);
+                        if (result) {
+                          setIsOverriding(true);
+                        }
+                      },
                     })
                   }
                 >

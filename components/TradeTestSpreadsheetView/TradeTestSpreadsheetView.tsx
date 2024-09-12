@@ -1,4 +1,7 @@
-import { getTradeTestSummaryData } from "@/backend/api/get";
+import {
+  checkSpreadsheetRowStatus,
+  getTradeTestSummaryData,
+} from "@/backend/api/get";
 import { updateTradeTestStatus } from "@/backend/api/update";
 import { useUserProfile, useUserTeamMember } from "@/stores/useUserStore";
 import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
@@ -179,6 +182,9 @@ const TradeTestSpreadsheetView = ({
     status: string,
     data: TradeTestSpreadsheetData
   ) => {
+    const isStatusMatched = await handleCheckRow(data);
+    if (!isStatusMatched) return;
+
     setIsLoading(true);
     try {
       if (!teamMember?.team_member_id || !user) throw new Error();
@@ -210,6 +216,39 @@ const TradeTestSpreadsheetView = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckRow = async (item: TradeTestSpreadsheetData) => {
+    try {
+      setIsLoading(true);
+      const fetchedRow = await checkSpreadsheetRowStatus(supabaseClient, {
+        id: item.trade_test_id,
+        status: item.trade_test_status,
+        table: "trade_test",
+      });
+      if (fetchedRow) {
+        setData((prev) =>
+          prev.map((thisItem) => {
+            if (thisItem.trade_test_id !== item.trade_test_id) return thisItem;
+            return fetchedRow as unknown as TradeTestSpreadsheetData;
+          })
+        );
+        notifications.show({
+          message: "This row is already updated.",
+          color: "orange",
+        });
+        return false;
+      }
+      return true;
+    } catch (e) {
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -253,6 +292,7 @@ const TradeTestSpreadsheetView = ({
         isMax={isMax}
         hiddenColumnList={hiddenColumnList}
         handleUpdateTradeTestStatus={handleUpdateTradeTestStatus}
+        handleCheckRow={handleCheckRow}
       />
     </Stack>
   );

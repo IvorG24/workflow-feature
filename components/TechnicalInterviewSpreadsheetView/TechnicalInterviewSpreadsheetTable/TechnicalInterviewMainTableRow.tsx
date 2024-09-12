@@ -24,12 +24,14 @@ type Props = {
     status: string,
     data: TechnicalInterviewSpreadsheetData
   ) => void;
+  handleCheckRow: (item: TechnicalInterviewSpreadsheetData) => Promise<boolean>;
 };
 
 const TechnicalInterviewMainTableRow = ({
   item,
   hiddenColumnList,
   handleUpdateTechnicalInterviewStatus,
+  handleCheckRow,
 }: Props) => {
   const { classes } = useStyles();
 
@@ -188,7 +190,12 @@ const TechnicalInterviewMainTableRow = ({
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
-                  onConfirm: () => setIsOverriding(true),
+                  onConfirm: async () => {
+                    const result = await handleCheckRow(item);
+                    if (result) {
+                      setIsOverriding(true);
+                    }
+                  },
                 })
               }
             >

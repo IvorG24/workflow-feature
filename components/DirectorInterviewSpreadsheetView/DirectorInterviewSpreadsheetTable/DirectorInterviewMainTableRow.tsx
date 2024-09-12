@@ -24,12 +24,14 @@ type Props = {
     status: string,
     data: DirectorInterviewSpreadsheetData
   ) => void;
+  handleCheckRow: (item: DirectorInterviewSpreadsheetData) => Promise<boolean>;
 };
 
 const DirectorInterviewMainTableRow = ({
   item,
   hiddenColumnList,
   handleUpdateDirectorInterviewStatus,
+  handleCheckRow,
 }: Props) => {
   const { classes } = useStyles();
   const team = useActiveTeam();
@@ -187,7 +189,12 @@ const DirectorInterviewMainTableRow = ({
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
-                  onConfirm: () => setIsOverriding(true),
+                  onConfirm: async () => {
+                    const result = await handleCheckRow(item);
+                    if (result) {
+                      setIsOverriding(true);
+                    }
+                  },
                 })
               }
             >

@@ -82,6 +82,7 @@ type Props = {
     status: string,
     data: TechnicalInterviewSpreadsheetData
   ) => void;
+  handleCheckRow: (item: TechnicalInterviewSpreadsheetData) => Promise<boolean>;
 };
 
 const TechnicalInterviewSpreadsheetTable = ({
@@ -94,6 +95,7 @@ const TechnicalInterviewSpreadsheetTable = ({
   isMax,
   hiddenColumnList,
   handleUpdateTechnicalInterviewStatus,
+  handleCheckRow
 }: Props) => {
   const { classes } = useStyles();
 
@@ -173,6 +175,7 @@ const TechnicalInterviewSpreadsheetTable = ({
                   handleUpdateTechnicalInterviewStatus={
                     handleUpdateTechnicalInterviewStatus
                   }
+                  handleCheckRow={handleCheckRow}
                 />
               ))}
             </tbody>

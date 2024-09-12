@@ -24,12 +24,14 @@ type Props = {
     status: string,
     data: HRPhoneInterviewSpreadsheetData
   ) => void;
+  handleCheckRow: (item: HRPhoneInterviewSpreadsheetData) => Promise<boolean>;
 };
 
 const HRPhoneInterviewMainTableRow = ({
   item,
   hiddenColumnList,
   handleUpdateHRPhoneInterviewStatus,
+  handleCheckRow,
 }: Props) => {
   const { classes } = useStyles();
   const team = useActiveTeam();
@@ -54,6 +56,7 @@ const HRPhoneInterviewMainTableRow = ({
       confirmProps: { color: statusColor[action] },
       onConfirm: async () => handleUpdateHRPhoneInterviewStatus(action, item),
     });
+
   if (!team.team_name) return null;
 
   return (
@@ -187,7 +190,12 @@ const HRPhoneInterviewMainTableRow = ({
                     </Text>
                   ),
                   labels: { confirm: "Confirm", cancel: "Cancel" },
-                  onConfirm: () => setIsOverriding(true),
+                  onConfirm: async () => {
+                    const result = await handleCheckRow(item);
+                    if (result) {
+                      setIsOverriding(true);
+                    }
+                  },
                 })
               }
             >
