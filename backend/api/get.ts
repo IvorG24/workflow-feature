@@ -6489,3 +6489,18 @@ export const checkJobOfferRow = async (
 if (error) throw error;
   return data
 };
+
+export const getHRIndicatorCount = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamMemberId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_hr_indicator_count",
+    { input_data: params }
+  );
+  if (error) throw error;
+
+  return data;
+};

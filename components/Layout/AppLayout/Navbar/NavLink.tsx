@@ -1,4 +1,7 @@
-import { getApproverRequestCount } from "@/backend/api/get";
+import {
+  getApproverRequestCount,
+  getHRIndicatorCount,
+} from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
@@ -50,12 +53,33 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import NavLinkSection from "./NavLinkSection";
 
+type HRIndicatorCountType = {
+  applicationInformation: number;
+  hrPhoneInterview: number;
+  tradeTest: number;
+  technicalInterview1: number;
+  technicalInterview2: number;
+  directorInterview: number;
+  backgroundCheck: number;
+  jobOffer: number;
+};
+
 const ReviewAppNavLink = () => {
   const defaultIconProps = { size: 20, stroke: 1 };
   const defaultNavLinkProps = { px: 0 };
   const defaultNavLinkContainerProps = { py: 5, mt: 3 };
 
   const [userNotificationCount, setUserNotificationCount] = useState(0);
+  const [hrIndicatorCount, setHrIndicatorCount] = useState({
+    applicationInformation: 0,
+    hrPhoneInterview: 0,
+    tradeTest: 0,
+    technicalInterview1: 0,
+    technicalInterview2: 0,
+    directorInterview: 0,
+    backgroundCheck: 0,
+    jobOffer: 0,
+  });
 
   const supabaseClient = createPagesBrowserClient<Database>();
   const activeTeam = useActiveTeam();
@@ -354,6 +378,8 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/requests/application-information-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.applicationInformation),
+      indicatorLabel: `${hrIndicatorCount.applicationInformation}`,
     },
     {
       label: `HR Phone Interview`,
@@ -363,6 +389,8 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/requests/hr-phone-interview-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.hrPhoneInterview),
+      indicatorLabel: `${hrIndicatorCount.hrPhoneInterview}`,
     },
     {
       label: `Trade Test`,
@@ -372,6 +400,8 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/requests/trade-test-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.tradeTest),
+      indicatorLabel: `${hrIndicatorCount.tradeTest}`,
     },
     {
       label: `Technical Interview 1`,
@@ -381,6 +411,8 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/requests/technical-interview-1-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.technicalInterview1),
+      indicatorLabel: `${hrIndicatorCount.technicalInterview1}`,
     },
     {
       label: `Technical Interview 2`,
@@ -390,6 +422,8 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/requests/technical-interview-2-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.technicalInterview2),
+      indicatorLabel: `${hrIndicatorCount.technicalInterview2}`,
     },
     {
       label: `Director Interview`,
@@ -399,6 +433,8 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/requests/director-interview-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.directorInterview),
+      indicatorLabel: `${hrIndicatorCount.directorInterview}`,
     },
     {
       label: `Background Check`,
@@ -408,6 +444,8 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/requests/background-check-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.backgroundCheck),
+      indicatorLabel: `${hrIndicatorCount.backgroundCheck}`,
     },
     {
       label: `Job Offer`,
@@ -417,6 +455,8 @@ const ReviewAppNavLink = () => {
         </Box>
       ),
       href: `/${activeTeamNameToUrl}/requests/job-offer-spreadsheet-view`,
+      withIndicator: Boolean(hrIndicatorCount.jobOffer),
+      indicatorLabel: `${hrIndicatorCount.jobOffer}`,
     },
   ];
 
@@ -458,11 +498,22 @@ const ReviewAppNavLink = () => {
 
       setUserNotificationCount(pendingRequestCount + unreadNotificationCount);
     };
-    if (
-      userTeamMemberData &&
-      userTeamMemberData.team_member_role === "APPROVER"
-    ) {
-      fetchApproverRequestCount(userTeamMemberData);
+    const fetchHrIndicatorCount = async (
+      userTeamMemberData: TeamMemberTableRow
+    ) => {
+      const count = await getHRIndicatorCount(supabaseClient, {
+        teamMemberId: userTeamMemberData.team_member_id,
+      });
+
+      setHrIndicatorCount(count as HRIndicatorCountType);
+    };
+    if (userTeamMemberData) {
+      if (userTeamMemberData.team_member_role === "APPROVER") {
+        fetchApproverRequestCount(userTeamMemberData);
+      }
+      if (teamMemberGroup.includes("HUMAN RESOURCES")) {
+        fetchHrIndicatorCount(userTeamMemberData);
+      }
     }
   }, [supabaseClient, unreadNotificationCount, userTeamMemberData]);
 

@@ -17741,6 +17741,126 @@ plv8.subtransaction(function(){
 return returnData;
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_hr_indicator_count(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = {};
+plv8.subtransaction(function(){
+  const {
+    teamMemberId
+  } = input_data;
+
+  const applicationInformationCount = plv8.execute(
+    `
+      SELECT COUNT(request_id)
+      FROM request_schema.request_table
+      INNER JOIN request_schema.request_signer_table ON request_signer_request_id = request_id
+      INNER JOIN form_schema.signer_table ON signer_id = request_signer_signer_id
+      WHERE
+        request_form_id = '151cc6d7-94d7-4c54-b5ae-44de9f59d170'
+        AND request_status = 'PENDING'
+        AND signer_team_member_id = '${teamMemberId}'
+    `
+  )[0].count;
+
+  const hrPhoneInterviewCount = plv8.execute(
+    `
+      SELECT COUNT(hr_phone_interview_id)
+      FROM hr_schema.hr_phone_interview_table
+      WHERE
+        hr_phone_interview_status = 'PENDING'
+        AND hr_phone_interview_team_member_id = '${teamMemberId}'
+    `
+  )[0].count;
+
+  const tradeTestCount = plv8.execute(
+    `
+      SELECT COUNT(trade_test_id)
+      FROM hr_schema.trade_test_table
+      WHERE
+        trade_test_status = 'PENDING'
+        AND trade_test_team_member_id = '${teamMemberId}'
+    `
+  )[0].count;
+
+  const technicalInterview1Count = plv8.execute(
+    `
+      SELECT COUNT(technical_interview_id)
+      FROM hr_schema.technical_interview_table
+      WHERE
+        technical_interview_status = 'PENDING'
+        AND technical_interview_team_member_id = '${teamMemberId}'
+        AND technical_interview_number = 1
+    `
+  )[0].count;
+
+  const technicalInterview2Count = plv8.execute(
+    `
+      SELECT COUNT(technical_interview_id)
+      FROM hr_schema.technical_interview_table
+      WHERE
+        technical_interview_status = 'PENDING'
+        AND technical_interview_team_member_id = '${teamMemberId}'
+        AND technical_interview_number = 2
+    `
+  )[0].count;
+
+  const directorInterviewCount = plv8.execute(
+    `
+      SELECT COUNT(director_interview_id)
+      FROM hr_schema.director_interview_table
+      WHERE
+        director_interview_status = 'PENDING'
+        AND director_interview_team_member_id = '${teamMemberId}'
+    `
+  )[0].count;
+
+  const backgroundCheckCount = plv8.execute(
+    `
+      SELECT COUNT(background_check_id)
+      FROM hr_schema.background_check_table
+      WHERE
+        background_check_status = 'PENDING'
+        AND background_check_team_member_id = '${teamMemberId}'
+    `
+  )[0].count;
+
+  const jobOfferCount = plv8.execute(
+    `
+      SELECT COUNT(job_offer_id)
+      FROM hr_schema.request_connection_table
+      INNER JOIN (
+        SELECT
+          JobOffer.*,
+          ROW_NUMBER() OVER (PARTITION BY job_offer_request_id ORDER BY JobOffer.job_offer_date_created DESC) AS RowNumber
+        FROM hr_schema.job_offer_table JobOffer
+      ) JobOffer ON JobOffer.job_offer_request_id = request_connection_application_information_request_id
+      LEFT JOIN team_schema.team_member_table ON team_member_id = job_offer_team_member_id
+      LEFT JOIN user_schema.user_table ON user_id = team_member_user_id
+      WHERE
+        job_offer_team_member_id = '${teamMemberId}'
+        AND JobOffer.RowNumber = 1
+        AND job_offer_status = 'WAITING FOR OFFER'
+    `
+  )[0].count;
+
+  returnData = {
+    applicationInformation: Number(applicationInformationCount),
+    hrPhoneInterview: Number(hrPhoneInterviewCount),
+    tradeTest: Number(tradeTestCount),
+    technicalInterview1: Number(technicalInterview1Count),
+    technicalInterview2: Number(technicalInterview2Count),
+    directorInterview: Number(directorInterviewCount),
+    backgroundCheck: Number(backgroundCheckCount),
+    jobOffer: Number(jobOfferCount)
+  }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES
