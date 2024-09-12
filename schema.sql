@@ -8084,14 +8084,12 @@ SET search_path TO ''
 AS $$
   let memo_data_on_load;
   plv8.subtransaction(function() {
-    const { memo_id, current_user_id } = input_data;
+    const { memo_id, team_id, current_user_id } = input_data;
 
     const currentUser = plv8.execute(`
       SELECT *
       FROM team_schema.team_member_table
-      WHERE team_member_user_id = '${current_user_id}'
-      LIMIT 1
-    `)[0];
+      WHERE team_member_user_id = '${current_user_id}' AND team_member_team_id = '${team_id}'`)[0];
 
     if (currentUser) {
       const hasUserReadMemo = plv8.execute(`
@@ -8255,7 +8253,7 @@ AS $$
       FROM memo_schema.memo_read_receipt_table
       INNER JOIN team_schema.team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      LEFT JOIN user_schema. ON user_id = user_employee_number_user_id
+      LEFT JOIN user_schema.user_employee_number_table ON user_id = user_employee_number_user_id
       WHERE memo_read_receipt_memo_id = '${memo_id}'
     `);
 
