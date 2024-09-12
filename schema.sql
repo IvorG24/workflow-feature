@@ -1498,8 +1498,8 @@ AS $$
     if (!status) {
       if (formId === '151cc6d7-94d7-4c54-b5ae-44de9f59d170') {
         const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
-        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
 
         const teamMemberIdList = plv8.execute(
           `
@@ -1527,8 +1527,11 @@ AS $$
               COUNT(request_signer_id)
             FROM form_schema.signer_table
             LEFT JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
+            INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
             WHERE
               signer_id IN (${signerIdList})
+              AND request_date_created >= '${startOfMonth}'
+              AND request_date_created <= '${endOfMonth}'
             GROUP BY signer_id
             ORDER BY COUNT ASC
             LIMIT 1
@@ -15482,6 +15485,10 @@ AS $$
 
     if (!hrTeamMemberIdList.length) return;
 
+    const currentDate = new Date(plv8.execute(`SELECT public.get_current_date()`)[0].get_current_date);
+    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
+    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
+
     const teamMemberData = plv8.execute(
       `
         WITH team_member_id_list (team_member_id) AS (
@@ -15490,6 +15497,8 @@ AS $$
         SELECT team_member_id_list.team_member_id, COALESCE(COUNT(${table}_team_member_id), 0) AS count
         FROM team_member_id_list
         LEFT JOIN hr_schema.${table}_table ON ${table}_team_member_id = team_member_id_list.team_member_id
+          AND ${table}_date_created >= '${startOfMonth}'
+          AND ${table}_date_created <= '${endOfMonth}' 
         GROUP BY team_member_id_list.team_member_id
         ORDER BY count
         LIMIT 1
