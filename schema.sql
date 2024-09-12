@@ -14810,23 +14810,61 @@ AS $$
             FROM hr_schema.hr_phone_interview_table
             WHERE
               hr_phone_interview_request_id = '${requestId}'
-              AND hr_phone_interview_schedule IS NOT NULL
+              AND hr_phone_interview_schedule IS NULL
           `
         )[0].count;
-        if(!hrPhoneInterviewCount){
+        if(hrPhoneInterviewCount){
           return true;
         }
 
-        const phoneInterviewCount = plv8.execute(
+        const tradeTestCount = plv8.execute(
           `
-            SELECT COUNT(hr_phone_interview_id)
-            FROM hr_schema.hr_phone_interview_table
+            SELECT COUNT(trade_test_id)
+            FROM hr_schema.trade_test_table
             WHERE
-              hr_phone_interview_request_id = '${requestId}'
-              AND hr_phone_interview_schedule IS NOT NULL
+              trade_test_request_id = '${requestId}'
+              AND trade_test_schedule IS NULL
           `
         )[0].count;
-        if(!phoneInterviewCount){
+        if(tradeTestCount){
+          return true;
+        }
+
+        const technicalInterviewCount = plv8.execute(
+          `
+            SELECT COUNT(technical_interview_id)
+            FROM hr_schema.technical_interview_table
+            WHERE
+              technical_interview_request_id = '${requestId}'
+              AND technical_interview_schedule IS NULL
+          `
+        )[0].count;
+        if(technicalInterviewCount){
+          return true;
+        }
+        const directorInterviewCount = plv8.execute(
+          `
+            SELECT COUNT(director_interview_id)
+            FROM hr_schema.director_interview_table
+            WHERE
+              director_interview_request_id = '${requestId}'
+              AND director_interview_schedule IS NULL
+          `
+        )[0].count;
+        if(directorInterviewCount){
+          return true;
+        }
+        const jobOfferData = plv8.execute(
+          `
+            SELECT job_offer_id, job_offer_status
+            FROM hr_schema.job_offer_table
+            WHERE
+              job_offer_request_id = '${requestId}'
+            ORDER BY job_offer_date_created DESC
+            LIMIT 1
+          `
+        );
+        if(jobOfferData.length && jobOfferData[0].job_offer_status === 'PENDING'){
           return true;
         }
       }
