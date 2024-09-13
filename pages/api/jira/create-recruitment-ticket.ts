@@ -1,3 +1,4 @@
+import { formatStringToNumber } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -53,8 +54,8 @@ export default async function handler(
         customfield_11481: {
           value: parsedPositionType,
         },
-        customfield_10442: Number(sssID),
-        customfield_10120: Number(contactNumber),
+        customfield_10442: formatStringToNumber(sssID),
+        customfield_10120: formatStringToNumber(contactNumber),
         customfield_10121: emailAddress,
         customfield_11519: {
           value: candidateSource,
