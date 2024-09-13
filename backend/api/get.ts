@@ -6078,10 +6078,9 @@ export const getPositionType = async (
 export const getAdOwnerList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
-  const { data, error } = await supabaseClient
-    .schema("lookup_schema")
-    .from("ad_owner_table")
-    .select("*");
+  const { data, error } = await supabaseClient.rpc(
+    "get_candidate_referral_source"
+  );
   if (error) throw error;
 
   return data;
