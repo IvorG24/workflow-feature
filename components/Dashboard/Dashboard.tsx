@@ -1,8 +1,11 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
-import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
+import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   Alert,
   Box,
@@ -22,10 +25,11 @@ import { IconAlertCircle, IconCalendarEvent } from "@tabler/icons-react";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import HRAnalytics from "./HRTab/HRAnalytics";
 import Overview from "./OverviewTab/Overview";
 
 // response tab is hidden
-const TABS = ["overview"];
+const TABS = ["overview", "hr analytics"];
 // const SPECIAL_FORMS = [
 //   "Item",
 //   "Receiving Inspecting Report",
@@ -48,6 +52,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
   const formList = useFormList();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
+  const teamMemberGroups = useUserTeamMemberGroupList();
 
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
@@ -119,6 +124,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
       setEndDateFilter(currDate);
     }
   }, [selectedDays]);
+
   const renderTabs = (tab: string) => {
     switch (tab) {
       case "overview":
@@ -142,6 +148,14 @@ const Dashboard = ({ ticketListCount }: Props) => {
             />
           </>
         );
+
+      case "hr analytics":
+        if (teamMemberGroups.includes("HUMAN RESOURCES")) {
+          return <HRAnalytics />;
+        } else {
+          setSelectedTab("overview");
+          return <></>;
+        }
 
       // case "responses":
       //   return selectedForm ? (
@@ -196,7 +210,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
           <SegmentedControl
             value={selectedTab}
             onChange={setSelectedTab}
-            data={TABS.map((tab) => ({ value: tab, label: startCase(tab) }))}
+            data={TABS.map((tab) => ({ value: tab, label: tab.toUpperCase() }))}
           />
           <Group>
             <Select

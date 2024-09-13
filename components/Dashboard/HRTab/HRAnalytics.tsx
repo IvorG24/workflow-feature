@@ -3,15 +3,21 @@ import { Container } from "@mantine/core";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useEffect, useState } from "react";
 
+type CandidateReferralSourceType = {
+  request_response: string;
+  count: number;
+};
+
 const HRAnalytics = () => {
   const supabaseClient = useSupabaseClient();
   const [candidateReferralSourceData, setCandidateReferralSourceData] =
-    useState([]);
+    useState<CandidateReferralSourceType[]>([]);
 
   useEffect(() => {
     const fetchHRAnalyticsData = async () => {
       const data = await getCandidateReferralSource(supabaseClient);
-      console.log(data);
+      if (!data) return;
+      setCandidateReferralSourceData(data as CandidateReferralSourceType[]);
     };
     fetchHRAnalyticsData();
   }, []);

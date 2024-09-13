@@ -14734,6 +14734,24 @@ plv8.subtransaction(function(){
 });
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_candidate_referral_source()
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let data;
+  plv8.subtransaction(function(){
+    const initial_data = plv8.execute(`
+        SELECT request_response, COUNT(DISTINCT request_response) 
+        FROM request_schema.request_response_table 
+        WHERE request_response_field_id = 'f416b6c8-5374-4642-b608-f626269bde1b'
+        GROUP BY request_response
+    `);
+
+    data = initial_data.map((d) => ({count: Number(d.count), ...d}));
+ });
+ return data;
+$$ LANGUAGE plv8;
+
 ----- END: FUNCTIONS
 
 ----- START: POLICIES

@@ -6085,3 +6085,14 @@ export const getAdOwnerList = async (
 
   return data;
 };
+
+export const getCandidateReferralSource = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_candidate_referral_source"
+  );
+  if (error) throw error;
+
+  return data;
+};
