@@ -949,7 +949,6 @@ CREATE TABLE lookup_schema.position_table (
   position_is_disabled BOOLEAN DEFAULT false NOT NULL,
   position_is_available BOOLEAN DEFAULT true NOT NULL,
 
-  position VARCHAR(4000) NOT NULL,
   position_category VARCHAR(4000) NOT NULL,
   position_classification VARCHAR(4000) NOT NULL,
 
