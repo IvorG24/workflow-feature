@@ -114,6 +114,11 @@ const TechnicalQuestionnaireFilter = ({
           placeholder="Questionnaire Name"
           value={questionnaireName}
           onChange={(event) => setQuestionnaireName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              handleConfirm(questionnaireName);
+            }
+          }}
           autoFocus
         />
         <Group mt="md">

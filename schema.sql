@@ -14448,7 +14448,7 @@ AS $$
     JOIN lookup_schema.position_table p
     ON p.position_questionnaire_id  = q.questionnaire_id
     WHERE p.position_alias ='${position_type}' AND qq.questionnaire_question_is_disabled = FALSE
-    ORDER BY RANDOM()
+    ORDER BY field_order ASC
     LIMIT 5;
   `);
 
@@ -14460,7 +14460,7 @@ AS $$
         SELECT *
         FROM form_schema.question_option_table
         WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
-        ORDER BY RANDOM()
+        ORDER BY question_option_order ASC
       `);
 
         const optionFormattedData = optionData.map((option) => ({
