@@ -2,7 +2,7 @@ import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
 import { useUserTeamMember } from "@/stores/useUserStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
-import { formatTeamNameToUrlKey } from "@/utils/string";
+import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   Alert,
   Box,
@@ -25,7 +25,7 @@ import { useEffect, useState } from "react";
 import Overview from "./OverviewTab/Overview";
 
 // response tab is hidden
-const TABS = ["overview", "hr analytics"];
+const TABS = ["overview"];
 // const SPECIAL_FORMS = [
 //   "Item",
 //   "Receiving Inspecting Report",
@@ -119,7 +119,6 @@ const Dashboard = ({ ticketListCount }: Props) => {
       setEndDateFilter(currDate);
     }
   }, [selectedDays]);
-
   const renderTabs = (tab: string) => {
     switch (tab) {
       case "overview":
@@ -197,7 +196,7 @@ const Dashboard = ({ ticketListCount }: Props) => {
           <SegmentedControl
             value={selectedTab}
             onChange={setSelectedTab}
-            data={TABS.map((tab) => ({ value: tab, label: tab.toUpperCase() }))}
+            data={TABS.map((tab) => ({ value: tab, label: startCase(tab) }))}
           />
           <Group>
             <Select
