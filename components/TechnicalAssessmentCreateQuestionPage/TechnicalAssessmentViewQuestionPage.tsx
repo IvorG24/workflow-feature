@@ -371,15 +371,15 @@ const TechnicalAssessmentViewQuestionPage = ({
                       field_is_required: false,
                     }
                   : correspondingResponse
-                    ? {
-                        ...field,
-                        field_id: correspondingResponse.field_id,
-                        field_type: isCorrectAnswer ? "DROPDOWN" : "TEXT",
+                  ? {
+                      ...field,
+                      field_id: correspondingResponse.field_id,
+                      field_type: isCorrectAnswer ? "DROPDOWN" : "TEXT",
 
-                        field_response: correspondingResponse.field_response,
-                        field_is_required: false,
-                      }
-                    : field;
+                      field_response: correspondingResponse.field_response,
+                      field_is_required: false,
+                    }
+                  : field;
               });
 
               return {
@@ -417,7 +417,9 @@ const TechnicalAssessmentViewQuestionPage = ({
           leftIcon={<IconPlus size={16} />}
           onClick={() =>
             router.push(
-              `/${formatTeamNameToUrlKey(team.team_name)}/forms/${formId}/technical-interview-questionnaire?questionnaireId=${questionnaireId}`
+              `/${formatTeamNameToUrlKey(
+                team.team_name
+              )}/forms/${formId}/technical-interview-questionnaire?questionnaireId=${questionnaireId}`
             )
           }
         >
@@ -426,10 +428,11 @@ const TechnicalAssessmentViewQuestionPage = ({
       </Flex>
       <Space h="xl" />
       <RequestFormDetails formDetails={formDetails} />
+
       <Space h="xl" />
       <FormProvider {...requestFormMethods}>
         <form onSubmit={handleSubmit(handleUpdateQuestionnairePosition)}>
-          <Stack spacing="xl">
+          <Stack spacing="xs">
             {formSections.map((section, idx) => {
               const isQuestionSection = section.section_name === "Question";
               const sectionKey =
