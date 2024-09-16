@@ -42,6 +42,7 @@ import {
   FieldTableRow,
   FormTableRow,
   FormType,
+  HRAnalyticsData,
   InitialFormType,
   ItemCategoryType,
   ItemCategoryWithSigner,
@@ -6085,4 +6086,20 @@ export const getAdOwnerList = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getHRApplicantAnalytics = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    startDate?: string;
+    endDate?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_application_information_analytics",
+    { input_data: params }
+  );
+  if (error) throw error;
+
+  return data as HRAnalyticsData;
 };

@@ -76,7 +76,7 @@ export const REPORT_LIST = [
     title: "Incident Report for Employees",
     description: "Track and analyze report for a user.",
     href: "/report/incident-report",
-  },
+  }
 ];
 
 export const UUID_EXP =

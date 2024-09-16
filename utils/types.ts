@@ -2213,3 +2213,14 @@ export type FetchUserRequestListParams = {
   email: string;
   form?: string[];
 };
+
+export type HRAnalyticsResponseType = {
+  request_response: string;
+  count: number;
+};
+
+export type HRAnalyticsData = {
+  candidate_referral_source: HRAnalyticsResponseType[];
+  most_applied_position: HRAnalyticsResponseType[];
+  applicant_age_bracket: HRAnalyticsResponseType[];
+};

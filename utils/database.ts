@@ -7,172 +7,12 @@ export type Json =
   | Json[]
 
 export type Database = {
-  activity_history_schema: {
-    Tables: {
-      activity_entity_table: {
-        Row: {
-          activity_entity_date_created: string
-          activity_entity_id: string
-          activity_entity_name: string
-          activity_entity_type: string
-        }
-        Insert: {
-          activity_entity_date_created?: string
-          activity_entity_id?: string
-          activity_entity_name: string
-          activity_entity_type: string
-        }
-        Update: {
-          activity_entity_date_created?: string
-          activity_entity_id?: string
-          activity_entity_name?: string
-          activity_entity_type?: string
-        }
-        Relationships: []
-      }
-      activity_log_table: {
-        Row: {
-          activity_log_activity_id: string
-          activity_log_field_name: string | null
-          activity_log_id: string
-          activity_log_new_value: string | null
-          activity_log_old_value: string | null
-        }
-        Insert: {
-          activity_log_activity_id: string
-          activity_log_field_name?: string | null
-          activity_log_id?: string
-          activity_log_new_value?: string | null
-          activity_log_old_value?: string | null
-        }
-        Update: {
-          activity_log_activity_id?: string
-          activity_log_field_name?: string | null
-          activity_log_id?: string
-          activity_log_new_value?: string | null
-          activity_log_old_value?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activity_log_table_activity_log_activity_id_fkey"
-            columns: ["activity_log_activity_id"]
-            isOneToOne: false
-            referencedRelation: "activity_log_view"
-            referencedColumns: ["activity_id"]
-          },
-          {
-            foreignKeyName: "activity_log_table_activity_log_activity_id_fkey"
-            columns: ["activity_log_activity_id"]
-            isOneToOne: false
-            referencedRelation: "activity_table"
-            referencedColumns: ["activity_id"]
-          },
-        ]
-      }
-      activity_table: {
-        Row: {
-          activity_created_at: string
-          activity_created_by: string
-          activity_entity_id: string
-          activity_id: string
-          activity_type_id: string
-        }
-        Insert: {
-          activity_created_at?: string
-          activity_created_by: string
-          activity_entity_id: string
-          activity_id?: string
-          activity_type_id: string
-        }
-        Update: {
-          activity_created_at?: string
-          activity_created_by?: string
-          activity_entity_id?: string
-          activity_id?: string
-          activity_type_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activity_table_activity_created_by_fkey"
-            columns: ["activity_created_by"]
-            isOneToOne: false
-            referencedRelation: "activity_log_view"
-            referencedColumns: ["activity_created_by_user_id"]
-          },
-          {
-            foreignKeyName: "activity_table_activity_created_by_fkey"
-            columns: ["activity_created_by"]
-            isOneToOne: false
-            referencedRelation: "user_table"
-            referencedColumns: ["user_id"]
-          },
-          {
-            foreignKeyName: "activity_table_activity_entity_id_fkey"
-            columns: ["activity_entity_id"]
-            isOneToOne: false
-            referencedRelation: "activity_entity_table"
-            referencedColumns: ["activity_entity_id"]
-          },
-          {
-            foreignKeyName: "activity_table_activity_type_id_fkey"
-            columns: ["activity_type_id"]
-            isOneToOne: false
-            referencedRelation: "activity_type_table"
-            referencedColumns: ["activity_type_id"]
-          },
-        ]
-      }
-      activity_type_table: {
-        Row: {
-          activity_type_id: string
-          activity_type_name: string
-        }
-        Insert: {
-          activity_type_id?: string
-          activity_type_name: string
-        }
-        Update: {
-          activity_type_id?: string
-          activity_type_name?: string
-        }
-        Relationships: []
-      }
-    }
-    Views: {
-      activity_log_view: {
-        Row: {
-          activity_created_at: string | null
-          activity_created_by_user_first_name: string | null
-          activity_created_by_user_id: string | null
-          activity_created_by_user_last_name: string | null
-          activity_entity_name: string | null
-          activity_id: string | null
-          activity_log_field_name: string | null
-          activity_log_id: string | null
-          activity_log_new_value: string | null
-          activity_log_old_value: string | null
-          activity_type: string | null
-        }
-        Relationships: []
-      }
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   equipment_schema: {
     Tables: {
       equipment_brand_table: {
         Row: {
           equipment_brand: string
           equipment_brand_date_created: string
-          equipment_brand_encoder_team_member_id: string | null
           equipment_brand_id: string
           equipment_brand_is_available: boolean
           equipment_brand_is_disabled: boolean
@@ -181,7 +21,6 @@ export type Database = {
         Insert: {
           equipment_brand: string
           equipment_brand_date_created?: string
-          equipment_brand_encoder_team_member_id?: string | null
           equipment_brand_id?: string
           equipment_brand_is_available?: boolean
           equipment_brand_is_disabled?: boolean
@@ -190,20 +29,12 @@ export type Database = {
         Update: {
           equipment_brand?: string
           equipment_brand_date_created?: string
-          equipment_brand_encoder_team_member_id?: string | null
           equipment_brand_id?: string
           equipment_brand_is_available?: boolean
           equipment_brand_is_disabled?: boolean
           equipment_brand_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "equipment_brand_table_equipment_brand_encoder_team_member__fkey"
-            columns: ["equipment_brand_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "equipment_brand_table_equipment_brand_team_id_fkey"
             columns: ["equipment_brand_team_id"]
@@ -217,7 +48,6 @@ export type Database = {
         Row: {
           equipment_category: string
           equipment_category_date_created: string
-          equipment_category_encoder_team_member_id: string | null
           equipment_category_id: string
           equipment_category_is_available: boolean
           equipment_category_is_disabled: boolean
@@ -226,7 +56,6 @@ export type Database = {
         Insert: {
           equipment_category: string
           equipment_category_date_created?: string
-          equipment_category_encoder_team_member_id?: string | null
           equipment_category_id?: string
           equipment_category_is_available?: boolean
           equipment_category_is_disabled?: boolean
@@ -235,20 +64,12 @@ export type Database = {
         Update: {
           equipment_category?: string
           equipment_category_date_created?: string
-          equipment_category_encoder_team_member_id?: string | null
           equipment_category_id?: string
           equipment_category_is_available?: boolean
           equipment_category_is_disabled?: boolean
           equipment_category_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "equipment_category_table_equipment_category_encoder_team_m_fkey"
-            columns: ["equipment_category_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "equipment_category_table_equipment_category_team_id_fkey"
             columns: ["equipment_category_team_id"]
@@ -261,7 +82,6 @@ export type Database = {
       equipment_component_category_table: {
         Row: {
           equipment_component_category: string
-          equipment_component_category_encoder_team_member_id: string | null
           equipment_component_category_id: string
           equipment_component_category_is_available: boolean
           equipment_component_category_is_disabled: boolean
@@ -270,7 +90,6 @@ export type Database = {
         }
         Insert: {
           equipment_component_category: string
-          equipment_component_category_encoder_team_member_id?: string | null
           equipment_component_category_id?: string
           equipment_component_category_is_available?: boolean
           equipment_component_category_is_disabled?: boolean
@@ -279,7 +98,6 @@ export type Database = {
         }
         Update: {
           equipment_component_category?: string
-          equipment_component_category_encoder_team_member_id?: string | null
           equipment_component_category_id?: string
           equipment_component_category_is_available?: boolean
           equipment_component_category_is_disabled?: boolean
@@ -289,13 +107,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "equipment_component_category__equipment_component_category_fkey"
-            columns: ["equipment_component_category_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
-          {
-            foreignKeyName: "equipment_component_category_equipment_component_category_fkey1"
             columns: ["equipment_component_category_team_id"]
             isOneToOne: false
             referencedRelation: "team_table"
@@ -308,7 +119,6 @@ export type Database = {
           equipment_description_acquisition_date: number | null
           equipment_description_brand_id: string
           equipment_description_date_created: string
-          equipment_description_encoder_team_member_id: string | null
           equipment_description_equipment_id: string
           equipment_description_id: string
           equipment_description_is_available: boolean
@@ -322,7 +132,6 @@ export type Database = {
           equipment_description_acquisition_date?: number | null
           equipment_description_brand_id: string
           equipment_description_date_created?: string
-          equipment_description_encoder_team_member_id?: string | null
           equipment_description_equipment_id: string
           equipment_description_id?: string
           equipment_description_is_available?: boolean
@@ -336,7 +145,6 @@ export type Database = {
           equipment_description_acquisition_date?: number | null
           equipment_description_brand_id?: string
           equipment_description_date_created?: string
-          equipment_description_encoder_team_member_id?: string | null
           equipment_description_equipment_id?: string
           equipment_description_id?: string
           equipment_description_is_available?: boolean
@@ -353,13 +161,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "equipment_brand_table"
             referencedColumns: ["equipment_brand_id"]
-          },
-          {
-            foreignKeyName: "equipment_description_table_equipment_description_encoder__fkey"
-            columns: ["equipment_description_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
           },
           {
             foreignKeyName: "equipment_description_table_equipment_description_equipmen_fkey"
@@ -381,7 +182,6 @@ export type Database = {
         Row: {
           equipment_general_name: string
           equipment_general_name_date_created: string
-          equipment_general_name_encoder_team_member_id: string | null
           equipment_general_name_id: string
           equipment_general_name_is_available: boolean
           equipment_general_name_is_disabled: boolean
@@ -390,7 +190,6 @@ export type Database = {
         Insert: {
           equipment_general_name: string
           equipment_general_name_date_created?: string
-          equipment_general_name_encoder_team_member_id?: string | null
           equipment_general_name_id?: string
           equipment_general_name_is_available?: boolean
           equipment_general_name_is_disabled?: boolean
@@ -399,20 +198,12 @@ export type Database = {
         Update: {
           equipment_general_name?: string
           equipment_general_name_date_created?: string
-          equipment_general_name_encoder_team_member_id?: string | null
           equipment_general_name_id?: string
           equipment_general_name_is_available?: boolean
           equipment_general_name_is_disabled?: boolean
           equipment_general_name_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "equipment_general_name_table_equipment_general_name_encode_fkey"
-            columns: ["equipment_general_name_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "equipment_general_name_table_equipment_general_name_team_i_fkey"
             columns: ["equipment_general_name_team_id"]
@@ -426,7 +217,6 @@ export type Database = {
         Row: {
           equipment_model: string
           equipment_model_date_created: string
-          equipment_model_encoder_team_member_id: string | null
           equipment_model_id: string
           equipment_model_is_available: boolean
           equipment_model_is_disabled: boolean
@@ -435,7 +225,6 @@ export type Database = {
         Insert: {
           equipment_model: string
           equipment_model_date_created?: string
-          equipment_model_encoder_team_member_id?: string | null
           equipment_model_id?: string
           equipment_model_is_available?: boolean
           equipment_model_is_disabled?: boolean
@@ -444,20 +233,12 @@ export type Database = {
         Update: {
           equipment_model?: string
           equipment_model_date_created?: string
-          equipment_model_encoder_team_member_id?: string | null
           equipment_model_id?: string
           equipment_model_is_available?: boolean
           equipment_model_is_disabled?: boolean
           equipment_model_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "equipment_model_table_equipment_model_encoder_team_member__fkey"
-            columns: ["equipment_model_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "equipment_model_table_equipment_model_team_id_fkey"
             columns: ["equipment_model_team_id"]
@@ -472,7 +253,6 @@ export type Database = {
           equipment_part_brand_id: string
           equipment_part_component_category_id: string
           equipment_part_date_created: string
-          equipment_part_encoder_team_member_id: string | null
           equipment_part_equipment_id: string
           equipment_part_general_name_id: string
           equipment_part_id: string
@@ -486,7 +266,6 @@ export type Database = {
           equipment_part_brand_id: string
           equipment_part_component_category_id: string
           equipment_part_date_created?: string
-          equipment_part_encoder_team_member_id?: string | null
           equipment_part_equipment_id: string
           equipment_part_general_name_id: string
           equipment_part_id?: string
@@ -500,7 +279,6 @@ export type Database = {
           equipment_part_brand_id?: string
           equipment_part_component_category_id?: string
           equipment_part_date_created?: string
-          equipment_part_encoder_team_member_id?: string | null
           equipment_part_equipment_id?: string
           equipment_part_general_name_id?: string
           equipment_part_id?: string
@@ -524,13 +302,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "equipment_component_category_table"
             referencedColumns: ["equipment_component_category_id"]
-          },
-          {
-            foreignKeyName: "equipment_part_table_equipment_part_encoder_team_member_id_fkey"
-            columns: ["equipment_part_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
           },
           {
             foreignKeyName: "equipment_part_table_equipment_part_equipment_id_fkey"
@@ -565,7 +336,6 @@ export type Database = {
       equipment_table: {
         Row: {
           equipment_date_created: string
-          equipment_encoder_team_member_id: string | null
           equipment_equipment_category_id: string
           equipment_id: string
           equipment_is_available: boolean
@@ -576,7 +346,6 @@ export type Database = {
         }
         Insert: {
           equipment_date_created?: string
-          equipment_encoder_team_member_id?: string | null
           equipment_equipment_category_id: string
           equipment_id?: string
           equipment_is_available?: boolean
@@ -587,7 +356,6 @@ export type Database = {
         }
         Update: {
           equipment_date_created?: string
-          equipment_encoder_team_member_id?: string | null
           equipment_equipment_category_id?: string
           equipment_id?: string
           equipment_is_available?: boolean
@@ -597,13 +365,6 @@ export type Database = {
           equipment_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "equipment_table_equipment_encoder_team_member_id_fkey"
-            columns: ["equipment_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "equipment_table_equipment_equipment_category_id_fkey"
             columns: ["equipment_equipment_category_id"]
@@ -627,7 +388,6 @@ export type Database = {
           equipment_description_acquisition_date: number | null
           equipment_description_brand_id: string | null
           equipment_description_date_created: string | null
-          equipment_description_encoder_team_member_id: string | null
           equipment_description_equipment_id: string | null
           equipment_description_id: string | null
           equipment_description_is_available: boolean | null
@@ -645,13 +405,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "equipment_brand_table"
             referencedColumns: ["equipment_brand_id"]
-          },
-          {
-            foreignKeyName: "equipment_description_table_equipment_description_encoder__fkey"
-            columns: ["equipment_description_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
           },
           {
             foreignKeyName: "equipment_description_table_equipment_description_equipmen_fkey"
@@ -1303,24 +1056,24 @@ export type Database = {
       interview_online_meeting_table: {
         Row: {
           interview_meeting_date_created: string
+          interview_meeting_id: string
           interview_meeting_interview_id: string
           interview_meeting_provider_id: string
           interview_meeting_url: string
-          inverview_meeting_id: string
         }
         Insert: {
           interview_meeting_date_created?: string
+          interview_meeting_id?: string
           interview_meeting_interview_id: string
           interview_meeting_provider_id: string
           interview_meeting_url: string
-          inverview_meeting_id?: string
         }
         Update: {
           interview_meeting_date_created?: string
+          interview_meeting_id?: string
           interview_meeting_interview_id?: string
           interview_meeting_provider_id?: string
           interview_meeting_url?: string
-          inverview_meeting_id?: string
         }
         Relationships: []
       }
@@ -1329,7 +1082,6 @@ export type Database = {
           job_offer_attachment_id: string | null
           job_offer_date_created: string
           job_offer_id: string
-          job_offer_project_assignment: string | null
           job_offer_request_id: string
           job_offer_status: string
           job_offer_status_date_updated: string | null
@@ -1340,7 +1092,6 @@ export type Database = {
           job_offer_attachment_id?: string | null
           job_offer_date_created?: string
           job_offer_id?: string
-          job_offer_project_assignment?: string | null
           job_offer_request_id: string
           job_offer_status?: string
           job_offer_status_date_updated?: string | null
@@ -1351,7 +1102,6 @@ export type Database = {
           job_offer_attachment_id?: string | null
           job_offer_date_created?: string
           job_offer_id?: string
-          job_offer_project_assignment?: string | null
           job_offer_request_id?: string
           job_offer_status?: string
           job_offer_status_date_updated?: string | null
@@ -1627,7 +1377,6 @@ export type Database = {
       item_description_field_table: {
         Row: {
           item_description_field_date_created: string
-          item_description_field_encoder_team_member_id: string | null
           item_description_field_id: string
           item_description_field_is_available: boolean
           item_description_field_is_disabled: boolean
@@ -1636,7 +1385,6 @@ export type Database = {
         }
         Insert: {
           item_description_field_date_created?: string
-          item_description_field_encoder_team_member_id?: string | null
           item_description_field_id?: string
           item_description_field_is_available?: boolean
           item_description_field_is_disabled?: boolean
@@ -1645,7 +1393,6 @@ export type Database = {
         }
         Update: {
           item_description_field_date_created?: string
-          item_description_field_encoder_team_member_id?: string | null
           item_description_field_id?: string
           item_description_field_is_available?: boolean
           item_description_field_is_disabled?: boolean
@@ -1653,13 +1400,6 @@ export type Database = {
           item_description_field_value?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "item_description_field_table_item_description_field_encode_fkey"
-            columns: ["item_description_field_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "item_description_field_table_item_description_field_item_d_fkey"
             columns: ["item_description_field_item_description_id"]
@@ -1744,13 +1484,6 @@ export type Database = {
             referencedRelation: "item_table"
             referencedColumns: ["item_id"]
           },
-          {
-            foreignKeyName: "item_description_table_item_description_item_id_fkey"
-            columns: ["item_description_item_id"]
-            isOneToOne: false
-            referencedRelation: "item_unspsc_view"
-            referencedColumns: ["item_id"]
-          },
         ]
       }
       item_division_table: {
@@ -1775,13 +1508,6 @@ export type Database = {
             columns: ["item_division_item_id"]
             isOneToOne: false
             referencedRelation: "item_table"
-            referencedColumns: ["item_id"]
-          },
-          {
-            foreignKeyName: "item_division_table_item_division_item_id_fkey"
-            columns: ["item_division_item_id"]
-            isOneToOne: false
-            referencedRelation: "item_unspsc_view"
             referencedColumns: ["item_id"]
           },
         ]
@@ -1813,20 +1539,12 @@ export type Database = {
             referencedRelation: "item_table"
             referencedColumns: ["item_id"]
           },
-          {
-            foreignKeyName: "item_level_three_description__item_level_three_description_fkey"
-            columns: ["item_level_three_description_item_id"]
-            isOneToOne: false
-            referencedRelation: "item_unspsc_view"
-            referencedColumns: ["item_id"]
-          },
         ]
       }
       item_table: {
         Row: {
           item_category_id: string | null
           item_date_created: string
-          item_encoder_team_member_id: string | null
           item_general_name: string
           item_gl_account: string
           item_id: string
@@ -1840,7 +1558,6 @@ export type Database = {
         Insert: {
           item_category_id?: string | null
           item_date_created?: string
-          item_encoder_team_member_id?: string | null
           item_general_name: string
           item_gl_account: string
           item_id?: string
@@ -1854,7 +1571,6 @@ export type Database = {
         Update: {
           item_category_id?: string | null
           item_date_created?: string
-          item_encoder_team_member_id?: string | null
           item_general_name?: string
           item_gl_account?: string
           item_id?: string
@@ -1872,13 +1588,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "item_category_table"
             referencedColumns: ["item_category_id"]
-          },
-          {
-            foreignKeyName: "item_table_item_encoder_team_member_id_fkey"
-            columns: ["item_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
           },
           {
             foreignKeyName: "item_table_item_team_id_fkey"
@@ -2176,179 +1885,6 @@ export type Database = {
       [_ in never]: never
     }
   }
-  kpi_schema: {
-    Tables: {
-      kpi_proof_reference: {
-        Row: {
-          kpi_proof_reference_id: string
-          kpi_proof_reference_kpi_id: string
-          kpi_proof_reference_kpi_proof_id: string
-        }
-        Insert: {
-          kpi_proof_reference_id?: string
-          kpi_proof_reference_kpi_id: string
-          kpi_proof_reference_kpi_proof_id: string
-        }
-        Update: {
-          kpi_proof_reference_id?: string
-          kpi_proof_reference_kpi_id?: string
-          kpi_proof_reference_kpi_proof_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "kpi_proof_reference_kpi_proof_reference_kpi_id_fkey"
-            columns: ["kpi_proof_reference_kpi_id"]
-            isOneToOne: false
-            referencedRelation: "kpi_table"
-            referencedColumns: ["kpi_id"]
-          },
-          {
-            foreignKeyName: "kpi_proof_reference_kpi_proof_reference_kpi_proof_id_fkey"
-            columns: ["kpi_proof_reference_kpi_proof_id"]
-            isOneToOne: false
-            referencedRelation: "kpi_proof_table"
-            referencedColumns: ["kpi_proof_id"]
-          },
-        ]
-      }
-      kpi_proof_table: {
-        Row: {
-          kpi_proof_id: string
-          kpi_proof_team_id: string
-          kpi_proof_title: string
-        }
-        Insert: {
-          kpi_proof_id?: string
-          kpi_proof_team_id: string
-          kpi_proof_title: string
-        }
-        Update: {
-          kpi_proof_id?: string
-          kpi_proof_team_id?: string
-          kpi_proof_title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "kpi_proof_table_kpi_proof_team_id_fkey"
-            columns: ["kpi_proof_team_id"]
-            isOneToOne: false
-            referencedRelation: "team_table"
-            referencedColumns: ["team_id"]
-          },
-        ]
-      }
-      kpi_table: {
-        Row: {
-          kpi_created_by_team_member_id: string
-          kpi_duty: number
-          kpi_id: string
-          kpi_note: string | null
-          kpi_title: string
-        }
-        Insert: {
-          kpi_created_by_team_member_id: string
-          kpi_duty: number
-          kpi_id?: string
-          kpi_note?: string | null
-          kpi_title: string
-        }
-        Update: {
-          kpi_created_by_team_member_id?: string
-          kpi_duty?: number
-          kpi_id?: string
-          kpi_note?: string | null
-          kpi_title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "kpi_table_kpi_created_by_team_member_id_fkey"
-            columns: ["kpi_created_by_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
-        ]
-      }
-      member_assigned_kpi_table: {
-        Row: {
-          member_assigned_kpi_id: string
-          member_assigned_kpi_kpi_id: string
-          member_assigned_kpi_member_id: string
-        }
-        Insert: {
-          member_assigned_kpi_id?: string
-          member_assigned_kpi_kpi_id: string
-          member_assigned_kpi_member_id: string
-        }
-        Update: {
-          member_assigned_kpi_id?: string
-          member_assigned_kpi_kpi_id?: string
-          member_assigned_kpi_member_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "member_assigned_kpi_table_member_assigned_kpi_kpi_id_fkey"
-            columns: ["member_assigned_kpi_kpi_id"]
-            isOneToOne: false
-            referencedRelation: "kpi_table"
-            referencedColumns: ["kpi_id"]
-          },
-          {
-            foreignKeyName: "member_assigned_kpi_table_member_assigned_kpi_member_id_fkey"
-            columns: ["member_assigned_kpi_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
-        ]
-      }
-      task_assigned_kpi_table: {
-        Row: {
-          task_assigned_kpi_id: string
-          task_assigned_kpi_kpi_id: string
-          task_assigned_kpi_task_id: string
-        }
-        Insert: {
-          task_assigned_kpi_id?: string
-          task_assigned_kpi_kpi_id: string
-          task_assigned_kpi_task_id: string
-        }
-        Update: {
-          task_assigned_kpi_id?: string
-          task_assigned_kpi_kpi_id?: string
-          task_assigned_kpi_task_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_assigned_kpi_table_task_assigned_kpi_kpi_id_fkey"
-            columns: ["task_assigned_kpi_kpi_id"]
-            isOneToOne: false
-            referencedRelation: "kpi_table"
-            referencedColumns: ["kpi_id"]
-          },
-          {
-            foreignKeyName: "task_assigned_kpi_table_task_assigned_kpi_task_id_fkey"
-            columns: ["task_assigned_kpi_task_id"]
-            isOneToOne: false
-            referencedRelation: "task_table"
-            referencedColumns: ["task_id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   lookup_schema: {
     Tables: {
       ad_owner_request_table: {
@@ -2493,21 +2029,18 @@ export type Database = {
       employee_job_title_table: {
         Row: {
           employee_job_title_date_created: string
-          employee_job_title_date_updated: string | null
           employee_job_title_id: string
           employee_job_title_is_disabled: boolean
           employee_job_title_label: string
         }
         Insert: {
           employee_job_title_date_created?: string
-          employee_job_title_date_updated?: string | null
           employee_job_title_id?: string
           employee_job_title_is_disabled?: boolean
           employee_job_title_label: string
         }
         Update: {
           employee_job_title_date_created?: string
-          employee_job_title_date_updated?: string | null
           employee_job_title_id?: string
           employee_job_title_is_disabled?: boolean
           employee_job_title_label?: string
@@ -2535,66 +2068,36 @@ export type Database = {
       position_table: {
         Row: {
           position: string
-          position_category: string
-          position_certificate_label: string | null
-          position_classification: string
           position_date_created: string
           position_id: string
           position_is_available: boolean
           position_is_disabled: boolean
-          position_is_ped_position: boolean
-          position_is_with_background_check: boolean
           position_is_with_certificate: boolean
-          position_is_with_director_interview: boolean
           position_is_with_license: boolean
-          position_is_with_technical_interview: boolean
-          position_is_with_trade_test: boolean
-          position_license_label: string | null
-          position_minimum_years_of_experience: number
           position_team_id: string
-          position_type: string | null
+          position_type: string
         }
         Insert: {
           position: string
-          position_category: string
-          position_certificate_label?: string | null
-          position_classification: string
           position_date_created?: string
           position_id?: string
           position_is_available?: boolean
           position_is_disabled?: boolean
-          position_is_ped_position?: boolean
-          position_is_with_background_check?: boolean
           position_is_with_certificate?: boolean
-          position_is_with_director_interview?: boolean
           position_is_with_license?: boolean
-          position_is_with_technical_interview?: boolean
-          position_is_with_trade_test?: boolean
-          position_license_label?: string | null
-          position_minimum_years_of_experience?: number
           position_team_id: string
-          position_type?: string | null
+          position_type: string
         }
         Update: {
           position?: string
-          position_category?: string
-          position_certificate_label?: string | null
-          position_classification?: string
           position_date_created?: string
           position_id?: string
           position_is_available?: boolean
           position_is_disabled?: boolean
-          position_is_ped_position?: boolean
-          position_is_with_background_check?: boolean
           position_is_with_certificate?: boolean
-          position_is_with_director_interview?: boolean
           position_is_with_license?: boolean
-          position_is_with_technical_interview?: boolean
-          position_is_with_trade_test?: boolean
-          position_license_label?: string | null
-          position_minimum_years_of_experience?: number
           position_team_id?: string
-          position_type?: string | null
+          position_type?: string
         }
         Relationships: [
           {
@@ -2627,7 +2130,6 @@ export type Database = {
       scic_employee_table: {
         Row: {
           scic_employee_date_created: string
-          scic_employee_date_updated: string | null
           scic_employee_first_name: string
           scic_employee_hris_id_number: string
           scic_employee_id: string
@@ -2637,7 +2139,6 @@ export type Database = {
         }
         Insert: {
           scic_employee_date_created?: string
-          scic_employee_date_updated?: string | null
           scic_employee_first_name: string
           scic_employee_hris_id_number: string
           scic_employee_id?: string
@@ -2647,7 +2148,6 @@ export type Database = {
         }
         Update: {
           scic_employee_date_created?: string
-          scic_employee_date_updated?: string | null
           scic_employee_first_name?: string
           scic_employee_hris_id_number?: string
           scic_employee_id?: string
@@ -3084,7 +2584,6 @@ export type Database = {
         Row: {
           other_expenses_category: string
           other_expenses_category_date_created: string
-          other_expenses_category_encoder_team_member_id: string | null
           other_expenses_category_id: string
           other_expenses_category_is_available: boolean
           other_expenses_category_is_disabled: boolean
@@ -3093,7 +2592,6 @@ export type Database = {
         Insert: {
           other_expenses_category: string
           other_expenses_category_date_created?: string
-          other_expenses_category_encoder_team_member_id?: string | null
           other_expenses_category_id?: string
           other_expenses_category_is_available?: boolean
           other_expenses_category_is_disabled?: boolean
@@ -3102,20 +2600,12 @@ export type Database = {
         Update: {
           other_expenses_category?: string
           other_expenses_category_date_created?: string
-          other_expenses_category_encoder_team_member_id?: string | null
           other_expenses_category_id?: string
           other_expenses_category_is_available?: boolean
           other_expenses_category_is_disabled?: boolean
           other_expenses_category_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "other_expenses_category_table_other_expenses_category_enco_fkey"
-            columns: ["other_expenses_category_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "other_expenses_category_table_other_expenses_category_team_fkey"
             columns: ["other_expenses_category_team_id"]
@@ -3130,7 +2620,6 @@ export type Database = {
           other_expenses_type: string
           other_expenses_type_category_id: string | null
           other_expenses_type_date_created: string
-          other_expenses_type_encoder_team_member_id: string | null
           other_expenses_type_id: string
           other_expenses_type_is_available: boolean
           other_expenses_type_is_disabled: boolean
@@ -3139,7 +2628,6 @@ export type Database = {
           other_expenses_type: string
           other_expenses_type_category_id?: string | null
           other_expenses_type_date_created?: string
-          other_expenses_type_encoder_team_member_id?: string | null
           other_expenses_type_id?: string
           other_expenses_type_is_available?: boolean
           other_expenses_type_is_disabled?: boolean
@@ -3148,7 +2636,6 @@ export type Database = {
           other_expenses_type?: string
           other_expenses_type_category_id?: string | null
           other_expenses_type_date_created?: string
-          other_expenses_type_encoder_team_member_id?: string | null
           other_expenses_type_id?: string
           other_expenses_type_is_available?: boolean
           other_expenses_type_is_disabled?: boolean
@@ -3160,13 +2647,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "other_expenses_category_table"
             referencedColumns: ["other_expenses_category_id"]
-          },
-          {
-            foreignKeyName: "other_expenses_type_table_other_expenses_type_encoder_team_fkey"
-            columns: ["other_expenses_type_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
           },
         ]
       }
@@ -3246,24 +2726,6 @@ export type Database = {
         }
         Relationships: []
       }
-      expense_type_table: {
-        Row: {
-          expense_type_id: string
-          expense_type_is_disabled: boolean
-          expense_type_label: string
-        }
-        Insert: {
-          expense_type_id?: string
-          expense_type_is_disabled?: boolean
-          expense_type_label: string
-        }
-        Update: {
-          expense_type_id?: string
-          expense_type_is_disabled?: boolean
-          expense_type_label?: string
-        }
-        Relationships: []
-      }
       notification_table: {
         Row: {
           notification_app: string
@@ -3322,78 +2784,12 @@ export type Database = {
           },
         ]
       }
-      request_processing_table: {
-        Row: {
-          request_processing_date_created: string
-          request_processing_id: string
-          request_processing_request_id: string
-        }
-        Insert: {
-          request_processing_date_created?: string
-          request_processing_id?: string
-          request_processing_request_id: string
-        }
-        Update: {
-          request_processing_date_created?: string
-          request_processing_id?: string
-          request_processing_request_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "request_processing_table_request_processing_request_id_fkey"
-            columns: ["request_processing_request_id"]
-            isOneToOne: false
-            referencedRelation: "request_table"
-            referencedColumns: ["request_id"]
-          },
-          {
-            foreignKeyName: "request_processing_table_request_processing_request_id_fkey"
-            columns: ["request_processing_request_id"]
-            isOneToOne: false
-            referencedRelation: "request_view"
-            referencedColumns: ["request_id"]
-          },
-        ]
-      }
-      unspsc_table: {
-        Row: {
-          unspsc_code: string
-          unspsc_id: string
-          unspsc_key: string
-          unspsc_parent_key: string
-          unspsc_title: string
-        }
-        Insert: {
-          unspsc_code: string
-          unspsc_id?: string
-          unspsc_key: string
-          unspsc_parent_key: string
-          unspsc_title: string
-        }
-        Update: {
-          unspsc_code?: string
-          unspsc_id?: string
-          unspsc_key?: string
-          unspsc_parent_key?: string
-          unspsc_title?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       distinct_division_view: {
         Row: {
           csi_code_division_description: string | null
           csi_code_division_id: string | null
-        }
-        Relationships: []
-      }
-      item_unspsc_view: {
-        Row: {
-          item_general_name: string | null
-          item_id: string | null
-          unspsc_code: string | null
-          unspsc_title: string | null
         }
         Relationships: []
       }
@@ -3480,12 +2876,6 @@ export type Database = {
         }
         Returns: Json
       }
-      add_job_offer: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
       add_team_member_to_all_project: {
         Args: {
           input_data: Json
@@ -3539,13 +2929,6 @@ export type Database = {
           input_data: Json
         }
         Returns: Json
-      }
-      calculate_match_score: {
-        Args: {
-          item: string
-          description: string
-        }
-        Returns: number
       }
       cancel_request: {
         Args: {
@@ -3617,6 +3000,12 @@ export type Database = {
           form_id: string
         }
         Returns: string
+      }
+      check_task_if_can_be_completed: {
+        Args: {
+          task_id: string
+        }
+        Returns: boolean
       }
       check_tranfer_receipt_item_quantity: {
         Args: {
@@ -3925,19 +3314,12 @@ export type Database = {
         }
         Returns: Json
       }
-      fetch_task_comment_list:
-        | {
-            Args: {
-              input_data: Json
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              task_id: string
-            }
-            Returns: Json
-          }
+      fetch_task_comment_list: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       fetch_task_completion_proof: {
         Args: {
           task_id: string
@@ -3980,13 +3362,6 @@ export type Database = {
         }
         Returns: string
       }
-      fuzzy_match_score: {
-        Args: {
-          item: string
-          description: string
-        }
-        Returns: number
-      }
       generate_request_id_condition: {
         Args: {
           request_id: string
@@ -4017,6 +3392,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_application_information_analytics: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_application_information_summary_table: {
         Args: {
           input_data: Json
@@ -4035,12 +3416,6 @@ export type Database = {
         }
         Returns: Json
       }
-      get_background_check_summary_table: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
       get_create_ticket_on_load: {
         Args: {
           input_data: Json
@@ -4050,18 +3425,6 @@ export type Database = {
       get_current_date: {
         Args: Record<PropertyKey, never>
         Returns: string
-      }
-      get_department_signer_with_team_member: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      get_director_interview_summary_table: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
       }
       get_edit_request_on_load: {
         Args: {
@@ -4094,12 +3457,6 @@ export type Database = {
         Returns: Json
       }
       get_form_section_with_field_list: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      get_hr_phone_interview_summary_table: {
         Args: {
           input_data: Json
         }
@@ -4171,18 +3528,6 @@ export type Database = {
         }
         Returns: Json
       }
-      get_job_history: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      get_job_offer_summary_table: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
       get_kpi_page_on_load: {
         Args: {
           input_data: Json
@@ -4238,12 +3583,6 @@ export type Database = {
         Returns: Json
       }
       get_notification_on_load: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      get_phone_meeting_available: {
         Args: {
           input_data: Json
         }
@@ -4411,7 +3750,13 @@ export type Database = {
         }
         Returns: Json
       }
-      get_technical_interview_summary_table: {
+      get_team_transaction_by_id: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
+      get_team_with_subscription_list: {
         Args: {
           input_data: Json
         }
@@ -4430,12 +3775,6 @@ export type Database = {
         Returns: Json
       }
       get_ticket_on_load: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      get_trade_test_summary_table: {
         Args: {
           input_data: Json
         }
@@ -4477,36 +3816,6 @@ export type Database = {
         }
         Returns: Json
       }
-      gtrgm_compress: {
-        Args: {
-          "": unknown
-        }
-        Returns: unknown
-      }
-      gtrgm_decompress: {
-        Args: {
-          "": unknown
-        }
-        Returns: unknown
-      }
-      gtrgm_in: {
-        Args: {
-          "": unknown
-        }
-        Returns: unknown
-      }
-      gtrgm_options: {
-        Args: {
-          "": unknown
-        }
-        Returns: undefined
-      }
-      gtrgm_out: {
-        Args: {
-          "": unknown
-        }
-        Returns: unknown
-      }
       handle_formsly_payment: {
         Args: {
           input_data: Json
@@ -4532,23 +3841,11 @@ export type Database = {
         }
         Returns: undefined
       }
-      normalize_text: {
-        Args: {
-          "": string
-        }
-        Returns: string
-      }
       ped_part_check: {
         Args: {
           input_data: Json
         }
         Returns: boolean
-      }
-      public_request_page_on_load: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
       }
       redirect_to_new_team: {
         Args: {
@@ -4568,22 +3865,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      set_limit: {
-        Args: {
-          "": number
-        }
-        Returns: number
-      }
-      show_limit: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
-      show_trgm: {
-        Args: {
-          "": string
-        }
-        Returns: string[]
-      }
       team_invoice_on_load: {
         Args: {
           input_data: Json
@@ -4597,24 +3878,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_background_check_status: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      update_director_interview_schedule: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      update_director_interview_status: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
       update_form_group: {
         Args: {
           input_data: Json
@@ -4622,12 +3885,6 @@ export type Database = {
         Returns: undefined
       }
       update_form_signer: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      update_hr_phone_interview_status: {
         Args: {
           input_data: Json
         }
@@ -4645,12 +3902,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_job_offer_status: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
       update_multiple_admin: {
         Args: {
           input_data: Json
@@ -4663,37 +3914,7 @@ export type Database = {
         }
         Returns: Json
       }
-      update_phone_interview: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      update_technical_interview_schedule: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      update_technical_interview_status: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
       update_ticket_status: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      update_trade_test_schedule: {
-        Args: {
-          input_data: Json
-        }
-        Returns: Json
-      }
-      update_trade_test_status: {
         Args: {
           input_data: Json
         }
@@ -4991,7 +4212,6 @@ export type Database = {
         Row: {
           service_category: string
           service_category_date_created: string
-          service_category_encoder_team_member_id: string | null
           service_category_id: string
           service_category_is_available: boolean
           service_category_is_disabled: boolean
@@ -5000,7 +4220,6 @@ export type Database = {
         Insert: {
           service_category: string
           service_category_date_created?: string
-          service_category_encoder_team_member_id?: string | null
           service_category_id?: string
           service_category_is_available?: boolean
           service_category_is_disabled?: boolean
@@ -5009,20 +4228,12 @@ export type Database = {
         Update: {
           service_category?: string
           service_category_date_created?: string
-          service_category_encoder_team_member_id?: string | null
           service_category_id?: string
           service_category_is_available?: boolean
           service_category_is_disabled?: boolean
           service_category_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "service_category_table_service_category_encoder_team_membe_fkey"
-            columns: ["service_category_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "service_category_table_service_category_team_id_fkey"
             columns: ["service_category_team_id"]
@@ -5167,372 +4378,12 @@ export type Database = {
       [_ in never]: never
     }
   }
-  subscription_schema: {
-    Tables: {
-      subscription_service_table: {
-        Row: {
-          subscription_service_description: string | null
-          subscription_service_id: string
-          subscription_service_name: string
-          subscription_service_price: number
-        }
-        Insert: {
-          subscription_service_description?: string | null
-          subscription_service_id?: string
-          subscription_service_name: string
-          subscription_service_price: number
-        }
-        Update: {
-          subscription_service_description?: string | null
-          subscription_service_id?: string
-          subscription_service_name?: string
-          subscription_service_price?: number
-        }
-        Relationships: []
-      }
-      subscription_service_transaction_table: {
-        Row: {
-          subscription_service_transaction_id: string
-          subscription_service_transaction_subscription_service_id: string
-          subscription_service_transaction_transaction_id: string
-        }
-        Insert: {
-          subscription_service_transaction_id?: string
-          subscription_service_transaction_subscription_service_id: string
-          subscription_service_transaction_transaction_id: string
-        }
-        Update: {
-          subscription_service_transaction_id?: string
-          subscription_service_transaction_subscription_service_id?: string
-          subscription_service_transaction_transaction_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_service_transac_subscription_service_transac_fkey1"
-            columns: [
-              "subscription_service_transaction_subscription_service_id",
-            ]
-            isOneToOne: false
-            referencedRelation: "subscription_service_table"
-            referencedColumns: ["subscription_service_id"]
-          },
-          {
-            foreignKeyName: "subscription_service_transact_subscription_service_transac_fkey"
-            columns: ["subscription_service_transaction_transaction_id"]
-            isOneToOne: false
-            referencedRelation: "team_transaction_table"
-            referencedColumns: ["team_transaction_id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  task_management_schema: {
-    Tables: {
-      comment_attachment_table: {
-        Row: {
-          comment_attachment_attachment_id: string
-          comment_attachment_id: string
-          comment_attachment_public_url: string
-          comment_comment_id: string
-        }
-        Insert: {
-          comment_attachment_attachment_id: string
-          comment_attachment_id?: string
-          comment_attachment_public_url: string
-          comment_comment_id: string
-        }
-        Update: {
-          comment_attachment_attachment_id?: string
-          comment_attachment_id?: string
-          comment_attachment_public_url?: string
-          comment_comment_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comment_attachment_table_comment_attachment_attachment_id_fkey"
-            columns: ["comment_attachment_attachment_id"]
-            isOneToOne: false
-            referencedRelation: "attachment_table"
-            referencedColumns: ["attachment_id"]
-          },
-          {
-            foreignKeyName: "comment_attachment_table_comment_comment_id_fkey"
-            columns: ["comment_comment_id"]
-            isOneToOne: false
-            referencedRelation: "comment_table"
-            referencedColumns: ["comment_id"]
-          },
-        ]
-      }
-      comment_table: {
-        Row: {
-          comment_content: string
-          comment_created_by_team_member_id: string
-          comment_date_created: string
-          comment_date_updated: string | null
-          comment_id: string
-          comment_task_id: string
-        }
-        Insert: {
-          comment_content: string
-          comment_created_by_team_member_id: string
-          comment_date_created?: string
-          comment_date_updated?: string | null
-          comment_id?: string
-          comment_task_id: string
-        }
-        Update: {
-          comment_content?: string
-          comment_created_by_team_member_id?: string
-          comment_date_created?: string
-          comment_date_updated?: string | null
-          comment_id?: string
-          comment_task_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comment_table_comment_created_by_team_member_id_fkey"
-            columns: ["comment_created_by_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
-          {
-            foreignKeyName: "comment_table_comment_task_id_fkey"
-            columns: ["comment_task_id"]
-            isOneToOne: false
-            referencedRelation: "task_table"
-            referencedColumns: ["task_id"]
-          },
-        ]
-      }
-      completion_proof_table: {
-        Row: {
-          completion_proof_comment_id: string
-          completion_proof_id: string
-        }
-        Insert: {
-          completion_proof_comment_id: string
-          completion_proof_id?: string
-        }
-        Update: {
-          completion_proof_comment_id?: string
-          completion_proof_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "completion_proof_table_completion_proof_comment_id_fkey"
-            columns: ["completion_proof_comment_id"]
-            isOneToOne: false
-            referencedRelation: "comment_table"
-            referencedColumns: ["comment_id"]
-          },
-        ]
-      }
-      subtask_table: {
-        Row: {
-          subtask_id: string
-          subtask_parent_task_id: string
-          subtask_task_id: string
-        }
-        Insert: {
-          subtask_id?: string
-          subtask_parent_task_id: string
-          subtask_task_id: string
-        }
-        Update: {
-          subtask_id?: string
-          subtask_parent_task_id?: string
-          subtask_task_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subtask_table_subtask_parent_task_id_fkey"
-            columns: ["subtask_parent_task_id"]
-            isOneToOne: false
-            referencedRelation: "task_table"
-            referencedColumns: ["task_id"]
-          },
-          {
-            foreignKeyName: "subtask_table_subtask_task_id_fkey"
-            columns: ["subtask_task_id"]
-            isOneToOne: false
-            referencedRelation: "task_table"
-            referencedColumns: ["task_id"]
-          },
-        ]
-      }
-      task_complexity_table: {
-        Row: {
-          task_complexity_color: string | null
-          task_complexity_description: string | null
-          task_complexity_id: string
-          task_complexity_label: string
-          task_complexity_points: number
-        }
-        Insert: {
-          task_complexity_color?: string | null
-          task_complexity_description?: string | null
-          task_complexity_id?: string
-          task_complexity_label: string
-          task_complexity_points?: number
-        }
-        Update: {
-          task_complexity_color?: string | null
-          task_complexity_description?: string | null
-          task_complexity_id?: string
-          task_complexity_label?: string
-          task_complexity_points?: number
-        }
-        Relationships: []
-      }
-      task_status_table: {
-        Row: {
-          task_status_color: string | null
-          task_status_id: string
-          task_status_is_disabled: boolean | null
-          task_status_label: string
-          task_status_order: number
-          task_status_team_id: string | null
-        }
-        Insert: {
-          task_status_color?: string | null
-          task_status_id?: string
-          task_status_is_disabled?: boolean | null
-          task_status_label: string
-          task_status_order: number
-          task_status_team_id?: string | null
-        }
-        Update: {
-          task_status_color?: string | null
-          task_status_id?: string
-          task_status_is_disabled?: boolean | null
-          task_status_label?: string
-          task_status_order?: number
-          task_status_team_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_status_table_task_status_team_id_fkey"
-            columns: ["task_status_team_id"]
-            isOneToOne: false
-            referencedRelation: "team_table"
-            referencedColumns: ["team_id"]
-          },
-        ]
-      }
-      task_table: {
-        Row: {
-          task_assignee_team_member_id: string | null
-          task_complexity_id: string | null
-          task_created_by_team_member_id: string
-          task_date_created: string
-          task_date_due: string | null
-          task_description: string | null
-          task_id: string
-          task_project_id: string
-          task_status_id: string
-          task_time_estimate: number | null
-          task_title: string
-        }
-        Insert: {
-          task_assignee_team_member_id?: string | null
-          task_complexity_id?: string | null
-          task_created_by_team_member_id: string
-          task_date_created?: string
-          task_date_due?: string | null
-          task_description?: string | null
-          task_id?: string
-          task_project_id: string
-          task_status_id: string
-          task_time_estimate?: number | null
-          task_title: string
-        }
-        Update: {
-          task_assignee_team_member_id?: string | null
-          task_complexity_id?: string | null
-          task_created_by_team_member_id?: string
-          task_date_created?: string
-          task_date_due?: string | null
-          task_description?: string | null
-          task_id?: string
-          task_project_id?: string
-          task_status_id?: string
-          task_time_estimate?: number | null
-          task_title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "task_table_task_assignee_team_member_id_fkey"
-            columns: ["task_assignee_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
-          {
-            foreignKeyName: "task_table_task_complexity_id_fkey"
-            columns: ["task_complexity_id"]
-            isOneToOne: false
-            referencedRelation: "task_complexity_table"
-            referencedColumns: ["task_complexity_id"]
-          },
-          {
-            foreignKeyName: "task_table_task_created_by_team_member_id_fkey"
-            columns: ["task_created_by_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
-          {
-            foreignKeyName: "task_table_task_project_id_fkey"
-            columns: ["task_project_id"]
-            isOneToOne: false
-            referencedRelation: "team_project_table"
-            referencedColumns: ["team_project_id"]
-          },
-          {
-            foreignKeyName: "task_table_task_status_id_fkey"
-            columns: ["task_status_id"]
-            isOneToOne: false
-            referencedRelation: "task_status_table"
-            referencedColumns: ["task_status_id"]
-          },
-        ]
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   team_schema: {
     Tables: {
       supplier_table: {
         Row: {
           supplier: string
           supplier_date_created: string
-          supplier_encoder_team_member_id: string | null
           supplier_id: string
           supplier_is_available: boolean
           supplier_is_disabled: boolean
@@ -5541,7 +4392,6 @@ export type Database = {
         Insert: {
           supplier: string
           supplier_date_created?: string
-          supplier_encoder_team_member_id?: string | null
           supplier_id?: string
           supplier_is_available?: boolean
           supplier_is_disabled?: boolean
@@ -5550,20 +4400,12 @@ export type Database = {
         Update: {
           supplier?: string
           supplier_date_created?: string
-          supplier_encoder_team_member_id?: string | null
           supplier_id?: string
           supplier_is_available?: boolean
           supplier_is_disabled?: boolean
           supplier_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "supplier_table_supplier_encoder_team_member_id_fkey"
-            columns: ["supplier_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "supplier_table_supplier_team_id_fkey"
             columns: ["supplier_team_id"]
@@ -5575,21 +4417,18 @@ export type Database = {
       }
       team_department_table: {
         Row: {
-          team_department_code: string | null
           team_department_date_created: string
           team_department_id: string
           team_department_is_disabled: boolean
           team_department_name: string
         }
         Insert: {
-          team_department_code?: string | null
           team_department_date_created?: string
           team_department_id?: string
           team_department_is_disabled?: boolean
           team_department_name: string
         }
         Update: {
-          team_department_code?: string | null
           team_department_date_created?: string
           team_department_id?: string
           team_department_is_disabled?: boolean
@@ -6190,7 +5029,6 @@ export type Database = {
         Row: {
           capacity_unit_of_measurement: string
           capacity_unit_of_measurement_date_created: string
-          capacity_unit_of_measurement_encoder_team_member_id: string | null
           capacity_unit_of_measurement_id: string
           capacity_unit_of_measurement_is_available: boolean
           capacity_unit_of_measurement_is_disabled: boolean
@@ -6199,7 +5037,6 @@ export type Database = {
         Insert: {
           capacity_unit_of_measurement: string
           capacity_unit_of_measurement_date_created?: string
-          capacity_unit_of_measurement_encoder_team_member_id?: string | null
           capacity_unit_of_measurement_id?: string
           capacity_unit_of_measurement_is_available?: boolean
           capacity_unit_of_measurement_is_disabled?: boolean
@@ -6208,7 +5045,6 @@ export type Database = {
         Update: {
           capacity_unit_of_measurement?: string
           capacity_unit_of_measurement_date_created?: string
-          capacity_unit_of_measurement_encoder_team_member_id?: string | null
           capacity_unit_of_measurement_id?: string
           capacity_unit_of_measurement_is_available?: boolean
           capacity_unit_of_measurement_is_disabled?: boolean
@@ -6217,13 +5053,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "capacity_unit_of_measurement__capacity_unit_of_measurement_fkey"
-            columns: ["capacity_unit_of_measurement_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
-          {
-            foreignKeyName: "capacity_unit_of_measurement_capacity_unit_of_measurement_fkey1"
             columns: ["capacity_unit_of_measurement_team_id"]
             isOneToOne: false
             referencedRelation: "team_table"
@@ -6235,7 +5064,6 @@ export type Database = {
         Row: {
           equipment_unit_of_measurement: string
           equipment_unit_of_measurement_date_created: string
-          equipment_unit_of_measurement_encoder_team_member_id: string | null
           equipment_unit_of_measurement_id: string
           equipment_unit_of_measurement_is_available: boolean
           equipment_unit_of_measurement_is_disabled: boolean
@@ -6244,7 +5072,6 @@ export type Database = {
         Insert: {
           equipment_unit_of_measurement: string
           equipment_unit_of_measurement_date_created?: string
-          equipment_unit_of_measurement_encoder_team_member_id?: string | null
           equipment_unit_of_measurement_id?: string
           equipment_unit_of_measurement_is_available?: boolean
           equipment_unit_of_measurement_is_disabled?: boolean
@@ -6253,7 +5080,6 @@ export type Database = {
         Update: {
           equipment_unit_of_measurement?: string
           equipment_unit_of_measurement_date_created?: string
-          equipment_unit_of_measurement_encoder_team_member_id?: string | null
           equipment_unit_of_measurement_id?: string
           equipment_unit_of_measurement_is_available?: boolean
           equipment_unit_of_measurement_is_disabled?: boolean
@@ -6261,18 +5087,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "equipment_unit_of_measuremen_equipment_unit_of_measuremen_fkey1"
+            foreignKeyName: "equipment_unit_of_measurement_equipment_unit_of_measuremen_fkey"
             columns: ["equipment_unit_of_measurement_team_id"]
             isOneToOne: false
             referencedRelation: "team_table"
             referencedColumns: ["team_id"]
-          },
-          {
-            foreignKeyName: "equipment_unit_of_measurement_equipment_unit_of_measuremen_fkey"
-            columns: ["equipment_unit_of_measurement_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
           },
         ]
       }
@@ -6280,7 +5099,6 @@ export type Database = {
         Row: {
           general_unit_of_measurement: string
           general_unit_of_measurement_date_created: string
-          general_unit_of_measurement_encoder_team_member_id: string | null
           general_unit_of_measurement_id: string
           general_unit_of_measurement_is_available: boolean
           general_unit_of_measurement_is_disabled: boolean
@@ -6289,7 +5107,6 @@ export type Database = {
         Insert: {
           general_unit_of_measurement: string
           general_unit_of_measurement_date_created?: string
-          general_unit_of_measurement_encoder_team_member_id?: string | null
           general_unit_of_measurement_id?: string
           general_unit_of_measurement_is_available?: boolean
           general_unit_of_measurement_is_disabled?: boolean
@@ -6298,7 +5115,6 @@ export type Database = {
         Update: {
           general_unit_of_measurement?: string
           general_unit_of_measurement_date_created?: string
-          general_unit_of_measurement_encoder_team_member_id?: string | null
           general_unit_of_measurement_id?: string
           general_unit_of_measurement_is_available?: boolean
           general_unit_of_measurement_is_disabled?: boolean
@@ -6306,18 +5122,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "general_unit_of_measurement__general_unit_of_measurement__fkey1"
+            foreignKeyName: "general_unit_of_measurement_t_general_unit_of_measurement__fkey"
             columns: ["general_unit_of_measurement_team_id"]
             isOneToOne: false
             referencedRelation: "team_table"
             referencedColumns: ["team_id"]
-          },
-          {
-            foreignKeyName: "general_unit_of_measurement_t_general_unit_of_measurement__fkey"
-            columns: ["general_unit_of_measurement_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
           },
         ]
       }
@@ -6325,7 +5134,6 @@ export type Database = {
         Row: {
           item_unit_of_measurement: string
           item_unit_of_measurement_date_created: string
-          item_unit_of_measurement_encoder_team_member_id: string | null
           item_unit_of_measurement_id: string
           item_unit_of_measurement_is_available: boolean
           item_unit_of_measurement_is_disabled: boolean
@@ -6334,7 +5142,6 @@ export type Database = {
         Insert: {
           item_unit_of_measurement: string
           item_unit_of_measurement_date_created?: string
-          item_unit_of_measurement_encoder_team_member_id?: string | null
           item_unit_of_measurement_id?: string
           item_unit_of_measurement_is_available?: boolean
           item_unit_of_measurement_is_disabled?: boolean
@@ -6343,20 +5150,12 @@ export type Database = {
         Update: {
           item_unit_of_measurement?: string
           item_unit_of_measurement_date_created?: string
-          item_unit_of_measurement_encoder_team_member_id?: string | null
           item_unit_of_measurement_id?: string
           item_unit_of_measurement_is_available?: boolean
           item_unit_of_measurement_is_disabled?: boolean
           item_unit_of_measurement_team_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "item_unit_of_measurement_tabl_item_unit_of_measurement_enc_fkey"
-            columns: ["item_unit_of_measurement_encoder_team_member_id"]
-            isOneToOne: false
-            referencedRelation: "team_member_table"
-            referencedColumns: ["team_member_id"]
-          },
           {
             foreignKeyName: "item_unit_of_measurement_tabl_item_unit_of_measurement_tea_fkey"
             columns: ["item_unit_of_measurement_team_id"]
