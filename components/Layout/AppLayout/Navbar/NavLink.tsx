@@ -41,6 +41,7 @@ import {
   IconInfoCircle,
   IconListDetails,
   IconPhoneCall,
+  IconQuestionMark,
   IconReportAnalytics,
   IconSettingsAutomation,
   IconShieldCheck,
@@ -457,6 +458,15 @@ const ReviewAppNavLink = () => {
       href: `/${activeTeamNameToUrl}/requests/job-offer-spreadsheet-view`,
       withIndicator: Boolean(hrIndicatorCount.jobOffer),
       indicatorLabel: `${hrIndicatorCount.jobOffer}`,
+    },
+    {
+      label: `Questionnaire List`,
+      icon: (
+        <Box ml="sm" {...defaultNavLinkContainerProps}>
+          <IconQuestionMark {...defaultIconProps} />
+        </Box>
+      ),
+      href: `/${activeTeamNameToUrl}/technical-question`,
     },
   ];
 

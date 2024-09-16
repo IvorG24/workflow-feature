@@ -350,33 +350,10 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
   // teamMemberGroupList.includes("REQUESTER");
   const isRequestActionSectionVisible =
     canSignerTakeAction || isEditable || isDeletable || isUserRequester;
-  const nextStep =
-    request.request_status === "APPROVED" &&
-    user?.user_email ===
-      safeParse(
-        request.request_form.form_section[1].section_field[0].field_response[0]
-          .request_response ?? ""
-      );
+  const nextStep = request.request_status === "APPROVED";
 
   return (
     <Container>
-      {!isNoteClosed && router.pathname.includes("public-request") && (
-        <Alert
-          mb="xl"
-          title="Note!"
-          icon={<IconNote size={16} />}
-          withCloseButton
-          onClose={() => {
-            setIsNoteClosed(true);
-          }}
-        >
-          <Text>
-            To access and keep track of all your submitted applications, go to{" "}
-            <Link href="/sign-up">formsly.io/sign-up</Link> and sign up using
-            the email that you entered on the application.
-          </Text>
-        </Alert>
-      )}
       <JoyRideNoSSR
         steps={[
           {
@@ -398,6 +375,24 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
         hideBackButton
         styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
       />
+      {!isNoteClosed && router.pathname.includes("public-request") && (
+        <Alert
+          mb="xl"
+          title="Note!"
+          icon={<IconNote size={16} />}
+          withCloseButton
+          onClose={() => {
+            setIsNoteClosed(true);
+          }}
+        >
+          <Text>
+            To access and keep track of all your submitted applications, go to{" "}
+            <Link href="/sign-up">formsly.io/sign-up</Link> and sign up using
+            the email that you entered on the application.
+          </Text>
+        </Alert>
+      )}
+
       <Flex justify="space-between" rowGap="xs" wrap="wrap">
         <Title order={2} color="dimmed">
           Request
@@ -427,7 +422,6 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
           isPrimarySigner={isUserSigner?.signer_is_primary_signer}
           requestJira={requestJira}
         />
-
         <Stack spacing="xl" mt="lg">
           {formSection.map((section, idx) => {
             return (

@@ -2458,7 +2458,7 @@ export type MeetingType =
   | "technical_interview"
   | "director_interview";
 
-  
+
 export type HRProjectType = HRProjectTableRow & {hr_project_address: AddressTableRow}
 
 export type JobOfferFormType = {
@@ -2470,3 +2470,30 @@ export type JobOfferFormType = {
   compensation: string;
   attachment: File | null;
 }
+
+export type TechnicalAssessmentFilterValues = {
+    search?: string;
+    creator?: string;
+    isAscendingSort: boolean;
+  };
+
+  export type TechnicalAssessmentTableRow = {
+    questionnaire_id: string;
+    questionnaire_name: string;
+    questionnaire_is_disabled: boolean;
+    questionnaire_date_created: string | null;
+    questionnaire_date_updated: string | null;
+    questionnaire_team_id: string;
+    questionnaire_created_by: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    };
+    questionnaire_updated_by: {
+      user_id: string;
+      user_first_name: string;
+      user_last_name: string;
+      user_avatar: string;
+    } | null;
+  };

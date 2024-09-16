@@ -45,10 +45,6 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
     form_date_created: form.form_date_created,
     form_team_member: form.form_team_member,
   };
-  // const signerList = form.form_signer.map((signer) => ({
-  //   ...signer,
-  //   signer_action: signer.signer_action.toUpperCase(),
-  // }));
 
   const requestFormMethods = useForm<RequestFormValues>();
   const { handleSubmit, control } = requestFormMethods;
@@ -58,15 +54,51 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
   });
 
   useEffect(() => {
-    replaceSection(form.form_section);
+    if (form.form_section.length === 3) {
+      replaceSection([
+        {
+          ...form.form_section[0],
+        },
+        {
+          ...form.form_section[1],
+          section_field: [...form.form_section[1].section_field.slice(1, 6)],
+        },
+        {
+          ...form.form_section[2],
+        },
+      ]);
+    } else {
+      replaceSection([
+        {
+          ...form.form_section[0],
+        },
+        {
+          ...form.form_section[1],
+          section_field: [...form.form_section[1].section_field.slice(1, 6)],
+        },
+      ]);
+    }
   }, [form, replaceSection, requestFormMethods]);
 
   const handleCreateRequest = async (data: RequestFormValues) => {
     try {
       setIsLoading(true);
-
       let requestScore = 0;
       let status = "PENDING";
+
+      const hasMissingTechnicalQuestionSection = data.sections.every(
+        (section) => section.section_name !== "Question"
+      );
+
+      if (hasMissingTechnicalQuestionSection) {
+        notifications.show({
+          message: "There is no technical questions yet",
+          color: "red",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       data.sections.forEach((section) => {
         section.section_field.forEach((field) => {
           if (
@@ -166,12 +198,15 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
         requestScore,
         rootFormslyRequestId,
       });
+
       notifications.show({
         message: "Request created.",
         color: "green",
       });
 
-      await router.push(`/public-request/${request.request_id}`);
+      await router.push(
+        `/user/requests/${request.request_formsly_id_prefix}-${request.request_formsly_id_serial}`
+      );
     } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",

@@ -11,6 +11,7 @@ type Props = {
     form_team_member: FormType["form_team_member"];
     form_type?: string;
     form_sub_type?: string;
+    form_questionnaire_name?: string;
   };
   requestingProject?: string;
 };
@@ -18,7 +19,13 @@ type Props = {
 const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
   const userProfile = useUserProfile();
 
-  const { form_name, form_description, form_type, form_sub_type } = formDetails;
+  const {
+    form_name,
+    form_description,
+    form_type,
+    form_sub_type,
+    form_questionnaire_name,
+  } = formDetails;
 
   const requestDate = formatDate(new Date());
 
@@ -35,6 +42,14 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
       label: "Date Created",
       value: requestDate,
     },
+    ...(form_name === "Technical Assessment" && form_questionnaire_name
+      ? [
+          {
+            label: "Questionnaire Name",
+            value: form_questionnaire_name,
+          },
+        ]
+      : []),
     ...(form_type && form_sub_type
       ? [
           {
@@ -47,7 +62,7 @@ const RequestFormDetails = ({ formDetails, requestingProject }: Props) => {
           },
         ]
       : []),
-    ...(userProfile
+    ...(!form_questionnaire_name && userProfile
       ? [
           {
             label: "Requested by",

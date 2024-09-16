@@ -4,114 +4,115 @@ import { TeamAdminType } from "@/components/TeamPage/TeamGroup/AdminGroup";
 import { TeamApproverType } from "@/components/TeamPage/TeamGroup/ApproverGroup";
 import { sortFormList } from "@/utils/arrayFunctions/arrayFunctions";
 import {
-  APP_SOURCE_ID,
-  FETCH_OPTION_LIMIT,
-  formatDate,
-  FORMSLY_FORM_ORDER,
-  IT_ASSET_FIELD_ID_LIST,
-  ITEM_FIELD_ID_LIST,
-  PED_ITEM_FIELD_ID_LIST,
-  SELECT_OPTION_LIMIT,
+    APP_SOURCE_ID,
+    FETCH_OPTION_LIMIT,
+    formatDate,
+    FORMSLY_FORM_ORDER,
+    IT_ASSET_FIELD_ID_LIST,
+    ITEM_FIELD_ID_LIST,
+    PED_ITEM_FIELD_ID_LIST,
+    SELECT_OPTION_LIMIT,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import {
-  addAmpersandBetweenWords,
-  escapeQuotes,
-  escapeQuotesForObject,
-  parseJSONIfValid,
-  startCase,
+    addAmpersandBetweenWords,
+    escapeQuotes,
+    escapeQuotesForObject,
+    parseJSONIfValid,
+    startCase,
 } from "@/utils/string";
 import {
-  AddressTableRow,
-  ApplicationInformationFilterFormValues,
-  ApplicationInformationSpreadsheetData,
-  ApproverUnresolvedRequestCountType,
-  AppType,
-  AttachmentBucketType,
-  AttachmentTableRow,
-  BackgroundCheckFilterFormValues,
-  BackgroundCheckSpreadsheetData,
-  CreateTicketFormValues,
-  CreateTicketPageOnLoad,
-  CSICodeTableRow,
-  DirectorInterviewFilterFormValues,
-  DirectorInterviewSpreadsheetData,
-  EquipmentDescriptionTableRow,
-  EquipmentPartTableInsert,
-  EquipmentPartType,
-  EquipmentTableRow,
-  FetchRequestListParams,
-  FetchUserRequestListParams,
-  FieldTableRow,
-  FormTableRow,
-  FormType,
-  HRPhoneInterviewFilterFormValues,
-  HRPhoneInterviewSpreadsheetData,
-  HRProjectType,
-  InitialFormType,
-  InterviewOnlineMeetingTableRow,
-  ItemCategoryType,
-  ItemCategoryWithSigner,
-  ItemDescriptionFieldWithUoM,
-  ItemDescriptionTableRow,
-  ItemWithDescriptionAndField,
-  ItemWithDescriptionType,
-  JiraFormslyItemCategoryWithUserDataType,
-  JiraFormslyProjectType,
-  JiraItemCategoryDataType,
-  JiraOrganizationTableRow,
-  JiraProjectDataType,
-  JobOfferFilterFormValues,
-  JobOfferHistoryType,
-  JobOfferSpreadsheetData,
-  LRFSpreadsheetData,
-  MemoListItemType,
-  MemoType,
-  NotificationOnLoad,
-  NotificationTableRow,
-  OptionTableRow,
-  OtherExpensesTypeTableRow,
-  PendingInviteType,
-  ReferenceMemoType,
-  RequestListItemType,
-  RequestListOnLoad,
-  RequestResponseTableRow,
-  RequestTableRow,
-  RequestWithResponseType,
-  SectionWithFieldType,
-  ServiceWithScopeAndChoice,
-  SignatureHistoryTableRow,
-  SignerRequestSLA,
-  SignerWithProfile,
-  SSOTOnLoad,
-  TeamMemberOnLoad,
-  TeamMemberType,
-  TeamMemberWithUser,
-  TeamMemberWithUserDetails,
-  TeamOnLoad,
-  TeamProjectTableRow,
-  TeamTableRow,
-  TechnicalInterviewFilterFormValues,
-  TechnicalInterviewSpreadsheetData,
-  TicketListOnLoad,
-  TicketListType,
-  TicketPageOnLoad,
-  TicketStatusType,
-  TradeTestFilterFormValues,
-  TradeTestSpreadsheetData,
-  TransactionTableRow,
-  UserIssuedItem,
+    AddressTableRow,
+    ApplicationInformationFilterFormValues,
+    ApplicationInformationSpreadsheetData,
+    ApproverUnresolvedRequestCountType,
+    AppType,
+    AttachmentBucketType,
+    AttachmentTableRow,
+    BackgroundCheckFilterFormValues,
+    BackgroundCheckSpreadsheetData,
+    CreateTicketFormValues,
+    CreateTicketPageOnLoad,
+    CSICodeTableRow,
+    DirectorInterviewFilterFormValues,
+    DirectorInterviewSpreadsheetData,
+    EquipmentDescriptionTableRow,
+    EquipmentPartTableInsert,
+    EquipmentPartType,
+    EquipmentTableRow,
+    FetchRequestListParams,
+    FetchUserRequestListParams,
+    FieldTableRow,
+    FormTableRow,
+    FormType,
+    HRPhoneInterviewFilterFormValues,
+    HRPhoneInterviewSpreadsheetData,
+    HRProjectType,
+    InitialFormType,
+    InterviewOnlineMeetingTableRow,
+    ItemCategoryType,
+    ItemCategoryWithSigner,
+    ItemDescriptionFieldWithUoM,
+    ItemDescriptionTableRow,
+    ItemWithDescriptionAndField,
+    ItemWithDescriptionType,
+    JiraFormslyItemCategoryWithUserDataType,
+    JiraFormslyProjectType,
+    JiraItemCategoryDataType,
+    JiraOrganizationTableRow,
+    JiraProjectDataType,
+    JobOfferFilterFormValues,
+    JobOfferHistoryType,
+    JobOfferSpreadsheetData,
+    LRFSpreadsheetData,
+    MemoListItemType,
+    MemoType,
+    NotificationOnLoad,
+    NotificationTableRow,
+    OptionTableRow,
+    OtherExpensesTypeTableRow,
+    PendingInviteType,
+    ReferenceMemoType,
+    RequestListItemType,
+    RequestListOnLoad,
+    RequestResponseTableRow,
+    RequestTableRow,
+    RequestWithResponseType,
+    SectionWithFieldType,
+    ServiceWithScopeAndChoice,
+    SignatureHistoryTableRow,
+    SignerRequestSLA,
+    SignerWithProfile,
+    SSOTOnLoad,
+    TeamMemberOnLoad,
+    TeamMemberType,
+    TeamMemberWithUser,
+    TeamMemberWithUserDetails,
+    TeamOnLoad,
+    TeamProjectTableRow,
+    TeamTableRow,
+    TechnicalAssessmentTableRow,
+    TechnicalInterviewFilterFormValues,
+    TechnicalInterviewSpreadsheetData,
+    TicketListOnLoad,
+    TicketListType,
+    TicketPageOnLoad,
+    TicketStatusType,
+    TradeTestFilterFormValues,
+    TradeTestSpreadsheetData,
+    TransactionTableRow,
+    UserIssuedItem,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  getBarangay,
-  getCity,
-  getProvince,
-  getRegion,
-  getTransactionList,
-  Database as OneOfficeDatabase,
+    getBarangay,
+    getCity,
+    getProvince,
+    getRegion,
+    getTransactionList,
+    Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -6546,3 +6547,151 @@ export const getHRProjectOptions = async (
   return data as HRProjectType[];
 };
 
+export const getQuestionnaireList = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      teamId: string;
+      page: number;
+      limit: number;
+      creator?: string;
+      isAscendingSort: boolean;
+      search?: string;
+    }
+  ) => {
+    const { teamId, page, limit, creator, isAscendingSort, search } = params;
+    const sortCondition = isAscendingSort ? "asc" : "desc";
+
+    const creatorCondition =
+      creator && validate(creator)
+        ? `q.questionnaire_created_by = '${creator}'`
+        : `q.questionnaire_created_by '%' || '${creator}' || '%'`;
+
+    const searchCondition =
+      search && validate(search)
+        ? `q.questionnaire_name = '${search}'`
+        : `q.questionnaire_name ILIKE '%' || '${search}' || '%'`;
+
+    const { data, error } = await supabaseClient.rpc(
+      "get_questionnare_table_on_load",
+      {
+        input_data: {
+          teamId,
+          search: search ? `AND (${searchCondition})` : "",
+          creator: creator ? `AND (${creatorCondition})` : "",
+          page,
+          isAscendingSort: sortCondition,
+          limit,
+        },
+      }
+    );
+    if (error) throw error;
+
+
+    return data as unknown as {
+      data: TechnicalAssessmentTableRow[];
+      count: number;
+    };
+  };
+
+  export const getQuestionnaireName = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      questionnaireId: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient
+      .schema("form_schema")
+      .from("questionnaire_table")
+      .select("questionnaire_name")
+      .eq("questionnaire_id", params.questionnaireId);
+
+    if (error) throw error;
+
+    return data[0] as { questionnaire_name: string };
+  };
+
+  export const getPositionPerQuestionnaire = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      questionnaireId: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient
+      .schema("lookup_schema")
+      .from("position_table")
+      .select("position_alias")
+      .eq("position_questionnaire_id", params.questionnaireId);
+
+    if (error) throw error;
+
+    const positions = data.map((item) => item.position_alias);
+
+    return positions;
+  };
+
+  export const getOptionsTechnicalQuestion = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: { fieldId: string }
+  ) => {
+    const { data, error } = await supabaseClient
+      .schema("form_schema")
+      .from("option_table")
+      .select("*")
+      .eq("option_field_id", params.fieldId)
+      .order("option_order", { ascending: true });
+
+    if (error) throw error;
+    return data as OptionTableRow[];
+  };
+
+  export const getTechnicalOptionsItem = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      teamId: string;
+      questionnaireId: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient.rpc("get_technical_options", {
+      input_data: params,
+    });
+
+    if (error) throw error;
+
+    return data as unknown as {
+      field_name: string;
+      field_id: string;
+      field_response: string;
+      field_is_required: boolean;
+      field_type: string;
+      field_position_id: string;
+      field_options: {
+        field_id: string;
+        field_name: string;
+        field_response: string;
+      }[];
+    }[];
+  };
+
+  export const getPositionTypeOptions = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: { teamId: string; fieldId: string }
+  ) => {
+    const { data, error } = await supabaseClient
+      .schema("lookup_schema")
+      .from("position_table")
+      .select("*")
+      .eq("position_team_id", params.teamId);
+
+    if (error) throw error;
+
+    const returnData = data.map((item, index) => {
+      return {
+        option_value: item.position_alias,
+        option_id: item.position_id,
+        option_field_id: params.fieldId,
+        option_order: index,
+      };
+    });
+
+    return returnData as OptionTableRow[];
+  };
