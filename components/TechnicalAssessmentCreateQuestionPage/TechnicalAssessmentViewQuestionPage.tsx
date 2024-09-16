@@ -254,11 +254,10 @@ const TechnicalAssessmentViewQuestionPage = ({
             fieldId: form.form_section[1].section_field[0].field_id,
             teamId: team.team_id,
           });
-          console.log(positionData);
 
           const positionOptionsFinal = positionData.map((option, index) => {
             return {
-              option_field_id: form.form_section[2].section_field[0].field_id,
+              option_field_id: form.form_section[1].section_field[0].field_id,
               option_id: option.option_id,
               option_order: index,
               option_value: option.option_value,
