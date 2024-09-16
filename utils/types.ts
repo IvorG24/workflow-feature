@@ -613,7 +613,7 @@ export type FieldType =
   | "DATE"
   | "TIME"
   | "LINK"
-  | "MULTIPLE CHOICE";
+  | "MULTIPLE CHOICE" | "AUTOCOMPLETE";
 // | "SLIDER";
 export type FieldTagType =
   | "POSITIVE_METRIC"
