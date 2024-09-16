@@ -82,22 +82,16 @@ const styles = StyleSheet.create({
     width: "15%",
   },
   "Base Unit of Measurement": {
-    width: "8%",
+    width: "10%",
   },
   Quantity: {
     width: "10%",
   },
   "GL Account": {
-    width: "10%",
-  },
-  "CSI Code Description": {
-    width: "10%",
-  },
-  "CSI Code": {
-    width: "7%",
+    width: "15%",
   },
   Description: {
-    width: "40%",
+    width: "50%",
   },
   badge: {
     padding: "0px 4px",
@@ -174,9 +168,7 @@ type ColumnType =
   | "General Name"
   | "Base Unit of Measurement"
   | "Quantity"
-  | "GL Account"
-  | "CSI Code Description"
-  | "CSI Code";
+  | "GL Account";
 
 type FieldType = {
   label: string;
@@ -321,19 +313,13 @@ const ItemPdfDocumentTableVersion = ({
                 <View style={[styles.tableCol, styles["GL Account"]]}>
                   <Text style={styles.tableHeader}>GL Account</Text>
                 </View>
-                <View style={[styles.tableCol, styles["CSI Code Description"]]}>
-                  <Text style={styles.tableHeader}>CSI Description</Text>
-                </View>
-                <View style={[styles.tableCol, styles["CSI Code"]]}>
-                  <Text style={styles.tableHeader}>CSI Code</Text>
-                </View>
                 <View style={[styles.tableCol, styles["Description"]]}>
                   <Text style={styles.tableHeader}>Item Description</Text>
                 </View>
               </View>
               {requestItems.slice(1).map((item, index) => {
                 let description = "";
-                item.fields.slice(9).forEach((field) => {
+                item.fields.slice(4).forEach((field) => {
                   if (field.value) {
                     description += `${field.label}: ${field.value}\n`;
                   }
@@ -341,7 +327,7 @@ const ItemPdfDocumentTableVersion = ({
 
                 return (
                   <View style={styles.tableRow} key={index} wrap={false}>
-                    {item.fields.slice(0, 6).map((field, i) => (
+                    {item.fields.slice(0, 4).map((field, i) => (
                       <View
                         key={i}
                         style={[
