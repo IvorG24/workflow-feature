@@ -3,65 +3,70 @@ import { FormBuilderData } from "@/components/FormBuilder/FormBuilder";
 import { TeamMemberType as GroupTeamMemberType } from "@/components/TeamPage/TeamGroup/TeamGroups/GroupMembers";
 import { TeamMemberType as ProjectTeamMemberType } from "@/components/TeamPage/TeamProject/ProjectMembers";
 import {
-  APP_SOURCE_ID,
-  BASE_URL,
-  formslyPremadeFormsData,
+    APP_SOURCE_ID,
+    BASE_URL,
+    formslyPremadeFormsData,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { formatJiraItemUserTableData } from "@/utils/functions";
 import { escapeQuotes, escapeQuotesForObject } from "@/utils/string";
 import {
-  AddressTableInsert,
-  AdOwnerRequestTableInsert,
-  AttachmentBucketType,
-  AttachmentTableInsert,
-  CommentTableInsert,
-  CreateTicketFormValues,
-  EquipmentDescriptionTableInsert,
-  EquipmentPartTableInsert,
-  EquipmentTableInsert,
-  FormTableRow,
-  FormType,
-  InterviewOnlineMeetingTableInsert,
-  InterviewOnlineMeetingTableRow,
-  InvitationTableRow,
-  ItemDescriptionFieldTableInsert,
-  ItemDescriptionFieldUOMTableInsert,
-  ItemDescriptionTableUpdate,
-  ItemForm,
-  ItemTableInsert,
-  JiraFormslyItemCategoryWithUserDataType,
-  JiraItemCategoryTableInsert,
-  JiraItemCategoryUserTableInsert,
-  JiraItemUserTableData,
-  JiraOrganizationTableInsert,
-  JiraProjectTableInsert,
-  JiraUserAccountTableInsert,
-  JobTitleTableInsert,
-  MemoAgreementTableRow,
-  MemoLineItem,
-  MemoTableRow,
-  NotificationTableInsert,
-  OtherExpensesTypeTableInsert,
-  ReferenceMemoType,
-  RequestResponseTableInsert,
-  RequestSignerTableInsert,
-  RequestTableRow,
-  ServiceForm,
-  ServiceScopeChoiceTableInsert,
-  ServiceTableInsert,
-  SignerTableInsert,
-  SupplierTableInsert,
-  TeamGroupTableInsert,
-  TeamMemberTableInsert,
-  TeamProjectWithAddressType,
-  TeamTableInsert,
-  TicketCommentTableInsert,
-  TicketResponseTableInsert,
-  TicketTableRow,
-  UserTableInsert,
-  UserTableRow,
-  UserValidIDTableInsert,
+    AddressTableInsert,
+    AdOwnerRequestTableInsert,
+    AttachmentBucketType,
+    AttachmentTableInsert,
+    CommentTableInsert,
+    CreateTicketFormValues,
+    EquipmentDescriptionTableInsert,
+    EquipmentPartTableInsert,
+    EquipmentTableInsert,
+    FieldCorrectResponseTableInsert,
+    FieldTableInsert,
+    FormTableRow,
+    FormType,
+    FormWithResponseType,
+    InterviewOnlineMeetingTableInsert,
+    InterviewOnlineMeetingTableRow,
+    InvitationTableRow,
+    ItemDescriptionFieldTableInsert,
+    ItemDescriptionFieldUOMTableInsert,
+    ItemDescriptionTableUpdate,
+    ItemForm,
+    ItemTableInsert,
+    JiraFormslyItemCategoryWithUserDataType,
+    JiraItemCategoryTableInsert,
+    JiraItemCategoryUserTableInsert,
+    JiraItemUserTableData,
+    JiraOrganizationTableInsert,
+    JiraProjectTableInsert,
+    JiraUserAccountTableInsert,
+    JobTitleTableInsert,
+    MemoAgreementTableRow,
+    MemoLineItem,
+    MemoTableRow,
+    NotificationTableInsert,
+    OptionTableInsert,
+    OtherExpensesTypeTableInsert,
+    ReferenceMemoType,
+    RequestResponseTableInsert,
+    RequestSignerTableInsert,
+    RequestTableRow,
+    ServiceForm,
+    ServiceScopeChoiceTableInsert,
+    ServiceTableInsert,
+    SignerTableInsert,
+    SupplierTableInsert,
+    TeamGroupTableInsert,
+    TeamMemberTableInsert,
+    TeamProjectWithAddressType,
+    TeamTableInsert,
+    TechnicalAssessmentTableRow,
+    TicketCommentTableInsert,
+    TicketResponseTableInsert,
+    TicketTableRow,
+    UserTableInsert,
+    UserTableRow,
+    UserValidIDTableInsert,
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -2128,3 +2133,252 @@ export const createAdOwnerRequest = async (
 
   if (error) throw error;
 };
+
+export const createTechnicalQuestions = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      requestFormValues: RequestFormValues;
+      formId: string;
+      teamMemberId?: string;
+      teamId: string;
+      questionnaireId: string;
+    }
+  ) => {
+    const { requestFormValues, formId, questionnaireId } = params;
+
+    const { data: fieldData, error: fieldError } = await supabaseClient
+      .schema("form_schema")
+      .from("field_table")
+      .select("field_order")
+      .order("field_order", { ascending: false })
+      .eq("field_section_id", requestFormValues.sections[0].section_id);
+
+    if (fieldError) throw fieldError;
+
+    const FieldTableInput: FieldTableInsert[] = [];
+    const OptionTableInput: OptionTableInsert[] = [];
+    const CorrectResponseTableInput: FieldCorrectResponseTableInsert[] = [];
+    const QuestionId: string[] = [];
+    let correctAnswerFieldResponse = "";
+    let field_order = 0;
+    let correctAnswerFieldId = "";
+    for (const section of requestFormValues.sections) {
+      for (const field of section.section_field) {
+        if (field.field_name.toLowerCase().includes("correct answer")) {
+          correctAnswerFieldResponse = String(field.field_response);
+          field_order = field.field_order;
+        }
+
+        if (field.field_name.toLowerCase().includes("technical question")) {
+          const fieldId = uuidv4();
+          correctAnswerFieldId = fieldId;
+          const fieldEntry: FieldTableInsert = {
+            field_id: fieldId,
+            field_name: String(field.field_response),
+            field_is_required: field.field_is_required,
+            field_type: "MULTIPLE CHOICE",
+            field_order: fieldData[0].field_order + 1,
+            field_section_id: field.field_section_id,
+          };
+          FieldTableInput.push(fieldEntry);
+
+          if (field.field_type === "TEXT" && field.field_response) {
+            let optionCounter = 1;
+
+            for (const optionField of section.section_field) {
+              const optionId = uuidv4();
+              if (
+                optionField.field_name
+                  .toLowerCase()
+                  .includes("question choice 1") ||
+                optionField.field_name
+                  .toLowerCase()
+                  .includes("question choice 2") ||
+                optionField.field_name
+                  .toLowerCase()
+                  .includes("question choice 3") ||
+                optionField.field_name.toLowerCase().includes("question choice 4")
+              ) {
+                const optionEntry: OptionTableInsert = {
+                  option_id: optionId,
+                  option_value: String(optionField.field_response),
+                  option_order: field_order,
+                  option_field_id: fieldId,
+                };
+
+                OptionTableInput.push(optionEntry);
+                optionCounter++;
+                field_order++;
+              }
+            }
+          }
+        }
+      }
+      if (correctAnswerFieldResponse) {
+        for (const optionField of section.section_field) {
+          if (
+            optionField.field_name.toLowerCase() ===
+            correctAnswerFieldResponse.toLowerCase()
+          ) {
+            const correctResponseEntry: FieldCorrectResponseTableInsert = {
+              correct_response_id: uuidv4(),
+              correct_response_value: String(optionField.field_response),
+              correct_response_field_id: correctAnswerFieldId,
+            };
+            CorrectResponseTableInput.push(correctResponseEntry);
+          }
+        }
+      }
+    }
+
+    const fieldResponseValues = FieldTableInput.map((response) => {
+      const escapedResponse = escapeQuotes(response.field_name || "");
+      return `('${response.field_id}', '${escapedResponse}','${response.field_is_required}','${response.field_type}',${response.field_order},'${response.field_section_id}')`;
+    }).join(",");
+
+    //   const optionResponseValues = OptionTableInput.map((response) => {
+    //     const escapedResponse = escapeQuotes(response.option_value || "");
+    //     return `('${response.option_id}', '${escapedResponse}', '${response.option_order}', '${response.option_field_id}')`; // Use the corresponding field UUID
+    //   }).join(",");
+
+    const correctResponseValues = CorrectResponseTableInput.map((response) => {
+      const escapedResponse = escapeQuotes(response.correct_response_value || "");
+      return `('${response.correct_response_id}', '${escapedResponse}', '${response.correct_response_field_id}')`;
+    }).join(",");
+
+    const questionResponseValues = FieldTableInput.map((response) => {
+      const questionId = uuidv4();
+      QuestionId.push(questionId);
+      const escapedResponse = escapeQuotes(response.field_name || "");
+      return `('${questionId}','${escapedResponse}','${response.field_id}','${questionnaireId}')`;
+    }).join(",");
+
+    const questionOptionResponseValues = OptionTableInput.map(
+      (response, index) => {
+        const escapedResponse = escapeQuotes(response.option_value || "");
+        const fieldUuid = QuestionId[Math.floor(index / 4)]; // Use the UUID from QuestionId in batches of 4
+        return `('${escapedResponse}', '${response.option_order}', '${fieldUuid}')`; // Use the corresponding field UUID
+      }
+    ).join(",");
+
+    const { data, error } = await supabaseClient
+      .rpc("create_technical_question", {
+        input_data: {
+          fieldResponseValues,
+          correctResponseValues,
+          // optionResponseValues,
+          questionResponseValues,
+          questionOptionResponseValues,
+        },
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  };
+
+  export const checkIfQuestionExists = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      data: RequestFormValues;
+      questionnaireId: string;
+    }
+  ) => {
+    const { data: requestFormValues, questionnaireId } = params;
+    const technicalQuestionData: string[] = [];
+    for (const section of requestFormValues.sections) {
+      for (const field of section.section_field) {
+        if (field.field_name.toLowerCase().includes("technical question")) {
+          technicalQuestionData.push(String(field.field_response));
+        }
+      }
+    }
+
+    const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
+      "check_technical_question",
+      {
+        input_data: {
+          data: technicalQuestionData,
+          questionnaireId,
+        },
+      }
+    );
+
+    if (fieldError) throw fieldError;
+
+    return fieldData as boolean;
+  };
+
+  export const checkIfQuestionExistsUpdate = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      data: FormWithResponseType["form_section"][0];
+      questionnaireId: string;
+    }
+  ) => {
+    const { data: requestFormValues, questionnaireId } = params;
+    const technicalQuestionData: string[] = [];
+
+    for (const field of requestFormValues.section_field) {
+      if (field.field_name.toLowerCase().includes("technical question")) {
+        technicalQuestionData.push(String(field.field_response));
+      }
+    }
+    const { data: fieldData, error: fieldError } = await supabaseClient.rpc(
+      "check_technical_question",
+      {
+        input_data: {
+          data: technicalQuestionData,
+          questionnaireId,
+        },
+      }
+    );
+
+    if (fieldError) throw fieldError;
+
+    return fieldData as boolean;
+  };
+
+  export const createQuestionnaire = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      questionnaireName: string;
+      teamId: string;
+      team_member_id: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient
+      .schema("form_schema")
+      .from("questionnaire_table")
+      .insert({
+        questionnaire_name: params.questionnaireName,
+        questionnaire_team_id: params.teamId,
+        questionnaire_created_by: params.team_member_id,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return data as unknown as TechnicalAssessmentTableRow;
+  };
+
+  export const checkQuestionnaireName = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      questionnaireName: string;
+    }
+  ) => {
+    const { data, error } = await supabaseClient
+      .schema("form_schema")
+      .from("questionnaire_table")
+      .select("*")
+      .eq("questionnaire_name", params.questionnaireName)
+      .limit(1);
+
+    if (error) throw error;
+
+    return data;
+  };
