@@ -48,6 +48,7 @@ import {
   FormType,
   HRPhoneInterviewFilterFormValues,
   HRPhoneInterviewSpreadsheetData,
+  HRProjectType,
   InitialFormType,
   InterviewOnlineMeetingTableRow,
   ItemCategoryType,
@@ -6534,3 +6535,14 @@ export const getDegreeNameOptions = async (
 
   return data as string[];
 };
+
+export const getHRProjectOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_hr_project_options"
+  );
+  if (error) throw error;
+  return data as HRProjectType[];
+};
+

@@ -63,6 +63,12 @@ const JobOffer = ({
         teamMemberId: jobOfferData.job_offer_team_member_id as string,
         projectAssignment: jobOfferData.job_offer_project_assignment as string,
         reason,
+        projectAddress:
+          jobOfferData.job_offer_project_assignment_address as string,
+        manpowerLoadingId: jobOfferData.job_offer_manpower_loading_id as string,
+        manpowerLoadingReferenceCreatedBy:
+          jobOfferData.job_offer_manpower_loading_reference_created_by as string,
+        compensation: jobOfferData.job_offer_compensation as string,
       });
 
       setJobOfferStatus(newStatus);
@@ -72,6 +78,7 @@ const JobOffer = ({
       });
       modals.closeAll();
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -155,6 +162,16 @@ const JobOffer = ({
               <Title order={5}>
                 {jobOfferData.job_offer_project_assignment}
               </Title>
+            </Group>
+            <Group>
+              <Text>Project Address: </Text>
+              <Title order={5}>
+                {jobOfferData.job_offer_project_assignment_address}
+              </Title>
+            </Group>
+            <Group>
+              <Text>Compensation: </Text>
+              <Title order={5}>{jobOfferData.job_offer_compensation}</Title>
             </Group>
             <Group>
               <Text>Job Offer: </Text>

@@ -566,6 +566,13 @@ export type InterviewOnlineMeetingTableInsert =
 export type InterviewOnlineMeetingTableUpdate =
   Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Update"];
 
+  export type HRProjectTableRow =
+  Database["hr_schema"]["Tables"]["hr_project_table"]["Row"];
+export type HRProjectTableInsert =
+  Database["hr_schema"]["Tables"]["hr_project_table"]["Insert"];
+export type HRProjectTableUpdate =
+  Database["hr_schema"]["Tables"]["hr_project_table"]["Update"];
+
 export type AdOwnerTableRow =
   Database["lookup_schema"]["Tables"]["ad_owner_table"]["Row"];
 
@@ -2450,3 +2457,16 @@ export type MeetingType =
   | "trade_test"
   | "technical_interview"
   | "director_interview";
+
+  
+export type HRProjectType = HRProjectTableRow & {hr_project_address: AddressTableRow}
+
+export type JobOfferFormType = {
+  title: string;
+  projectAssignment: string;
+  projectAddress: string;
+  manpowerLoadingId: string;
+  manpowerLoadingReferenceCreatedBy: string;
+  compensation: string;
+  attachment: File | null;
+}

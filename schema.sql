@@ -17200,10 +17200,13 @@ AS $$
       requestReferenceId,
       userEmail,
       applicationInformationFormslyId,
-      jobTitle,
       attachmentId,
+      title,
       projectAssignment,
-      reason
+      projectAddress,
+      manpowerLoadingId,
+      manpowerLoadingReferenceCreatedBy,
+      compensation
     } = input_data;
 
     const jobOfferId = plv8.execute(
@@ -17212,18 +17215,27 @@ AS $$
         (
           job_offer_status,
           job_offer_team_member_id,
-          job_offer_title,
           job_offer_attachment_id,
+          job_offer_request_id,
+          job_offer_title,
           job_offer_project_assignment,
-          job_offer_request_id)
+          job_offer_project_assignment_address,
+          job_offer_manpower_loading_id,
+          job_offer_manpower_loading_reference_created_by,
+          job_offer_compensation
+        )
         VALUES
         (
           'PENDING',
           '${teamMemberId}',
-          '${jobTitle}',
           '${attachmentId}',
+          '${requestReferenceId}',
+          '${title}',
           '${projectAssignment}',
-          '${requestReferenceId}'
+          '${projectAddress}',
+          '${manpowerLoadingId}',
+          '${manpowerLoadingReferenceCreatedBy}',
+          '${compensation}'
         )
         RETURNING job_offer_id
       `
@@ -17243,7 +17255,7 @@ AS $$
         (
           'REQUEST',
           'REQUEST',
-          'You have a new job offer (${jobTitle}).',
+          'You have a new job offer (${title}).',
           '/user/application-progress/${applicationInformationFormslyId}',
           '${userId}'
         )
@@ -17268,7 +17280,11 @@ AS $$
       attachmentId,
       teamMemberId,
       projectAssignment,
-      reason
+      reason,
+      projectAddress,
+      manpowerLoadingId,
+      manpowerLoadingReferenceCreatedBy,
+      compensation
     } = input_data;
 
     const jobOfferId = plv8.execute(
@@ -17280,7 +17296,11 @@ AS $$
           job_offer_request_id,
           job_offer_attachment_id,
           job_offer_team_member_id,
-          job_offer_project_assignment
+          job_offer_project_assignment,
+          job_offer_project_assignment_address,
+          job_offer_manpower_loading_id,
+          job_offer_manpower_loading_reference_created_by,
+          job_offer_compensation
         )
         VALUES
         (
@@ -17289,7 +17309,11 @@ AS $$
           '${requestReferenceId}',
           ${attachmentId ? `'${attachmentId}'` : "NULL"},
           '${teamMemberId}',
-          ${projectAssignment ? `'${projectAssignment}'` : "NULL"}
+          ${projectAssignment ? `'${projectAssignment}'` : "NULL"},
+          ${projectAddress ? `'${projectAddress}'` : "NULL"},
+          ${manpowerLoadingId ? `'${manpowerLoadingId}'` : "NULL"},
+          ${manpowerLoadingReferenceCreatedBy ? `'${manpowerLoadingReferenceCreatedBy}'` : "NULL"},
+          ${compensation ? `'${compensation}'` : "NULL"}
         )
         RETURNING job_offer_id
       `
@@ -17930,6 +17954,42 @@ plv8.subtransaction(function(){
     `
   );
   returnData = data.map(value => value.degree_name);
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_hr_project_options(
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function(){
+  const data = plv8.execute(
+    `
+      SELECT *
+      FROM hr_schema.hr_project_table
+      INNER JOIN public.address_table ON address_id = hr_project_address_id
+      ORDER BY hr_project_name
+    `
+  );
+  returnData = data.map(project => {
+    return {
+      hr_project_id: project.hr_project_id,
+      hr_project_date_created: project.hr_project_date_created,
+      hr_project_name: project.hr_project_name,
+      hr_project_address: {
+        address_id: project.address_id,
+        address_date_created: project.address_date_created,
+        address_region: project.address_region,
+        address_province: project.address_province,
+        address_city: project.address_city,
+        address_barangay: project.address_barangay,
+        address_street: project.address_street,
+        address_zip_code: project.address_zip_code
+      }
+    }
+  });
 });
 return returnData;
 $$ LANGUAGE plv8;

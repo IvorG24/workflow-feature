@@ -24,6 +24,7 @@ import {
   JiraOrganizationTableUpdate,
   JiraProjectTableUpdate,
   JiraUserAccountTableUpdate,
+  JobOfferFormType,
   JobTitleTableUpdate,
   MemberRoleType,
   MemoAgreementTableRow,
@@ -1476,15 +1477,12 @@ export const updateBackgroundCheckStatus = async (
 
 export const addJobOffer = async (
   supabaseClient: SupabaseClient<Database>,
-  params: {
+  params: Omit<JobOfferFormType, "attachment"> & {
     teamMemberId: string;
     requestReferenceId: string;
     userEmail: string;
     applicationInformationFormslyId: string;
-    jobTitle: string;
     attachmentId: string;
-    projectAssignment: string;
-    reason?: string;
   }
 ) => {
   const { error } = await supabaseClient.rpc("add_job_offer", {
@@ -1503,6 +1501,10 @@ export const updateJobOfferStatus = async (
     teamMemberId: string;
     projectAssignment: string;
     reason?: string;
+    projectAddress: string;
+    manpowerLoadingId: string;
+    manpowerLoadingReferenceCreatedBy: string;
+    compensation: string;
   }
 ) => {
   const { error } = await supabaseClient.rpc("update_job_offer_status", {

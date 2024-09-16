@@ -1,4 +1,8 @@
-import { getJobHistory } from "@/backend/api/get";
+import {
+  getHRProjectOptions,
+  getJobHistory,
+  getTeamMemberList,
+} from "@/backend/api/get";
 import { createAttachment } from "@/backend/api/post";
 import { addJobOffer, updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
@@ -15,9 +19,12 @@ import { safeParse } from "@/utils/functions";
 import { capitalizeEachWord, formatTeamNameToUrlKey } from "@/utils/string";
 import { getStatusToColor, mobileNumberFormatter } from "@/utils/styling";
 import {
+  HRProjectType,
+  JobOfferFormType,
   JobOfferHistoryType,
   JobOfferSpreadsheetData,
   OptionType,
+  TeamMemberType,
 } from "@/utils/types";
 import {
   ActionIcon,
@@ -35,6 +42,7 @@ import {
   Select,
   Stack,
   Text,
+  TextInput,
   Timeline,
   Title,
 } from "@mantine/core";
@@ -43,12 +51,10 @@ import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
-  IconBriefcase,
   IconCheck,
   IconFile,
   IconHistory,
   IconHourglass,
-  IconLocation,
   IconProgress,
   IconTag,
   IconX,
@@ -100,6 +106,10 @@ const JobOfferMainTableRow = ({
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [history, setHistory] = useState<JobOfferHistoryType[]>([]);
   const [isOverriding, setIsOverriding] = useState(false);
+  const [teamMemberOptions, setTeamMemberOptions] = useState<TeamMemberType[]>(
+    []
+  );
+  const [projectOptions, setProjectOptions] = useState<HRProjectType[]>([]);
 
   const {
     handleSubmit,
@@ -107,17 +117,52 @@ const JobOfferMainTableRow = ({
     formState: { errors },
     setValue,
     clearErrors,
-  } = useForm<{
-    title: string;
-    attachment: File | null;
-    projectAssignment: string;
-  }>({ defaultValues: { title: "", attachment: null, projectAssignment: "" } });
+    register,
+  } = useForm<JobOfferFormType>({
+    defaultValues: {
+      title: "",
+      projectAssignment: "",
+      projectAddress: "",
+      manpowerLoadingId: "",
+      manpowerLoadingReferenceCreatedBy: "",
+      compensation: "",
+      attachment: null,
+    },
+  });
+
+  useEffect(() => {
+    const fetchJobOfferData = async () => {
+      try {
+        setIsLoading(true);
+        const teamMemberData = await getTeamMemberList(supabaseClient, {
+          teamId: team.team_id,
+        });
+        setTeamMemberOptions(teamMemberData);
+        const projectData = await getHRProjectOptions(supabaseClient);
+        setProjectOptions(projectData);
+      } catch (e) {
+        notifications.show({
+          message: "Something went wrong. Please try again later.",
+          color: "red",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (team.team_id) {
+      fetchJobOfferData();
+    }
+  }, [team.team_id]);
 
   useEffect(() => {
     if (!jobOfferModalIsOpen) {
       setValue("title", "");
-      setValue("attachment", null);
       setValue("projectAssignment", "");
+      setValue("projectAddress", "");
+      setValue("manpowerLoadingId", "");
+      setValue("manpowerLoadingReferenceCreatedBy", "");
+      setValue("compensation", "");
+      setValue("attachment", null);
       clearErrors();
     }
   }, [jobOfferModalIsOpen]);
@@ -145,11 +190,7 @@ const JobOfferMainTableRow = ({
     }
   }, [historyModalIsOpen]);
 
-  const handleAddOffer = async (data: {
-    title: string;
-    attachment: File | null;
-    projectAssignment: string;
-  }) => {
+  const handleAddOffer = async (data: JobOfferFormType) => {
     const isJobOfferMatched = await handleCheckRow(item);
     if (!isJobOfferMatched) return;
 
@@ -172,14 +213,13 @@ const JobOfferMainTableRow = ({
       );
 
       await addJobOffer(supabaseClient, {
+        ...data,
         teamMemberId: teamMember.team_member_id,
         requestReferenceId: item.hr_request_reference_id,
         userEmail: item.application_information_email,
         applicationInformationFormslyId:
           item.application_information_request_id,
-        jobTitle: data.title,
         attachmentId: attachmentData.attachment_id,
-        projectAssignment: data.projectAssignment,
       });
 
       setData((prev) =>
@@ -203,6 +243,7 @@ const JobOfferMainTableRow = ({
         color: "green",
       });
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
@@ -244,6 +285,10 @@ const JobOfferMainTableRow = ({
         attachmentId: "",
         teamMemberId: teamMember.team_member_id,
         projectAssignment: "",
+        projectAddress: "",
+        manpowerLoadingId: "",
+        manpowerLoadingReferenceCreatedBy: "",
+        compensation: "",
       });
 
       setData((prev) =>
@@ -303,7 +348,7 @@ const JobOfferMainTableRow = ({
       <Modal
         opened={jobOfferModalIsOpen}
         onClose={closeJobOfferModal}
-        title="Add / Update Offer"
+        title="Add Offer"
         centered
         closeOnEscape={false}
         closeOnClickOutside={false}
@@ -331,7 +376,6 @@ const JobOfferMainTableRow = ({
                   return (
                     <Select
                       label="Job Title"
-                      icon={<IconBriefcase size={16} />}
                       clearable
                       value={value}
                       required
@@ -355,18 +399,34 @@ const JobOfferMainTableRow = ({
                   return (
                     <Select
                       label="Project Assignment"
-                      icon={<IconLocation size={16} />}
                       clearable
                       value={value}
                       required
                       searchable
-                      onChange={onChange}
+                      onChange={(value) => {
+                        const projectAddress = projectOptions.find(
+                          (project) => project.hr_project_name === value
+                        )?.hr_project_address;
+                        setValue(
+                          "projectAddress",
+                          [
+                            projectAddress?.address_region,
+                            projectAddress?.address_province,
+                            projectAddress?.address_city,
+                            projectAddress?.address_barangay,
+                            projectAddress?.address_street,
+                            projectAddress?.address_zip_code,
+                          ].join(", ")
+                        );
+                        onChange(value);
+                      }}
                       error={errors.projectAssignment?.message}
-                      data={[
-                        { label: "Project 1", value: "Project 1" },
-                        { label: "Project 2", value: "Project 2" },
-                        { label: "Project 3", value: "Project 3" },
-                      ]}
+                      data={projectOptions.map((project) => {
+                        return {
+                          label: project.hr_project_name,
+                          value: project.hr_project_name,
+                        };
+                      })}
                       withinPortal
                       autoFocus={false}
                     />
@@ -376,6 +436,60 @@ const JobOfferMainTableRow = ({
                   required: "Project assignment is required.",
                 }}
               />
+              <TextInput
+                label="Project Address"
+                {...register("projectAddress", {
+                  required: "Project address is required.",
+                })}
+                required
+                error={errors.projectAddress?.message}
+                readOnly
+                variant="filled"
+              />
+              <TextInput
+                label="Manpower Loading ID"
+                {...register("manpowerLoadingId", {
+                  required: "Manpower loading ID is required.",
+                })}
+                required
+                error={errors.manpowerLoadingId?.message}
+              />
+              <Controller
+                control={control}
+                name="manpowerLoadingReferenceCreatedBy"
+                render={({ field: { value, onChange } }) => {
+                  return (
+                    <Select
+                      label="Manpower Loading Reference Createdy By"
+                      clearable
+                      value={value}
+                      required
+                      searchable
+                      onChange={onChange}
+                      error={errors.projectAssignment?.message}
+                      data={teamMemberOptions.map((teamMember) => {
+                        return {
+                          label: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                          value: `${teamMember.team_member_user.user_first_name} ${teamMember.team_member_user.user_last_name}`,
+                        };
+                      })}
+                      withinPortal
+                      autoFocus={false}
+                    />
+                  );
+                }}
+                rules={{
+                  required: "Project assignment is required.",
+                }}
+              />
+              <TextInput
+                label="Compensation"
+                {...register("compensation", {
+                  required: "Compensation is required.",
+                })}
+                required
+                error={errors.compensation?.message}
+              />
               <Controller
                 control={control}
                 name="attachment"
@@ -383,7 +497,6 @@ const JobOfferMainTableRow = ({
                   return (
                     <FileInput
                       label="Attachment"
-                      icon={<IconFile size={16} />}
                       clearable
                       value={value}
                       required
@@ -429,6 +542,7 @@ const JobOfferMainTableRow = ({
         onClose={closeHistoryModal}
         title="Job Offer History"
         centered
+        size="lg"
       >
         {isFetchingHistory && (
           <Center p="xl">
@@ -466,6 +580,56 @@ const JobOfferMainTableRow = ({
                             </Title>
                           </Group>
                         )}
+                        {value.job_offer_title && (
+                          <Group>
+                            <Text size={14}>Job Title: </Text>
+                            <Title order={6}>{value.job_offer_title}</Title>
+                          </Group>
+                        )}
+                        {value.job_offer_project_assignment && (
+                          <Group>
+                            <Text size={14}>Project Assignment: </Text>
+                            <Title order={6}>
+                              {value.job_offer_project_assignment}
+                            </Title>
+                          </Group>
+                        )}
+                        {value.job_offer_project_assignment_address && (
+                          <Group>
+                            <Text size={14}>Project Address: </Text>
+                            <Title order={6}>
+                              {value.job_offer_project_assignment_address}
+                            </Title>
+                          </Group>
+                        )}
+                        {value.job_offer_manpower_loading_id && (
+                          <Group>
+                            <Text size={14}>Manpower Loading ID: </Text>
+                            <Title order={6}>
+                              {value.job_offer_manpower_loading_id}
+                            </Title>
+                          </Group>
+                        )}
+                        {value.job_offer_manpower_loading_reference_created_by && (
+                          <Group>
+                            <Text size={14}>
+                              Manpower Loading Reference Created By:{" "}
+                            </Text>
+                            <Title order={6}>
+                              {
+                                value.job_offer_manpower_loading_reference_created_by
+                              }
+                            </Title>
+                          </Group>
+                        )}
+                        {value.job_offer_compensation && (
+                          <Group>
+                            <Text size={14}>Compensation: </Text>
+                            <Title order={6}>
+                              {value.job_offer_compensation}
+                            </Title>
+                          </Group>
+                        )}
                         {value.job_offer_attachment && (
                           <Group>
                             <Text size={14}>Job Offer: </Text>
@@ -492,21 +656,6 @@ const JobOfferMainTableRow = ({
                             </ActionIcon>
                           </Group>
                         )}
-                        {value.job_offer_title && (
-                          <Group>
-                            <Text size={14}>Job Title: </Text>
-                            <Title order={6}>{value.job_offer_title}</Title>
-                          </Group>
-                        )}
-                        {value.job_offer_project_assignment && (
-                          <Group>
-                            <Text size={14}>Project Assignment: </Text>
-                            <Title order={6}>
-                              {value.job_offer_project_assignment}
-                            </Title>
-                          </Group>
-                        )}
-
                         {value.job_offer_reason_for_rejection && (
                           <Group>
                             <Text size={14}>Reason for rejection: </Text>
