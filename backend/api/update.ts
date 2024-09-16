@@ -25,7 +25,7 @@ import {
   JiraOrganizationTableUpdate,
   JiraProjectTableUpdate,
   JiraUserAccountTableUpdate,
-   JobOfferFormType,
+  JobOfferFormType,
   JobTitleTableUpdate,
   MemberRoleType,
   MemoAgreementTableRow,

@@ -16,11 +16,11 @@ import {
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
 import {
-    addAmpersandBetweenWords,
-    escapeQuotes,
-    escapeQuotesForObject,
-    parseJSONIfValid,
-    startCase,
+  addAmpersandBetweenWords,
+  escapeQuotes,
+  escapeQuotesForObject,
+  parseJSONIfValid,
+  startCase,
 } from "@/utils/string";
 import {
   AddressTableRow,
@@ -6680,7 +6680,8 @@ export const getQuestionnaireList = async (
       .schema("lookup_schema")
       .from("position_table")
       .select("*")
-      .eq("position_team_id", params.teamId);
+      .eq("position_team_id", params.teamId)
+      .order("position_alias");
 
     if (error) throw error;
 

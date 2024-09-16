@@ -109,7 +109,7 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
           }
         });
       });
-      if (requestScore >= 1) {
+      if (requestScore >= 3) {
         status = "APPROVED";
       } else {
         status = "REJECTED";

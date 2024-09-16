@@ -283,6 +283,27 @@ const RequestResponse = ({
             clearable
           />
         );
+      case "AUTOCOMPLETE":
+        const autocompleteOption = response.options.map((option) => ({
+          value: option.option_value,
+          label: option.option_value,
+        }));
+
+        return isFormslyForm || Boolean(response.isSpecialField) ? (
+          <TextInput
+            label={response.label}
+            value={parsedValue}
+            {...inputProps}
+          />
+        ) : (
+          <Select
+            label={response.label}
+            data={autocompleteOption}
+            value={parsedValue}
+            {...inputProps}
+            clearable
+          />
+        );
       case "MULTISELECT":
         let multiselectOption = response.options.map((option) => ({
           value: option.option_value,

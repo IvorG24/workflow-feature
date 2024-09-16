@@ -15,6 +15,7 @@ import {
 import { FieldTableRow, OptionTableRow } from "@/utils/types";
 import {
   ActionIcon,
+  Autocomplete,
   Checkbox,
   FileInput,
   Flex,
@@ -1231,6 +1232,40 @@ const RequestFormFields = ({
                     ? "Which department will this employee go to?"
                     : ""
                 }
+              />
+            )}
+            rules={{ ...fieldRules }}
+          />
+        );
+
+      case "AUTOCOMPLETE":
+        const autoCompleteOption = dropdownOptionValue.map((option) => {
+          return {
+            value: option.option_value,
+            label: option.option_value,
+          };
+        });
+
+        return (
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <Autocomplete
+                value={value as string}
+                onChange={(value) => {
+                  onChange(value);
+                }}
+                data={autoCompleteOption}
+                withAsterisk={field.field_is_required}
+                {...inputProps}
+                error={fieldError}
+                limit={SELECT_OPTION_LIMIT}
+                disabled={isEdit && field.field_name === "Requesting Project"}
+                readOnly={field.field_is_read_only || isLoading}
+                rightSection={isLoading && <Loader size={16} />}
+                dropdownPosition="bottom"
+                maxDropdownHeight={220}
               />
             )}
             rules={{ ...fieldRules }}
