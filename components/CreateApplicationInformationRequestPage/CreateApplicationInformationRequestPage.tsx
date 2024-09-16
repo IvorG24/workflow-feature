@@ -4,6 +4,8 @@ import {
   fetchProvince,
   fetchRegion,
   getApplicationInformationPositionOptions,
+  getDegreeNameOptions,
+  getFieldOfStudyOptions,
 } from "@/backend/api/get";
 import { createAdOwnerRequest, createRequest } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
@@ -112,7 +114,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
               option_field_id: form.form_section[0].section_field[0].field_id,
               option_id: position.position_id,
               option_order: index,
-              option_value: position.position,
+              option_value: position.position_alias,
             };
           });
           positionOptionList.push(...positionOptions);
@@ -144,7 +146,9 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
             section_field: [
               {
                 ...form.form_section[0].section_field[0],
-                field_option: positionOptionList,
+                field_option: positionOptionList.sort((a, b) =>
+                  a.option_value.localeCompare(b.option_value)
+                ),
               },
               ...form.form_section[0].section_field.slice(1, 3).map((field) => {
                 return {
@@ -368,7 +372,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         setLoadingFieldList([{ sectionIndex: 0, fieldIndex: 0 }]);
 
         const position = positionList.find(
-          (position) => position.position === value
+          (position) => position.position_alias === value
         );
         if (!position) throw new Error();
 
@@ -401,7 +405,17 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           position.position_classification === "NOT APPLICABLE" &&
           !isWithEducationalBackground
         ) {
-          insertSection(4, form.form_section[4], { shouldFocus: false });
+          insertSection(
+            4,
+            {
+              ...form.form_section[4],
+              section_field: [
+                form.form_section[4].section_field[0],
+                ...form.form_section[4].section_field.slice(3),
+              ],
+            },
+            { shouldFocus: false }
+          );
           insertSection(6, form.form_section[6], { shouldFocus: false });
         } else if (
           (position.position_classification === "SKILLED" ||
@@ -812,48 +826,128 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
     value: string | null
   ) => {
     const newSection = getValues(`sections.4`);
-
-    const isWithDegree = newSection.section_field.some(
-      (field) => field.field_name === "Degree"
-    );
+    const newFieldList = [newSection.section_field[0]];
 
     const isDegreeRequired = value
       ? !["High School", "Vocational"].includes(value)
       : false;
 
-    if (value) {
-      if (!isDegreeRequired && isWithDegree) {
+    try {
+      setLoadingFieldList([{ sectionIndex: 4, fieldIndex: 0 }]);
+
+      if (value) {
+        if (isDegreeRequired) {
+          const fieldOfStudyOption = await getFieldOfStudyOptions(
+            supabaseClient,
+            {
+              value,
+            }
+          );
+
+          newFieldList.push(
+            {
+              ...form.form_section[4].section_field[1],
+              field_option: fieldOfStudyOption.map((field, index) => {
+                return {
+                  option_field_id:
+                    form.form_section[4].section_field[1].field_id,
+                  option_id: uuidv4(),
+                  option_order: index,
+                  option_value: field,
+                };
+              }),
+            },
+            ...form.form_section[4].section_field.slice(2)
+          );
+        } else {
+          newFieldList.push(...form.form_section[4].section_field.slice(3));
+        }
         removeSection(4);
         insertSection(4, {
           ...newSection,
-          section_field: [
-            newSection.section_field[0],
-            ...newSection.section_field.slice(2),
-          ],
+          section_field: newFieldList,
         });
-      } else if (isDegreeRequired && !isWithDegree) {
+      } else {
         removeSection(4);
         insertSection(4, {
           ...newSection,
           section_field: [
             newSection.section_field[0],
-            form.form_section[4].section_field[1],
-            ...newSection.section_field.slice(1),
+            ...form.form_section[4].section_field.slice(3),
           ],
         });
       }
-    } else {
-      if (!isWithDegree) {
-        removeSection(4);
-        insertSection(4, {
+    } catch (e) {
+      setValue(`sections.4.section_field.0.field_response`, "");
+      removeSection(4);
+      insertSection(4, {
+        ...newSection,
+        section_field: [
+          newSection.section_field[0],
+          ...form.form_section[4].section_field.slice(3),
+        ],
+      });
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
+    }
+  };
+
+  const handleFieldOfStudyChange = async (value: string | null) => {
+    const newSection = getValues(`sections.4`);
+
+    try {
+      setLoadingFieldList([{ sectionIndex: 4, fieldIndex: 2 }]);
+
+      if (value) {
+        const degreeNameData = await getDegreeNameOptions(supabaseClient, {
+          degreeType: newSection.section_field[0].field_response as string,
+          fieldOfStudy: value,
+        });
+        const degreeNameOptions = degreeNameData.map((degree, index) => {
+          return {
+            option_field_id: form.form_section[4].section_field[2].field_id,
+            option_id: uuidv4(),
+            option_order: index,
+            option_value: degree,
+          };
+        });
+
+        updateSection(4, {
           ...newSection,
           section_field: [
-            newSection.section_field[0],
-            form.form_section[4].section_field[1],
-            ...newSection.section_field.slice(1),
+            ...newSection.section_field.slice(0, 2),
+            {
+              ...form.form_section[4].section_field[2],
+              field_option: degreeNameOptions,
+            },
+            ...newSection.section_field.slice(3),
+          ],
+        });
+      } else {
+        updateSection(4, {
+          ...newSection,
+          section_field: [
+            ...newSection.section_field.slice(0, 2),
+            {
+              ...form.form_section[4].section_field[2],
+              field_option: [],
+            },
+            ...newSection.section_field.slice(3),
           ],
         });
       }
+    } catch (e) {
+      setValue(`sections.4.section_field.1.field_response`, "");
+      notifications.show({
+        message: "Something went wrong. Please try again later.",
+        color: "red",
+      });
+    } finally {
+      setLoadingFieldList([]);
     }
   };
 
@@ -892,6 +986,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
                         handleWillingToBeAssignedAnywhereChange,
                       onHighestEducationalAttainmentChange:
                         handleHighestEducationalAttainmentChange,
+                      onFieldOfStudyChange: handleFieldOfStudyChange,
                     }}
                   />
                   {section.section_is_duplicatable &&

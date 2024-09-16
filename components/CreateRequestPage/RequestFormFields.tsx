@@ -275,6 +275,7 @@ type RequestFormFieldsProps = {
       index: number
     ) => void;
     onHighestEducationalAttainmentChange: (value: string | null) => void;
+    onFieldOfStudyChange: (value: string | null) => void;
   };
 };
 
@@ -1129,6 +1130,11 @@ const RequestFormFields = ({
                       break;
                     case "Highest Educational Attainment":
                       applicationInformationFormMethods?.onHighestEducationalAttainmentChange(
+                        value
+                      );
+                      break;
+                    case "Field of Study":
+                      applicationInformationFormMethods?.onFieldOfStudyChange(
                         value
                       );
                       break;

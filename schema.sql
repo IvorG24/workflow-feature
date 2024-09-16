@@ -958,6 +958,7 @@ CREATE TABLE lookup_schema.position_table (
   position_title_type VARCHAR(4000),
   position_title VARCHAR(4000) NOT NULL,
   position_function VARCHAR(4000),
+  position_alias VARCHAR(4000) NOT NULL,
 
   position_is_with_certificate BOOLEAN DEFAULT false NOT NULL,
   position_certificate_label VARCHAR(4000),
@@ -1537,11 +1538,11 @@ AS $$
               COUNT(request_signer_id)
             FROM form_schema.signer_table
             LEFT JOIN request_schema.request_signer_table ON request_signer_signer_id = signer_id
-            INNER JOIN request_schema.request_table ON request_id = request_signer_request_id
-            WHERE
-              signer_id IN (${signerIdList})
+            LEFT JOIN request_schema.request_table ON request_id = request_signer_request_id
               AND request_date_created >= '${startOfMonth}'
               AND request_date_created <= '${endOfMonth}'
+            WHERE
+              signer_id IN (${signerIdList})
             GROUP BY signer_id
             ORDER BY COUNT ASC
             LIMIT 1
@@ -14552,11 +14553,11 @@ AS $$
 
     const positionData = plv8.execute(
       `
-        SELECT position
+        SELECT *
         FROM lookup_schema.position_table
         WHERE
           position_is_disabled = false
-        ORDER BY position
+        ORDER BY position_alias
       `
     );
 
@@ -14566,7 +14567,7 @@ AS $$
         field_option: positionData.map((position, index) => {
           return {
             option_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
-            option_value: position.position,
+            option_value: position.position_alias,
             option_order: index + 1,
             option_field_id: 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'
           }
@@ -14973,7 +14974,7 @@ AS $$
 
     const requestUUID = plv8.execute(`SELECT request_id FROM public.request_view WHERE request_formsly_id = '${requestId}'`)[0].request_id;
     const positionValue = plv8.execute(`SELECT request_response FROM request_schema.request_response_table WHERE request_response_request_id = '${requestUUID}' AND request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'`)[0].request_response.replaceAll('"', "");
-    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position = '${positionValue}'`)[0];
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${positionValue}'`)[0];
 
     if (positionData.position_is_with_trade_test) {
       tradeTestData = undefined;
@@ -15451,7 +15452,7 @@ AS $$
       'director_interview',
       'background_check'
     ];
-    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position = '${position}' LIMIT 1`)[0];
+    const positionData = plv8.execute(`SELECT * FROM lookup_schema.position_table WHERE position_alias = '${position}' LIMIT 1`)[0];
     const currentStep = steps.indexOf(qualifiedStep);
 
     if (positionData.position_is_with_trade_test && currentStep <= 0) {
@@ -17466,16 +17467,16 @@ plv8.subtransaction(function(){
 
   const positionData = plv8.execute(
     `
-      SELECT position
+      SELECT position_alias
       FROM lookup_schema.position_table
       WHERE
         position_team_id = '${teamId}'
-      ORDER BY position
+      ORDER BY position_alias
     `
   );
 
   const positionOptionList = positionData.map(position => {
-    return { label: position.position, value: position.position };
+    return { label: position.position_alias, value: position.position_alias };
   });
 
   const hrMemberData = plv8.execute(
@@ -17876,6 +17877,59 @@ plv8.subtransaction(function(){
     backgroundCheck: Number(backgroundCheckCount),
     jobOffer: Number(jobOfferCount)
   }
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_field_of_study_options(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function(){
+  const {
+    value
+  } = input_data;
+  const data = plv8.execute(
+    `
+      SELECT DISTINCT(degree_field_of_study)
+      FROM lookup_schema.degree_table
+      WHERE
+        degree_type = '${value}'
+        AND degree_field_of_study IS NOT NULL
+      ORDER BY degree_field_of_study
+    `
+  );
+  returnData = data.map(value => value.degree_field_of_study);
+});
+return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_degree_name_options(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function(){
+  const {
+    degreeType,
+    fieldOfStudy
+  } = input_data;
+  const data = plv8.execute(
+    `
+      SELECT DISTINCT(degree_name)
+      FROM lookup_schema.degree_table
+      WHERE
+        degree_type = '${degreeType}'
+        AND degree_field_of_study = '${fieldOfStudy}'
+      ORDER BY degree_name
+    `
+  );
+  returnData = data.map(value => value.degree_name);
 });
 return returnData;
 $$ LANGUAGE plv8;

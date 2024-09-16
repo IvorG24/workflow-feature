@@ -123,7 +123,8 @@ const ApplicationInformationMainTableRow = ({
     } & { field_response: string }
   ) => {
     const response = safeParse(row.field_response);
-
+    if (!response && row.field_name === "Region willing to be assigned")
+      return "Anywhere";
     if (!response && !(row.field_type === "SWITCH")) return "";
     switch (row.field_type) {
       case "DATE":

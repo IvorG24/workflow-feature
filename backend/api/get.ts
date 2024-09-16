@@ -5871,12 +5871,11 @@ export const getApplicationInformationPositionOptions = async (
     .eq("position_team_id", teamId)
     .eq("position_is_disabled", false)
     .eq("position_is_available", true)
-    .order("position")
     .limit(limit)
     .range(index, index + limit - 1);
   if (error) throw error;
 
-  return data;
+  return data
 };
 
 export const getApplicationInformationSummaryData = async (
@@ -6503,4 +6502,35 @@ export const getHRIndicatorCount = async (
   if (error) throw error;
 
   return data;
+};
+
+export const getFieldOfStudyOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    value: string
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_field_of_study_options",
+    { input_data: params }
+  );
+  if (error) throw error;
+
+  return data as string[];
+};
+
+export const getDegreeNameOptions = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    degreeType: string,
+    fieldOfStudy: string
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_degree_name_options",
+    { input_data: params }
+  );
+  if (error) throw error;
+
+  return data as string[];
 };

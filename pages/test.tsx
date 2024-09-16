@@ -40,7 +40,7 @@ const Page = () => {
     `"Associate"`,
     `"Bachelor"`,
     `"Master"`,
-    `"Doctoral"`,
+    `"Doctorate"`,
   ];
   const employmentStatusOption = [`"Employed"`, `"Unemployed"`];
   const genderOption = [`"Male"`, `"Female"`];
