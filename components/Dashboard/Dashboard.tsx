@@ -1,9 +1,6 @@
 import { useFormList } from "@/stores/useFormStore";
 import { useActiveTeam } from "@/stores/useTeamStore";
-import {
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
+import { useUserTeamMember } from "@/stores/useUserStore";
 import { UNHIDEABLE_FORMLY_FORMS } from "@/utils/constant";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
@@ -25,7 +22,6 @@ import { IconAlertCircle, IconCalendarEvent } from "@tabler/icons-react";
 import moment from "moment";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import HRAnalytics from "./HRTab/HRAnalytics";
 import Overview from "./OverviewTab/Overview";
 
 // response tab is hidden
@@ -52,7 +48,6 @@ const Dashboard = ({ ticketListCount }: Props) => {
   const formList = useFormList();
   const activeTeam = useActiveTeam();
   const teamMember = useUserTeamMember();
-  const teamMemberGroups = useUserTeamMemberGroupList();
 
   const [selectedTab, setSelectedTab] = useState("overview");
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
@@ -148,14 +143,6 @@ const Dashboard = ({ ticketListCount }: Props) => {
             />
           </>
         );
-
-      case "hr analytics":
-        if (teamMemberGroups.includes("HUMAN RESOURCES")) {
-          return <HRAnalytics />;
-        } else {
-          setSelectedTab("overview");
-          return <></>;
-        }
 
       // case "responses":
       //   return selectedForm ? (

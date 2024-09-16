@@ -3392,6 +3392,12 @@ export type Database = {
         }
         Returns: Json
       }
+      get_application_information_analytics: {
+        Args: {
+          input_data: Json
+        }
+        Returns: Json
+      }
       get_application_information_summary_table: {
         Args: {
           input_data: Json
@@ -3408,10 +3414,6 @@ export type Database = {
         Args: {
           input_data: Json
         }
-        Returns: Json
-      }
-      get_candidate_referral_source: {
-        Args: Record<PropertyKey, never>
         Returns: Json
       }
       get_create_ticket_on_load: {

@@ -42,6 +42,7 @@ import {
   FieldTableRow,
   FormTableRow,
   FormType,
+  HRAnalyticsData,
   InitialFormType,
   ItemCategoryType,
   ItemCategoryWithSigner,
@@ -6078,21 +6079,27 @@ export const getPositionType = async (
 export const getAdOwnerList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {
-  const { data, error } = await supabaseClient.rpc(
-    "get_candidate_referral_source"
-  );
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("ad_owner_table")
+    .select("*");
   if (error) throw error;
 
   return data;
 };
 
-export const getCandidateReferralSource = async (
-  supabaseClient: SupabaseClient<Database>
+export const getHRApplicantAnalytics = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    startDate?: string;
+    endDate?: string;
+  }
 ) => {
   const { data, error } = await supabaseClient.rpc(
-    "get_candidate_referral_source"
+    "get_application_information_analytics",
+    { input_data: params }
   );
   if (error) throw error;
 
-  return data;
+  return data as HRAnalyticsData;
 };
