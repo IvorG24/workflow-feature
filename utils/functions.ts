@@ -234,3 +234,10 @@ export const calculateInvoiceAmountWithVAT = (amount: number) => {
 export const formatTimeToLocal = (dateTime: string) => {
   return moment(dateTime).format("hh:mm A");
 };
+
+export const isError = (error: unknown): error is Error => {
+  return (
+    error instanceof Error ||
+    (typeof error === "object" && error !== null && "message" in error)
+  );
+};

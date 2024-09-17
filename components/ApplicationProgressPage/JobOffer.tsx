@@ -1,7 +1,9 @@
+import { insertError } from "@/backend/api/post";
 import { updateJobOfferStatus } from "@/backend/api/update";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { formatDate } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { isError } from "@/utils/functions";
 import { getStatusToColor } from "@/utils/styling";
 import { AttachmentTableRow, JobOfferTableRow } from "@/utils/types";
 import {
@@ -17,7 +19,9 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { IconFile, IconNote } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -32,6 +36,8 @@ const JobOffer = ({
   setJobOfferStatus,
 }: Props) => {
   const supabaseClient = createPagesBrowserClient<Database>();
+  const router = useRouter();
+  const user = useUser();
   const [attachmentUrl, setAttachmentUrl] = useState("");
   const { setIsLoading } = useLoadingActions();
 
@@ -82,6 +88,17 @@ const JobOffer = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleUpdateJobOffer",
+            error_user_email: user?.email,
+            error_user_id: user?.id,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

@@ -566,12 +566,18 @@ export type InterviewOnlineMeetingTableInsert =
 export type InterviewOnlineMeetingTableUpdate =
   Database["hr_schema"]["Tables"]["interview_online_meeting_table"]["Update"];
 
-  export type HRProjectTableRow =
+export type HRProjectTableRow =
   Database["hr_schema"]["Tables"]["hr_project_table"]["Row"];
 export type HRProjectTableInsert =
   Database["hr_schema"]["Tables"]["hr_project_table"]["Insert"];
 export type HRProjectTableUpdate =
   Database["hr_schema"]["Tables"]["hr_project_table"]["Update"];
+
+export type ErrorTableRow = Database["public"]["Tables"]["error_table"]["Row"];
+export type ErrorTableInsert =
+  Database["public"]["Tables"]["error_table"]["Insert"];
+export type ErrorTableUpdate =
+  Database["public"]["Tables"]["error_table"]["Update"];
 
 export type AdOwnerTableRow =
   Database["lookup_schema"]["Tables"]["ad_owner_table"]["Row"];

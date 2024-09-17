@@ -1,5 +1,7 @@
 import { getInterview } from "@/backend/api/get";
+import { insertError } from "@/backend/api/post";
 import { formatDate } from "@/utils/constant";
+import { isError } from "@/utils/functions";
 import { getStatusToColor } from "@/utils/styling";
 import { HRPhoneInterviewTableRow } from "@/utils/types";
 import {
@@ -13,8 +15,9 @@ import {
   Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import { IconNote } from "@tabler/icons-react";
+import { useRouter } from "next/router";
 import { useState } from "react";
 import SchedulingCalendar from "./SchedulingCalendar";
 
@@ -23,6 +26,8 @@ type Props = {
 };
 const HRPhoneInterview = ({ hrPhoneInterviewData: initialData }: Props) => {
   const supabaseClient = useSupabaseClient();
+  const router = useRouter();
+  const user = useUser();
   const [hrPhoneInterviewData, setHRPhoneInterviewData] =
     useState<HRPhoneInterviewTableRow>(initialData);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,11 +46,22 @@ const HRPhoneInterview = ({ hrPhoneInterviewData: initialData }: Props) => {
         table: "hr_phone_interview",
       });
       setHRPhoneInterviewData(data);
-    } catch (error) {
+    } catch (e) {
       notifications.show({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "refetchData",
+            error_user_email: user?.email,
+            error_user_id: user?.id,
+          },
+        });
+      }
     } finally {
       setIsFetching(false);
     }

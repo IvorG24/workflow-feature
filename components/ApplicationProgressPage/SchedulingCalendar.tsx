@@ -5,7 +5,7 @@ import {
   getPhoneMeetingSlots,
   phoneInterviewValidation,
 } from "@/backend/api/get";
-import { createInterviewOnlineMeeting } from "@/backend/api/post";
+import { createInterviewOnlineMeeting, insertError } from "@/backend/api/post";
 import {
   cancelInterview,
   updateInterviewOnlineMeeting,
@@ -18,7 +18,7 @@ import {
   formatDate,
   MEETING_TYPE_DETAILS,
 } from "@/utils/constant";
-import { formatTimeToLocal, JoyRideNoSSR } from "@/utils/functions";
+import { formatTimeToLocal, isError, JoyRideNoSSR } from "@/utils/functions";
 import {
   InterviewOnlineMeetingTableInsert,
   InterviewOnlineMeetingTableRow,
@@ -41,9 +41,11 @@ import { notifications } from "@mantine/notifications";
 import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { IconCalendar, IconClock } from "@tabler/icons-react";
 import moment from "moment";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { EmailNotificationTemplateProps } from "../Resend/EmailNotificationTemplate";
+
 type SchedulingType = {
   meetingType:
     | "hr_phone_interview"
@@ -95,6 +97,7 @@ const SchedulingCalendar = ({
   const { colors } = useMantineTheme();
   const user = useUserProfile();
   const supabaseClient = useSupabaseClient();
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
     if (intialDate) {
       return new Date(intialDate);
@@ -162,6 +165,17 @@ const SchedulingCalendar = ({
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "cancelInterviewHandler",
+            error_user_email: user?.user_email,
+            error_user_id: user?.user_id,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -222,6 +236,17 @@ const SchedulingCalendar = ({
           message: "Error fetching meeting slots",
           color: "orange",
         });
+        if (isError(e)) {
+          await insertError(supabaseClient, {
+            errorTableRow: {
+              error_message: e.message,
+              error_url: router.asPath,
+              error_function: "fetchTime",
+              error_user_email: user?.user_email,
+              error_user_id: user?.user_id,
+            },
+          });
+        }
       } finally {
         setIsFetching(false);
       }
@@ -288,6 +313,17 @@ const SchedulingCalendar = ({
       });
       fetchTime({ breakDuration: 10, slotDuration: 5 });
       setSelectedSlot("");
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleCreateOrUpdateSchedule",
+            error_user_email: user?.user_email,
+            error_user_id: user?.user_id,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -594,6 +630,17 @@ const SchedulingCalendar = ({
         message: "Failed to cancel MS Teams meeting",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleCancelOnlineMeeting",
+            error_user_email: user?.user_email,
+            error_user_id: user?.user_id,
+          },
+        });
+      }
     }
   };
 

@@ -7,11 +7,16 @@ import {
   getDegreeNameOptions,
   getFieldOfStudyOptions,
 } from "@/backend/api/get";
-import { createAdOwnerRequest, createRequest } from "@/backend/api/post";
+import {
+  createAdOwnerRequest,
+  createRequest,
+  insertError,
+} from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
 import { FETCH_OPTION_LIMIT } from "@/utils/constant";
+import { isError } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import supabaseClientAddress from "@/utils/supabase/address";
 import {
@@ -193,6 +198,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           message: "Something went wrong. Please try again later.",
           color: "red",
         });
+        if (isError(e)) {
+          await insertError(supabaseClient, {
+            errorTableRow: {
+              error_message: e.message,
+              error_url: router.asPath,
+              error_function: "fetchOptions",
+            },
+          });
+        }
       } finally {
         setIsLoading(false);
       }
@@ -269,6 +283,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleCreateRequest",
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -360,7 +383,7 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
     }
   };
 
-  const handlePositionChange = (value: string | null) => {
+  const handlePositionChange = async (value: string | null) => {
     const newSection = getValues(`sections.0`);
 
     const isWithEducationalBackground = formSections.some(
@@ -453,6 +476,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handlePositionChange",
+          },
+        });
+      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -540,6 +572,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleRegionChange",
+          },
+        });
+      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -626,6 +667,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleProvinceChange",
+          },
+        });
+      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -711,6 +761,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleCityChange",
+          },
+        });
+      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -781,6 +840,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleBarangayChange",
+          },
+        });
+      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -891,6 +959,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleHighestEducationalAttainmentChange",
+          },
+        });
+      }
     } finally {
       setLoadingFieldList([]);
     }
@@ -946,6 +1023,15 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleFieldOfStudyChange",
+          },
+        });
+      }
     } finally {
       setLoadingFieldList([]);
     }

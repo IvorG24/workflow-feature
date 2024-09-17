@@ -1,8 +1,8 @@
-import { createRequest } from "@/backend/api/post";
+import { createRequest, insertError } from "@/backend/api/post";
 import RequestFormDetails from "@/components/CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "@/components/CreateRequestPage/RequestFormSection";
 import { useLoadingActions } from "@/stores/useLoadingStore";
-import { safeParse } from "@/utils/functions";
+import { isError, safeParse } from "@/utils/functions";
 import { formatTeamNameToUrlKey, startCase } from "@/utils/string";
 import {
   FormType,
@@ -177,6 +177,20 @@ const CreateGeneralAssessmentRequestPage = ({ form }: Props) => {
         message: "Something went wrong. Please try again later.",
         color: "red",
       });
+      if (isError(e)) {
+        const applicantSection = data.sections.find(
+          (section) => section.section_name === "Applicant"
+        );
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: router.asPath,
+            error_function: "handleCreateRequest",
+            error_user_email: applicantSection?.section_field[0]
+              .field_response as string,
+          },
+        });
+      }
     } finally {
       setIsLoading(false);
     }

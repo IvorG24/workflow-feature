@@ -1,5 +1,7 @@
+import { insertError } from "@/backend/api/post";
 import ApplicationProgressPage from "@/components/ApplicationProgressPage/ApplicationProgressPage";
 import Meta from "@/components/Meta/Meta";
+import { isError } from "@/utils/functions";
 import { withAuthAndOnboarding } from "@/utils/server-side-protections";
 import {
   AttachmentTableRow,
@@ -14,7 +16,7 @@ import {
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
-  async ({ supabaseClient, context }) => {
+  async ({ supabaseClient, context, user }) => {
     try {
       const { data, error } = await supabaseClient.rpc(
         "get_user_application_progress_on_load",
@@ -30,6 +32,17 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
         props: data as Props,
       };
     } catch (e) {
+      if (isError(e)) {
+        await insertError(supabaseClient, {
+          errorTableRow: {
+            error_message: e.message,
+            error_url: context.resolvedUrl,
+            error_function: "getServerSideProps",
+            error_user_email: user.email,
+            error_id: user.id,
+          },
+        });
+      }
       return {
         redirect: {
           destination: "/500",

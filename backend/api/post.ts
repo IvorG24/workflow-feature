@@ -20,6 +20,7 @@ import {
   EquipmentDescriptionTableInsert,
   EquipmentPartTableInsert,
   EquipmentTableInsert,
+  ErrorTableInsert,
   FieldCorrectResponseTableInsert,
   FieldTableInsert,
   FormTableRow,
@@ -2373,4 +2374,17 @@ export const createTechnicalQuestions = async (
     if (error) throw error;
 
     return data;
+  };
+
+  export const insertError = async (
+    supabaseClient: SupabaseClient<Database>,
+    params: {
+      errorTableRow: ErrorTableInsert;
+    }
+  ) => {
+    const { errorTableRow } = params;
+    const { error } = await supabaseClient
+      .from("error_table")
+      .insert(errorTableRow);
+    if (error) throw error;
   };
