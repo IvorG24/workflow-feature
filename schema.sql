@@ -14157,9 +14157,9 @@ CREATE OR REPLACE FUNCTION create_public_request_page_on_load(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let returnData;
-  plv8.subtransaction(function(){
-    const {
+let returnData;
+plv8.subtransaction(function(){
+   const {
       formId,
       applicationInformationId,
       generalAssessmentId
@@ -14438,7 +14438,7 @@ AS $$
 
          const position_type = safeParse(positionData[0].request_response);
 
-         const fieldData = plv8.execute(`
+    const fieldData = plv8.execute(`
          SELECT f.*, qq.questionnaire_question_id
          FROM form_schema.questionnaire_table q
          JOIN form_schema.questionnaire_question_table qq
@@ -14487,11 +14487,11 @@ AS $$
             };
         });
     }
-  returnData = {
-    form: {
-      ...form,
-      form_section: [
-        {
+    returnData = {
+        form: {
+         ...form,
+        form_section: [
+         {
           ...form.form_section[0],
           section_field: [
             {
@@ -14552,7 +14552,7 @@ AS $$
         returnData = { form }
         }
     });
-    return returnData;
+return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_application_information_summary_table(
@@ -18279,23 +18279,23 @@ AS $$
         questionnaireId
     } = input_data;
 
-    const fieldData = plv8.execute(
-        `
-            SELECT
-                f.*, qq.questionnaire_question_id
-            FROM form_schema.field_table f
-            JOIN form_schema.questionnaire_question_table qq
-            ON qq.questionnaire_question_field_id = f.field_id
-            JOIN form_schema.questionnaire_table q
-            ON q.questionnaire_id = qq.questionnaire_question_questionnaire_id
-            WHERE q.questionnaire_id = $1 AND qq.questionnaire_question_is_disabled = FALSE
-            ORDER BY field_order ASC;
+    const fieldData = plv8.execute(`
+      SELECT
+        f.*, qq.questionnaire_question_id
+      FROM form_schema.field_table f
+      JOIN form_schema.questionnaire_question_table qq
+      ON qq.questionnaire_question_field_id = f.field_id
+      JOIN form_schema.questionnaire_table q
+      ON q.questionnaire_id = qq.questionnaire_question_questionnaire_id
+      WHERE
+        q.questionnaire_id = $1
+        AND qq.questionnaire_question_is_disabled = FALSE
+      ORDER BY field_order ASC;
         `, [questionnaireId]
     );
 
     returnData = fieldData.map((field) => {
-        const optionsData = plv8.execute(
-        `
+        const optionsData = plv8.execute(`
             SELECT *
             FROM form_schema.question_option_table
             WHERE question_option_questionnaire_question_id = $1
@@ -18354,8 +18354,8 @@ CREATE OR REPLACE FUNCTION create_technical_question(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let request_data;
-  plv8.subtransaction(function(){
+let request_data;
+plv8.subtransaction(function(){
     const {
         fieldResponseValues,
         correctResponseValues,
@@ -18388,8 +18388,8 @@ AS $$
       `);
 
     request_data = { success: true, message: 'Data inserted successfully' };
-  });
-  return request_data;
+});
+return request_data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION check_technical_question(
@@ -18398,27 +18398,27 @@ CREATE OR REPLACE FUNCTION check_technical_question(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-    let returnData = false;
-    const { data, questionnaireId } = input_data;
-        data.forEach(function (field_response) {
-        const query = `
-            SELECT *
-            FROM form_schema.field_table f
-            JOIN form_schema.questionnaire_question_table q
-            ON q.questionnaire_question_field_id = f.field_id
-            WHERE
-                f.field_name = $1
-                AND q.questionnaire_question_questionnaire_id = $2
-                AND q.questionnaire_question_is_disabled = FALSE
-        `;
-      const result = plv8.execute(query, [field_response, questionnaireId]);
+let returnData = false;
+const { data, questionnaireId } = input_data;
+    data.forEach(function (field_response) {
+    const query = `
+    SELECT *
+    FROM form_schema.field_table f
+    JOIN form_schema.questionnaire_question_table q
+    ON q.questionnaire_question_field_id = f.field_id
+    WHERE
+        f.field_name = $1
+        AND q.questionnaire_question_questionnaire_id = $2
+        AND q.questionnaire_question_is_disabled = FALSE
+    `;
+    const result = plv8.execute(query, [field_response, questionnaireId]);
 
-      if (result.length > 0) {
-        returnData = true;
-        return;
+    if (result.length > 0) {
+    returnData = true;
+    return;
       }
     });
-    return returnData;
+return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_questionnare_table_on_load(
@@ -18427,12 +18427,11 @@ CREATE OR REPLACE FUNCTION get_questionnare_table_on_load(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let returnData = {
-        data: [],
-        count: 0
-    };
-
-    plv8.subtransaction(function() {
+let returnData = {
+    data: [],
+    count: 0
+};
+plv8.subtransaction(function() {
     const {
         teamId,
         search = '',
@@ -18465,63 +18464,63 @@ AS $$
     const offset = (page - 1) * limit;
 
     const questionnaireData = plv8.execute(`
-        SELECT q.*,
-            u.user_id AS created_user_id,
-            u.user_first_name AS created_user_first_name,
-            u.user_last_name AS created_user_last_name,
-            u.user_avatar AS created_user_avatar,
-            u2.user_id AS updated_user_id,
-            u2.user_first_name AS updated_user_first_name,
-            u2.user_last_name AS updated_user_last_name,
-            u2.user_avatar AS updated_user_avatar
-        FROM form_schema.questionnaire_table q
-        JOIN team_schema.team_member_table tm
-        ON tm.team_member_id = q.questionnaire_created_by
-        JOIN user_schema.user_table u
-        ON u.user_id = tm.team_member_user_id
-        LEFT JOIN team_schema.team_member_table tm2
-        ON tm2.team_member_id = q.questionnaire_updated_by
-        LEFT JOIN user_schema.user_table u2
-        ON u2.user_id = tm2.team_member_user_id
-        WHERE
-            q.questionnaire_team_id = $1
-            ${creator}
-            ${search}
-        ORDER BY q.questionnaire_date_created ${isAscendingSort}
-        LIMIT $2 OFFSET $3
+    SELECT q.*,
+        u.user_id AS created_user_id,
+        u.user_first_name AS created_user_first_name,
+        u.user_last_name AS created_user_last_name,
+        u.user_avatar AS created_user_avatar,
+        u2.user_id AS updated_user_id,
+        u2.user_first_name AS updated_user_first_name,
+        u2.user_last_name AS updated_user_last_name,
+        u2.user_avatar AS updated_user_avatar
+    FROM form_schema.questionnaire_table q
+    JOIN team_schema.team_member_table tm
+    ON tm.team_member_id = q.questionnaire_created_by
+    JOIN user_schema.user_table u
+    ON u.user_id = tm.team_member_user_id
+    LEFT JOIN team_schema.team_member_table tm2
+    ON tm2.team_member_id = q.questionnaire_updated_by
+    LEFT JOIN user_schema.user_table u2
+    ON u2.user_id = tm2.team_member_user_id
+    WHERE
+        q.questionnaire_team_id = $1
+        ${creator}
+        ${search}
+    ORDER BY q.questionnaire_date_created ${isAscendingSort}
+    LIMIT $2 OFFSET $3
     `, [teamId, limit, offset]);
 
     returnData.data = questionnaireData.map(response => {
-        const {
-            created_user_id,
-            created_user_first_name,
-            created_user_last_name,
-            created_user_avatar,
-            updated_user_id,
-            updated_user_first_name,
-            updated_user_last_name,
-            updated_user_avatar,
-            ...rest
-        } = response;
+    const {
+        created_user_id,
+        created_user_first_name,
+        created_user_last_name,
+        created_user_avatar,
+        updated_user_id,
+        updated_user_first_name,
+        updated_user_last_name,
+        updated_user_avatar,
+        ...rest
+    } = response;
 
-        return {
-            ...rest,
-            questionnaire_created_by: {
-                user_id: created_user_id,
-                user_first_name: created_user_first_name,
-                user_last_name: created_user_last_name,
-                user_avatar: created_user_avatar
-            },
-            questionnaire_updated_by: updated_user_id ? {
-                user_id: updated_user_id,
-                user_first_name: updated_user_first_name,
-                user_last_name: updated_user_last_name,
-                user_avatar: updated_user_avatar
-            } : null
-        };
-      });
+    return {
+        ...rest,
+    questionnaire_created_by: {
+        user_id: created_user_id,
+        user_first_name: created_user_first_name,
+        user_last_name: created_user_last_name,
+        user_avatar: created_user_avatar
+        },
+    questionnaire_updated_by: updated_user_id ? {
+        user_id: updated_user_id,
+        user_first_name: updated_user_first_name,
+        user_last_name: updated_user_last_name,
+        user_avatar: updated_user_avatar
+        } : null
+    };
     });
-    return returnData;
+});
+return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
