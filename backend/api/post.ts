@@ -2144,7 +2144,7 @@ export const createTechnicalQuestions = async (
       questionnaireId: string;
     }
   ) => {
-    const { requestFormValues, formId, questionnaireId } = params;
+    const { requestFormValues, questionnaireId } = params;
 
     const { data: fieldData, error: fieldError } = await supabaseClient
       .schema("form_schema")
@@ -2236,11 +2236,6 @@ export const createTechnicalQuestions = async (
       return `('${response.field_id}', '${escapedResponse}','${response.field_is_required}','${response.field_type}',${response.field_order},'${response.field_section_id}')`;
     }).join(",");
 
-    //   const optionResponseValues = OptionTableInput.map((response) => {
-    //     const escapedResponse = escapeQuotes(response.option_value || "");
-    //     return `('${response.option_id}', '${escapedResponse}', '${response.option_order}', '${response.option_field_id}')`; // Use the corresponding field UUID
-    //   }).join(",");
-
     const correctResponseValues = CorrectResponseTableInput.map((response) => {
       const escapedResponse = escapeQuotes(response.correct_response_value || "");
       return `('${response.correct_response_id}', '${escapedResponse}', '${response.correct_response_field_id}')`;
@@ -2256,8 +2251,8 @@ export const createTechnicalQuestions = async (
     const questionOptionResponseValues = OptionTableInput.map(
       (response, index) => {
         const escapedResponse = escapeQuotes(response.option_value || "");
-        const fieldUuid = QuestionId[Math.floor(index / 4)]; // Use the UUID from QuestionId in batches of 4
-        return `('${escapedResponse}', '${response.option_order}', '${fieldUuid}')`; // Use the corresponding field UUID
+        const fieldUuid = QuestionId[Math.floor(index / 4)];
+        return `('${escapedResponse}', '${response.option_order}', '${fieldUuid}')`;
       }
     ).join(",");
 
@@ -2266,7 +2261,6 @@ export const createTechnicalQuestions = async (
         input_data: {
           fieldResponseValues,
           correctResponseValues,
-          // optionResponseValues,
           questionResponseValues,
           questionOptionResponseValues,
         },
