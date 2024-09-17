@@ -6525,7 +6525,7 @@ AS $$
           section_field: fieldWithOptionAndResponse.sort((a,b) => a.field_order - b.field_order),
         })
       });
-    }else if (requestData.form_is_formsly_form && (requestData.form_name === "Technical Assessment")) {
+    } else if (requestData.form_is_formsly_form && (requestData.form_name === "Technical Assessment")) {
 
         const technicalAssessmentResult = plv8.execute(`
             SELECT request_id
@@ -14538,7 +14538,6 @@ plv8.subtransaction(function(){
               field_id
             FROM request_schema.request_response_table
             INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-            WHERE
             WHERE
               request_response_request_id = '${requestId}'
               AND field_id IN (

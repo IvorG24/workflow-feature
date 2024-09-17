@@ -289,7 +289,7 @@ const UserSettingsPage = ({ user }: Props) => {
             <Group>
               <Text>Copy Link to Recruit & Earn Points</Text>
               <CopyButton
-                value={`${BASE_URL}/public-form/151cc6d7-94d7-4c54-b5ae-44de9f59d170/create?recruiter=${teamMember.team_member_id}`}
+                value={`${BASE_URL}/public-form/16ae1f62-c553-4b0e-909a-003d92828036/create?recruiter=${teamMember.team_member_id}`}
               >
                 {({ copied, copy }) => (
                   <Button
