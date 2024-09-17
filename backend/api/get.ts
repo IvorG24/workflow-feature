@@ -6075,7 +6075,377 @@ export const getPositionType = async (
 
   return data[0].position_type;
 };
+export const checkIfOwner = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    userId: string;
+    teamId: string;
+  }
+) => {
+  const { userId, teamId } = params;
+  const { data, error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_member_table")
+    .select("team_member_role")
+    .eq("team_member_user_id", userId)
+    .eq("team_member_team_id", teamId)
+    .maybeSingle();
+  if (error) throw error;
+  const role = data?.team_member_role;
+  if (role === null) return false;
+  return role === "OWNER";
+};
 
+export const validateEnvApiKey = async (
+  supabase: SupabaseClient<Database>,
+  params: {
+    apiKey: string;
+    endPoint: string;
+  }
+) => {
+  const { apiKey, endPoint } = params;
+
+  if (!apiKey) {
+    throw new Error("Missing API key");
+  }
+
+  const { data: apiKeyData, error } = await supabase
+    .schema("team_schema")
+    .from("team_key_table")
+    .select("*")
+    .eq("team_key_api_key", apiKey)
+    .maybeSingle();
+
+  if (error) throw new Error("Error fetching API key data");
+  if (!apiKeyData) throw new Error("API key not found");
+
+  if (apiKeyData.team_key_is_disabled) {
+    throw new Error("API key is disabled");
+  }
+
+  const { error: recordError } = await supabase
+    .schema("team_schema")
+    .from("team_key_record_table")
+    .insert({
+      team_key_record_team_key_id: apiKeyData.team_key_id,
+      team_key_record_access_api: endPoint,
+    });
+
+  if (recordError) throw new Error("Error logging API key access");
+
+  return apiKeyData;
+};
+
+export const getRequestRayaApi = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    offset?: string;
+    limit?: string;
+    order?: string;
+    startDate?: string;
+    teamId: string;
+    endDate?: string;
+  }
+) => {
+  const {
+    offset = "0",
+    limit = "100",
+    order = "asc",
+    startDate,
+    teamId,
+    endDate,
+  } = params;
+
+  const parsedOffset = parseInt(offset, 10);
+  const parsedLimit = Math.min(parseInt(limit, 10), 1000);
+  const parsedOrder = order === "desc" ? "desc" : "asc";
+
+  const { data, error } = await supabaseClient.rpc("get_request_raya_api", {
+    input_data: {
+      offset: parsedOffset,
+      limit: parsedLimit,
+      teamId: teamId,
+      startDate: startDate,
+      endDate: endDate,
+      order: parsedOrder,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+export const getOtherExpensesRayaApi = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    offset?: string;
+    limit?: string;
+    order?: string;
+    startDate?: string;
+    teamId: string;
+    endDate?: string;
+  }
+) => {
+  const {
+    offset = "0",
+    limit = "100",
+    order = "asc",
+    startDate,
+    teamId,
+    endDate,
+  } = params;
+
+  const parsedOffset = parseInt(offset, 10);
+  const parsedLimit = Math.min(parseInt(limit, 10), 1000);
+  const parsedOrder = order === "desc" ? "desc" : "asc";
+
+  const { data, error } = await supabaseClient.rpc(
+    "get_other_expenses_raya_api",
+    {
+      input_data: {
+        offset: parsedOffset,
+        limit: parsedLimit,
+        teamId: teamId,
+        startDate: startDate,
+        endDate: endDate,
+        order: parsedOrder,
+      },
+    }
+  );
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+export const getPedPartRayaApi = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    offset?: string;
+    limit?: string;
+    order?: string;
+    startDate?: string;
+    teamId: string;
+    endDate?: string;
+  }
+) => {
+  const {
+    offset = "0",
+    limit = "100",
+    order = "asc",
+    startDate,
+    teamId,
+    endDate,
+  } = params;
+
+  const parsedOffset = parseInt(offset, 10);
+  const parsedLimit = Math.min(parseInt(limit, 10), 1000);
+  const parsedOrder = order === "desc" ? "desc" : "asc";
+
+  const { data, error } = await supabaseClient.rpc("get_ped_part_raya_api", {
+    input_data: {
+      offset: parsedOffset,
+      limit: parsedLimit,
+      teamId: teamId,
+      startDate: startDate,
+      endDate: endDate,
+      order: parsedOrder,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+export const getItemRayaApi = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    offset?: string;
+    limit?: string;
+    order?: string;
+    startDate?: string;
+    teamId: string;
+    endDate?: string;
+  }
+) => {
+  const {
+    offset = "0",
+    limit = "100",
+    order = "asc",
+    startDate,
+    teamId,
+    endDate,
+  } = params;
+
+  const parsedOffset = parseInt(offset, 10);
+  const parsedLimit = Math.min(parseInt(limit, 10), 1000);
+  const parsedOrder = order === "desc" ? "desc" : "asc";
+
+  const { data, error } = await supabaseClient.rpc("get_item_raya_api", {
+    input_data: {
+      offset: parsedOffset,
+      limit: parsedLimit,
+      teamId: teamId,
+      startDate: startDate,
+      endDate: endDate,
+      order: parsedOrder,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+export const getItAssetRayaApi = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    offset?: string;
+    limit?: string;
+    order?: string;
+    startDate?: string;
+    teamId: string;
+    endDate?: string;
+  }
+) => {
+  const {
+    offset = "0",
+    limit = "100",
+    order = "asc",
+    startDate,
+    teamId,
+    endDate,
+  } = params;
+
+  const parsedOffset = parseInt(offset, 10);
+  const parsedLimit = Math.min(parseInt(limit, 10), 1000);
+  const parsedOrder = order === "desc" ? "desc" : "asc";
+
+  const { data, error } = await supabaseClient.rpc("get_it_asset_raya_api", {
+    input_data: {
+      offset: parsedOffset,
+      limit: parsedLimit,
+      teamId: teamId,
+      startDate: startDate,
+      endDate: endDate,
+      order: parsedOrder,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+export const getPedItemRayaApi = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    offset?: string;
+    limit?: string;
+    order?: string;
+    startDate?: string;
+    teamId: string;
+    endDate?: string;
+  }
+) => {
+  const {
+    offset = "0",
+    limit = "100",
+    order = "asc",
+    startDate,
+    teamId,
+    endDate,
+  } = params;
+
+  const parsedOffset = parseInt(offset, 10);
+  const parsedLimit = Math.min(parseInt(limit, 10), 1000);
+  const parsedOrder = order === "desc" ? "desc" : "asc";
+
+  const { data, error } = await supabaseClient.rpc("get_ped_item_raya_api", {
+    input_data: {
+      offset: parsedOffset,
+      limit: parsedLimit,
+      teamId: teamId,
+      startDate: startDate,
+      endDate: endDate,
+      order: parsedOrder,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+
+export const getServicesRayaApi = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    offset?: string;
+    limit?: string;
+    order?: string;
+    startDate?: string;
+    teamId: string;
+    endDate?: string;
+  }
+) => {
+  const {
+    offset = "0",
+    limit = "100",
+    order = "asc",
+    startDate,
+    teamId,
+    endDate,
+  } = params;
+
+  const parsedOffset = parseInt(offset, 10);
+  const parsedLimit = Math.min(parseInt(limit, 10), 1000);
+  const parsedOrder = order === "desc" ? "desc" : "asc";
+
+  const { data, error } = await supabaseClient.rpc("get_services_raya_api", {
+    input_data: {
+      offset: parsedOffset,
+      limit: parsedLimit,
+      teamId: teamId,
+      startDate: startDate,
+      endDate: endDate,
+      order: parsedOrder,
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
+export const getLatestApiKey = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    teamId: string;
+  }
+) => {
+  const { teamId } = params;
+
+  const { data, error } = await supabaseClient
+    .schema("team_schema")
+    .from("team_key_table")
+    .select("team_key_api_key,team_key_label")
+    .eq("team_key_team_id", teamId)
+    .order("team_key_date_created", { ascending: false })
+    .eq("team_key_is_disabled", false);
+
+  if (error) {
+    throw error;
+  }
+  return data;
+};
 export const getAdOwnerList = async (
   supabaseClient: SupabaseClient<Database>
 ) => {

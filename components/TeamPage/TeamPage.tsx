@@ -363,6 +363,7 @@ const TeamPage = ({
           onUpdateTeam={handleUpdateTeam}
           teamLogoFile={teamLogo}
           onTeamLogoFileChange={setTeamLogo}
+          isOwner={isOwner}
           isOwnerOrAdmin={isOwnerOrAdmin}
         />
       </FormProvider>
