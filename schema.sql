@@ -14391,101 +14391,102 @@ AS $$
         }
         return;
       }else if (form.form_name === 'Technical Assessment' && generalAssessmentId) {
-  const requestData = plv8.execute(`
-    SELECT request_id
-    FROM public.request_view
-    WHERE request_formsly_id = '${generalAssessmentId}'
-  `);
+        const requestData = plv8.execute(`
+          SELECT request_id
+          FROM public.request_view
+          WHERE request_formsly_id = '${generalAssessmentId}'
+        `);
 
-  if (!requestData.length) throw new Error('Request not found');
-  const requestId = requestData[0].request_id;
+        if(!requestData.length) throw new Error('Request not found');
+        const requestId = requestData[0].request_id;
 
-  const applicantData = plv8.execute(`
-    SELECT
-      request_response,
-      field_id
-    FROM request_schema.request_response_table
-    INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-    WHERE
-      request_response_request_id = '${requestId}'
-      AND field_id IN (
-        'be0e130b-455b-47e0-a804-f90943f7bc07',
-        '5c5284cd-7647-4307-b558-40b9076d9f7f',
-        'f1c516bd-e483-4f32-a5b0-5223b186afb5',
-        'd209aed6-e560-49a8-aa77-66c9cada168d',
-        'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
-      )
-    ORDER BY field_order
-  `);
+        const applicantData = plv8.execute(`
+          SELECT
+            request_response,
+            field_id
+          FROM request_schema.request_response_table
+          INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+          WHERE
+            request_response_request_id = '${requestId}'
+            AND field_id IN (
+            'be0e130b-455b-47e0-a804-f90943f7bc07',
+            '5c5284cd-7647-4307-b558-40b9076d9f7f',
+            'f1c516bd-e483-4f32-a5b0-5223b186afb5',
+            'd209aed6-e560-49a8-aa77-66c9cada168d',
+            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+          )
+         ORDER BY field_order
+         `);
 
-  const requestApplicationData = plv8.execute(`
-    SELECT request_id
-    FROM public.request_view
-    WHERE request_formsly_id = '${safeParse(applicantData[0].request_response)}'
-  `);
+        const requestApplicationData = plv8.execute(`
+          SELECT request_id
+          FROM public.request_view
+          WHERE request_formsly_id = '${safeParse(applicantData[0].request_response)}'
+        `);
 
-  const positionData = plv8.execute(`
-    SELECT
-      request_response,
-      field_id
-    FROM request_schema.request_response_table
-    INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-    WHERE
-      request_response_request_id = '${requestApplicationData[0].request_id}'
-      AND field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
-    ORDER BY field_order
-  `);
+        const positionData = plv8.execute(`
+         SELECT
+            request_response,
+            field_id
+         FROM request_schema.request_response_table
+         INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+         WHERE
+            equest_response_request_id = '${requestApplicationData[0].request_id}'
+            AND field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
+         ORDER BY field_order
+        `);
 
-  const position_type = safeParse(positionData[0].request_response);
+         const position_type = safeParse(positionData[0].request_response);
 
-  const fieldData = plv8.execute(`
-    SELECT f.*, qq.questionnaire_question_id
-    FROM form_schema.questionnaire_table q
-    JOIN form_schema.questionnaire_question_table qq
-    ON qq.questionnaire_question_questionnaire_id = q.questionnaire_id
-    JOIN form_schema.field_table f
-    ON f.field_id = qq.questionnaire_question_field_id
-    JOIN lookup_schema.position_table p
-    ON p.position_questionnaire_id  = q.questionnaire_id
-    WHERE p.position_alias ='${position_type}' AND qq.questionnaire_question_is_disabled = FALSE
-    ORDER BY RANDOM()
-    LIMIT 5;
-  `);
+         const fieldData = plv8.execute(`
+         SELECT f.*, qq.questionnaire_question_id
+         FROM form_schema.questionnaire_table q
+         JOIN form_schema.questionnaire_question_table qq
+         ON qq.questionnaire_question_questionnaire_id = q.questionnaire_id
+         JOIN form_schema.field_table f
+         ON f.field_id = qq.questionnaire_question_field_id
+         JOIN lookup_schema.position_table p
+         ON p.position_questionnaire_id  = q.questionnaire_id
+         WHERE
+            p.position_alias ='${position_type}'
+            AND qq.questionnaire_question_is_disabled = FALSE
+         ORDER BY RANDOM()
+         LIMIT 5;
+         `);
 
-  let sectionFieldsWithOptions = [];
+        let sectionFieldsWithOptions = [];
 
-  if (fieldData.length > 0) {
-    sectionFieldsWithOptions = fieldData.map((field) => {
-      const optionData = plv8.execute(`
-        SELECT *
-        FROM form_schema.question_option_table
-        WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
-        ORDER BY question_option_order ASC
-      `);
+        if (fieldData.length > 0) {
+          sectionFieldsWithOptions = fieldData.map((field) => {
+            const optionData = plv8.execute(`
+              SELECT *
+              FROM form_schema.question_option_table
+              WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
+              ORDER BY question_option_order ASC
+            `);
 
-        const optionFormattedData = optionData.map((option) => ({
-        option_id: option.question_option_id,
-        option_value: option.question_option_value,
-        option_order: option.question_option_order,
-        option_field_id: field.field_id,
-        }));
+            const optionFormattedData = optionData.map((option) => ({
+                option_id: option.question_option_id,
+                option_value: option.question_option_value,
+                option_order: option.question_option_order,
+                option_field_id: field.field_id,
+             }));
 
-      const correctResponseData = plv8.execute(`
-        SELECT *
-        FROM form_schema.correct_response_table
-        WHERE correct_response_field_id = '${field.field_id}'
-      `);
+            const correctResponseData = plv8.execute(`
+              SELECT *
+              FROM form_schema.correct_response_table
+              WHERE correct_response_field_id = '${field.field_id}'
+            `);
 
-      return {
-        ...field,
-        field_name: safeParse(field.field_name),
-        field_type: 'MULTIPLE CHOICE',
-        field_option: optionFormattedData,
-        field_correct_response: correctResponseData[0],
-      };
-    });
-  }
-
+            return {
+              ...field,
+              field_name: safeParse(field.field_name),
+              field_type: 'MULTIPLE CHOICE',
+              field_option: optionFormattedData,
+              field_correct_response: correctResponseData[0],
+            };
+        });
+    }
   returnData = {
     form: {
       ...form,
@@ -18280,34 +18281,34 @@ AS $$
 
     const fieldData = plv8.execute(
         `
-        SELECT
-        f.*, qq.questionnaire_question_id
-        FROM form_schema.field_table f
-        JOIN form_schema.questionnaire_question_table qq
-        ON qq.questionnaire_question_field_id = f.field_id
-        JOIN form_schema.questionnaire_table q
-        ON q.questionnaire_id = qq.questionnaire_question_questionnaire_id
-        WHERE q.questionnaire_id = $1 AND qq.questionnaire_question_is_disabled = FALSE
-        ORDER BY field_order ASC;
+            SELECT
+                f.*, qq.questionnaire_question_id
+            FROM form_schema.field_table f
+            JOIN form_schema.questionnaire_question_table qq
+            ON qq.questionnaire_question_field_id = f.field_id
+            JOIN form_schema.questionnaire_table q
+            ON q.questionnaire_id = qq.questionnaire_question_questionnaire_id
+            WHERE q.questionnaire_id = $1 AND qq.questionnaire_question_is_disabled = FALSE
+            ORDER BY field_order ASC;
         `, [questionnaireId]
     );
 
     returnData = fieldData.map((field) => {
         const optionsData = plv8.execute(
         `
-        SELECT *
-        FROM form_schema.question_option_table
-        WHERE question_option_questionnaire_question_id = $1
-        ORDER BY question_option_order ASC;
+            SELECT *
+            FROM form_schema.question_option_table
+            WHERE question_option_questionnaire_question_id = $1
+            ORDER BY question_option_order ASC;
         `, [field.questionnaire_question_id]
         );
 
         const correctAnswer = plv8.execute(
-        `
-        SELECT *
-        FROM form_schema.correct_response_table
-        WHERE correct_response_field_id = $1;
-        `, [field.field_id]  // Use field ID as parameter
+            `
+            SELECT *
+            FROM form_schema.correct_response_table
+            WHERE correct_response_field_id = $1;
+            `, [field.field_id]
         );
 
         let correctAnswerFieldName = null;
@@ -18323,26 +18324,26 @@ AS $$
         }
 
         return {
-        field_name: "Technical Question",
-        field_response: field.field_name,
-        field_id: field.field_id,
-        field_is_required: field.field_is_required,
-        field_type: field.field_type,
-        field_position_type: field.field_position_id,
-        field_options: [
-            ...optionsData.map((option, index) => ({
-            field_id: option.question_option_id,
-            field_name: `Question Choice ${index + 1}`,
-            field_response: option.question_option_value,
-            })),
-            ...(correctAnswer.length > 0 ? [{
-            field_id: correctAnswer[0].correct_response_id,
-            field_name: "Correct Answer",
-            field_response: correctAnswerFieldName
-            }] : [])
-        ]
+            field_name: "Technical Question",
+            field_response: field.field_name,
+            field_id: field.field_id,
+            field_is_required: field.field_is_required,
+            field_type: field.field_type,
+            field_position_type: field.field_position_id,
+            field_options: [
+                ...optionsData.map((option, index) => ({
+                field_id: option.question_option_id,
+                field_name: `Question Choice ${index + 1}`,
+                field_response: option.question_option_value,
+                })),
+                ...(correctAnswer.length > 0 ? [{
+                field_id: correctAnswer[0].correct_response_id,
+                field_name: "Correct Answer",
+                field_response: correctAnswerFieldName
+                }] : [])
+            ]
         };
-    });
+     });
     });
 return returnData;
 $$ LANGUAGE plv8;
@@ -18401,14 +18402,15 @@ AS $$
     const { data, questionnaireId } = input_data;
         data.forEach(function (field_response) {
         const query = `
-        SELECT *
-        FROM form_schema.field_table f
-        JOIN form_schema.questionnaire_question_table q
-        ON q.questionnaire_question_field_id = f.field_id
-        WHERE f.field_name = $1
-          AND q.questionnaire_question_questionnaire_id = $2
-          AND q.questionnaire_question_is_disabled = FALSE
-      `;
+            SELECT *
+            FROM form_schema.field_table f
+            JOIN form_schema.questionnaire_question_table q
+            ON q.questionnaire_question_field_id = f.field_id
+            WHERE
+                f.field_name = $1
+                AND q.questionnaire_question_questionnaire_id = $2
+                AND q.questionnaire_question_is_disabled = FALSE
+        `;
       const result = plv8.execute(query, [field_response, questionnaireId]);
 
       if (result.length > 0) {
@@ -18444,13 +18446,13 @@ AS $$
         SELECT COUNT(*)::INT AS total_count
         FROM form_schema.questionnaire_table q
         JOIN team_schema.team_member_table tm
-          ON tm.team_member_id = q.questionnaire_created_by
+        ON tm.team_member_id = q.questionnaire_created_by
         JOIN user_schema.user_table u
-          ON u.user_id = tm.team_member_user_id
+        ON u.user_id = tm.team_member_user_id
         LEFT JOIN team_schema.team_member_table tm2
-          ON tm2.team_member_id = q.questionnaire_updated_by
+        ON tm2.team_member_id = q.questionnaire_updated_by
         LEFT JOIN user_schema.user_table u2
-          ON u2.user_id = tm2.team_member_user_id
+        ON u2.user_id = tm2.team_member_user_id
         WHERE q.questionnaire_team_id = $1
         ${creator}
         ${search}
@@ -18464,26 +18466,27 @@ AS $$
 
     const questionnaireData = plv8.execute(`
         SELECT q.*,
-               u.user_id AS created_user_id,
-               u.user_first_name AS created_user_first_name,
-               u.user_last_name AS created_user_last_name,
-               u.user_avatar AS created_user_avatar,
-               u2.user_id AS updated_user_id,
-               u2.user_first_name AS updated_user_first_name,
-               u2.user_last_name AS updated_user_last_name,
-               u2.user_avatar AS updated_user_avatar
+            u.user_id AS created_user_id,
+            u.user_first_name AS created_user_first_name,
+            u.user_last_name AS created_user_last_name,
+            u.user_avatar AS created_user_avatar,
+            u2.user_id AS updated_user_id,
+            u2.user_first_name AS updated_user_first_name,
+            u2.user_last_name AS updated_user_last_name,
+            u2.user_avatar AS updated_user_avatar
         FROM form_schema.questionnaire_table q
         JOIN team_schema.team_member_table tm
-          ON tm.team_member_id = q.questionnaire_created_by
+        ON tm.team_member_id = q.questionnaire_created_by
         JOIN user_schema.user_table u
-          ON u.user_id = tm.team_member_user_id
+        ON u.user_id = tm.team_member_user_id
         LEFT JOIN team_schema.team_member_table tm2
-          ON tm2.team_member_id = q.questionnaire_updated_by
+        ON tm2.team_member_id = q.questionnaire_updated_by
         LEFT JOIN user_schema.user_table u2
-          ON u2.user_id = tm2.team_member_user_id
-        WHERE q.questionnaire_team_id = $1
-        ${creator}
-        ${search}
+        ON u2.user_id = tm2.team_member_user_id
+        WHERE
+            q.questionnaire_team_id = $1
+            ${creator}
+            ${search}
         ORDER BY q.questionnaire_date_created ${isAscendingSort}
         LIMIT $2 OFFSET $3
     `, [teamId, limit, offset]);
@@ -18516,7 +18519,7 @@ AS $$
                 user_avatar: updated_user_avatar
             } : null
         };
-    });
+      });
     });
     return returnData;
 $$ LANGUAGE plv8;
