@@ -23,7 +23,7 @@ import { Dispatch, SetStateAction } from "react";
 import HRPhoneInterviewMainTableRow from "./HRPhoneInterviewMainTableRow";
 
 const columnList = [
-  { field_id: "request_response", field_name: "Position", field_type: "TEXT" },
+  { field_id: "position", field_name: "Position", field_type: "TEXT" },
   {
     field_id: "application_information_full_name",
     field_name: "Name",
@@ -150,7 +150,7 @@ const HRPhoneInterviewSpreadsheetTable = ({
 
   const renderHRPhoneInterviewFieldList = () => {
     return columnList
-      .filter((field) => !hiddenColumnList.includes(field.field_name))
+      .filter((field) => !hiddenColumnList.includes(field.field_id)) // Filter based on field_id for consistency
       .map((field, index) => (
         <th
           key={index}

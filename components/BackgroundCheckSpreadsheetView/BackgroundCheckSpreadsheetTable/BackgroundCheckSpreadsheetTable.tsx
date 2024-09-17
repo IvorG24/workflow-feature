@@ -23,7 +23,7 @@ import { Dispatch, SetStateAction } from "react";
 import BackgroundCheckMainTableRow from "./BackgroundCheckMainTableRow";
 
 const columnList = [
-  { field_id: "request_response", field_name: "Position" },
+  { field_id: "position", field_name: "Position" },
   { field_id: "application_information_full_name", field_name: "Full Name" },
   { field_id: "application_information_nickname", field_name: "Nickname" },
   {
@@ -128,7 +128,7 @@ const BackgroundCheckSpreadsheetTable = ({
   };
   const renderBackgroundCheckFieldList = () => {
     return columnList
-      .filter((field) => !hiddenColumnList.includes(field.field_name))
+      .filter((field) => !hiddenColumnList.includes(field.field_id))
       .map((field, index) => (
         <th
           key={index}
