@@ -22,7 +22,7 @@ import {
 import { Dispatch, SetStateAction } from "react";
 import DirectorInterviewMainTableRow from "./DirectorInterviewMainTableRow";
 const columnList = [
-  { field_id: "request_response", field_name: "Position" },
+  { field_id: "position", field_name: "Position" },
   { field_id: "application_information_full_name", field_name: "Name" },
   {
     field_id: "application_information_contact_number",
@@ -168,7 +168,7 @@ const DirectorInterviewSpreadsheetTable = ({
   };
   const renderDirectorInterviewFieldList = () => {
     return columnList
-      .filter((field) => !hiddenColumnList.includes(field.field_name))
+      .filter((field) => !hiddenColumnList.includes(field.field_id))
       .map((field, index) => (
         <th
           key={index}

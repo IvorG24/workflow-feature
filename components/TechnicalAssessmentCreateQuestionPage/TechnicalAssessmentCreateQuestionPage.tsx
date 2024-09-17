@@ -127,6 +127,14 @@ const TechnicalAssessmentCreateQuestionPage = ({
         for (let i = 1; i < section.section_field.length; i++) {
           if (i === 5) continue;
 
+          if (
+            section.section_field[i].field_response === "" ||
+            section.section_field[i].field_response === null ||
+            section.section_field[i].field_response === undefined
+          ) {
+            continue;
+          }
+
           const choiceResponse = section.section_field[i]
             .field_response as string;
           if (uniqueChoices.has(choiceResponse)) {

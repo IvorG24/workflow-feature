@@ -24,7 +24,7 @@ import TradeTestMainTableRow from "./TradeTestMainTableRow";
 
 const columnList = [
   {
-    field_id: "request_response",
+    field_id: "position",
     field_name: "Position",
     field_type: "TEXT",
   },
@@ -161,7 +161,7 @@ const TradeTestSpreadsheetTable = ({
   };
   const renderTradeTestFieldList = () => {
     return columnList
-      .filter((field) => !hiddenColumnList.includes(field.field_name))
+      .filter((field) => !hiddenColumnList.includes(field.field_id))
       .map((field, index) => (
         <th
           key={index}

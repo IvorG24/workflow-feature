@@ -175,9 +175,11 @@ const TechnicalAssessmentViewQuestionPage = ({
 
       const choiceSet = new Set();
 
-      for (const field of data.section_field) {
+      for (const [index, field] of data.section_field.entries()) {
         const fieldResponse = (field.field_response as string).trim();
-
+        if ((index === 3 || index === 4) && !fieldResponse) {
+          continue;
+        }
         if (!fieldResponse) {
           notifications.show({
             message: `Field "${field.field_name}" cannot be empty.`,
@@ -311,6 +313,7 @@ const TechnicalAssessmentViewQuestionPage = ({
             questionnaireId: questionnaireId,
           }
         );
+
         const positions = await getPositionPerQuestionnaire(supabaseClient, {
           questionnaireId: questionnaireId,
         });
@@ -382,15 +385,17 @@ const TechnicalAssessmentViewQuestionPage = ({
                       field_is_required: false,
                     }
                   : correspondingResponse
-                  ? {
-                      ...field,
-                      field_id: correspondingResponse.field_id,
-                      field_type: isCorrectAnswer ? "DROPDOWN" : "TEXT",
-
-                      field_response: correspondingResponse.field_response,
-                      field_is_required: false,
-                    }
-                  : field;
+                    ? {
+                        ...field,
+                        field_id: correspondingResponse.field_id,
+                        field_type: isCorrectAnswer ? "DROPDOWN" : "TEXT",
+                        field_response:
+                          correspondingResponse.field_response === "undefined"
+                            ? ""
+                            : correspondingResponse.field_response,
+                        field_is_required: false,
+                      }
+                    : field;
               });
 
               return {
