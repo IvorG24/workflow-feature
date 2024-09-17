@@ -23,6 +23,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       const memo = await getMemo(supabaseClient, {
         memo_id: `${memoId}`,
         current_user_id: user.id,
+        team_id: userActiveTeam.team_id,
       });
 
       const teamMemoSignerList = await getTeamMemoSignerList(supabaseClient, {

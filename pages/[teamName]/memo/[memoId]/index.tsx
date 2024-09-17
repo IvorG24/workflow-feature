@@ -6,7 +6,7 @@ import { MemoType } from "@/utils/types";
 import { GetServerSideProps } from "next";
 
 export const getServerSideProps: GetServerSideProps = withActiveTeam(
-  async ({ supabaseClient, context, user }) => {
+  async ({ supabaseClient, context, user, userActiveTeam }) => {
     try {
       const { memoId } = context.query;
       if (!memoId) {
@@ -21,6 +21,7 @@ export const getServerSideProps: GetServerSideProps = withActiveTeam(
       const memo = await getMemo(supabaseClient, {
         memo_id: `${memoId}`,
         current_user_id: user.id,
+        team_id: userActiveTeam.team_id,
       });
 
       return {

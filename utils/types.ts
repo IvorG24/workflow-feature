@@ -2504,3 +2504,14 @@ export type TechnicalAssessmentFilterValues = {
       user_avatar: string;
     } | null;
   };
+
+export type HRAnalyticsResponseType = {
+  request_response: string;
+  count: number;
+};
+
+export type HRAnalyticsData = {
+  candidate_referral_source: HRAnalyticsResponseType[];
+  most_applied_position: HRAnalyticsResponseType[];
+  applicant_age_bracket: HRAnalyticsResponseType[];
+};
