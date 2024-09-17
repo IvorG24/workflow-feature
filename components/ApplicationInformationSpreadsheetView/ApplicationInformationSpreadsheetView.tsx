@@ -222,7 +222,7 @@ const ApplicationInformationSpreadsheetView = ({
                 option_id: uuidv4(),
                 option_value: region.region,
                 option_order: index + 1,
-                option_field_id: "aeb28a1f-8a5c-4e17-9ddd-a0377db12e97",
+                option_field_id: "1a901f84-4f55-47aa-bfa0-42f56d1eb6c5",
               };
             }),
           };

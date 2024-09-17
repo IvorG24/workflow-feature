@@ -37,10 +37,10 @@ import { useEffect, useState } from "react";
 import { ClassNameType } from "./ApplicationInformationSpreadsheetTable";
 
 export const duplicatableFieldIdList = [
-  "98378ca4-3323-4f7c-a469-e33adec84d25",
-  "00d3e4e7-9177-4497-948d-daba978f0aa3",
-  "c35cf796-9613-4a02-8438-d2baa46e653b",
-  "e0959707-0606-4610-af60-8fd49d014320",
+  "8f3730f4-8ea0-4aa0-92f9-b0e7c269c32b",
+  "0251f4cd-d97b-4e6c-af14-8f8cfc8b2ca1",
+  "c9f4de33-42fd-4c4e-a41d-9616b6e20b77",
+  "4567100a-d863-465e-a5b2-376e33c7a2b8",
 ];
 
 const useStyles = createStyles((theme) => ({
