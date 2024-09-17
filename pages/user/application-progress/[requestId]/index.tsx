@@ -39,7 +39,7 @@ export const getServerSideProps: GetServerSideProps = withAuthAndOnboarding(
             error_url: context.resolvedUrl,
             error_function: "getServerSideProps",
             error_user_email: user.email,
-            error_id: user.id,
+            error_user_id: user.id,
           },
         });
       }

@@ -53,6 +53,7 @@ DROP SCHEMA IF EXISTS ticket_schema CASCADE;
 DROP SCHEMA IF EXISTS request_schema CASCADE;
 DROP SCHEMA IF EXISTS form_schema CASCADE;
 DROP SCHEMA IF EXISTS team_schema CASCADE;
+DROP SCHEMA IF EXISTS hr_schema CASCADE;
 
 CREATE SCHEMA public AUTHORIZATION postgres;
 CREATE SCHEMA user_schema AUTHORIZATION postgres;
@@ -69,6 +70,7 @@ CREATE SCHEMA ticket_schema AUTHORIZATION postgres;
 CREATE SCHEMA request_schema AUTHORIZATION postgres;
 CREATE SCHEMA form_schema AUTHORIZATION postgres;
 CREATE SCHEMA team_schema AUTHORIZATION postgres;
+CREATE SCHEMA hr_schema AUTHORIZATION postgres;
 
 ----- END: SCHEMAS
 
@@ -311,6 +313,13 @@ CREATE TABLE form_schema.field_table (
   field_special_field_template_id UUID REFERENCES form_schema.special_field_template_table(special_field_template_id)
 );
 
+CREATE TABLE form_schema.correct_response_table (
+  correct_response_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  correct_response_value VARCHAR(4000) NOT NULL,
+
+  correct_response_field_id UUID REFERENCES form_schema.field_table(field_id) NOT NULL
+);
+
 CREATE TABLE form_schema.option_table (
   option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   option_value VARCHAR(4000) NOT NULL,
@@ -352,6 +361,13 @@ CREATE TABLE request_schema.request_table (
   request_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id),
   request_form_id UUID REFERENCES form_schema.form_table(form_id) NOT NULL,
   request_project_id UUID REFERENCES team_schema.team_project_table(team_project_id)
+);
+
+CREATE TABLE request_schema.request_score_table (
+  request_score_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  request_score_value INT NOT NULL,
+
+  request_score_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
 );
 
 CREATE TABLE request_schema.request_response_table (
@@ -943,6 +959,186 @@ CREATE TABLE lookup_schema.bank_list_table (
   bank_label VARCHAR(4000) NOT NULL
 );
 
+CREATE TABLE lookup_schema.ad_owner_table (
+  ad_owner_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  ad_owner_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ad_owner_name TEXT NOT NULL,
+  ad_owner_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+);
+
+CREATE TABLE lookup_schema.ad_owner_request_table (
+  ad_owner_request_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  ad_owner_request_owner_id UUID REFERENCES lookup_schema.ad_owner_table(ad_owner_id) NOT NULL,
+  ad_owner_request_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
+);
+
+CREATE TABLE hr_schema.hr_phone_interview_table (
+  hr_phone_interview_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  hr_phone_interview_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  hr_phone_interview_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
+  hr_phone_interview_status_date_updated TIMESTAMPTZ,
+  hr_phone_interview_schedule TIMESTAMPTZ,
+
+  hr_phone_interview_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  hr_phone_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE hr_schema.trade_test_table (
+  trade_test_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  trade_test_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  trade_test_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
+  trade_test_status_date_updated TIMESTAMPTZ,
+  trade_test_schedule TIMESTAMPTZ,
+  trade_test_meeting_link VARCHAR(4000),
+
+  trade_test_address_id UUID REFERENCES address_table(address_id),
+  trade_test_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  trade_test_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE hr_schema.technical_interview_table (
+  technical_interview_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  technical_interview_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  technical_interview_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
+  technical_interview_status_date_updated TIMESTAMPTZ,
+  technical_interview_schedule TIMESTAMPTZ,
+  technical_interview_meeting_link VARCHAR(4000),
+  technical_interview_number INT DEFAULT 1 NOT NULL,
+
+  technical_interview_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  technical_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE hr_schema.director_interview_table (
+  director_interview_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  director_interview_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  director_interview_status VARCHAR(4000) DEFAULT 'WAITING FOR SCHEDULE' NOT NULL,
+  director_interview_status_date_updated TIMESTAMPTZ,
+  director_interview_schedule TIMESTAMPTZ,
+  director_interview_meeting_link VARCHAR(4000),
+
+  director_interview_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  director_interview_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE hr_schema.background_check_table (
+  background_check_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  background_check_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  background_check_status VARCHAR(4000) DEFAULT 'PENDING' NOT NULL,
+  background_check_status_date_updated TIMESTAMPTZ,
+
+  background_check_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  background_check_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE hr_schema.job_offer_table (
+  job_offer_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  job_offer_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  job_offer_status VARCHAR(4000) DEFAULT 'WAITING FOR OFFER' NOT NULL,
+
+  job_offer_title VARCHAR(4000),
+  job_offer_project_assignment VARCHAR(4000),
+  job_offer_project_assignment_address VARCHAR(4000),
+  job_offer_manpower_loading_id VARCHAR(4000),
+  job_offer_manpower_loading_reference_created_by VARCHAR(4000),
+  job_offer_compensation VARCHAR(4000),
+
+  job_offer_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  job_offer_attachment_id UUID REFERENCES public.attachment_table(attachment_id),
+  job_offer_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id)
+);
+
+CREATE TABLE hr_schema.job_offer_reason_for_rejection_table (
+  job_offer_reason_for_rejection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  job_offer_reason_for_rejection VARCHAR(4000) NOT NULL,
+
+  job_offer_reason_for_rejection_job_offer_id UUID REFERENCES hr_schema.job_offer_table(job_offer_id) NOT NULL
+);
+
+CREATE TABLE hr_schema.request_connection_table (
+  request_connection_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+
+  request_connection_application_information_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  request_connection_general_assessment_request_id UUID REFERENCES request_schema.request_table(request_id),
+  request_connection_technical_assessment_request_id UUID REFERENCES request_schema.request_table(request_id)
+);
+
+CREATE TABLE hr_schema.interview_online_meeting_table (
+  interview_meeting_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  interview_meeting_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  interview_meeting_provider_id TEXT UNIQUE NOT NULL,
+  interview_meeting_url TEXT NOT NULL,
+  interview_meeting_interview_id UUID NOT NULL,
+  interview_meeting_duration INT NOT NULL,
+  interview_meeting_break_duration INT NOT NULL,
+  interview_meeting_schedule TIMESTAMPTZ NOT NULL,
+  interview_meeting_is_disabled BOOLEAN DEFAULT false NOT NULL
+);
+
+CREATE TABLE hr_schema.recruitment_table (
+  recruitment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  
+  recruitment_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
+  recruitment_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
+);
+
+CREATE TABLE hr_schema.hr_project_table (
+  hr_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  hr_project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  hr_project_name VARCHAR(4000) NOT NULL,
+  
+  hr_project_address_id UUID REFERENCES public.address_table(address_id) NOT NULL
+);
+
+CREATE TABLE lookup_schema.degree_table (
+  degree_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  degree_type VARCHAR(4000) NOT NULL,
+  degree_branch VARCHAR(4000) NOT NULL,
+  degree_field_of_study VARCHAR(4000),
+  degree_name VARCHAR(4000) NOT NULL
+);
+
+CREATE TABLE form_schema.questionnaire_table (
+  questionnaire_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  questionnaire_name VARCHAR(5000) NOT NULL,
+  questionnaire_date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  questionnaire_date_updated TIMESTAMP,
+  questionnaire_is_disabled BOOLEAN DEFAULT FALSE,
+
+  questionnaire_created_by UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
+  questionnaire_updated_by UUID REFERENCES team_schema.team_member_table(team_member_id),
+  questionnaire_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+);
+
+CREATE TABLE form_schema.questionnaire_question_table(
+  questionnaire_question_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  questionnaire_question VARCHAR(4000) NOT NULL,
+  questionnaire_date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  questionnaire_question_is_disabled BOOLEAN DEFAULT FALSE,
+
+  questionnaire_question_field_id UUID REFERENCES form_schema.field_table(field_id) NOT NULL,
+  questionnaire_question_questionnaire_id UUID REFERENCES form_schema.questionnaire_table(questionnaire_id) NOT NULL
+);
+
+CREATE TABLE form_schema.question_option_table(
+  question_option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+  question_option_value VARCHAR(4000) NOT NULL,
+  question_option_order INT NOT NULL,
+
+  question_option_questionnaire_question_id UUID REFERENCES form_schema.questionnaire_question_table(questionnaire_question_id) NOT NULL
+);
+
+CREATE TABLE error_table(
+  error_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  error_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  error_message TEXT NOT NULL,
+  error_url TEXT NOT NULL,
+  error_function TEXT NOT NULL,
+
+  error_user_id UUID REFERENCES user_schema.user_table(user_id),
+  error_user_email VARCHAR(4000)
+);
+
 CREATE TABLE lookup_schema.position_table (
   position_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
   position_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -974,20 +1170,8 @@ CREATE TABLE lookup_schema.position_table (
   position_is_with_director_interview BOOLEAN DEFAULT false NOT NULL,
   position_is_with_background_check BOOLEAN DEFAULT false NOT NULL,
 
-  position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
-);
-
-CREATE TABLE lookup_schema.ad_owner_table (
-  ad_owner_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  ad_owner_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  ad_owner_name TEXT NOT NULL,
-  ad_owner_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
-);
-
-CREATE TABLE lookup_schema.ad_owner_request_table (
-  ad_owner_request_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  ad_owner_request_owner_id UUID REFERENCES lookup_schema.ad_owner_table(ad_owner_id) NOT NULL,
-  ad_owner_request_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
+  position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL,
+  position_questionnaire_id UUID REFERENCES form_schema.questionnaire_table(questionnaire_id)
 );
 
 ----- END: TABLES
