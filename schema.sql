@@ -14448,7 +14448,7 @@ AS $$
     JOIN lookup_schema.position_table p
     ON p.position_questionnaire_id  = q.questionnaire_id
     WHERE p.position_alias ='${position_type}' AND qq.questionnaire_question_is_disabled = FALSE
-    ORDER BY field_order ASC
+    ORDER BY RANDOM()
     LIMIT 5;
   `);
 
@@ -14532,7 +14532,7 @@ AS $$
             },
           ],
         },
-        ...(sectionFieldsWithOptions.length > 0
+        ...(sectionFieldsWithOptions.length === 5
         ? [
             {
               ...form.form_section[2],
@@ -14553,7 +14553,6 @@ AS $$
     });
     return returnData;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION get_application_information_summary_table(
   input_data JSON
