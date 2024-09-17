@@ -623,6 +623,22 @@ const RequestFormFields = ({
                     ? true
                     : "Contact number must start with 9";
                 },
+                validateStreet: (value) => {
+                  if (
+                    !(
+                      field.field_name === "Street" &&
+                      applicationInformationFormMethods
+                    )
+                  )
+                    return true;
+                  const streetPattern = /^[a-zA-Z0-9\s,.'-]{5,100}$/;
+                  const trimmedStreet = (value as string).trim();
+                  if (!streetPattern.test(trimmedStreet)) {
+                    return "Invalid street address. Use letters, numbers, spaces, commas, and hyphens only.";
+                  } else {
+                    return true;
+                  }
+                },
               },
             }}
           />
