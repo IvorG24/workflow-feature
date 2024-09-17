@@ -9,10 +9,6 @@ import {
   useUserTeamMember,
   useUserTeamMemberGroupList,
 } from "@/stores/useUserStore";
-import {
-  useUserTeamMember,
-  useUserTeamMemberGroupList,
-} from "@/stores/useUserStore";
 import { REQUEST_LIST_HIDDEN_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
@@ -600,13 +596,14 @@ const ReviewAppNavLink = () => {
 
   return (
     <>
-      {!isEmpty(activeTeam) && hasTeam ? (
-        <NavLinkSection
-          label={"Metrics"}
-          links={metricsSection}
-          {...defaultNavLinkProps}
-        />
-      ) : null}
+      {!isEmpty(activeTeam) && hasTeam
+        ? // <NavLinkSection
+          //   label={"Metrics"}
+          //   links={metricsSection}
+          //   {...defaultNavLinkProps}
+          // />
+          renderMetricsMenu()
+        : null}
 
       {!isEmpty(activeTeam) &&
         hasTeam &&

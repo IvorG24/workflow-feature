@@ -17758,6 +17758,74 @@ plv8.subtransaction(function(){
 });
 $$ LANGUAGE plv8;
 
+CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
+RETURNS JSON 
+SET search_path TO ''
+AS $$
+  let data;
+  plv8.subtransaction(function(){
+    const {
+      startDate,
+      endDate
+    } = input_data;
+
+    let dateFilterCondition = '';
+    if (startDate && endDate) {
+      dateFilterCondition = `AND request_date_created >= '${startDate}' AND request_date_created <= '${endDate}'`
+    }
+
+    const candidate_referral_source = plv8.execute(`
+        SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+        FROM request_schema.request_response_table 
+        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+        WHERE request_response_field_id = 'f416b6c8-5374-4642-b608-f626269bde1b'
+        ${dateFilterCondition}
+        GROUP BY request_response
+    `);
+
+    const formatted_candidate_referral_source = candidate_referral_source.map((d) => ({count: Number(d.count), ...d}));
+
+    const most_applied_position = plv8.execute(`
+      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+      FROM request_schema.request_response_table
+      INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+      WHERE request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'
+      ${dateFilterCondition}
+      GROUP BY request_response
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+
+    const formatted_most_applied_position = most_applied_position.map((d) => ({count: Number(d.count), ...d}));
+
+    const age_bracket_list = [{min: 18, max: 25}, {min: 26, max: 30}, {min: 31, max: 35}, {min: 36, max: 40}, {min: 41, max: 100}];
+
+    const applicant_age_bracket = age_bracket_list.map((bracket) => {
+      const count = plv8.execute(`
+        SELECT COUNT(request_response)::int
+        FROM request_schema.request_response_table
+        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+        WHERE request_response_field_id = '222d4978-5216-4c81-a676-be9405a7323c'
+        AND request_response >= $1
+        AND request_response <= $2
+        ${dateFilterCondition}
+      `, [bracket.min, bracket.max])[0].count;
+
+      return {
+        request_response: `${bracket.min}-${bracket.max}`,
+        count: Number(count)
+      }
+    });
+
+    data = {
+      candidate_referral_source: formatted_candidate_referral_source,
+      most_applied_position: formatted_most_applied_position,
+      applicant_age_bracket
+    }
+ });
+ return data;
+$$ LANGUAGE plv8;
+
 CREATE OR REPLACE FUNCTION get_hr_spreadsheet_view_on_load(
   input_data JSON
 )
