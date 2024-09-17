@@ -1,3 +1,4 @@
+import { formatStringToNumber } from "@/utils/functions";
 import { startCase } from "@/utils/string";
 import { NextApiRequest, NextApiResponse } from "next";
 
@@ -53,8 +54,8 @@ export default async function handler(
         customfield_11481: {
           value: parsedPositionType,
         },
-        customfield_10442: sssID as number,
-        customfield_10120: contactNumber as number,
+        customfield_10442: formatStringToNumber(sssID),
+        customfield_10120: formatStringToNumber(contactNumber),
         customfield_10121: emailAddress,
         customfield_11519: {
           value: candidateSource,
@@ -83,7 +84,7 @@ export default async function handler(
 
     const createTicketData = await createTicketResponse.json();
     jiraTicketId = createTicketData.key;
-    jiraTicketLink = createTicketData.self;
+    jiraTicketLink = `https://scic.atlassian.net/jira/core/projects/REC/board?selectedIssue=${createTicketData.key}`; // link is hardcoded because the issue does not return a user facing web link unlike the other form tickets
 
     return res.status(200).json({ jiraTicketId, jiraTicketLink });
   } catch (e) {

@@ -42,6 +42,7 @@ import {
   FieldTableRow,
   FormTableRow,
   FormType,
+  HRAnalyticsData,
   InitialFormType,
   ItemCategoryType,
   ItemCategoryWithSigner,
@@ -3307,7 +3308,7 @@ export const getTeamMemoSignerList = async (
 // Get memo
 export const getMemo = async (
   supabaseClient: SupabaseClient<Database>,
-  params: { memo_id: string; current_user_id: string }
+  params: { memo_id: string; current_user_id: string; team_id: string }
 ) => {
   const { data, error } = await supabaseClient.rpc("get_memo_on_load", {
     input_data: params,
@@ -4134,7 +4135,9 @@ export const getItemUnitOfMeasurement = async (
   }
 ) => {
   const { data, error } = await supabaseClient
-    .rpc("get_item_unit_of_measurement", { input_data: params })
+    .rpc("get_item_unit_of_measurement", {
+      input_data: escapeQuotesForObject(params),
+    })
     .select("*");
   if (error) throw error;
 
@@ -6445,4 +6448,31 @@ export const getLatestApiKey = async (
     throw error;
   }
   return data;
+};
+export const getAdOwnerList = async (
+  supabaseClient: SupabaseClient<Database>
+) => {
+  const { data, error } = await supabaseClient
+    .schema("lookup_schema")
+    .from("ad_owner_table")
+    .select("*");
+  if (error) throw error;
+
+  return data;
+};
+
+export const getHRApplicantAnalytics = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    startDate?: string;
+    endDate?: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_application_information_analytics",
+    { input_data: params }
+  );
+  if (error) throw error;
+
+  return data as HRAnalyticsData;
 };

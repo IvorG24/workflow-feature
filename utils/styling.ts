@@ -195,6 +195,22 @@ export const sssIdNumberFormatter = (value: string | undefined) => {
   }
 };
 
+export const philHealthIdNumberFormatter = (value: string | undefined) => {
+  const cleanedNumber = value ? value.replace(/\D/g, "") : "";
+
+  if (cleanedNumber.length === 12) {
+    const formattedNumber = cleanedNumber.replace(
+      /(\d{2})(\d{9})(\d{1})/,
+      "$1-$2-$3"
+    );
+    return formattedNumber;
+  } else if (cleanedNumber.length === 0) {
+    return "";
+  } else {
+    return "Invalid number";
+  }
+};
+
 export const pagIbigNumberFormatter = (value: string | undefined) => {
   const cleanedNumber = value ? value.replace(/\D/g, "") : "";
 

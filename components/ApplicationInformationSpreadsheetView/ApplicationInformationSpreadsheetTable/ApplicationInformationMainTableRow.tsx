@@ -7,6 +7,7 @@ import {
   getStatusToColor,
   mobileNumberFormatter,
   pagIbigNumberFormatter,
+  philHealthIdNumberFormatter,
   sssIdNumberFormatter,
   tinNumberFormatter,
 } from "@/utils/styling";
@@ -143,24 +144,30 @@ const ApplicationInformationMainTableRow = ({
         );
       case "SWITCH":
         return `${Boolean(response)}`;
-      case "NUMBER":
+      case "TEXT":
         switch (row.field_name) {
           case "Contact Number":
             return mobileNumberFormatter(`${response}`);
           case "SSS ID Number":
-          case "Philhealth Number":
             return sssIdNumberFormatter(`${response}`);
+          case "Philhealth Number":
+            return philHealthIdNumberFormatter(`${response}`);
           case "Pag-IBIG Number":
             return pagIbigNumberFormatter(`${response}`);
           case "TIN":
             return tinNumberFormatter(`${response}`);
-          case "Expected Monthly Salary (PHP)":
-            return pesoFormatter(`${response}`);
           default:
             return response;
         }
       case "MULTISELECT":
         return response && response.join(", ");
+      case "NUMBER":
+        switch (row.field_name) {
+          case "Expected Monthly Salary (PHP)":
+            return pesoFormatter(`${response}`);
+          default:
+            return response;
+        }
       default:
         return response;
     }

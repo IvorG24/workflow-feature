@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { ChartData } from "chart.js";
 import moment from "moment";
 import dynamic from "next/dynamic";
+import { startCase } from "./string";
 import { JiraItemUserTableData } from "./types";
 
 // check if a value is empty
@@ -230,4 +232,65 @@ export const sendEmailTeamInvite = async ({
 
 export const calculateInvoiceAmountWithVAT = (amount: number) => {
   return (amount / 1.12) * 0.12;
+};
+
+export const formatStringToNumber = (numericString: string) => {
+  return Number(numericString.replace(/\s/g, ""));
+};
+
+export const parseDataForChart = ({
+  data,
+  labelPropKey,
+  valuePropKey,
+  datasetLabel,
+  colorPalette,
+}: {
+  data: Array<{ [key: string]: any }>;
+  labelPropKey: string;
+  valuePropKey: string;
+  datasetLabel?: string;
+  colorPalette?: string[];
+}): ChartData => {
+  const aggregatedData: { [key: string]: number } = {};
+
+  // Process each item
+  data.forEach((item) => {
+    const label = startCase(item[labelPropKey]);
+    const value = Number(item[valuePropKey]);
+
+    if (label && !isNaN(value)) {
+      if (aggregatedData[label]) {
+        aggregatedData[label] += value;
+      } else {
+        aggregatedData[label] = value;
+      }
+    }
+  });
+
+  const labels = Object.keys(aggregatedData);
+  const values = Object.values(aggregatedData);
+
+  const colors =
+    colorPalette ||
+    labels.map(() => {
+      const r = Math.floor(Math.random() * 255);
+      const g = Math.floor(Math.random() * 255);
+      const b = Math.floor(Math.random() * 255);
+      return `rgba(${r}, ${g}, ${b}, 0.2)`;
+    });
+
+  const chartData: ChartData = {
+    labels,
+    datasets: [
+      {
+        label: datasetLabel || "Dataset",
+        data: values,
+        backgroundColor: colors,
+        borderColor: colors.map((color) => color.replace("0.2", "1")),
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  return chartData;
 };

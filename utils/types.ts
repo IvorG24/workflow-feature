@@ -510,6 +510,12 @@ export type TeamDepartmentTableRow =
 
 export type RequestViewRow = Database["public"]["Views"]["request_view"]["Row"];
 
+export type AdOwnerTableRow =
+  Database["lookup_schema"]["Tables"]["ad_owner_table"]["Row"];
+
+export type AdOwnerRequestTableInsert =
+  Database["lookup_schema"]["Tables"]["ad_owner_request_table"]["Insert"];
+
 // End: Database Table Types
 
 // Start: Database Enums
@@ -2211,4 +2217,14 @@ export type FetchUserRequestListParams = {
 export type ApiKeyData = {
   team_key_api_key: string;
   team_key_label: string;
+};
+export type HRAnalyticsResponseType = {
+  request_response: string;
+  count: number;
+};
+
+export type HRAnalyticsData = {
+  candidate_referral_source: HRAnalyticsResponseType[];
+  most_applied_position: HRAnalyticsResponseType[];
+  applicant_age_bracket: HRAnalyticsResponseType[];
 };

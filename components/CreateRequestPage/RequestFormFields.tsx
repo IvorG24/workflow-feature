@@ -457,48 +457,169 @@ const RequestFormFields = ({
         );
 
       case "TEXT":
+        let maxLength: number | undefined = undefined;
+        let formatter: ((value: string) => string) | undefined = undefined;
+
+        switch (field.field_name) {
+          case "Contact Number":
+            maxLength = 10;
+            break;
+          case "SSS ID Number":
+            maxLength = 10;
+            formatter = (value: string) => {
+              if (!value) return "";
+              const cleaned = ("" + value).replace(/\D/g, "");
+              const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
+              if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+              }
+              return value;
+            };
+            break;
+          case "Philhealth Number":
+            maxLength = 12;
+            formatter = (value: string) => {
+              if (!value) return "";
+              const cleaned = ("" + value).replace(/\D/g, "");
+              const match = cleaned.match(/^(\d{2})(\d{9})(\d{1})$/);
+              if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+              }
+              return value;
+            };
+            break;
+          case "Pag-IBIG Number":
+            maxLength = 12;
+            formatter = (value: string) => {
+              if (!value) return "";
+              const cleaned = ("" + value).replace(/\D/g, "");
+              const match = cleaned.match(/^(\d{4})(\d{4})(\d{4})$/);
+              if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+              }
+              return value;
+            };
+            break;
+          case "TIN":
+            maxLength = 9;
+            formatter = (value: string) => {
+              if (!value) return "";
+              const cleaned = ("" + value).replace(/\D/g, "");
+              const match = cleaned.match(/^(\d{3})(\d{3})(\d{3})$/);
+              if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+              }
+              return value;
+            };
+            break;
+        }
+
         return (
-          <TextInput
-            {...inputProps}
-            {...register(
-              `sections.${sectionIndex}.section_field.${fieldIndex}.field_response`,
-              {
-                ...fieldRules,
-              }
+          <Controller
+            control={control}
+            name={`sections.${sectionIndex}.section_field.${fieldIndex}.field_response`}
+            render={({ field: { value, onChange } }) => (
+              <TextInput
+                value={(value ?? "") as string}
+                onChange={(e) => {
+                  const value = e.currentTarget.value;
+                  if (formatter) {
+                    const numberOnly = value.replace(/\D/g, "");
+                    const newValue = formatter(numberOnly);
+                    if (maxLength && maxLength + 2 === newValue.length) {
+                      onChange(newValue);
+                      return;
+                    } else {
+                      onChange(numberOnly);
+                      return;
+                    }
+                  }
+                  onChange(value);
+                }}
+                withAsterisk={field.field_is_required}
+                {...inputProps}
+                error={fieldError}
+                maxLength={maxLength ?? MAX_TEXT_LENGTH}
+                readOnly={field.field_is_read_only || isLoading}
+                rightSection={isLoading && <Loader size={16} />}
+                onBlur={(e) => {
+                  const value = e.currentTarget.value;
+                  switch (field.field_name) {
+                    case "Employee No. (HRIS)":
+                      personnelTransferRequisitionMethods &&
+                        personnelTransferRequisitionMethods.onEmployeeNumberChange(
+                          value,
+                          sectionIndex
+                        );
+                      requestForPaymentFormMethods &&
+                        requestForPaymentFormMethods.onEmployeeNumberChange(
+                          value
+                        );
+
+                      pettyCashVoucherFormMethods &&
+                        pettyCashVoucherFormMethods.onEmployeeNumberChange(
+                          value,
+                          sectionIndex
+                        );
+                      break;
+
+                    case "Action Plan":
+                      equipmentServiceReportMethods?.onActionPlanBlur(
+                        value,
+                        sectionIndex
+                      );
+                      break;
+                  }
+                }}
+                type={
+                  field.field_name === "Email Address" ? "email" : undefined
+                }
+                icon={field.field_name === "Contact Number" ? "+63" : ""}
+              />
             )}
-            error={fieldError}
-            withAsterisk={field.field_is_required}
-            readOnly={field.field_is_read_only || isLoading}
-            rightSection={isLoading && <Loader size={16} />}
-            onBlur={(e) => {
-              const value = e.currentTarget.value;
-              switch (field.field_name) {
-                case "Employee No. (HRIS)":
-                  personnelTransferRequisitionMethods &&
-                    personnelTransferRequisitionMethods.onEmployeeNumberChange(
-                      value,
-                      sectionIndex
-                    );
-                  requestForPaymentFormMethods &&
-                    requestForPaymentFormMethods.onEmployeeNumberChange(value);
+            rules={{
+              ...fieldRules,
+              validate: {
+                checkNumberOfCharacter: (value) => {
+                  const stringifiedValue = value ? `${value}` : "";
 
-                  pettyCashVoucherFormMethods &&
-                    pettyCashVoucherFormMethods.onEmployeeNumberChange(
-                      value,
-                      sectionIndex
-                    );
-                  break;
-
-                case "Action Plan":
-                  equipmentServiceReportMethods?.onActionPlanBlur(
-                    value,
-                    sectionIndex
-                  );
-                  break;
-              }
+                  if (!stringifiedValue.length || !maxLength) return true;
+                  switch (field.field_name) {
+                    case "Contact Number":
+                      if (stringifiedValue.length !== maxLength) {
+                        return "Invalid Contact Number";
+                      }
+                      return true;
+                    case "SSS ID Number":
+                      if (stringifiedValue.length !== maxLength + 2) {
+                        return "Invalid SSS ID Number";
+                      }
+                      return true;
+                    case "Philhealth Number":
+                      if (stringifiedValue.length !== maxLength + 2) {
+                        return "Invalid Philhealth Number";
+                      }
+                      return true;
+                    case "Pag-IBIG Number":
+                      if (stringifiedValue.length !== maxLength + 2) {
+                        return "Invalid Pag-IBIG Number";
+                      }
+                      return true;
+                    case "TIN":
+                      if (stringifiedValue.length !== maxLength + 2) {
+                        return "Invalid TIN Number";
+                      }
+                      return true;
+                  }
+                },
+                startsWith: (value) => {
+                  if (field.field_name !== "Contact Number") return true;
+                  return `${value}`[0] === "9"
+                    ? true
+                    : "Contact number must start with 9";
+                },
+              },
             }}
-            type={field.field_name === "Email Address" ? "email" : undefined}
-            maxLength={MAX_TEXT_LENGTH}
           />
         );
 
@@ -568,52 +689,6 @@ const RequestFormFields = ({
             />
           );
         } else {
-          let maxLength: number | undefined = undefined;
-          let formatter: ((value: string) => string) | undefined = undefined;
-
-          switch (field.field_name) {
-            case "Contact Number":
-              maxLength = 10;
-              break;
-            case "SSS ID Number":
-            case "Philhealth Number":
-              maxLength = 10;
-              formatter = (value: string) => {
-                if (!value) return "";
-                const cleaned = ("" + value).replace(/\D/g, "");
-                const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
-                if (match) {
-                  return `${match[1]}-${match[2]}-${match[3]}`;
-                }
-                return value;
-              };
-              break;
-            case "Pag-IBIG Number":
-              maxLength = 12;
-              formatter = (value: string) => {
-                if (!value) return "";
-                const cleaned = ("" + value).replace(/\D/g, "");
-                const match = cleaned.match(/^(\d{4})(\d{4})(\d{4})$/);
-                if (match) {
-                  return `${match[1]}-${match[2]}-${match[3]}`;
-                }
-                return value;
-              };
-              break;
-            case "TIN":
-              maxLength = 9;
-              formatter = (value: string) => {
-                if (!value) return "";
-                const cleaned = ("" + value).replace(/\D/g, "");
-                const match = cleaned.match(/^(\d{3})(\d{3})(\d{3})$/);
-                if (match) {
-                  return `${match[1]}-${match[2]}-${match[3]}`;
-                }
-                return value;
-              };
-              break;
-          }
-
           return (
             <Controller
               control={control}
@@ -625,9 +700,7 @@ const RequestFormFields = ({
                   withAsterisk={field.field_is_required}
                   {...inputProps}
                   error={fieldError}
-                  formatter={formatter}
-                  parser={(value) => value.replace(/[^\d.]/g, "")}
-                  maxLength={maxLength}
+                  maxLength={10}
                   precision={
                     [
                       "Quantity",
@@ -674,9 +747,8 @@ const RequestFormFields = ({
                         break;
                     }
                   }}
-                  icon={field.field_name === "Contact Number" ? "+63" : ""}
                   min={0}
-                  max={maxLength ? undefined : MAX_INT}
+                  max={MAX_INT}
                 />
               )}
               rules={{
@@ -692,18 +764,6 @@ const RequestFormFields = ({
                     field.field_name === "Quantity" && Number(value) < 0
                       ? "Quantity must be a positive integer."
                       : true,
-                  valid: (value) => {
-                    if (field.field_name !== "Contact Number") return true;
-                    return `${value}`.length === 10
-                      ? true
-                      : "Invalid contact number";
-                  },
-                  startsWith: (value) => {
-                    if (field.field_name !== "Contact Number") return true;
-                    return `${value}`[0] === "9"
-                      ? true
-                      : "Contact number must start with 9";
-                  },
                 },
               }}
             />

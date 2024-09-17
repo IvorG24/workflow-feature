@@ -128,11 +128,59 @@ const RequestResponse = ({
           </Flex>
         );
       case "TEXT":
+        let formatter = undefined;
+        switch (response.label) {
+          case "SSS ID Number":
+            formatter = (value: string) => {
+              if (!value) return "";
+              const cleaned = ("" + value).replace(/\D/g, "");
+              const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
+              if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+              }
+              return value;
+            };
+            break;
+          case "Philhealth Number":
+            formatter = (value: string) => {
+              if (!value) return "";
+              const cleaned = ("" + value).replace(/\D/g, "");
+              const match = cleaned.match(/^(\d{2})(\d{9})(\d{1})$/);
+              if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+              }
+              return value;
+            };
+            break;
+          case "Pag-IBIG Number":
+            formatter = (value: string) => {
+              if (!value) return "";
+              const cleaned = ("" + value).replace(/\D/g, "");
+              const match = cleaned.match(/^(\d{4})(\d{4})(\d{4})$/);
+              if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+              }
+              return value;
+            };
+            break;
+          case "TIN":
+            formatter = (value: string) => {
+              if (!value) return "";
+              const cleaned = ("" + value).replace(/\D/g, "");
+              const match = cleaned.match(/^(\d{3})(\d{3})(\d{3})$/);
+              if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+              }
+              return value;
+            };
+            break;
+        }
+
         return (
           <Flex w="100%" align="flex-end" gap="xs">
             <TextInput
               label={response.label}
-              value={parsedValue}
+              value={formatter ? formatter(parsedValue) : parsedValue}
               {...inputProps}
               sx={{ flex: 1 }}
             />
@@ -178,44 +226,6 @@ const RequestResponse = ({
             />
           );
         } else {
-          let formatter = undefined;
-          switch (response.label) {
-            case "SSS ID Number":
-            case "Philhealth Number":
-              formatter = (value: string) => {
-                if (!value) return "";
-                const cleaned = ("" + value).replace(/\D/g, "");
-                const match = cleaned.match(/^(\d{2})(\d{7})(\d{1})$/);
-                if (match) {
-                  return `${match[1]}-${match[2]}-${match[3]}`;
-                }
-                return value;
-              };
-              break;
-            case "Pag-IBIG Number":
-              formatter = (value: string) => {
-                if (!value) return "";
-                const cleaned = ("" + value).replace(/\D/g, "");
-                const match = cleaned.match(/^(\d{4})(\d{4})(\d{4})$/);
-                if (match) {
-                  return `${match[1]}-${match[2]}-${match[3]}`;
-                }
-                return value;
-              };
-              break;
-            case "TIN":
-              formatter = (value: string) => {
-                if (!value) return "";
-                const cleaned = ("" + value).replace(/\D/g, "");
-                const match = cleaned.match(/^(\d{3})(\d{3})(\d{3})$/);
-                if (match) {
-                  return `${match[1]}-${match[2]}-${match[3]}`;
-                }
-                return value;
-              };
-              break;
-          }
-
           return (
             <NumberInput
               label={response.label}
@@ -234,7 +244,6 @@ const RequestResponse = ({
                   ? 2
                   : 0
               }
-              formatter={formatter}
             />
           );
         }

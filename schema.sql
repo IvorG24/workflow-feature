@@ -971,6 +971,19 @@ CREATE TABLE lookup_schema.position_table (
   position_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
+CREATE TABLE lookup_schema.ad_owner_table (
+  ad_owner_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  ad_owner_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  ad_owner_name TEXT NOT NULL,
+  ad_owner_is_disabled BOOLEAN DEFAULT FALSE NOT NULL
+);
+
+CREATE TABLE lookup_schema.ad_owner_request_table (
+  ad_owner_request_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
+  ad_owner_request_owner_id UUID REFERENCES lookup_schema.ad_owner_table(ad_owner_id) NOT NULL,
+  ad_owner_request_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL
+);
+
 ----- END: TABLES
 
 ----- START: FUNCTIONS
@@ -8089,14 +8102,12 @@ SET search_path TO ''
 AS $$
   let memo_data_on_load;
   plv8.subtransaction(function() {
-    const { memo_id, current_user_id } = input_data;
+    const { memo_id, team_id, current_user_id } = input_data;
 
     const currentUser = plv8.execute(`
       SELECT *
       FROM team_schema.team_member_table
-      WHERE team_member_user_id = '${current_user_id}'
-      LIMIT 1
-    `)[0];
+      WHERE team_member_user_id = '${current_user_id}' AND team_member_team_id = '${team_id}'`)[0];
 
     if (currentUser) {
       const hasUserReadMemo = plv8.execute(`
@@ -8260,7 +8271,7 @@ AS $$
       FROM memo_schema.memo_read_receipt_table
       INNER JOIN team_schema.team_member_table ON team_member_id = memo_read_receipt_by_team_member_id
       INNER JOIN user_schema.user_table ON user_id = team_member_user_id
-      LEFT JOIN user_schema. ON user_id = user_employee_number_user_id
+      LEFT JOIN user_schema.user_employee_number_table ON user_id = user_employee_number_user_id
       WHERE memo_read_receipt_memo_id = '${memo_id}'
     `);
 
@@ -14155,11 +14166,11 @@ AS $$
     const numberRangeCondition = (property, fieldId) => {
       let returnData = "";
       if (responseFilter[property]["start"] && responseFilter[property]["end"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND (CAST(request_response AS integer) >= ${responseFilter[property]["start"]} AND CAST(request_response AS integer) <= ${responseFilter[property]["end"]}))`;
+        returnData = `(request_response_field_id = '${fieldId}' AND (CAST(request_response AS NUMERIC) >= ${responseFilter[property]["start"]} AND CAST(request_response AS NUMERIC) <= ${responseFilter[property]["end"]}))`;
       } else if (responseFilter[property]["start"]) {
-        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS integer) >= ${responseFilter[property]["start"]})`;
+        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS NUMERIC) >= ${responseFilter[property]["start"]})`;
       } else if (responseFilter[property]["end"]){
-        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS integer) <= ${responseFilter[property]["end"]})`;
+        returnData = `(request_response_field_id = '${fieldId}' AND CAST(request_response AS NUMERIC) <= ${responseFilter[property]["end"]})`;
       }
       return returnData;
     }
@@ -14231,7 +14242,7 @@ AS $$
 
     const castRequestResponse = (value) => {
       switch(sort.dataType) {
-        case "NUMBER": return `CAST(${value} AS INTEGER)`;
+        case "NUMBER": return `CAST(${value} AS NUMERIC)`;
         case "DATE": return `TO_DATE(REPLACE(${value}, '"', ''), 'YYYY-MM-DD')`;
         default: return value;
       }
@@ -15304,6 +15315,103 @@ let returnData = [];
   });
 
   return returnData;
+CREATE OR REPLACE FUNCTION create_ad_owner_request(
+  input_data JSON
+)
+RETURNS VOID
+SET search_path TO ''
+AS $$
+plv8.subtransaction(function(){
+  const {
+    ad_owner_request_owner_id,
+    ad_owner_request_request_id
+  } = input_data;
+
+  const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
+
+  const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
+  const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
+  const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
+
+  if (!is_valid_owner) {
+    const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
+    if (!scic) return;
+    insert_data.ad_owner_request_owner_id = scic.ad_owner_id;
+  }
+
+  plv8.execute(`
+    INSERT INTO lookup_schema.ad_owner_request_table (ad_owner_request_owner_id, ad_owner_request_request_id)
+    VALUES ($1, $2)
+  `, [insert_data.ad_owner_request_owner_id, insert_data.ad_owner_request_request_id]);
+});
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let data;
+  plv8.subtransaction(function(){
+    const {
+      startDate,
+      endDate
+    } = input_data;
+
+    let dateFilterCondition = '';
+    if (startDate && endDate) {
+      dateFilterCondition = `AND request_date_created >= '${startDate}' AND request_date_created <= '${endDate}'`
+    }
+
+    const candidate_referral_source = plv8.execute(`
+        SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+        FROM request_schema.request_response_table
+        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+        WHERE request_response_field_id = 'f416b6c8-5374-4642-b608-f626269bde1b'
+        ${dateFilterCondition}
+        GROUP BY request_response
+    `);
+
+    const formatted_candidate_referral_source = candidate_referral_source.map((d) => ({count: Number(d.count), ...d}));
+
+    const most_applied_position = plv8.execute(`
+      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+      FROM request_schema.request_response_table
+      INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+      WHERE request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'
+      ${dateFilterCondition}
+      GROUP BY request_response
+      ORDER BY count DESC
+      LIMIT 10
+    `);
+
+    const formatted_most_applied_position = most_applied_position.map((d) => ({count: Number(d.count), ...d}));
+
+    const age_bracket_list = [{min: 18, max: 25}, {min: 26, max: 30}, {min: 31, max: 35}, {min: 36, max: 40}, {min: 41, max: 100}];
+
+    const applicant_age_bracket = age_bracket_list.map((bracket) => {
+      const count = plv8.execute(`
+        SELECT COUNT(request_response)::int
+        FROM request_schema.request_response_table
+        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+        WHERE request_response_field_id = '222d4978-5216-4c81-a676-be9405a7323c'
+        AND request_response >= $1
+        AND request_response <= $2
+        ${dateFilterCondition}
+      `, [bracket.min, bracket.max])[0].count;
+
+      return {
+        request_response: `${bracket.min}-${bracket.max}`,
+        count: Number(count)
+      }
+    });
+
+    data = {
+      candidate_referral_source: formatted_candidate_referral_source,
+      most_applied_position: formatted_most_applied_position,
+      applicant_age_bracket
+    }
+ });
+ return data;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
@@ -18775,6 +18883,29 @@ CREATE POLICY "Allow ALL for anon users on team key record table" ON team_schema
 AS PERMISSIVE FOR ALL
 USING (true);
 
+--- lookup_schema.position_table
+ALTER TABLE lookup_schema.position_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.position_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.position_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- lookup_schema.ad_owner_table
+ALTER TABLE lookup_schema.ad_owner_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.ad_owner_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.ad_owner_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+--- lookup_schema.ad_owner_request_table
+ALTER TABLE lookup_schema.ad_owner_request_table ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_table;
+CREATE POLICY "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_table
+AS PERMISSIVE FOR INSERT
+WITH CHECK (true);
 
 ----- END: POLICIES
 

@@ -2,7 +2,10 @@ import { getApproverRequestCount } from "@/backend/api/get";
 import { useFormList } from "@/stores/useFormStore";
 import { useUnreadNotificationCount } from "@/stores/useNotificationStore";
 import { useActiveTeam, useTeamList } from "@/stores/useTeamStore";
-import { useUserTeamMember } from "@/stores/useUserStore";
+import {
+  useUserTeamMember,
+  useUserTeamMemberGroupList,
+} from "@/stores/useUserStore";
 import { REQUEST_LIST_HIDDEN_FORMS } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { isEmpty } from "@/utils/functions";
@@ -18,6 +21,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import {
   IconBell,
@@ -56,6 +60,7 @@ const ReviewAppNavLink = () => {
   const activeTeamNameToUrl = formatTeamNameToUrlKey(
     activeTeam.team_name ?? ""
   );
+  const teamMemberGroups = useUserTeamMemberGroupList();
 
   const router = useRouter();
   const unhiddenForms = forms.filter(
@@ -75,6 +80,31 @@ const ReviewAppNavLink = () => {
     (form) => form.form_is_formsly_form && form.form_name === "Item"
   )[0] as unknown as FormTableRow & {
     form_team_group: string[];
+  };
+
+  const analyticsMenuOptions = ["Human Resources"];
+
+  const handleRedirectToAnalyticsPage = (option: string) => {
+    const url = `/${activeTeamNameToUrl}/analytics/${formatTeamNameToUrlKey(
+      option
+    )}`;
+    switch (option) {
+      case "Human Resources":
+        const isUserAllowed = teamMemberGroups.includes(option.toUpperCase());
+        if (!isUserAllowed) {
+          notifications.show({
+            message: "You do not have permission to access this page.",
+            color: "red",
+          });
+          return;
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    router.push(url);
   };
 
   const renderCreateRequestMenu = () => {
@@ -207,35 +237,75 @@ const ReviewAppNavLink = () => {
     );
   };
 
-  const metricsSection = [
-    {
-      label: `Dashboard`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconDashboard {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/dashboard`,
-    },
-    {
-      label: `SLA`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconFileReport {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/sla`,
-    },
-    {
-      label: `Report`,
-      icon: (
-        <Box ml="sm" {...defaultNavLinkContainerProps}>
-          <IconReportAnalytics {...defaultIconProps} />
-        </Box>
-      ),
-      href: `/${activeTeamNameToUrl}/report`,
-    },
-  ];
+  const renderMetricsMenu = () => {
+    return (
+      <Box h="fit-content" mt="md">
+        <Text size="xs" weight={400}>
+          Metrics
+        </Text>
+        <Menu
+          shadow="1px 1px 3px rgba(0, 0, 0, .25)"
+          withArrow
+          position="right"
+        >
+          <Stack align="start" {...defaultNavLinkContainerProps}>
+            <Button
+              fw={400}
+              leftIcon={<IconDashboard {...defaultIconProps} />}
+              variant="transparent"
+              onClick={async () =>
+                await router.push(`/${activeTeamNameToUrl}/dashboard`)
+              }
+            >
+              Dashboard
+            </Button>
+            <Menu.Target>
+              <Button
+                fw={400}
+                leftIcon={<IconTicket {...defaultIconProps} />}
+                variant="transparent"
+              >
+                Analytics
+              </Button>
+            </Menu.Target>
+            <Button
+              fw={400}
+              leftIcon={<IconFileReport {...defaultIconProps} />}
+              variant="transparent"
+              onClick={async () =>
+                await router.push(`/${activeTeamNameToUrl}/sla`)
+              }
+            >
+              SLA
+            </Button>
+            <Button
+              fw={400}
+              leftIcon={<IconReportAnalytics {...defaultIconProps} />}
+              variant="transparent"
+              onClick={async () =>
+                await router.push(`/${activeTeamNameToUrl}/report`)
+              }
+            >
+              Report
+            </Button>
+          </Stack>
+
+          <Portal>
+            <Menu.Dropdown>
+              {analyticsMenuOptions.map((option, index) => (
+                <Menu.Item
+                  key={index}
+                  onClick={() => handleRedirectToAnalyticsPage(option)}
+                >
+                  {option}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Portal>
+        </Menu>
+      </Box>
+    );
+  };
 
   const createSection = [
     {
@@ -381,13 +451,14 @@ const ReviewAppNavLink = () => {
 
   return (
     <>
-      {!isEmpty(activeTeam) && hasTeam ? (
-        <NavLinkSection
-          label={"Metrics"}
-          links={metricsSection}
-          {...defaultNavLinkProps}
-        />
-      ) : null}
+      {!isEmpty(activeTeam) && hasTeam
+        ? // <NavLinkSection
+          //   label={"Metrics"}
+          //   links={metricsSection}
+          //   {...defaultNavLinkProps}
+          // />
+          renderMetricsMenu()
+        : null}
 
       {itemForm &&
       itemForm.form_is_hidden === false &&
