@@ -14506,7 +14506,7 @@ plv8.subtransaction(function(){
           ],
         },
         {
-          ...form.form_section[1],
+         ...form.form_section[1],
           section_field: [
             {
               ...form.form_section[1].section_field[0],
@@ -14533,7 +14533,7 @@ plv8.subtransaction(function(){
             },
           ],
         },
-        ...(sectionFieldsWithOptions.length === 5
+         ...(sectionFieldsWithOptions.length === 5
         ? [
             {
               ...form.form_section[2],
