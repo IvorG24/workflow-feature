@@ -6114,17 +6114,16 @@ export const validateEnvApiKey = async (
     .from("team_key_table")
     .select("*")
     .eq("team_key_api_key", apiKey)
-    .single();
+    .maybeSingle();
 
-  if (error || !apiKeyData) {
-    throw new Error("Unauthorized");
-  }
+  if (error) throw new Error("Error fetching API key data");
+  if (!apiKeyData) throw new Error("API key not found");
 
   if (apiKeyData.team_key_is_disabled) {
     throw new Error("API key is disabled");
   }
 
-  const { error: RecordError } = await supabase
+  const { error: recordError } = await supabase
     .schema("team_schema")
     .from("team_key_record_table")
     .insert({
@@ -6132,9 +6131,7 @@ export const validateEnvApiKey = async (
       team_key_record_access_api: endPoint,
     });
 
-  if (RecordError) {
-    throw new Error("Unauthorized");
-  }
+  if (recordError) throw new Error("Error logging API key access");
 
   return apiKeyData;
 };

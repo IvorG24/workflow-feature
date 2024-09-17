@@ -61,7 +61,7 @@ const ApiKeyDetails = ({
     <>
       {apiKeyData &&
         apiKeyData.map((api) => (
-          <Flex key={api.team_key_api_key} gap={6} align="end">
+          <Flex key={api.team_key_api_key} gap={6} align="end" justify={"end"}>
             <PasswordInput
               label={`${api.team_key_label.toUpperCase()} API KEY`}
               variant="filled"
@@ -88,6 +88,7 @@ const ApiKeyDetails = ({
 
             <Tooltip label={`Delete ${api.team_key_label} API Key`}>
               <ActionIcon
+                mb={1}
                 size={"lg"}
                 color="red"
                 variant="filled"

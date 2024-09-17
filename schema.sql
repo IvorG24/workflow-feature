@@ -209,7 +209,7 @@ CREATE TABLE team_schema.team_key_table (
 CREATE TABLE team_schema.team_key_record_table (
     team_key_record_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
     team_key_record_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-    team_key_record_access_api UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL,
+    team_key_record_access_api VARCHAR(5000) NOT NULL,
 
     team_key_record_team_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
 );
@@ -14721,186 +14721,103 @@ AS $$
   return returnData;
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_request_raya_api(
-    input_data JSON
+CREATE OR REPLACE FUNCTION create_ad_owner_request(
+  input_data JSON
 )
+RETURNS VOID
+SET search_path TO ''
+AS $$
+plv8.subtransaction(function(){
+  const {
+    ad_owner_request_owner_id,
+    ad_owner_request_request_id
+  } = input_data;
+
+  const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
+
+  const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
+  const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
+  const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
+
+  if (!is_valid_owner) {
+    const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
+    if (!scic) return;
+    insert_data.ad_owner_request_owner_id = scic.ad_owner_id;
+  }
+
+  plv8.execute(`
+    INSERT INTO lookup_schema.ad_owner_request_table (ad_owner_request_owner_id, ad_owner_request_request_id)
+    VALUES ($1, $2)
+  `, [insert_data.ad_owner_request_owner_id, insert_data.ad_owner_request_request_id]);
+});
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let returnData = [];
-  plv8.subtransaction(function() {
+  let data;
+  plv8.subtransaction(function(){
     const {
-      sort = 'request_date_created',
-      limit = 100,
-      offset = 0,
-      startDate = null,
-      endDate = null,
-      order = 'asc',
-      teamId
+      startDate,
+      endDate
     } = input_data;
 
-    let mainQuery = `
-      SELECT
-        r.*,
-        ru.user_id AS requester_user_id,
-        ru.user_first_name AS requester_first_name,
-        ru.user_last_name AS requester_last_name,
-        f.form_name,
-        p.team_project_name
-      FROM
-        request_schema.request_table r
-      JOIN
-        form_schema.form_table f
-        ON f.form_id = r.request_form_id
-      JOIN
-        team_schema.team_project_table p
-        ON p.team_project_id = r.request_project_id
-      JOIN
-        team_schema.team_member_table tmt
-        ON tmt.team_member_id = r.request_team_member_id
-      JOIN
-        user_schema.user_table ru
-        ON ru.user_id = tmt.team_member_user_id
-      JOIN
-        team_schema.team_table t
-        ON t.team_id = tmt.team_member_team_id
-      WHERE
-        r.request_status = 'APPROVED' AND
-        r.request_is_disabled = false
-        AND t.team_id = '${teamId}'`;
-
-    if (startDate) {
-      mainQuery += ` AND r.request_date_created >= '${startDate}' `;
-    }
-    if (endDate) {
-      mainQuery += ` AND r.request_date_created <= '${endDate}' `;
+    let dateFilterCondition = '';
+    if (startDate && endDate) {
+      dateFilterCondition = `AND request_date_created >= '${startDate}' AND request_date_created <= '${endDate}'`
     }
 
-    mainQuery += ` ORDER BY r.${sort} ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
-    mainQuery += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
+    const candidate_referral_source = plv8.execute(`
+        SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+        FROM request_schema.request_response_table
+        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+        WHERE request_response_field_id = 'f416b6c8-5374-4642-b608-f626269bde1b'
+        ${dateFilterCondition}
+        GROUP BY request_response
+    `);
 
-    let mainQueryData = plv8.execute(mainQuery);
+    const formatted_candidate_referral_source = candidate_referral_source.map((d) => ({count: Number(d.count), ...d}));
 
-    let requestIds = mainQueryData.map(data => data.request_id);
-    let groupedData = {};
+    const most_applied_position = plv8.execute(`
+      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
+      FROM request_schema.request_response_table
+      INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+      WHERE request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'
+      ${dateFilterCondition}
+      GROUP BY request_response
+      ORDER BY count DESC
+      LIMIT 10
+    `);
 
-    mainQueryData.forEach((data) => {
-      const {request_team_member_id,request_form_id,request_module_request_id,requester_user_id,request_project_id,request_is_disabled, ...filteredData}=data;
-      const requestId = data.request_id;
-      groupedData[requestId] = {
-        ...filteredData,
-         requester: {
-          user_first_name: data.requester_first_name,
-          user_last_name: data.requester_last_name,
-        },
-        request_signers: [],
-        request_comments: [],
-        request_sections: [],
-      };
+    const formatted_most_applied_position = most_applied_position.map((d) => ({count: Number(d.count), ...d}));
+
+    const age_bracket_list = [{min: 18, max: 25}, {min: 26, max: 30}, {min: 31, max: 35}, {min: 36, max: 40}, {min: 41, max: 100}];
+
+    const applicant_age_bracket = age_bracket_list.map((bracket) => {
+      const count = plv8.execute(`
+        SELECT COUNT(request_response)::int
+        FROM request_schema.request_response_table
+        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
+        WHERE request_response_field_id = '222d4978-5216-4c81-a676-be9405a7323c'
+        AND request_response >= $1
+        AND request_response <= $2
+        ${dateFilterCondition}
+      `, [bracket.min, bracket.max])[0].count;
+
+      return {
+        request_response: `${bracket.min}-${bracket.max}`,
+        count: Number(count)
+      }
     });
 
-    if (requestIds.length > 0) {
-      let signerQuery = `
-        SELECT
-          rs.request_signer_request_id,
-          u.user_first_name,
-          u.user_last_name
-        FROM
-          request_schema.request_signer_table rs
-        JOIN
-          form_schema.signer_table s
-        ON s.signer_id = rs.request_signer_signer_id
-        JOIN
-          team_schema.team_member_table tmm
-        ON tmm.team_member_id = s.signer_team_member_id
-        JOIN
-          user_schema.user_table u
-        ON u.user_id = tmm.team_member_user_id
-        WHERE
-          rs.request_signer_request_id = ANY($1)
-      `;
-
-      let signerData = plv8.execute(signerQuery, [requestIds]);
-
-      signerData.forEach((data) => {
-        const requestId = data.request_signer_request_id;
-        if (groupedData[requestId]) {
-          groupedData[requestId].request_signers.push({
-            user_first_name: data.user_first_name,
-            user_last_name: data.user_last_name
-          });
-        }
-      });
+    data = {
+      candidate_referral_source: formatted_candidate_referral_source,
+      most_applied_position: formatted_most_applied_position,
+      applicant_age_bracket
     }
-
-    if (requestIds.length > 0) {
-      let commentQuery = `
-        SELECT
-          c.comment_request_id,
-          c.comment_content
-        FROM
-          request_schema.comment_table c
-        WHERE
-          c.comment_request_id = ANY($1)
-          AND c.comment_is_disabled = false
-      `;
-
-      let commentData = plv8.execute(commentQuery, [requestIds]);
-
-      commentData.forEach((data) => {
-        const requestId = data.comment_request_id;
-        if (groupedData[requestId]) {
-          groupedData[requestId].request_comments.push({
-            comment_content: data.comment_content
-          });
-        }
-      });
-    }
-
-    if (requestIds.length > 0) {
-      let sectionQuery = `
-        SELECT
-          s.section_name,
-          ft.field_name,
-          rr.request_response,
-          rr.request_response_request_id
-        FROM
-          form_schema.section_table s
-        JOIN
-          form_schema.field_table ft
-        ON ft.field_section_id = s.section_id
-        JOIN
-          request_schema.request_response_table rr
-        ON rr.request_response_field_id = ft.field_id
-        WHERE
-          rr.request_response_request_id = ANY($1)
-      `;
-
-      let sectionData = plv8.execute(sectionQuery, [requestIds]);
-
-      sectionData.forEach((data) => {
-        const requestId = data.request_response_request_id;
-        if (groupedData[requestId]) {
-          let section = groupedData[requestId].request_sections.find(s => s.section_name === data.section_name);
-          if (!section) {
-            section = {
-              section_name: data.section_name,
-              fields: []
-            };
-            groupedData[requestId].request_sections.push(section);
-          }
-          section.fields.push({
-            field_name: data.field_name,
-            response: JSON.parse(data.request_response)
-          });
-        }
-      });
-    }
-
-    returnData = Object.values(groupedData);
-  });
-
-  return returnData;
+ });
+ return data;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_ped_part_raya_api(
@@ -15315,103 +15232,188 @@ let returnData = [];
   });
 
   return returnData;
-CREATE OR REPLACE FUNCTION create_ad_owner_request(
-  input_data JSON
-)
-RETURNS VOID
-SET search_path TO ''
-AS $$
-plv8.subtransaction(function(){
-  const {
-    ad_owner_request_owner_id,
-    ad_owner_request_request_id
-  } = input_data;
-
-  const insert_data = { ad_owner_request_owner_id, ad_owner_request_request_id };
-
-  const ad_owner_list = plv8.execute(`SELECT * FROM lookup_schema.ad_owner_table`);
-  const ad_owner_id_list = ad_owner_list.map((owner) => owner.ad_owner_id);
-  const is_valid_owner = ad_owner_id_list.includes(ad_owner_request_owner_id);
-
-  if (!is_valid_owner) {
-    const scic = ad_owner_list.find((owner) => owner.ad_owner_name === 'scic');
-    if (!scic) return;
-    insert_data.ad_owner_request_owner_id = scic.ad_owner_id;
-  }
-
-  plv8.execute(`
-    INSERT INTO lookup_schema.ad_owner_request_table (ad_owner_request_owner_id, ad_owner_request_request_id)
-    VALUES ($1, $2)
-  `, [insert_data.ad_owner_request_owner_id, insert_data.ad_owner_request_request_id]);
-});
 $$ LANGUAGE plv8;
 
-CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
+CREATE OR REPLACE FUNCTION get_request_raya_api(
+    input_data JSON
+)
 RETURNS JSON
 SET search_path TO ''
 AS $$
-  let data;
-  plv8.subtransaction(function(){
+  let returnData = [];
+  plv8.subtransaction(function() {
     const {
-      startDate,
-      endDate
+      sort = 'request_date_created',
+      limit = 100,
+      offset = 0,
+      startDate = null,
+      endDate = null,
+      order = 'asc',
+      teamId
     } = input_data;
 
-    let dateFilterCondition = '';
-    if (startDate && endDate) {
-      dateFilterCondition = `AND request_date_created >= '${startDate}' AND request_date_created <= '${endDate}'`
+    let mainQuery = `
+      SELECT
+        r.*,
+        ru.user_id AS requester_user_id,
+        ru.user_first_name AS requester_first_name,
+        ru.user_last_name AS requester_last_name,
+        f.form_name,
+        p.team_project_name
+      FROM
+        request_schema.request_table r
+      JOIN
+        form_schema.form_table f
+        ON f.form_id = r.request_form_id
+      JOIN
+        team_schema.team_project_table p
+        ON p.team_project_id = r.request_project_id
+      JOIN
+        team_schema.team_member_table tmt
+        ON tmt.team_member_id = r.request_team_member_id
+      JOIN
+        user_schema.user_table ru
+        ON ru.user_id = tmt.team_member_user_id
+      JOIN
+        team_schema.team_table t
+        ON t.team_id = tmt.team_member_team_id
+      WHERE
+        r.request_status = 'APPROVED' AND
+        r.request_is_disabled = false
+        AND t.team_id = '${teamId}'`;
+
+    if (startDate) {
+      mainQuery += ` AND r.request_date_created >= '${startDate}' `;
+    }
+    if (endDate) {
+      mainQuery += ` AND r.request_date_created <= '${endDate}' `;
     }
 
-    const candidate_referral_source = plv8.execute(`
-        SELECT request_response, COUNT(DISTINCT request_response)::int AS count
-        FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-        WHERE request_response_field_id = 'f416b6c8-5374-4642-b608-f626269bde1b'
-        ${dateFilterCondition}
-        GROUP BY request_response
-    `);
+    mainQuery += ` ORDER BY r.${sort} ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
+    mainQuery += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
 
-    const formatted_candidate_referral_source = candidate_referral_source.map((d) => ({count: Number(d.count), ...d}));
+    let mainQueryData = plv8.execute(mainQuery);
 
-    const most_applied_position = plv8.execute(`
-      SELECT request_response, COUNT(DISTINCT request_response)::int AS count
-      FROM request_schema.request_response_table
-      INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-      WHERE request_response_field_id = 'd8490dac-21b2-4fec-9f49-09c24c4e1e66'
-      ${dateFilterCondition}
-      GROUP BY request_response
-      ORDER BY count DESC
-      LIMIT 10
-    `);
+    let requestIds = mainQueryData.map(data => data.request_id);
+    let groupedData = {};
 
-    const formatted_most_applied_position = most_applied_position.map((d) => ({count: Number(d.count), ...d}));
-
-    const age_bracket_list = [{min: 18, max: 25}, {min: 26, max: 30}, {min: 31, max: 35}, {min: 36, max: 40}, {min: 41, max: 100}];
-
-    const applicant_age_bracket = age_bracket_list.map((bracket) => {
-      const count = plv8.execute(`
-        SELECT COUNT(request_response)::int
-        FROM request_schema.request_response_table
-        INNER JOIN request_schema.request_table ON request_id = request_response_request_id
-        WHERE request_response_field_id = '222d4978-5216-4c81-a676-be9405a7323c'
-        AND request_response >= $1
-        AND request_response <= $2
-        ${dateFilterCondition}
-      `, [bracket.min, bracket.max])[0].count;
-
-      return {
-        request_response: `${bracket.min}-${bracket.max}`,
-        count: Number(count)
-      }
+    mainQueryData.forEach((data) => {
+      const {request_team_member_id,request_form_id,request_module_request_id,requester_user_id,request_project_id,request_is_disabled, ...filteredData}=data;
+      const requestId = data.request_id;
+      groupedData[requestId] = {
+        ...filteredData,
+         requester: {
+          user_first_name: data.requester_first_name,
+          user_last_name: data.requester_last_name,
+        },
+        request_signers: [],
+        request_comments: [],
+        request_sections: [],
+      };
     });
 
-    data = {
-      candidate_referral_source: formatted_candidate_referral_source,
-      most_applied_position: formatted_most_applied_position,
-      applicant_age_bracket
+    if (requestIds.length > 0) {
+      let signerQuery = `
+        SELECT
+          rs.request_signer_request_id,
+          u.user_first_name,
+          u.user_last_name
+        FROM
+          request_schema.request_signer_table rs
+        JOIN
+          form_schema.signer_table s
+        ON s.signer_id = rs.request_signer_signer_id
+        JOIN
+          team_schema.team_member_table tmm
+        ON tmm.team_member_id = s.signer_team_member_id
+        JOIN
+          user_schema.user_table u
+        ON u.user_id = tmm.team_member_user_id
+        WHERE
+          rs.request_signer_request_id = ANY($1)
+      `;
+
+      let signerData = plv8.execute(signerQuery, [requestIds]);
+
+      signerData.forEach((data) => {
+        const requestId = data.request_signer_request_id;
+        if (groupedData[requestId]) {
+          groupedData[requestId].request_signers.push({
+            user_first_name: data.user_first_name,
+            user_last_name: data.user_last_name
+          });
+        }
+      });
     }
- });
- return data;
+
+    if (requestIds.length > 0) {
+      let commentQuery = `
+        SELECT
+          c.comment_request_id,
+          c.comment_content
+        FROM
+          request_schema.comment_table c
+        WHERE
+          c.comment_request_id = ANY($1)
+          AND c.comment_is_disabled = false
+      `;
+
+      let commentData = plv8.execute(commentQuery, [requestIds]);
+
+      commentData.forEach((data) => {
+        const requestId = data.comment_request_id;
+        if (groupedData[requestId]) {
+          groupedData[requestId].request_comments.push({
+            comment_content: data.comment_content
+          });
+        }
+      });
+    }
+
+    if (requestIds.length > 0) {
+      let sectionQuery = `
+        SELECT
+          s.section_name,
+          ft.field_name,
+          rr.request_response,
+          rr.request_response_request_id
+        FROM
+          form_schema.section_table s
+        JOIN
+          form_schema.field_table ft
+        ON ft.field_section_id = s.section_id
+        JOIN
+          request_schema.request_response_table rr
+        ON rr.request_response_field_id = ft.field_id
+        WHERE
+          rr.request_response_request_id = ANY($1)
+      `;
+
+      let sectionData = plv8.execute(sectionQuery, [requestIds]);
+
+      sectionData.forEach((data) => {
+        const requestId = data.request_response_request_id;
+        if (groupedData[requestId]) {
+          let section = groupedData[requestId].request_sections.find(s => s.section_name === data.section_name);
+          if (!section) {
+            section = {
+              section_name: data.section_name,
+              fields: []
+            };
+            groupedData[requestId].request_sections.push(section);
+          }
+          section.fields.push({
+            field_name: data.field_name,
+            response: JSON.parse(data.request_response)
+          });
+        }
+      });
+    }
+
+    returnData = Object.values(groupedData);
+  });
+
+  return returnData;
 $$ LANGUAGE plv8;
 
 ----- END: FUNCTIONS
