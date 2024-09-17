@@ -60,6 +60,8 @@ export const MEETING_TYPE_DETAILS: Record<MeetingType, MeetingDetails> = {
 
 export const unsortableFieldList = [
   "Name",
+  "Full Name",
+  "Nickname",
   "Contact Number",
   "Email",
   "Assigned HR",

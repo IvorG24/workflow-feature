@@ -163,7 +163,7 @@ const ApplicationInformationMainTableRow = ({
             return tinNumberFormatter(`${response}`);
           default:
             if (
-              ["First Name", "Middle Name", "Last Name"].includes(
+              ["First Name", "Middle Name", "Last Name", "Nickname"].includes(
                 row.field_name
               )
             )

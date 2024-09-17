@@ -58,6 +58,7 @@ const formDefaultValues = {
     firstName: "",
     middleName: "",
     lastName: "",
+    nickname: "",
     gender: "",
     ageRange: {
       start: null,
@@ -77,7 +78,8 @@ const formDefaultValues = {
     pagibigNumber: "",
     tin: "",
     highestEducationalAttainment: [],
-    degree: "",
+    fieldOfStudy: "",
+    degreeName: "",
     torOrDiplomaAttachment: null,
     school: "",
     yearGraduated: {

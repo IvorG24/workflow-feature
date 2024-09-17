@@ -14390,7 +14390,7 @@ plv8.subtransaction(function(){
           }
         }
         return;
-      }else if (form.form_name === 'Technical Assessment' && generalAssessmentId) {
+      } else if (form.form_name === 'Technical Assessment' && generalAssessmentId) {
         const requestData = plv8.execute(`
           SELECT request_id
           FROM public.request_view
@@ -14416,7 +14416,7 @@ plv8.subtransaction(function(){
             'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
           )
          ORDER BY field_order
-         `);
+        `);
 
         const requestApplicationData = plv8.execute(`
           SELECT request_id
@@ -14438,7 +14438,7 @@ plv8.subtransaction(function(){
 
          const position_type = safeParse(positionData[0].request_response);
 
-         const fieldData = plv8.execute(`
+        const fieldData = plv8.execute(`
           SELECT f.*, qq.questionnaire_question_id
           FROM form_schema.questionnaire_table q
           JOIN form_schema.questionnaire_question_table qq
@@ -14452,11 +14452,11 @@ plv8.subtransaction(function(){
             AND qq.questionnaire_question_is_disabled = FALSE
           ORDER BY RANDOM()
           LIMIT 5;
-          `);
+        `);
 
-         let sectionFieldsWithOptions = [];
+        let sectionFieldsWithOptions = [];
 
-         if (fieldData.length > 0) {
+        if (fieldData.length > 0) {
           sectionFieldsWithOptions = fieldData.map((field) => {
             const optionData = plv8.execute(`
               SELECT *
@@ -14485,7 +14485,7 @@ plv8.subtransaction(function(){
               field_option: optionFormattedData,
               field_correct_response: correctResponseData[0],
             };
-        });
+      });
     }
     returnData = {
         form: {
@@ -14614,6 +14614,7 @@ AS $$
     responseFilter.firstName ? responseFilterCondition.push(`(request_response_field_id = '7201c77e-b24a-4006-a4e5-8f38db887804' AND request_response ILIKE '%${responseFilter.firstName}%')`) : null;
     responseFilter.middleName ? responseFilterCondition.push(`(request_response_field_id = '859ac939-10c8-4094-aa7a-634f84b950b0' AND request_response ILIKE '%${responseFilter.middleName}%')`) : null;
     responseFilter.lastName ? responseFilterCondition.push(`(request_response_field_id = '0080798c-2359-4162-b8ae-441ac80512b6' AND request_response ILIKE '%${responseFilter.lastName}%')`) : null;
+    responseFilter.nickname ? responseFilterCondition.push(`(request_response_field_id = '7f00b6c6-df5e-4bfa-b991-4bce3f4f5277' AND request_response ILIKE '%${responseFilter.nickname}%')`) : null;
     responseFilter.gender ? responseFilterCondition.push(`(request_response_field_id = '9f36b822-320a-4044-b292-ced5e2074949' AND request_response = '"${responseFilter.gender}"')`) : null;
     responseFilter.ageRange && (responseFilter.ageRange.start || responseFilter.ageRange.end) ? responseFilterCondition.push(numberRangeCondition('ageRange', '222d4978-5216-4c81-a676-be9405a7323c')) : null;
     Boolean(responseFilter.civilStatus) && responseFilter.civilStatus.length ? responseFilterCondition.push(`(request_response_field_id = '2ba8f1e6-5ff9-4db8-b0c0-e9f6b62cc7a9' AND request_response IN (${responseFilter.civilStatus.map(value => `'"${value}"'`).join(", ")}))`) : null;
@@ -14630,7 +14631,8 @@ AS $$
     responseFilter.pagibigNumber ? responseFilterCondition.push(`(request_response_field_id = '0d7295a6-68c3-4646-99eb-421b44973d30' AND request_response ILIKE '%${onlyNumber(responseFilter.pagibigNumber)}%')`) : null;
     responseFilter.tin ? responseFilterCondition.push(`(request_response_field_id = 'd7db6653-2296-4515-b2b2-62ecba8e8999' AND request_response ILIKE '%${onlyNumber(responseFilter.tin)}%')`) : null;
     Boolean(responseFilter.highestEducationalAttainment) && responseFilter.highestEducationalAttainment.length ? responseFilterCondition.push(`(request_response_field_id = 'c8ff31cc-26c9-4544-8414-76741fe73b19' AND request_response IN (${responseFilter.highestEducationalAttainment.map(value => `'"${value}"'`).join(", ")}))`) : null;
-    responseFilter.degree ? responseFilterCondition.push(`(request_response_field_id = '3a60d0e4-0485-4055-8a94-e51a9a4e0b72' AND request_response ILIKE '%${responseFilter.degree}%')`) : null;
+    responseFilter.fieldOfStudy ? responseFilterCondition.push(`(request_response_field_id = 'b058db68-9504-49d1-9b44-5bfe46981ead' AND request_response ILIKE '%${responseFilter.fieldOfStudy}%')`) : null;
+    responseFilter.degreeName ? responseFilterCondition.push(`(request_response_field_id = '00a2a47a-b4b9-4005-ac6c-1972d3d86e64' AND request_response ILIKE '%${responseFilter.degreeName}%')`) : null;
     responseFilter.school ? responseFilterCondition.push(`(request_response_field_id = 'f6a645c6-d7b2-4a77-ae72-1d4e386ba9e1' AND request_response ILIKE '%${responseFilter.school}%')`) : null;
     responseFilter.yearGraduated && (Boolean(responseFilter.yearGraduated.start) || Boolean(responseFilter.yearGraduated.end)) ? responseFilterCondition.push(dateRangeCondition('yearGraduated', '9b63d408-c67b-419a-a8f2-7bf65d249ccf')) : null;
     responseFilter.employmentStatus ? responseFilterCondition.push(`(request_response_field_id = 'c3df937d-de59-413f-b6bb-22e5679fa4d1' AND request_response = '"${responseFilter.employmentStatus}"')`) : null;
@@ -14779,7 +14781,7 @@ AS $$
       });
     });
     returnData = requestListWithResponses;
-});
+  });
 return returnData;
 $$ LANGUAGE plv8;
 
@@ -17067,11 +17069,18 @@ AS $$
           FROM request_schema.request_response_table
           WHERE
             request_response_request_id = '${request.hr_request_reference_id}'
-            AND request_response_field_id IN ('7201c77e-b24a-4006-a4e5-8f38db887804', '859ac939-10c8-4094-aa7a-634f84b950b0', '0080798c-2359-4162-b8ae-441ac80512b6', '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 'ee6ec8af-0a9e-40a5-8353-7d851218fa87')
+            AND request_response_field_id IN (
+              '7201c77e-b24a-4006-a4e5-8f38db887804', 
+              '859ac939-10c8-4094-aa7a-634f84b950b0', 
+              '0080798c-2359-4162-b8ae-441ac80512b6', 
+              '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 
+              'ee6ec8af-0a9e-40a5-8353-7d851218fa87', 
+              '7f00b6c6-df5e-4bfa-b991-4bce3f4f5277'
+            )
         `
       );
 
-      let firstName = middleName = lastName = contactNumber = email = "";
+      let firstName = middleName = lastName = contactNumber = email = nickname = "";
       additionalData.forEach(response => {
         const parsedResponse = response.request_response.replaceAll('"', "");
         switch(response.request_response_field_id) {
@@ -17080,6 +17089,7 @@ AS $$
           case "0080798c-2359-4162-b8ae-441ac80512b6": lastName = parsedResponse; break;
           case "5b43279b-88d6-41ce-ac69-b396e5a7a48f": contactNumber = parsedResponse; break;
           case "ee6ec8af-0a9e-40a5-8353-7d851218fa87": email = parsedResponse; break;
+          case "7f00b6c6-df5e-4bfa-b991-4bce3f4f5277": nickname = parsedResponse; break;
         }
       });
 
@@ -17087,7 +17097,8 @@ AS $$
         ...request,
         application_information_full_name: [firstName, ...(middleName ? [middleName]: []), lastName].join(" "),
         application_information_contact_number: contactNumber,
-        application_information_email: email
+        application_information_email: email,
+        application_information_nickname: nickname
       }
     });
 });

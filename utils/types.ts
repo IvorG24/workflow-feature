@@ -2412,6 +2412,7 @@ export type BackgroundCheckSpreadsheetData = HRSpreadsheetGeneralData & {
   background_check_id: string;
   background_check_date_created: string;
   background_check_status: string;
+  application_information_nickname: string;
 };
 
 export type BackgroundCheckFilterFormValues =

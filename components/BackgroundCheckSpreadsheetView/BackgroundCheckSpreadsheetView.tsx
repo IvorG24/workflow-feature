@@ -28,6 +28,7 @@ const initialSort = {
 const formDefaultValues = {
   position: [],
   application_information_full_name: "",
+  application_information_nickname: "",
   application_information_contact_number: "",
   application_information_email: "",
   application_information_request_id: "",
@@ -111,6 +112,7 @@ const BackgroundCheckSpreadsheetView = ({
         setData((prev) => [...prev, ...newData]);
       }
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Failed to fetch data",
         color: "red",

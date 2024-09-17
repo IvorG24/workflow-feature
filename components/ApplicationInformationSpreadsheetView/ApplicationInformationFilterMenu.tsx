@@ -107,6 +107,11 @@ const sectionList = [
         type: "TEXT",
       },
       {
+        id: "responseFilter.nickname",
+        label: "Nickname",
+        type: "TEXT",
+      },
+      {
         id: "responseFilter.gender",
         label: "Gender",
         type: "SELECT",
@@ -202,8 +207,13 @@ const sectionList = [
         type: "MULTISELECT",
       },
       {
-        id: "responseFilter.degree",
-        label: "Degree",
+        id: "responseFilter.fieldOfStudy",
+        label: "Field of Study",
+        type: "TEXT",
+      },
+      {
+        id: "responseFilter.degreeName",
+        label: "Degree Name",
         type: "TEXT",
       },
       {
