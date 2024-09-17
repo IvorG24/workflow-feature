@@ -14391,16 +14391,16 @@ plv8.subtransaction(function(){
         }
         return;
       } else if (form.form_name === 'Technical Assessment' && generalAssessmentId) {
-        const requestData = plv8.execute(`
+         const requestData = plv8.execute(`
           SELECT request_id
           FROM public.request_view
           WHERE request_formsly_id = '${generalAssessmentId}'
-        `);
+         `);
 
-        if(!requestData.length) throw new Error('Request not found');
-        const requestId = requestData[0].request_id;
+         if(!requestData.length) throw new Error('Request not found');
+         const requestId = requestData[0].request_id;
 
-        const applicantData = plv8.execute(`
+         const applicantData = plv8.execute(`
           SELECT
             request_response,
             field_id
@@ -14415,30 +14415,30 @@ plv8.subtransaction(function(){
             'd209aed6-e560-49a8-aa77-66c9cada168d',
             'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
           )
-         ORDER BY field_order
-        `);
+          ORDER BY field_order
+         `);
 
-        const requestApplicationData = plv8.execute(`
+         const requestApplicationData = plv8.execute(`
           SELECT request_id
           FROM public.request_view
           WHERE request_formsly_id = '${safeParse(applicantData[0].request_response)}'
-        `);
+         `);
 
-        const positionData = plv8.execute(`
-         SELECT
+         const positionData = plv8.execute(`
+           SELECT
             request_response,
             field_id
-         FROM request_schema.request_response_table
-         INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-         WHERE
+           FROM request_schema.request_response_table
+           INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+           WHERE
             equest_response_request_id = '${requestApplicationData[0].request_id}'
             AND field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
-         ORDER BY field_order
-        `);
+           ORDER BY field_order
+         `);
 
          const position_type = safeParse(positionData[0].request_response);
 
-        const fieldData = plv8.execute(`
+         const fieldData = plv8.execute(`
           SELECT f.*, qq.questionnaire_question_id
           FROM form_schema.questionnaire_table q
           JOIN form_schema.questionnaire_question_table qq
@@ -14452,11 +14452,11 @@ plv8.subtransaction(function(){
             AND qq.questionnaire_question_is_disabled = FALSE
           ORDER BY RANDOM()
           LIMIT 5;
-        `);
+         `);
 
-        let sectionFieldsWithOptions = [];
+         let sectionFieldsWithOptions = [];
 
-        if (fieldData.length > 0) {
+         if (fieldData.length > 0) {
           sectionFieldsWithOptions = fieldData.map((field) => {
             const optionData = plv8.execute(`
               SELECT *
@@ -14485,72 +14485,72 @@ plv8.subtransaction(function(){
               field_option: optionFormattedData,
               field_correct_response: correctResponseData[0],
             };
-      });
-    }
-    returnData = {
-        form: {
-         ...form,
-        form_section: [
-         {
-          ...form.form_section[0],
-          section_field: [
+          });
+         }
+         returnData = {
+          form: {
+            ...form,
+            form_section: [
             {
-              ...form.form_section[0].section_field[0],
-              field_response: safeParse(applicantData[0].request_response),
-            },
-            {
-              ...form.form_section[0].section_field[1],
-              field_response: generalAssessmentId,
-            },
-            ...form.form_section[0].section_field.slice(2),
-          ],
-        },
-        {
-         ...form.form_section[1],
-          section_field: [
-            {
-              ...form.form_section[1].section_field[0],
-              field_response: safeParse(applicantData[0].request_response),
+                ...form.form_section[0],
+              section_field: [
+                {
+                    ...form.form_section[0].section_field[0],
+                    field_response: safeParse(applicantData[0].request_response),
+                },
+                {
+                    ...form.form_section[0].section_field[1],
+                    field_response: generalAssessmentId,
+                },
+                ...form.form_section[0].section_field.slice(2),
+             ],
             },
             {
-              ...form.form_section[1].section_field[1],
-              field_response: safeParse(applicantData[1].request_response),
+                ...form.form_section[1],
+              section_field: [
+                {
+                    ...form.form_section[1].section_field[0],
+                    field_response: safeParse(applicantData[0].request_response),
+                },
+                {
+                    ...form.form_section[1].section_field[1],
+                    field_response: safeParse(applicantData[1].request_response),
+                },
+                {
+                    ...form.form_section[1].section_field[2],
+                    field_response: safeParse(applicantData[2].request_response),
+                },
+                {
+                    ...form.form_section[1].section_field[3],
+                    field_response:
+                    applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d'
+                    ? safeParse(applicantData[3].request_response)
+                    : '',
+                },
+                {
+                    ...form.form_section[1].section_field[4],
+                    field_response: safeParse(applicantData[4].request_response),
+                },
+                ],
             },
-            {
-              ...form.form_section[1].section_field[2],
-              field_response: safeParse(applicantData[2].request_response),
-            },
-            {
-              ...form.form_section[1].section_field[3],
-              field_response:
-                applicantData[3].field_id === 'd209aed6-e560-49a8-aa77-66c9cada168d'
-                  ? safeParse(applicantData[3].request_response)
-                  : '',
-            },
-             {
-              ...form.form_section[1].section_field[4],
-              field_response: safeParse(applicantData[4].request_response),
-            },
-          ],
-        },
-         ...(sectionFieldsWithOptions.length === 5
-        ? [
-            {
-              ...form.form_section[2],
-              section_field: sectionFieldsWithOptions,
-            },
-          ]
-        : []),
-    ],
-  },
-    };
-    return;
-    } else {
-            returnData = { form }
+           ...(sectionFieldsWithOptions.length === 5
+            ? [
+              {
+                ...form.form_section[2],
+                section_field: sectionFieldsWithOptions,
+              },
+            ]
+          : []),
+            ],
+          },
+         };
+         return;
+      } else {
+        returnData = { form }
         }
         } else {
         returnData = { form }
-        }
+    }
     });
 return returnData;
 $$ LANGUAGE plv8;
@@ -17070,11 +17070,11 @@ AS $$
           WHERE
             request_response_request_id = '${request.hr_request_reference_id}'
             AND request_response_field_id IN (
-              '7201c77e-b24a-4006-a4e5-8f38db887804', 
-              '859ac939-10c8-4094-aa7a-634f84b950b0', 
-              '0080798c-2359-4162-b8ae-441ac80512b6', 
-              '5b43279b-88d6-41ce-ac69-b396e5a7a48f', 
-              'ee6ec8af-0a9e-40a5-8353-7d851218fa87', 
+              '7201c77e-b24a-4006-a4e5-8f38db887804',
+              '859ac939-10c8-4094-aa7a-634f84b950b0',
+              '0080798c-2359-4162-b8ae-441ac80512b6',
+              '5b43279b-88d6-41ce-ac69-b396e5a7a48f',
+              'ee6ec8af-0a9e-40a5-8353-7d851218fa87',
               '7f00b6c6-df5e-4bfa-b991-4bce3f4f5277'
             )
         `
@@ -18411,7 +18411,7 @@ SET search_path TO ''
 AS $$
 let returnData = false;
 const { data, questionnaireId } = input_data;
-    data.forEach(function (field_response) {
+data.forEach(function (field_response) {
     const query = `
     SELECT *
     FROM form_schema.field_table f
@@ -18425,10 +18425,10 @@ const { data, questionnaireId } = input_data;
     const result = plv8.execute(query, [field_response, questionnaireId]);
 
     if (result.length > 0) {
-    returnData = true;
-    return;
-      }
-    });
+        returnData = true;
+        return;
+    }
+});
 return returnData;
 $$ LANGUAGE plv8;
 
@@ -18475,7 +18475,7 @@ plv8.subtransaction(function() {
     const offset = (page - 1) * limit;
 
     const questionnaireData = plv8.execute(`
-    SELECT q.*,
+      SELECT q.*,
         u.user_id AS created_user_id,
         u.user_first_name AS created_user_first_name,
         u.user_last_name AS created_user_last_name,
@@ -18484,25 +18484,25 @@ plv8.subtransaction(function() {
         u2.user_first_name AS updated_user_first_name,
         u2.user_last_name AS updated_user_last_name,
         u2.user_avatar AS updated_user_avatar
-    FROM form_schema.questionnaire_table q
-    JOIN team_schema.team_member_table tm
-    ON tm.team_member_id = q.questionnaire_created_by
-    JOIN user_schema.user_table u
-    ON u.user_id = tm.team_member_user_id
-    LEFT JOIN team_schema.team_member_table tm2
-    ON tm2.team_member_id = q.questionnaire_updated_by
-    LEFT JOIN user_schema.user_table u2
-    ON u2.user_id = tm2.team_member_user_id
-    WHERE
+      FROM form_schema.questionnaire_table q
+      JOIN team_schema.team_member_table tm
+      ON tm.team_member_id = q.questionnaire_created_by
+      JOIN user_schema.user_table u
+      ON u.user_id = tm.team_member_user_id
+      LEFT JOIN team_schema.team_member_table tm2
+      ON tm2.team_member_id = q.questionnaire_updated_by
+      LEFT JOIN user_schema.user_table u2
+      ON u2.user_id = tm2.team_member_user_id
+      WHERE
         q.questionnaire_team_id = $1
         ${creator}
         ${search}
-    ORDER BY q.questionnaire_date_created ${isAscendingSort}
-    LIMIT $2 OFFSET $3
-    `, [teamId, limit, offset]);
+      ORDER BY q.questionnaire_date_created ${isAscendingSort}
+      LIMIT $2 OFFSET $3
+      `, [teamId, limit, offset]);
 
     returnData.data = questionnaireData.map(response => {
-    const {
+      const {
         created_user_id,
         created_user_first_name,
         created_user_last_name,
@@ -18512,23 +18512,23 @@ plv8.subtransaction(function() {
         updated_user_last_name,
         updated_user_avatar,
         ...rest
-    } = response;
+      } = response;
 
-    return {
+      return {
         ...rest,
-    questionnaire_created_by: {
-        user_id: created_user_id,
-        user_first_name: created_user_first_name,
-        user_last_name: created_user_last_name,
-        user_avatar: created_user_avatar
-        },
-    questionnaire_updated_by: updated_user_id ? {
-        user_id: updated_user_id,
-        user_first_name: updated_user_first_name,
-        user_last_name: updated_user_last_name,
-        user_avatar: updated_user_avatar
+        questionnaire_created_by: {
+            user_id: created_user_id,
+            user_first_name: created_user_first_name,
+            user_last_name: created_user_last_name,
+            user_avatar: created_user_avatar
+            },
+        questionnaire_updated_by: updated_user_id ? {
+            user_id: updated_user_id,
+            user_first_name: updated_user_first_name,
+            user_last_name: updated_user_last_name,
+            user_avatar: updated_user_avatar
         } : null
-    };
+      };
     });
 });
 return returnData;
