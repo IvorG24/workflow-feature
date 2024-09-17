@@ -2183,7 +2183,6 @@ export const createTechnicalQuestions = async (
           FieldTableInput.push(fieldEntry);
 
           if (field.field_type === "TEXT" && field.field_response) {
-            let optionCounter = 1;
 
             for (const optionField of section.section_field) {
               const optionId = uuidv4();
@@ -2207,7 +2206,6 @@ export const createTechnicalQuestions = async (
                 };
 
                 OptionTableInput.push(optionEntry);
-                optionCounter++;
                 field_order++;
               }
             }
