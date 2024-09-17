@@ -21,6 +21,7 @@ import {
 } from "@/stores/useUserStore";
 import { FETCH_OPTION_LIMIT } from "@/utils/constant";
 import { Database } from "@/utils/database";
+import { JoyRideNoSSR } from "@/utils/functions";
 import { formatTeamNameToUrlKey } from "@/utils/string";
 import {
   FormType,
@@ -39,6 +40,7 @@ import {
   Stack,
   Text,
   Title,
+  useMantineTheme,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
@@ -46,7 +48,12 @@ import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
 import { IconPlus, IconTrash } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { FormProvider, useFieldArray, useForm } from "react-hook-form";
+import {
+  FormProvider,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import RequestFormDetails from "../CreateRequestPage/RequestFormDetails";
 import RequestFormSection from "../CreateRequestPage/RequestFormSection";
 
@@ -72,6 +79,7 @@ const TechnicalAssessmentViewQuestionPage = ({
   formslyFormName = "",
 }: Props) => {
   const router = useRouter();
+  const { colors } = useMantineTheme();
   const supabaseClient = createPagesBrowserClient<Database>();
   const teamMember = useUserTeamMember();
   const teamGroup = useUserTeamMemberGroupList();
@@ -79,7 +87,9 @@ const TechnicalAssessmentViewQuestionPage = ({
   const requestorProfile = useUserProfile();
   const { setIsLoading } = useLoadingActions();
   const activeTeam = useUserTeamMember();
-
+  const [isJoyRideOpen, setIsJoyRideOpen] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [positions, setPositions] = useState<string[]>([]);
   const [questionnaireName, setQuestionnaireName] = useState<string>("");
   const formId = router.query.formId as string;
   const questionnaireId = router.query.questionnaireId as string;
@@ -101,7 +111,10 @@ const TechnicalAssessmentViewQuestionPage = ({
     control,
     name: "sections",
   });
-
+  const watchedFieldResponse = useWatch({
+    control,
+    name: "sections.0.section_field.0.field_response",
+  });
   const handleUpdateQuestionnairePosition = async (data: RequestFormValues) => {
     try {
       if (!questionnaireId) return;
@@ -302,11 +315,9 @@ const TechnicalAssessmentViewQuestionPage = ({
           questionnaireId: questionnaireId,
         });
 
+        setPositions(positions);
         if (questionnaireData.length === 0) {
-          notifications.show({
-            message: "No questions found for the selected position.",
-            color: "yellow",
-          });
+          setIsJoyRideOpen(true);
 
           replaceSection([
             {
@@ -391,12 +402,17 @@ const TechnicalAssessmentViewQuestionPage = ({
               };
             }
           );
+
           removeSection(1);
           const currentSections = getValues("sections");
           setValue("sections", [...currentSections, ...updatedSections]);
+          setIsLoading(false);
+          const isButtonDisabled =
+            positions.length ===
+            (currentSections[0]?.section_field[0]?.field_response as string[])
+              .length;
+          setIsButtonDisabled(isButtonDisabled);
         }
-
-        setIsLoading(false);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",
@@ -405,16 +421,44 @@ const TechnicalAssessmentViewQuestionPage = ({
       }
     };
     handleFetchOptions();
-  }, [teamGroup, teamMember, questionnaireId]);
+  }, [teamGroup, teamMember, questionnaireId, form]);
+
+  useEffect(() => {
+    if (positions && watchedFieldResponse) {
+      const isButtonDisabled =
+        positions.length === (watchedFieldResponse as string[]).length;
+      setIsButtonDisabled(isButtonDisabled);
+    }
+  }, [positions, watchedFieldResponse]);
 
   return (
     <Container>
+      <JoyRideNoSSR
+        steps={[
+          {
+            target: ".add-question",
+            content: (
+              <Text>
+                To add questions, click the &ldquo;Add Questions&ldquo; button.
+              </Text>
+            ),
+            disableBeacon: true,
+          },
+        ]}
+        run={isJoyRideOpen}
+        hideCloseButton
+        disableCloseOnEsc
+        disableOverlayClose
+        hideBackButton
+        styles={{ buttonNext: { backgroundColor: colors.blue[6] } }}
+      />
       <Flex justify="space-between">
         <Title order={2} color="dimmed">
           View Technical Question
         </Title>
         <Button
           leftIcon={<IconPlus size={16} />}
+          className="add-question"
           onClick={() =>
             router.push(
               `/${formatTeamNameToUrlKey(
@@ -497,22 +541,29 @@ const TechnicalAssessmentViewQuestionPage = ({
                       </Accordion.Item>
                     </Accordion>
                   ) : (
-                    <Box>
-                      <RequestFormSection
-                        section={section}
-                        sectionIndex={idx}
-                        formslyFormName={formslyFormName}
-                      />
-                    </Box>
+                    <>
+                      <Box>
+                        <RequestFormSection
+                          section={section}
+                          sectionIndex={idx}
+                          formslyFormName={formslyFormName}
+                        />
+                      </Box>
+                      <Space h="xl" />
+                      <Button
+                        disabled={isButtonDisabled}
+                        fullWidth
+                        type="submit"
+                      >
+                        Update Position
+                      </Button>{" "}
+                    </>
                   )}
                 </Box>
               );
             })}
           </Stack>
           <Space h="xl" />
-          <Button fullWidth type="submit">
-            Update Position
-          </Button>
         </form>
       </FormProvider>
     </Container>

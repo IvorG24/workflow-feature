@@ -14460,7 +14460,7 @@ AS $$
         SELECT *
         FROM form_schema.question_option_table
         WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
-        ORDER BY RANDOM()
+        ORDER BY question_option_order ASC
       `);
 
         const optionFormattedData = optionData.map((option) => ({
@@ -14532,7 +14532,7 @@ AS $$
             },
           ],
         },
-        ...(sectionFieldsWithOptions.length > 0
+        ...(sectionFieldsWithOptions.length === 5
         ? [
             {
               ...form.form_section[2],
@@ -14553,7 +14553,6 @@ AS $$
     });
     return returnData;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION get_application_information_summary_table(
   input_data JSON
@@ -18430,90 +18429,95 @@ AS $$
         data: [],
         count: 0
     };
+
     plv8.subtransaction(function() {
     const {
         teamId,
-        search,
-        creator,
-        page,
-        isAscendingSort,
+        search = '',
+        creator = '',
+        page = 1,
+        isAscendingSort = 'ASC',
         limit
     } = input_data;
 
-    const totalCount = plv8.execute(`
+    const totalCountResult = plv8.execute(`
         SELECT COUNT(*)::INT AS total_count
         FROM form_schema.questionnaire_table q
-		JOIN team_schema.team_member_table tm
-		  ON tm.team_member_id = q.questionnaire_created_by
-		JOIN user_schema.user_table u
-		  ON u.user_id = tm.team_member_user_id
-		LEFT JOIN team_schema.team_member_table tm2
-		  ON tm2.team_member_id = q.questionnaire_updated_by
-		LEFT JOIN user_schema.user_table u2
-		  ON u2.user_id = tm2.team_member_user_id
-        WHERE questionnaire_team_id = '${teamId}' ${creator}
-        LIMIT '${limit}'
-        OFFSET '${page-1}'
-    `)
+        JOIN team_schema.team_member_table tm
+          ON tm.team_member_id = q.questionnaire_created_by
+        JOIN user_schema.user_table u
+          ON u.user_id = tm.team_member_user_id
+        LEFT JOIN team_schema.team_member_table tm2
+          ON tm2.team_member_id = q.questionnaire_updated_by
+        LEFT JOIN user_schema.user_table u2
+          ON u2.user_id = tm2.team_member_user_id
+        WHERE q.questionnaire_team_id = $1
+        ${creator}
+        ${search}
+    `, [teamId]);
 
-    returnData.count = totalCount[0].total_count;
+    if (totalCountResult.length > 0) {
+        returnData.count = totalCountResult[0].total_count;
+    }
 
-	  const questionnaireData = plv8.execute(`
-		    SELECT q.*,
-       u.user_id AS created_user_id,
-       u.user_first_name AS created_user_first_name,
-       u.user_last_name AS created_user_last_name,
-       u.user_avatar AS created_user_avatar,
-       u2.user_id AS updated_user_id,
-       u2.user_first_name AS updated_user_first_name,
-       u2.user_last_name AS updated_user_last_name,
-       u2.user_avatar AS updated_user_avatar
-		FROM form_schema.questionnaire_table q
-		JOIN team_schema.team_member_table tm
-		  ON tm.team_member_id = q.questionnaire_created_by
-		JOIN user_schema.user_table u
-		  ON u.user_id = tm.team_member_user_id
-		LEFT JOIN team_schema.team_member_table tm2
-		  ON tm2.team_member_id = q.questionnaire_updated_by
-		LEFT JOIN user_schema.user_table u2
-		  ON u2.user_id = tm2.team_member_user_id
-        WHERE q.questionnaire_team_id = '${teamId}' ${creator} ${search}
-      	ORDER BY q.questionnaire_date_created ${isAscendingSort}
-        LIMIT '${limit}'
-        OFFSET '${page-1}'
-    `)
+    const offset = (page - 1) * limit;
 
-     returnData.data = questionnaireData.map(response => {
-            const {
-                created_user_id,
-                created_user_first_name,
-                created_user_last_name,
-                created_user_avatar,
-                updated_user_id,
-                updated_user_first_name,
-                updated_user_last_name,
-                updated_user_avatar,
-                ...rest
-            } = response;
+    const questionnaireData = plv8.execute(`
+        SELECT q.*,
+               u.user_id AS created_user_id,
+               u.user_first_name AS created_user_first_name,
+               u.user_last_name AS created_user_last_name,
+               u.user_avatar AS created_user_avatar,
+               u2.user_id AS updated_user_id,
+               u2.user_first_name AS updated_user_first_name,
+               u2.user_last_name AS updated_user_last_name,
+               u2.user_avatar AS updated_user_avatar
+        FROM form_schema.questionnaire_table q
+        JOIN team_schema.team_member_table tm
+          ON tm.team_member_id = q.questionnaire_created_by
+        JOIN user_schema.user_table u
+          ON u.user_id = tm.team_member_user_id
+        LEFT JOIN team_schema.team_member_table tm2
+          ON tm2.team_member_id = q.questionnaire_updated_by
+        LEFT JOIN user_schema.user_table u2
+          ON u2.user_id = tm2.team_member_user_id
+        WHERE q.questionnaire_team_id = $1
+        ${creator}
+        ${search}
+        ORDER BY q.questionnaire_date_created ${isAscendingSort}
+        LIMIT $2 OFFSET $3
+    `, [teamId, limit, offset]);
 
-            return {
-                ...rest,
-                questionnaire_created_by: {
-                    user_id: created_user_id,
-                    user_first_name: created_user_first_name,
-                    user_last_name: created_user_last_name,
-                    user_avatar: created_user_avatar
-                },
-                questionnaire_updated_by: updated_user_id ? {
-                    user_id: updated_user_id,
-                    user_first_name: updated_user_first_name,
-                    user_last_name: updated_user_last_name,
-                    user_avatar: updated_user_avatar
-                } : null
-            };
-        });
+    returnData.data = questionnaireData.map(response => {
+        const {
+            created_user_id,
+            created_user_first_name,
+            created_user_last_name,
+            created_user_avatar,
+            updated_user_id,
+            updated_user_first_name,
+            updated_user_last_name,
+            updated_user_avatar,
+            ...rest
+        } = response;
+
+        return {
+            ...rest,
+            questionnaire_created_by: {
+                user_id: created_user_id,
+                user_first_name: created_user_first_name,
+                user_last_name: created_user_last_name,
+                user_avatar: created_user_avatar
+            },
+            questionnaire_updated_by: updated_user_id ? {
+                user_id: updated_user_id,
+                user_first_name: updated_user_first_name,
+                user_last_name: updated_user_last_name,
+                user_avatar: updated_user_avatar
+            } : null
+        };
     });
-
+    });
     return returnData;
 $$ LANGUAGE plv8;
 
