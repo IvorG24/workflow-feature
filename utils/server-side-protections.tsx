@@ -1,4 +1,5 @@
 import {
+  checkIfOwner,
   checkIfOwnerOrAdmin,
   getRequestTeamId,
   getTeam,
@@ -186,7 +187,7 @@ export const withOwnerOrApprover = <P extends { [key: string]: any }>(
 };
 
 export const withAuthAndOnboardingRequestPage = <
-  P extends { [key: string]: any }
+  P extends { [key: string]: any },
 >(
   getServerSidePropsFunc: (params: {
     context: GetServerSidePropsContext;
@@ -390,6 +391,75 @@ export const withActiveTeam = <P extends { [key: string]: any }>(
         user,
         userActiveTeam,
       });
+    } catch (e) {
+      return {
+        redirect: {
+          destination: "/500",
+          permanent: false,
+        },
+      };
+    }
+  };
+};
+
+export const withOwnerAndRaya = <P extends { [key: string]: any }>(
+  getServerSidePropsFunc: (params: {
+    context: GetServerSidePropsContext;
+    supabaseClient: SupabaseClient<Database>;
+    user: User;
+    teamId: string;
+  }) => Promise<GetServerSidePropsResult<P>>
+): GetServerSideProps<P> => {
+  return async (
+    context: GetServerSidePropsContext
+  ): Promise<GetServerSidePropsResult<P>> => {
+    const supabaseClient = createPagesServerClient(context);
+
+    try {
+      // * 1. Check if user is authenticated
+      const {
+        data: { session },
+      } = await supabaseClient.auth.getSession();
+
+      if (!session) {
+        return {
+          redirect: {
+            destination: SIGN_IN_PAGE_PATH,
+            permanent: false,
+          },
+        };
+      }
+      if (!session?.user?.email) throw new Error("No email in session");
+
+      // * 2. Check if user is onboarded
+      if (
+        !(await checkIfEmailExists(supabaseClient, {
+          email: session.user.email,
+        }))
+      ) {
+        return {
+          redirect: {
+            destination: "/onboarding",
+            permanent: false,
+          },
+        };
+      }
+
+      const user = session.user;
+
+      // * 3. Check if user is approver or owner
+      const teamId = await getUserActiveTeamId(supabaseClient, {
+        userId: user.id,
+      });
+      if (!teamId) throw new Error("No team found");
+      const isOwner = await checkIfOwner(supabaseClient, {
+        userId: user.id,
+        teamId: teamId,
+      });
+
+      if (!isOwner) throw new Error("User is not an owner");
+
+      return getServerSidePropsFunc({ context, supabaseClient, user, teamId });
     } catch (e) {
       return {
         redirect: {

@@ -201,6 +201,24 @@ CREATE TABLE team_schema.supplier_table (
   supplier_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
 );
 
+CREATE TABLE team_schema.team_key_table (
+    team_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    team_key_api_key VARCHAR(4000) NOT NULL,
+    team_key_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    team_key_label VARCHAR(4000) NOT NULL,
+    team_key_is_disabled BOOLEAN DEFAULT FALSE NOT NULL,
+
+    team_key_team_id UUID REFERENCES team_schema.team_table(team_id) NOT NULL
+);
+
+CREATE TABLE team_schema.team_key_record_table (
+    team_key_record_key_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
+    team_key_record_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    team_key_record_access_api VARCHAR(5000) NOT NULL,
+
+    team_key_record_team_key_id UUID REFERENCES team_schema.team_key_table(team_key_id) NOT NULL
+);
+
 CREATE TABLE user_schema.user_valid_id_table (
   user_valid_id_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   user_valid_id_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
@@ -14521,6 +14539,7 @@ plv8.subtransaction(function(){
             FROM request_schema.request_response_table
             INNER JOIN form_schema.field_table ON field_id = request_response_field_id
             WHERE
+            WHERE
               request_response_request_id = '${requestId}'
               AND field_id IN (
                 '56438f2d-da70-4fa4-ade6-855f2f29823b',
@@ -14532,6 +14551,7 @@ plv8.subtransaction(function(){
           `
         );
 
+        returnData = {
         returnData = {
           form: {
             ...form,
@@ -17943,7 +17963,7 @@ plv8.subtransaction(function(){
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_application_information_analytics(input_data JSON)
-RETURNS JSON 
+RETURNS JSON
 SET search_path TO ''
 AS $$
   let data;
@@ -17960,7 +17980,7 @@ AS $$
 
     const candidate_referral_source = plv8.execute(`
         SELECT request_response, COUNT(DISTINCT request_response)::int AS count
-        FROM request_schema.request_response_table 
+        FROM request_schema.request_response_table
         INNER JOIN request_schema.request_table ON request_id = request_response_request_id
         WHERE request_response_field_id = 'c6e15dd5-9548-4f43-8989-ee53842abde3'
         ${dateFilterCondition}
@@ -22174,6 +22194,66 @@ USING (
       AND team_member_team_id = team_transaction_team_id
   )
 );
+
+--- team_schema.team_key_table
+ALTER TABLE team_schema.team_key_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow Read for anon users on team key table" ON team_schema.team_key_table;
+CREATE POLICY "Allow Read for anon users on team key table" ON team_schema.team_key_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
+DROP POLICY IF EXISTS "Allow INSERT for authenticated users with OWNER role" ON team_schema.team_key_table;
+CREATE POLICY "Allow INSERT for authenticated users with OWNER role"
+ON team_schema.team_key_table
+AS PERMISSIVE FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN team_schema.team_table t ON t.team_id = tm.team_member_team_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role = 'OWNER'
+  )
+);
+
+DROP POLICY IF EXISTS "Allow UPDATE for authenticated users with OWNER role" ON team_schema.team_key_table;
+CREATE POLICY "Allow UPDATE for authenticated users with OWNER role"
+ON team_schema.team_key_table
+AS PERMISSIVE FOR UPDATE
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM team_schema.team_member_table tm
+    JOIN team_schema.team_table t ON t.team_id = tm.team_member_team_id
+    WHERE tm.team_member_user_id = auth.uid()
+    AND tm.team_member_role = 'OWNER'
+  )
+);
+
+DROP POLICY IF EXISTS "Allow DELETE for authenticated users with OWNER role" ON team_schema.team_key_table;
+CREATE POLICY "Allow DELETE for authenticated users with OWNER role"
+ON team_schema.team_key_table
+AS PERMISSIVE FOR DELETE
+TO authenticated
+USING (
+  (
+    SELECT team_key_team_id
+    FROM team_schema.team_key_table
+    WHERE team_key_table.team_key_id = team_key_id
+  ) IN (
+    SELECT team_member_team_id
+    FROM team_schema.team_member_table
+    WHERE team_member_user_id = (SELECT auth.uid())
+    AND team_member_role IN ('OWNER')
+  )
+);
+ALTER TABLE team_schema.team_key_record_table ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow ALL for anon users on team key record table" ON team_schema.team_key_record_table;
+CREATE POLICY "Allow ALL for anon users on team key record table" ON team_schema.team_key_record_table
+AS PERMISSIVE FOR ALL
+USING (true);
 
 --- lookup_schema.position_table
 ALTER TABLE lookup_schema.position_table ENABLE ROW LEVEL SECURITY;

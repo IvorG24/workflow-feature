@@ -2505,6 +2505,12 @@ export type TechnicalAssessmentFilterValues = {
     } | null;
   };
 
+
+export type ApiKeyData = {
+  team_key_api_key: string;
+  team_key_label: string;
+};
+
 export type HRAnalyticsResponseType = {
   request_response: string;
   count: number;

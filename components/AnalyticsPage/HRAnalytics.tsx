@@ -62,7 +62,6 @@ const HRAnalytics = ({ data: initialData }: Props) => {
         ).format("MMM DD, YYYY")}`
       );
     } catch (error) {
-      console.log(error);
       notifications.show({
         message: "Failed to fetch data",
         color: "red",
