@@ -14552,7 +14552,6 @@ plv8.subtransaction(function(){
         );
 
         returnData = {
-        returnData = {
           form: {
             ...form,
             form_section: [
@@ -18028,6 +18027,601 @@ AS $$
     }
  });
  return data;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_ped_part_raya_api(
+  input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function() {
+    const {
+      sort = 'equipment_part_date_created',
+      limit = 100,
+      offset = 0,
+      startDate = null,
+      endDate = null,
+      order = 'asc',
+      teamId
+    } = input_data;
+
+    let query = `
+     SELECT p.*,
+            g.equipment_general_name,
+            b.equipment_brand,
+            m.equipment_model,
+            u.equipment_unit_of_measurement,
+            ec.equipment_component_category
+     FROM equipment_schema.equipment_part_table p
+     JOIN equipment_schema.equipment_table e
+         ON e.equipment_id = p.equipment_part_equipment_id
+         AND e.equipment_is_disabled = false
+         AND e.equipment_is_available = true
+     JOIN equipment_schema.equipment_general_name_table g
+         ON g.equipment_general_name_id = p.equipment_part_general_name_id
+         AND g.equipment_general_name_is_disabled = false
+         AND g.equipment_general_name_is_available = true
+     JOIN equipment_schema.equipment_brand_table b
+         ON b.equipment_brand_id = p.equipment_part_brand_id
+         AND b.equipment_brand_is_disabled = false
+         AND b.equipment_brand_is_available = true
+     JOIN equipment_schema.equipment_model_table m
+         ON m.equipment_model_id = p.equipment_part_model_id
+         AND m.equipment_model_is_disabled = false
+         AND m.equipment_model_is_available = true
+     JOIN unit_of_measurement_schema.equipment_unit_of_measurement_table u
+         ON u.equipment_unit_of_measurement_id = p.equipment_part_unit_of_measurement_id
+         AND u.equipment_unit_of_measurement_is_disabled = false
+         AND u.equipment_unit_of_measurement_is_available = true
+     JOIN equipment_schema.equipment_component_category_table ec
+         ON ec.equipment_component_category_id = p.equipment_part_component_category_id
+         AND ec.equipment_component_category_is_disabled = false
+         AND ec.equipment_component_category_is_available = true
+     WHERE p.equipment_part_is_available = true
+       AND p.equipment_part_is_disabled = false
+       AND e.equipment_team_id = '${teamId}'`;
+
+    if (startDate) {
+      query += ` AND p.equipment_part_date_created >= '${startDate}' `;
+    }
+    if (endDate) {
+      query += ` AND p.equipment_part_date_created <= '${endDate}' `;
+    }
+
+    query += ` ORDER BY p.${sort} ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
+    query += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
+    let pedPartData = plv8.execute(query);
+     pedPartData.forEach((data) => {
+        const {
+            equipment_part_is_available,
+            equipment_part_is_disabled,
+            equipment_part_general_name_id,
+            equipment_part_brand_id,
+            equipment_part_unit_of_measurement_id,
+            equipment_part_component_category_id,
+            equipment_part_model_id,
+            equipment_part_equipment_id,
+            ...filteredData
+        } = data;
+        returnData.push(filteredData);
+    });
+  });
+
+  return returnData;
+
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_other_expenses_raya_api(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+   plv8.subtransaction(function() {
+    const {
+      sort = 'other_expenses_type_date_created',
+      limit = 100,
+      offset = 0,
+      startDate = null,
+      endDate = null,
+      order = 'asc',
+      teamId
+    } = input_data;
+
+    let query = `
+      SELECT t.*, c.other_expenses_category
+      FROM other_expenses_schema.other_expenses_type_table t
+      JOIN other_expenses_schema.other_expenses_category_table c
+      ON c.other_expenses_category_id = t.other_expenses_type_category_id
+      WHERE t.other_expenses_type_is_available = true
+      AND t.other_expenses_type_is_disabled = false
+      AND c.other_expenses_category_team_id = '${teamId}'`;
+
+    if (startDate) {
+      query += ` AND t.other_expenses_type_date_created >= '${startDate}' `;
+    }
+    if (endDate) {
+      query += ` AND t.other_expenses_type_date_created <= '${endDate}' `;
+    }
+    query += ` ORDER BY t.${sort} ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
+    query += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
+    let otherExpensesData = plv8.execute(query);
+
+    otherExpensesData.forEach((data) => {
+        const {
+            other_expenses_type_is_disabled,
+            other_expenses_type_is_available,
+            other_expenses_type_category_id,
+            ...filteredData
+        } = data;
+
+        returnData.push(filteredData);
+    });
+  });
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_item_raya_api(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+   plv8.subtransaction(function() {
+    const {
+      limit = 100,
+      offset = 0,
+      startDate = null,
+      endDate = null,
+      order = 'asc',
+      teamId
+    } = input_data;
+
+    let query = `
+      SELECT
+        i.*,
+        c.item_description_label
+      FROM
+        item_schema.item_table i
+      JOIN
+        item_schema.item_description_table c
+        ON c.item_description_item_id = i.item_id
+        AND c.item_description_is_available = true
+        AND c.item_description_is_disabled = false
+      WHERE
+        i.item_is_available = true
+        AND i.item_is_disabled = false
+        AND i.item_team_id = '${teamId}'`;
+
+    if (startDate) {
+      query += ` AND i.item_date_created >= '${startDate}' `;
+    }
+    if (endDate) {
+      query += ` AND i.item_date_created <= '${endDate}' `;
+    }
+
+    query += ` ORDER BY i.item_date_created ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
+    query += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
+
+    let itemData = plv8.execute(query);
+
+    let groupedData = {};
+
+    itemData.forEach((data) => {
+      const itemId = data.item_id;
+      if (!groupedData[itemId]) {
+        const {
+          item_is_available,
+          item_is_disabled,
+          item_category_id,
+          item_team_id,
+          item_description_label,
+          ...initialData
+        } = data;
+
+        groupedData[itemId] = {
+          ...initialData,
+          item_descriptions: [],
+        };
+      }
+
+      if (data.item_description_label) {
+        groupedData[itemId].item_descriptions.push(data.item_description_label);
+      }
+    });
+
+    returnData = Object.values(groupedData);
+  });
+
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_ped_item_raya_api(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+   plv8.subtransaction(function() {
+    const {
+      limit = 100,
+      offset = 0,
+      startDate = null,
+      endDate = null,
+      order = 'asc',
+      teamId
+    } = input_data;
+
+    let query = `
+      SELECT
+        i.*,
+        c.item_description_label
+      FROM
+        item_schema.item_table i
+      JOIN
+        item_schema.item_description_table c
+        ON c.item_description_item_id = i.item_id
+        AND c.item_description_is_available = true
+        AND c.item_description_is_disabled = false
+      WHERE
+        i.item_is_available = true
+        AND i.item_is_disabled = false
+        AND i.item_is_ped_item = true
+        AND i.item_team_id = '${teamId}'`;
+
+    if (startDate) {
+      query += ` AND i.item_date_created >= '${startDate}' `;
+    }
+    if (endDate) {
+      query += ` AND i.item_date_created <= '${endDate}' `;
+    }
+
+    query += ` ORDER BY i.item_date_created ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
+    query += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
+
+    let itemData = plv8.execute(query);
+
+    let groupedData = {};
+
+    itemData.forEach((data) => {
+      const itemId = data.item_id;
+      if (!groupedData[itemId]) {
+        const {
+          item_is_available,
+          item_is_disabled,
+          item_category_id,
+          item_team_id,
+          item_description_label,
+          ...initialData
+        } = data;
+
+        groupedData[itemId] = {
+          ...initialData,
+          item_descriptions: [],
+        };
+      }
+
+      if (data.item_description_label) {
+        groupedData[itemId].item_descriptions.push(data.item_description_label);
+      }
+    });
+
+    returnData = Object.values(groupedData);
+  });
+
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_services_raya_api(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+plv8.subtransaction(function() {
+    const {
+      limit = 100,
+      offset = 0,
+      startDate = null,
+      endDate = null,
+      order = 'asc',
+      teamId
+    } = input_data;
+
+    let query = `
+      SELECT s.*,c.service_scope_name
+      FROM service_schema.service_table s
+      JOIN service_schema.service_scope_table c ON c.service_scope_service_id = s.service_id
+      AND c.service_scope_is_available = true
+      AND c.service_scope_is_disabled = false
+      WHERE s.service_is_available = true and s.service_is_disabled = false AND s.service_team_id = '${teamId}'`
+    if (startDate) {
+      query += ` AND s.service_date_created >= '${startDate}' `;
+    }
+    if (endDate) {
+      query += ` AND s.service_date_created <= '${endDate}' `;
+    }
+    query += ` ORDER BY s.service_date_created ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
+    query += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
+    let serviceData = plv8.execute(query);
+
+    serviceData.forEach((data)=>{
+        const {
+          service_is_available,
+          service_is_disabled,
+          service_category_id,
+          service_team_id,
+            ...filteredData
+        } = data;
+
+        returnData.push(filteredData);
+    })
+})
+return returnData
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_it_asset_raya_api(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+let returnData = [];
+   plv8.subtransaction(function() {
+    const {
+      limit = 100,
+      offset = 0,
+      startDate = null,
+      endDate = null,
+      order = 'asc',
+      teamId
+    } = input_data;
+
+    let query = `
+      SELECT
+        i.*,
+        c.item_description_label
+      FROM
+        item_schema.item_table i
+      JOIN
+        item_schema.item_description_table c
+        ON c.item_description_item_id = i.item_id
+        AND c.item_description_is_available = true
+        AND c.item_description_is_disabled = false
+      WHERE
+        i.item_is_available = true
+        AND i.item_is_disabled = false
+        AND i.item_is_it_asset_item = true
+        AND i.item_team_id = '${teamId}'`;
+
+    if (startDate) {
+      query += ` AND i.item_date_created >= '${startDate}' `;
+    }
+    if (endDate) {
+      query += ` AND i.item_date_created <= '${endDate}' `;
+    }
+
+    query += ` ORDER BY i.item_date_created ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
+    query += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
+
+    let itemData = plv8.execute(query);
+
+    let groupedData = {};
+
+    itemData.forEach((data) => {
+      const itemId = data.item_id;
+      if (!groupedData[itemId]) {
+        const {
+          item_is_available,
+          item_is_disabled,
+          item_category_id,
+          item_team_id,
+          ...initialData
+        } = data;
+
+        groupedData[itemId] = {
+          ...initialData,
+          item_descriptions: [],
+        };
+      }
+
+      if (data.item_description_label) {
+        groupedData[itemId].item_descriptions.push(data.item_description_label);
+      }
+    });
+
+    returnData = Object.values(groupedData);
+  });
+
+  return returnData;
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_request_raya_api(
+    input_data JSON
+)
+RETURNS JSON
+SET search_path TO ''
+AS $$
+  let returnData = [];
+  plv8.subtransaction(function() {
+    const {
+      sort = 'request_date_created',
+      limit = 100,
+      offset = 0,
+      startDate = null,
+      endDate = null,
+      order = 'asc',
+      teamId
+    } = input_data;
+
+    let mainQuery = `
+      SELECT
+        r.*,
+        ru.user_id AS requester_user_id,
+        ru.user_first_name AS requester_first_name,
+        ru.user_last_name AS requester_last_name,
+        f.form_name,
+        p.team_project_name
+      FROM
+        request_schema.request_table r
+      JOIN
+        form_schema.form_table f
+        ON f.form_id = r.request_form_id
+      JOIN
+        team_schema.team_project_table p
+        ON p.team_project_id = r.request_project_id
+      JOIN
+        team_schema.team_member_table tmt
+        ON tmt.team_member_id = r.request_team_member_id
+      JOIN
+        user_schema.user_table ru
+        ON ru.user_id = tmt.team_member_user_id
+      JOIN
+        team_schema.team_table t
+        ON t.team_id = tmt.team_member_team_id
+      WHERE
+        r.request_status = 'APPROVED' AND
+        r.request_is_disabled = false
+        AND t.team_id = '${teamId}'`;
+
+    if (startDate) {
+      mainQuery += ` AND r.request_date_created >= '${startDate}' `;
+    }
+    if (endDate) {
+      mainQuery += ` AND r.request_date_created <= '${endDate}' `;
+    }
+
+    mainQuery += ` ORDER BY r.${sort} ${order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'} `;
+    mainQuery += ` LIMIT ${Math.min(limit, 1000)} OFFSET ${offset} `;
+
+    let mainQueryData = plv8.execute(mainQuery);
+
+    let requestIds = mainQueryData.map(data => data.request_id);
+    let groupedData = {};
+
+    mainQueryData.forEach((data) => {
+      const {request_team_member_id,request_form_id,request_module_request_id,requester_user_id,request_project_id,request_is_disabled, ...filteredData}=data;
+      const requestId = data.request_id;
+      groupedData[requestId] = {
+        ...filteredData,
+         requester: {
+          user_first_name: data.requester_first_name,
+          user_last_name: data.requester_last_name,
+        },
+        request_signers: [],
+        request_comments: [],
+        request_sections: [],
+      };
+    });
+
+    if (requestIds.length > 0) {
+      let signerQuery = `
+        SELECT
+          rs.request_signer_request_id,
+          u.user_first_name,
+          u.user_last_name
+        FROM
+          request_schema.request_signer_table rs
+        JOIN
+          form_schema.signer_table s
+        ON s.signer_id = rs.request_signer_signer_id
+        JOIN
+          team_schema.team_member_table tmm
+        ON tmm.team_member_id = s.signer_team_member_id
+        JOIN
+          user_schema.user_table u
+        ON u.user_id = tmm.team_member_user_id
+        WHERE
+          rs.request_signer_request_id = ANY($1)
+      `;
+
+      let signerData = plv8.execute(signerQuery, [requestIds]);
+
+      signerData.forEach((data) => {
+        const requestId = data.request_signer_request_id;
+        if (groupedData[requestId]) {
+          groupedData[requestId].request_signers.push({
+            user_first_name: data.user_first_name,
+            user_last_name: data.user_last_name
+          });
+        }
+      });
+    }
+
+    if (requestIds.length > 0) {
+      let commentQuery = `
+        SELECT
+          c.comment_request_id,
+          c.comment_content
+        FROM
+          request_schema.comment_table c
+        WHERE
+          c.comment_request_id = ANY($1)
+          AND c.comment_is_disabled = false
+      `;
+
+      let commentData = plv8.execute(commentQuery, [requestIds]);
+
+      commentData.forEach((data) => {
+        const requestId = data.comment_request_id;
+        if (groupedData[requestId]) {
+          groupedData[requestId].request_comments.push({
+            comment_content: data.comment_content
+          });
+        }
+      });
+    }
+
+    if (requestIds.length > 0) {
+      let sectionQuery = `
+        SELECT
+          s.section_name,
+          ft.field_name,
+          rr.request_response,
+          rr.request_response_request_id
+        FROM
+          form_schema.section_table s
+        JOIN
+          form_schema.field_table ft
+        ON ft.field_section_id = s.section_id
+        JOIN
+          request_schema.request_response_table rr
+        ON rr.request_response_field_id = ft.field_id
+        WHERE
+          rr.request_response_request_id = ANY($1)
+      `;
+
+      let sectionData = plv8.execute(sectionQuery, [requestIds]);
+
+      sectionData.forEach((data) => {
+        const requestId = data.request_response_request_id;
+        if (groupedData[requestId]) {
+          let section = groupedData[requestId].request_sections.find(s => s.section_name === data.section_name);
+          if (!section) {
+            section = {
+              section_name: data.section_name,
+              fields: []
+            };
+            groupedData[requestId].request_sections.push(section);
+          }
+          section.fields.push({
+            field_name: data.field_name,
+            response: JSON.parse(data.request_response)
+          });
+        }
+      });
+    }
+
+    returnData = Object.values(groupedData);
+  });
+
+  return returnData;
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_hr_spreadsheet_view_on_load(
