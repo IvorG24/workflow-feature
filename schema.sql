@@ -14438,25 +14438,25 @@ plv8.subtransaction(function(){
 
          const position_type = safeParse(positionData[0].request_response);
 
-    const fieldData = plv8.execute(`
-         SELECT f.*, qq.questionnaire_question_id
-         FROM form_schema.questionnaire_table q
-         JOIN form_schema.questionnaire_question_table qq
-         ON qq.questionnaire_question_questionnaire_id = q.questionnaire_id
-         JOIN form_schema.field_table f
-         ON f.field_id = qq.questionnaire_question_field_id
-         JOIN lookup_schema.position_table p
-         ON p.position_questionnaire_id  = q.questionnaire_id
-         WHERE
+         const fieldData = plv8.execute(`
+          SELECT f.*, qq.questionnaire_question_id
+          FROM form_schema.questionnaire_table q
+          JOIN form_schema.questionnaire_question_table qq
+          ON qq.questionnaire_question_questionnaire_id = q.questionnaire_id
+          JOIN form_schema.field_table f
+          ON f.field_id = qq.questionnaire_question_field_id
+          JOIN lookup_schema.position_table p
+          ON p.position_questionnaire_id  = q.questionnaire_id
+          WHERE
             p.position_alias ='${position_type}'
             AND qq.questionnaire_question_is_disabled = FALSE
-         ORDER BY RANDOM()
-         LIMIT 5;
-         `);
+          ORDER BY RANDOM()
+          LIMIT 5;
+          `);
 
-        let sectionFieldsWithOptions = [];
+         let sectionFieldsWithOptions = [];
 
-        if (fieldData.length > 0) {
+         if (fieldData.length > 0) {
           sectionFieldsWithOptions = fieldData.map((field) => {
             const optionData = plv8.execute(`
               SELECT *
@@ -14506,7 +14506,7 @@ plv8.subtransaction(function(){
           ],
         },
         {
-          ...form.form_section[1],
+         ...form.form_section[1],
           section_field: [
             {
               ...form.form_section[1].section_field[0],
@@ -14533,7 +14533,7 @@ plv8.subtransaction(function(){
             },
           ],
         },
-        ...(sectionFieldsWithOptions.length === 5
+         ...(sectionFieldsWithOptions.length === 5
         ? [
             {
               ...form.form_section[2],
