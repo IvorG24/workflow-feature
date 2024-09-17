@@ -14429,7 +14429,7 @@ plv8.subtransaction(function(){
            FROM request_schema.request_response_table
            INNER JOIN form_schema.field_table ON field_id = request_response_field_id
            WHERE
-            equest_response_request_id = '${requestApplicationData[0].request_id}'
+            request_response_request_id = '${requestApplicationData[0].request_id}'
             AND field_id IN ('d8490dac-21b2-4fec-9f49-09c24c4e1e66')
            ORDER BY field_order
         `);
