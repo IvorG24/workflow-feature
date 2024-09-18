@@ -26,7 +26,10 @@ const FormSectionList = ({ formId, formName }: Props) => {
           formId: formId,
           formName: formName,
         });
+
         setSectionList(data);
+
+        console.log(data);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

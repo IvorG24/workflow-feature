@@ -12,6 +12,7 @@ import {
   ITEM_FIELD_ID_LIST,
   PED_ITEM_FIELD_ID_LIST,
   SELECT_OPTION_LIMIT,
+  TECHNICAL_ASSESSMENT_FIELD_LIST,
 } from "@/utils/constant";
 import { Database } from "@/utils/database";
 import { safeParse } from "@/utils/functions";
@@ -46,10 +47,10 @@ import {
   FieldTableRow,
   FormTableRow,
   FormType,
+  HRAnalyticsData,
   HRPhoneInterviewFilterFormValues,
   HRPhoneInterviewSpreadsheetData,
   HRProjectType,
-  HRAnalyticsData,
   InitialFormType,
   InterviewOnlineMeetingTableRow,
   ItemCategoryType,
@@ -108,12 +109,12 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-  getBarangay,
-  getCity,
-  getProvince,
-  getRegion,
-  getTransactionList,
-  Database as OneOfficeDatabase,
+    getBarangay,
+    getCity,
+    getProvince,
+    getRegion,
+    getTransactionList,
+    Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -5195,6 +5196,9 @@ export const getFormSection = async (
     case "IT Asset":
       query = query.in("field_table.field_id", IT_ASSET_FIELD_ID_LIST);
       break;
+    case "Technical Assessment":
+    query = query.in("field_table.field_id", TECHNICAL_ASSESSMENT_FIELD_LIST);
+    break;
   }
 
   const { data, error } = await query;
