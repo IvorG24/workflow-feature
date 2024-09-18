@@ -389,10 +389,7 @@ const TechnicalAssessmentViewQuestionPage = ({
                         ...field,
                         field_id: correspondingResponse.field_id,
                         field_type: isCorrectAnswer ? "DROPDOWN" : "TEXT",
-                        field_response:
-                          correspondingResponse.field_response === "undefined"
-                            ? ""
-                            : correspondingResponse.field_response,
+                        field_response: correspondingResponse.field_response,
                         field_is_required: false,
                       }
                     : field;

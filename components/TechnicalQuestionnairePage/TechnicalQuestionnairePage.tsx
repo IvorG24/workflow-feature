@@ -191,8 +191,8 @@ const TechnicalQuestionnairePage = ({ teamMemberList }: Props) => {
       };
       setQuestionnaireName("");
       setQuestionnnaireList([
-        ...questionnnaireList,
         formattedData as unknown as TechnicalAssessmentTableRow,
+        ...questionnnaireList,
       ]);
       setQuestionnnaireListCount(questionnnaireListCount + 1);
       notifications.show({

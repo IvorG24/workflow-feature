@@ -10,7 +10,7 @@ type Props = {
 const TechnicalAssessment = ({ technicalAssessmentData }: Props) => {
   return (
     <Stack spacing="xl" sx={{ flex: 1 }}>
-      <Title order={3}>General Assessment</Title>
+      <Title order={3}>Technical Assessment</Title>
       <Stack>
         <Group>
           <Text>Request ID: </Text>
