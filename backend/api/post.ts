@@ -46,8 +46,8 @@ import {
   MemoLineItem,
   MemoTableRow,
   NotificationTableInsert,
-  OptionTableInsert,
   OtherExpensesTypeTableInsert,
+  QuestionOption,
   ReferenceMemoType,
   RequestResponseTableInsert,
   RequestSignerTableInsert,
@@ -67,7 +67,7 @@ import {
   TicketTableRow,
   UserTableInsert,
   UserTableRow,
-  UserValidIDTableInsert,
+  UserValidIDTableInsert
 } from "@/utils/types";
 import { SupabaseClient } from "@supabase/supabase-js";
 import Compressor from "compressorjs";
@@ -2181,7 +2181,7 @@ export const createTechnicalQuestions = async (
     if (fieldError) throw fieldError;
 
     const FieldTableInput: FieldTableInsert[] = [];
-    const OptionTableInput: OptionTableInsert[] = [];
+    const OptionTableInput: QuestionOption[] = [];
     const CorrectResponseTableInput: FieldCorrectResponseTableInsert[] = [];
     const QuestionId: string[] = [];
     let correctAnswerFieldResponse = "";
@@ -2223,9 +2223,9 @@ export const createTechnicalQuestions = async (
                   .includes("question choice 3") ||
                 optionField.field_name.toLowerCase().includes("question choice 4")
               ) {
-                const optionEntry: OptionTableInsert = {
+                const optionEntry: QuestionOption = {
                   option_id: optionId,
-                  option_value: String(optionField.field_response),
+                  option_value: String(optionField.field_response) === "undefined" ? null : String(optionField.field_response),
                   option_order: field_order,
                   option_field_id: fieldId,
                 };
@@ -2278,6 +2278,7 @@ export const createTechnicalQuestions = async (
         return `('${escapedResponse}', '${response.option_order}', '${fieldUuid}')`;
       }
     ).join(",");
+
 
     const { data, error } = await supabaseClient
       .rpc("create_technical_question", {

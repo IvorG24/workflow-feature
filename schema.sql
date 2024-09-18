@@ -1095,7 +1095,7 @@ CREATE TABLE hr_schema.interview_online_meeting_table (
 
 CREATE TABLE hr_schema.recruitment_table (
   recruitment_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  
+
   recruitment_request_id UUID REFERENCES request_schema.request_table(request_id) NOT NULL,
   recruitment_team_member_id UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL
 );
@@ -1104,7 +1104,7 @@ CREATE TABLE hr_schema.hr_project_table (
   hr_project_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   hr_project_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   hr_project_name VARCHAR(4000) NOT NULL,
-  
+
   hr_project_address_id UUID REFERENCES public.address_table(address_id) NOT NULL
 );
 
@@ -1140,7 +1140,7 @@ CREATE TABLE form_schema.questionnaire_question_table(
 
 CREATE TABLE form_schema.question_option_table(
   question_option_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  question_option_value VARCHAR(4000) NOT NULL,
+  question_option_value VARCHAR(4000),
   question_option_order INT NOT NULL,
 
   question_option_questionnaire_question_id UUID REFERENCES form_schema.questionnaire_question_table(questionnaire_question_id) NOT NULL
@@ -6627,30 +6627,30 @@ AS $$
             ORDER BY field_order ASC
             `);
 
-    const fieldWithOptionAndResponse = fieldData.map(field => {
-      const optionData = plv8.execute(`
-        SELECT *
-        FROM form_schema.question_option_table
-        WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
-        ORDER BY question_option_order ASC;
-      `);
+            const fieldWithOptionAndResponse = fieldData.map(field => {
+              const optionData = plv8.execute(`
+                SELECT *
+                FROM form_schema.question_option_table
+                WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
+                ORDER BY question_option_order ASC;
+              `);
 
-      const requestResponseData = plv8.execute(`
-        SELECT *
-        FROM request_schema.request_response_table
-        WHERE request_response_request_id = '${technicalAssessmentId}'
-        AND request_response_field_id = '${field.field_id}'
-      `);
+              const requestResponseData = plv8.execute(`
+                SELECT *
+                FROM request_schema.request_response_table
+                WHERE request_response_request_id = '${technicalAssessmentId}'
+                AND request_response_field_id = '${field.field_id}'
+              `);
 
-      return {
-        ...field,
-        field_response:requestResponseData,
-        field_option: optionData.map(option => ({
-          option_id: option.question_option_id,
-          option_value: option.question_option_value,
-          option_order: option.question_option_order,
+              return {
+                ...field,
+                field_response:requestResponseData,
+                field_option: optionData.filter(option => option.question_option_value !== null && option.question_option_value.trim() !== "").map((option) => ({
+                  option_id: option.question_option_id,
+                  option_value: option.question_option_value,
+                  option_order: option.question_option_order,
         }))
-      };
+    };
     });
 
     formSection.push({
@@ -6696,7 +6696,7 @@ AS $$
           ...section,
           section_field: fieldWithOptionAndResponse,
         })
-  }
+     }
       });
     } else {
       sectionData.forEach(section => {
@@ -14665,7 +14665,7 @@ plv8.subtransaction(function(){
               ORDER BY question_option_order ASC
             `);
 
-            const optionFormattedData = optionData.map((option) => ({
+            const optionFormattedData = optionData.filter(option => option.question_option_value !== null && option.question_option_value.trim() !== "").map((option) => ({
                 option_id: option.question_option_id,
                 option_value: option.question_option_value,
                 option_order: option.question_option_order,

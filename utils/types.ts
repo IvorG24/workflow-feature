@@ -2521,3 +2521,10 @@ export type HRAnalyticsData = {
   most_applied_position: HRAnalyticsResponseType[];
   applicant_age_bracket: HRAnalyticsResponseType[];
 };
+
+export type QuestionOption = {
+    option_id:string;
+    option_value:string | null;
+    option_order:number;
+    option_field_id:string;
+}
