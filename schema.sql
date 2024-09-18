@@ -1130,7 +1130,7 @@ CREATE TABLE form_schema.questionnaire_table (
 
 CREATE TABLE form_schema.questionnaire_question_table(
   questionnaire_question_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  questionnaire_question VARCHAR(4000),
+  questionnaire_question VARCHAR(4000) NOT NULL,
   questionnaire_date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   questionnaire_question_is_disabled BOOLEAN DEFAULT FALSE,
 
@@ -1148,7 +1148,7 @@ CREATE TABLE form_schema.question_option_table(
 
 CREATE TABLE error_table(
   error_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  error_date_created TIMESTAMPT DEFAULT NOW() NOT NULL,
+  error_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   error_message TEXT NOT NULL,
   error_url TEXT NOT NULL,
   error_function TEXT NOT NULL,
