@@ -1119,8 +1119,8 @@ CREATE TABLE lookup_schema.degree_table (
 CREATE TABLE form_schema.questionnaire_table (
   questionnaire_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
   questionnaire_name VARCHAR(5000) NOT NULL,
-  questionnaire_date_created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  questionnaire_date_updated TIMESTAMPTZ,
+  questionnaire_date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  questionnaire_date_updated TIMESTAMP,
   questionnaire_is_disabled BOOLEAN DEFAULT FALSE,
 
   questionnaire_created_by UUID REFERENCES team_schema.team_member_table(team_member_id) NOT NULL,
@@ -1130,8 +1130,8 @@ CREATE TABLE form_schema.questionnaire_table (
 
 CREATE TABLE form_schema.questionnaire_question_table(
   questionnaire_question_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY NOT NULL,
-  questionnaire_question VARCHAR(4000) NOT NULL,
-  questionnaire_date_created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  questionnaire_question VARCHAR(4000),
+  questionnaire_date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   questionnaire_question_is_disabled BOOLEAN DEFAULT FALSE,
 
   questionnaire_question_field_id UUID REFERENCES form_schema.field_table(field_id) NOT NULL,
@@ -1148,7 +1148,7 @@ CREATE TABLE form_schema.question_option_table(
 
 CREATE TABLE error_table(
   error_id UUID DEFAULT uuid_generate_v4() UNIQUE PRIMARY KEY NOT NULL,
-  error_date_created TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  error_date_created TIMESTAMPT DEFAULT NOW() NOT NULL,
   error_message TEXT NOT NULL,
   error_url TEXT NOT NULL,
   error_function TEXT NOT NULL,
