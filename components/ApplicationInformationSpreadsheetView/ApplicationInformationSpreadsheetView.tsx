@@ -88,6 +88,7 @@ const formDefaultValues = {
     },
     employmentStatus: "",
     workedAtStaClara: null,
+    shiftWillingToWork: null,
     willingToBeAssignedAnywhere: null,
     regionWillingToBeAssigned: [],
     soonestJoiningDate: {

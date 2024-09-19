@@ -2248,6 +2248,7 @@ export type ApplicationInformationFilterFormValues = {
     };
     employmentStatus?: string;
     workedAtStaClara?: boolean;
+    shiftWillingToWork?: boolean;
     willingToBeAssignedAnywhere?: boolean;
     regionWillingToBeAssigned?: string[];
     soonestJoiningDate?: {

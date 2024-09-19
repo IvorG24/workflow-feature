@@ -183,12 +183,12 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
           {
             ...form.form_section[5],
             section_field: [
-              ...form.form_section[5].section_field.slice(0, 3),
+              ...form.form_section[5].section_field.slice(0, 4),
               {
-                ...form.form_section[5].section_field[3],
+                ...form.form_section[5].section_field[4],
                 field_option: regionOptionList,
               },
-              ...form.form_section[5].section_field.slice(4),
+              ...form.form_section[5].section_field.slice(5),
             ],
           },
           ...form.form_section.slice(7),
@@ -863,14 +863,14 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
       updateSection(index, {
         ...newSection,
         section_field: [
-          ...newSection.section_field.slice(0, 3),
-          ...newSection.section_field.slice(4),
+          ...newSection.section_field.slice(0, 4),
+          ...newSection.section_field.slice(5),
         ],
       });
     } else {
       const regionOptions = regionOptionList.map((region, index) => {
         return {
-          option_field_id: form.form_section[5].section_field[3].field_id,
+          option_field_id: form.form_section[5].section_field[4].field_id,
           option_id: region.region_id,
           option_order: index,
           option_value: region.region,
@@ -879,12 +879,12 @@ const CreateApplicationInformationRequestPage = ({ form }: Props) => {
       updateSection(index, {
         ...newSection,
         section_field: [
-          ...newSection.section_field.slice(0, 3),
+          ...newSection.section_field.slice(0, 4),
           {
-            ...form.form_section[5].section_field[3],
+            ...form.form_section[5].section_field[4],
             field_option: regionOptions,
           },
-          ...newSection.section_field.slice(3),
+          ...newSection.section_field.slice(4),
         ],
       });
     }

@@ -247,6 +247,11 @@ const sectionList = [
         type: "BOOLEAN",
       },
       {
+        id: "responseFilter.shiftWillingToWork",
+        label: "Shift Willing to Work",
+        type: "SELECT",
+      },
+      {
         id: "responseFilter.willingToBeAssignedAnywhere",
         label: "Willing to be assigned anywhere",
         type: "BOOLEAN",
@@ -305,7 +310,15 @@ const ApplicationInformationFilterMenu = ({
     if (["SELECT", "MULTISELECT"].includes(field.type)) {
       fieldOptions =
         optionList
-          .find((option) => option.field_name === field.label)
+          .find((option) => {
+            if (field.label === "Shift Willing to Work") {
+              return (
+                option.field_name === "Which shift are you willing to work?"
+              );
+            } else {
+              return option.field_name === field.label;
+            }
+          })
           ?.field_option.map((option) => {
             return {
               label: option.option_value,

@@ -14834,6 +14834,7 @@ AS $$
     responseFilter.yearGraduated && (Boolean(responseFilter.yearGraduated.start) || Boolean(responseFilter.yearGraduated.end)) ? responseFilterCondition.push(dateRangeCondition('yearGraduated', 'fd699cdb-0073-41d9-b81f-0178fad54746')) : null;
     responseFilter.employmentStatus ? responseFilterCondition.push(`(request_response_field_id = 'f264f914-dcb8-45d1-8f40-da44bab471cb' AND request_response = '"${responseFilter.employmentStatus}"')`) : null;
     responseFilter.workedAtStaClara ? responseFilterCondition.push(`(request_response_field_id = '738ab073-d076-4087-b058-5951e89d03bf' AND request_response = '${responseFilter.workedAtStaClara}')`) : null;
+    responseFilter.shiftWillingToWork ? responseFilterCondition.push(`(request_response_field_id = 'a086b07e-cedf-418c-ab60-4caa32b1bdde' AND request_response = '"${responseFilter.shiftWillingToWork}"')`) : null;
     responseFilter.willingToBeAssignedAnywhere ? responseFilterCondition.push(`(request_response_field_id = 'c72f8295-a8b1-478a-bb07-63ce6cb5641b' AND request_response = '${responseFilter.willingToBeAssignedAnywhere}')`) : null;
     Boolean(responseFilter.regionWillingToBeAssigned) && responseFilter.regionWillingToBeAssigned.length ? responseFilterCondition.push(`(request_response_field_id = '1a901f84-4f55-47aa-bfa0-42f56d1eb6c5' AND request_response IN (${responseFilter.regionWillingToBeAssigned.map(value => `'"${value}"'`).join(", ")}))`) : null;
     responseFilter.soonestJoiningDate && (Boolean(responseFilter.soonestJoiningDate.start) || Boolean(responseFilter.soonestJoiningDate.end)) ? responseFilterCondition.push(dateRangeCondition('soonestJoiningDate', '3e8ee62f-5483-462a-b91e-63ad04454215')) : null;
@@ -15032,7 +15033,7 @@ AS $$
       `
     );
 
-    if(positionData.length){
+    if (positionData.length) {
       optionList.push({
         field_name: 'Position',
         field_option: positionData.map((position, index) => {

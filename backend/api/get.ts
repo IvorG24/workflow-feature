@@ -5974,6 +5974,7 @@ export const getFormSectionWithFieldList = async (
     }
   );
   if (error) throw error;
+
   return data as unknown as {
     sectionList: SectionWithFieldType[];
     optionList: (OptionTableRow & { field_name: string })[];
