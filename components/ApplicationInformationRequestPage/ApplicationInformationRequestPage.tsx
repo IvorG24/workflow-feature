@@ -1,6 +1,7 @@
 import { deleteRequest } from "@/backend/api/delete";
 import {
   getPositionType,
+  getRequestAdOwner,
   getRequestComment,
   getUserIdInApplicationInformation,
 } from "@/backend/api/get";
@@ -266,6 +267,23 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
     try {
       setIsLoading(true);
 
+      let candidateSource = "";
+      const adOwner = await getRequestAdOwner(
+        supabaseClient,
+        request.request_id
+      );
+
+      if (
+        adOwner?.ad_owner.ad_owner_name &&
+        adOwner?.ad_owner.ad_owner_name === "lgu"
+      ) {
+        candidateSource = adOwner?.ad_owner.ad_owner_name.toUpperCase();
+      } else {
+        candidateSource = safeParse(
+          `${formSection[0].section_field[3].field_response?.request_response}`
+        );
+      }
+
       const personalInformationSection = formSection[1].section_field;
       const firstName = safeParse(
         `${personalInformationSection[0].field_response?.request_response}`
@@ -299,9 +317,6 @@ const ApplicationInformationRequestPage = ({ request }: Props) => {
       );
       const emailAddress = safeParse(
         `${formSection[2].section_field[1].field_response?.request_response}`
-      );
-      const candidateSource = safeParse(
-        `${formSection[0].section_field[3].field_response?.request_response}`
       );
       const employmentStatus = safeParse(
         `${formSection[5].section_field[0].field_response?.request_response}`
