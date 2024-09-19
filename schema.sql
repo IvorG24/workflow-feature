@@ -3885,7 +3885,7 @@ AS $$
       }
     }
 
-    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information', 'General Assessment', 'Technical Assessment'].includes(request.form_name))) {
+    if (!request.form_is_formsly_form || (request.form_is_formsly_form && ['Subcon', 'Request For Payment v1', 'Petty Cash Voucher', 'Petty Cash Voucher Balance', 'Application Information v1', 'Application Information', 'General Assessment', 'Technical Assessment'].includes(request.form_name))) {
       const requestData = plv8.execute(`SELECT public.get_request('${requestId}')`)[0].get_request;
       if(!request) throw new Error('404');
       returnData = {
@@ -6361,7 +6361,7 @@ AS $$
   let returnData;
   plv8.subtransaction(function(){
 
-      const isStringParsable = (str) => {
+    const isStringParsable = (str) => {
       try {
         JSON.parse(str);
         return true;
@@ -6526,95 +6526,94 @@ AS $$
         })
       });
     } else if (requestData.form_is_formsly_form && (requestData.form_name === "Technical Assessment")) {
+      const technicalAssessmentResult = plv8.execute(`
+        SELECT request_id
+        FROM public.request_view
+        WHERE request_formsly_id = '${request_id}'
+      `);
+      const technicalAssessmentId = technicalAssessmentResult[0].request_id;
 
-        const technicalAssessmentResult = plv8.execute(`
-            SELECT request_id
-            FROM public.request_view
-            WHERE request_formsly_id = '${request_id}'
-            `)
-        const technicalAssessmentId = technicalAssessmentResult[0].request_id;
-
-        const generalAssessmentData = plv8.execute(`
-        SELECT
-            request_response,
-            field_id
-        FROM request_schema.request_response_table
-        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        WHERE
-            request_response_request_id = '${technicalAssessmentId}'
-            AND field_id IN (
-            '362bff3d-54fa-413b-992c-fd344d8552c6'
-            )
+      const generalAssessmentData = plv8.execute(`
+      SELECT
+        request_response,
+        field_id
+      FROM request_schema.request_response_table
+      INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+      WHERE
+        request_response_request_id = '${technicalAssessmentId}'
+        AND field_id IN (
+          '362bff3d-54fa-413b-992c-fd344d8552c6'
+        )
         ORDER BY field_order
-        `);
+      `);
 
-        const generalAssessmentId = generalAssessmentData[0].request_response;
+      const generalAssessmentId = generalAssessmentData[0].request_response;
 
-        const generalRequestData = plv8.execute(`
+      const generalRequestData = plv8.execute(`
         SELECT request_id
         FROM public.request_view
         WHERE request_formsly_id = '${safeParse(generalAssessmentId)}'
-        `);
+      `);
 
-        if (!generalRequestData.length) {
+      if (!generalRequestData.length) {
         throw new Error("General request data not found.");
-        }
+      }
 
-        const requestId = generalRequestData[0].request_id;
+      const requestId = generalRequestData[0].request_id;
 
-        const applicantData = plv8.execute(`
-        SELECT
-            request_response,
-            field_id
-        FROM request_schema.request_response_table
-        INNER JOIN form_schema.field_table ON field_id = request_response_field_id
-        WHERE
-            request_response_request_id = '${requestId}'
-            AND field_id IN (
-            'be0e130b-455b-47e0-a804-f90943f7bc07',
-            '5c5284cd-7647-4307-b558-40b9076d9f7f',
-            'f1c516bd-e483-4f32-a5b0-5223b186afb5',
-            'd209aed6-e560-49a8-aa77-66c9cada168d',
-            'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
-            )
+      const applicantData = plv8.execute(`
+      SELECT
+        request_response,
+        field_id
+      FROM request_schema.request_response_table
+      INNER JOIN form_schema.field_table ON field_id = request_response_field_id
+      WHERE
+        request_response_request_id = '${requestId}'
+        AND field_id IN (
+          'be0e130b-455b-47e0-a804-f90943f7bc07',
+          '5c5284cd-7647-4307-b558-40b9076d9f7f',
+          'f1c516bd-e483-4f32-a5b0-5223b186afb5',
+          'd209aed6-e560-49a8-aa77-66c9cada168d',
+          'f92a07b0-7b04-4262-8cd4-b3c7f37ce9b6'
+        )
         ORDER BY field_order
-        `);
+      `);
 
-        if (!applicantData.length) {
+      if (!applicantData.length) {
         throw new Error("Applicant data not found.");
-        }
+      }
 
-        const requestApplicationData = plv8.execute(`
+      const requestApplicationData = plv8.execute(`
         SELECT request_id
         FROM public.request_view
         WHERE request_formsly_id = '${safeParse(applicantData[0].request_response)}'
-        `);
+      `);
 
-        if (!requestApplicationData.length) {
+      if (!requestApplicationData.length) {
         throw new Error("Request application data not found.");
-        }
+      }
 
-        const positionData = plv8.execute(`
+      const positionData = plv8.execute(`
         SELECT
-            request_response,
-            field_id
+          request_response,
+          field_id
         FROM request_schema.request_response_table
         INNER JOIN form_schema.field_table ON field_id = request_response_field_id
         WHERE
-            request_response_request_id = '${requestApplicationData[0].request_id}'
-            AND field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
+          request_response_request_id = '${requestApplicationData[0].request_id}'
+          AND field_id IN ('0fd115df-c2fe-4375-b5cf-6f899b47ec56')
         ORDER BY field_order ASC
-        `);
+      `);
 
-        if (!positionData.length) {
+      if (!positionData.length) {
         throw new Error("Position data not found.");
-        }
+      }
 
-        const position_type = safeParse(positionData[0].request_response);
+      const position_type = safeParse(positionData[0].request_response);
 
-        sectionData.forEach((section, index) => {
+      sectionData.forEach((section, index) => {
         if (index === 2) {
-            const fieldData = plv8.execute(`
+          const fieldData = plv8.execute(`
             SELECT f.*, qq.questionnaire_question_id
             FROM form_schema.questionnaire_table q
             JOIN form_schema.questionnaire_question_table qq
@@ -6625,78 +6624,78 @@ AS $$
             ON p.position_questionnaire_id  = q.questionnaire_id
             WHERE p.position_alias = '${position_type}' AND qq.questionnaire_question_is_disabled = FALSE
             ORDER BY field_order ASC
+          `);
+
+          const fieldWithOptionAndResponse = fieldData.map(field => {
+            const optionData = plv8.execute(`
+              SELECT *
+              FROM form_schema.question_option_table
+              WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
+              ORDER BY question_option_order ASC;
             `);
 
-            const fieldWithOptionAndResponse = fieldData.map(field => {
-              const optionData = plv8.execute(`
-                SELECT *
-                FROM form_schema.question_option_table
-                WHERE question_option_questionnaire_question_id = '${field.questionnaire_question_id}'
-                ORDER BY question_option_order ASC;
-              `);
-
-              const requestResponseData = plv8.execute(`
-                SELECT *
-                FROM request_schema.request_response_table
-                WHERE request_response_request_id = '${technicalAssessmentId}'
-                AND request_response_field_id = '${field.field_id}'
-              `);
-
-              return {
-                ...field,
-                field_response:requestResponseData,
-                field_option: optionData.filter(option => option.question_option_value !== null && option.question_option_value.trim() !== "").map((option) => ({
-                  option_id: option.question_option_id,
-                  option_value: option.question_option_value,
-                  option_order: option.question_option_order,
-        }))
-    };
-    });
-
-    formSection.push({
-      ...section,
-      section_field: fieldWithOptionAndResponse,
-    });
-  } else {
-     const fieldData = plv8.execute(
-          `
-            SELECT *
-            FROM form_schema.field_table
-            WHERE field_section_id = '${section.section_id}'
-            ORDER BY field_order ASC
-          `
-        );
-        const fieldWithOptionAndResponse = fieldData.map(field => {
-          const optionData = plv8.execute(
-            `
-              SELECT *
-              FROM form_schema.option_table
-              WHERE option_field_id = '${field.field_id}'
-              ORDER BY option_order ASC
-            `
-          );
-
-          const requestResponseData = plv8.execute(
-            `
+            const requestResponseData = plv8.execute(`
               SELECT *
               FROM request_schema.request_response_table
-              WHERE request_response_request_id = '${requestData.request_id}'
+              WHERE request_response_request_id = '${technicalAssessmentId}'
               AND request_response_field_id = '${field.field_id}'
+            `);
+
+            return {
+              ...field,
+              field_response:requestResponseData,
+              field_option: optionData.filter(option => option.question_option_value !== null && option.question_option_value.trim() !== "").map((option) => ({
+                option_id: option.question_option_id,
+                option_value: option.question_option_value,
+                option_order: option.question_option_order,
+              }))
+            };
+          });
+
+          formSection.push({
+            ...section,
+            section_field: fieldWithOptionAndResponse,
+          });
+        } else {
+          const fieldData = plv8.execute(
+            `
+              SELECT *
+              FROM form_schema.field_table
+              WHERE field_section_id = '${section.section_id}'
+              ORDER BY field_order ASC
             `
           );
+          const fieldWithOptionAndResponse = fieldData.map(field => {
+            const optionData = plv8.execute(
+              `
+                SELECT *
+                FROM form_schema.option_table
+                WHERE option_field_id = '${field.field_id}'
+                ORDER BY option_order ASC
+              `
+            );
 
-          return {
-            ...field,
-            field_response: requestResponseData,
-            field_option: optionData
-          };
-        });
+            const requestResponseData = plv8.execute(
+              `
+                SELECT *
+                FROM request_schema.request_response_table
+                WHERE request_response_request_id = '${requestData.request_id}'
+                AND request_response_field_id = '${field.field_id}'
+              `
+            );
 
-        formSection.push({
-          ...section,
-          section_field: fieldWithOptionAndResponse,
-        })
-     }
+            return {
+              ...field,
+              field_response: requestResponseData,
+              field_option: optionData
+            };
+          });
+
+          formSection.push({
+            ...section,
+            section_field: fieldWithOptionAndResponse,
+          })
+        }
       });
     } else {
       sectionData.forEach(section => {
@@ -6740,7 +6739,6 @@ AS $$
         })
       });
     }
-
 
     const form = {
       form_id: requestData.form_id,
@@ -6827,7 +6825,6 @@ AS $$
  });
  return returnData;
 $$ LANGUAGE plv8;
-
 
 CREATE OR REPLACE FUNCTION get_ticket_form(
   input_data JSON
@@ -15384,6 +15381,44 @@ AS $$
 $$ LANGUAGE plv8;
 
 CREATE OR REPLACE FUNCTION get_user_id_in_application_information(
+  input_data JSON
+)
+RETURNS TEXT
+SET search_path TO ''
+AS $$
+  let return_value = '';
+  plv8.subtransaction(function(){
+    const {
+      requestId
+    } = input_data;
+
+    const email = plv8.execute(
+      `
+        SELECT request_response
+        FROM request_schema.request_response_table
+        WHERE
+          request_response_field_id = '56438f2d-da70-4fa4-ade6-855f2f29823b'
+          AND request_response_request_id = '${requestId}'
+      `
+    )[0].request_response;
+
+    const user = plv8.execute(
+      `
+        SELECT user_id
+        FROM user_schema.user_table
+        WHERE
+          user_email = '${email.replace(/"/g, '')}'
+      `
+    );
+
+    if(user.length){
+      return_value = user[0].user_id
+    }
+  });
+  return return_value
+$$ LANGUAGE plv8;
+
+CREATE OR REPLACE FUNCTION get_user_id_in_application_information_v1(
   input_data JSON
 )
 RETURNS TEXT

@@ -28,8 +28,6 @@ const FormSectionList = ({ formId, formName }: Props) => {
         });
 
         setSectionList(data);
-
-        console.log(data);
       } catch (e) {
         notifications.show({
           message: "Something went wrong. Please try again later.",

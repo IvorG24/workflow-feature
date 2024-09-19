@@ -109,12 +109,12 @@ import {
 import { SupabaseClient } from "@supabase/supabase-js";
 import moment from "moment";
 import {
-    getBarangay,
-    getCity,
-    getProvince,
-    getRegion,
-    getTransactionList,
-    Database as OneOfficeDatabase,
+  getBarangay,
+  getCity,
+  getProvince,
+  getRegion,
+  getTransactionList,
+  Database as OneOfficeDatabase,
 } from "oneoffice-api";
 import { v4 as uuidv4, validate } from "uuid";
 
@@ -6049,6 +6049,22 @@ export const getUserIdInApplicationInformation = async (
   );
   if (error) throw error;
   return data;
+};
+
+export const getUserIdInApplicationInformationV1 = async (
+  supabaseClient: SupabaseClient<Database>,
+  params: {
+    requestId: string;
+  }
+) => {
+  const { data, error } = await supabaseClient.rpc(
+    "get_user_id_in_application_information_v1",
+    {
+      input_data: params,
+    }
+  );
+  if (error) throw error;
+  return data as string | undefined;
 };
 
 export const checkUserIdNumber = async (

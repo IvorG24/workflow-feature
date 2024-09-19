@@ -1,4 +1,5 @@
 import ApplicationInformationRequestPage from "@/components/ApplicationInformationRequestPage/ApplicationInformationRequestPage";
+import ApplicationInformationV1RequestPage from "@/components/ApplicationInformationV1RequestPage/ApplicationInformationV1RequestPage";
 import BillOfQuantityRequestPage from "@/components/BillOfQuantityRequestPage/BillOfQuantityRequestPage";
 import { default as EquipmentServiceReportRequestPage } from "@/components/EquipmentServiceReportRequestPage/EquipmentServiceReportRequestPage";
 import GeneralAssessmentRequestPage from "@/components/GeneralAssessmentRequestPage/GeneralAssessmentRequestPage";
@@ -173,6 +174,10 @@ const Page = ({
       request.request_form.form_name === "Petty Cash Voucher Balance"
     ) {
       return <PettyCashVoucherBalanceRequestPage request={request} />;
+    } else if (
+      request.request_form.form_name === "Application Information v1"
+    ) {
+      return <ApplicationInformationV1RequestPage request={request} />;
     } else if (request.request_form.form_name === "Application Information") {
       return <ApplicationInformationRequestPage request={request} />;
     } else if (request.request_form.form_name === "General Assessment") {
