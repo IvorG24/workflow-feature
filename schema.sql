@@ -15023,30 +15023,6 @@ AS $$
       `
     );
 
-    const positionData = plv8.execute(
-      `
-        SELECT *
-        FROM lookup_schema.position_table
-        WHERE
-          position_is_disabled = false
-        ORDER BY position_alias
-      `
-    );
-
-    if (positionData.length) {
-      optionList.push({
-        field_name: 'Position',
-        field_option: positionData.map((position, index) => {
-          return {
-            option_id: plv8.execute('SELECT extensions.uuid_generate_v4()')[0].uuid_generate_v4,
-            option_value: position.position_alias,
-            option_order: index + 1,
-            option_field_id: '0fd115df-c2fe-4375-b5cf-6f899b47ec56'
-          }
-        })
-      });
-    }
-
     const signerIdList = plv8.execute(
       `
         SELECT DISTINCT(signer_id)

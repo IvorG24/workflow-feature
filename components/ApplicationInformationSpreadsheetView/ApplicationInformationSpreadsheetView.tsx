@@ -1,13 +1,15 @@
 import {
   fetchRegion,
+  getApplicationInformationPositionOptions,
   getApplicationInformationSummaryData,
 } from "@/backend/api/get";
-import { DEFAULT_NUMBER_SSOT_ROWS } from "@/utils/constant";
+import { DEFAULT_NUMBER_SSOT_ROWS, FETCH_OPTION_LIMIT } from "@/utils/constant";
 import supabaseClientAddress from "@/utils/supabase/address";
 import {
   ApplicationInformationFieldOptionType,
   ApplicationInformationFilterFormValues,
   ApplicationInformationSpreadsheetData,
+  OptionTableRow,
   OptionType,
   SectionWithFieldType,
 } from "@/utils/types";
@@ -153,7 +155,7 @@ const ApplicationInformationSpreadsheetView = ({
           sort: data?.sort ?? sort,
         }
       );
-
+ 
       if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
         setIsMax(true);
       }
@@ -228,6 +230,46 @@ const ApplicationInformationSpreadsheetView = ({
             }),
           };
           return [...prev, regionOption];
+        });
+      }
+
+      let index = 0;
+      const positionOptionList: OptionTableRow[] = [];
+      while (1) {
+        const positionData = await getApplicationInformationPositionOptions(
+          supabaseClient,
+          {
+            teamId: "a5a28977-6956-45c1-a624-b9e90911502e",
+            index,
+            limit: FETCH_OPTION_LIMIT,
+          }
+        );
+
+        const positionOptions = positionData.map((position, index) => {
+          return {
+            option_field_id: "0fd115df-c2fe-4375-b5cf-6f899b47ec56",
+            option_id: position.position_id,
+            option_order: index,
+            option_value: position.position_alias,
+          };
+        });
+        positionOptionList.push(...positionOptions);
+        if (positionData.length < FETCH_OPTION_LIMIT) break;
+        index += FETCH_OPTION_LIMIT;
+      }
+
+      if (positionOptionList.length) {
+        const orderedOptions = positionOptionList.sort((a, b) =>
+          a.option_value.localeCompare(b.option_value)
+        );
+        setOptionList((prev) => {
+          return [
+            ...prev,
+            {
+              field_name: "Position",
+              field_option: orderedOptions,
+            },
+          ];
         });
       }
 
