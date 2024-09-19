@@ -18909,6 +18909,11 @@ CREATE POLICY "Allow CREATE for anon users" ON lookup_schema.ad_owner_request_ta
 AS PERMISSIVE FOR INSERT
 WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow READ for anon users" ON lookup_schema.ad_owner_request_table;
+CREATE POLICY "Allow READ for anon users" ON lookup_schema.ad_owner_request_table
+AS PERMISSIVE FOR SELECT
+USING (true);
+
 ----- END: POLICIES
 
 ----- START: INDEXES
