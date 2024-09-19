@@ -14842,7 +14842,7 @@ AS $$
     responseFilter.expectedSalary && (responseFilter.expectedSalary.start || responseFilter.expectedSalary.end) ? responseFilterCondition.push(numberRangeCondition('expectedSalary', 'bcfba5e2-b9cc-4c4b-a308-174993c4564d')) : null;
 
     const responseBooleanFilterCondition = [];
-    responseFilter.certification ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.certification === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = '60b588b2-3f1e-4e67-b9a6-c3fcb4c4bdc4'))`) : null;
+    responseFilter.certification ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.certification === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = 'cf9a92db-0d27-42ef-ae70-86f3a173b1c0'))`) : null;
     responseFilter.license ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.license === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = 'fb2314e5-6e02-4493-8af6-849a0c56521a'))`) : null;
     responseFilter.torOrDiplomaAttachment ? responseBooleanFilterCondition.push(`(SELECT ${responseFilter.torOrDiplomaAttachment === "true" ? "EXISTS" : "NOT EXISTS"} (SELECT 1 FROM request_schema.request_response_table WHERE request_response_request_id = request_id AND request_response_field_id = 'ca5d710e-29cd-4c33-9415-e70395d91fb3'))`) : null;
 
@@ -14883,7 +14883,6 @@ AS $$
             ROW_NUMBER() OVER (PARTITION BY request_view.request_id) AS rowNumber
           FROM public.request_view
           INNER JOIN form_schema.form_table ON form_id = request_form_id
-          INNER JOIN form_schema.signer_table ON signer_form_id = form_id
           INNER JOIN team_schema.team_member_table ON team_member_id = form_team_member_id
           INNER JOIN request_schema.request_response_table ON request_id = request_response_request_id
           INNER JOIN request_schema.request_score_table ON request_score_request_id = request_id

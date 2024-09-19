@@ -155,7 +155,7 @@ const ApplicationInformationSpreadsheetView = ({
           sort: data?.sort ?? sort,
         }
       );
- 
+
       if (newData.length < DEFAULT_NUMBER_SSOT_ROWS) {
         setIsMax(true);
       }
@@ -166,6 +166,7 @@ const ApplicationInformationSpreadsheetView = ({
         setData((prev) => [...prev, ...newData]);
       }
     } catch (e) {
+      console.log(e);
       notifications.show({
         message: "Failed to fetch data",
         color: "red",
