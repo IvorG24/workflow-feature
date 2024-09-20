@@ -16404,9 +16404,8 @@ CREATE OR REPLACE FUNCTION phone_interview_validation(
 RETURNS JSON
 SET search_path TO ''
 AS $$
-
   let message;
-
+  let hrScheduledInterviews = [];
   plv8.subtransaction(function() {
     const {
       interview_schedule
@@ -16485,74 +16484,115 @@ AS $$
       return;
     }
 
-    const targetDate = new Date(interview_schedule);
-    const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1).toISOString().split('T')[0];
-    const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split('T')[0];
+    const interviewDate = new Date(interview_schedule);
+    const currentYear = interviewDate.getFullYear();
+    const currentMonth = interviewDate.getMonth(); // Month (0-11)
 
-    const hrScheduledInterviews = plv8.execute(
-      `
-      SELECT
-        tm.team_member_id,
-        COUNT(DISTINCT iom.interview_meeting_interview_id) AS interview_count
-        FROM (
-            SELECT unnest(array[${availableHrMembers.map(id => `'${id}'`).join(',')}])::UUID AS team_member_id
-        ) tm
-        LEFT JOIN hr_schema.hr_phone_interview_table hpi
-        ON tm.team_member_id = hpi.hr_phone_interview_team_member_id
-        LEFT JOIN hr_schema.director_interview_table di
-            ON tm.team_member_id = di.director_interview_team_member_id
-        LEFT JOIN hr_schema.technical_interview_table ti
-            ON tm.team_member_id = ti.technical_interview_team_member_id
-        LEFT JOIN hr_schema.trade_test_table t
-            ON tm.team_member_id = t.trade_test_team_member_id
-        JOIN hr_schema.interview_online_meeting_table iom
-            ON iom.interview_meeting_interview_id = COALESCE(
-            hpi.hr_phone_interview_id,
-            di.director_interview_id,
-            ti.technical_interview_id,
-            t.trade_test_id
+
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const week1End = new Date(currentYear, currentMonth, 7);
+    const week2Start = new Date(currentYear, currentMonth, 8);
+    const week2End = new Date(currentYear, currentMonth, 14);
+    const week3Start = new Date(currentYear, currentMonth, 15);
+    const week3End = new Date(currentYear, currentMonth, 21);
+    const week4Start = new Date(currentYear, currentMonth, 22);
+    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+
+    let weekStart, weekEnd;
+    if (interviewDate <= week1End) {
+        weekStart = firstDayOfMonth;
+        weekEnd = week1End;
+    } else if (interviewDate >= week2Start && interviewDate <= week2End) {
+        weekStart = week2Start;
+        weekEnd = week2End;
+    } else if (interviewDate >= week3Start && interviewDate <= week3End) {
+        weekStart = week3Start;
+        weekEnd = week3End;
+    } else if (interviewDate >= week4Start && interviewDate <= lastDayOfMonth) {
+        weekStart = week4Start;
+        weekEnd = lastDayOfMonth;
+    }
+
+   availableHrMembers.forEach((teamMemberId) => {
+    const result = plv8.execute(
+        `
+        WITH interviews_data AS (
+            SELECT
+            COUNT(DISTINCT iom_total.interview_meeting_interview_id) AS total_count,
+            COUNT(DISTINCT CASE
+                WHEN iom_total.interview_meeting_schedule BETWEEN $1 AND $2
+                THEN iom_total.interview_meeting_interview_id
+                END) AS weekly_count
+            FROM hr_schema.hr_phone_interview_table hpi
+            LEFT JOIN hr_schema.director_interview_table di
+            ON hpi.hr_phone_interview_team_member_id = di.director_interview_team_member_id
+            LEFT JOIN hr_schema.technical_interview_table ti
+            ON hpi.hr_phone_interview_team_member_id = ti.technical_interview_team_member_id
+            LEFT JOIN hr_schema.trade_test_table t
+            ON hpi.hr_phone_interview_team_member_id = t.trade_test_team_member_id
+            JOIN hr_schema.interview_online_meeting_table iom_total
+            ON iom_total.interview_meeting_interview_id = COALESCE(
+                hpi.hr_phone_interview_id,
+                di.director_interview_id,
+                ti.technical_interview_id,
+                t.trade_test_id
+            )
+            WHERE iom_total.interview_meeting_is_disabled = false
+            AND hpi.hr_phone_interview_team_member_id = $3
         )
-                    AND iom.interview_meeting_schedule BETWEEN $1 AND $2
-            AND iom.interview_meeting_is_disabled = false
-        GROUP BY tm.team_member_id
-        ORDER BY interview_count ASC
-      `,
-      [startOfMonth, endOfMonth]
+        SELECT
+            $3 AS team_member_id,
+            weekly_count,
+            total_count
+        FROM interviews_data
+        `,
+        [weekStart, weekEnd, teamMemberId]
     );
 
+   hrScheduledInterviews.push(result[0]);});
+
     const hrLoadMap = new Map();
-    availableHrMembers.forEach(memberId => {
-      hrLoadMap.set(memberId, 0);
-    });
 
     hrScheduledInterviews.forEach(interview => {
-      hrLoadMap.set(interview.team_member_id, interview.interview_count);
+        hrLoadMap.set(interview.team_member_id, {
+            totalLoad: interview.total_count,
+            weeklyLoad: interview.weekly_count
+        });
+        });
+
+        let lowestLoadMember = null;
+        let lowestWeeklyLoad = Infinity;
+        let lowestTotalLoad = Infinity;
+
+        hrLoadMap.forEach((load, memberId) => {
+        const { totalLoad, weeklyLoad } = load;
+
+        if (weeklyLoad < lowestWeeklyLoad) {
+            lowestWeeklyLoad = weeklyLoad;
+            lowestTotalLoad = totalLoad;
+            lowestLoadMember = memberId;
+        }
+        else if (weeklyLoad === lowestWeeklyLoad) {
+            if (totalLoad < lowestTotalLoad) {
+            lowestTotalLoad = totalLoad;
+            lowestLoadMember = memberId;
+            }
+        }
+        });
+
+        if (!lowestLoadMember) {
+        message = {
+            status: 'error',
+            message: 'No available HR member for the selected time.'
+        };
+        } else {
+        message = {
+            status: 'success',
+            message: 'HR phone interview scheduled successfully.',
+            assigned_hr_team_member_id: lowestLoadMember
+        };
+        }
     });
-
-    let lowestLoadMember = null;
-    let lowestLoad = Infinity;
-
-    hrLoadMap.forEach((load, memberId) => {
-      if (load < lowestLoad) {
-        lowestLoad = load;
-        lowestLoadMember = memberId;
-      }
-    });
-
-    if (!lowestLoadMember) {
-      message = {
-        status: 'error',
-        message: 'No available HR member for the selected time.'
-      };
-    } else {
-      message = {
-        status: 'success',
-        message: 'HR phone interview scheduled successfully.',
-        assigned_hr_team_member_id: lowestLoadMember
-      };
-    }
-  });
-
   return message;
 $$ LANGUAGE plv8;
 
