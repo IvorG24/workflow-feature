@@ -423,7 +423,7 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
           requestJira={requestJira}
         />
         <Stack spacing="xl" mt="lg">
-          {formSection.map((section, idx) => {
+          {formSection.slice(0, 2).map((section, idx) => {
             return (
               <RequestSection
                 key={section.section_id + idx}
@@ -435,6 +435,26 @@ const TechnicalAssessmentRequestPage = ({ request }: Props) => {
               />
             );
           })}
+          {formSection[2].section_field.length ? (
+            formSection.slice(2).map((section, idx) => {
+              return (
+                <RequestSection
+                  key={section.section_id + idx}
+                  section={section}
+                  isFormslyForm={true}
+                  isOnlyWithResponse
+                  index={idx + 1}
+                  isPublicRequest={true}
+                />
+              );
+            })
+          ) : (
+            <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+              <Text>
+                The position doesn&apos;t have a technical assessment yet.
+              </Text>
+            </Alert>
+          )}
         </Stack>
 
         {isRequestActionSectionVisible && (

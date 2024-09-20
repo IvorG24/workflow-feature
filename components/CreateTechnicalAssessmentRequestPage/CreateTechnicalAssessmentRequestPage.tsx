@@ -9,9 +9,19 @@ import {
   FormWithResponseType,
   RequestResponseTableRow,
 } from "@/utils/types";
-import { Box, Button, Container, Space, Stack, Title } from "@mantine/core";
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Space,
+  Stack,
+  Text,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPagesBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { IconNote } from "@tabler/icons-react";
 import { useRouter } from "next/router";
 import { Database } from "oneoffice-api";
 import { useEffect } from "react";
@@ -86,33 +96,26 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
       let requestScore = 0;
       let status = "PENDING";
 
-      const hasMissingTechnicalQuestionSection = data.sections.every(
-        (section) => section.section_name !== "Question"
-      );
+      const isMissingTechnicalQuestionSection = data.sections.length < 3;
 
-      if (hasMissingTechnicalQuestionSection) {
-        notifications.show({
-          message: "There is no technical questions yet",
-          color: "red",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      data.sections.forEach((section) => {
-        section.section_field.forEach((field) => {
-          if (
-            field.field_response ===
-            field.field_correct_response?.correct_response_value
-          ) {
-            requestScore += 1;
-          }
-        });
-      });
-      if (requestScore >= 3) {
+      if (isMissingTechnicalQuestionSection) {
         status = "APPROVED";
       } else {
-        status = "REJECTED";
+        data.sections.forEach((section) => {
+          section.section_field.forEach((field) => {
+            if (
+              field.field_response ===
+              field.field_correct_response?.correct_response_value
+            ) {
+              requestScore += 1;
+            }
+          });
+        });
+        if (requestScore >= 3) {
+          status = "APPROVED";
+        } else {
+          status = "REJECTED";
+        }
       }
 
       if (status === "APPROVED") {
@@ -255,6 +258,15 @@ const CreateTechnicalAssessmentRequestPage = ({ form }: Props) => {
               );
             })}
             {/* <RequestFormSigner signerList={signerList} /> */}
+            {form.form_section.length < 3 && (
+              <Alert mb="xl" title="Note!" icon={<IconNote size={16} />}>
+                <Text>
+                  The position your applying for doesn&apos;t have a technical
+                  assessment yet, just click the submit button to proceed to the
+                  next step.
+                </Text>
+              </Alert>
+            )}
             <Button type="submit">Submit</Button>
           </Stack>
         </form>
